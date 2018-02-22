@@ -10,12 +10,12 @@ import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -353,11 +353,11 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
         120);
     OLogSequenceNumber lsn = log.begin();
 
-    List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();
+    List<OWriteableWALRecord> atomicUnit = new ArrayList<OWriteableWALRecord>();
 
     boolean atomicChangeIsProcessed = false;
     while (lsn != null) {
-      OWALRecord walRecord = log.read(lsn);
+      OWriteableWALRecord walRecord = log.read(lsn);
       if (walRecord instanceof OOperationUnitRecord)
         atomicUnit.add(walRecord);
 
@@ -367,7 +367,7 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
       } else if (walRecord instanceof OAtomicUnitEndRecord) {
         atomicChangeIsProcessed = false;
 
-        for (OWALRecord restoreRecord : atomicUnit) {
+        for (OWriteableWALRecord restoreRecord : atomicUnit) {
           if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord
               || restoreRecord instanceof ONonTxOperationPerformedWALRecord)
             continue;

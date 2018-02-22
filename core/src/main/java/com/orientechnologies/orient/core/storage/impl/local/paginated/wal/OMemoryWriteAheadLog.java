@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,7 +60,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber log(OWALRecord record) throws IOException {
+  public OLogSequenceNumber log(OWriteableWALRecord record) throws IOException {
     return new OLogSequenceNumber(Long.MAX_VALUE, Long.MAX_VALUE);
   }
 
@@ -85,7 +86,7 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OWALRecord read(OLogSequenceNumber lsn) throws IOException {
+  public OWriteableWALRecord read(OLogSequenceNumber lsn) throws IOException {
     throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 

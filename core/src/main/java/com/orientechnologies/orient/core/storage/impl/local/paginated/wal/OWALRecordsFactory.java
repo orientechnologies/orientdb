@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +35,7 @@ public class OWALRecordsFactory {
 
   public static final OWALRecordsFactory INSTANCE    = new OWALRecordsFactory();
 
-  public byte[] toStream(OWALRecord walRecord) {
+  public byte[] toStream(OWriteableWALRecord walRecord) {
     int contentSize = walRecord.serializedSize() + 1;
     byte[] content = new byte[contentSize];
 
@@ -69,8 +71,8 @@ public class OWALRecordsFactory {
     return content;
   }
 
-  public OWALRecord fromStream(byte[] content) {
-    OWALRecord walRecord;
+  public OWriteableWALRecord fromStream(byte[] content) {
+    OWriteableWALRecord walRecord;
     switch (content[0]) {
     case 0:
       walRecord = new OUpdatePageRecord();
@@ -108,7 +110,7 @@ public class OWALRecordsFactory {
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
-          walRecord = (OWALRecord) idToTypeMap.get(content[0]).newInstance();
+          walRecord = (OWriteableWALRecord) idToTypeMap.get(content[0]).newInstance();
         } catch (InstantiationException | IllegalAccessException e) {
           throw new IllegalStateException("Cannot deserialize passed in record", e);
         }
@@ -121,7 +123,7 @@ public class OWALRecordsFactory {
     return walRecord;
   }
 
-  public void registerNewRecord(byte id, Class<? extends OWALRecord> type) {
+  public void registerNewRecord(byte id, Class<? extends OWriteableWALRecord> type) {
     typeToIdMap.put(type, id);
     idToTypeMap.put(id, type);
   }

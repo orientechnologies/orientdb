@@ -78,6 +78,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
@@ -973,7 +974,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
 
           // start record is absent there is nothing that we can do
-          OWALRecord walRecord = writeAheadLog.read(startLsn);
+          OWriteableWALRecord walRecord = writeAheadLog.read(startLsn);
           if (walRecord == null) {
             OLogManager.instance()
                 .info(this, "Cannot find requested LSN=%s for database sync operation (record in WAL is absent)", lsn);
@@ -1151,7 +1152,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             return result;
           }
 
-          OWALRecord walRecord = writeAheadLog.read(startLsn);
+          OWriteableWALRecord walRecord = writeAheadLog.read(startLsn);
           if (walRecord == null) {
             OLogManager.instance()
                 .info(this, "Cannot find requested LSN=%s for database sync operation (record in WAL is absent)", startLsn);
@@ -4823,7 +4824,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return restoreFromBeginning();
       }
 
-      OWALRecord checkPointRecord;
+      OWriteableWALRecord checkPointRecord;
       try {
         checkPointRecord = writeAheadLog.read(lastCheckPoint);
       } catch (OWALPageBrokenException ignore) {
@@ -4892,7 +4893,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       OLogSequenceNumber lsn = writeAheadLog.next(lastCheckPoint);
 
       while (lsn != null) {
-        OWALRecord walRecord = writeAheadLog.read(lsn);
+        OWriteableWALRecord walRecord = writeAheadLog.read(lsn);
         if (walRecord instanceof OCheckpointEndRecord)
           return true;
 
@@ -4920,7 +4921,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       OLogSequenceNumber lsn = writeAheadLog.next(lastCheckPoint);
 
       while (lsn != null) {
-        OWALRecord walRecord = writeAheadLog.read(lsn);
+        OWriteableWALRecord walRecord = writeAheadLog.read(lsn);
         if (walRecord instanceof OFuzzyCheckpointEndRecord)
           return true;
 
@@ -4981,7 +4982,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     long recordsProcessed = 0;
 
     final int reportBatchSize = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
-    final Map<OOperationUnitId, List<OWALRecord>> operationUnits = new HashMap<>();
+    final Map<OOperationUnitId, List<OWriteableWALRecord>> operationUnits = new HashMap<>();
 
     long lastReportTime = 0;
 
@@ -4989,11 +4990,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       while (lsn != null) {
         logSequenceNumber = lsn;
 
-        OWALRecord walRecord = writeAheadLog.read(lsn);
+        OWriteableWALRecord walRecord = writeAheadLog.read(lsn);
 
         if (walRecord instanceof OAtomicUnitEndRecord) {
           OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
-          List<OWALRecord> atomicUnit = operationUnits.remove(atomicUnitEndRecord.getOperationUnitId());
+          List<OWriteableWALRecord> atomicUnit = operationUnits.remove(atomicUnitEndRecord.getOperationUnitId());
 
           // in case of data restore from fuzzy checkpoint part of operations may be already flushed to the disk
           if (atomicUnit != null) {
@@ -5002,7 +5003,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
 
         } else if (walRecord instanceof OAtomicUnitStartRecord) {
-          List<OWALRecord> operationList = new ArrayList<>();
+          List<OWriteableWALRecord> operationList = new ArrayList<>();
 
           assert !operationUnits.containsKey(((OAtomicUnitStartRecord) walRecord).getOperationUnitId());
 
@@ -5011,7 +5012,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         } else if (walRecord instanceof OOperationUnitRecord) {
           OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
 
-          List<OWALRecord> operationList = operationUnits.get(operationUnitRecord.getOperationUnitId());
+          List<OWriteableWALRecord> operationList = operationUnits.get(operationUnitRecord.getOperationUnitId());
 
           if (operationList == null || operationList.isEmpty()) {
             OLogManager.instance().errorNoDb(this, "'Start transaction' record is absent for atomic operation", null);
@@ -5049,7 +5050,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           .infoNoDb(this, "There are %d unfinished atomic operations left, they will be rolled back", operationUnits.size());
 
       if (!operationUnits.isEmpty()) {
-        for (List<OWALRecord> atomicOperation : operationUnits.values()) {
+        for (List<OWriteableWALRecord> atomicOperation : operationUnits.values()) {
           revertAtomicUnit(atomicOperation, atLeastOnePageUpdate);
         }
       }
@@ -5143,11 +5144,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private void revertAtomicUnit(List<OWALRecord> atomicUnit, OModifiableBoolean atLeastOnePageUpdate) throws IOException {
-    final ListIterator<OWALRecord> recordsIterator = atomicUnit.listIterator(atomicUnit.size());
+  private void revertAtomicUnit(List<OWriteableWALRecord> atomicUnit, OModifiableBoolean atLeastOnePageUpdate) throws IOException {
+    final ListIterator<OWriteableWALRecord> recordsIterator = atomicUnit.listIterator(atomicUnit.size());
 
     while (recordsIterator.hasPrevious()) {
-      final OWALRecord record = recordsIterator.previous();
+      final OWriteableWALRecord record = recordsIterator.previous();
 
       if (record instanceof OFileDeletedWALRecord) {
         OLogManager.instance().infoNoDb(this, "Deletion of file can not be rolled back");
@@ -5208,10 +5209,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @SuppressWarnings("WeakerAccess")
-  protected void restoreAtomicUnit(List<OWALRecord> atomicUnit, OModifiableBoolean atLeastOnePageUpdate) throws IOException {
+  protected void restoreAtomicUnit(List<OWriteableWALRecord> atomicUnit, OModifiableBoolean atLeastOnePageUpdate) throws IOException {
     assert atomicUnit.get(atomicUnit.size() - 1) instanceof OAtomicUnitEndRecord;
 
-    for (OWALRecord walRecord : atomicUnit) {
+    for (OWriteableWALRecord walRecord : atomicUnit) {
       if (walRecord instanceof OFileDeletedWALRecord) {
         OFileDeletedWALRecord fileDeletedWALRecord = (OFileDeletedWALRecord) walRecord;
         if (writeCache.exists(fileDeletedWALRecord.getFileId()))

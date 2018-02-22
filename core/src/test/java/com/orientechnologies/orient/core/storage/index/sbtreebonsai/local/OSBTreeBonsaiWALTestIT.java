@@ -16,6 +16,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import org.junit.*;
 
 import java.io.File;
@@ -272,11 +273,11 @@ public class OSBTreeBonsaiWALTestIT extends OSBTreeBonsaiLocalTestIT {
         16 * OWALPage.PAGE_SIZE, 120);
     OLogSequenceNumber lsn = log.begin();
 
-    List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();
+    List<OWriteableWALRecord> atomicUnit = new ArrayList<OWriteableWALRecord>();
 
     boolean atomicChangeIsProcessed = false;
     while (lsn != null) {
-      OWALRecord walRecord = log.read(lsn);
+      OWriteableWALRecord walRecord = log.read(lsn);
       if (walRecord instanceof OOperationUnitBodyRecord)
         atomicUnit.add(walRecord);
 
@@ -286,7 +287,7 @@ public class OSBTreeBonsaiWALTestIT extends OSBTreeBonsaiLocalTestIT {
       } else if (walRecord instanceof OAtomicUnitEndRecord) {
         atomicChangeIsProcessed = false;
 
-        for (OWALRecord restoreRecord : atomicUnit) {
+        for (OWriteableWALRecord restoreRecord : atomicUnit) {
           if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord
               || restoreRecord instanceof ONonTxOperationPerformedWALRecord)
             continue;

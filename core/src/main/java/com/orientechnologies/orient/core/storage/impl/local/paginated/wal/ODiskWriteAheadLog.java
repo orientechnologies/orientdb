@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInforma
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
@@ -522,7 +523,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber log(OWALRecord record) throws IOException {
+  public OLogSequenceNumber log(OWriteableWALRecord record) throws IOException {
     OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     if (statistic != null)
       statistic.startWALLogRecordTimer();
@@ -538,7 +539,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   /**
    * it log a record getting the serialized content as parameter.
    */
-  private OLogSequenceNumber internalLog(OWALRecord record, byte[] recordContent) throws IOException {
+  private OLogSequenceNumber internalLog(OWriteableWALRecord record, byte[] recordContent) throws IOException {
     syncObject.lock();
     try {
       checkForClose();
@@ -831,7 +832,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OWALRecord read(OLogSequenceNumber lsn) throws IOException {
+  public OWriteableWALRecord read(OLogSequenceNumber lsn) throws IOException {
     syncObject.lock();
     try {
       checkForClose();
@@ -847,7 +848,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       if (recordEntry == null)
         return null;
 
-      final OWALRecord record = OWALRecordsFactory.INSTANCE.fromStream(recordEntry);
+      final OWriteableWALRecord record = OWALRecordsFactory.INSTANCE.fromStream(recordEntry);
       record.setLsn(lsn);
 
       return record;

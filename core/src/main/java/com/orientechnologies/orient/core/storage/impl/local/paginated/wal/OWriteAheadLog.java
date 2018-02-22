@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,7 +58,7 @@ public interface OWriteAheadLog {
   OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn,
       Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata) throws IOException;
 
-  OLogSequenceNumber log(OWALRecord record) throws IOException;
+  OLogSequenceNumber log(OWriteableWALRecord record) throws IOException;
 
   void truncate() throws IOException;
 
@@ -69,7 +70,7 @@ public interface OWriteAheadLog {
 
   void delete(boolean flush) throws IOException;
 
-  OWALRecord read(OLogSequenceNumber lsn) throws IOException;
+  OWriteableWALRecord read(OLogSequenceNumber lsn) throws IOException;
 
   OLogSequenceNumber next(OLogSequenceNumber lsn) throws IOException;
 

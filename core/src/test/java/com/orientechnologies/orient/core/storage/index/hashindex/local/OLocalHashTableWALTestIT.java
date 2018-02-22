@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPa
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -247,17 +248,17 @@ public class OLocalHashTableWALTestIT extends OLocalHashTableBase {
 
     OLogSequenceNumber lsn = log.begin();
 
-    List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();
-    List<OWALRecord> batch = new ArrayList<OWALRecord>();
+    List<OWriteableWALRecord> atomicUnit = new ArrayList<OWriteableWALRecord>();
+    List<OWriteableWALRecord> batch = new ArrayList<OWriteableWALRecord>();
 
     boolean atomicChangeIsProcessed = false;
     while (lsn != null) {
-      OWALRecord walRecord = log.read(lsn);
+      OWriteableWALRecord walRecord = log.read(lsn);
       batch.add(walRecord);
 
       if (batch.size() >= 1000) {
         atomicChangeIsProcessed = restoreDataFromBatch(atomicChangeIsProcessed, atomicUnit, batch);
-        batch = new ArrayList<OWALRecord>();
+        batch = new ArrayList<OWriteableWALRecord>();
       }
 
       lsn = log.next(lsn);
@@ -274,13 +275,13 @@ public class OLocalHashTableWALTestIT extends OLocalHashTableBase {
     writeCache.flush();
   }
 
-  private boolean restoreDataFromBatch(boolean atomicChangeIsProcessed, List<OWALRecord> atomicUnit, List<OWALRecord> records)
+  private boolean restoreDataFromBatch(boolean atomicChangeIsProcessed, List<OWriteableWALRecord> atomicUnit, List<OWriteableWALRecord> records)
       throws IOException {
 
     final OReadCache expectedReadCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getReadCache();
     final OWriteCache expectedWriteCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
 
-    for (OWALRecord walRecord : records) {
+    for (OWriteableWALRecord walRecord : records) {
       if (walRecord instanceof OOperationUnitBodyRecord)
         atomicUnit.add(walRecord);
 
@@ -289,7 +290,7 @@ public class OLocalHashTableWALTestIT extends OLocalHashTableBase {
       } else if (walRecord instanceof OAtomicUnitEndRecord) {
         atomicChangeIsProcessed = false;
 
-        for (OWALRecord restoreRecord : atomicUnit) {
+        for (OWriteableWALRecord restoreRecord : atomicUnit) {
           if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord
               || restoreRecord instanceof ONonTxOperationPerformedWALRecord || restoreRecord instanceof OFullCheckpointStartRecord
               || restoreRecord instanceof OCheckpointEndRecord)

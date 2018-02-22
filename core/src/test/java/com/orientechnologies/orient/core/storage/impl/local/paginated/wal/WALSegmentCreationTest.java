@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -78,7 +79,7 @@ public class WALSegmentCreationTest {
 
     System.out.println("Segment : " + lsn.getSegment());
     while (lsn != null) {
-      OWALRecord record = writeAheadLog.read(lsn);
+      OWriteableWALRecord record = writeAheadLog.read(lsn);
       if (record instanceof OAtomicUnitStartRecord) {
         OOperationUnitId operationUnitId = ((OAtomicUnitStartRecord) record).getOperationUnitId();
         Assert.assertFalse(operations.contains(operationUnitId));
