@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -78,6 +79,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   public void setDiskEngine(final String name) {
     disk = orient.getEngine(name);
+    if (disk == null)
+      throw new OConfigurationException("Cannot find '" + name + "' disk engine");
   }
 
   @Override
@@ -92,7 +95,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       synchronized (this) {
         OStorage storage = getOrInitStorage(name);
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-        storage.open(null,null,config.getConfigurations());
+        storage.open(null, null, config.getConfigurations());
         embedded = factory.newInstance(storage);
         embedded.init(config);
       }
@@ -112,7 +115,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       synchronized (this) {
         OStorage storage = getOrInitStorage(name);
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-        storage.open(null,null,config.getConfigurations());
+        storage.open(null, null, config.getConfigurations());
         embedded = factory.newInstance(storage);
         embedded.init(config);
       }
@@ -133,7 +136,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         config = solveConfig(config);
         OStorage storage = getOrInitStorage(name);
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-        storage.open(null,null,config.getConfigurations());
+        storage.open(null, null, config.getConfigurations());
         embedded = factory.newInstance(storage);
         embedded.init(config);
       }
@@ -162,7 +165,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     synchronized (this) {
       checkOpen();
       OStorage storage = getOrInitStorage(name);
-      storage.open(null,null,pool.getConfig().getConfigurations());
+      storage.open(null, null, pool.getConfig().getConfigurations());
       embedded = factory.newPoolInstance(pool, storage);
       embedded.init(pool.getConfig());
     }
@@ -334,7 +337,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         if (!storages.containsKey(name)) {
           OStorage storage = getOrInitStorage(name);
           // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-          storage.open(null,null,getConfigurations().getConfigurations());
+          storage.open(null, null, getConfigurations().getConfigurations());
         }
       });
     }

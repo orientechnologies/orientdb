@@ -615,7 +615,8 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     }
   }
 
-  public void addIndexEngine(String name, IndexEngineData engineData) {
+  @Override
+  public void addIndexEngine(final String name, final IndexEngineData engineData) {
     final IndexEngineData oldEngine = indexEngines.putIfAbsent(name, engineData);
 
     if (oldEngine != null)
@@ -625,6 +626,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     update();
   }
 
+  @Override
   public void deleteIndexEngine(String name) {
     indexEngines.remove(name);
     update();

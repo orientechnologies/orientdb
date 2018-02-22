@@ -26,10 +26,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfigurationModifiable;
-import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
+import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -39,6 +36,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCluster;
@@ -49,7 +47,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class OEmbeddedStorageAbstract extends OStorageAbstract {
+public abstract class OEmbeddedStorageAbstract extends OStorageAbstract implements OStorageIndex {
   protected static final Comparator<ORecordOperation> COMMIT_RECORD_OPERATION_COMPARATOR = Comparator
       .comparing(o -> o.getRecord().getIdentity());
 
@@ -63,6 +61,7 @@ public abstract class OEmbeddedStorageAbstract extends OStorageAbstract {
    */
   protected final AtomicReference<Error> jvmError = new AtomicReference<>();
   protected int defaultClusterId;
+
   protected volatile ORecordConflictStrategy recordConflictStrategy = Orient.instance().getRecordConflictStrategy()
       .getDefaultImplementation();
 
@@ -71,6 +70,103 @@ public abstract class OEmbeddedStorageAbstract extends OStorageAbstract {
   }
 
   protected abstract OCluster createCluster(final String clusterName);
+
+  @Override
+  public ORecordConflictStrategy getConflictStrategy() {
+    return recordConflictStrategy;
+  }
+
+  @Override
+  public void setConflictStrategy(final ORecordConflictStrategy recordConflictStrategy) {
+    this.recordConflictStrategy = recordConflictStrategy;
+  }
+
+  @Override
+  public int loadExternalIndexEngine(String engineName, String algorithm, String indexType, OIndexDefinition indexDefinition,
+      OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version,
+      Map<String, String> engineProperties) {
+    try {
+      checkOpenness();
+
+      stateLock.acquireWriteLock();
+      try {
+        checkOpenness();
+
+        checkLowDiskSpaceRequestsAndReadOnlyConditions();
+
+        // this method introduced for binary compatibility only
+        if (getConfiguration().getBinaryFormatVersion() > 15)
+          return -1;
+
+        if (indexEngineNameMap.containsKey(engineName))
+          throw new OIndexException("Index with name " + engineName + " already exists");
+
+        makeStorageDirty();
+
+        final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
+        final int keySize = determineKeySize(indexDefinition);
+        final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
+        final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
+
+        final OStorageConfigurationImpl.IndexEngineData engineData = new OStorageConfigurationImpl.IndexEngineData(engineName,
+            algorithm, indexType, durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic,
+            keyTypes, nullValuesSupport, keySize, engineProperties);
+
+        final OIndexEngine engine = OIndexes
+            .createIndexEngine(engineName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties, null);
+        engine.load(engineName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullValuesSupport, keySize,
+            engineData.getEngineProperties());
+
+        indexEngineNameMap.put(engineName, engine);
+        indexEngines.add(engine);
+        getConfiguration().addIndexEngine(engineName, engineData);
+
+        return indexEngines.size() - 1;
+
+      } catch (IOException e) {
+        throw OException
+            .wrapException(new OStorageException("Cannot add index engine '" + engineName + "' in storage '" + name + "'"), e);
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
+  public int loadIndexEngine(final String name) {
+    try {
+      checkOpenness();
+
+      stateLock.acquireReadLock();
+      try {
+        checkOpenness();
+
+        final OIndexEngine engine = indexEngineNameMap.get(name);
+        if (engine == null)
+          return -1;
+
+        final int indexId = indexEngines.indexOf(engine);
+        assert indexId >= 0;
+
+        return indexId;
+
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
 
   @Override
   public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
@@ -782,5 +878,11 @@ public abstract class OEmbeddedStorageAbstract extends OStorageAbstract {
     if (cluster == null)
       throw new IllegalArgumentException("Cluster " + clusterId + " is null");
     return cluster;
+  }
+
+  protected void makeStorageDirty() throws IOException {
+  }
+
+  protected void checkLowDiskSpaceRequestsAndReadOnlyConditions() {
   }
 }

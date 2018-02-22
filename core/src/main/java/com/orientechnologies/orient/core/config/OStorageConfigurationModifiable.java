@@ -56,4 +56,8 @@ public interface OStorageConfigurationModifiable extends OStorageConfiguration {
   void setConfigurationUpdateListener(OStorageConfigurationUpdateListener updateListener);
 
   void initConfiguration(OContextConfiguration contextConfiguration);
+
+  void addIndexEngine(String engineName, OStorageConfigurationImpl.IndexEngineData engineData);
+
+  void deleteIndexEngine(String name);
 }

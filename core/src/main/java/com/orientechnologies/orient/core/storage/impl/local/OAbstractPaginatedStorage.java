@@ -108,7 +108,7 @@ import java.util.zip.ZipOutputStream;
  */
 public abstract class OAbstractPaginatedStorage extends OEmbeddedStorageAbstract
     implements OLowDiskSpaceListener, OCheckpointRequestListener, OIdentifiableStorage, OBackgroundExceptionListener,
-    OFreezableStorageComponent, OPageIsBrokenListener, OStorageIndex {
+    OFreezableStorageComponent, OPageIsBrokenListener {
   private static final int RECORD_LOCK_TIMEOUT         = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger();
   private static final int WAL_RESTORE_REPORT_INTERVAL = 30 * 1000; // milliseconds
 
@@ -1840,90 +1840,6 @@ public abstract class OAbstractPaginatedStorage extends OEmbeddedStorageAbstract
   }
 
   @Override
-  public int loadIndexEngine(final String name) {
-    try {
-      checkOpenness();
-
-      stateLock.acquireReadLock();
-      try {
-        checkOpenness();
-
-        final OIndexEngine engine = indexEngineNameMap.get(name);
-        if (engine == null)
-          return -1;
-
-        final int indexId = indexEngines.indexOf(engine);
-        assert indexId >= 0;
-
-        return indexId;
-      } finally {
-        stateLock.releaseReadLock();
-      }
-    } catch (RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  @Override
-  public int loadExternalIndexEngine(String engineName, String algorithm, String indexType, OIndexDefinition indexDefinition,
-      OBinarySerializer valueSerializer, boolean isAutomatic, Boolean durableInNonTxMode, int version,
-      Map<String, String> engineProperties) {
-    try {
-      checkOpenness();
-
-      stateLock.acquireWriteLock();
-      try {
-        checkOpenness();
-
-        checkLowDiskSpaceRequestsAndReadOnlyConditions();
-
-        // this method introduced for binary compatibility only
-        if (getConfiguration().binaryFormatVersion > 15)
-          return -1;
-
-        if (indexEngineNameMap.containsKey(engineName))
-          throw new OIndexException("Index with name " + engineName + " already exists");
-
-        makeStorageDirty();
-
-        final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
-        final int keySize = determineKeySize(indexDefinition);
-        final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
-        final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
-
-        final OStorageConfigurationImpl.IndexEngineData engineData = new OStorageConfigurationImpl.IndexEngineData(engineName,
-            algorithm, indexType, durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic,
-            keyTypes, nullValuesSupport, keySize, engineProperties);
-
-        final OIndexEngine engine = OIndexes
-            .createIndexEngine(engineName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties, null);
-        engine.load(engineName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullValuesSupport, keySize,
-            engineData.getEngineProperties());
-
-        indexEngineNameMap.put(engineName, engine);
-        indexEngines.add(engine);
-        getConfiguration().addIndexEngine(engineName, engineData);
-
-        return indexEngines.size() - 1;
-      } catch (IOException e) {
-        throw OException.wrapException(new OStorageException("Cannot add index engine " + engineName + " in storage."), e);
-      } finally {
-        stateLock.releaseWriteLock();
-      }
-    } catch (RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  @Override
   public int addIndexEngine(String engineName, final String algorithm, final String indexType,
       final OIndexDefinition indexDefinition, final OBinarySerializer valueSerializer, final boolean isAutomatic,
       final Boolean durableInNonTxMode, final int version, final Map<String, String> engineProperties,
@@ -3430,9 +3346,6 @@ public abstract class OAbstractPaginatedStorage extends OEmbeddedStorageAbstract
   protected void postDeleteSteps() {
   }
 
-  protected void makeStorageDirty() throws IOException {
-  }
-
   protected void clearStorageDirty() throws IOException {
   }
 
@@ -4578,7 +4491,8 @@ public abstract class OAbstractPaginatedStorage extends OEmbeddedStorageAbstract
    * <li>Exception during data flush in background threads</li> <li>Broken files</li> </ol> If one of those conditions are satisfied
    * data modification operation is aborted and storage is switched in "read only" mode.
    */
-  private void checkLowDiskSpaceRequestsAndReadOnlyConditions() {
+  @Override
+  protected void checkLowDiskSpaceRequestsAndReadOnlyConditions() {
     if (transaction.get() != null)
       return;
 
