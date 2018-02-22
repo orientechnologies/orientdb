@@ -200,7 +200,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           if (!match)
             continue;
 
-          if (!ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator().isBinaryComparable(type))
+          if (!getComparator().isBinaryComparable(type))
             return null;
 
           bytes.offset = valuePos;
@@ -226,7 +226,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           if (valuePos == 0)
             return null;
 
-          if (!ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator().isBinaryComparable(type))
+          if (!getComparator().isBinaryComparable(type))
             return null;
 
           bytes.offset = valuePos;

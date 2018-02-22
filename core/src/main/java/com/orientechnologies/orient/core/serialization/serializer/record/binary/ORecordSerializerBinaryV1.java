@@ -222,7 +222,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       if (!match)
         return new Tuple<>(Signal.CONTINUE, null);
 
-      if (!ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator().isBinaryComparable(type))
+      if (!getComparator().isBinaryComparable(type))
         return new Tuple<>(Signal.RETURN_VALUE, null);
 
       bytes.offset = valuePos;
@@ -242,8 +242,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       final int valuePos = readInteger(bytes);
       final OType type = getTypeForLenLessThanZero(prop, bytes);
 
-      if (valuePos == 0 ||
-          !ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator().isBinaryComparable(type))
+      if (valuePos == 0 || !getComparator().isBinaryComparable(type))
         return new Tuple<>(Signal.RETURN_VALUE, null);
 
       bytes.offset = valuePos;
