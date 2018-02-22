@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.serialization.serializer.record.binary
 
 import java.util.ArrayList;
 
-import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
@@ -16,11 +15,9 @@ public class ORecordSerializerBinaryDebug extends ORecordSerializerBinaryV0 {
     ORecordSerializationDebug debugInfo = new ORecordSerializationDebug();
     OImmutableSchema schema = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot();
     BytesContainer bytes = new BytesContainer(iSource);
-    if (bytes.bytes[0] != 0)
-      throw new OSystemException("Unsupported binary serialization version");
-    bytes.skip(1);
+    int version = readByte(bytes);
     
-    if (ORecordSerializerBinary.INSTANCE.getCurrentSerializer().isSerializingClassNameByDefault()){
+    if (ORecordSerializerBinary.INSTANCE.getSerializer(version).isSerializingClassNameByDefault()){
       try {
         final String className = readString(bytes);
         debugInfo.className = className;
