@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
@@ -44,7 +45,7 @@ public class OQueryOperatorMod extends OQueryOperator {
 
   @Override
   public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
-      Object iLeft, Object iRight, OCommandContext iContext) {
+      Object iLeft, Object iRight, OCommandContext iContext, final ODocumentSerializer serializer) {
     if (iRight == null || iLeft == null)
       return null;
 

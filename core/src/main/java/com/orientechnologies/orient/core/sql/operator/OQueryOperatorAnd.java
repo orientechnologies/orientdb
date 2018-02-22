@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -39,7 +40,7 @@ public class OQueryOperatorAnd extends OQueryOperator {
 
   @Override
   public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
-      final Object iLeft, final Object iRight, OCommandContext iContext) {
+      final Object iLeft, final Object iRight, OCommandContext iContext, final ODocumentSerializer serializer) {
     if (iLeft == null)
       return false;
     return (Boolean) iLeft && (Boolean) iRight;
