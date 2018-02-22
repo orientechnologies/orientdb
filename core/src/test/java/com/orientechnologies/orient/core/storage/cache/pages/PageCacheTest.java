@@ -211,11 +211,11 @@ public class PageCacheTest {
     verifyStep(vectors, 19);
 
     // cached at this point for tiny and lru
-    atomicOperation.getChanges(0, 0).setByteValue(page0.getCachePointer().getSharedBuffer(), (byte) 0, 0);
+    atomicOperation.getChanges(0, 0).setByteValue(page0.getCachePointer().getBufferDuplicate(), (byte) 0, 0);
     // not cached at this point for tiny and lru
-    atomicOperation.getChanges(0, 1).setByteValue(page0.getCachePointer().getSharedBuffer(), (byte) 0, 0);
+    atomicOperation.getChanges(0, 1).setByteValue(page0.getCachePointer().getBufferDuplicate(), (byte) 0, 0);
     // completely new page, not cached
-    atomicOperation.getChanges(0, 6).setByteValue(page0.getCachePointer().getSharedBuffer(), (byte) 0, 0);
+    atomicOperation.getChanges(0, 6).setByteValue(page0.getCachePointer().getBufferDuplicate(), (byte) 0, 0);
 
     atomicOperation.releasePage(page0);
     atomicOperation.releasePage(page0);
