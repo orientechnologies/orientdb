@@ -13,6 +13,8 @@ import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -20,17 +22,53 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-public class ODocumentSchemalessBinarySerializationTest {
-
-  protected ORecordSerializer serializer;
-
-  public ODocumentSchemalessBinarySerializationTest() {
-    serializer = new ORecordSerializerBinary();
+@RunWith(Parameterized.class)
+public class ODocumentSchemalessBinarySerializationTest {  
+    
+  @Parameters  
+  public static Collection<Object[]> generateParams() {
+    List<Object[]> params = new ArrayList<Object[]>();
+    //first we want to run tests for all registreted serializers, and then for two network serializers
+    //testig for each serializer type has its own index
+    for (byte i = 0; i < ORecordSerializerBinary.INSTANCE.getNumberOfSupportedVersions() + 2; i++) {
+      params.add(new Object[]{i});
+    }
+    return params;
   }
+  
+  protected ORecordSerializer serializer;
+  private final byte serializerVersion;
 
+  //first to test for all registreted serializers , then for network serializers
+  public ODocumentSchemalessBinarySerializationTest(byte serializerVersion) {
+    int numOfRegistretedSerializers = ORecordSerializerBinary.INSTANCE.getNumberOfSupportedVersions();
+    if (serializerVersion < numOfRegistretedSerializers){
+      serializer = new ORecordSerializerBinary(serializerVersion);
+    }
+    else if (serializerVersion == numOfRegistretedSerializers){
+      serializer = new ORecordSerializerNetwork();
+    }
+    else if (serializerVersion == numOfRegistretedSerializers + 1){
+      serializer = new ORecordSerializerNetworkV37();
+    }
+    
+    this.serializerVersion = serializerVersion;
+  }
+  
+  @Before
+  public void createSerializer() {
+    //we want new instance before method only for network serializers
+    if (serializerVersion >= ORecordSerializerBinary.INSTANCE.getNumberOfSupportedVersions())
+      serializer = new ORecordSerializerNetwork();
+  }
+  
   @Test
-  public void testSimpleSerialization() {
+  public void testSimpleSerialization() {    
     ODatabaseRecordThreadLocal.instance().remove();
     ODocument document = new ODocument();
 
