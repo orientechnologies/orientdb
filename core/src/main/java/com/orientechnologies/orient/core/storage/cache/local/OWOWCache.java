@@ -767,15 +767,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         fileId = -fileId;
 
       fileClassic = createFileInstance(fileName, fileId);
-      createFile(fileClassic);
+      createFile(fileName, fileId, fileClassic);
 
       final long externalId = composeFileId(id, fileId);
       files.add(externalId, fileClassic);
 
       nameIdMap.put(fileName, fileId);
       idNameMap.put(fileId, fileName);
-
-      writeNameIdEntry(new NameFileIdEntry(fileName, fileId, fileClassic.getName()), true);
 
       return externalId;
     } catch (InterruptedException e) {
@@ -870,15 +868,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           nextInternalId = intId;
 
         fileClassic = createFileInstance(fileName, intId);
-        createFile(fileClassic);
+        createFile(fileName, intId,fileClassic);
 
         files.add(fileId, fileClassic);
       }
 
       nameIdMap.put(fileName, intId);
       idNameMap.put(intId, fileName);
-
-      writeNameIdEntry(new NameFileIdEntry(fileName, intId, fileClassic.getName()), true);
 
       return fileId;
     } catch (InterruptedException e) {
@@ -1693,9 +1689,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   }
 
-  private void createFile(final OFileClassic fileClassic) throws IOException {
+  private void createFile(String fileName, int intId, final OFileClassic fileClassic) throws IOException {
     if (!fileClassic.exists()) {
       fileClassic.create();
+      writeNameIdEntry(new NameFileIdEntry(fileName, intId, fileClassic.getName()), false);
       fileClassic.synch();
     } else {
       throw new OStorageException("File '" + fileClassic.getName() + "' already exists.");
