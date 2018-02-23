@@ -1,6 +1,5 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OElement;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Property;
@@ -25,9 +24,6 @@ public class OrientProperty<V> implements Property<V> {
 
   private Object wrapIntoGraphElement(V value) {
     Object result = value;
-    if (result instanceof OIdentifiable) {
-      result = ((OIdentifiable) result).getRecord();
-    }
     if (result instanceof OElement) {
       if (((OElement) result).isVertex()) {
         result = element.getGraph().elementFactory().wrapVertex(((OElement) result).asVertex().get());
