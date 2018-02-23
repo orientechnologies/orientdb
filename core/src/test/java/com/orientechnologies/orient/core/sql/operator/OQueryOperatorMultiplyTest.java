@@ -19,6 +19,7 @@
   */
 package com.orientechnologies.orient.core.sql.operator;
 
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMultiply;
 import org.junit.Assert; import org.junit.Test;
 
@@ -32,16 +33,16 @@ public class OQueryOperatorMultiplyTest {
   @Test
   public void test() {
     OQueryOperatorMultiply operator = new OQueryOperatorMultiply();
-    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10, 10, null), 100);
-    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10l, 10l, null), 100l);
-    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10000000, 10000, null), 100000000000l);//upscale to long
-    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10.1, 10, null), 10.1 * 10);
-    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10, 10.1, null), 10 * 10.1);
-    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10.1d, 10, null), 10.1d * 10);
-    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10, 10.1d, null), 10 * 10.1d);
-    Assert.assertEquals(operator.evaluateRecord(null, null, null, new BigDecimal(10), 10, null),
+    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10, 10, null, ORecordSerializerBinary.INSTANCE.getCurrentSerializer()), 100);
+    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10l, 10l, null, ORecordSerializerBinary.INSTANCE.getCurrentSerializer()), 100l);
+    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10000000, 10000, null, ORecordSerializerBinary.INSTANCE.getCurrentSerializer()), 100000000000l);//upscale to long
+    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10.1, 10, null, ORecordSerializerBinary.INSTANCE.getCurrentSerializer()), 10.1 * 10);
+    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10, 10.1, null, ORecordSerializerBinary.INSTANCE.getCurrentSerializer()), 10 * 10.1);
+    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10.1d, 10, null, ORecordSerializerBinary.INSTANCE.getCurrentSerializer()), 10.1d * 10);
+    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10, 10.1d, null, ORecordSerializerBinary.INSTANCE.getCurrentSerializer()), 10 * 10.1d);
+    Assert.assertEquals(operator.evaluateRecord(null, null, null, new BigDecimal(10), 10, null, ORecordSerializerBinary.INSTANCE.getCurrentSerializer()),
         new BigDecimal(10).multiply(new BigDecimal(10)));
-    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10, new BigDecimal(10), null),
+    Assert.assertEquals(operator.evaluateRecord(null, null, null, 10, new BigDecimal(10), null, ORecordSerializerBinary.INSTANCE.getCurrentSerializer()),
         new BigDecimal(10).multiply(new BigDecimal(10)));
   }
 }

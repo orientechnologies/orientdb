@@ -126,7 +126,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     final BytesContainer container = new BytesContainer(iSource).skip(1);
 
     try {
-      return serializerByVersion[iSource[0]].getFieldNames(reference, container);
+      return serializerByVersion[iSource[0]].getFieldNames(reference, container, false);
     } catch (RuntimeException e) {
       OLogManager.instance().warn(this, "Error deserializing record to get field-names, send this data for debugging: %s ",
           Base64.getEncoder().encodeToString(iSource));
@@ -142,7 +142,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     container.bytes[pos] = CURRENT_RECORD_VERSION;
 
     // SERIALIZE CLASS ONLY
-    serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, true);
+    serializerByVersion[CURRENT_RECORD_VERSION].serializeWithClassName((ODocument) iSource, container, true);
 
     return container.fitBytes();
   }

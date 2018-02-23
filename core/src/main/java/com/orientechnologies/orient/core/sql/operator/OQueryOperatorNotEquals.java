@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
@@ -55,8 +56,9 @@ public class OQueryOperatorNotEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, OCommandContext iContext) {
-    return !ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator().isEqual(iFirstField, iSecondField);
+  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, 
+          OCommandContext iContext, final ODocumentSerializer serializer) {
+    return !serializer.getComparator().isEqual(iFirstField, iSecondField);
   }
 
   @Override

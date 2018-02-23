@@ -36,20 +36,36 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   private static final byte                    CURRENT_RECORD_VERSION = 0;
 
   private ODocumentSerializer[] serializerByVersion;
+  private final byte currentSerializerVersion;
 
-  public ORecordSerializerBinary() {
-    serializerByVersion = new ODocumentSerializer[1];
+  private void init(){
+    serializerByVersion = new ODocumentSerializer[2];
     serializerByVersion[0] = new ORecordSerializerBinaryV0();
+    serializerByVersion[1] = new ORecordSerializerBinaryV1();
+  }
+  
+  public ORecordSerializerBinary(byte serializerVersion){
+    currentSerializerVersion = serializerVersion;
+    init();
+  }
+  
+  public ORecordSerializerBinary() {
+    currentSerializerVersion = CURRENT_RECORD_VERSION;
+    init();
   }
 
+  public int getNumberOfSupportedVersions(){
+    return serializerByVersion.length;
+  }
+  
   @Override
   public int getCurrentVersion() {
-    return CURRENT_RECORD_VERSION;
+    return currentSerializerVersion;
   }
 
   @Override
   public int getMinSupportedVersion() {
-    return CURRENT_RECORD_VERSION;
+    return 0;
   }
 
   public ODocumentSerializer getSerializer(final int iVersion) {
@@ -57,7 +73,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   }
 
   public ODocumentSerializer getCurrentSerializer() {
-    return serializerByVersion[serializerByVersion.length - 1];
+    return serializerByVersion[currentSerializerVersion];
   }
 
   @Override
@@ -106,9 +122,9 @@ public class ORecordSerializerBinary implements ORecordSerializer {
 
       // WRITE SERIALIZER VERSION
       int pos = container.alloc(1);
-      container.bytes[pos] = CURRENT_RECORD_VERSION;
+      container.bytes[pos] = currentSerializerVersion;
       // SERIALIZE RECORD
-      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false);
+      serializerByVersion[currentSerializerVersion].serialize((ODocument) iSource, container, false);
 
       return container.fitBytes();
     }
@@ -122,7 +138,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     final BytesContainer container = new BytesContainer(iSource).skip(1);
 
     try {
-      return serializerByVersion[iSource[0]].getFieldNames(reference, container);
+      return serializerByVersion[iSource[0]].getFieldNames(reference, container, false);
     } catch (RuntimeException e) {
       OLogManager.instance().warn(this, "Error deserializing record to get field-names, send this data for debugging: %s ",
           Base64.getEncoder().encodeToString(iSource));
@@ -130,15 +146,16 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     }
   }
 
+  @Override
   public byte[] writeClassOnly(ORecord iSource) {
     final BytesContainer container = new BytesContainer();
 
     // WRITE SERIALIZER VERSION
     int pos = container.alloc(1);
-    container.bytes[pos] = CURRENT_RECORD_VERSION;
+    container.bytes[pos] = currentSerializerVersion;
 
     // SERIALIZE CLASS ONLY
-    serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, true);
+    serializerByVersion[currentSerializerVersion].serializeWithClassName((ODocument) iSource, container, true);
 
     return container.fitBytes();
   }

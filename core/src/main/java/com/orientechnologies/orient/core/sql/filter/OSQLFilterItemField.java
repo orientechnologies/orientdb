@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
@@ -147,9 +148,19 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
       return null;
 
     final ORecord rec = iRecord.getRecord();
-
-    return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().deserializeField(new BytesContainer(rec.toStream()).skip(1),
-        rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
+    BytesContainer serialized = new BytesContainer(rec.toStream());
+    byte version = serialized.bytes[serialized.offset++];
+    ODocumentSerializer serializer = ORecordSerializerBinary.INSTANCE.getSerializer(version);
+    
+    //check for embedded objects, they have invalid ID and they are serialized with class name
+    if (!serializer.isSerializingClassNameByDefault()){
+      return ORecordSerializerBinary.INSTANCE.getSerializer(version).deserializeField(serialized,
+          rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
+    }
+    else{
+      return serializer.deserializeFieldWithClassName(serialized,
+          rec instanceof ODocument ? ((ODocument) rec).getSchemaClass() : null, name);
+    }
   }
 
   public String getRoot() {
