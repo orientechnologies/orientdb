@@ -599,6 +599,8 @@ public enum OType {
         context = context.doubleValue();
       else if (max instanceof BigDecimal)
         context = new BigDecimal(context.intValue());
+      else if (max instanceof Byte)
+        context = context.byteValue();
 
     } else if (context instanceof Integer) {
       // INTEGER
@@ -612,6 +614,8 @@ public enum OType {
         context = new BigDecimal(context.intValue());
       else if (max instanceof Short)
         max = max.intValue();
+      else if (max instanceof Byte)
+        max = max.intValue();
 
     } else if (context instanceof Long) {
       // LONG
@@ -621,7 +625,7 @@ public enum OType {
         context = context.doubleValue();
       else if (max instanceof BigDecimal)
         context = new BigDecimal(context.longValue());
-      else if (max instanceof Integer || max instanceof Short)
+      else if (max instanceof Integer || max instanceof Byte || max instanceof Short)
         max = max.longValue();
 
     } else if (context instanceof Float) {
@@ -630,14 +634,14 @@ public enum OType {
         context = context.doubleValue();
       else if (max instanceof BigDecimal)
         context = new BigDecimal(context.floatValue());
-      else if (max instanceof Short || max instanceof Integer || max instanceof Long)
+      else if (max instanceof Byte || max instanceof Short || max instanceof Integer || max instanceof Long)
         max = max.floatValue();
 
     } else if (context instanceof Double) {
       // DOUBLE
       if (max instanceof BigDecimal)
         context = new BigDecimal(context.doubleValue());
-      else if (max instanceof Short || max instanceof Integer || max instanceof Long || max instanceof Float)
+      else if (max instanceof Byte || max instanceof Short || max instanceof Integer || max instanceof Long || max instanceof Float)
         max = max.doubleValue();
 
     } else if (context instanceof BigDecimal) {
@@ -650,7 +654,23 @@ public enum OType {
         max = new BigDecimal((Double) max);
       else if (max instanceof Short)
         max = new BigDecimal((Short) max);
+      else if (max instanceof Byte)
+        max = new BigDecimal((Byte) max);
+    } else if(context instanceof Byte){
+      if (max instanceof Short)
+        context = context.shortValue();
+      else if (max instanceof Integer)
+        context = context.intValue();
+      else if (max instanceof Long)
+        context = context.longValue();
+      else if (max instanceof Float)
+        context = context.floatValue();
+      else if (max instanceof Double)
+        context = context.doubleValue();
+      else if (max instanceof BigDecimal)
+        context = new BigDecimal(context.intValue());
     }
+
 
     return new Number[] { context, max };
   }
