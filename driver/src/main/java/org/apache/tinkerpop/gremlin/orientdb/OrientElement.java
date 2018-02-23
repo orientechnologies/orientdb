@@ -68,6 +68,15 @@ public abstract class OrientElement implements Element, OIdentifiable {
     return new OrientProperty<>(key, value, this);
   }
 
+  @Override
+  public <V> Property<V> property(String key) {
+    ODocument doc = getRawElement().getRecord();
+    if (doc.containsField(key)) {
+      return new OrientProperty<>(key, getRawElement().getProperty(key), this);
+    }
+    return Property.empty();
+  }
+
   public void property(Object... keyValues) {
     ElementHelper.legalPropertyKeyValueArray(keyValues);
     if (ElementHelper.getIdValue(keyValues).isPresent())
