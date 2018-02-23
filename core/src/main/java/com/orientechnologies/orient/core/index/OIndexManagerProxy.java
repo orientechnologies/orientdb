@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -247,5 +248,13 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
 
   private boolean isDistributedCommand() {
     return database.getStorage().isDistributed() && !((OAutoshardedStorage) database.getStorage()).isLocalEnv();
+  }
+
+  public void getClassRawIndexes(String name, Collection<OIndex<?>> indexes) {
+    delegate.getClassRawIndexes(name, indexes);
+  }
+
+  public OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, OIndex<?> index) {
+    return delegate.preProcessBeforeReturn(database, index);
   }
 }

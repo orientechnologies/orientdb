@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -25,13 +24,13 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
       List<OClassIndexManager.IndexChange> changes = new ArrayList<>();
       switch (change.getType()) {
       case ORecordOperation.CREATED:
-        OClassIndexManager.processIndexOnCreate(rec, changes);
+        OClassIndexManager.processIndexOnCreate(database, rec, changes);
         break;
       case ORecordOperation.UPDATED:
-        OClassIndexManager.processIndexOnUpdate(rec, changes);
+        OClassIndexManager.processIndexOnUpdate(database, rec, changes);
         break;
       case ORecordOperation.DELETED:
-        OClassIndexManager.processIndexOnDelete(rec, changes);
+        OClassIndexManager.processIndexOnDelete(database, rec, changes);
         break;
       case ORecordOperation.LOADED:
         break;
