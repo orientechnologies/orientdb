@@ -48,6 +48,16 @@ public final class OrientVertex extends OrientElement implements Vertex {
 
   }
 
+  @Override
+  public <V> VertexProperty<V> property(String key) {
+
+    ODocument doc = getRawElement().getRecord();
+    if (doc.containsField(key)) {
+      return new OrientVertexProperty<>(key, getRawElement().getProperty(key), this);
+    }
+    return VertexProperty.empty();
+  }
+
   public <V> Iterator<VertexProperty<V>> properties(final String... propertyKeys) {
     Iterator<? extends Property<V>> properties = super.properties(propertyKeys);
     return StreamUtils.asStream(properties).filter(p -> !INTERNAL_FIELDS.contains(p.key())).filter(p -> !p.key().startsWith("out_"))
