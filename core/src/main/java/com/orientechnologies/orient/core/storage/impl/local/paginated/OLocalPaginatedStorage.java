@@ -227,33 +227,37 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     try {
       if (!isClosed())
         close(true, false);
+      try {
+        stateLock.acquireWriteLock();
+        OZIPCompressionUtil.uncompressDirectory(in, getStoragePath().toString(), iListener);
 
-      OZIPCompressionUtil.uncompressDirectory(in, getStoragePath().toString(), iListener);
-
-      final Path cacheStateFile = getStoragePath().resolve(O2QCache.CACHE_STATE_FILE);
-      if (Files.exists(cacheStateFile)) {
-        String message = "the cache state file (" + O2QCache.CACHE_STATE_FILE + ") is found in the backup, deleting the file";
-        OLogManager.instance().warn(this, message);
-        if (iListener != null)
-          iListener.onMessage('\n' + message);
-
-        try {
-          Files.deleteIfExists(cacheStateFile); // delete it, if it still exists
-        } catch (IOException e) {
-          message =
-              "unable to delete the backed up cache state file (" + O2QCache.CACHE_STATE_FILE + "), please delete it manually";
-          OLogManager.instance().warn(this, message, e);
+        final Path cacheStateFile = getStoragePath().resolve(O2QCache.CACHE_STATE_FILE);
+        if (Files.exists(cacheStateFile)) {
+          String message = "the cache state file (" + O2QCache.CACHE_STATE_FILE + ") is found in the backup, deleting the file";
+          OLogManager.instance().warn(this, message);
           if (iListener != null)
             iListener.onMessage('\n' + message);
-        }
-      }
 
-      if (callable != null)
-        try {
-          callable.call();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on calling callback on database restore", e);
+          try {
+            Files.deleteIfExists(cacheStateFile); // delete it, if it still exists
+          } catch (IOException e) {
+            message =
+                "unable to delete the backed up cache state file (" + O2QCache.CACHE_STATE_FILE + "), please delete it manually";
+            OLogManager.instance().warn(this, message, e);
+            if (iListener != null)
+              iListener.onMessage('\n' + message);
+          }
         }
+
+        if (callable != null)
+          try {
+            callable.call();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error on calling callback on database restore", e);
+          }
+      } finally {
+        stateLock.releaseWriteLock();
+      }
 
       open(null, null, new OContextConfiguration());
     } catch (RuntimeException e) {
