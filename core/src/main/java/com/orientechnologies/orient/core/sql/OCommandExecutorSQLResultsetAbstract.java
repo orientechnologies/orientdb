@@ -58,19 +58,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
- * condition.
- * <p>
- * SYNTAX: <code>TRAVERSE <field>* FROM <target> WHERE <condition></code>
- * </p>
- * <p>
- * In the command context you've access to the variable $depth containing the depth level from the root node. This is useful to
- * limit the traverse up to a level. For example to consider from the first depth level (0 is root node) to the third use:
- * <code>TRAVERSE children FROM #5:23 WHERE $depth BETWEEN 1 AND 3</code>. To filter traversed records use it combined with a SELECT
- * statement:
- * </p>
- * <p>
- * <code>SELECT FROM (TRAVERSE children FROM #5:23 WHERE $depth BETWEEN 1 AND 3) WHERE city.name = 'Rome'</code>
- * </p>
+ * condition. <p> SYNTAX: <code>TRAVERSE <field>* FROM <target> WHERE <condition></code> </p> <p> In the command context you've
+ * access to the variable $depth containing the depth level from the root node. This is useful to limit the traverse up to a level.
+ * For example to consider from the first depth level (0 is root node) to the third use: <code>TRAVERSE children FROM #5:23 WHERE
+ * $depth BETWEEN 1 AND 3</code>. To filter traversed records use it combined with a SELECT statement: </p> <p> <code>SELECT FROM
+ * (TRAVERSE children FROM #5:23 WHERE $depth BETWEEN 1 AND 3) WHERE city.name = 'Rome'</code> </p>
  *
  * @author Luca Garulli
  */
@@ -728,7 +720,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     if (firstResult instanceof OResultSet) {
       // REUSE THE SAME RESULTSET TO AVOID DUPLICATES
       ((OResultSet) firstResult).clear();
-      ((OResultSet) firstResult).addAll(mergedResult);
+      if(mergedResult!=null) {
+        for (Object o : mergedResult) {
+          ((OResultSet) firstResult).add(o);
+        }
+      }
       result = firstResult;
     } else
       result = mergedResult;
