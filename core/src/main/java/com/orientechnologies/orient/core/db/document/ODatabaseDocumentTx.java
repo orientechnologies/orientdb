@@ -1495,6 +1495,21 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
+  public OIdentifiable beforeCreateOperations(OIdentifiable id, String iClusterName) {
+    return internal.beforeCreateOperations(id, iClusterName);
+  }
+
+  @Override
+  public OIdentifiable beforeUpdateOperations(OIdentifiable id, String iClusterName) {
+    return internal.beforeUpdateOperations(id, iClusterName);
+  }
+
+  @Override
+  public void beforeDeleteOperations(OIdentifiable id, String iClusterName) {
+    internal.beforeDeleteOperations(id, iClusterName);
+  }
+
+  @Override
   public void afterCreateOperations(OIdentifiable id) {
     internal.afterCreateOperations(id);
   }

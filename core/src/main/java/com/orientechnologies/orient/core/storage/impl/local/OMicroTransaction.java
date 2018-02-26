@@ -454,28 +454,25 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     try {
       switch (type) {
       case ORecordOperation.CREATED: {
-        database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, clusterName);
-        ORecordHook.RESULT result = database.callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, record);
-        if (result == ORecordHook.RESULT.RECORD_CHANGED && record instanceof ODocument)
-          ((ODocument) record).validate();
-        if (result == ORecordHook.RESULT.RECORD_CHANGED)
+        OIdentifiable newRec = database.beforeCreateOperations(record, clusterName);
+        if (newRec != null) {
+          record = (ORecord) newRec;
           reSave(record);
+        }
       }
       break;
 
       case ORecordOperation.UPDATED: {
-        database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, clusterName);
-        ORecordHook.RESULT result = database.callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, record);
-        if (result == ORecordHook.RESULT.RECORD_CHANGED && record instanceof ODocument)
-          ((ODocument) record).validate();
-        if (result == ORecordHook.RESULT.RECORD_CHANGED)
+        OIdentifiable newRec = database.beforeUpdateOperations(record, clusterName);
+        if (newRec != null) {
+          record = (ORecord) newRec;
           reSave(record);
+        }
       }
       break;
 
       case ORecordOperation.DELETED:
-        database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, clusterName);
-        database.callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, record);
+        database.beforeDeleteOperations(record, clusterName);
         break;
       }
 

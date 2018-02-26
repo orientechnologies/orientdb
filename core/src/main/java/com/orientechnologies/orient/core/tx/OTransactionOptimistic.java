@@ -33,14 +33,10 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
@@ -380,7 +376,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = iStatus;
   }
 
-  public ORecordOperation addRecord(final ORecord iRecord, byte iStatus, String iClusterName) {
+  public ORecordOperation addRecord(ORecord iRecord, byte iStatus, String iClusterName) {
     changed = true;
     checkTransaction();
 
@@ -398,10 +394,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       }
       switch (iStatus) {
       case ORecordOperation.CREATED: {
-        database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
-        RESULT res = database.callbackHooks(TYPE.BEFORE_CREATE, iRecord);
-        if (res == RESULT.RECORD_CHANGED && iRecord instanceof ODocument)
-          ((ODocument) iRecord).validate();
+        OIdentifiable res = database.beforeCreateOperations(iRecord, iClusterName);
+        if (res != null) {
+          iRecord = (ORecord) res;
+        }
       }
       break;
       case ORecordOperation.LOADED:
@@ -410,16 +406,15 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
          */
         break;
       case ORecordOperation.UPDATED: {
-        database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
-        RESULT res = database.callbackHooks(TYPE.BEFORE_UPDATE, iRecord);
-        if (res == RESULT.RECORD_CHANGED && iRecord instanceof ODocument)
-          ((ODocument) iRecord).validate();
+        OIdentifiable res = database.beforeUpdateOperations(iRecord, iClusterName);
+        if (res != null) {
+          iRecord = (ORecord) res;
+        }
       }
       break;
 
       case ORecordOperation.DELETED:
-        database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
-        database.callbackHooks(TYPE.BEFORE_DELETE, iRecord);
+        database.beforeDeleteOperations(iRecord, iClusterName);
         break;
       }
 

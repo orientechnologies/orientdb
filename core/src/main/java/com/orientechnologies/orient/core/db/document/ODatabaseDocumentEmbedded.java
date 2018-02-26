@@ -508,7 +508,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   @Override
   public OStorage getStorage() {
     return storage;
-  } 
+  }
 
   @Override
   public void replaceStorage(OStorage iNewStorage) {
@@ -753,6 +753,50 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       if (!microTransaction.isActive())
         microTransaction = null;
     }
+  }
+
+  @Override
+  public OIdentifiable beforeCreateOperations(OIdentifiable id, String iClusterName) {
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
+    ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, id);
+    if (res == ORecordHook.RESULT.RECORD_CHANGED) {
+      if (id instanceof ODocument) {
+        ((ODocument) id).validate();
+      }
+      return id;
+    } else if (res == ORecordHook.RESULT.RECORD_REPLACED) {
+      ORecord replaced = OHookReplacedRecordThreadLocal.INSTANCE.get();
+      if (replaced instanceof ODocument) {
+        ((ODocument) replaced).validate();
+      }
+      return replaced;
+    }
+    return null;
+  }
+
+  @Override
+  public OIdentifiable beforeUpdateOperations(OIdentifiable id, String iClusterName) {
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
+    ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, id);
+    if (res == ORecordHook.RESULT.RECORD_CHANGED) {
+      if (id instanceof ODocument) {
+        ((ODocument) id).validate();
+      }
+      return id;
+    } else if (res == ORecordHook.RESULT.RECORD_REPLACED) {
+      ORecord replaced = OHookReplacedRecordThreadLocal.INSTANCE.get();
+      if (replaced instanceof ODocument) {
+        ((ODocument) replaced).validate();
+      }
+      return replaced;
+    }
+    return null;
+  }
+
+  @Override
+  public void beforeDeleteOperations(OIdentifiable id, String iClusterName) {
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
+    callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, id);
   }
 
   public void afterCreateOperations(final OIdentifiable id) {

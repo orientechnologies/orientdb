@@ -538,32 +538,20 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       final boolean isNew = forceCreate || rid.isNew();
       try {
 
-        final ORecordHook.TYPE triggerType;
+        ORecord overwritten;
         if (isNew) {
           // NOTIFY IDENTITY HAS CHANGED
           ORecordInternal.onBeforeIdentityChanged(record);
           int id = assignAndCheckCluster(record, clusterName);
           clusterName = getClusterNameById(id);
-          checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, clusterName);
-          triggerType = ORecordHook.TYPE.BEFORE_CREATE;
+          overwritten = (ORecord) beforeCreateOperations(record, clusterName);
         } else {
-          clusterName = getClusterNameById(record.getIdentity().getClusterId());
-          checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, clusterName);
-          triggerType = ORecordHook.TYPE.BEFORE_UPDATE;
+          overwritten = (ORecord) beforeUpdateOperations(record, clusterName);
+        }
+        if (overwritten != null) {
+          record = overwritten;
         }
         stream = getSerializer().toStream(record, false);
-
-        final ORecordHook.RESULT hookResult = callbackHooks(triggerType, record);
-
-        if (hookResult == ORecordHook.RESULT.RECORD_CHANGED) {
-          if (record instanceof ODocument)
-            ((ODocument) record).validate();
-          stream = updateStream(record);
-        } else if (hookResult == ORecordHook.RESULT.SKIP_IO)
-          return (RET) record;
-        else if (hookResult == ORecordHook.RESULT.RECORD_REPLACED)
-          // RETURNED THE REPLACED RECORD
-          return (RET) OHookReplacedRecordThreadLocal.INSTANCE.get();
 
         ORecordSaveThreadLocal.setLast(record);
         try {
@@ -745,6 +733,50 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     ORecordInternal.unsetDirty(record);
     record.setDirty();
     return serializer.toStream(record, false);
+  }
+
+  @Override
+  public OIdentifiable beforeCreateOperations(OIdentifiable id, String iClusterName) {
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
+    ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, id);
+    if (res == ORecordHook.RESULT.RECORD_CHANGED) {
+      if (id instanceof ODocument) {
+        ((ODocument) id).validate();
+      }
+      return id;
+    } else if (res == ORecordHook.RESULT.RECORD_REPLACED) {
+      ORecord replaced = OHookReplacedRecordThreadLocal.INSTANCE.get();
+      if (replaced instanceof ODocument) {
+        ((ODocument) replaced).validate();
+      }
+      return replaced;
+    }
+    return null;
+  }
+
+  @Override
+  public OIdentifiable beforeUpdateOperations(OIdentifiable id, String iClusterName) {
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
+    ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, id);
+    if (res == ORecordHook.RESULT.RECORD_CHANGED) {
+      if (id instanceof ODocument) {
+        ((ODocument) id).validate();
+      }
+      return id;
+    } else if (res == ORecordHook.RESULT.RECORD_REPLACED) {
+      ORecord replaced = OHookReplacedRecordThreadLocal.INSTANCE.get();
+      if (replaced instanceof ODocument) {
+        ((ODocument) replaced).validate();
+      }
+      return replaced;
+    }
+    return null;
+  }
+
+  @Override
+  public void beforeDeleteOperations(OIdentifiable id, String iClusterName) {
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
+    callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, id);
   }
 
   public void afterUpdateOperations(final OIdentifiable id) {

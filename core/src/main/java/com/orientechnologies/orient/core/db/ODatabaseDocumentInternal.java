@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 import java.util.Map;
 
@@ -77,9 +76,27 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   void reloadUser();
 
+  /**
+   *
+   * @param id
+   * @param iClusterName
+   * @return null if nothing changed the instance if has been modified or replaced
+   */
+  OIdentifiable beforeCreateOperations(final OIdentifiable id, String iClusterName);
+  /**
+   *
+   * @param id
+   * @param iClusterName
+   * @return null if nothing changed the instance if has been modified or replaced
+   */
+  OIdentifiable beforeUpdateOperations(final OIdentifiable id, String iClusterName);
+  void beforeDeleteOperations(final OIdentifiable id, String iClusterName);
+
   void afterUpdateOperations(final OIdentifiable id);
   void afterCreateOperations(final OIdentifiable id);
   void afterDeleteOperations(final OIdentifiable id);
+
+
   ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE type, final OIdentifiable id);
 
   <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final int recordVersion, final String fetchPlan,
@@ -210,4 +227,5 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   boolean isClusterVertex(int cluster);
 
   boolean isClusterEdge(int cluster);
+
 }
