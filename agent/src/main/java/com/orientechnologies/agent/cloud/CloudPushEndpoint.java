@@ -28,7 +28,7 @@ public class CloudPushEndpoint extends Thread {
   private String projectId;
   private String cloudBaseUrl;
 
-  private static String monitoringPath = "/api/v1/monitoring/collectStats/{projectId}";
+  private static String monitoringPath = "/api/v1/monitoring/{projectId}/stats";
 
   public CloudPushEndpoint(OEnterpriseCloudManager oEnterpriseAgent) {
     cloudManager = oEnterpriseAgent;
