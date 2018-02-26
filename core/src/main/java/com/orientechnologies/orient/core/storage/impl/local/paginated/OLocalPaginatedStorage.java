@@ -252,46 +252,49 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     try {
       if (!isClosed())
         close(true, false);
-
-      File dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
-      final File[] storageFiles = dbDir.listFiles();
-      if (storageFiles != null) {
-        // TRY TO DELETE ALL THE FILES
-        for (File f : storageFiles) {
-          // DELETE ONLY THE SUPPORTED FILES
-          for (String ext : ALL_FILE_EXTENSIONS)
-            if (f.getPath().endsWith(ext)) {
-              f.delete();
-              break;
-            }
+      try {
+        stateLock.acquireWriteLock();
+        File dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
+        final File[] storageFiles = dbDir.listFiles();
+        if (storageFiles != null) {
+          // TRY TO DELETE ALL THE FILES
+          for (File f : storageFiles) {
+            // DELETE ONLY THE SUPPORTED FILES
+            for (String ext : ALL_FILE_EXTENSIONS)
+              if (f.getPath().endsWith(ext)) {
+                f.delete();
+                break;
+              }
+          }
         }
-      }
 
-      OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
+        OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
 
-      final File cacheStateFile = new File(getStoragePath() + File.separator + O2QCache.CACHE_STATE_FILE);
-      if (cacheStateFile.exists()) {
-        String message = "the cache state file (" + O2QCache.CACHE_STATE_FILE + ") is found in the backup, deleting the file";
-        OLogManager.instance().warn(this, message);
-        if (iListener != null)
-          iListener.onMessage('\n' + message);
-
-        if (!cacheStateFile.delete()) {
-          message =
-              "unable to delete the backed up cache state file (" + O2QCache.CACHE_STATE_FILE + "), please delete it manually";
+        final File cacheStateFile = new File(getStoragePath() + File.separator + O2QCache.CACHE_STATE_FILE);
+        if (cacheStateFile.exists()) {
+          String message = "the cache state file (" + O2QCache.CACHE_STATE_FILE + ") is found in the backup, deleting the file";
           OLogManager.instance().warn(this, message);
           if (iListener != null)
             iListener.onMessage('\n' + message);
+
+          if (!cacheStateFile.delete()) {
+            message =
+                "unable to delete the backed up cache state file (" + O2QCache.CACHE_STATE_FILE + "), please delete it manually";
+            OLogManager.instance().warn(this, message);
+            if (iListener != null)
+              iListener.onMessage('\n' + message);
+          }
         }
+
+        if (callable != null)
+          try {
+            callable.call();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error on calling callback on database restore", e);
+          }
+      } finally {
+        stateLock.releaseWriteLock();
       }
-
-      if (callable != null)
-        try {
-          callable.call();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on calling callback on database restore", e);
-        }
-
       open(null, null, null);
     } catch (RuntimeException e) {
       throw logAndPrepareForRethrow(e);
