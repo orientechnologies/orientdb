@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheHook;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -34,6 +35,7 @@ import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
@@ -48,7 +50,8 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryMonitorEmbedded;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
+import com.orientechnologies.orient.core.schedule.OScheduledEvent;
+import com.orientechnologies.orient.core.schedule.OScheduler;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.*;
@@ -499,8 +502,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     hooks.clear();
     registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
-    registerHook(new OUserTrigger(this), ORecordHook.HOOK_POSITION.EARLY);
-    registerHook(new OSchedulerTrigger(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OLiveQueryHook(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OLiveQueryHookV2(this), ORecordHook.HOOK_POSITION.LAST);
   }
@@ -758,6 +759,22 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   @Override
   public OIdentifiable beforeCreateOperations(OIdentifiable id, String iClusterName) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
+
+    boolean changed = false;
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      if (clazz != null) {
+        if (clazz.isScheduler()) {
+          getSharedContext().getScheduler().initScheduleRecord(doc);
+          changed = true;
+        }
+        if (clazz.isOuser()) {
+          changed = OUser.encodePassword(doc);
+        }
+      }
+    }
+
     ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, id);
     if (res == ORecordHook.RESULT.RECORD_CHANGED) {
       if (id instanceof ODocument) {
@@ -771,12 +788,30 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       }
       return replaced;
     }
+    if (changed) {
+      return id;
+    }
     return null;
   }
 
   @Override
   public OIdentifiable beforeUpdateOperations(OIdentifiable id, String iClusterName) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
+
+    boolean changed = false;
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      if (clazz != null) {
+        if (clazz.isScheduler()) {
+          getSharedContext().getScheduler().handleUpdateSchedule(doc);
+          changed = true;
+        }
+        if (clazz.isOuser()) {
+          changed = OUser.encodePassword(doc);
+        }
+      }
+    }
     ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, id);
     if (res == ORecordHook.RESULT.RECORD_CHANGED) {
       if (id instanceof ODocument) {
@@ -789,6 +824,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         ((ODocument) replaced).validate();
       }
       return replaced;
+    }
+
+    if (changed) {
+      return id;
     }
     return null;
   }
@@ -811,6 +850,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceCreated(this, doc);
+        }
+        if (clazz.isScheduler()) {
+          getMetadata().getScheduler().scheduleEvent(new OScheduledEvent(doc));
         }
       }
     }
@@ -847,6 +889,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceDropped(this, doc);
+        }
+        if (clazz.isScheduler()) {
+          final String eventName = doc.field(OScheduledEvent.PROP_NAME);
+          getMetadata().getScheduler().removeEvent(eventName);
         }
       }
     }
