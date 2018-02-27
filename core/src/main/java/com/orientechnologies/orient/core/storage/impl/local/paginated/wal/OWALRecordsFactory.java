@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 
 import java.util.HashMap;
@@ -33,7 +34,7 @@ public class OWALRecordsFactory {
   private final Map<Byte, Class> idToTypeMap = new HashMap<>();
   private final Map<Class, Byte> typeToIdMap = new HashMap<>();
 
-  public static final OWALRecordsFactory INSTANCE    = new OWALRecordsFactory();
+  public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
 
   public byte[] toStream(OWriteableWALRecord walRecord) {
     int contentSize = walRecord.serializedSize() + 1;
@@ -61,6 +62,8 @@ public class OWALRecordsFactory {
       content[0] = 12;
     else if (walRecord instanceof OFileTruncatedWALRecord)
       content[0] = 13;
+    else if (walRecord instanceof OEmptyWALRecord)
+      content[0] = 14;
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       content[0] = typeToIdMap.get(walRecord.getClass());
     } else
@@ -106,6 +109,9 @@ public class OWALRecordsFactory {
       break;
     case 13:
       walRecord = new OFileTruncatedWALRecord();
+      break;
+    case 14:
+      walRecord = new OEmptyWALRecord();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

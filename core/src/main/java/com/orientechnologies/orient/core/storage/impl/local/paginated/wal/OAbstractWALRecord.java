@@ -72,7 +72,7 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
 
   @Override
   public void setBinaryContent(byte[] content) {
-    this.binaryContent = binaryContent;
+    this.binaryContent = content;
   }
 
   @Override
