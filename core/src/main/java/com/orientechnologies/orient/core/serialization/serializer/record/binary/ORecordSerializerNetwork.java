@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
@@ -36,7 +37,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   public static final ORecordSerializerNetwork INSTANCE               = new ORecordSerializerNetwork();
   private static final byte                    CURRENT_RECORD_VERSION = 0;
 
-  private ODocumentSerializer[]                serializerByVersion;
+  private final ODocumentSerializer[]                serializerByVersion;
 
   public ORecordSerializerNetwork() {
     serializerByVersion = new ODocumentSerializer[1];
@@ -134,6 +135,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     }
   }
 
+  @Override
   public byte[] writeClassOnly(ORecord iSource) {
     final BytesContainer container = new BytesContainer();
 
@@ -147,6 +149,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     return container.fitBytes();
   }
 
+  @Override
   public boolean getSupportBinaryEvaluate() {
     return false;
   }
@@ -154,5 +157,13 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   @Override
   public String getName() {
     return NAME;
+  }
+
+  @Override
+  public <RET> RET deserializeField(byte[] record, OClass iClass, String iFieldName) {
+    BytesContainer bytes = new BytesContainer(record);
+    //read serializer version
+    byte serializerVersion = bytes.bytes[bytes.offset++];
+    return serializerByVersion[serializerVersion].deserializeFieldTyped(bytes, iClass, iFieldName);
   }
 }

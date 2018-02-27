@@ -53,6 +53,7 @@ public interface OBinaryComparator {
   /**
    * Returns true if the type is binary comparable
    * 
+   * @param iType
    * @return
    */
   boolean isBinaryComparable(OType iType);

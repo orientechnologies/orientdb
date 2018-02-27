@@ -414,7 +414,44 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   @Override
-  public Object deserializeValue(final BytesContainer bytes, final OType type, final ODocument ownerDocument) {
+  public Object deserializeValue(final BytesContainer bytes, final OType type, final ODocument ownerDocument){
+    return deserializeValue(bytes, type, ownerDocument, true);
+  }
+  
+  private Object deserializeEmbeddedAsDocument(final BytesContainer bytes, final ODocument ownerDocument){
+    Object value = new ODocument();
+    deserializeWithClassName((ODocument) value, bytes);
+    if (((ODocument) value).containsField(ODocumentSerializable.CLASS_NAME)) {
+      String className = ((ODocument) value).field(ODocumentSerializable.CLASS_NAME);
+      try {
+        Class<?> clazz = Class.forName(className);
+        ODocumentSerializable newValue = (ODocumentSerializable) clazz.newInstance();
+        newValue.fromDocument((ODocument) value);
+        value = newValue;
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    } else
+      ODocumentInternal.addOwner((ODocument) value, ownerDocument);
+    return value;
+  }
+  
+  private byte[] deserializeEmbeddedAsByte(final BytesContainer bytes){
+    int startOffset = bytes.offset;
+    final String className = readString(bytes);
+    while (true){
+      int length = readInteger(bytes);
+      if (length == 0){
+        break;
+      }
+      else if (length > 0){
+        //skip field name bytes (length) , pointer adress (Integer) , type (byte)
+        bytes.offset += length + OIntegerSerializer.INT_SIZE + 1;
+      }
+    }
+  }
+    
+  private Object deserializeValue(final BytesContainer bytes, final OType type, final ODocument ownerDocument, boolean embeddedAsDocument) {
     Object value = null;
     switch (type) {
     case INTEGER:
@@ -450,21 +487,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       value = new Date(savedTime);
       break;
     case EMBEDDED:
-      value = new ODocument();
-      deserializeWithClassName((ODocument) value, bytes);
-      if (((ODocument) value).containsField(ODocumentSerializable.CLASS_NAME)) {
-        String className = ((ODocument) value).field(ODocumentSerializable.CLASS_NAME);
-        try {
-          Class<?> clazz = Class.forName(className);
-          ODocumentSerializable newValue = (ODocumentSerializable) clazz.newInstance();
-          newValue.fromDocument((ODocument) value);
-          value = newValue;
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      } else
-        ODocumentInternal.addOwner((ODocument) value, ownerDocument);
-
+      if (embeddedAsDocument){
+        value = deserializeEmbeddedAsDocument(bytes, ownerDocument);
+      }
+      else{
+        value = deserializeEmbeddedAsByte();
+      }      
       break;
     case EMBEDDEDSET:
       value = readEmbeddedSet(bytes, ownerDocument);
@@ -1033,9 +1061,106 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return toCalendar.getTimeInMillis();
   }
 
-    @Override
-    public boolean isSerializingClassNameByDefault() {
-      return true;
+  @Override
+  public boolean isSerializingClassNameByDefault() {
+    return true;
+  }
+  
+  protected void skipClassName(BytesContainer bytes){
+    final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
+    bytes.skip(classNameLen);
+  }
+  
+  protected <RET> RET deserializeFieldTypedLoopAndReturn(BytesContainer bytes, OClass iClass, String iFieldName){
+    final byte[] field = iFieldName.getBytes();
+
+    final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
+    final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
+
+    while (true) {
+      final int len = OVarIntSerializer.readAsInteger(bytes);
+
+      if (len == 0) {
+        // SCAN COMPLETED, NO FIELD FOUND
+        return null;
+      } else if (len > 0) {
+        // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
+        if (iFieldName.length() == len) {
+          boolean match = true;
+          for (int j = 0; j < len; ++j)
+            if (bytes.bytes[bytes.offset + j] != field[j]) {
+              match = false;
+              break;
+            }
+
+          bytes.skip(len);
+          final int valuePos = readInteger(bytes);
+          final OType type = readOType(bytes);
+
+          if (valuePos == 0)
+            return null;
+
+          if (!match)
+            continue;
+
+          if (!getComparator().isBinaryComparable(type))
+            return null;
+
+          bytes.offset = valuePos;
+          
+          ODocument parent = null;
+          if (type.isEmbedded()){
+            parent = new Docum
+          }
+          
+          Object value = deserializeValue(bytes, type, null);
+          return (RET)value;
+        }
+
+        // skip Pointer and data type
+        bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);        
+
+      } else {
+        // LOAD GLOBAL PROPERTY BY ID
+        final int id = (len * -1) - 1;
+        final OGlobalProperty prop = _schema.getGlobalPropertyById(id);
+        if (iFieldName.equals(prop.getName())) {
+          final int valuePos = readInteger(bytes);
+          final OType type;
+          if (prop.getType() != OType.ANY)
+            type = prop.getType();
+          else
+            type = readOType(bytes);
+
+          if (valuePos == 0)
+            return null;
+
+//          Suppose that we dpn't need check like this one
+//          if (!getComparator().isBinaryComparable(type))
+//            return null;
+
+          bytes.offset = valuePos;
+
+          ODocument parentDoc = null;
+          //we want parent document only for embedded documents / collections
+          if (type.isEmbedded()){
+            parentDoc = new ODocument();
+            parentDoc.fromStream(bytes.bytes);
+          }
+          Object value = deserializeValue(bytes, type, parentDoc);
+          return (RET)value;
+        }
+        bytes.skip(OIntegerSerializer.INT_SIZE + (prop.getType() != OType.ANY ? 0 : 1));
+      }
     }
+  }
+  
+  @Override
+  public <RET> RET deserializeFieldTyped(BytesContainer bytes, OClass iClass, String iFieldName){    
+    // SKIP CLASS NAME    
+    skipClassName(bytes);
+    
+    return deserializeFieldTypedLoopAndReturn(bytes, iClass, iFieldName);
+  }
 
 }

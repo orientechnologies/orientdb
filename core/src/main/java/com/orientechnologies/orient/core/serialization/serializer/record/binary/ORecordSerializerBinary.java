@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -65,7 +66,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
 
   @Override
   public int getMinSupportedVersion() {
-    return 0;
+    return currentSerializerVersion;
   }
 
   public ODocumentSerializer getSerializer(final int iVersion) {
@@ -168,5 +169,14 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   @Override
   public String getName() {
     return NAME;
+  }
+  
+  @Override
+  public <RET> RET deserializeField(byte[]record, OClass iClass, String iFieldName){
+    int serializerVersion = record[0];
+    BytesContainer bytes = new BytesContainer(record);
+    //skip serializer version
+    bytes = bytes.skip(1);
+    return serializerByVersion[serializerVersion].deserializeFieldTyped(bytes, iClass, iFieldName);
   }
 }

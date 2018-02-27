@@ -55,4 +55,6 @@ public interface ODocumentSerializer {
   String[] getFieldNames(ODocument reference, BytesContainer iBytes, boolean readClassName);
   
   boolean isSerializingClassNameByDefault();
+  
+  <RET> RET deserializeFieldTyped(BytesContainer record, OClass iClass, String iFieldName);
 }

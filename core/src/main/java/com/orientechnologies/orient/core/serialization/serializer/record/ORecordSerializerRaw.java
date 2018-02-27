@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -54,6 +55,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
     return NAME;
   }
 
+  @Override
   public ORecord fromStream(final byte[] iSource, final ORecord iRecord, String[] iFields) {
     final OBlob record = (OBlob) iRecord;
     record.reset();
@@ -67,6 +69,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
     return new byte[] {};
   }
 
+  @Override
   public byte[] toStream(final ORecord iSource, boolean iOnlyDelta) {
     try {
       return iSource.toStream();
@@ -77,6 +80,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
     }
   }
 
+  @Override
   public boolean getSupportBinaryEvaluate() {
     return false;
   }
@@ -85,4 +89,10 @@ public class ORecordSerializerRaw implements ORecordSerializer {
   public String getName() {
     return NAME;
   }
+
+  @Override
+  public <RET> RET deserializeField(byte[] record, OClass iClass, String iFieldName) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+    
 }

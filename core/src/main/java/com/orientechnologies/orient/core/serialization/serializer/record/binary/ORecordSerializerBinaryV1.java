@@ -505,8 +505,14 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   }
   
   @Override
-    public boolean isSerializingClassNameByDefault() {
-      return false;
-    }
+  public boolean isSerializingClassNameByDefault() {
+    return false;
+  }
+  
+  @Override
+  public <RET> RET deserializeFieldTyped(BytesContainer bytes, OClass iClass, String iFieldName){    
+    //No need to skip class name
+    return deserializeFieldTypedLoopAndReturn(bytes, iClass, iFieldName);
+  }
    
 }
