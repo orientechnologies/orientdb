@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
+import jdk.nashorn.internal.runtime.options.Option;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -107,27 +108,24 @@ public class OIndexFullText extends OIndexMultiValues {
         // SAVE THE INDEX ENTRY
         while (true) {
           try {
-            storage.updateIndexEntry(indexId, word, new Callable<Object>() {
-              @Override
-              public Object call() throws Exception {
-                Set<OIdentifiable> result = null;
+            storage.updateIndexEntry(indexId, word, oldValue -> {
+              Set<OIdentifiable> result = null;
 
-                if (refsc == null) {
-                  // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-                  if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-                    result = new OIndexRIDContainer(getName(), durable);
-                  } else {
-                    throw new IllegalStateException("MBRBTreeContainer is not supported any more");
-                  }
+              if (refsc == null) {
+                // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
+                if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+                  result = new OIndexRIDContainer(getName(), durable);
                 } else {
-                  result = refsc;
+                  throw new IllegalStateException("MBRBTreeContainer is not supported any more");
                 }
-
-                // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-                result.add(singleValue);
-
-                return result;
+              } else {
+                result = refsc;
               }
+
+              // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
+              result.add(singleValue);
+
+              return OIndexUpdateAction.changed(result);
             });
 
             break;
@@ -178,7 +176,7 @@ public class OIndexFullText extends OIndexMultiValues {
         if (recs != null && !recs.isEmpty()) {
           while (true) {
             try {
-              storage.updateIndexEntry(indexId, word, new EntityRemover(recs, value, removed));
+              storage.updateIndexEntry(indexId, word, new EntityRemover(value, removed));
               break;
             } catch (OInvalidIndexEngineIdException ignore) {
               doReloadIndexEngine();
@@ -311,30 +309,29 @@ public class OIndexFullText extends OIndexMultiValues {
     return result;
   }
 
-  private static class EntityRemover implements Callable<Object> {
-    private final Set<OIdentifiable> recs;
+  private static class EntityRemover implements OIndexKeyUpdater<Object> {
     private final OIdentifiable      value;
     private final OModifiableBoolean removed;
 
-    public EntityRemover(Set<OIdentifiable> recs, OIdentifiable value, OModifiableBoolean removed) {
-      this.recs = recs;
+    public EntityRemover(OIdentifiable value, OModifiableBoolean removed) {
       this.value = value;
       this.removed = removed;
     }
 
     @Override
-    public Object call() throws Exception {
+    public OIndexUpdateAction<Object> update(Object old) {
+      Set<OIdentifiable> recs = (Set<OIdentifiable>) old;
       if (recs.remove(value)) {
         removed.setValue(true);
 
         if (recs.isEmpty())
-          return null;
+          return OIndexUpdateAction.remove();
         else
-          return recs;
+          return OIndexUpdateAction.changed(recs);
 
       }
 
-      return recs;
+      return OIndexUpdateAction.changed(recs);
     }
   }
 
