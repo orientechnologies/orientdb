@@ -1397,18 +1397,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
 
         final OCluster cluster = doGetAndCheckCluster(clusterId);
-        OPhysicalPosition[] nextPositions = cluster.higherPositions(new OPhysicalPosition(lastPosition));
-        if (nextPositions.length > 0) {
-          long newLastPosition = nextPositions[nextPositions.length - 1].clusterPosition;
-          List<OClusterBrowseEntry> nexv = new ArrayList<>();
-          for (OPhysicalPosition pos : nextPositions) {
-            final ORawBuffer buff = cluster.readRecord(pos.clusterPosition, false);
-            nexv.add(new OClusterBrowseEntry(pos.clusterPosition, buff));
-          }
-          return new OClusterBrowsePage(nexv, newLastPosition);
-        } else {
-          return null;
-        }
+        return cluster.nextPage(lastPosition);
       } finally {
         stateLock.releaseReadLock();
       }
