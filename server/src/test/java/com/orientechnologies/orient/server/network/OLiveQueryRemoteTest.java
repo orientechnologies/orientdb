@@ -7,13 +7,13 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -126,6 +126,8 @@ public class OLiveQueryRemoteTest {
     for (OResult doc : listener.ops) {
       Assert.assertEquals(doc.getProperty("@class"), "test");
       Assert.assertEquals(doc.getProperty("name"), "foo");
+      ORID rid = doc.getProperty("@rid");
+      Assert.assertTrue(rid.isPersistent());
     }
 
   }

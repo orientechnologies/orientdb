@@ -29,18 +29,51 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
+import com.orientechnologies.orient.core.db.document.OMicroTxListener;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabaseListener {
+public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabaseListener, OMicroTxListener {
+
+  @Override
+  public void onBeforeMicroTxBegin(ODatabaseDocumentEmbedded db, OMicroTransaction microTx) {
+
+  }
+
+  @Override
+  public void onAfterMicroTxBegin(ODatabaseDocumentEmbedded db, OMicroTransaction microTx) {
+
+  }
+
+  @Override
+  public void onBeforeMicroTxRollback(ODatabaseDocumentEmbedded db, OMicroTransaction microTx) {
+
+  }
+
+  @Override
+  public void onAfterMicroTxRollback(ODatabaseDocumentEmbedded db, OMicroTransaction microTx) {
+    onAfterTxRollback(db);
+  }
+
+  @Override
+  public void onBeforeMicroTxCommit(ODatabaseDocumentEmbedded db, OMicroTransaction microTx) {
+
+  }
+
+  @Override
+  public void onAfterMicroTxCommit(ODatabaseDocumentEmbedded db, OMicroTransaction microTx) {
+    onAfterTxCommit(db);
+  }
 
   public static class OLiveQueryOp {
     public    OResult   before;
@@ -81,6 +114,12 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
   public OLiveQueryHookV2(ODatabaseDocumentInternal db) {
     super(db);
     db.registerListener(this);
+
+    if (db instanceof ODatabaseDocumentEmbedded) {
+      ((ODatabaseDocumentEmbedded) db).registerMicroTxListener(this);
+    } else if (db.getUnderlying() instanceof ODatabaseDocumentEmbedded) {
+      ((ODatabaseDocumentEmbedded) db.getUnderlying()).registerMicroTxListener(this);
+    }
   }
 
   public static OLiveQueryOps getOpsReference(ODatabaseInternal db) {
@@ -228,16 +267,7 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) db);
     if (!ops.queueThread.hasListeners())
       return;
-    if (db.getTransaction() == null || !db.getTransaction().isActive()) {
 
-      // TODO synchronize
-      OResult before = iType == ORecordOperation.CREATED ? null : calculateBefore(iDocument);
-      OResult after = iType == ORecordOperation.DELETED ? null : calculateAfter(iDocument);
-      OLiveQueryOp op = new OLiveQueryOp(iDocument.copy(), before, after, iType);
-
-      ops.queueThread.enqueue(op);
-      return;
-    }
     OResult before = iType == ORecordOperation.CREATED ? null : calculateBefore(iDocument);
     OResult after = iType == ORecordOperation.DELETED ? null : calculateAfter(iDocument);
 
