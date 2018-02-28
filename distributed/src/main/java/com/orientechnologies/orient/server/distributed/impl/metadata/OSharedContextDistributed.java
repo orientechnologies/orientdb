@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public class OSharedContextDistributed extends OSharedContext {
 
   public OSharedContextDistributed(OStorage storage) {
-    schema = new OSchemaDistributed();
+    schema = new OSchemaDistributed(this);
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerDistributed(storage);
     functionLibrary = new OFunctionLibraryImpl();
@@ -49,8 +49,10 @@ public class OSharedContextDistributed extends OSharedContext {
       try {
         if (!loaded) {
           schema.load(database);
-          security.load();
           indexManager.load(database);
+          //The Immutable snapshot should be after index and schema that require and before everything else that use it
+          schema.forceSnapshot();
+          security.load();
           functionLibrary.load(database);
           scheduler.load(database);
           sequenceLibrary.load(database);
@@ -85,6 +87,8 @@ public class OSharedContextDistributed extends OSharedContext {
     OScenarioThreadLocal.executeAsDistributed(() -> {
       schema.reload();
       indexManager.reload();
+      //The Immutable snapshot should be after index and schema that require and before everything else that use it
+      schema.forceSnapshot();
       security.load();
       functionLibrary.load(database);
       sequenceLibrary.load(database);
@@ -107,6 +111,8 @@ public class OSharedContextDistributed extends OSharedContext {
       // CREATE BASE VERTEX AND EDGE CLASSES
       schema.createClass(database, "V");
       schema.createClass(database, "E");
+
+      schema.forceSnapshot();
       loaded = true;
       return null;
     });

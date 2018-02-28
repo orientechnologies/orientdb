@@ -20,14 +20,19 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -37,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */
-public class OSchedulerImpl  {
+public class OSchedulerImpl {
   private ConcurrentHashMap<String, OScheduledEvent> events = new ConcurrentHashMap<String, OScheduledEvent>();
 
   public OSchedulerImpl() {
@@ -111,7 +116,7 @@ public class OSchedulerImpl  {
       }
     }
   }
-  
+
   public void close() {
     for (OScheduledEvent event : events.values()) {
       event.interrupt();
@@ -130,5 +135,41 @@ public class OSchedulerImpl  {
     f.createProperty(OScheduledEvent.PROP_FUNC, OType.LINK, database.getMetadata().getSchema().getClass(OFunction.CLASS_NAME), true)
         .setMandatory(true).setNotNull(true);
     f.createProperty(OScheduledEvent.PROP_STARTTIME, OType.DATETIME, (OType) null, true);
+  }
+
+  public void initScheduleRecord(ODocument doc) {
+    String name = doc.field(OScheduledEvent.PROP_NAME);
+    final OScheduledEvent event = getEvent(name);
+    if (event != null && event.getDocument() != doc) {
+      throw new ODatabaseException("Scheduled event with name '" + name + "' already exists in database");
+    }
+    doc.field(OScheduledEvent.PROP_STATUS, OScheduler.STATUS.STOPPED.name());
+  }
+
+  public void handleUpdateSchedule(ODocument doc) {
+    try {
+      final String schedulerName = doc.field(OScheduledEvent.PROP_NAME);
+      OScheduledEvent event = getEvent(schedulerName);
+
+      if (event != null) {
+        // UPDATED EVENT
+        final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(doc.getDirtyFields()));
+
+        if (dirtyFields.contains(OScheduledEvent.PROP_NAME))
+          throw new OValidationException("Scheduled event cannot change name");
+
+        if (dirtyFields.contains(OScheduledEvent.PROP_RULE)) {
+          // RULE CHANGED, STOP CURRENT EVENT AND RESCHEDULE IT
+          updateEvent(new OScheduledEvent(doc));
+        } else {
+          doc.field(OScheduledEvent.PROP_STATUS, OScheduler.STATUS.STOPPED.name());
+          event.fromStream(doc);
+        }
+
+      }
+
+    } catch (Exception ex) {
+      OLogManager.instance().error(this, "Error on updating scheduled event", ex);
+    }
   }
 }

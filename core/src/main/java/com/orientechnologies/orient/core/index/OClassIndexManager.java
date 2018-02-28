@@ -21,11 +21,12 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -37,11 +38,7 @@ import java.util.*;
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com), Artem Orobets
  */
-public class OClassIndexManager extends ODocumentHookAbstract {
-
-  public OClassIndexManager(ODatabaseDocument database) {
-    super(database);
-  }
+public class OClassIndexManager {
 
   public static class IndexChange {
     public final OIndex                             index;
@@ -57,59 +54,52 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     }
   }
 
-  @Override
-  public SCOPE[] getScopes() {
-    return new SCOPE[] { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
-  }
-
-  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.BOTH;
-  }
-
-  @Override
-  public void onRecordAfterCreate(ODocument document) {
+  public static void checkIndexesAfterCreate(ODocument document, ODatabaseDocumentInternal database) {
     document = checkForLoading(document);
     List<IndexChange> ops = new ArrayList<>();
 
-    processIndexOnCreate(document, ops);
+    processIndexOnCreate(database, document, ops);
     applyChanges(ops);
   }
 
-  public static void processIndexOnCreate(ODocument document, List<IndexChange> ops) {
-    final OClass cls = ODocumentInternal.getImmutableSchemaClass(document);
+  public static void processIndexOnCreate(ODatabaseDocumentInternal database, ODocument document, List<IndexChange> ops) {
+    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(document);
     if (cls != null) {
-      final Collection<OIndex<?>> indexes = cls.getIndexes();
-      addIndexesEntries(document, indexes, ops);
+      final Collection<OIndex<?>> indexes = cls.getRawIndexes();
+      addIndexesEntries(database, document, indexes, ops);
     }
   }
 
-  @Override
-  public void onRecordAfterUpdate(ODocument iDocument) {
+  public static void checkIndexesAfterUpdate(ODocument iDocument, ODatabaseDocumentInternal database) {
     iDocument = checkForLoading(iDocument);
     List<IndexChange> changes = new ArrayList<>();
-    processIndexOnUpdate(iDocument, changes);
+    processIndexOnUpdate(database, iDocument, changes);
     applyChanges(changes);
   }
 
-  public static void processIndexOnUpdate(ODocument iDocument, List<IndexChange> changes) {
-    final OClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
+  public static void processIndexOnUpdate(ODatabaseDocumentInternal database, ODocument iDocument, List<IndexChange> changes) {
+    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (cls == null) {
       return;
     }
-    final Collection<OIndex<?>> indexes = cls.getIndexes();
+
+    final Collection<OIndex<?>> indexes = cls.getRawIndexes();
     if (!indexes.isEmpty()) {
       final Set<String> dirtyFields = new HashSet<>(Arrays.asList(iDocument.getDirtyFields()));
       if (!dirtyFields.isEmpty())
         for (final OIndex<?> index : indexes) {
-          processIndexUpdate(iDocument, dirtyFields, index, changes);
+          processIndexUpdate(iDocument, dirtyFields, getTransactionalIndex(database, index), changes);
         }
     }
   }
 
-  @Override
-  public void onRecordAfterDelete(final ODocument iDocument) {
+  private static OIndex getTransactionalIndex(ODatabaseDocumentInternal database, OIndex<?> index) {
+    return ((OIndexManagerProxy) database.getMetadata().getIndexManager()).preProcessBeforeReturn(database, index);
+  }
+
+  public static void checkIndexesAfterDelete(ODocument iDocument, ODatabaseDocumentInternal database) {
     List<IndexChange> changes = new ArrayList<>();
-    processIndexOnDelete(iDocument, changes);
+    processIndexOnDelete(database, iDocument, changes);
     applyChanges(changes);
   }
 
@@ -369,12 +359,13 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       processSingleIndexUpdate(index, dirtyFields, iDocument, changes);
   }
 
-  private static void addIndexesEntries(ODocument document, final Collection<OIndex<?>> indexes, List<IndexChange> changes) {
+  private static void addIndexesEntries(ODatabaseDocumentInternal database, ODocument document, final Collection<OIndex<?>> indexes,
+      List<IndexChange> changes) {
     // STORE THE RECORD IF NEW, OTHERWISE ITS RID
     final OIdentifiable rid = document.getIdentity();
 
     for (final OIndex<?> index : indexes) {
-      addIndexEntry(document, rid, index, changes);
+      addIndexEntry(document, rid, getTransactionalIndex(database, index), changes);
     }
   }
 
@@ -389,12 +380,16 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       addPut(changes, index, key, rid);
   }
 
-  public static void processIndexOnDelete(ODocument iDocument, List<IndexChange> changes) {
-    final OClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
+  public static void processIndexOnDelete(ODatabaseDocumentInternal database, ODocument iDocument, List<IndexChange> changes) {
+    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (cls == null)
       return;
 
-    final Collection<OIndex<?>> indexes = new ArrayList<>(cls.getIndexes());
+    final Collection<OIndex<?>> indexes = new ArrayList<>();
+    for (OIndex index : cls.getRawIndexes()) {
+      indexes.add(getTransactionalIndex(database, index));
+    }
+
     if (!indexes.isEmpty()) {
       final Set<String> dirtyFields = new HashSet<>(Arrays.asList(iDocument.getDirtyFields()));
 

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -78,6 +79,27 @@ public class OUser extends OIdentity implements OSecurityUser {
   public static final String encryptPassword(final String iPassword) {
     return OSecurityManager.instance()
         .createHash(iPassword, OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString(), true);
+  }
+
+  public static boolean encodePassword(final ODocument iDocument) {
+    if (iDocument.field("name") == null)
+      throw new OSecurityException("User name not found");
+
+    final String password = (String) iDocument.field("password");
+
+    if (password == null)
+      throw new OSecurityException("User '" + iDocument.field("name") + "' has no password");
+
+    if (Orient.instance().getSecurity() != null) {
+      Orient.instance().getSecurity().validatePassword(password);
+    }
+
+    if (!password.startsWith("{")) {
+      iDocument.field("password", encryptPassword(password));
+      return true;
+    }
+
+    return false;
   }
 
   @Override

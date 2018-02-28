@@ -156,6 +156,15 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     return snapshot;
   }
 
+  public void forceSnapshot() {
+    acquireSchemaReadLock();
+    try {
+      snapshot = new OImmutableSchema(this);
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
   public OClusterSelectionFactory getClusterSelectionFactory() {
     return clusterSelectionFactory;
   }
@@ -272,7 +281,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     rwSpinLock.acquireWriteLock();
     try {
       reload(null);
-      snapshot = new OImmutableSchema(this);
+      forceSnapshot();
       return (RET) this;
     } finally {
       rwSpinLock.releaseWriteLock();
@@ -580,8 +589,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       ((ORecordId) document.getIdentity()).fromString(database.getStorage().getConfiguration().getSchemaRecordId());
       reload("*:-1 index:0");
 
-      snapshot = new OImmutableSchema(this);
-
       return this;
     } finally {
       rwSpinLock.releaseWriteLock();
@@ -711,7 +718,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       }
     });
 
-    snapshot = new OImmutableSchema(this);
+    forceSnapshot();
     for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
       listener.onSchemaUpdate(database.getName(), this);
     }
@@ -783,4 +790,5 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   public Set<Integer> getBlobClusters() {
     return Collections.unmodifiableSet(blobClusters);
   }
+
 }

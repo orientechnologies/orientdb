@@ -668,7 +668,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     }
   }
 
-  protected OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex<?> index) {
+  public OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex<?> index) {
     if (index instanceof OIndexMultiValues)
       //noinspection unchecked
       return new OIndexTxAwareMultiValue(database, (OIndex<Set<OIdentifiable>>) index);
