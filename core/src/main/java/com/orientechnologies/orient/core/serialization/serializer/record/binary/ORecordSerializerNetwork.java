@@ -158,12 +158,14 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   public String getName() {
     return NAME;
   }
-
+    
   @Override
   public <RET> RET deserializeField(byte[] record, OClass iClass, String iFieldName) {
-    BytesContainer bytes = new BytesContainer(record);
-    //read serializer version
-    byte serializerVersion = bytes.bytes[bytes.offset++];
-    return serializerByVersion[serializerVersion].deserializeFieldTyped(bytes, iClass, iFieldName);
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
+  public <RET> RET deserializeFieldFromEmbedded(byte[] record, OClass iClass, String iFieldName, int serializerVersion) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 }

@@ -32,11 +32,29 @@ import java.util.Set;
 public class OResultBinary implements OResult{
 
   private ORID id;
-  private byte[] resultBytes;
+  private final byte[] resultBytes;
+  private final int serializerVersion;
   
-  public OResultBinary(byte[] bytes){
+  public OResultBinary(byte[] bytes, int serializerVersion){
     this.resultBytes = bytes;
+    this.serializerVersion = serializerVersion;
   }
+
+  public ORID getId() {
+    return id;
+  }
+
+  public void setId(ORID id) {
+    this.id = id;
+  }
+
+  public byte[] getResultBytes() {
+    return resultBytes;
+  }
+
+  public int getSerializerVersion() {
+    return serializerVersion;
+  }    
   
   @Override
   public <T> T getProperty(String name) {

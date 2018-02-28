@@ -552,4 +552,14 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   public String getName() {
     return NAME;
   }
+
+  @Override
+  public <RET> RET deserializeField(byte[] record, OClass iClass, String iFieldName) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
+  public <RET> RET deserializeFieldFromEmbedded(byte[] record, OClass iClass, String iFieldName, int serializerVersion) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
 }

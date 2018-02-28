@@ -170,13 +170,25 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   public String getName() {
     return NAME;
   }
+    
+  
+  private <RET> RET deserializeField(byte[]record, OClass iClass, String iFieldName, boolean isEmbedded, int serializerVersion){
+    BytesContainer bytes = new BytesContainer(record);
+    if (!isEmbedded){
+      serializerVersion = record[0];      
+      //skip serializer version
+      bytes = bytes.skip(1);
+    }
+    return serializerByVersion[serializerVersion].deserializeFieldTyped(bytes, iClass, iFieldName, isEmbedded, serializerVersion);
+  }
   
   @Override
   public <RET> RET deserializeField(byte[]record, OClass iClass, String iFieldName){
-    int serializerVersion = record[0];
-    BytesContainer bytes = new BytesContainer(record);
-    //skip serializer version
-    bytes = bytes.skip(1);
-    return serializerByVersion[serializerVersion].deserializeFieldTyped(bytes, iClass, iFieldName);
+    return deserializeField(record, iClass, iFieldName, false, -1);
+  }
+  
+  @Override
+  public <RET> RET deserializeFieldFromEmbedded(byte[]record, OClass iClass, String iFieldName, int serializerVersion){
+    return deserializeField(record, iClass, iFieldName, true, serializerVersion);
   }
 }

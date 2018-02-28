@@ -71,6 +71,16 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   private static final Double               MAX_FLOAT             = (double) Float.MAX_VALUE;
   private static final Double               MIN_FLOAT             = (double) Float.MIN_VALUE;
 
+  @Override
+  public <RET> RET deserializeField(byte[]record, OClass iClass, String iFieldName){
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
+  public <RET> RET deserializeFieldFromEmbedded(byte[] record, OClass iClass, String iFieldName, int serializerVersion) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
   private interface CollectionItemVisitor {
     void visitItem(Object item);
   }

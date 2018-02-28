@@ -42,4 +42,5 @@ public interface ORecordSerializer {
   String getName();
   
   <RET> RET deserializeField(byte[]record, OClass iClass, String iFieldName);
+  <RET> RET deserializeFieldFromEmbedded(byte[]record, OClass iClass, String iFieldName, int serializerVersion);
 }

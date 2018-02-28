@@ -56,5 +56,5 @@ public interface ODocumentSerializer {
   
   boolean isSerializingClassNameByDefault();
   
-  <RET> RET deserializeFieldTyped(BytesContainer record, OClass iClass, String iFieldName);
+  <RET> RET deserializeFieldTyped(BytesContainer record, OClass iClass, String iFieldName, boolean isEmbedded, int serializerVersion);  
 }
