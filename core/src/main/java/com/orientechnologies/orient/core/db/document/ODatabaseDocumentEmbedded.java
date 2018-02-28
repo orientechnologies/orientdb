@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheHook;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -68,8 +69,9 @@ import java.util.concurrent.Callable;
  */
 public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract implements OQueryLifecycleListener {
 
-  private OrientDBConfig config;
-  private OStorage       storage;
+  private OrientDBConfig         config;
+  private OStorage               storage;
+  private List<OMicroTxListener> microTxListeners;
 
   public ODatabaseDocumentEmbedded(final OStorage storage) {
     activateOnCurrentThread();
@@ -649,7 +651,19 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     if (microTransaction == null)
       microTransaction = new OMicroTransaction(abstractPaginatedStorage, this);
 
+    if (microTxListeners != null) {
+      for (OMicroTxListener listener : microTxListeners) {
+        listener.onBeforeMicroTxBegin(this, microTransaction);
+      }
+    }
+
     microTransaction.begin();
+
+    if (microTxListeners != null) {
+      for (OMicroTxListener listener : microTxListeners) {
+        listener.onAfterMicroTxBegin(this, microTransaction);
+      }
+    }
     return microTransaction;
   }
 
@@ -741,19 +755,77 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     assert microTransaction != null;
 
     try {
-      if (success)
+      if (success) {
         try {
+          if (microTxListeners != null) {
+            for (OMicroTxListener listener : microTxListeners) {
+              listener.onBeforeMicroTxCommit(this, microTransaction);
+            }
+          }
           microTransaction.commit();
+          if (microTxListeners != null) {
+            for (OMicroTxListener listener : microTxListeners) {
+              try {
+                listener.onAfterMicroTxCommit(this, microTransaction);
+              } catch (Exception e) {
+                OLogManager.instance().error(this, "Error executing microTx afterCommit event: " + e, e);
+              }
+            }
+          }
         } catch (Exception e) {
+          if (microTxListeners != null) {
+            for (OMicroTxListener listener : microTxListeners) {
+              try {
+                listener.onBeforeMicroTxRollback(this, microTransaction);
+              } catch (Exception e2) {
+                OLogManager.instance().error(this, "Error executing microTx beforeRollback even: " + e2, e2);
+              }
+            }
+          }
           microTransaction.rollbackAfterFailedCommit();
+          if (microTxListeners != null) {
+            for (OMicroTxListener listener : microTxListeners) {
+              try {
+                listener.onAfterMicroTxRollback(this, microTransaction);
+              } catch (Exception e2) {
+                OLogManager.instance().error(this, "Error executing microTx afterRollback even: " + e, e);
+              }
+            }
+          }
           throw e;
         }
-      else
+      } else {
+        if (microTxListeners != null) {
+          for (OMicroTxListener listener : microTxListeners) {
+            try {
+              listener.onBeforeMicroTxRollback(this, microTransaction);
+            } catch (Exception e2) {
+              OLogManager.instance().error(this, "Error executing microTx beforeRollback even: " + e2, e2);
+            }
+          }
+        }
         microTransaction.rollback();
+        if (microTxListeners != null) {
+          for (OMicroTxListener listener : microTxListeners) {
+            try {
+              listener.onAfterMicroTxRollback(this, microTransaction);
+            } catch (Exception e2) {
+              OLogManager.instance().error(this, "Error executing microTx afterRollback even: " + e2, e2);
+            }
+          }
+        }
+      }
     } finally {
       if (!microTransaction.isActive())
         microTransaction = null;
     }
+  }
+
+  public void registerMicroTxListener(OMicroTxListener listener) {
+    if (this.microTxListeners == null) {
+      this.microTxListeners = new ArrayList<>();
+    }
+    this.microTxListeners.add(listener);
   }
 
 }

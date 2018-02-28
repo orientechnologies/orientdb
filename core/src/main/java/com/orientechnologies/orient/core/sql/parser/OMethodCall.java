@@ -120,7 +120,7 @@ public class OMethodCall extends SimpleNode {
       }
       return method.execute(targetObjects, (OIdentifiable) val, ctx, targetObjects, paramValues.toArray());
     }
-    throw new UnsupportedOperationException("OMethod call, something missing in the implementation...?");
+    throw new UnsupportedOperationException("Method not found: "+toString());
 
   }
 
