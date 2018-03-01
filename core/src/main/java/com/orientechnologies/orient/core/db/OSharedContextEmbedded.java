@@ -27,7 +27,7 @@ public class OSharedContextEmbedded extends OSharedContext {
   private Map<String, DistributedQueryContext> activeDistributedQueries;
 
   public OSharedContextEmbedded(OStorage storage) {
-    schema = new OSchemaEmbedded();
+    schema = new OSchemaEmbedded(this);
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerShared(storage);
     functionLibrary = new OFunctionLibraryImpl();
@@ -58,8 +58,10 @@ public class OSharedContextEmbedded extends OSharedContext {
     try {
       if (!loaded) {
         schema.load(database);
-        security.load();
         indexManager.load(database);
+        //The Immutable snapshot should be after index and schema that require and before everything else that use it
+        schema.forceSnapshot();
+        security.load();
         functionLibrary.load(database);
         scheduler.load(database);
         sequenceLibrary.load(database);
@@ -93,6 +95,8 @@ public class OSharedContextEmbedded extends OSharedContext {
   public synchronized void reload(ODatabaseDocumentInternal database) {
     schema.reload();
     indexManager.reload();
+    //The Immutable snapshot should be after index and schema that require and before everything else that use it
+    schema.forceSnapshot();
     security.load();
     functionLibrary.load(database);
     sequenceLibrary.load(database);
@@ -108,7 +112,8 @@ public class OSharedContextEmbedded extends OSharedContext {
     sequenceLibrary.create(database);
     security.createClassTrigger();
     scheduler.create(database);
-
+    schema.forceSnapshot();
+    
     // CREATE BASE VERTEX AND EDGE CLASSES
     schema.createClass(database, "V");
     schema.createClass(database, "E");

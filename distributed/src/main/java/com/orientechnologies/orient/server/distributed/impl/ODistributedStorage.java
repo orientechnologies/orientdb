@@ -95,7 +95,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   private Thread                                     asynchWorker;
   private ODistributedServerManager.DB_STATUS        prevStatus;
   private ODistributedDatabase                       localDistributedDatabase;
-  private ODistributedTransactionManager             txManager;
   private ODistributedStorageEventListener           eventListener;
 
   private volatile ODistributedConfiguration distributedConfiguration;
@@ -121,7 +120,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     this.wrapped = wrapped;
     this.wrapped.underDistributedStorage();
     this.localDistributedDatabase = dManager.getMessageService().getDatabase(getName());
-    this.txManager = new ODistributedTransactionManager(this, dManager, localDistributedDatabase);
 
     ODistributedServerLog
         .debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.NONE,
@@ -1108,112 +1106,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   @Override
   public List<ORecordOperation> commit(final OTransactionInternal iTx) {
-    resetLastValidBackup();
-
-    if (isLocalEnv()) {
-      // ALREADY DISTRIBUTED
-      try {
-        return wrapped.commit(iTx);
-      } catch (ORecordDuplicatedException e) {
-        // CHECK THE RECORD HAS THE SAME KEY IS STILL UNDER DISTRIBUTED TX
-        final ODistributedDatabase dDatabase = dManager.getMessageService().getDatabase(getName());
-        if (dDatabase.getRecordIfLocked(e.getRid()) != null) {
-          throw new OPossibleDuplicatedRecordException(e);
-        }
-        throw e;
-      }
-    }
-
-    final ODistributedConfiguration dbCfg = distributedConfiguration;
-
-    final String localNodeName = dManager.getLocalNodeName();
-
-    checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
-
-    try {
-      if (!dbCfg.isReplicationActive(null, localNodeName)) {
-        // DON'T REPLICATE
-        OScenarioThreadLocal.executeAsDistributed(new Callable() {
-          @Override
-          public Object call() throws Exception {
-            return wrapped.commit(iTx);
-          }
-        });
-      } else {
-        // EXECUTE DISTRIBUTED TX
-        int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
-        if (maxAutoRetry <= 0)
-          maxAutoRetry = 1;
-
-        int autoRetryDelay = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
-        if (autoRetryDelay <= 0)
-          autoRetryDelay = 1;
-
-        Throwable lastException = null;
-        for (int retry = 1; retry <= maxAutoRetry; ++retry) {
-
-          try {
-
-            final List<ORecordOperation> result = txManager.commit(ODatabaseRecordThreadLocal.instance().get(), iTx, eventListener);
-
-            if (result != null) {
-              for (ORecordOperation r : result) {
-                // UPDATE LOCAL CONTENT IN LOCKS TO ASSURE READ MY WRITES IF THE REQUEST IS STILL RUNNING
-                localDistributedDatabase.replaceRecordContentIfLocked(r.getRID(), r.getRecord().toStream());
-              }
-            }
-
-            return result;
-
-          } catch (Exception e) {
-            lastException = e;
-
-            if (retry >= maxAutoRetry) {
-              // REACHED MAX RETRIES
-              ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                  "Distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
-              break;
-            }
-
-            // SKIP RETRY IN CASE OF OConcurrentModificationException BECAUSE IT NEEDS A RETRY AT APPLICATION LEVEL
-            if (!(e instanceof OConcurrentModificationException) && (e instanceof ONeedRetryException
-                || e instanceof ORecordNotFoundException) && !(e instanceof ODistributedRedirectException)) {
-              // RETRY
-              final long wait = autoRetryDelay / 2 + new Random().nextInt(autoRetryDelay);
-
-              ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                  "Distributed transaction cannot be completed, wait %dms and retry again (%d/%d)", wait, retry, maxAutoRetry);
-
-              Thread.sleep(wait);
-
-              Orient.instance().getProfiler().updateCounter("db." + getName() + ".distributedTxRetries",
-                  "Number of retries executed in distributed transaction", +1, "db.*.distributedTxRetries");
-
-            } else
-              // SKIP RETRY LOOP
-              break;
-          }
-        }
-
-        if (lastException instanceof RuntimeException)
-          throw (RuntimeException) lastException;
-        else
-          throw OException.wrapException(new ODistributedException("Error on executing distributed transaction"), lastException);
-      }
-
-    } catch (OValidationException e) {
-      throw e;
-    } catch (HazelcastInstanceNotActiveException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } catch (HazelcastException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } catch (Exception e) {
-      handleDistributedException("Cannot route TX operation against distributed node", e);
-    }
-
-    return null;
+    return wrapped.commit(iTx);
   }
 
   protected ODistributedRequestId acquireRecordLock(final ORecordId rid) {
@@ -1937,9 +1830,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     return new File(serverInstance.getDatabaseDirectory() + getName() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
   }
 
-  public ODistributedTransactionManager getTxManager() {
-    return txManager;
-  }
 
   public ODistributedDatabase getLocalDistributedDatabase() {
     return localDistributedDatabase;

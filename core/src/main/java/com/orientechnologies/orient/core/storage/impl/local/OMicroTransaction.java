@@ -32,10 +32,7 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -457,28 +454,25 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     try {
       switch (type) {
       case ORecordOperation.CREATED: {
-        database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, clusterName);
-        ORecordHook.RESULT result = database.callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, record);
-        if (result == ORecordHook.RESULT.RECORD_CHANGED && record instanceof ODocument)
-          ((ODocument) record).validate();
-        if (result == ORecordHook.RESULT.RECORD_CHANGED)
+        OIdentifiable newRec = database.beforeCreateOperations(record, clusterName);
+        if (newRec != null) {
+          record = (ORecord) newRec;
           reSave(record);
+        }
       }
       break;
 
       case ORecordOperation.UPDATED: {
-        database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, clusterName);
-        ORecordHook.RESULT result = database.callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, record);
-        if (result == ORecordHook.RESULT.RECORD_CHANGED && record instanceof ODocument)
-          ((ODocument) record).validate();
-        if (result == ORecordHook.RESULT.RECORD_CHANGED)
+        OIdentifiable newRec = database.beforeUpdateOperations(record, clusterName);
+        if (newRec != null) {
+          record = (ORecord) newRec;
           reSave(record);
+        }
       }
       break;
 
       case ORecordOperation.DELETED:
-        database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, clusterName);
-        database.callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, record);
+        database.beforeDeleteOperations(record, clusterName);
         break;
       }
 
@@ -520,13 +514,13 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
         switch (type) {
         case ORecordOperation.CREATED:
-          database.callbackHooks(ORecordHook.TYPE.AFTER_CREATE, record);
+          database.afterCreateOperations(record);
           break;
         case ORecordOperation.UPDATED:
-          database.callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, record);
+          database.afterUpdateOperations(record);
           break;
         case ORecordOperation.DELETED:
-          database.callbackHooks(ORecordHook.TYPE.AFTER_DELETE, record);
+          database.afterDeleteOperations(record);
           break;
         }
 

@@ -1298,6 +1298,7 @@ OMatchStatement MatchStatement():
             jjtThis.returnAliases.add(lastReturnAlias);
             jjtThis.returnItems.add(lastReturn);
             jjtThis.returnNestedProjections.add(lastNestedProjection);
+            lastNestedProjection = null;
         }
         (
             <COMMA>
@@ -1308,6 +1309,7 @@ OMatchStatement MatchStatement():
                 jjtThis.returnAliases.add(lastReturnAlias);
                 jjtThis.returnItems.add(lastReturn);
                 jjtThis.returnNestedProjections.add(lastNestedProjection);
+                lastNestedProjection = null;
             }
         )*
         [ jjtThis.groupBy = GroupBy() ]

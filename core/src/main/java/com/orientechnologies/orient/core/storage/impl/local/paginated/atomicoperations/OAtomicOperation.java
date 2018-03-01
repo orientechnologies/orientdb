@@ -131,7 +131,10 @@ public class OAtomicOperation {
     if (deletedFiles.contains(fileId))
       throw new OStorageException("File with id " + fileId + " is deleted.");
 
-    FileChanges changesContainer = fileChanges.computeIfAbsent(fileId, k -> new FileChanges());
+    FileChanges changesContainer = fileChanges.get(fileId);
+    if (changesContainer == null) {
+      return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
+    }
 
     if (changesContainer.isNew) {
       if (pageIndex <= changesContainer.maxNewPageIndex) {

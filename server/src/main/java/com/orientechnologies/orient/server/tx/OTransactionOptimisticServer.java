@@ -78,7 +78,8 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
 
         switch (recordStatus) {
         case ORecordOperation.CREATED:
-          ORecord record = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
+          ORecord record = Orient.instance().getRecordFactoryManager()
+              .newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
           ORecordSerializerNetworkV37.INSTANCE.fromStream(operation.getRecord(), record, null);
           entry = new ORecordOperation(record, ORecordOperation.CREATED);
           ORecordInternal.setIdentity(record, rid);
@@ -91,7 +92,8 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
 
         case ORecordOperation.UPDATED:
           int version = operation.getVersion();
-          ORecord updated = Orient.instance().getRecordFactoryManager().newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
+          ORecord updated = Orient.instance().getRecordFactoryManager()
+              .newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
           ORecordSerializerNetworkV37.INSTANCE.fromStream(operation.getRecord(), updated, null);
           entry = new ORecordOperation(updated, ORecordOperation.UPDATED);
           ORecordInternal.setIdentity(updated, rid);
@@ -278,7 +280,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
     return operation;
   }
 
-  public void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName, Map<ORID, ORecordOperation> oldTx) {
+  public void addRecord(ORecord iRecord, final byte iStatus, final String iClusterName, Map<ORID, ORecordOperation> oldTx) {
     changed = true;
     checkTransaction();
 
@@ -291,10 +293,10 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       if (callHooks) {
         switch (iStatus) {
         case ORecordOperation.CREATED: {
-          database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
-          ORecordHook.RESULT res = database.callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, iRecord);
-          if (res == ORecordHook.RESULT.RECORD_CHANGED && iRecord instanceof ODocument)
-            ((ODocument) iRecord).validate();
+          OIdentifiable res = database.beforeCreateOperations(iRecord, iClusterName);
+          if (res != null) {
+            iRecord = (ORecord) res;
+          }
         }
         break;
         case ORecordOperation.LOADED:
@@ -303,16 +305,15 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
            */
           break;
         case ORecordOperation.UPDATED: {
-          database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
-          ORecordHook.RESULT res = database.callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, iRecord);
-          if (res == ORecordHook.RESULT.RECORD_CHANGED && iRecord instanceof ODocument)
-            ((ODocument) iRecord).validate();
+          OIdentifiable res = database.beforeUpdateOperations(iRecord, iClusterName);
+          if (res != null) {
+            iRecord = (ORecord) res;
+          }
         }
         break;
 
         case ORecordOperation.DELETED:
-          database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
-          database.callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, iRecord);
+          database.beforeDeleteOperations(iRecord, iClusterName);
           break;
         }
       }
@@ -376,7 +377,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
         if (callHooks) {
           switch (iStatus) {
           case ORecordOperation.CREATED:
-            database.callbackHooks(ORecordHook.TYPE.AFTER_CREATE, iRecord);
+            database.afterCreateOperations(iRecord);
             break;
           case ORecordOperation.LOADED:
             /**
@@ -385,10 +386,10 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
              */
             break;
           case ORecordOperation.UPDATED:
-            database.callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, iRecord);
+            database.afterUpdateOperations(iRecord);
             break;
           case ORecordOperation.DELETED:
-            database.callbackHooks(ORecordHook.TYPE.AFTER_DELETE, iRecord);
+            database.afterDeleteOperations(iRecord);
             break;
           }
         }

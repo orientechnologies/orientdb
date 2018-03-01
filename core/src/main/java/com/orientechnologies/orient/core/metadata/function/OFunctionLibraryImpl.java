@@ -47,7 +47,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OFunctionLibraryImpl {
-  protected final Map<String, OFunction> functions  = new ConcurrentHashMap<String, OFunction>();
+  public static final String CLASSNAME = "OFunction";
+  protected final Map<String, OFunction> functions = new ConcurrentHashMap<String, OFunction>();
   private         AtomicBoolean          needReload = new AtomicBoolean(false);
 
   static {

@@ -86,7 +86,7 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
     return val == null || val.getType() != type;
   }
 
-  public void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName, boolean callHook) {
+  public void addRecord(ORecord iRecord, final byte iStatus, final String iClusterName, boolean callHook) {
     if (iStatus != ORecordOperation.LOADED)
       changedDocuments.remove(iRecord);
 
@@ -94,9 +94,9 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
       if (callHook) {
         switch (iStatus) {
         case ORecordOperation.CREATED: {
-          ORecordHook.RESULT res = database.callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, iRecord);
-          if (res == ORecordHook.RESULT.RECORD_CHANGED && iRecord instanceof ODocument) {
-            ((ODocument) iRecord).validate();
+          OIdentifiable res = database.beforeCreateOperations(iRecord, iClusterName);
+          if (res != null) {
+            iRecord = (ORecord) res;
             changed = true;
           }
         }
@@ -107,16 +107,16 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
            */
           break;
         case ORecordOperation.UPDATED: {
-          database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
-          ORecordHook.RESULT res = database.callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, iRecord);
-          if (res == ORecordHook.RESULT.RECORD_CHANGED && iRecord instanceof ODocument)
-            ((ODocument) iRecord).validate();
+          OIdentifiable res = database.beforeUpdateOperations(iRecord, iClusterName);
+          if (res != null) {
+            iRecord = (ORecord) res;
+            changed = true;
+          }
         }
         break;
 
         case ORecordOperation.DELETED:
-          database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
-          database.callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, iRecord);
+          database.beforeDeleteOperations(iRecord, iClusterName);
           break;
         }
       }
