@@ -470,6 +470,21 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           pointer -= offset;
           //write to byte container
           OIntegerSerializer.INSTANCE.serializeLiteral(pointer, record.bytes, record.offset - OIntegerSerializer.INT_SIZE);
+          
+          final int id = (len * -1) - 1;
+          final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
+          final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
+          OGlobalProperty property = _schema.getGlobalPropertyById(id);
+          OType type;
+          if (property.getType() != OType.ANY)
+            type = property.getType();
+          else
+            type = readOType(record);
+          
+          if (type.isEmbedded()){
+            recordsStartPositions.add(pointer);
+          }
+          
         }
       }
     }
@@ -604,7 +619,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   protected OGlobalProperty getGlobalProperty(final ODocument document, final int len) {
     final int id = (len * -1) - 1;
-    return ODocumentInternal.getGlobalPropertyById(document, id);
+    return ODocumentInternal.getGlobalPropertyById(document, id);    
   }
 
   protected OType readOType(final BytesContainer bytes) {

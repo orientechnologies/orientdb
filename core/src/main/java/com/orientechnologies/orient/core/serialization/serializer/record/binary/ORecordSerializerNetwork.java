@@ -160,7 +160,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   }
     
   @Override
-  public <RET> RET deserializeField(byte[] record, OClass iClass, String iFieldName) {
+  public <RET> RET deserializeFieldFromRoot(byte[] record, OClass iClass, String iFieldName) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 

@@ -63,7 +63,7 @@ public class ORecordSerializerBinaryTest {
     Integer setValue = 16;
     doc.setProperty("TestField", setValue);
     byte[] serializedDoc = serializer.toStream(doc, false);
-    Integer value = serializer.deserializeField(serializedDoc, null, "TestField");
+    Integer value = serializer.deserializeFieldFromRoot(serializedDoc, null, "TestField");
     Assert.assertEquals(setValue, value);
   }
   
@@ -111,31 +111,54 @@ public class ORecordSerializerBinaryTest {
     embeddedNativeBytes = Arrays.copyOfRange(embeddedNativeBytes, 1, embeddedNativeBytes.length);        
     
     
-    OResultBinary embeddedBytesViaGet = serializer.deserializeField(rootBytes, classOfEmbedded, "TestEmbedded");    
+    OResultBinary embeddedBytesViaGet = serializer.deserializeFieldFromRoot(rootBytes, classOfEmbedded, "TestEmbedded");    
     Assert.assertTrue(Arrays.equals(embeddedNativeBytes, embeddedBytesViaGet.getResultBytes()));
   }
   
-  @Test
-  public void testGetTypedFieldFromEmbedded(){
-    ODocument root = new ODocument();
-    ODocument embedded = new ODocument("TestClass");
-    Integer setValue = 17;
-    embedded.setProperty("TestField", setValue);    
-    
-    OClass classOfEmbedded = db.getClass("TestClass");
-    
-    root.field("TestEmbedded", embedded);
-    root.setClassName("TestClass");
-        
-    db.save(root);    
-    
-    byte[] rootBytes = serializer.toStream(root, false);
-    
-    OResultBinary embeddedBytesViaGet = serializer.deserializeField(rootBytes, classOfEmbedded, "TestEmbedded");    
-    
-    Integer testValue = serializer.deserializeFieldFromEmbedded(embeddedBytesViaGet.getResultBytes(), classOfEmbedded, "TestField", rootBytes[0]);
-    Assert.assertEquals(setValue, testValue);
-  }
+//  @Test
+//  public void testGetTypedFieldFromEmbedded(){
+//    ODocument root = new ODocument();
+//    ODocument embedded = new ODocument("TestClass");
+//    Integer setValue = 17;
+//    embedded.setProperty("TestField", setValue);    
+//    
+//    OClass classOfEmbedded = db.getClass("TestClass");
+//    
+//    root.field("TestEmbedded", embedded);
+//    root.setClassName("TestClass");
+//        
+//    db.save(root);    
+//    
+//    byte[] rootBytes = serializer.toStream(root, false);
+//    
+//    OResultBinary embeddedBytesViaGet = serializer.deserializeFieldFromRoot(rootBytes, classOfEmbedded, "TestEmbedded");    
+//    
+//    Integer testValue = serializer.deserializeFieldFromEmbedded(embeddedBytesViaGet.getResultBytes(), classOfEmbedded, "TestField", rootBytes[0]);
+//    Assert.assertEquals(setValue, testValue);
+//  }
+  
+//  @Test
+//  public void testGetTypedEmbeddedFromEmbedded(){
+//    ODocument root = new ODocument("TestClass");
+//    ODocument embedded = new ODocument("TestClass");
+//    ODocument embeddedLevel2 = new ODocument("TestClass");
+//    Integer setValue = 17;    
+//    embeddedLevel2.setProperty("InnerTestFields", setValue);
+//    embedded.setProperty("TestEmbedded", embeddedLevel2);    
+//    
+//    OClass classOfEmbedded = db.getClass("TestClass");
+//    
+//    root.field("TestEmbedded", embedded);    
+//        
+//    db.save(root);    
+//    
+//    byte[] rootBytes = serializer.toStream(root, false);
+//    
+//    OResultBinary embeddedBytesViaGet = serializer.deserializeFieldFromRoot(rootBytes, classOfEmbedded, "TestEmbedded");        
+//    OResultBinary embeddedLKevel2BytesViaGet = serializer.deserializeFieldFromEmbedded(embeddedBytesViaGet.getResultBytes(), classOfEmbedded, "TestEmbedded", rootBytes[0]);
+//    Integer testValue = serializer.deserializeFieldFromEmbedded(embeddedLKevel2BytesViaGet.getResultBytes(), classOfEmbedded, "InnerTestFields", rootBytes[0]);
+//    Assert.assertEquals(setValue, testValue);
+//  }
 
   private void decreasePositionsBy(byte[] embeddedNativeBytes, int stepSize) {
     BytesContainer container = new BytesContainer(embeddedNativeBytes);
