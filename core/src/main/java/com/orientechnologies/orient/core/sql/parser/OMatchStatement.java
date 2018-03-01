@@ -440,6 +440,22 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     for (Map.Entry<String, Long> root : estimatedRootEntries.entrySet()) {
       rootWeights.add(new OPair<Long, String>(root.getValue(), root.getKey()));
     }
+
+    //raise weight of nodes that have a WHILE, they have to be calculated as late as possible
+    for (OPair<Long, String> rootWeight : rootWeights) {
+      PatternNode node = pattern.aliasToNode.get(rootWeight.value);
+      if (node.in != null) {
+        for (PatternEdge patternEdge : node.in) {
+          if (patternEdge.item != null && patternEdge.item.filter != null && patternEdge.item.filter.getWhileCondition() != null) {
+            rootWeight.key = rootWeight.key + Integer.MAX_VALUE;
+            if (rootWeight.key < 0) {
+              rootWeight.key = Long.MAX_VALUE;
+            }
+            break;
+          }
+        }
+      }
+    }
     Collections.sort(rootWeights);
 
     // Add the starting vertices, in the correct order, to an ordered set.

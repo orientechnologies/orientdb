@@ -1621,6 +1621,32 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
+  public void testWhileWithFewItems() {
+    // issue #8129
+    db.command(new OCommandSQL("CREATE CLASS testWhileWithFewItemsV EXTENDS V")).execute();
+    db.command(new OCommandSQL("CREATE CLASS testWhileWithFewItemsE EXTENDS E")).execute();
+
+    db.command(new OCommandSQL("CREATE VERTEX testWhileWithFewItemsV SET name = 'a'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testWhileWithFewItemsV SET name = 'b'")).execute();
+    db.command(new OCommandSQL("CREATE VERTEX testWhileWithFewItemsV SET name = 'c'")).execute();
+
+    db.command(new OCommandSQL("CREATE EDGE testWhileWithFewItemsE from"
+        + "(select from testWhileWithFewItemsV where name = 'a') to (select from testWhileWithFewItemsV where name = 'b')"))
+        .execute();
+
+    db.command(new OCommandSQL("CREATE EDGE testWhileWithFewItemsE from"
+        + "(select from testWhileWithFewItemsV where name = 'b') to (select from testWhileWithFewItemsV where name = 'c')"))
+        .execute();
+
+
+    OSQLSynchQuery query = new OSQLSynchQuery(
+        "MATCH {class:testWhileWithFewItemsV, as:a} --> {as:b} --> {as:c, class:testWhileWithFewItemsV, where:(name = 'c'), while:(true)} RETURN $patterns");
+
+    List<?> result = db.query(query);
+    assertEquals(2, result.size());
+  }
+
+  @Test
   public void testTargetRid() {
     db.command(new OCommandSQL("CREATE CLASS testTargetRid EXTENDS V")).execute();
     db.command(new OCommandSQL("INSERT INTO testTargetRid SET name = 'a'")).execute();
