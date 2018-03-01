@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.binary
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -490,7 +491,40 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
   }
   
-  protected OResultBinary deserializeEmbeddedAsBytes(final BytesContainer bytes, int valueLength, int serializerVersion){
+  protected BytesContainer[] deserializeEmbeddedCollectionAsCollectionOfBytes(final BytesContainer bytes, int valueLength, int serializerVersion){        
+    int numberOfElements = OVarIntSerializer.readAsInteger(bytes);
+    BytesContainer[] retVals = new BytesContainer[numberOfElements];
+    
+    for (int i = 0 ; i < numberOfElements; i++){
+      int startOffset = bytes.offset;
+      //read element
+      int len = -1;
+      while (len != 0){
+        //read field name
+        readString(bytes);
+        //read data pointer
+        readInteger(bytes);
+        //read type
+        readByte(bytes);
+      }
+      byte[] documentBytes = Arrays.copyOfRange(bytes.bytes, bytes.offset, bytes.offset + valueLength);
+
+      //---we neeed update info about data pointers
+      BytesContainer container = new BytesContainer(documentBytes);
+      //read class name
+
+      Queue<Integer> recordOffsets = new LinkedList<>();
+      recordOffsets.add(0);
+      updatePositions(container, recordOffsets, startOffset);
+      //---
+      container.offset = 0;
+      return container;
+    }
+    
+    return retVals;
+  }
+  
+  protected BytesContainer deserializeEmbeddedAsBytes(final BytesContainer bytes, int valueLength){
     int startOffset = bytes.offset;
     byte[] documentBytes = Arrays.copyOfRange(bytes.bytes, bytes.offset, bytes.offset + valueLength);
     
@@ -502,9 +536,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     recordOffsets.add(0);
     updatePositions(container, recordOffsets, startOffset);
     //---
-    
-    OResultBinary wrappedDocument = new OResultBinary(documentBytes, serializerVersion);
-    return wrappedDocument;
+    container.offset = 0;
+    return container;
   }
     
   private Object deserializeValue(final BytesContainer bytes, final OType type, final ODocument ownerDocument, boolean embeddedAsDocument, 
@@ -548,14 +581,29 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         value = deserializeEmbeddedAsDocument(bytes, ownerDocument);
       }
       else{
-        value = deserializeEmbeddedAsBytes(bytes, valueLengthInBytes, serializerVersion);
+        value = deserializeEmbeddedAsBytes(bytes, valueLengthInBytes);
+        value = new OResultBinary((byte[])value, serializerVersion);
       }      
       break;
     case EMBEDDEDSET:
-      value = readEmbeddedSet(bytes, ownerDocument);
+      if (embeddedAsDocument){
+        value = readEmbeddedSet(bytes, ownerDocument);;
+      }
+      else{
+        value = deserializeEmbeddedAsBytes(bytes, valueLengthInBytes);
+        value = wrapEmbeddedCollectionToBeDeseriazible((BytesContainer)value, OType.EMBEDDEDSET);
+        value = new OResultBinary((byte[])value, serializerVersion);
+      }      
       break;
     case EMBEDDEDLIST:
-      value = readEmbeddedList(bytes, ownerDocument);
+      if (embeddedAsDocument){
+        value = readEmbeddedList(bytes, ownerDocument);
+      }
+      else{
+        value = deserializeEmbeddedAsBytes(bytes, valueLengthInBytes);
+        value = wrapEmbeddedCollectionToBeDeseriazible((BytesContainer)value, OType.EMBEDDEDLIST);
+        value = new OResultBinary((byte[])value, serializerVersion);
+      }
       break;
     case LINKSET:
       value = readLinkCollection(bytes, new ORecordLazySet(ownerDocument));
@@ -573,7 +621,14 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       value = readLinkMap(bytes, ownerDocument);
       break;
     case EMBEDDEDMAP:
-      value = readEmbeddedMap(bytes, ownerDocument);
+      if (embeddedAsDocument){
+        value = readEmbeddedMap(bytes, ownerDocument);
+      }
+      else{
+        value = deserializeEmbeddedAsBytes(bytes, valueLengthInBytes);
+        value = wrapEmbeddedCollectionToBeDeseriazible((BytesContainer)value, OType.EMBEDDEDMAP);
+        value = new OResultBinary((byte[])value, serializerVersion);
+      }
       break;
     case DECIMAL:
       value = ODecimalSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
@@ -592,11 +647,18 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         String className = readString(bytes);
         Class<?> clazz = Class.forName(className);
         OSerializableStream stream = (OSerializableStream) clazz.newInstance();
-        stream.fromStream(readBinary(bytes));
-        if (stream instanceof OSerializableWrapper)
-          value = ((OSerializableWrapper) stream).getSerializable();
-        else
-          value = stream;
+        byte[] bytesRepresentation = readBinary(bytes);
+        if (embeddedAsDocument){
+          stream.fromStream(bytesRepresentation);
+          if (stream instanceof OSerializableWrapper)
+            value = ((OSerializableWrapper) stream).getSerializable();
+          else
+            value = stream;
+        }
+        else{
+          OResultBinary retVal = new OResultBinary(bytesRepresentation, serializerVersion);
+          return retVal;
+        }
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -1187,7 +1249,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           if (type.isEmbedded()){            
             fieldDataLength = getEmbeddedFieldSize(bytes, fieldDataLength);            
             //because we will it read it as byte[] we don't care about real type
-            type = OType.EMBEDDED;
+//            type = OType.EMBEDDED;
           }                    
           
           bytes.offset = valuePos;
@@ -1214,7 +1276,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           if (type.isEmbedded()){
             fieldDataLength = getEmbeddedFieldSize(bytes, valuePos);            
             //any embedded type treat as embedded
-            type = OType.EMBEDDED;
+//            type = OType.EMBEDDED;
           }
           
           if (valuePos == 0)
@@ -1235,6 +1297,28 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     // SKIP CLASS NAME        
     skipClassName(bytes);    
     return deserializeFieldTypedLoopAndReturn(bytes, iClass, iFieldName, serializerVersion);    
+  }
+
+  private BytesContainer wrapEmbeddedCollectionToBeDeseriazible(BytesContainer value, OType oType) {
+    BytesContainer retValue = new BytesContainer();    
+    //no class name
+    OVarIntSerializer.write(retValue, 0l);
+    
+    wri
+    
+    int offset = retValue.offset;
+    //allocate space for pointer and type id
+    value.alloc(OIntegerSerializer.INT_SIZE + 1);
+    //allocate space for embedded collection data
+    value.alloc(value.bytes.length);    
+    //write data pointer
+    OIntegerSerializer.INSTANCE.serializeLiteral(offset, retValue.bytes, offset);
+    //write type
+    OByteSerializer.INSTANCE.serializeLiteral((byte)oType.getId(), retValue.bytes, offset + OIntegerSerializer.INT_SIZE);
+    //write embedded collection content
+    OByteSerializer.INSTANCE.serializeRawBytes(value.bytes, retValue.bytes, retValue.offset);
+    
+    return retValue;
   }
   
 }

@@ -69,4 +69,11 @@ public class BytesContainer {
     System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
     bytes = newBytes;
   }
+  
+  private void shiftRight(int steps){
+    int startIndex = bytes.length - steps - 1;
+    for (int i = startIndex ; i >= 0; --i){
+      bytes[i + steps] = bytes[i];
+    }
+  }
 }
