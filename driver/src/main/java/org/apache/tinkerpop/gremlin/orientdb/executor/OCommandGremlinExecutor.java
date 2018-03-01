@@ -46,6 +46,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.util.TraversalExplanation;
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -86,7 +87,13 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
 
     @Override
     public OResultSet execute(ODatabaseDocumentInternal database, String script, Object... params) {
-        throw new UnsupportedOperationException("");
+        Map<Object, Object> mapParams = new HashMap<>();
+        if (params != null) {
+            for (int i = 0; i < params.length; i++) {
+                mapParams.put("par_" + i, params[i]);
+            }
+        }
+        return execute(database,script,mapParams);
     }
 
     @Override
