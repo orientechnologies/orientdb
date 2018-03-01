@@ -83,7 +83,7 @@ public class AsyncIndexRemoteTest extends BareBoneBase3ServerTest {
 
     // CHECK ON THE 2ND NODE
     OrientDB orientDB3 = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig());
-    ODatabaseDocument graph3 = orientDB2.open(getDatabaseName(), "admin", "admin");
+    ODatabaseDocument graph3 = orientDB3.open(getDatabaseName(), "admin", "admin");
     try {
       try {
         graph3

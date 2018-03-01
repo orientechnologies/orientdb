@@ -156,7 +156,7 @@ public class ONewDistributedTransactionManager {
         Object key = ((OTxUniqueIndex) resultPayload).getKey();
         //TODO include all paramenter in response
         throw new ORecordDuplicatedException(
-            String.format("Cannot index record %s: found duplicated key '%s' in index '%s' ", id, key, index), index, id);
+            String.format("Cannot index record %s: found duplicated key '%s' in index '%s' ", id, key, index), index, id, key);
       }
       case OTxConcurrentModification.ID: {
         //Concurrent modification exception quorum send ko and throw cuncurrent modification exception
