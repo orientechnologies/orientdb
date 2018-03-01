@@ -115,8 +115,26 @@ public class ORecordSerializerBinaryTest {
     Assert.assertTrue(Arrays.equals(embeddedNativeBytes, embeddedBytesViaGet.getResultBytes()));
   }
   
-  public void testGetTypedFilledFromEmbedded(){
+  @Test
+  public void testGetTypedFieldFromEmbedded(){
+    ODocument root = new ODocument();
+    ODocument embedded = new ODocument("TestClass");
+    Integer setValue = 17;
+    embedded.setProperty("TestField", setValue);    
     
+    OClass classOfEmbedded = db.getClass("TestClass");
+    
+    root.field("TestEmbedded", embedded);
+    root.setClassName("TestClass");
+        
+    db.save(root);    
+    
+    byte[] rootBytes = serializer.toStream(root, false);
+    
+    OResultBinary embeddedBytesViaGet = serializer.deserializeField(rootBytes, classOfEmbedded, "TestEmbedded");    
+    
+    Integer testValue = serializer.deserializeFieldFromEmbedded(embeddedBytesViaGet.getResultBytes(), classOfEmbedded, "TestField", rootBytes[0]);
+    Assert.assertEquals(setValue, testValue);
   }
 
   private void decreasePositionsBy(byte[] embeddedNativeBytes, int stepSize) {

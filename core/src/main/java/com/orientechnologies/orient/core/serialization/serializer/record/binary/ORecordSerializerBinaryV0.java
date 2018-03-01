@@ -436,7 +436,44 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return value;
   }
   
-  
+  private void updatePositions(BytesContainer record, Queue<Integer> recordsStartPositions, int offset){    
+    //go with breadth first
+    while(!recordsStartPositions.isEmpty()){
+      record.offset = recordsStartPositions.poll();
+      int len = -1;      
+      //skip class name
+      readString(record);
+      //update positions and check for embedded records
+      while (len != 0){
+        len = OVarIntSerializer.readAsInteger(record);
+        if (len > 0){
+          //read field name
+          record.offset += len;
+          //read data pointer
+          int pointer = readInteger(record);                    
+          //shift pointer by start offset
+          pointer -= offset;
+          //write to byte container
+          OIntegerSerializer.INSTANCE.serializeLiteral(pointer, record.bytes, record.offset - OIntegerSerializer.INT_SIZE);
+          //read type
+          byte typeId = readByte(record);          
+          OType type = OType.getById(typeId);
+          if (type.isEmbedded()){
+            //detected embedded doc, we want to update its data pointers too
+            recordsStartPositions.add(pointer);
+          }
+        }
+        else if (len < 0){
+          //rtead data pointer
+          int pointer = readInteger(record);
+          //shift pointer
+          pointer -= offset;
+          //write to byte container
+          OIntegerSerializer.INSTANCE.serializeLiteral(pointer, record.bytes, record.offset - OIntegerSerializer.INT_SIZE);
+        }
+      }
+    }
+  }
   
   protected OResultBinary deserializeEmbeddedAsBytes(final BytesContainer bytes, int valueLength, int serializerVersion){
     int startOffset = bytes.offset;
@@ -445,31 +482,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     //---we neeed update info about data pointers
     BytesContainer container = new BytesContainer(documentBytes);
     //read class name
-    String className = readString(container);
-    int len = -1;
-    while (len != 0){
-      len = OVarIntSerializer.readAsInteger(container);
-      if (len > 0){
-        //read field name
-        container.offset += len;
-        //read data pointer
-        int pointer = readInteger(container);
-        //shift pointer by start ofset
-        pointer -= startOffset;
-        //write to byte container
-        OIntegerSerializer.INSTANCE.serializeLiteral(pointer, container.bytes, container.offset - OIntegerSerializer.INT_SIZE);
-        //read type
-        container.offset++;
-      }
-      else if (len < 0){
-        //rtead data pointer
-        int pointer = readInteger(container);
-        //shift pointer
-        pointer -= startOffset;
-        //write to byte container
-        OIntegerSerializer.INSTANCE.serializeLiteral(pointer, container.bytes, container.offset - OIntegerSerializer.INT_SIZE);
-      }
-    }
+    
+    Queue<Integer> recordOffsets = new LinkedList<>();
+    recordOffsets.add(0);
+    updatePositions(container, recordOffsets, startOffset);
     //---
     
     OResultBinary wrappedDocument = new OResultBinary(documentBytes, serializerVersion);
@@ -1097,6 +1113,27 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     bytes.skip(classNameLen);
   }
   
+  private int getEmbeddedFieldSize(BytesContainer bytes, int currentFieldDataPos){
+    int startOffset = bytes.offset;
+    int fieldDataLength = -1;              
+    //next field header
+    int len = OVarIntSerializer.readAsInteger(bytes);
+    if (len == 0){
+      fieldDataLength = bytes.bytes.length - currentFieldDataPos;
+    }
+    else if (len > 0){
+      bytes.skip(len);
+      int nextVal = readInteger(bytes);
+      fieldDataLength = nextVal - currentFieldDataPos;
+    }
+    else{
+      int nextVal = readInteger(bytes);
+      fieldDataLength = nextVal - currentFieldDataPos;
+    }
+    bytes.offset = startOffset;  
+    return fieldDataLength;
+  }
+  
   protected <RET> RET deserializeFieldTypedLoopAndReturn(BytesContainer bytes, OClass iClass, String iFieldName, int serializerVersion){
     final byte[] field = iFieldName.getBytes();
 
@@ -1129,37 +1166,16 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           if (!match)
             continue;
 
-//          if (!getComparator().isBinaryComparable(type))
-//            return null;
-
           //find start of the next field offset so current field byte length can be calculated
           //actual field byte length is only needed for embedded fields
           int fieldDataLength = -1;
-          bytes.offset = valuePos;
-          
-          if (type.isEmbedded()){
-            //here we want to skip class name
-//            readString(bytes);
-//            valuePos = bytes.offset;
-            
-            len = OVarIntSerializer.readAsInteger(bytes);
-            if (len == 0){
-              fieldDataLength = bytes.bytes.length - valuePos;
-            }
-            else if (len > 0){
-              bytes.skip(len);
-              int nextVal = readInteger(bytes);
-              fieldDataLength = nextVal - valuePos;
-            }
-            else{
-              int nextVal = readInteger(bytes);
-              fieldDataLength = nextVal - valuePos;
-            }
-            
+          if (type.isEmbedded()){            
+            fieldDataLength = getEmbeddedFieldSize(bytes, fieldDataLength);            
             //because we will it read it as byte[] we don't care about real type
             type = OType.EMBEDDED;
           }                    
-                              
+          
+          bytes.offset = valuePos;
           Object value = deserializeValue(bytes, type, null, false, fieldDataLength, serializerVersion);
           return (RET)value;
         }
@@ -1173,7 +1189,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         final OGlobalProperty prop = _schema.getGlobalPropertyById(id);
         if (iFieldName.equals(prop.getName())) {
           final int valuePos = readInteger(bytes);
-          final OType type;
+          OType type;
           if (prop.getType() != OType.ANY)
             type = prop.getType();
           else
@@ -1181,27 +1197,13 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
           int fieldDataLength = -1;
           if (type.isEmbedded()){
-            len = OVarIntSerializer.readAsInteger(bytes);
-            if (len == 0){
-              fieldDataLength = bytes.bytes.length - valuePos;
-            }
-            else if (len > 0){
-              bytes.skip(len);
-              int nextVal = readInteger(bytes);
-              fieldDataLength = nextVal - valuePos;
-            }
-            else{
-              int nextVal = readInteger(bytes);
-              fieldDataLength = nextVal - valuePos;
-            }
+            fieldDataLength = getEmbeddedFieldSize(bytes, valuePos);            
+            //any embedded type treat as embedded
+            type = OType.EMBEDDED;
           }
           
           if (valuePos == 0)
             return null;
-
-//          Suppose that we dpn't need check like this one
-//          if (!getComparator().isBinaryComparable(type))
-//            return null;
 
           bytes.offset = valuePos;
           
