@@ -446,7 +446,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       PatternNode node = pattern.aliasToNode.get(rootWeight.value);
       if (node.in != null) {
         for (PatternEdge patternEdge : node.in) {
-          if (patternEdge.item != null && patternEdge.item.filter != null && patternEdge.item.filter.getWhileCondition() != null) {
+          if (patternEdge.item != null && patternEdge.item.filter != null && (patternEdge.item.filter.getWhileCondition() != null
+              || patternEdge.item.filter.getMaxDepth() != null)) {
             rootWeight.key = rootWeight.key + Integer.MAX_VALUE;
             if (rootWeight.key < 0) {
               rootWeight.key = Long.MAX_VALUE;
