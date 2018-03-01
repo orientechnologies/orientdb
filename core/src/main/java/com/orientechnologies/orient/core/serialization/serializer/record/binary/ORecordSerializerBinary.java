@@ -188,8 +188,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   }
   
   @Override
-  public <RET> RET deserializeFieldFromEmbedded(byte[]record, OClass iClass, String iFieldName, int serializerVersion){
-    throw new UnsupportedOperationException("Operation still not supported");
-//    return deserializeField(record, iClass, iFieldName, true, serializerVersion);
+  public <RET> RET deserializeFieldFromEmbedded(byte[]record, OClass iClass, String iFieldName, int serializerVersion){    
+    return deserializeField(record, iClass, iFieldName, true, serializerVersion);
   }
 }
