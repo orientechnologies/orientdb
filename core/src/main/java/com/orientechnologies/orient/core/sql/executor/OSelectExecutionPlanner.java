@@ -49,6 +49,7 @@ public class OSelectExecutionPlanner {
     info.unwind = this.statement.getUnwind() == null ? null : this.statement.getUnwind().copy();
     info.skip = this.statement.getSkip();
     info.limit = this.statement.getLimit();
+    info.lockRecord = this.statement.getLockRecord();
 
   }
 
@@ -94,6 +95,8 @@ public class OSelectExecutionPlanner {
     // TODO optimization: in most cases the projections can be calculated on remote nodes
     buildDistributedExecutionPlan(result, info, ctx, enableProfiling);
 
+    handleLockRecord(result, info, ctx, enableProfiling);
+
     handleProjectionsBlock(result, info, ctx, enableProfiling);
 
     if (!enableProfiling && statement.executinPlanCanBeCached() && result.canBeCached()
@@ -101,6 +104,12 @@ public class OSelectExecutionPlanner {
       OExecutionPlanCache.put(statement.getOriginalStatement(), result, (ODatabaseDocumentInternal) ctx.getDatabase());
     }
     return result;
+  }
+
+  private void handleLockRecord(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx, boolean enableProfiling) {
+    if(info.lockRecord!=null){
+      result.chain(new LockRecordStep(info.lockRecord, ctx, enableProfiling));
+    }
   }
 
   public static void handleProjectionsBlock(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,

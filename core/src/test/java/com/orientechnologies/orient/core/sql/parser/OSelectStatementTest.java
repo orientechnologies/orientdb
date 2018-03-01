@@ -772,6 +772,17 @@ public class OSelectStatementTest {
     checkRightSyntax("select bar[not IN $a ] from V LET $a = (SELECT FROM V)");
   }
 
+  @Test
+  public void testLockRecord() {
+    checkRightSyntax("select from V LOCK RECORD");
+    checkRightSyntax("select from V LOCK NONE");
+    checkRightSyntax("select from V LOCK DEFAULT");
+    checkRightSyntax("select from V LOCK SHARED");
+
+    checkWrongSyntax("select from V LOCK RECORD FOO");
+    checkWrongSyntax("select from V LOCK FOO");
+  }
+
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());
     OrientSql osql = new OrientSql(is);
