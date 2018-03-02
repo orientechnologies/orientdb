@@ -9,24 +9,12 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Triple;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Tuple;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{      
-  
-  private static class Triple<T1, T2, T3> extends Tuple<T1, T2>{
-    
-    private final T3 thirdVal;
-    
-    public Triple(T1 firstVal, T2 secondVal, T3 thirdVal) {
-      super(firstVal, secondVal);
-      this.thirdVal = thirdVal;
-    }
-
-    public T3 getThirdVal() {
-      return thirdVal;
-    }        
-  }
+public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{          
   
   private enum Signal{
     CONTINUE,

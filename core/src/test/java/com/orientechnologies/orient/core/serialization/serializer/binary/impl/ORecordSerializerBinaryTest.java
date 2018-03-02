@@ -19,7 +19,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -150,6 +149,9 @@ public class ORecordSerializerBinaryTest {
     embeddedLevel2.setProperty("InnerTestFields", setValue);
     embedded.setProperty("TestEmbedded", embeddedLevel2);    
     
+    byte[] embeddedBytesNative = serializer.toStream(embedded, false);
+    byte[] embeddedLevel2BytesNative = serializer.toStream(embeddedLevel2, false);
+    
     OClass classOfEmbedded = db.getClass("TestClass");
     
     root.field("TestEmbedded", embedded);    
@@ -184,34 +186,7 @@ public class ORecordSerializerBinaryTest {
     OResultBinary embeddedListElementBytes = embeddedListFieldValue.get(0);
     Integer deserializedValue = serializer.deserializeFieldFromEmbedded(embeddedListElementBytes.getResultBytes(), null, "InnerTestFields", rootBytes[0]);
     Assert.assertEquals(setValue, deserializedValue);
-  }
-  
-//  @Test
-//  public void testLink(){        
-//    ODocument embedded = new ODocument();
-//    Integer setValue = 19;
-//    embedded.setProperty("TestField", setValue);
-//    embedded = db.save(embedded);
-//    ORID id = embedded.getIdentity();
-//    
-//    ODocument root = new ODocument();
-//    root.field("TestLink", embedded);
-//    root.setClassName("TestClass");
-//    
-//    OClass classType = db.getClass("TestClass");
-//    
-//    db.save(root);    
-//    
-//    byte[] rootBytes = serializer.toStream(root, false);
-//    byte[] embeddedNativeBytes = serializer.toStream(embedded, false);
-//    //want to update data pointers because first byte will be removed
-//    decreasePositionsBy(embeddedNativeBytes, 1);
-//    //skip serializer version
-//    embeddedNativeBytes = Arrays.copyOfRange(embeddedNativeBytes, 1, embeddedNativeBytes.length);        
-//        
-//    OResultBinary embeddedBytesViaGet = serializer.deserializeFieldFromRoot(rootBytes, classType, "TestLink");    
-//    Assert.assertTrue(Arrays.equals(embeddedNativeBytes, embeddedBytesViaGet.getResultBytes()));
-//  }
+  }  
 
   private void decreasePositionsBy(byte[] embeddedNativeBytes, int stepSize) {
     BytesContainer container = new BytesContainer(embeddedNativeBytes);
