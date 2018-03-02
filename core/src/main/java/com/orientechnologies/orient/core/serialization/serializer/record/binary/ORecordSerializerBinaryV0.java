@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.io.Serializable;
@@ -51,9 +52,31 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
+  protected static class Tuple<T1, T2>{
+    
+    private final T1 firstVal;
+    private final T2 secondVal;
+    
+    Tuple(T1 firstVal, T2 secondVal){
+      this.firstVal = firstVal;
+      this.secondVal = secondVal;
+    }
+
+    public T1 getFirstVal() {
+      return firstVal;
+    }
+
+    public T2 getSecondVal() {
+      return secondVal;
+    }
+        
+  }
+  
   private static final String       CHARSET_UTF_8    = "UTF-8";
   private static final ORecordId    NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
   protected static final long       MILLISEC_PER_DAY = 86400000;
@@ -437,8 +460,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return value;
   }
   
-  private void updatePositions(BytesContainer record, Queue<Integer> recordsStartPositions, int offset){    
-    //go with breadth first
+  
+  
+  private void updatePositionsEmbedded(BytesContainer record, Queue<Integer> recordsStartPositions, int offset){    
+    //go with depth first
     while(!recordsStartPositions.isEmpty()){
       record.offset = recordsStartPositions.poll();
       int len = -1;      
@@ -459,9 +484,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           //read type
           byte typeId = readByte(record);          
           OType type = OType.getById(typeId);
-          if (type.isEmbedded()){
+          if (type == OType.EMBEDDED){
             //detected embedded doc, we want to update its data pointers too
             recordsStartPositions.add(pointer);
+          }
+          else if (type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET){
+            List<Tuple<Integer, Integer>> embeddedFromCollectionStartPositions = getEmbeddedDocumentsPositionsFromCollectionOfEmbedded(record);
+            for (Tuple<Integer, Integer> positionLength : embeddedFromCollectionStartPositions){
+              recordsStartPositions.add(positionLength.getFirstVal());
+            }
           }
         }
         else if (len < 0){
@@ -482,8 +513,14 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           else
             type = readOType(record);
           
-          if (type.isEmbedded()){
+          if (type == OType.EMBEDDED){
             recordsStartPositions.add(pointer);
+          }
+          else if (type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET){
+            List<Tuple<Integer, Integer>> embeddedFromCollectionStartPositions = getEmbeddedDocumentsPositionsFromCollectionOfEmbedded(record);
+            for (Tuple<Integer, Integer> positionLength : embeddedFromCollectionStartPositions){
+              recordsStartPositions.add(positionLength.getFirstVal());
+            }
           }
           
         }
@@ -491,37 +528,83 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
   }
   
-  protected BytesContainer[] deserializeEmbeddedCollectionAsCollectionOfBytes(final BytesContainer bytes, int valueLength, int serializerVersion){        
-    int numberOfElements = OVarIntSerializer.readAsInteger(bytes);
-    BytesContainer[] retVals = new BytesContainer[numberOfElements];
+  //returns begin position and length for each document in embedded collection
+  private List<Tuple<Integer, Integer>> getEmbeddedDocumentsPositionsFromCollectionOfEmbedded(final BytesContainer bytes){
+    final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
+    final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
     
-    for (int i = 0 ; i < numberOfElements; i++){
-      int startOffset = bytes.offset;
+    int numberOfElements = OVarIntSerializer.readAsInteger(bytes);
+    List<Tuple<Integer, Integer>> retVals = new ArrayList<>();
+    //read collection type
+    byte typeId = readByte(bytes);
+    OType collectionType = OType.getById(typeId);
+    
+    for (int i = 0 ; i < numberOfElements; i++){      
       //read element
-      int len = -1;
-      while (len != 0){
-        //read field name
-        readString(bytes);
-        //read data pointer
-        readInteger(bytes);
-        //read type
-        readByte(bytes);
-      }
-      byte[] documentBytes = Arrays.copyOfRange(bytes.bytes, bytes.offset, bytes.offset + valueLength);
-
-      //---we neeed update info about data pointers
-      BytesContainer container = new BytesContainer(documentBytes);
+      //read data type 
+      typeId = readByte(bytes);
+      
+      //now starts embedded element
+      int startOffset = bytes.offset;
       //read class name
-
-      Queue<Integer> recordOffsets = new LinkedList<>();
-      recordOffsets.add(0);
-      updatePositions(container, recordOffsets, startOffset);
-      //---
-      container.offset = 0;
-      return container;
+      String className = readString(bytes);
+      int len = -1;
+      int lastDataPos = -1;
+      OType lastDataType = null;
+      while (len != 0){
+        len = OVarIntSerializer.readAsInteger(bytes);
+        if (len > 0){
+          //read field name
+          bytes.skip(len);
+          //read data pointer
+          lastDataPos = readInteger(bytes);
+          //read type
+          byte dataTypeId = readByte(bytes);
+          lastDataType = OType.getById(dataTypeId);
+        }
+        else if (len < 0) {
+          final int id = (len * -1) - 1;          
+          OGlobalProperty property = _schema.getGlobalPropertyById(id);          
+          if (property.getType() != OType.ANY)
+            lastDataType = property.getType();
+          else
+            lastDataType = readOType(bytes);
+          lastDataPos = readInteger(bytes);
+        }
+      }
+      //read last data
+      //TODO find better solution
+      bytes.offset = lastDataPos;
+      deserializeValue(bytes, lastDataType, null);
+      int endOffset = bytes.offset;
+      Tuple<Integer, Integer> positionsAndLength = new Tuple<>(startOffset, endOffset - startOffset);
+      retVals.add(positionsAndLength);
     }
     
     return retVals;
+  }
+  
+  protected List<BytesContainer> deserializeEmbeddedCollectionAsCollectionOfBytes(final BytesContainer bytes){
+    List<Tuple<Integer, Integer>> positionsWithLengths = getEmbeddedDocumentsPositionsFromCollectionOfEmbedded(bytes);
+    List<BytesContainer> retVal = new ArrayList<>();
+    
+    for (Tuple<Integer, Integer> positionLength : positionsWithLengths){
+      int position = positionLength.getFirstVal();
+      int length = positionLength.getSecondVal();
+      byte[] documentBytes = Arrays.copyOfRange(bytes.bytes, position, position + length);
+
+      //---we neeed update info about data pointers
+      BytesContainer embeddedContainer = new BytesContainer(documentBytes);      
+
+      Queue<Integer> recordOffsets = new LinkedList<>();
+      recordOffsets.add(0);
+      updatePositionsEmbedded(embeddedContainer, recordOffsets, position);
+      //---
+      embeddedContainer.offset = 0;
+      retVal.add(embeddedContainer);
+    }
+    
+    return retVal;
   }
   
   protected BytesContainer deserializeEmbeddedAsBytes(final BytesContainer bytes, int valueLength){
@@ -529,12 +612,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     byte[] documentBytes = Arrays.copyOfRange(bytes.bytes, bytes.offset, bytes.offset + valueLength);
     
     //---we neeed update info about data pointers
-    BytesContainer container = new BytesContainer(documentBytes);
-    //read class name
+    BytesContainer container = new BytesContainer(documentBytes);    
     
     Queue<Integer> recordOffsets = new LinkedList<>();
     recordOffsets.add(0);
-    updatePositions(container, recordOffsets, startOffset);
+    updatePositionsEmbedded(container, recordOffsets, startOffset);
     //---
     container.offset = 0;
     return container;
@@ -590,9 +672,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         value = readEmbeddedSet(bytes, ownerDocument);;
       }
       else{
-        value = deserializeEmbeddedAsBytes(bytes, valueLengthInBytes);
-        value = wrapEmbeddedCollectionToBeDeseriazible((BytesContainer)value, OType.EMBEDDEDSET);
-        value = new OResultBinary((byte[])value, serializerVersion);
+        List<BytesContainer> bytesColection = deserializeEmbeddedCollectionAsCollectionOfBytes(bytes);
+        value = bytesColection.stream().map((BytesContainer container) -> new OResultBinary(container.bytes, serializerVersion)).collect(Collectors.toList());
       }      
       break;
     case EMBEDDEDLIST:
@@ -600,9 +681,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         value = readEmbeddedList(bytes, ownerDocument);
       }
       else{
-        value = deserializeEmbeddedAsBytes(bytes, valueLengthInBytes);
-        value = wrapEmbeddedCollectionToBeDeseriazible((BytesContainer)value, OType.EMBEDDEDLIST);
-        value = new OResultBinary((byte[])value, serializerVersion);
+        List<BytesContainer> bytesColection = deserializeEmbeddedCollectionAsCollectionOfBytes(bytes);
+        value = bytesColection.stream().map((BytesContainer container) -> new OResultBinary(container.bytes, serializerVersion)).collect(Collectors.toList());
       }
       break;
     case LINKSET:
@@ -621,14 +701,14 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       value = readLinkMap(bytes, ownerDocument);
       break;
     case EMBEDDEDMAP:
-      if (embeddedAsDocument){
+//      if (embeddedAsDocument){
         value = readEmbeddedMap(bytes, ownerDocument);
-      }
-      else{
-        value = deserializeEmbeddedAsBytes(bytes, valueLengthInBytes);
-        value = wrapEmbeddedCollectionToBeDeseriazible((BytesContainer)value, OType.EMBEDDEDMAP);
-        value = new OResultBinary((byte[])value, serializerVersion);
-      }
+//      }
+//      else{
+//        value = deserializeEmbeddedAsBytes(bytes, valueLengthInBytes);
+//        value = wrapEmbeddedCollectionToBeDeseriazible((BytesContainer)value, OType.EMBEDDEDMAP);
+//        value = new OResultBinary((byte[])value, serializerVersion);
+//      }
       break;
     case DECIMAL:
       value = ODecimalSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
@@ -1297,28 +1377,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     // SKIP CLASS NAME        
     skipClassName(bytes);    
     return deserializeFieldTypedLoopAndReturn(bytes, iClass, iFieldName, serializerVersion);    
-  }
-
-  private BytesContainer wrapEmbeddedCollectionToBeDeseriazible(BytesContainer value, OType oType) {
-    BytesContainer retValue = new BytesContainer();    
-    //no class name
-    OVarIntSerializer.write(retValue, 0l);
-    
-    wri
-    
-    int offset = retValue.offset;
-    //allocate space for pointer and type id
-    value.alloc(OIntegerSerializer.INT_SIZE + 1);
-    //allocate space for embedded collection data
-    value.alloc(value.bytes.length);    
-    //write data pointer
-    OIntegerSerializer.INSTANCE.serializeLiteral(offset, retValue.bytes, offset);
-    //write type
-    OByteSerializer.INSTANCE.serializeLiteral((byte)oType.getId(), retValue.bytes, offset + OIntegerSerializer.INT_SIZE);
-    //write embedded collection content
-    OByteSerializer.INSTANCE.serializeRawBytes(value.bytes, retValue.bytes, retValue.offset);
-    
-    return retValue;
-  }
+  }  
   
 }

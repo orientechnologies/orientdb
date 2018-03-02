@@ -12,27 +12,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{  
-  
-  private static class Tuple<T1, T2>{
-    
-    private final T1 firstVal;
-    private final T2 secondVal;
-    
-    Tuple(T1 firstVal, T2 secondVal){
-      this.firstVal = firstVal;
-      this.secondVal = secondVal;
-    }
-
-    public T1 getFirstVal() {
-      return firstVal;
-    }
-
-    public T2 getSecondVal() {
-      return secondVal;
-    }
-        
-  }
+public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{      
   
   private static class Triple<T1, T2, T3> extends Tuple<T1, T2>{
     

@@ -170,6 +170,9 @@ public class ORecordSerializerBinaryTest {
     ODocument embeddedListElement = new ODocument();
     Integer setValue = 19;
     embeddedListElement.field("InnerTestFields", setValue);
+    
+    byte[] rawElementBytes = serializer.toStream(embeddedListElement, false);
+    
     List<ODocument> embeddedList = new  ArrayList<>();
     embeddedList.add(embeddedListElement);
     
@@ -177,9 +180,9 @@ public class ORecordSerializerBinaryTest {
     
     byte[] rootBytes = serializer.toStream(root, false);
     
-    List<byte[]> embeddedListFieldValue = serializer.deserializeFieldFromRoot(rootBytes, null, "TestEmbeddedList");
-    byte[] embeddedListElementBytes = embeddedListFieldValue.get(0);
-    Integer deserializedValue = serializer.deserializeFieldFromEmbedded(embeddedListElementBytes, null, "InnerTestFields", rootBytes[0]);
+    List<OResultBinary> embeddedListFieldValue = serializer.deserializeFieldFromRoot(rootBytes, null, "TestEmbeddedList");
+    OResultBinary embeddedListElementBytes = embeddedListFieldValue.get(0);
+    Integer deserializedValue = serializer.deserializeFieldFromEmbedded(embeddedListElementBytes.getResultBytes(), null, "InnerTestFields", rootBytes[0]);
     Assert.assertEquals(setValue, deserializedValue);
   }
   
