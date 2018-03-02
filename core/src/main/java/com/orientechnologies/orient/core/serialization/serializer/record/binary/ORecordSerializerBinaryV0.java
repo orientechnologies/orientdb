@@ -445,7 +445,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     List<HelperClasses.Tuple<Integer, Integer>> retList = new ArrayList<>();    
     int len = -1;      
     //skip class name
-    readString(record);
+    String className = readString(record);
     //update positions and check for embedded records
     while (len != 0){
       len = OVarIntSerializer.readAsInteger(record);
@@ -462,14 +462,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         OType type = OType.getById(typeId);
         
         int currentCursor = record.offset;
-        record.offset = valuePos + moveOffset;
+        record.offset = valuePos;
         if (null != type)switch (type) {
           case EMBEDDED:
-            //detected embedded doc, we want to update its data pointers too
+            //no need for level up because root byte array is already devided
             retList.addAll(getPositionsPointersToUpdateFromSimpleEmbedded(record, moveOffset, level + 1));
             break;
           case EMBEDDEDLIST:
           case EMBEDDEDSET:
+            //no need for level up because root byte array is already devided
             List<RecordInfo> recordsInfo = getPositionsFromEmbeddedCollection(record, level + 1);
             for (RecordInfo recordInfo : recordsInfo){
               retList.addAll(recordInfo.fieldRelatedPositions);
@@ -494,20 +495,21 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         else
           type = readOType(record);
 
-        HelperClasses.Tuple<Integer, Integer> pointerLevel = new HelperClasses.Tuple<>(record.offset, level);
+        HelperClasses.Tuple<Integer, Integer> pointerLevel = new HelperClasses.Tuple<>(record.offset, level + 1);
         retList.add(pointerLevel);
         int valuePos = readInteger(record);
         
         int currentCursor = record.offset;
-        record.offset = valuePos + moveOffset;
+        record.offset = valuePos;
         if (null != type)switch (type) {
-          case EMBEDDED:
-            //detected embedded doc, we want to update its data pointers too
+          case EMBEDDED:            
+            //no need for level up because root byte array is already devided
             retList.addAll(getPositionsPointersToUpdateFromSimpleEmbedded(record, moveOffset, level + 1));
             break;
           case EMBEDDEDLIST:
           case EMBEDDEDSET:
-            List<RecordInfo> recordsInfo = getPositionsFromEmbeddedCollection(record, level + 1);
+            //no need for level up because root byte array is already devided
+            List<RecordInfo> recordsInfo = getPositionsFromEmbeddedCollection(record, level);
             for (RecordInfo recordInfo : recordsInfo){
               retList.addAll(recordInfo.fieldRelatedPositions);
             }
@@ -562,9 +564,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       
       int currentCursor = bytes.offset;
       if (dataType == OType.EMBEDDED){
+        //collections have embedded documents and root array still not divided
         fieldInfo.fieldRelatedPositions.addAll(getPositionsPointersToUpdateFromSimpleEmbedded(bytes, -fieldStart, level + 1));
       }
       else if (dataType == OType.EMBEDDEDLIST || dataType == OType.EMBEDDEDSET){
+        //collections have embedded documents and root array still not divided
         List<RecordInfo> fieldsInfo = getPositionsFromEmbeddedCollection(bytes, level + 1);
         fieldsInfo.forEach((innerFieldInfo) -> {
           fieldInfo.fieldRelatedPositions.addAll(innerFieldInfo.fieldRelatedPositions);
@@ -574,7 +578,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         fieldInfo.fieldRelatedPositions.addAll(getPositionsFromEmbeddedMap(bytes));
       }
       bytes.offset = currentCursor;
-      //TODO find better way to do this;
+      //TODO find better way to skip data bytes;
       deserializeValue(bytes, dataType, null);
       fieldInfo.fieldLength = bytes.offset - fieldStart;      
       retList.add(fieldInfo);
@@ -606,12 +610,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   
   protected BytesContainer deserializeEmbeddedAsBytes(final BytesContainer bytes, int valueLength){
     int startOffset = bytes.offset;
-    byte[] documentBytes = Arrays.copyOfRange(bytes.bytes, bytes.offset, bytes.offset + valueLength);
+            
+    List<HelperClasses.Tuple<Integer, Integer>> positionsPointers = getPositionsPointersToUpdateFromSimpleEmbedded(bytes, -startOffset, 1);
+    byte[] documentBytes = Arrays.copyOfRange(bytes.bytes, startOffset, startOffset + valueLength);
     
     //---we neeed update info about data pointers
-    BytesContainer container = new BytesContainer(documentBytes);    
-        
-    List<HelperClasses.Tuple<Integer, Integer>> positionsPointers = getPositionsPointersToUpdateFromSimpleEmbedded(container, -startOffset, 0);
+    BytesContainer container = new BytesContainer(documentBytes);
     updatePositions(positionsPointers, -startOffset, container);
     //---
     container.offset = 0;
@@ -624,6 +628,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       int level = pointerLevel.getSecondVal();            
       if (level > 0)
         //for positions on level > 0 also pointer addresses should be shifted
+        //level is > 0 when more then one array division is performed
         pointer += shiftVal;
       bytes.offset = pointer;
       Integer position = readInteger(bytes);
