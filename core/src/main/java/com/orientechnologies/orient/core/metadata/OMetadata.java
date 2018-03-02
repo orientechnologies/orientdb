@@ -34,13 +34,12 @@ import java.util.*;
 
 /**
  * @author luca.molino
- * 
  */
 public interface OMetadata {
   Set<String> SYSTEM_CLUSTER = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-      new String[] { OUser.CLASS_NAME.toLowerCase(Locale.ENGLISH), ORole.CLASS_NAME.toLowerCase(Locale.ENGLISH), OIdentity.CLASS_NAME.toLowerCase(Locale.ENGLISH),
-          OSecurity.RESTRICTED_CLASSNAME.toLowerCase(Locale.ENGLISH), OFunction.CLASS_NAME.toLowerCase(Locale.ENGLISH), "OTriggered".toLowerCase(Locale.ENGLISH),
-          "OSchedule".toLowerCase(Locale.ENGLISH), "internal"})));
+      new String[] { OUser.CLASS_NAME.toLowerCase(Locale.ENGLISH), ORole.CLASS_NAME.toLowerCase(Locale.ENGLISH),
+          OIdentity.CLASS_NAME.toLowerCase(Locale.ENGLISH), OSecurity.RESTRICTED_CLASSNAME.toLowerCase(Locale.ENGLISH),
+          OFunction.CLASS_NAME.toLowerCase(Locale.ENGLISH), "internal" })));
 
   void load();
 

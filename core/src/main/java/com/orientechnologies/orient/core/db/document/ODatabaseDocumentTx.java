@@ -1009,19 +1009,20 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   public void reloadUser() {
     if (user != null) {
       activateOnCurrentThread();
+      if (user.checkIfAllowed(ORule.ResourceGeneric.CLASS, OUser.CLASS_NAME, ORole.PERMISSION_READ) != null) {
+        OMetadata metadata = getMetadata();
 
-      OMetadata metadata = getMetadata();
+        if (metadata != null) {
+          final OSecurity security = metadata.getSecurity();
+          OUser secGetUser = security.getUser(user.getName());
 
-      if (metadata != null) {
-        final OSecurity security = metadata.getSecurity();
-        OUser secGetUser = security.getUser(user.getName());
-
-        if (secGetUser != null)
-          user = new OImmutableUser(security.getVersion(), secGetUser);
-        else
+          if (secGetUser != null)
+            user = new OImmutableUser(security.getVersion(), secGetUser);
+          else
+            user = new OImmutableUser(-1, new OUser());
+        } else
           user = new OImmutableUser(-1, new OUser());
-      } else
-        user = new OImmutableUser(-1, new OUser());
+      }
     }
   }
 
