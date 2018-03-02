@@ -189,6 +189,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   
   @Override
   public <RET> RET deserializeFieldFromEmbedded(byte[]record, OClass iClass, String iFieldName, int serializerVersion){    
-    return deserializeField(record, iClass, iFieldName, true, serializerVersion);
+    throw new UnsupportedOperationException("Reading from embedded fields currently ar enot supported");
+//    return deserializeField(record, iClass, iFieldName, true, serializerVersion);
   }
 }

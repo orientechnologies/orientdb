@@ -549,6 +549,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       }
       else{
         value = deserializeEmbeddedAsBytes(bytes, valueLengthInBytes, serializerVersion);
+        throw new UnsupportedOperationException("Embedded fields currently are not supported");
       }      
       break;
     case EMBEDDEDSET:
