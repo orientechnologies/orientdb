@@ -172,7 +172,7 @@ public class OrientDBRemote implements OrientDBInternal {
     checkOpen();
     OServerAdmin admin = null;
     try {
-      admin = new OServerAdmin(buildUrl(name));
+      admin = new OServerAdmin(this, buildUrl(name));
       admin.connect(user, password);
       return operation.execute(admin);
     } catch (IOException e) {
