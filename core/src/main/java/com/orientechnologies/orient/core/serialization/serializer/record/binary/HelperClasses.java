@@ -57,7 +57,7 @@ public class HelperClasses {
   }
   
   protected static class RecordInfo{
-    List<Tuple<Integer, Integer>> fieldRelatedPositions;
+    List<Integer> fieldRelatedPositions;
     int fieldStartOffset;
     int fieldLength;
   }
