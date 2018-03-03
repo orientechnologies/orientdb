@@ -171,21 +171,26 @@ public class ORecordSerializerBinaryTest {
     ODocument root = new ODocument();
     ODocument embeddedListElement = new ODocument();
     Integer setValue = 19;
+    Integer setValue2 = 21;
     embeddedListElement.field("InnerTestFields", setValue);
     
     byte[] rawElementBytes = serializer.toStream(embeddedListElement, false);
     
-    List<ODocument> embeddedList = new  ArrayList<>();
+    List embeddedList = new  ArrayList();
     embeddedList.add(embeddedListElement);
+    embeddedList.add(setValue2);
     
     root.field("TestEmbeddedList", embeddedList, OType.EMBEDDEDLIST);
     
     byte[] rootBytes = serializer.toStream(root, false);
     
-    List<OResultBinary> embeddedListFieldValue = serializer.deserializeFieldFromRoot(rootBytes, null, "TestEmbeddedList");
-    OResultBinary embeddedListElementBytes = embeddedListFieldValue.get(0);
+    List<Object> embeddedListFieldValue = serializer.deserializeFieldFromRoot(rootBytes, null, "TestEmbeddedList");
+    OResultBinary embeddedListElementBytes = (OResultBinary)embeddedListFieldValue.get(0);
     Integer deserializedValue = serializer.deserializeFieldFromEmbedded(embeddedListElementBytes.getResultBytes(), null, "InnerTestFields", rootBytes[0]);
     Assert.assertEquals(setValue, deserializedValue);
+    
+    Integer secondtestVal = (Integer)embeddedListFieldValue.get(1);
+    Assert.assertEquals(setValue2, secondtestVal);
   }  
 
   private void decreasePositionsBy(byte[] embeddedNativeBytes, int stepSize) {

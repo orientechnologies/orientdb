@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Tuple;
 import java.util.*;
 import java.util.Map.Entry;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
 
 public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{          
   
