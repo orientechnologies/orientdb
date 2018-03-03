@@ -76,6 +76,11 @@ public class HelperClasses {
     OType fieldType;
   }
   
+  protected static class MapRecordInfo extends RecordInfo{
+    String key;
+    OType keyType;
+  }
+  
   protected static class MapObjectData{
     int startPosition;
     int length;

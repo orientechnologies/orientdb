@@ -30,7 +30,9 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -191,7 +193,30 @@ public class ORecordSerializerBinaryTest {
     
     Integer secondtestVal = (Integer)embeddedListFieldValue.get(1);
     Assert.assertEquals(setValue2, secondtestVal);
-  }  
+  }
+
+  @Test
+  public void testGetFieldFromEmbeddedMap(){
+    ODocument root = new ODocument();    
+    Integer setValue = 23;
+    Integer setValue2 = 27;
+    Map<String, Object> map = new HashMap<>();
+    ODocument embeddedListElement = new ODocument();
+    embeddedListElement.field("InnerTestFields", setValue);
+    map.put("first", embeddedListElement);
+    map.put("second", setValue2);
+    
+    root.field("TestEmbeddedMap", map, OType.EMBEDDEDMAP);
+    byte[] rootBytes = serializer.toStream(root, false);
+    
+    Map deserializedMap = serializer.deserializeFieldFromRoot(rootBytes, null, "TestEmbeddedMap");
+    OResultBinary firstValDeserialized = (OResultBinary)deserializedMap.get("first");
+    Integer deserializedValue = serializer.deserializeFieldFromEmbedded(firstValDeserialized.getResultBytes(), null, "InnerTestFields", rootBytes[0]);
+    Assert.assertEquals(setValue, deserializedValue);
+    
+    Integer secondDeserializedValue = (Integer)deserializedMap.get("second");
+    Assert.assertEquals(setValue2, secondDeserializedValue);
+  }
 
   private void decreasePositionsBy(byte[] embeddedNativeBytes, int stepSize) {
     BytesContainer container = new BytesContainer(embeddedNativeBytes);

@@ -444,7 +444,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       if (len > 0){
         //read field name
         record.offset += len;
-        //add this offeste to result List;        
+        //add this offset to result List;        
         retList.add(record.offset);
         int valuePos = readInteger(record);                    
 
@@ -468,7 +468,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
             }
             break;          
           case EMBEDDEDMAP:
-            retList.addAll(getPositionsFromEmbeddedMap(record));
+            List<MapRecordInfo> mapRecordInfo = getPositionsFromEmbeddedMap(record, serializerVersion);
+            for (RecordInfo recordInfo : mapRecordInfo){
+              retList.addAll(recordInfo.fieldRelatedPositions);
+            }
             break;
           default:
             break;
@@ -490,7 +493,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         int valuePos = readInteger(record);
         
         int currentCursor = record.offset;
-        record.offset = valuePos;
+        record.offset = valuePos;         
         if (null != type)switch (type) {
           case EMBEDDED:            
             //no need for level up because root byte array is already devided
@@ -499,13 +502,16 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           case EMBEDDEDLIST:
           case EMBEDDEDSET:
             //no need for level up because root byte array is already devided
-            List<RecordInfo> recordsInfo = getPositionsFromEmbeddedCollection(record, serializerVersion);
-            for (RecordInfo recordInfo : recordsInfo){
+            List<RecordInfo> listRecordsInfo = getPositionsFromEmbeddedCollection(record, serializerVersion);
+            for (RecordInfo recordInfo : listRecordsInfo){
               retList.addAll(recordInfo.fieldRelatedPositions);
             }
             break;          
           case EMBEDDEDMAP:
-            retList.addAll(getPositionsFromEmbeddedMap(record));
+            List<MapRecordInfo> mapRecordsInfo = getPositionsFromEmbeddedMap(record, serializerVersion);
+            for (RecordInfo recordInfo : mapRecordsInfo){
+              retList.addAll(recordInfo.fieldRelatedPositions);
+            }
             break;
           default:
             break;
@@ -517,24 +523,65 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
     
   
-  private List<Integer> getPositionsFromEmbeddedMap(final BytesContainer bytes){
-    return null;
-//    int numOfEntries = OVarIntSerializer.readAsByte(bytes);
-//    for (int i = 0; i < numOfEntries; i++){
-//      byte keyTypeId = readByte(bytes);
-//      OType keyType = OType.getById(keyTypeId);
-//      Object key = deserializeValue(bytes, keyType, null);
-//      int dataPosition = readInteger(bytes);
-//      byte dataTypeId = readByte(bytes);
-//      OType dataType = OType.getById(dataTypeId);
-//    }
+  private List<MapRecordInfo> getPositionsFromEmbeddedMap(final BytesContainer bytes, int serializerVersion){
+    List<MapRecordInfo> retList = new ArrayList<>();
+    
+    int numberOfElements = OVarIntSerializer.readAsInteger(bytes);    
+    
+    for (int i = 0 ; i < numberOfElements; i++){   
+      byte keyTypeId = readByte(bytes);
+      String key = readString(bytes);
+      int valuePos = readInteger(bytes);
+      byte valueTypeId = readByte(bytes);
+      OType valueType = OType.getById(valueTypeId);
+      MapRecordInfo recordInfo = new MapRecordInfo();
+      recordInfo.fieldRelatedPositions = new ArrayList<>();
+      recordInfo.fieldStartOffset = valuePos;
+      recordInfo.fieldType = valueType;
+      recordInfo.key = key;
+      recordInfo.keyType = OType.getById(keyTypeId);
+      int currentOffset = bytes.offset;
+      bytes.offset = valuePos;
+      
+      //add recursively for all embedded
+      if (null != valueType)switch (valueType) {
+        case EMBEDDED:
+          //collections have embedded documents and root array still not divided
+          recordInfo.fieldRelatedPositions.addAll(getPositionsPointersToUpdateFromSimpleEmbedded(bytes, serializerVersion));
+          break;
+        case EMBEDDEDLIST:
+        case EMBEDDEDSET:
+          //collections have embedded documents and root array still not divided
+          List<RecordInfo> fieldsInfo = getPositionsFromEmbeddedCollection(bytes, serializerVersion);
+          fieldsInfo.forEach((innerFieldInfo) -> {
+            recordInfo.fieldRelatedPositions.addAll(innerFieldInfo.fieldRelatedPositions);
+          });
+          break;
+        case EMBEDDEDMAP:
+          List<MapRecordInfo> mapRecordsInfo = getPositionsFromEmbeddedMap(bytes, serializerVersion);
+          for (RecordInfo mapRecordInfo : mapRecordsInfo){
+            recordInfo.fieldRelatedPositions.addAll(mapRecordInfo.fieldRelatedPositions);
+          }
+          break;
+        default:
+          break;
+      }
+      
+      //get field length
+      bytes.offset = valuePos;
+      deserializeValue(bytes, valueType, null, true, -1, serializerVersion, true);
+      recordInfo.fieldLength = bytes.offset - valuePos;
+      
+      bytes.offset = currentOffset;
+      retList.add(recordInfo);
+    }
+    
+    return retList;
   }
   
   //returns begin position and length for each value in embedded collection
   private List<RecordInfo> getPositionsFromEmbeddedCollection(final BytesContainer bytes, int serializerVersion){
     List<RecordInfo> retList = new ArrayList<>();
-    final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
-    final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
     
     int numberOfElements = OVarIntSerializer.readAsInteger(bytes);    
     //read collection type
@@ -567,7 +614,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           });
           break;
         case EMBEDDEDMAP:
-          fieldInfo.fieldRelatedPositions.addAll(getPositionsFromEmbeddedMap(bytes));
+          List<MapRecordInfo> mapRecordsInfo = getPositionsFromEmbeddedMap(bytes, serializerVersion);
+          for (RecordInfo recordInfo : mapRecordsInfo){
+            fieldInfo.fieldRelatedPositions.addAll(recordInfo.fieldRelatedPositions);
+          }
           break;
         default:
           break;
@@ -604,12 +654,27 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return retVal;
   }
   
-  protected Map<Object, OResultBinary> deserializeEmbeddedMapAsMapOfBytes(final BytesContainer bytes){
-//    Map<Object, OResultBinary> retVal = new TreeMap<>();
-//    List<Tuple<Integer, Integer>> positionsWithLengths = getEmbeddedDocumentsPositionsFromMapOfEmbedded(bytes);
-//    
-//    return retVal;
-    throw new UnsupportedOperationException();
+  protected Map<String, Object> deserializeEmbeddedMapAsMapOfBytes(final BytesContainer bytes, int serializerVersion){
+    Map<String, Object> retVal = new TreeMap<>();
+    List<MapRecordInfo> positionsWithLengths = getPositionsFromEmbeddedMap(bytes, serializerVersion);
+    for (MapRecordInfo recordInfo : positionsWithLengths){
+      String key = recordInfo.key;
+      Object value;
+      if (recordInfo.fieldType.isEmbedded()){
+        byte[] recordBytes = Arrays.copyOfRange(bytes.bytes, recordInfo.fieldStartOffset, recordInfo.fieldLength + recordInfo.fieldStartOffset);
+        BytesContainer container = new BytesContainer(recordBytes);
+        updatePositions(recordInfo.fieldRelatedPositions, -recordInfo.fieldStartOffset, container);
+        value = container;
+      }
+      else{
+        int currentOffset = bytes.offset;
+        bytes.offset = recordInfo.fieldStartOffset;
+        value = deserializeValue(bytes, recordInfo.fieldType, null);        
+        bytes.offset = currentOffset;
+      }
+      retVal.put(key, value);
+    }
+    return retVal;    
   }
   
   protected BytesContainer deserializeEmbeddedAsBytes(final BytesContainer bytes, int valueLength, int serializerVersion){
@@ -758,8 +823,16 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         value = readEmbeddedMap(bytes, ownerDocument);
       }
       else{
-        value = deserializeEmbeddedMapAsMapOfBytes(bytes);
-        
+        Map<String, Object> mapOfDeserialized = deserializeEmbeddedMapAsMapOfBytes(bytes, serializerVersion);        
+        Map<String, Object> returnMap = new HashMap<>();
+        for (Entry<String, Object> mapEntry : mapOfDeserialized.entrySet()){
+          Object val = mapEntry.getValue();
+          if (val instanceof BytesContainer){
+            val = new OResultBinary(((BytesContainer)val).bytes, serializerVersion);
+          }
+          returnMap.put(mapEntry.getKey(), val);
+        }
+        value = returnMap;
       }
       break;
     case DECIMAL:            
