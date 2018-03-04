@@ -431,7 +431,31 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return value;
   }
   
-  
+  //get positions for all embedded nested fields
+  private void getPositionsForAllChildren(List<Integer> destinationList, BytesContainer record, OType fieldType, int serializerVersion){
+    if (null != fieldType)switch (fieldType) {
+      case EMBEDDED:
+        //no need for level up because root byte array is already devided
+        destinationList.addAll(getPositionsPointersToUpdateFromSimpleEmbedded(record, serializerVersion));
+        break;
+      case EMBEDDEDLIST:
+      case EMBEDDEDSET:
+        //no need for level up because root byte array is already devided
+        List<RecordInfo> recordsInfo = getPositionsFromEmbeddedCollection(record, serializerVersion);
+        for (RecordInfo recordInfo : recordsInfo){
+          destinationList.addAll(recordInfo.fieldRelatedPositions);
+        }
+        break;          
+      case EMBEDDEDMAP:
+        List<MapRecordInfo> mapRecordInfo = getPositionsFromEmbeddedMap(record, serializerVersion);
+        for (RecordInfo recordInfo : mapRecordInfo){
+          destinationList.addAll(recordInfo.fieldRelatedPositions);
+        }
+        break;
+      default:
+        break;
+    }
+  }
   
   private List<Integer> getPositionsPointersToUpdateFromSimpleEmbedded(BytesContainer record, int serializerVersion){    
     List<Integer> retList = new ArrayList<>();    
@@ -454,28 +478,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         
         int currentCursor = record.offset;
         record.offset = valuePos;
-        if (null != type)switch (type) {
-          case EMBEDDED:
-            //no need for level up because root byte array is already devided
-            retList.addAll(getPositionsPointersToUpdateFromSimpleEmbedded(record, serializerVersion));
-            break;
-          case EMBEDDEDLIST:
-          case EMBEDDEDSET:
-            //no need for level up because root byte array is already devided
-            List<RecordInfo> recordsInfo = getPositionsFromEmbeddedCollection(record, serializerVersion);
-            for (RecordInfo recordInfo : recordsInfo){
-              retList.addAll(recordInfo.fieldRelatedPositions);
-            }
-            break;          
-          case EMBEDDEDMAP:
-            List<MapRecordInfo> mapRecordInfo = getPositionsFromEmbeddedMap(record, serializerVersion);
-            for (RecordInfo recordInfo : mapRecordInfo){
-              retList.addAll(recordInfo.fieldRelatedPositions);
-            }
-            break;
-          default:
-            break;
-        }
+        getPositionsForAllChildren(retList, record, type, serializerVersion);        
         record.offset = currentCursor;
       }
       else if (len < 0){
@@ -493,29 +496,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         int valuePos = readInteger(record);
         
         int currentCursor = record.offset;
-        record.offset = valuePos;         
-        if (null != type)switch (type) {
-          case EMBEDDED:            
-            //no need for level up because root byte array is already devided
-            retList.addAll(getPositionsPointersToUpdateFromSimpleEmbedded(record, serializerVersion));
-            break;
-          case EMBEDDEDLIST:
-          case EMBEDDEDSET:
-            //no need for level up because root byte array is already devided
-            List<RecordInfo> listRecordsInfo = getPositionsFromEmbeddedCollection(record, serializerVersion);
-            for (RecordInfo recordInfo : listRecordsInfo){
-              retList.addAll(recordInfo.fieldRelatedPositions);
-            }
-            break;          
-          case EMBEDDEDMAP:
-            List<MapRecordInfo> mapRecordsInfo = getPositionsFromEmbeddedMap(record, serializerVersion);
-            for (RecordInfo recordInfo : mapRecordsInfo){
-              retList.addAll(recordInfo.fieldRelatedPositions);
-            }
-            break;
-          default:
-            break;
-        }
+        record.offset = valuePos;
+        getPositionsForAllChildren(retList, record, type, serializerVersion);        
         record.offset = currentCursor;
       }
     }
@@ -543,29 +525,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       int currentOffset = bytes.offset;
       bytes.offset = valuePos;
       
-      //add recursively for all embedded
-      if (null != valueType)switch (valueType) {
-        case EMBEDDED:
-          //collections have embedded documents and root array still not divided
-          recordInfo.fieldRelatedPositions.addAll(getPositionsPointersToUpdateFromSimpleEmbedded(bytes, serializerVersion));
-          break;
-        case EMBEDDEDLIST:
-        case EMBEDDEDSET:
-          //collections have embedded documents and root array still not divided
-          List<RecordInfo> fieldsInfo = getPositionsFromEmbeddedCollection(bytes, serializerVersion);
-          fieldsInfo.forEach((innerFieldInfo) -> {
-            recordInfo.fieldRelatedPositions.addAll(innerFieldInfo.fieldRelatedPositions);
-          });
-          break;
-        case EMBEDDEDMAP:
-          List<MapRecordInfo> mapRecordsInfo = getPositionsFromEmbeddedMap(bytes, serializerVersion);
-          for (RecordInfo mapRecordInfo : mapRecordsInfo){
-            recordInfo.fieldRelatedPositions.addAll(mapRecordInfo.fieldRelatedPositions);
-          }
-          break;
-        default:
-          break;
-      }
+      getPositionsForAllChildren(recordInfo.fieldRelatedPositions, bytes, valueType, serializerVersion);      
       
       //get field length
       bytes.offset = valuePos;
@@ -600,28 +560,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       fieldInfo.fieldType = dataType;
       
       int currentCursor = bytes.offset;
-      if (null != dataType)switch (dataType) {
-        case EMBEDDED:
-          //collections have embedded documents and root array still not divided
-          fieldInfo.fieldRelatedPositions.addAll(getPositionsPointersToUpdateFromSimpleEmbedded(bytes, serializerVersion));
-          break;
-        case EMBEDDEDLIST:
-        case EMBEDDEDSET:
-          //collections have embedded documents and root array still not divided
-          List<RecordInfo> fieldsInfo = getPositionsFromEmbeddedCollection(bytes, serializerVersion);
-          fieldsInfo.forEach((innerFieldInfo) -> {
-            fieldInfo.fieldRelatedPositions.addAll(innerFieldInfo.fieldRelatedPositions);
-          });
-          break;
-        case EMBEDDEDMAP:
-          List<MapRecordInfo> mapRecordsInfo = getPositionsFromEmbeddedMap(bytes, serializerVersion);
-          for (RecordInfo recordInfo : mapRecordsInfo){
-            fieldInfo.fieldRelatedPositions.addAll(recordInfo.fieldRelatedPositions);
-          }
-          break;
-        default:
-          break;
-      }
+      
+      getPositionsForAllChildren(fieldInfo.fieldRelatedPositions, bytes, dataType, serializerVersion);
+      
       bytes.offset = currentCursor;
       //TODO find better way to skip data bytes;
       deserializeValue(bytes, dataType, null, true, -1, serializerVersion, true);      
