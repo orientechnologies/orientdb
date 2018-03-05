@@ -461,7 +461,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     List<Integer> retList = new ArrayList<>();    
     int len = -1;      
     //skip class name
-    String className = readString(record);
+    readString(record);
     //update positions and check for embedded records
     while (len != 0){
       len = OVarIntSerializer.readAsInteger(record);
@@ -708,7 +708,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       break;
     case EMBEDDEDSET:
       if (embeddedAsDocument){
-        value = readEmbeddedSet(bytes, ownerDocument);;
+        value = readEmbeddedSet(bytes, ownerDocument);
       }
       else{
         List bytesColection = deserializeEmbeddedCollectionAsCollectionOfBytes(bytes, serializerVersion);

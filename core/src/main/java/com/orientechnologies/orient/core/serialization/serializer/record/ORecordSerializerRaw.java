@@ -91,12 +91,12 @@ public class ORecordSerializerRaw implements ORecordSerializer {
   }
 
   @Override
-  public <RET> RET deserializeFieldFromRoot(byte[]record, OClass iClass, String iFieldName){
+  public <RET> RET deserializeFieldFromRoot(byte[]record, String iFieldName){
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
   
   @Override
-  public <RET> RET deserializeFieldFromEmbedded(byte[]record, OClass iClass, String iFieldName, int serializerVersion){
+  public <RET> RET deserializeFieldFromEmbedded(byte[]record, String iFieldName, int serializerVersion){
     throw new UnsupportedOperationException("Not supported yet."); 
   }
   

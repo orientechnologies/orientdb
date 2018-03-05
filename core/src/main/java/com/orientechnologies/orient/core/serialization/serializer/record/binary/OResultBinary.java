@@ -61,7 +61,7 @@ public class OResultBinary implements OResult{
   
   @Override
   public <T> T getProperty(String name) {
-    return (T)ORecordSerializerBinary.INSTANCE.deserializeFieldFromEmbedded(resultBytes, null, name, serializerVersion);
+    return (T)ORecordSerializerBinary.INSTANCE.deserializeFieldFromEmbedded(resultBytes, name, serializerVersion);
   }
 
   @Override

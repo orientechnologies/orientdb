@@ -32,6 +32,10 @@ import java.util.TimeZone;
  * @author mdjurovi
  */
 public class HelperClasses {
+  protected static final String       CHARSET_UTF_8    = "UTF-8";
+  protected static final ORecordId    NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
+  protected static final long       MILLISEC_PER_DAY = 86400000;
+  
   protected static class Tuple<T1, T2>{
     
     private final T1 firstVal;
@@ -49,11 +53,7 @@ public class HelperClasses {
     public T2 getSecondVal() {
       return secondVal;
     }        
-  }
-  
-  protected static final String       CHARSET_UTF_8    = "UTF-8";
-  protected static final ORecordId    NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
-  protected static final long       MILLISEC_PER_DAY = 86400000;
+  }    
   
   protected static class Triple<T1, T2, T3> extends Tuple<T1, T2>{
     
@@ -70,23 +70,23 @@ public class HelperClasses {
   }
   
   protected static class RecordInfo{
-    List<Integer> fieldRelatedPositions;
-    int fieldStartOffset;
-    int fieldLength;
-    OType fieldType;
+    public List<Integer> fieldRelatedPositions;
+    public int fieldStartOffset;
+    public int fieldLength;
+    public OType fieldType;
   }
   
   protected static class MapRecordInfo extends RecordInfo{
-    String key;
-    OType keyType;
+    public String key;
+    public OType keyType;
   }
   
-  protected static class MapObjectData{
-    int startPosition;
-    int length;
-    OType type;
-    Object associatedKey;
-  }
+//  protected static class MapObjectData{
+//    int startPosition;
+//    int length;
+//    OType type;
+//    Object associatedKey;
+//  }
   
   protected static OType readOType(final BytesContainer bytes) {
     return OType.getById(readByte(bytes));
