@@ -248,7 +248,7 @@ public enum OGlobalConfiguration {
   WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
 
   WAL_SHUTDOWN_TIMEOUT("storage.wal.shutdownTimeout", "Maximum wait interval between events, when the background flush thread"
-      + "receives a shutdown command and when the background flush will be stopped (in ms.)", Integer.class, 10000),
+      + "receives a shutdown command and when the background flush will be stopped (in ms.)", Integer.class, 15 * 60000),
 
   WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval", "Interval between fuzzy checkpoints (in seconds)",
       Integer.class, 300),
