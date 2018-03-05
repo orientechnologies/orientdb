@@ -55,7 +55,8 @@ public class OTransactionPhase1TaskTest {
 
   @After
   public void after() {
-    session.close();
+    if (session != null)
+      session.close();
     server.getContext().drop(OTransactionPhase1TaskTest.class.getSimpleName());
     server.shutdown();
   }

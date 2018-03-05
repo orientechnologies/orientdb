@@ -127,7 +127,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       payload = new OTxLockTimeout();
     } catch (ORecordDuplicatedException ex) {
       //TODO:Check if can get out the key
-      payload = new OTxUniqueIndex((ORecordId) ex.getRid(), ex.getIndexName(), null);
+      payload = new OTxUniqueIndex((ORecordId) ex.getRid(), ex.getIndexName(), ex.getKey());
     } catch (RuntimeException ex) {
       payload = new OTxException(ex);
     }
@@ -162,7 +162,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       case ORecordOperation.DELETED:
         record = database.getRecord(req.getId());
         if (record == null) {
-          record = Orient.instance().getRecordFactoryManager().newInstance(req.getRecordType(), req.getId().getClusterId(), database);
+          record = Orient.instance().getRecordFactoryManager()
+              .newInstance(req.getRecordType(), req.getId().getClusterId(), database);
         }
         break;
       }

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.sql.parser.*;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,7 @@ public class QueryPlanningInfo {
   boolean projectionsCalculated = false;
 
   OAndBlock ridRangeConditions;
+  OStorage.LOCKING_STRATEGY lockRecord;
 
   public QueryPlanningInfo copy() {
     //TODO check what has to be copied and what can be just referenced as it is
@@ -78,6 +80,8 @@ public class QueryPlanningInfo {
     result.orderApplied = this.orderApplied;
     result.projectionsCalculated = this.projectionsCalculated;
     result.ridRangeConditions = this.ridRangeConditions;
+
+    result.lockRecord = this.lockRecord;
     return result;
   }
 }

@@ -31,17 +31,20 @@ import com.orientechnologies.orient.core.id.ORID;
 public class ORecordDuplicatedException extends OCoreException implements OHighLevelException {
   private final ORID   rid;
   private final String indexName;
+  private final Object key;
 
   public ORecordDuplicatedException(final ORecordDuplicatedException exception) {
     super(exception);
     this.indexName = exception.indexName;
     this.rid = exception.rid;
+    this.key = exception.key;
   }
 
-  public ORecordDuplicatedException(final String message, final String indexName, final ORID iRid) {
+  public ORecordDuplicatedException(final String message, final String indexName, final ORID iRid, Object key) {
     super(message);
     this.indexName = indexName;
     this.rid = iRid;
+    this.key = key;
   }
 
   public ORID getRid() {
@@ -50,6 +53,10 @@ public class ORecordDuplicatedException extends OCoreException implements OHighL
 
   public String getIndexName() {
     return indexName;
+  }
+
+  public Object getKey() {
+    return key;
   }
 
   @Override

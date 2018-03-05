@@ -3,6 +3,9 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.ArrayList;
@@ -79,16 +82,22 @@ public class OCreateUserStatement extends OSimpleExecStatement {
     sb.append(" WHERE ");
     sb.append(ROLE_FIELD_NAME);
     sb.append(" IN [");
+    OSecurity security = ctx.getDatabase().getMetadata().getSecurity();
     for (int i = 0; i < this.roles.size(); ++i) {
+      String roleName = this.roles.get(i).getStringValue();
+      ORole role = security.getRole(roleName);
+      if (role == null) {
+        throw new OCommandExecutionException("Cannot create user " + this.name + ": role " + roleName + " does not exist");
+      }
       if (i > 0) {
         sb.append(", ");
       }
-      String role = roles.get(i).getStringValue();
-      if (role.startsWith("'") || role.startsWith("\"")) {
-        sb.append(this.roles.get(i));
+
+      if (roleName.startsWith("'") || roleName.startsWith("\"")) {
+        sb.append(roleName);
       } else {
         sb.append("'");
-        sb.append(this.roles.get(i));
+        sb.append(roleName);
         sb.append("'");
       }
     }

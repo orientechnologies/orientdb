@@ -629,7 +629,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           if (old != null && !old.equals(newValue)) {
             throw new ORecordDuplicatedException(String
                 .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                    newValue, changesPerKey.key, getName(), old.getIdentity()), getName(), old.getIdentity());
+                    newValue, changesPerKey.key, getName(), old.getIdentity()), getName(), old.getIdentity(), changesPerKey.key);
           }
         }
       }

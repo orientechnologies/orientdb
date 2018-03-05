@@ -40,7 +40,7 @@ public abstract class BareBoneBase3ServerTest extends BareBoneBase2ServerTest {
     Thread dbServer1 = new Thread() {
       @Override
       public void run() {
-        servers[0] = dbServer(DB1_DIR, getLocalURL(), "asynch-dserver-config-0.xml");
+        servers[0] = dbServer(DB1_DIR, getDatabaseName(), "asynch-dserver-config-0.xml");
       }
     };
     dbServer1.start();
@@ -49,7 +49,7 @@ public abstract class BareBoneBase3ServerTest extends BareBoneBase2ServerTest {
     Thread dbServer2 = new Thread() {
       @Override
       public void run() {
-        servers[1] = dbServer(DB2_DIR, getLocalURL2(), "asynch-dserver-config-1.xml");
+        servers[1] = dbServer(DB2_DIR, getDatabaseName(), "asynch-dserver-config-1.xml");
       }
     };
     dbServer2.start();
@@ -58,7 +58,7 @@ public abstract class BareBoneBase3ServerTest extends BareBoneBase2ServerTest {
     Thread dbServer3 = new Thread() {
       @Override
       public void run() {
-        servers[2] = dbServer(DB3_DIR, getLocalURL3(), "asynch-dserver-config-2.xml");
+        servers[2] = dbServer(DB3_DIR, getDatabaseName(), "asynch-dserver-config-2.xml");
       }
     };
     dbServer3.start();
