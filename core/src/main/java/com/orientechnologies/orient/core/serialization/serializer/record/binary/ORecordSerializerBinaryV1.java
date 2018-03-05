@@ -9,44 +9,13 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Triple;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Tuple;
 import java.util.*;
 import java.util.Map.Entry;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
 
-public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{  
-  
-  private static class Tuple<T1, T2>{
-    
-    private final T1 firstVal;
-    private final T2 secondVal;
-    
-    Tuple(T1 firstVal, T2 secondVal){
-      this.firstVal = firstVal;
-      this.secondVal = secondVal;
-    }
-
-    public T1 getFirstVal() {
-      return firstVal;
-    }
-
-    public T2 getSecondVal() {
-      return secondVal;
-    }
-        
-  }
-  
-  private static class Triple<T1, T2, T3> extends Tuple<T1, T2>{
-    
-    private final T3 thirdVal;
-    
-    public Triple(T1 firstVal, T2 secondVal, T3 thirdVal) {
-      super(firstVal, secondVal);
-      this.thirdVal = thirdVal;
-    }
-
-    public T3 getThirdVal() {
-      return thirdVal;
-    }        
-  }
+public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{          
   
   private enum Signal{
     CONTINUE,
@@ -510,11 +479,16 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   }
   
   @Override
-  public <RET> RET deserializeFieldTyped(BytesContainer bytes, OClass iClass, String iFieldName, boolean isEmbedded, int serializerVersion){    
+  public <RET> RET deserializeFieldTyped(BytesContainer bytes, String iFieldName, boolean isEmbedded, int serializerVersion){    
     if (isEmbedded){
       skipClassName(bytes);
     }
-    return deserializeFieldTypedLoopAndReturn(bytes, iClass, iFieldName, serializerVersion);
+    return deserializeFieldTypedLoopAndReturn(bytes, iFieldName, serializerVersion);
+  }
+  
+  @Override
+  public boolean isSerializingClassNameForEmbedded() {
+    return true;
   }
      
 }

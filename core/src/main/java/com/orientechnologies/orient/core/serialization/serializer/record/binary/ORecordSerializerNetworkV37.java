@@ -890,23 +890,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   @Override
   public int getMinSupportedVersion() {
     return 0;
-  }
-
-  @Override
-  public String[] getFieldNames(ODocument reference, byte[] iSource) {
-    if (iSource == null || iSource.length == 0)
-      return new String[0];
-
-    final BytesContainer container = new BytesContainer(iSource);
-
-    try {
-      return getFieldNames(reference, container);
-    } catch (RuntimeException e) {
-      OLogManager.instance().warn(this, "Error deserializing record to get field-names, send this data for debugging: %s ",
-          Base64.getEncoder().encodeToString(iSource));
-      throw e;
-    }
-  }
+  }  
 
   @Override
   public boolean getSupportBinaryEvaluate() {
@@ -926,5 +910,26 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   @Override
   public <RET> RET deserializeFieldFromEmbedded(byte[] record, OClass iClass, String iFieldName, int serializerVersion) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
+  public String[] getFieldNamesRoot(ODocument reference, byte[] iSource) {
+    if (iSource == null || iSource.length == 0)
+      return new String[0];
+
+    final BytesContainer container = new BytesContainer(iSource);
+
+    try {
+      return getFieldNames(reference, container);
+    } catch (RuntimeException e) {
+      OLogManager.instance().warn(this, "Error deserializing record to get field-names, send this data for debugging: %s ",
+          Base64.getEncoder().encodeToString(iSource));
+      throw e;
+    }
+  }
+  
+  @Override
+  public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int serializerVersion) {
+    return getFieldNamesRoot(reference, iSource);
   }
 }

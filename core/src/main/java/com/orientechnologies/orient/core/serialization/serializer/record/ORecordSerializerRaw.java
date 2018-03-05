@@ -46,7 +46,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
   }
 
   @Override
-  public String[] getFieldNames(ODocument reference, byte[] iSource) {
+  public String[] getFieldNamesRoot(ODocument reference, byte[] iSource) {
     return null;
   }
 
@@ -98,6 +98,11 @@ public class ORecordSerializerRaw implements ORecordSerializer {
   @Override
   public <RET> RET deserializeFieldFromEmbedded(byte[]record, OClass iClass, String iFieldName, int serializerVersion){
     throw new UnsupportedOperationException("Not supported yet."); 
+  }
+  
+  @Override
+  public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int serializerVersion) {
+    return getFieldNamesRoot(reference, iSource);
   }
     
 }

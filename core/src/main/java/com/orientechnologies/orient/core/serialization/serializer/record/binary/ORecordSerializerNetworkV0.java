@@ -864,8 +864,13 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     }
 
   @Override
-  public <RET> RET deserializeFieldTyped(BytesContainer record, OClass iClass, String iFieldName, boolean isEmbedded, int serializerVersion) {
+  public <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, int serializerVersion) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
+  public boolean isSerializingClassNameForEmbedded() {
+    return true;
   }
   
 }

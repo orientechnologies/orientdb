@@ -21,7 +21,10 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -58,7 +61,7 @@ public class OResultBinary implements OResult{
   
   @Override
   public <T> T getProperty(String name) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return (T)ORecordSerializerBinary.INSTANCE.deserializeFieldFromEmbedded(resultBytes, null, name, serializerVersion);
   }
 
   @Override
@@ -73,72 +76,79 @@ public class OResultBinary implements OResult{
 
   @Override
   public OEdge getEdgeProperty(String name) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 
   @Override
   public OBlob getBlobProperty(String name) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return null;
   }
 
   @Override
   public Set<String> getPropertyNames() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    String[] fields = ORecordSerializerBinary.INSTANCE.getFieldNamesEmbedded(new ODocument(), resultBytes, serializerVersion);
+    return new HashSet<>(Arrays.asList(fields));
   }
 
   @Override
   public Optional<ORID> getIdentity() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return Optional.of(id);
   }
 
   @Override
   public boolean isElement() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return true;
   }
 
   @Override
   public Optional<OElement> getElement() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return Optional.of(toDocument());
   }
 
   @Override
   public OElement toElement() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return toDocument();
   }
 
   @Override
   public boolean isBlob() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return false;
   }
 
   @Override
   public Optional<OBlob> getBlob() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return null;
   }
 
   @Override
   public Optional<ORecord> getRecord() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return Optional.of(toDocument());
   }
 
   @Override
   public boolean isProjection() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return false;
   }
 
   @Override
   public Object getMetadata(String key) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return null;
   }
 
   @Override
   public Set<String> getMetadataKeys() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return null;
   }
 
   @Override
   public boolean hasProperty(String varName) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+  
+  private ODocument toDocument(){
+    ODocument doc = new ODocument();
+    ORecordSerializerBinary.INSTANCE.getSerializer(serializerVersion).deserialize(doc, new BytesContainer(resultBytes));
+    return doc;
   }
   
 }

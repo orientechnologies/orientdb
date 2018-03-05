@@ -9,6 +9,8 @@ import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
+
 public class ORecordSerializerBinaryDebug extends ORecordSerializerBinaryV0 {
 
   public ORecordSerializationDebug deserializeDebug(final byte[] iSource, ODatabaseDocumentInternal db) {

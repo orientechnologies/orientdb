@@ -79,7 +79,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   @Override
   public <RET> RET deserializeFieldFromEmbedded(byte[] record, OClass iClass, String iFieldName, int serializerVersion) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-  }
+  }  
 
   private interface CollectionItemVisitor {
     void visitItem(Object item);
@@ -781,5 +781,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   @Override
   public String getName() {
     return NAME;
+  }
+  
+  @Override
+  public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int serializerVersion) {
+    return getFieldNamesRoot(reference, iSource);
   }
 }

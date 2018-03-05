@@ -35,7 +35,8 @@ public interface ORecordSerializer {
 
   int getMinSupportedVersion();
 
-  String[] getFieldNames(ODocument reference, byte[] iSource);
+  String[] getFieldNamesRoot(ODocument reference, byte[] iSource);  
+  String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int serializerVersion);
 
   boolean getSupportBinaryEvaluate();
 
