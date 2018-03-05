@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabaseListener {
+public class OLiveQueryHookV2 {
 
   public static class OLiveQueryOp {
     public    OResult   before;
@@ -76,11 +76,6 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     public OLiveQueryQueueThreadV2 getQueueThread() {
       return queueThread;
     }
-  }
-
-  public OLiveQueryHookV2(ODatabaseDocumentInternal db) {
-    super(db);
-    db.registerListener(this);
   }
 
   public static OLiveQueryOps getOpsReference(ODatabaseInternal db) {
@@ -122,59 +117,13 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     }
   }
 
-  @Override
-  public void onCreate(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onDelete(ODatabase iDatabase) {
+  public static void notifyForTxChanges(ODatabaseDocument database) {
     if (Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
       return;
-    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
-    synchronized (ops.pendingOps) {
-      ops.pendingOps.remove(iDatabase);
-    }
-  }
-
-  @Override
-  public void onOpen(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onBeforeTxBegin(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onBeforeTxRollback(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onAfterTxRollback(ODatabase iDatabase) {
-    if (Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
-      return;
-    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
-    synchronized (ops.pendingOps) {
-      ops.pendingOps.remove(iDatabase);
-    }
-  }
-
-  @Override
-  public void onBeforeTxCommit(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onAfterTxCommit(ODatabase iDatabase) {
-    if (Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
-      return;
-    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
+    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) database);
     List<OLiveQueryOp> list;
     synchronized (ops.pendingOps) {
-      list = ops.pendingOps.remove(iDatabase);
+      list = ops.pendingOps.remove(database);
     }
     // TODO sync
     if (list != null) {
@@ -185,43 +134,16 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     }
   }
 
-  @Override
-  public void onClose(ODatabase iDatabase) {
+  public static void removePendingDatabaseOps(ODatabaseDocument database) {
     if (Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
       return;
-    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
+    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) database);
     synchronized (ops.pendingOps) {
-      ops.pendingOps.remove(iDatabase);
+      ops.pendingOps.remove(database);
     }
   }
 
-  @Override
-  public void onBeforeCommand(OCommandRequestText iCommand, OCommandExecutor executor) {
-
-  }
-
-  @Override
-  public void onAfterCommand(OCommandRequestText iCommand, OCommandExecutor executor, Object result) {
-
-  }
-
-  @Override
-  public void onRecordAfterCreate(ODocument iDocument) {
-    addOp(iDocument, ORecordOperation.CREATED);
-  }
-
-  @Override
-  public void onRecordAfterUpdate(ODocument iDocument) {
-    addOp(iDocument, ORecordOperation.UPDATED);
-  }
-
-  @Override
-  public RESULT onRecordBeforeDelete(ODocument iDocument) {
-    addOp(iDocument, ORecordOperation.DELETED);
-    return RESULT.RECORD_NOT_CHANGED;
-  }
-
-  protected void addOp(ODocument iDocument, byte iType) {
+  public static void addOp(ODocument iDocument, byte iType, ODatabaseDocument database) {
     if (Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
       return;
     ODatabaseDocument db = database;
@@ -261,7 +183,7 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     }
   }
 
-  private OLiveQueryOp prevousUpdate(List<OLiveQueryOp> list, ODocument doc) {
+  private static OLiveQueryOp prevousUpdate(List<OLiveQueryOp> list, ODocument doc) {
     for (OLiveQueryOp oLiveQueryOp : list) {
       if (oLiveQueryOp.originalDoc == doc) {
         return oLiveQueryOp;
@@ -270,7 +192,7 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     return null;
   }
 
-  private OResultInternal calculateBefore(ODocument iDocument) {
+  private static OResultInternal calculateBefore(ODocument iDocument) {
     OResultInternal result = new OResultInternal();
     for (String prop : iDocument.getPropertyNames()) {
       result.setProperty(prop, iDocument.getProperty(prop));
@@ -284,7 +206,7 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     return result;
   }
 
-  private OResultInternal calculateAfter(ODocument iDocument) {
+  private static OResultInternal calculateAfter(ODocument iDocument) {
     OResultInternal result = new OResultInternal();
     for (String prop : iDocument.getPropertyNames()) {
       result.setProperty(prop, iDocument.getProperty(prop));
@@ -293,10 +215,5 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     result.setProperty("@class", iDocument.getClassName());
     result.setProperty("@version", iDocument.getVersion() + 1);
     return result;
-  }
-
-  @Override
-  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.BOTH;
   }
 }
