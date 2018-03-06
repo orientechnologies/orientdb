@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -116,9 +117,10 @@ public class OLiveQueryV2Test {
       for (OResult doc : listener.ops) {
         Assert.assertEquals(doc.getProperty("@class"), "test");
         Assert.assertEquals(doc.getProperty("name"), "foo");
+        ORID rid = doc.getProperty("@rid");
+        Assert.assertTrue(rid.isPersistent());
       }
     } finally {
-
       db.drop();
     }
   }
