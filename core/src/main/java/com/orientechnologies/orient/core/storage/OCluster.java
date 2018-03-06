@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 
 import java.io.IOException;
 
@@ -165,4 +166,6 @@ public interface OCluster {
    * Acquires exclusive lock in the active atomic operation running on the current thread for this cluster.
    */
   void acquireAtomicExclusiveLock();
+
+  OClusterBrowsePage nextPage(long lastPosition) throws IOException;
 }
