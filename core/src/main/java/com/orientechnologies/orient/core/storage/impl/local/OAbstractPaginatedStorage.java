@@ -2023,14 +2023,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           database.getMetadata().clearThreadLocalSchemaSnapshot();
         }
       } finally {
-        if (pessimisticLock) {
-          for (ORecordOperation recordOperation : recordOperations) {
-            if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
-              releaseWriteLock(recordOperation.getRID());
+        try {
+          if (pessimisticLock) {
+            for (ORecordOperation recordOperation : recordOperations) {
+              if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
+                releaseWriteLock(recordOperation.getRID());
+              }
             }
           }
+        } finally {
+          stateLock.releaseReadLock();
         }
-        stateLock.releaseReadLock();
       }
 
       if (OLogManager.instance().isDebugEnabled())
@@ -4030,10 +4033,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       buff = doReadRecordIfNotLatest(cluster, rid, recordVersion);
       return buff;
     } finally {
-      if (pessimisticLock) {
-        releaseReadLock(rid);
+      try {
+        if (pessimisticLock) {
+          releaseReadLock(rid);
+        }
+      } finally {
+        stateLock.releaseReadLock();
       }
-      stateLock.releaseReadLock();
     }
   }
 
@@ -4058,10 +4064,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpenness();
       return doReadRecord(clusterSegment, rid, prefetchRecords);
     } finally {
-      if (pessimisticLock) {
-        releaseReadLock(rid);
+      try {
+        if (pessimisticLock) {
+          releaseReadLock(rid);
+        }
+      } finally {
+        stateLock.releaseReadLock();
       }
-      stateLock.releaseReadLock();
     }
   }
 
