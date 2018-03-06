@@ -57,12 +57,13 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
    * Should be called inside of lock to ensure uniqueness of entity on disk !!!
    */
   public OIndexRIDContainer(String name, boolean durableNonTxMode, AtomicLong bonsayFileId) {
-    if (bonsayFileId.get() == 0) {
-      fileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
-      bonsayFileId.set(fileId);
-    } else {
-      fileId = bonsayFileId.get();
+    long gotFileId = bonsayFileId.get();
+    if (gotFileId == 0) {
+      gotFileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
+      bonsayFileId.set(gotFileId);
     }
+    this.fileId = gotFileId;
+
     underlying = new HashSet<>();
     isEmbedded = true;
     this.durableNonTxMode = durableNonTxMode;
