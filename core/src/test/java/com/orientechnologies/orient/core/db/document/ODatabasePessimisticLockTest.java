@@ -1,7 +1,10 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -10,7 +13,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ConcurrentModificationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -20,7 +22,6 @@ import static org.junit.Assert.assertFalse;
 public class ODatabasePessimisticLockTest {
 
   private OrientDB orientDB;
-  private ORID     rid;
 
   @Before
   public void before() {
@@ -29,7 +30,7 @@ public class ODatabasePessimisticLockTest {
     orientDB.create("test", ODatabaseType.MEMORY);
     ODatabaseSession session = orientDB.open("test", "admin", "admin");
     session.createClass("test");
-    rid = session.save(new ODocument("test")).getIdentity();
+    session.save(new ODocument("test")).getIdentity();
   }
 
   @Test

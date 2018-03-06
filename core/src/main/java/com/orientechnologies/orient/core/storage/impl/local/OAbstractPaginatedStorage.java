@@ -98,11 +98,7 @@ import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.Lock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -1918,10 +1914,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         if (pessimisticLock) {
+          List<ORID> recordLocks = new ArrayList<>();
           for (ORecordOperation recordOperation : recordOperations) {
             if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
-              acquireWriteLock(recordOperation.getRID());
+              recordLocks.add(recordOperation.getRID());
             }
+          }
+          Collections.sort(recordLocks);
+          for (ORID rid : recordLocks) {
+            acquireWriteLock(rid);
           }
         }
         try {
