@@ -137,13 +137,6 @@ public class OLiveQueryHook {
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) db);
     if (!ops.queueThread.hasListeners())
       return;
-    if (db.getTransaction() == null || !db.getTransaction().isActive()) {
-
-      // TODO synchronize
-      ORecordOperation op = new ORecordOperation(iDocument.copy(), iType);
-      ops.queueThread.enqueue(op);
-      return;
-    }
     ORecordOperation result = new ORecordOperation(iDocument, iType);
     synchronized (ops.pendingOps) {
       List<ORecordOperation> list = ops.pendingOps.get(db);

@@ -150,16 +150,7 @@ public class OLiveQueryHookV2 {
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) db);
     if (!ops.queueThread.hasListeners())
       return;
-    if (db.getTransaction() == null || !db.getTransaction().isActive()) {
 
-      // TODO synchronize
-      OResult before = iType == ORecordOperation.CREATED ? null : calculateBefore(iDocument);
-      OResult after = iType == ORecordOperation.DELETED ? null : calculateAfter(iDocument);
-      OLiveQueryOp op = new OLiveQueryOp(iDocument.copy(), before, after, iType);
-
-      ops.queueThread.enqueue(op);
-      return;
-    }
     OResult before = iType == ORecordOperation.CREATED ? null : calculateBefore(iDocument);
     OResult after = iType == ORecordOperation.DELETED ? null : calculateAfter(iDocument);
 
