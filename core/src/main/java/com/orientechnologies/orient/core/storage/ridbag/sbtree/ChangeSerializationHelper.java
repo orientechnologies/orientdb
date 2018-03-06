@@ -55,7 +55,7 @@ public class ChangeSerializationHelper {
     return res;
   }
 
-  public <K extends OIdentifiable> void serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, byte[] stream, int offset) {
+  public <K extends OIdentifiable> int serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, byte[] stream, int offset) {
     OIntegerSerializer.INSTANCE.serializeLiteral(changes.size(), stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
@@ -71,6 +71,7 @@ public class ChangeSerializationHelper {
 
       offset += entry.getValue().serialize(stream, offset);
     }
+    return offset;
   }
 
   public int getChangesSerializedSize(int changesCount) {

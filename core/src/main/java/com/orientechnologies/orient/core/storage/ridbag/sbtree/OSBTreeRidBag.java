@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagDeleteSerializationOperation;
@@ -627,13 +628,13 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     return result;
   }
 
-  @Override
-  public int getSerializedSize(byte[] stream, int offset) {
-    return getSerializedSize();
-  }
+//  @Override
+//  public int getSerializedSize(byte[] stream, int offset) {
+//    return getSerializedSize();
+//  }
 
   @Override
-  public int serialize(byte[] stream, int offset, UUID ownerUuid) {
+  public int serialize(BytesContainer bytes, UUID ownerUuid) {
     applyNewEntries();
 
     final ORecordSerializationContext context;
@@ -660,22 +661,23 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       collectionPointer = OBonsaiCollectionPointer.INVALID;
     }
 
-    OLongSerializer.INSTANCE.serializeLiteral(collectionPointer.getFileId(), stream, offset);
-    offset += OLongSerializer.LONG_SIZE;
+    OLongSerializer.INSTANCE.serializeLiteral(collectionPointer.getFileId(), bytes.bytes, bytes.offset);
+    bytes.offset += OLongSerializer.LONG_SIZE;
 
     OBonsaiBucketPointer rootPointer = collectionPointer.getRootPointer();
-    OLongSerializer.INSTANCE.serializeLiteral(rootPointer.getPageIndex(), stream, offset);
-    offset += OLongSerializer.LONG_SIZE;
+    OLongSerializer.INSTANCE.serializeLiteral(rootPointer.getPageIndex(), bytes.bytes, bytes.offset);
+    bytes.offset += OLongSerializer.LONG_SIZE;
 
-    OIntegerSerializer.INSTANCE.serializeLiteral(rootPointer.getPageOffset(), stream, offset);
-    offset += OIntegerSerializer.INT_SIZE;
+    OIntegerSerializer.INSTANCE.serializeLiteral(rootPointer.getPageOffset(), bytes.bytes, bytes.offset);
+    bytes.offset += OIntegerSerializer.INT_SIZE;
 
     // Keep this section for binary compatibility with versions older then 1.7.5
-    OIntegerSerializer.INSTANCE.serializeLiteral(size, stream, offset);
-    offset += OIntegerSerializer.INT_SIZE;
+    OIntegerSerializer.INSTANCE.serializeLiteral(size, bytes.bytes, bytes.offset);
+    bytes.offset += OIntegerSerializer.INT_SIZE;
 
     if (context == null) {
-      ChangeSerializationHelper.INSTANCE.serializeChanges(changes, OLinkSerializer.INSTANCE, stream, offset);
+      int newOffset = ChangeSerializationHelper.INSTANCE.serializeChanges(changes, OLinkSerializer.INSTANCE, bytes.bytes, bytes.offset);
+      bytes.offset = newOffset;
     } else {
 
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
@@ -695,11 +697,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       context.push(new ORidBagUpdateSerializationOperation(changes, collectionPointer));
 
       // 0-length serialized list of changes
-      OIntegerSerializer.INSTANCE.serializeLiteral(0, stream, offset);
-      offset += OIntegerSerializer.INT_SIZE;
+      OIntegerSerializer.INSTANCE.serializeLiteral(0, bytes.bytes, bytes.offset);
+      bytes.offset += OIntegerSerializer.INT_SIZE;
     }
 
-    return offset;
+    return bytes.offset;
   }
 
   private void applyNewEntries() {

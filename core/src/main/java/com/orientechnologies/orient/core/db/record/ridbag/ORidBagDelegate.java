@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 
 import java.util.Collection;
@@ -44,7 +45,7 @@ public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMul
 
   int getSerializedSize();
 
-  int getSerializedSize(byte[] stream, int offset);
+//  int getSerializedSize(byte[] stream, int offset);
 
   /**
    * Writes content of bag to stream.
@@ -59,7 +60,7 @@ public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMul
    *          id of delegate owner
    * @return offset where content of stream is ended
    */
-  int serialize(byte[] stream, int offset, UUID ownerUuid);
+  int serialize(BytesContainer bytes, UUID ownerUuid);
 
   int deserialize(byte[] stream, int offset);
 
