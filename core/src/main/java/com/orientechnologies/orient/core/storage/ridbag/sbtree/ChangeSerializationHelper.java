@@ -32,7 +32,7 @@ public class ChangeSerializationHelper {
     }
   }
 
-  public Change deserializeChange(final byte[] stream, final int offset) {
+  private Change deserializeChange(final byte[] stream, final int offset) {
     int value = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset + OByteSerializer.BYTE_SIZE);
     return createChangeInstance(OByteSerializer.INSTANCE.deserializeLiteral(stream, offset), value);
   }
