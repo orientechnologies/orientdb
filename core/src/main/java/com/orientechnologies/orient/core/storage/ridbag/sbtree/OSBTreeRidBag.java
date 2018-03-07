@@ -671,9 +671,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     int sz = getChangesSerializedSize();
     bytes.offset = bytes.alloc(sz);
     
+    Map<OIdentifiable, Change> changesToSerialze;
+    
     if (context == null) {
-      int newOffset = ChangeSerializationHelper.INSTANCE.serializeChanges(changes, OLinkSerializer.INSTANCE, bytes.bytes, bytes.offset);
-      bytes.offset = newOffset;
+      changesToSerialze = changes;
     } else {
 
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
@@ -692,12 +693,12 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       this.collectionPointer = collectionPointer;
       context.push(new ORidBagUpdateSerializationOperation(changes, collectionPointer));
 
-      // 0-length serialized list of changes
-//      OVarIntSerializer.write(bytes, 0);      
-      OIntegerSerializer.INSTANCE.serializeLiteral(0, bytes.bytes, bytes.offset);
-      bytes.offset += OIntegerSerializer.INT_SIZE;    
+      changesToSerialze = new HashMap<>();
     }
 
+    int newOffset = ChangeSerializationHelper.INSTANCE.serializeChanges(changesToSerialze, OLinkSerializer.INSTANCE, bytes.bytes, bytes.offset);
+    bytes.offset = newOffset;
+    
     return bytes.offset;
   }
 
