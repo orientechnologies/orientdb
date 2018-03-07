@@ -58,7 +58,7 @@ public class OSBTGetRealBagSizeRequest implements OBinaryRequest<OSBTGetRealBagS
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(network, collectionPointer);
     final ChangeSerializationHelper changeSerializer = ChangeSerializationHelper.INSTANCE;
-    final byte[] stream = new byte[OIntegerSerializer.INT_SIZE + changeSerializer.getChangesSerializedSize(changes.size())];
+    final byte[] stream = new byte[changeSerializer.getChangesSerializedSize(changes.size())];
     changeSerializer.serializeChanges(changes, keySerializer, stream, 0);
     network.writeBytes(stream);
   }

@@ -397,7 +397,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public int getSerializedSize() {    
-    return 1;
+    return 0;
   }
     
 

@@ -3,9 +3,12 @@ package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -75,6 +78,12 @@ public class ChangeSerializationHelper {
   }
 
   public int getChangesSerializedSize(int changesCount) {
-    return changesCount * (OLinkSerializer.RID_SIZE + Change.SIZE);
+    int size = 0;
+    if (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy
+        || ORecordSerializationContext.getContext() == null)      
+      size += changesCount * (OLinkSerializer.RID_SIZE + Change.SIZE);
+    //one int more for size
+    size += OIntegerSerializer.INT_SIZE;
+    return size;
   }
 }

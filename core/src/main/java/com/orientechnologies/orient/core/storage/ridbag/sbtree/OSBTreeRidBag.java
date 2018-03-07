@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagDeleteSerializationOperation;
@@ -620,12 +621,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public int getSerializedSize() {
-    int result = 2 * OLongSerializer.LONG_SIZE + 3 * OIntegerSerializer.INT_SIZE;
-    if (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy
-        || ORecordSerializationContext.getContext() == null)
-      result += getChangesSerializedSize();
-    return result;
+  public int getSerializedSize() {    
+    return 0;    
   }
 
 //  @Override
@@ -661,20 +658,19 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       collectionPointer = OBonsaiCollectionPointer.INVALID;
     }
 
-    OLongSerializer.INSTANCE.serializeLiteral(collectionPointer.getFileId(), bytes.bytes, bytes.offset);
-    bytes.offset += OLongSerializer.LONG_SIZE;
+    OVarIntSerializer.write(bytes, collectionPointer.getFileId());
 
     OBonsaiBucketPointer rootPointer = collectionPointer.getRootPointer();
-    OLongSerializer.INSTANCE.serializeLiteral(rootPointer.getPageIndex(), bytes.bytes, bytes.offset);
-    bytes.offset += OLongSerializer.LONG_SIZE;
+    OVarIntSerializer.write(bytes, rootPointer.getPageIndex());
 
-    OIntegerSerializer.INSTANCE.serializeLiteral(rootPointer.getPageOffset(), bytes.bytes, bytes.offset);
-    bytes.offset += OIntegerSerializer.INT_SIZE;
+    OVarIntSerializer.write(bytes, rootPointer.getPageOffset());
 
     // Keep this section for binary compatibility with versions older then 1.7.5
-    OIntegerSerializer.INSTANCE.serializeLiteral(size, bytes.bytes, bytes.offset);
-    bytes.offset += OIntegerSerializer.INT_SIZE;
-
+    OVarIntSerializer.write(bytes, size);
+    
+    int sz = getChangesSerializedSize();
+    bytes.offset = bytes.alloc(sz);
+    
     if (context == null) {
       int newOffset = ChangeSerializationHelper.INSTANCE.serializeChanges(changes, OLinkSerializer.INSTANCE, bytes.bytes, bytes.offset);
       bytes.offset = newOffset;
@@ -697,8 +693,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       context.push(new ORidBagUpdateSerializationOperation(changes, collectionPointer));
 
       // 0-length serialized list of changes
+//      OVarIntSerializer.write(bytes, 0);      
       OIntegerSerializer.INSTANCE.serializeLiteral(0, bytes.bytes, bytes.offset);
-      bytes.offset += OIntegerSerializer.INT_SIZE;
+      bytes.offset += OIntegerSerializer.INT_SIZE;    
     }
 
     return bytes.offset;
@@ -742,17 +739,17 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public int deserialize(byte[] stream, int offset) {
-    final long fileId = OLongSerializer.INSTANCE.deserializeLiteral(stream, offset);
-    offset += OLongSerializer.LONG_SIZE;
+    BytesContainer bytes = new BytesContainer(stream);
+    bytes.offset = offset;
+    
+    final long fileId = OVarIntSerializer.readAsLong(bytes);
+    
+    final long pageIndex = OVarIntSerializer.readAsLong(bytes);
 
-    final long pageIndex = OLongSerializer.INSTANCE.deserializeLiteral(stream, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    final int pageOffset = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset);
-    offset += OIntegerSerializer.INT_SIZE;
+    final int pageOffset = OVarIntSerializer.readAsInteger(bytes);
 
     // Cached bag size. Not used after 1.7.5
-    offset += OIntegerSerializer.INT_SIZE;
+    OVarIntSerializer.readAsInteger(bytes);
 
     if (fileId == -1)
       collectionPointer = null;
