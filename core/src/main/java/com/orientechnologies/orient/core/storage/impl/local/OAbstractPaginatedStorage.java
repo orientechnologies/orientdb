@@ -98,11 +98,7 @@ import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.Lock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -200,11 +196,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected volatile OAtomicOperationsManager atomicOperationsManager;
   private volatile boolean                  wereNonTxOperationsPerformedInPreviousOpen = false;
   private volatile OLowDiskSpaceInformation lowDiskSpace                               = null;
-
+  private volatile boolean                  pessimisticLock                            = false;
   /**
    * Set of pages which were detected as broken and need to be repaired.
    */
-  private final Set<OPair<String, Long>> brokenPages = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final    Set<OPair<String, Long>> brokenPages                                = Collections
+      .newSetFromMap(new ConcurrentHashMap<>());
 
   protected volatile OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
 
@@ -268,6 +265,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         if (!exists())
           throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
+
+        pessimisticLock = contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
 
         fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
         fuzzyCheckpointExecutor.setMaximumPoolSize(1);
@@ -451,6 +450,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         if (exists())
           throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it already exists");
+
+        pessimisticLock = contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
 
         fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
         fuzzyCheckpointExecutor.setMaximumPoolSize(1);
@@ -1901,6 +1902,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final List<ORecordOperation> result = new ArrayList<>();
       stateLock.acquireReadLock();
       try {
+        if (pessimisticLock) {
+          List<ORID> recordLocks = new ArrayList<>();
+          for (ORecordOperation recordOperation : recordOperations) {
+            if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
+              recordLocks.add(recordOperation.getRID());
+            }
+          }
+          Collections.sort(recordLocks);
+          for (ORID rid : recordLocks) {
+            acquireWriteLock(rid);
+          }
+        }
         try {
           try {
 
@@ -2000,7 +2013,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           database.getMetadata().clearThreadLocalSchemaSnapshot();
         }
       } finally {
-        stateLock.releaseReadLock();
+        try {
+          if (pessimisticLock) {
+            for (ORecordOperation recordOperation : recordOperations) {
+              if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
+                releaseWriteLock(recordOperation.getRID());
+              }
+            }
+          }
+        } finally {
+          stateLock.releaseReadLock();
+        }
       }
 
       if (OLogManager.instance().isDebugEnabled())
@@ -3990,13 +4013,23 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     stateLock.acquireReadLock();
     try {
+      if (pessimisticLock) {
+        acquireReadLock(rid);
+      }
+
       ORawBuffer buff;
       checkOpenness();
 
       buff = doReadRecordIfNotLatest(cluster, rid, recordVersion);
       return buff;
     } finally {
-      stateLock.releaseReadLock();
+      try {
+        if (pessimisticLock) {
+          releaseReadLock(rid);
+        }
+      } finally {
+        stateLock.releaseReadLock();
+      }
     }
   }
 
@@ -4015,10 +4048,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     stateLock.acquireReadLock();
     try {
+      if (pessimisticLock) {
+        acquireReadLock(rid);
+      }
       checkOpenness();
       return doReadRecord(clusterSegment, rid, prefetchRecords);
     } finally {
-      stateLock.releaseReadLock();
+      try {
+        if (pessimisticLock) {
+          releaseReadLock(rid);
+        }
+      } finally {
+        stateLock.releaseReadLock();
+      }
     }
   }
 
