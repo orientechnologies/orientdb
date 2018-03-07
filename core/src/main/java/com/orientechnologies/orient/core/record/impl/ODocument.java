@@ -268,7 +268,7 @@ public class ODocument extends ORecordAbstract
     if (_status == ORecordElement.STATUS.LOADED && _source != null && ODatabaseRecordThreadLocal.instance().isDefined()
         && !ODatabaseRecordThreadLocal.instance().get().isClosed()) {
       // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
-      final String[] fieldNames = _recordFormat.getFieldNames(this, _source);
+      final String[] fieldNames = _recordFormat.getFieldNamesRoot(this, _source);
       if (fieldNames != null) {
         Set<String> result = new HashSet<>();
         Collections.addAll(result, fieldNames);
@@ -1041,7 +1041,7 @@ public class ODocument extends ORecordAbstract
     if (_status == ORecordElement.STATUS.LOADED && _source != null && ODatabaseRecordThreadLocal.instance().isDefined()
         && !ODatabaseRecordThreadLocal.instance().get().isClosed()) {
       // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
-      final String[] fieldNames = _recordFormat.getFieldNames(this, _source);
+      final String[] fieldNames = _recordFormat.getFieldNamesRoot(this, _source);
       if (fieldNames != null)
         return fieldNames;
     }

@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 
 /**
  * Remote cluster implementation
@@ -37,7 +38,7 @@ public class OClusterRemote implements OCluster {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.storage.OCluster#configure(com.orientechnologies.orient.core.storage.OStorage, int,
    * java.lang.String, java.lang.String, int, java.lang.Object[])
    */
@@ -48,7 +49,7 @@ public class OClusterRemote implements OCluster {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.storage.OCluster#configure(com.orientechnologies.orient.core.storage.OStorage,
    * com.orientechnologies.orient.core.config.OStorageClusterConfiguration)
    */
@@ -59,7 +60,7 @@ public class OClusterRemote implements OCluster {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.storage.OCluster#create(int)
    */
   public void create(int iStartSize) throws IOException {
@@ -68,7 +69,7 @@ public class OClusterRemote implements OCluster {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.storage.OCluster#open()
    */
   public void open() throws IOException {
@@ -253,4 +254,10 @@ public class OClusterRemote implements OCluster {
   public void acquireAtomicExclusiveLock() {
     throw new UnsupportedOperationException("remote cluster doesn't support atomic locking");
   }
+
+  @Override
+  public OClusterBrowsePage nextPage(long lastPosition) {
+    throw new UnsupportedOperationException();
+  }
 }
+
