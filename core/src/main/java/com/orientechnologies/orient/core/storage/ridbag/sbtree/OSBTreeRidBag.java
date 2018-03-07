@@ -668,8 +668,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     // Keep this section for binary compatibility with versions older then 1.7.5
     OVarIntSerializer.write(bytes, size);
     
-    int sz = getChangesSerializedSize();
-    bytes.offset = bytes.alloc(sz);
+//    int sz = getChangesSerializedSize();
+//    bytes.offset = bytes.alloc(sz);
     
     Map<OIdentifiable, Change> changesToSerialze;
     
@@ -696,7 +696,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       changesToSerialze = new HashMap<>();
     }
 
-    int newOffset = ChangeSerializationHelper.INSTANCE.serializeChanges(changesToSerialze, OLinkSerializer.INSTANCE, bytes.bytes, bytes.offset);
+    int newOffset = ChangeSerializationHelper.INSTANCE.serializeChanges(changesToSerialze, OLinkSerializer.INSTANCE, bytes);
     bytes.offset = newOffset;
     
     return bytes.offset;
@@ -758,12 +758,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       collectionPointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
 
     this.size = -1;
+    
+    changes.putAll(ChangeSerializationHelper.INSTANCE.deserializeChanges(bytes));    
 
-    changes.putAll(ChangeSerializationHelper.INSTANCE.deserializeChanges(stream, offset));
-
-    offset += OIntegerSerializer.INT_SIZE + (OLinkSerializer.RID_SIZE + Change.SIZE) * changes.size();
-
-    return offset;
+    return bytes.offset;
   }
 
   public OBonsaiCollectionPointer getCollectionPointer() {
@@ -869,11 +867,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     return size;
   }
 
-  private int getChangesSerializedSize() {
-    Set<OIdentifiable> changedIds = new HashSet<>(changes.keySet());
-    changedIds.addAll(newEntries.keySet());
-    return ChangeSerializationHelper.INSTANCE.getChangesSerializedSize(changedIds.size());
-  }
+//  private int getChangesSerializedSize() {
+//    Set<OIdentifiable> changedIds = new HashSet<>(changes.keySet());
+//    changedIds.addAll(newEntries.keySet());
+//    return ChangeSerializationHelper.INSTANCE.getChangesSerializedSize(changedIds.size());
+//  }
 
   private int getHighLevelDocClusterId() {
     ORecordElement owner = this.owner;

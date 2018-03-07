@@ -28,6 +28,7 @@ import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.ChangeSerializationHelper;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -58,16 +59,19 @@ public class OSBTGetRealBagSizeRequest implements OBinaryRequest<OSBTGetRealBagS
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(network, collectionPointer);
     final ChangeSerializationHelper changeSerializer = ChangeSerializationHelper.INSTANCE;
-    final byte[] stream = new byte[changeSerializer.getChangesSerializedSize(changes.size())];
-    changeSerializer.serializeChanges(changes, keySerializer, stream, 0);
+//    final byte[] stream = new byte[changeSerializer.getChangesSerializedSize(changes.size())];
+    BytesContainer container = new BytesContainer();
+    changeSerializer.serializeChanges(changes, keySerializer, container);
+    byte[] stream = container.fitBytes();
     network.writeBytes(stream);
   }
 
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
     byte[] stream = channel.readBytes();
+    BytesContainer bytes = new BytesContainer(stream);
     final ChangeSerializationHelper changeSerializer = ChangeSerializationHelper.INSTANCE;
-    changes = changeSerializer.deserializeChanges(stream, 0);
+    changes = changeSerializer.deserializeChanges(bytes);
   }
 
   @Override
