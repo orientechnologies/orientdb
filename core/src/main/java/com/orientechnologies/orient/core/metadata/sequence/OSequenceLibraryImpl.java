@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -53,15 +55,21 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().existsClass(OSequence.CLASS_NAME)) {
-      final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + OSequence.CLASS_NAME));
-      for (ODocument document : result) {
-        document.reload();
+      OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
+        @Override
+        public Object call() throws Exception {
+          final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + OSequence.CLASS_NAME));
+          for (ODocument document : result) {
+            document.reload();
 
-        final OSequence sequence = OSequenceHelper.createSequence(document);
-        if (sequence != null) {
-          sequences.put(sequence.getName().toUpperCase(Locale.ENGLISH), sequence);
+            final OSequence sequence = OSequenceHelper.createSequence(document);
+            if (sequence != null) {
+              sequences.put(sequence.getName().toUpperCase(Locale.ENGLISH), sequence);
+            }
+          }
+          return null;
         }
-      }
+      });
     }
   }
 

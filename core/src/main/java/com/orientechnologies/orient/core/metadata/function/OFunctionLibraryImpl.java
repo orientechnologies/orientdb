@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorFunction;
 import com.orientechnologies.orient.core.command.script.OCommandFunction;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -36,6 +37,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -70,21 +72,27 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
     // LOAD ALL THE FUNCTIONS IN MEMORY
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.instance().get();
     if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().existsClass("OFunction")) {
-      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction order by name"));
-      for (ODocument d : result) {
-        d.reload();
+      OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
+        @Override
+        public Object call() throws Exception {
+          List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction order by name"));
+          for (ODocument d : result) {
+            d.reload();
 
-        //skip the function records which do not contain real data
-        if (d.fields() == 0)
-          continue;
+            //skip the function records which do not contain real data
+            if (d.fields() == 0)
+              continue;
 
-        final OFunction f = new OFunction(d);
+            final OFunction f = new OFunction(d);
 
-        // RESTORE CALLBACK IF ANY
-        f.setCallback(callbacks.get(f.getName()));
+            // RESTORE CALLBACK IF ANY
+            f.setCallback(callbacks.get(f.getName()));
 
-        functions.put(d.field("name").toString().toUpperCase(Locale.ENGLISH), f);
-      }
+            functions.put(d.field("name").toString().toUpperCase(Locale.ENGLISH), f);
+          }
+          return null;
+        }
+      });
     }
   }
 
