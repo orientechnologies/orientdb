@@ -258,7 +258,8 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
   @Override
   public void dropCluster(int iClusterId) {
     // this just remove it locally before a proper update from the push arrive
-    clusters.set(iClusterId, null);
+    if (clusters.size() > iClusterId)
+      clusters.set(iClusterId, null);
   }
 
   @Override
