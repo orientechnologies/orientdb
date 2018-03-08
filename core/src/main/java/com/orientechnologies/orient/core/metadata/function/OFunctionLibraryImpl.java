@@ -34,8 +34,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
@@ -49,9 +47,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OFunctionLibraryImpl {
-  public static final String                 CLASSNAME  = "OFunction";
-  protected final     Map<String, OFunction> functions  = new ConcurrentHashMap<String, OFunction>();
-  private             AtomicBoolean          needReload = new AtomicBoolean(false);
+  public static final String CLASSNAME = "OFunction";
+  protected final Map<String, OFunction> functions = new ConcurrentHashMap<String, OFunction>();
+  private         AtomicBoolean          needReload = new AtomicBoolean(false);
 
   static {
     OCommandManager.instance().registerExecutor(OCommandFunction.class, OCommandExecutorFunction.class);
@@ -79,11 +77,11 @@ public class OFunctionLibraryImpl {
     functions.clear();
 
     // LOAD ALL THE FUNCTIONS IN MEMORY
-    if (db.getMetadata().getImmutableSchemaSnapshot().existsClass("OFunction")) {
-      OResultSet result = db.query("select from OFunction order by name");
-      while (result.hasNext()) {
-        OResult res = result.next();
-        ODocument d = (ODocument) res.getElement().get();
+    if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().existsClass("OFunction")) {
+      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction order by name"));
+      for (ODocument d : result) {
+        d.reload();
+
         //skip the function records which do not contain real data
         if (d.fields() == 0)
           continue;
