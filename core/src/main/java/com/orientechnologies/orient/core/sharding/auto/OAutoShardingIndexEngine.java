@@ -23,11 +23,8 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
@@ -40,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Index engine implementation that relies on multiple hash indexes partitioned by key.
@@ -61,6 +59,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   private       int                              version;
   private final String                           name;
   private       int                              partitionSize;
+  private final AtomicLong bonsayFileId = new AtomicLong(0);
 
   public OAutoShardingIndexEngine(final String iName, final Boolean iDurableInNonTxMode, final OAbstractPaginatedStorage iStorage,
       final int iVersion) {
@@ -200,6 +199,19 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   @Override
   public void put(final Object key, final Object value) {
     getPartition(key).put(key, value);
+  }
+
+  @Override
+  public void update(Object key, OIndexKeyUpdater<Object> updater) {
+    Object value = get(key);
+    OIndexUpdateAction<Object> updated = updater.update(value, bonsayFileId);
+    if (updated.isChange())
+      put(key, updated.getValue());
+    else if (updated.isRemove()) {
+      remove(key);
+    } else if (updated.isNothing()) {
+      //Do Nothing
+    }
   }
 
   @SuppressWarnings("unchecked")

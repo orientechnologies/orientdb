@@ -2473,7 +2473,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public void updateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) throws OInvalidIndexEngineIdException {
+  public void updateIndexEntry(int indexId, Object key, OIndexKeyUpdater<Object> valueCreator)
+      throws OInvalidIndexEngineIdException {
     try {
       if (transaction.get() != null) {
         doUpdateIndexEntry(indexId, key, valueCreator);
@@ -2562,7 +2563,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   }
 
-  private void doUpdateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) throws OInvalidIndexEngineIdException {
+  private void doUpdateIndexEntry(int indexId, Object key, OIndexKeyUpdater<Object> valueCreator)
+      throws OInvalidIndexEngineIdException {
     try {
       atomicOperationsManager.startAtomicOperation((String) null, true);
     } catch (IOException e) {
@@ -2576,11 +2578,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OIndexEngine engine = indexEngines.get(indexId);
       makeStorageDirty();
 
-      final Object value = valueCreator.call();
-      if (value == null)
-        engine.remove(key);
-      else
-        engine.put(key, value);
+      engine.update(key, valueCreator);
 
       atomicOperationsManager.endAtomicOperation(false, null);
     } catch (OInvalidIndexEngineIdException e) {
