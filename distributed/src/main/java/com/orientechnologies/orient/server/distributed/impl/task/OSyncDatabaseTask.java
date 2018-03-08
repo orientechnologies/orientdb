@@ -208,10 +208,9 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
         if (lastLSN.compareTo(currentLSN) <= 0)
           // REQUESTED LSN IS <= LOCAL LSN
           return dDatabase;
-        else
-          databaseIsOld(iManager, databaseName, dDatabase);
       }
-    } else if (lastOperationTimestamp > -1) {
+    }
+    if (lastOperationTimestamp > -1) {
       if (lastOperationTimestamp <= dDatabase.getSyncConfiguration().getLastOperationTimestamp())
         // NO LSN, BUT LOCAL DATABASE HAS BEEN WRITTEN AFTER THE REQUESTER, STILL OK
         return dDatabase;
