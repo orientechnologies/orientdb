@@ -160,19 +160,21 @@ public abstract class OBackupStrategy {
 
       final OBackupFinishedLog finished = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID(), unitId);
 
+      validateBackup(finished);
+
+      new Thread(() -> startRestoreBackup(logger.getServer(), finished, databaseName, listener)).start();
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error finding backup log for " + getUUID(), e);
+    }
+  }
+
+  private void validateBackup(OBackupFinishedLog finished) {
+
+    if(finished.getUpload()==null) {
       File f = new File(finished.getPath());
       if (!f.exists()) {
         throw new IllegalArgumentException("Cannot restore the backup from path (" + finished.getPath() + ").");
       }
-
-      new Thread(new Runnable() {
-        @Override
-        public void run() {
-          startRestoreBackup(logger.getServer(), finished, databaseName, listener);
-        }
-      }).start();
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error finding backup log for " + getUUID(), e);
     }
   }
 
