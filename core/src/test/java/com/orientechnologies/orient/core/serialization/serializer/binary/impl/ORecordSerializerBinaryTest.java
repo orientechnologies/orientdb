@@ -144,14 +144,17 @@ public class ORecordSerializerBinaryTest {
     embeddedNativeBytes = Arrays.copyOfRange(embeddedNativeBytes, 1, embeddedNativeBytes.length);        
         
     OResultBinary embeddedBytesViaGet = serializer.deserializeFieldFromRoot(rootBytes, "TestEmbedded");    
-    byte[] deserializedBytes = embeddedBytesViaGet.getResultBytes();
-    if (!serializer.getCurrentSerializer().isSerializingClassNameByDefault()){
-      BytesContainer container = new BytesContainer(deserializedBytes);
+    byte[] deserializedBytes = Arrays.copyOfRange(embeddedBytesViaGet.getBytes(), embeddedBytesViaGet.getOffset(), embeddedBytesViaGet.getOffset() + embeddedBytesViaGet.getFieldLength());
+    BytesContainer container = new BytesContainer(deserializedBytes);
+    //if by default serializer doesn't store class name then original
+    //value embeddedNativeBytes will not have class name in byes so we want to skip them
+    if (!serializer.getCurrentSerializer().isSerializingClassNameByDefault() && 
+        serializer.getCurrentSerializer().isSerializingClassNameForEmbedded()){      
       int len = OVarIntSerializer.readAsInteger(container);
-      container.skip(len);
-      decreasePositionsBy(deserializedBytes, container.offset, true);
-      deserializedBytes = Arrays.copyOfRange(deserializedBytes, container.offset, deserializedBytes.length);      
+      container.skip(len);            
     }
+    decreasePositionsBy(deserializedBytes, container.offset + embeddedBytesViaGet.getOffset(), true);
+    deserializedBytes = Arrays.copyOfRange(deserializedBytes, container.offset, deserializedBytes.length);
     Assert.assertTrue(Arrays.equals(embeddedNativeBytes, deserializedBytes));
   }
   
@@ -165,13 +168,13 @@ public class ORecordSerializerBinaryTest {
     root.field("TestEmbedded", embedded);
     root.setClassName("TestClass");
         
-    db.save(root);    
+    db.save(root);
     
     byte[] rootBytes = serializer.toStream(root, false);
     
     OResultBinary embeddedBytesViaGet = serializer.deserializeFieldFromRoot(rootBytes, "TestEmbedded");    
     
-    Integer testValue = serializer.deserializeFieldFromEmbedded(embeddedBytesViaGet.getResultBytes(), "TestField", rootBytes[0]);
+    Integer testValue = serializer.deserializeFieldFromEmbedded(embeddedBytesViaGet.getBytes(), embeddedBytesViaGet.getOffset(), "TestField", rootBytes[0]);
     Assert.assertEquals(setValue, testValue);
   }
   
@@ -182,10 +185,7 @@ public class ORecordSerializerBinaryTest {
     ODocument embeddedLevel2 = new ODocument("TestClass");
     Integer setValue = 17;    
     embeddedLevel2.setProperty("InnerTestFields", setValue);
-    embedded.setProperty("TestEmbedded", embeddedLevel2);    
-    
-    byte[] embeddedBytesNative = serializer.toStream(embedded, false);
-    byte[] embeddedLevel2BytesNative = serializer.toStream(embeddedLevel2, false);        
+    embedded.setProperty("TestEmbedded", embeddedLevel2);                       
     
     root.field("TestEmbedded", embedded);    
         
@@ -194,8 +194,8 @@ public class ORecordSerializerBinaryTest {
     byte[] rootBytes = serializer.toStream(root, false);
     
     OResultBinary embeddedBytesViaGet = serializer.deserializeFieldFromRoot(rootBytes, "TestEmbedded");        
-    OResultBinary embeddedLKevel2BytesViaGet = serializer.deserializeFieldFromEmbedded(embeddedBytesViaGet.getResultBytes(), "TestEmbedded", rootBytes[0]);
-    Integer testValue = serializer.deserializeFieldFromEmbedded(embeddedLKevel2BytesViaGet.getResultBytes(), "InnerTestFields", rootBytes[0]);
+    OResultBinary embeddedLKevel2BytesViaGet = serializer.deserializeFieldFromEmbedded(embeddedBytesViaGet.getBytes(), embeddedBytesViaGet.getOffset(), "TestEmbedded", rootBytes[0]);
+    Integer testValue = serializer.deserializeFieldFromEmbedded(embeddedLKevel2BytesViaGet.getBytes(), embeddedLKevel2BytesViaGet.getOffset(), "InnerTestFields", rootBytes[0]);
     Assert.assertEquals(setValue, testValue);
   }
   
@@ -219,7 +219,7 @@ public class ORecordSerializerBinaryTest {
     
     List<Object> embeddedListFieldValue = serializer.deserializeFieldFromRoot(rootBytes, "TestEmbeddedList");
     OResultBinary embeddedListElementBytes = (OResultBinary)embeddedListFieldValue.get(0);
-    Integer deserializedValue = serializer.deserializeFieldFromEmbedded(embeddedListElementBytes.getResultBytes(), "InnerTestFields", rootBytes[0]);
+    Integer deserializedValue = serializer.deserializeFieldFromEmbedded(embeddedListElementBytes.getBytes(), embeddedListElementBytes.getOffset(), "InnerTestFields", rootBytes[0]);
     Assert.assertEquals(setValue, deserializedValue);
     
     Integer secondtestVal = (Integer)embeddedListFieldValue.get(1);
@@ -242,7 +242,7 @@ public class ORecordSerializerBinaryTest {
     
     Map deserializedMap = serializer.deserializeFieldFromRoot(rootBytes, "TestEmbeddedMap");
     OResultBinary firstValDeserialized = (OResultBinary)deserializedMap.get("first");
-    Integer deserializedValue = serializer.deserializeFieldFromEmbedded(firstValDeserialized.getResultBytes(), "InnerTestFields", rootBytes[0]);
+    Integer deserializedValue = serializer.deserializeFieldFromEmbedded(firstValDeserialized.getBytes(), firstValDeserialized.getOffset(), "InnerTestFields", rootBytes[0]);
     Assert.assertEquals(setValue, deserializedValue);
     
     Integer secondDeserializedValue = (Integer)deserializedMap.get("second");
