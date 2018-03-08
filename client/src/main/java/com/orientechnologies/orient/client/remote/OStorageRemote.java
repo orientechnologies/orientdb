@@ -488,6 +488,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public void shutdown() {
+    if (status == STATUS.CLOSED || status == STATUS.CLOSING)
+      return;
+
     stateLock.acquireWriteLock();
     try {
       if (status == STATUS.CLOSED)
