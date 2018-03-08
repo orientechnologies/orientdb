@@ -47,7 +47,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {      
@@ -204,8 +203,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
         // SKIP IT
         bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
-        continue;
-
       } else {
         // LOAD GLOBAL PROPERTY BY ID
         final int id = (len * -1) - 1;
@@ -257,7 +254,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     int valuePos;
     OType type;
     while (true) {
-      OGlobalProperty prop = null;
+      OGlobalProperty prop;
       final int len = OVarIntSerializer.readAsInteger(bytes);
       if (len == 0) {
         // SCAN COMPLETED
@@ -311,7 +308,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
     String fieldName;
     while (true) {
-      OGlobalProperty prop = null;
+      OGlobalProperty prop;
       final int len = OVarIntSerializer.readAsInteger(bytes);
       if (len == 0) {
         // SCAN COMPLETED
@@ -578,9 +575,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     List<RecordInfo> fieldsInfo = getPositionsFromEmbeddedCollection(bytes, serializerVersion);
     for (RecordInfo fieldInfo : fieldsInfo){
       if (fieldInfo.fieldType.isEmbedded()){
-//        byte[] recordBytes = Arrays.copyOfRange(bytes.bytes, fieldInfo.fieldStartOffset, fieldInfo.fieldLength + fieldInfo.fieldStartOffset);
-//        BytesContainer container = new BytesContainer(recordBytes);
-//        updatePositions(fieldInfo.fieldRelatedPositions, -fieldInfo.fieldStartOffset, container);
         OResultBinary result = new OResultBinary(bytes.bytes, fieldInfo.fieldStartOffset, fieldInfo.fieldLength, serializerVersion);
         retVal.add(result);
       }
@@ -603,9 +597,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       String key = recordInfo.key;
       Object value;
       if (recordInfo.fieldType.isEmbedded()){
-//        byte[] recordBytes = Arrays.copyOfRange(bytes.bytes, recordInfo.fieldStartOffset, recordInfo.fieldLength + recordInfo.fieldStartOffset);
-//        BytesContainer container = new BytesContainer(recordBytes);
-//        updatePositions(recordInfo.fieldRelatedPositions, -recordInfo.fieldStartOffset, container);
         value = new OResultBinary(bytes.bytes, recordInfo.fieldStartOffset, recordInfo.fieldLength, serializerVersion);
       }
       else{
@@ -620,29 +611,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
   
   protected OResultBinary deserializeEmbeddedAsBytes(final BytesContainer bytes, int valueLength, int serializerVersion){
-    int startOffset = bytes.offset;
-            
-//    List<Integer> positionsPointers = getPositionsPointersToUpdateFromSimpleEmbedded(bytes, serializerVersion);
-//    byte[] documentBytes = Arrays.copyOfRange(bytes.bytes, startOffset, startOffset + valueLength);
-//    
-//    //---we neeed update info about data pointers
-//    BytesContainer container = new BytesContainer(documentBytes);
-//    updatePositions(positionsPointers, -startOffset, container);
-//    //---
-//    container.offset = 0;
+    int startOffset = bytes.offset;            
     return new OResultBinary(bytes.bytes, startOffset, valueLength, serializerVersion);
-  }
-  
-//  private void updatePositions(List<Integer> positionsPointers, int shiftVal, BytesContainer bytes){
-//    for (int pointer : positionsPointers){
-//      pointer += shiftVal;
-//      bytes.offset = pointer;
-//      Integer position = readInteger(bytes);
-//      position += shiftVal;
-//      OIntegerSerializer.INSTANCE.serializeLiteral(position, bytes.bytes, pointer);
-//    }
-//    bytes.offset = 0;
-//  }
+  }  
     
   private Object deserializeValue(final BytesContainer bytes, final OType type, final ODocument ownerDocument, boolean embeddedAsDocument, 
           int valueLengthInBytes, int serializerVersion, boolean justRunThrough) {
