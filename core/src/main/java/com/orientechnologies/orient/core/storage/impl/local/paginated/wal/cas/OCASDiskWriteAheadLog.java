@@ -9,6 +9,9 @@ import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -18,6 +21,7 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -36,6 +40,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -54,7 +59,11 @@ public class OCASDiskWriteAheadLog {
   private final       int    BATCH_READ_SIZE       = 320;
 
   private final long walSizeHardLimit = OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024;
-  private       long walSizeLimit     = walSizeHardLimit;
+
+  private final List<WeakReference<OLowDiskSpaceListener>>      lowDiskSpaceListeners   = new CopyOnWriteArrayList<>();
+  private final List<WeakReference<OCheckpointRequestListener>> fullCheckpointListeners = new CopyOnWriteArrayList<>();
+
+  private long walSizeLimit = walSizeHardLimit;
 
   private final int maxSegmentSize;
 
@@ -90,6 +99,18 @@ public class OCASDiskWriteAheadLog {
 
   private final ScheduledFuture<?> recordsWriterFuture;
 
+  private long lastRecordPosition = -1;
+
+  private static final boolean assertions;
+
+  static {
+    boolean asrt = false;
+    //noinspection ConstantConditions,AssertWithSideEffects
+    assert asrt = true;
+    //noinspection ConstantConditions
+    assertions = asrt;
+  }
+
   public OCASDiskWriteAheadLog(String storageName, Path storagePath, final Path walPath, int maxPagesCacheSize, int maxSegmentSize,
       int commitDelay, boolean filterWALFiles, Locale locale) throws IOException {
     commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
@@ -111,7 +132,7 @@ public class OCASDiskWriteAheadLog {
     this.storageName = storageName;
     this.maxCacheSize = maxPagesCacheSize * OCASWALPage.PAGE_SIZE;
 
-    logSize.set(initSegmentSet(filterWALFiles, locale));
+    initSegmentSet(filterWALFiles, locale);
 
     long nextSegmentId;
 
@@ -129,7 +150,7 @@ public class OCASDiskWriteAheadLog {
 
     startRecord.setLsn(new OLogSequenceNumber(currentSegment.get(), OCASWALPage.RECORDS_OFFSET));
     startRecord.setDistance(0);
-    startRecord.setDiskSize(0);
+    startRecord.setDiskSize(OCASWALPage.RECORDS_OFFSET);
 
     records.add(startRecord);
 
@@ -139,10 +160,9 @@ public class OCASDiskWriteAheadLog {
         .scheduleAtFixedRate(new RecordsWriter(), commitDelay, commitDelay, TimeUnit.MILLISECONDS);
   }
 
-  private long initSegmentSet(boolean filterWALFiles, Locale locale) throws IOException {
+  private void initSegmentSet(boolean filterWALFiles, Locale locale) throws IOException {
     Stream<Path> walFiles;
 
-    OModifiableLong walSize = new OModifiableLong();
     if (filterWALFiles)
       walFiles = Files.find(walLocation, 1,
           (Path path, BasicFileAttributes attributes) -> validateName(path.getFileName().toString(), storageName, locale));
@@ -155,16 +175,8 @@ public class OCASDiskWriteAheadLog {
           "Location passed in WAL does not exist, or IO error was happened. DB cannot work in durable mode in such case");
 
     walFiles.forEach((Path path) -> {
-      try {
-        walSize.increment(Files.size(path));
-        segments.add(extractSegmentId(path.getFileName().toString()));
-      } catch (IOException e) {
-        OLogManager.instance().errorNoDb(this, "Error during WAL loading", e);
-        throw new IllegalStateException("Error during WAL loading", e);
-      }
+      segments.add(extractSegmentId(path.getFileName().toString()));
     });
-
-    return walSize.value;
   }
 
   private long extractSegmentId(String name) {
@@ -285,6 +297,10 @@ public class OCASDiskWriteAheadLog {
     } finally {
       removeCutTillLimit(lsn);
     }
+  }
+
+  long segSize() {
+    return segmentSize.get();
   }
 
   private List<OWriteableWALRecord> readFromDisk(OLogSequenceNumber lsn, int limit) throws IOException {
@@ -572,11 +588,23 @@ public class OCASDiskWriteAheadLog {
     }
 
     final int diskSize = writeableRecord.getDiskSize();
-    final long size = logSize.addAndGet(diskSize);
     final long segSize = segmentSize.addAndGet(diskSize);
+    final long size = logSize.addAndGet(diskSize);
 
     if (writeableRecord instanceof OAtomicUnitEndRecord) {
       ongoingTXs.decrement();
+    }
+
+    if (walSizeHardLimit < 0 && freeSpace > -1) {
+      walSizeLimit += (size + freeSpace) / 2;
+    }
+
+    if (walSizeLimit > -1 && size > walSizeLimit && segments.size() > 1) {
+      for (WeakReference<OCheckpointRequestListener> listenerWeakReference : fullCheckpointListeners) {
+        final OCheckpointRequestListener listener = listenerWeakReference.get();
+        if (listener != null)
+          listener.requestCheckpoint();
+      }
     }
 
     return recordLSN;
@@ -639,14 +667,14 @@ public class OCASDiskWriteAheadLog {
     walChannel.close();
     cutTillLimits.clear();
 
-    if (!recordsWriterFuture.isCancelled()) {
+    if (recordsWriterFuture.isDone()) {
       try {
-        recordsWriterFuture.get(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS);
+        recordsWriterFuture.get();
       } catch (CancellationException e) {
         //ignore
       } catch (InterruptedException e) {
         OLogManager.instance().error(this, "Cannot shutdown background WAL commit thread", e);
-      } catch (ExecutionException | TimeoutException e) {
+      } catch (ExecutionException e) {
         throw new OStorageException("WAL flush task for '" + storageName + "' storage cannot be stopped");
       }
     }
@@ -654,6 +682,55 @@ public class OCASDiskWriteAheadLog {
 
   private void checkFreeSpace() throws IOException {
     freeSpace = fileStore.getUsableSpace();
+
+    //system has unlimited amount of free space
+    if (freeSpace < 0)
+      return;
+
+    if (freeSpace < freeSpaceLimit) {
+      for (WeakReference<OLowDiskSpaceListener> listenerWeakReference : lowDiskSpaceListeners) {
+        final OLowDiskSpaceListener lowDiskSpaceListener = listenerWeakReference.get();
+
+        if (lowDiskSpaceListener != null)
+          lowDiskSpaceListener.lowDiskSpace(new OLowDiskSpaceInformation(freeSpace, freeSpaceLimit));
+      }
+    }
+  }
+
+  public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
+    lowDiskSpaceListeners.add(new WeakReference<>(listener));
+  }
+
+  public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {
+    List<WeakReference<OLowDiskSpaceListener>> itemsToRemove = new ArrayList<>();
+
+    for (WeakReference<OLowDiskSpaceListener> ref : lowDiskSpaceListeners) {
+      final OLowDiskSpaceListener lowDiskSpaceListener = ref.get();
+
+      if (lowDiskSpaceListener == null || lowDiskSpaceListener.equals(listener)) {
+        itemsToRemove.add(ref);
+      }
+    }
+
+    lowDiskSpaceListeners.removeAll(itemsToRemove);
+  }
+
+  public void addFullCheckpointListener(OCheckpointRequestListener listener) {
+    fullCheckpointListeners.add(new WeakReference<>(listener));
+  }
+
+  public void removeFullCheckpointListener(OCheckpointRequestListener listener) {
+    List<WeakReference<OCheckpointRequestListener>> itemsToRemove = new ArrayList<>();
+
+    for (WeakReference<OCheckpointRequestListener> ref : fullCheckpointListeners) {
+      final OCheckpointRequestListener fullCheckpointRequestListener = ref.get();
+
+      if (fullCheckpointRequestListener == null || fullCheckpointRequestListener.equals(listener)) {
+        itemsToRemove.add(ref);
+      }
+    }
+
+    fullCheckpointListeners.removeAll(itemsToRemove);
   }
 
   private void doFlush() {
@@ -759,7 +836,7 @@ public class OCASDiskWriteAheadLog {
         }
 
         record.setDistance(distance);
-        record.setDiskSize(distance + OCASWALPage.RECORDS_OFFSET);
+        record.setDiskSize(distance + prevRecord.getDiskSize());
       }
 
       return prevStart;
@@ -818,10 +895,10 @@ public class OCASDiskWriteAheadLog {
       final int pageOffset = (int) (end - pageIndex * OCASWALPage.PAGE_SIZE);
       if (pageOffset > OCASWALPage.RECORDS_OFFSET) {
         newPosition = (pageIndex + 1) * OCASWALPage.PAGE_SIZE + OCASWALPage.RECORDS_OFFSET;
-        record.setDiskSize((int) ((pageIndex + 1) * OCASWALPage.PAGE_SIZE - end));
+        record.setDiskSize((int) ((pageIndex + 1) * OCASWALPage.PAGE_SIZE - end) + OCASWALPage.RECORDS_OFFSET);
       } else {
         newPosition = end;
-        record.setDiskSize(0);
+        record.setDiskSize(OCASWALPage.RECORDS_OFFSET);
       }
 
       record.setDistance(0);
@@ -859,6 +936,10 @@ public class OCASDiskWriteAheadLog {
 
       if (offset == 0) {
         diskSize -= OCASWALPage.RECORDS_OFFSET;
+      }
+
+      if (startOffset == OCASWALPage.RECORDS_OFFSET) {
+        diskSize += OCASWALPage.RECORDS_OFFSET;
       }
 
       record.setDiskSize(diskSize);
@@ -918,6 +999,7 @@ public class OCASDiskWriteAheadLog {
                 .open(walLocation.resolve(getSegmentName(segmentId)), StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
             segments.add(segmentId);
 
+            lastRecordPosition = 0;
             assert lsn.getPosition() == OCASWALPage.RECORDS_OFFSET;
           }
 
@@ -985,6 +1067,14 @@ public class OCASDiskWriteAheadLog {
 
             buffer.put(recordContent, written - OIntegerSerializer.INT_SIZE, chunkSize);
             written += chunkSize;
+          }
+
+          if (assertions && buffer != null) {
+            if (lastRecordPosition >= 0) {
+              assert walChannel.position() - lastRecordPosition + buffer.position() == record.getDiskSize();
+            }
+
+            lastRecordPosition = walChannel.position() + buffer.position();
           }
 
           lastLSN = record.getLsn();

@@ -14,6 +14,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -221,8 +222,8 @@ public class OCASDiskWriteAheadLogTest {
       try {
         final Random random = new Random(seed);
 
-        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100,
-            Integer.MAX_VALUE, 1000, true, Locale.US);
+        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, Integer.MAX_VALUE, 1000,
+            true, Locale.US);
 
         List<TestRecord> records = new ArrayList<>();
 
@@ -913,6 +914,48 @@ public class OCASDiskWriteAheadLogTest {
     }
   }
 
+  @Test
+  public void testSegSize() throws Exception {
+    final int iterations = 1500;
+
+    for (int n = 0; n < iterations; n++) {
+      final long seed = System.nanoTime();
+      OFileUtils.deleteRecursively(testDirectory.toFile());
+
+      try {
+        final Random random = new Random(seed);
+        final int recordsCount = random.nextInt(10_000) + 100;
+
+        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100,
+            Integer.MAX_VALUE, 1000, true, Locale.US);
+        for (int i = 0; i < recordsCount; i++) {
+
+          final TestRecord testRecord = new TestRecord(random, 4 * OCASWALPage.PAGE_SIZE, 1);
+          wal.log(testRecord);
+        }
+
+        wal.close();
+
+        final long segSize = Files.walk(testDirectory)
+            .filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal")).mapToLong(p -> p.toFile().length())
+            .sum();
+
+        final long calculatedSegSize =
+            ((wal.segSize() + OCASWALPage.PAGE_SIZE - 1) / OCASWALPage.PAGE_SIZE) * OCASWALPage.PAGE_SIZE;
+        Assert.assertEquals(segSize, calculatedSegSize);
+
+        Thread.sleep(2);
+
+        if (n > 0 && n % 10 == 0) {
+          System.out.printf("%d iterations out of %d were passed\n", n, iterations);
+        }
+      } catch (Exception | Error e) {
+        System.out.println("testLogSize : " + seed);
+        throw e;
+      }
+    }
+  }
+
   public static final class TestRecord extends OAbstractWALRecord {
     private byte[] data;
 
@@ -957,5 +1000,6 @@ public class OCASDiskWriteAheadLogTest {
     public boolean isUpdateMasterRecord() {
       return false;
     }
+
   }
 }
