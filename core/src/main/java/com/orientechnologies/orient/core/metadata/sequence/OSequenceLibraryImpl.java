@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.util.List;
@@ -51,12 +53,13 @@ public class OSequenceLibraryImpl {
     sequences.clear();
 
     if (db.getMetadata().getImmutableSchemaSnapshot().existsClass(OSequence.CLASS_NAME)) {
-      final List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + OSequence.CLASS_NAME));
-      for (ODocument document : result) {
-        document.reload();
+      try (final OResultSet result = db.query("SELECT FROM " + OSequence.CLASS_NAME)) {
+        while (result.hasNext()) {
+          OResult res = result.next();
 
-        final OSequence sequence = OSequenceHelper.createSequence(document);
-        sequences.put(sequence.getName().toUpperCase(Locale.ENGLISH), sequence);
+          final OSequence sequence = OSequenceHelper.createSequence((ODocument) res.getElement().get());
+          sequences.put(sequence.getName().toUpperCase(Locale.ENGLISH), sequence);
+        }
       }
     }
   }
