@@ -6,6 +6,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,26 +14,18 @@ import java.util.Map;
 /**
  * Created by tglman on 15/06/17.
  */
-public class ChangeSerializationHelper_V0 {
-  public static final ChangeSerializationHelper_V0 INSTANCE = new ChangeSerializationHelper_V0();
+public class ChangeSerializationHelper_V0 extends ChangeSerializationHelper{    
 
-  public static Change createChangeInstance(byte type, int value) {
-    switch (type) {
-    case AbsoluteChange.TYPE:
-      return new AbsoluteChange(value);
-    case DiffChange.TYPE:
-      return new DiffChange(value);
-    default:
-      throw new IllegalArgumentException("Change type is incorrect");
-    }
-  }
-
-  public Change deserializeChange(final byte[] stream, final int offset) {
+  private Change deserializeChange(final byte[] stream, final int offset) {
     int value = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset + OByteSerializer.BYTE_SIZE);
     return createChangeInstance(OByteSerializer.INSTANCE.deserializeLiteral(stream, offset), value);
   }
 
-  public Map<OIdentifiable, Change> deserializeChanges(final byte[] stream, int offset) {
+  @Override
+  public Map<OIdentifiable, Change> deserializeChanges(BytesContainer bytes) {
+    byte[] stream = bytes.bytes;
+    int offset = bytes.offset;
+    
     final int count = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
@@ -52,10 +45,15 @@ public class ChangeSerializationHelper_V0 {
       res.put(identifiable, change);
     }
 
+    bytes.offset = offset;
     return res;
   }
 
-  public <K extends OIdentifiable> void serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, byte[] stream, int offset) {
+  @Override
+  public <K extends OIdentifiable> int serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, BytesContainer bytes) {
+    byte[] stream = bytes.bytes;
+    int offset = bytes.offset;
+    
     OIntegerSerializer.INSTANCE.serializeLiteral(changes.size(), stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
@@ -71,9 +69,13 @@ public class ChangeSerializationHelper_V0 {
 
       offset += entry.getValue().serialize(stream, offset);
     }
+    
+    bytes.offset = offset;
+    return bytes.offset;
   }
 
-  public int getChangesSerializedSize(int changesCount) {
+  @Override
+  protected int getChangesSerializedSize(int changesCount) {
     return changesCount * (OLinkSerializer.RID_SIZE + Change.SIZE);
   }
 }

@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -41,7 +40,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 
 import java.util.*;
 
-public class OEmbeddedRidBag_V1 implements ORidBagDelegate {
+public class OEmbeddedRidBag_V1 implements OEmbeddedRidBag {
   private boolean contentWasChanged = false;
 
   private Object[] entries       = OCommonConst.EMPTY_OBJECT_ARRAY;
@@ -230,6 +229,7 @@ public class OEmbeddedRidBag_V1 implements ORidBagDelegate {
             identifiable));
   }
 
+  @Override
   public OEmbeddedRidBag_V1 copy() {
     final OEmbeddedRidBag_V1 copy = new OEmbeddedRidBag_V1();
     copy.contentWasChanged = contentWasChanged;
@@ -356,12 +356,14 @@ public class OEmbeddedRidBag_V1 implements ORidBagDelegate {
       return "[size=" + size + "]";
   }
 
+  @Override
   public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
     if (changeListeners == null)
       changeListeners = new LinkedList<OMultiValueChangeListener<OIdentifiable, OIdentifiable>>();
     changeListeners.add(changeListener);
   }
 
+  @Override
   public void removeRecordChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
     if (changeListeners != null)
       changeListeners.remove(changeListener);

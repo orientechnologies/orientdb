@@ -17,25 +17,14 @@ import java.util.Map;
 /**
  * Created by tglman on 15/06/17.
  */
-public class ChangeSerializationHelper_V1 {
-  public static final ChangeSerializationHelper_V1 INSTANCE = new ChangeSerializationHelper_V1();
-
-  public static Change createChangeInstance(byte type, int value) {
-    switch (type) {
-    case AbsoluteChange.TYPE:
-      return new AbsoluteChange(value);
-    case DiffChange.TYPE:
-      return new DiffChange(value);
-    default:
-      throw new IllegalArgumentException("Change type is incorrect");
-    }
-  }
+public class ChangeSerializationHelper_V1 extends ChangeSerializationHelper{  
 
   private Change deserializeChange(final byte[] stream, final int offset) {
     int value = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset + OByteSerializer.BYTE_SIZE);
     return createChangeInstance(OByteSerializer.INSTANCE.deserializeLiteral(stream, offset), value);
   }
 
+  @Override
   public Map<OIdentifiable, Change> deserializeChanges(BytesContainer container) {
     final int count = OVarIntSerializer.readAsInteger(container);    
     byte[] stream = container.bytes;
@@ -62,6 +51,7 @@ public class ChangeSerializationHelper_V1 {
     return res;
   }
 
+  @Override
   public <K extends OIdentifiable> int serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, BytesContainer bytes) {    
     OVarIntSerializer.write(bytes, changes.size());
 
@@ -87,7 +77,8 @@ public class ChangeSerializationHelper_V1 {
     return bytes.offset;
   }
 
-  private int getChangesSerializedSize(int changesCount) {
+  @Override
+  protected int getChangesSerializedSize(int changesCount) {
     int size = 0;
     if (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy
         || ORecordSerializationContext.getContext() == null)      

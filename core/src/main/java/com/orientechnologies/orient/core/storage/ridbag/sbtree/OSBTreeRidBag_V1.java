@@ -26,7 +26,6 @@ import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
@@ -51,7 +50,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
  *
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public class OSBTreeRidBag_V1 implements ORidBagDelegate {
+public class OSBTreeRidBag_V1 implements OSBTreeRidBag {
   private final OSBTreeCollectionManager                           collectionManager = ODatabaseRecordThreadLocal.instance().get()
       .getSbTreeCollectionManager();
   private final NavigableMap<OIdentifiable, Change>                changes           = new ConcurrentSkipListMap<>();
@@ -328,13 +327,13 @@ public class OSBTreeRidBag_V1 implements ORidBagDelegate {
     }
   }
 
-  public OSBTreeRidBag_V1(OBonsaiCollectionPointer pointer, Map<OIdentifiable, Change> changes) {
+  protected OSBTreeRidBag_V1(OBonsaiCollectionPointer pointer, Map<OIdentifiable, Change> changes) {
     this.collectionPointer = pointer;
     this.changes.putAll(changes);
     this.size = -1;
   }
 
-  public OSBTreeRidBag_V1() {
+  protected OSBTreeRidBag_V1() {
     collectionPointer = null;
   }
 
@@ -623,11 +622,6 @@ public class OSBTreeRidBag_V1 implements ORidBagDelegate {
     return 0;    
   }
 
-//  @Override
-//  public int getSerializedSize(byte[] stream, int offset) {
-//    return getSerializedSize();
-//  }
-
   @Override
   public int serialize(BytesContainer bytes, UUID ownerUuid) {
     applyNewEntries();
@@ -664,10 +658,7 @@ public class OSBTreeRidBag_V1 implements ORidBagDelegate {
     OVarIntSerializer.write(bytes, rootPointer.getPageOffset());
 
     // Keep this section for binary compatibility with versions older then 1.7.5
-    OVarIntSerializer.write(bytes, size);
-    
-//    int sz = getChangesSerializedSize();
-//    bytes.offset = bytes.alloc(sz);
+    OVarIntSerializer.write(bytes, size);    
     
     Map<OIdentifiable, Change> changesToSerialze;
     
@@ -694,7 +685,7 @@ public class OSBTreeRidBag_V1 implements ORidBagDelegate {
       changesToSerialze = new HashMap<>();
     }
 
-    int newOffset = ChangeSerializationHelper_V1.INSTANCE.serializeChanges(changesToSerialze, OLinkSerializer.INSTANCE, bytes);
+    int newOffset = OSBTreeRidBagFactory.getInstance().getChangeSerializationHelper(1).serializeChanges(changesToSerialze, OLinkSerializer.INSTANCE, bytes);
     bytes.offset = newOffset;
     
     return bytes.offset;
@@ -715,6 +706,7 @@ public class OSBTreeRidBag_V1 implements ORidBagDelegate {
     newEntries.clear();
   }
 
+  @Override
   public void clearChanges() {
     changes.clear();
   }
@@ -726,6 +718,7 @@ public class OSBTreeRidBag_V1 implements ORidBagDelegate {
       context.push(new ORidBagDeleteSerializationOperation(collectionPointer, this));
   }
 
+  @Override
   public void confirmDelete() {
     collectionPointer = null;
     changes.clear();
@@ -757,15 +750,17 @@ public class OSBTreeRidBag_V1 implements ORidBagDelegate {
 
     this.size = -1;
     
-    changes.putAll(ChangeSerializationHelper.INSTANCE.deserializeChanges(bytes));    
+    changes.putAll(OSBTreeRidBagFactory.getInstance().getChangeSerializationHelper(1).deserializeChanges(bytes));
 
     return bytes.offset;
   }
 
+  @Override
   public OBonsaiCollectionPointer getCollectionPointer() {
     return collectionPointer;
   }
 
+  @Override
   public void setCollectionPointer(OBonsaiCollectionPointer collectionPointer) {
     this.collectionPointer = collectionPointer;
   }
@@ -865,12 +860,6 @@ public class OSBTreeRidBag_V1 implements ORidBagDelegate {
     return size;
   }
 
-//  private int getChangesSerializedSize() {
-//    Set<OIdentifiable> changedIds = new HashSet<>(changes.keySet());
-//    changedIds.addAll(newEntries.keySet());
-//    return ChangeSerializationHelper.INSTANCE.getChangesSerializedSize(changedIds.size());
-//  }
-
   private int getHighLevelDocClusterId() {
     ORecordElement owner = this.owner;
     while (owner != null && owner.getOwner() != null) {
@@ -934,6 +923,7 @@ public class OSBTreeRidBag_V1 implements ORidBagDelegate {
     return null;
   }
 
+  @Override
   public void debugPrint(PrintStream writer) throws IOException {
     OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
     if (tree instanceof OSBTreeBonsaiLocal) {
@@ -950,5 +940,27 @@ public class OSBTreeRidBag_V1 implements ORidBagDelegate {
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     //do nothing not needed
+  }
+  
+  @Override
+  public void mergeChanges(OSBTreeRidBag treeRidBag) {
+    OSBTreeRidBag_V1 other = (OSBTreeRidBag_V1)treeRidBag;
+    for (Map.Entry<OIdentifiable, OModifiableInteger> entry : other.newEntries.entrySet()) {
+      mergeDiffEntry(entry.getKey(), entry.getValue().getValue());
+    }
+
+    for (Map.Entry<OIdentifiable, Change> entry : other.changes.entrySet()) {
+      final OIdentifiable rec = entry.getKey();
+      final Change change = entry.getValue();
+      final int diff;
+      if (change instanceof DiffChange)
+        diff = change.getValue();
+      else if (change instanceof AbsoluteChange)
+        diff = change.getValue() - getAbsoluteValue(rec).getValue();
+      else
+        throw new IllegalArgumentException("change type is not supported");
+
+      mergeDiffEntry(rec, diff);
+    }
   }
 }

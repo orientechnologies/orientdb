@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTre
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBagFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -60,7 +61,7 @@ public class ConcurrencySBTreeBonsaiLocalTest {
       atomManager.endAtomicOperation(false, null);
       ex.get();
 
-      OSBTreeRidBag bag = new OSBTreeRidBag();
+      OSBTreeRidBag bag = OSBTreeRidBagFactory.getInstance().getOSBTreeRidBag();
       bag.setCollectionPointer(tree.getCollectionPointer());
       bag.setAutoConvertToRecord(false);
       Assert.assertEquals(tree.size(), 1000);
@@ -68,7 +69,7 @@ public class ConcurrencySBTreeBonsaiLocalTest {
         if (id.getIdentity().getClusterPosition() > 2000)
           Assert.fail("found a wrong rid in the ridbag");
       }
-      OSBTreeRidBag secondBag = new OSBTreeRidBag();
+      OSBTreeRidBag secondBag = OSBTreeRidBagFactory.getInstance().getOSBTreeRidBag();
       secondBag.setAutoConvertToRecord(false);
       secondBag.setCollectionPointer(tree1.getCollectionPointer());
       Assert.assertEquals(tree1.size(), 1000);

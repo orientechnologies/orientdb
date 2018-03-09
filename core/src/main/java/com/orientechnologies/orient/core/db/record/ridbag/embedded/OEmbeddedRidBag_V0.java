@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -41,7 +40,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 
 import java.util.*;
 
-public class OEmbeddedRidBag_V0 implements ORidBagDelegate {
+public class OEmbeddedRidBag_V0 implements OEmbeddedRidBag {
   private boolean contentWasChanged = false;
 
   private Object[] entries       = OCommonConst.EMPTY_OBJECT_ARRAY;
@@ -230,7 +229,8 @@ public class OEmbeddedRidBag_V0 implements ORidBagDelegate {
             identifiable));
   }
 
-  public OEmbeddedRidBag_V0 copy() {
+  @Override
+  public OEmbeddedRidBag copy() {
     final OEmbeddedRidBag_V0 copy = new OEmbeddedRidBag_V0();
     copy.contentWasChanged = contentWasChanged;
     copy.entries = entries;
@@ -356,12 +356,14 @@ public class OEmbeddedRidBag_V0 implements ORidBagDelegate {
       return "[size=" + size + "]";
   }
 
+  @Override
   public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
     if (changeListeners == null)
       changeListeners = new LinkedList<OMultiValueChangeListener<OIdentifiable, OIdentifiable>>();
     changeListeners.add(changeListener);
   }
 
+  @Override
   public void removeRecordChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
     if (changeListeners != null)
       changeListeners.remove(changeListener);
@@ -430,7 +432,8 @@ public class OEmbeddedRidBag_V0 implements ORidBagDelegate {
       }
     }
 
-    return offset;
+    bytes.offset = offset;
+    return bytes.offset;
   }
 
   @Override
