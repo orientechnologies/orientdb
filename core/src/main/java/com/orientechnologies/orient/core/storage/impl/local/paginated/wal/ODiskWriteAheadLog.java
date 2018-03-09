@@ -591,7 +591,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         }
       }
 
-      if (walSizeHardLimit < 0 && freeSpace > -1) {
+      if (walSizeHardLimit < 0 && freeSpace > freeSpaceLimit) {
         walSizeLimit = logSize + freeSpace / 2;
       }
 
