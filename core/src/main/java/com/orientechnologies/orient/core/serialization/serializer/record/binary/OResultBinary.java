@@ -35,14 +35,26 @@ import java.util.Set;
 public class OResultBinary implements OResult{
 
   private ORID id;
-  private final byte[] resultBytes;
+  private final byte[] bytes;
+  private final int offset;
   private final int serializerVersion;
+  private final int fieldLength;
   
-  public OResultBinary(byte[] bytes, int serializerVersion){
-    this.resultBytes = bytes;
+  public OResultBinary(byte[] bytes, int offset, int fieldLength, int serializerVersion){
+    this.bytes = bytes;
     this.serializerVersion = serializerVersion;
+    this.offset = offset;
+    this.fieldLength = fieldLength;
   }
 
+  public int getFieldLength() {
+    return fieldLength;
+  }
+
+  public int getOffset() {
+    return offset;
+  }  
+  
   public ORID getId() {
     return id;
   }
@@ -51,8 +63,8 @@ public class OResultBinary implements OResult{
     this.id = id;
   }
 
-  public byte[] getResultBytes() {
-    return resultBytes;
+  public byte[] getBytes() {
+    return bytes;
   }
 
   public int getSerializerVersion() {
@@ -61,7 +73,7 @@ public class OResultBinary implements OResult{
   
   @Override
   public <T> T getProperty(String name) {
-    return (T)ORecordSerializerBinary.INSTANCE.deserializeFieldFromEmbedded(resultBytes, name, serializerVersion);
+    return (T)ORecordSerializerBinary.INSTANCE.deserializeFieldFromEmbedded(bytes, offset, name, serializerVersion);
   }
 
   @Override
@@ -86,7 +98,7 @@ public class OResultBinary implements OResult{
 
   @Override
   public Set<String> getPropertyNames() {
-    String[] fields = ORecordSerializerBinary.INSTANCE.getFieldNamesEmbedded(new ODocument(), resultBytes, serializerVersion);
+    String[] fields = ORecordSerializerBinary.INSTANCE.getFieldNamesEmbedded(new ODocument(), bytes, offset, serializerVersion);
     return new HashSet<>(Arrays.asList(fields));
   }
 
@@ -147,7 +159,7 @@ public class OResultBinary implements OResult{
   
   private ODocument toDocument(){
     ODocument doc = new ODocument();
-    ORecordSerializerBinary.INSTANCE.getSerializer(serializerVersion).deserialize(doc, new BytesContainer(resultBytes));
+    ORecordSerializerBinary.INSTANCE.getSerializer(serializerVersion).deserialize(doc, new BytesContainer(bytes));
     return doc;
   }
   

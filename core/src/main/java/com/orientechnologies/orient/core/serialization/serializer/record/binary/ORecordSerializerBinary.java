@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -132,11 +131,12 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   }  
   
   @Override
-  public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int serializerVersion) {
+  public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int offset, int serializerVersion) {
     if (iSource == null || iSource.length == 0)
       return new String[0];
 
-    final BytesContainer container = new BytesContainer(iSource);    
+    final BytesContainer container = new BytesContainer(iSource);
+    container.skip(offset);
 
     try {
       return serializerByVersion[serializerVersion].getFieldNames(reference, container, serializerByVersion[serializerVersion].isSerializingClassNameForEmbedded());
@@ -188,24 +188,27 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   }
     
   
-  private <RET> RET deserializeField(byte[]record, String iFieldName, boolean isEmbedded, int serializerVersion){
+  private <RET> RET deserializeField(byte[]record, int offset, String iFieldName, boolean isEmbedded, int serializerVersion){
     BytesContainer bytes = new BytesContainer(record);
     int wantedSerializerVersion = serializerVersion;
-    if (!isEmbedded){
+    if (!isEmbedded && offset == 0){
       wantedSerializerVersion = record[0];      
       //skip serializer version
       bytes = bytes.skip(1);
+    }
+    else if (isEmbedded){
+      bytes.skip(offset);
     }
     return serializerByVersion[wantedSerializerVersion].deserializeFieldTyped(bytes, iFieldName, isEmbedded, wantedSerializerVersion);
   }
   
   @Override
   public <RET> RET deserializeFieldFromRoot(byte[]record, String iFieldName){
-    return deserializeField(record, iFieldName, false, -1);
+    return deserializeField(record, 0, iFieldName, false, -1);
   }
   
   @Override
-  public <RET> RET deserializeFieldFromEmbedded(byte[]record, String iFieldName, int serializerVersion){       
-    return deserializeField(record, iFieldName, true, serializerVersion);
+  public <RET> RET deserializeFieldFromEmbedded(byte[]record, int offset, String iFieldName, int serializerVersion){       
+    return deserializeField(record, offset, iFieldName, true, serializerVersion);
   }
 }
