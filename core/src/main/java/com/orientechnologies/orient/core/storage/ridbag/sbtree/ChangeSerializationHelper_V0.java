@@ -51,6 +51,9 @@ public class ChangeSerializationHelper_V0 extends ChangeSerializationHelper{
 
   @Override
   public <K extends OIdentifiable> int serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, BytesContainer bytes) {
+    int allocSize = OIntegerSerializer.INT_SIZE + getChangesSerializedSize(changes.size());
+    bytes.offset = bytes.alloc(allocSize);
+    
     byte[] stream = bytes.bytes;
     int offset = bytes.offset;
     
