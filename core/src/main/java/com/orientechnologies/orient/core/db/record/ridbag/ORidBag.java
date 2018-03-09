@@ -24,18 +24,14 @@ import com.orientechnologies.common.collection.OCollection;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -223,8 +219,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     final int serializedSize =
         OByteSerializer.BYTE_SIZE + delegate.getSerializedSize() + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
     int pointer = bytesContainer.alloc(serializedSize);
-    int offset = pointer;
-    final byte[] stream = bytesContainer.bytes;
+//    int offsetAfterAlloc = bytesContainer.offset;
+    bytesContainer.offset = pointer;
 
     byte configByte = 0;
     if (isEmbedded())
@@ -233,14 +229,16 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     if (hasUuid)
       configByte |= 2;
 
-    stream[offset++] = configByte;
+    //stream[offset++] = configByte;
+    bytesContainer.bytes[bytesContainer.offset++] = configByte;
 
     if (hasUuid) {
-      OUUIDSerializer.INSTANCE.serialize(uuid, stream, offset);
-      offset += OUUIDSerializer.UUID_SIZE;
+      OUUIDSerializer.INSTANCE.serialize(uuid, bytesContainer.bytes, bytesContainer.offset);
+      bytesContainer.offset += OUUIDSerializer.UUID_SIZE;
     }
 
-    delegate.serialize(stream, offset, oldUuid);
+    delegate.serialize(bytesContainer, oldUuid);
+//    bytesContainer.offset = offsetAfterAlloc;
     return pointer;
   }
 

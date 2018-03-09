@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import org.junit.Test;
 
 import java.util.UUID;
@@ -23,8 +24,9 @@ public class OEmbeddedRidBagBasicTest {
       bag.convertLinks2Records();
       bag.convertRecords2Links();
       byte[] bytes = new byte[1024];
+      BytesContainer container = new BytesContainer(bytes);
       UUID id = UUID.randomUUID();
-      bag.serialize(bytes, 0, id);
+      bag.serialize(container, id);
 
       OEmbeddedRidBag bag1 = new OEmbeddedRidBag();
       bag1.deserialize(bytes, 0);

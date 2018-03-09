@@ -3,9 +3,13 @@ package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,22 +31,25 @@ public class ChangeSerializationHelper {
     }
   }
 
-  public Change deserializeChange(final byte[] stream, final int offset) {
+  private Change deserializeChange(final byte[] stream, final int offset) {
     int value = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset + OByteSerializer.BYTE_SIZE);
     return createChangeInstance(OByteSerializer.INSTANCE.deserializeLiteral(stream, offset), value);
   }
 
-  public Map<OIdentifiable, Change> deserializeChanges(final byte[] stream, int offset) {
-    final int count = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset);
-    offset += OIntegerSerializer.INT_SIZE;
+  public Map<OIdentifiable, Change> deserializeChanges(BytesContainer container) {
+    final int count = OVarIntSerializer.readAsInteger(container);    
+    byte[] stream = container.bytes;
 
     final HashMap<OIdentifiable, Change> res = new HashMap<>();
     for (int i = 0; i < count; i++) {
-      ORecordId rid = OLinkSerializer.INSTANCE.deserialize(stream, offset);
-      offset += OLinkSerializer.RID_SIZE;
-      Change change = ChangeSerializationHelper.INSTANCE.deserializeChange(stream, offset);
-      offset += Change.SIZE;
-
+      short clusterId = OVarIntSerializer.readAsShort(container);
+      long clusterPosition = OVarIntSerializer.readAsLong(container);      
+      
+      ORecordId rid = new ORecordId(clusterId, clusterPosition);
+      
+      Change change = ChangeSerializationHelper.INSTANCE.deserializeChange(stream, container.offset);
+      container.offset += Change.SIZE;
+           
       final OIdentifiable identifiable;
       if (rid.isTemporary() && rid.getRecord() != null)
         identifiable = rid.getRecord();
@@ -55,9 +62,12 @@ public class ChangeSerializationHelper {
     return res;
   }
 
-  public <K extends OIdentifiable> void serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, byte[] stream, int offset) {
-    OIntegerSerializer.INSTANCE.serializeLiteral(changes.size(), stream, offset);
-    offset += OIntegerSerializer.INT_SIZE;
+  public <K extends OIdentifiable> int serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, BytesContainer bytes) {    
+    OVarIntSerializer.write(bytes, changes.size());
+
+    //lets allocate these bytes for sure they will be needed in deserialization process
+    int size = getChangesSerializedSize(changes.size());
+    bytes.offset = bytes.alloc(size);
 
     for (Map.Entry<K, Change> entry : changes.entrySet()) {
       K key = entry.getKey();
@@ -65,15 +75,23 @@ public class ChangeSerializationHelper {
       if (key.getIdentity().isTemporary())
         //noinspection unchecked
         key = key.getRecord();
+            
+      OIdentifiable id = (OIdentifiable)key;
+      OVarIntSerializer.write(bytes, id.getIdentity().getClusterId());
+      OVarIntSerializer.write(bytes, id.getIdentity().getClusterPosition());
 
-      keySerializer.serialize(key, stream, offset);
-      offset += keySerializer.getObjectSize(key);
-
-      offset += entry.getValue().serialize(stream, offset);
+      //check for additional space
+      bytes.offset = bytes.alloc(Change.SIZE);
+      bytes.offset += entry.getValue().serialize(bytes.bytes, bytes.offset);
     }
+    return bytes.offset;
   }
 
-  public int getChangesSerializedSize(int changesCount) {
-    return changesCount * (OLinkSerializer.RID_SIZE + Change.SIZE);
+  private int getChangesSerializedSize(int changesCount) {
+    int size = 0;
+    if (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy
+        || ORecordSerializationContext.getContext() == null)      
+      size += changesCount * Change.SIZE;    
+    return size;
   }
 }
