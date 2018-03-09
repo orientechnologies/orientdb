@@ -148,7 +148,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   }
 
   @Override
-  public <RET> RET deserializeFieldFromEmbedded(byte[] record, String iFieldName, int serializerVersion) {
+  public <RET> RET deserializeFieldFromEmbedded(byte[] record, int offset, String iFieldName, int serializerVersion) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 
@@ -169,7 +169,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   }
   
   @Override
-  public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int serializerVersion) {
+  public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int offset, int serializerVersion) {
     return getFieldNamesRoot(reference, iSource);
   }
 }
