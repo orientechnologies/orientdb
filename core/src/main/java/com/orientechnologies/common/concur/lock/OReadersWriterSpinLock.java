@@ -248,8 +248,29 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
 
     pNode.waitingWriter = null;
 
-    while (distributedCounter.sum() != 0) {
-      Thread.yield();
+    if (distributedCounter.sum() != 0) {
+      node.locked = false;
+
+      myNode.set(new WNode());
+
+      final Thread waitingWriter = node.waitingWriter;
+      if (waitingWriter != null) {
+        LockSupport.unpark(waitingWriter);
+      }
+
+      while (!node.waitingReaders.isEmpty()) {
+        final Set<Thread> readers = node.waitingReaders.keySet();
+        final Iterator<Thread> threadIterator = readers.iterator();
+
+        while (threadIterator.hasNext()) {
+          final Thread reader = threadIterator.next();
+          threadIterator.remove();
+
+          LockSupport.unpark(reader);
+        }
+      }
+
+      return false;
     }
 
     setExclusiveOwnerThread(Thread.currentThread());
