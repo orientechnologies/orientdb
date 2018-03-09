@@ -246,8 +246,6 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
       return false;
     }
 
-    pNode.waitingWriter = null;
-
     if (distributedCounter.sum() != 0) {
       node.locked = false;
 
