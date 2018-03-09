@@ -30,10 +30,7 @@ import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngineException;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -53,6 +50,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.orientechnologies.lucene.builder.OLuceneQueryBuilder.EMPTY_METADATA;
 
@@ -60,6 +58,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
   private OLuceneDocumentBuilder builder;
   private OLuceneQueryBuilder    queryBuilder;
+  private final AtomicLong bonsayFileId = new AtomicLong(0);
 
   public OLuceneFullTextIndexEngine(OStorage storage, String idxName) {
     super(storage, idxName);
@@ -134,6 +133,11 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   @Override
   public Object get(Object key) {
     return getInTx(key, null);
+  }
+
+  @Override
+  public void update(Object key, OIndexKeyUpdater<Object> updater) {
+    put(key, updater.update(null, bonsayFileId).getValue());
   }
 
   @Override

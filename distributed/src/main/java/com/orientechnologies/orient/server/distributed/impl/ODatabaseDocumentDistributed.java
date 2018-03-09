@@ -20,6 +20,8 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
+import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
@@ -589,8 +591,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.getTxContext(transactionId);
     if (txContext != null) {
-      txContext.commit(this);
-      localDistributedDatabase.popTxContext(transactionId);
+      try {
+        txContext.commit(this);
+        localDistributedDatabase.popTxContext(transactionId);
+        OLiveQueryHook.notifyForTxChanges(this);
+        OLiveQueryHookV2.notifyForTxChanges(this);
+      } finally {
+        OLiveQueryHook.removePendingDatabaseOps(this);
+        OLiveQueryHookV2.removePendingDatabaseOps(this);
+      }
       return true;
     }
     return false;
@@ -603,6 +612,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       synchronized (txContext) {
         txContext.destroy();
       }
+      OLiveQueryHook.removePendingDatabaseOps(this);
+      OLiveQueryHookV2.removePendingDatabaseOps(this);
     }
   }
 

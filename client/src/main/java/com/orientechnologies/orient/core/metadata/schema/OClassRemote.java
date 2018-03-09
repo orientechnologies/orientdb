@@ -465,8 +465,9 @@ public class OClassRemote extends OClassImpl {
   public void setDefaultClusterId(final int defaultClusterId) {
     final ODatabaseDocumentInternal database = getDatabase();
     String clusterName = database.getClusterNameById(defaultClusterId);
-    if (clusterName != null)
-      throw new OSchemaException("Cluster with id '" + defaultClusterId + "' do not exists");
+    if (clusterName == null) {
+      throw new OSchemaException("Cluster with id '" + defaultClusterId + "' does not exist");
+    }
     final String cmd = String.format("alter class `%s` DEFAULTCLUSTER `%s`", this.name, clusterName);
     database.command(cmd).close();
   }

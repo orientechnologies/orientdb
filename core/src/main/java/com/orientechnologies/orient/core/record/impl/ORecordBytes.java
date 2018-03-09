@@ -75,6 +75,7 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
     return this;
   }
 
+  @Override
   public ORecordBytes copy() {
     return (ORecordBytes) copyTo(new ORecordBytes());
   }

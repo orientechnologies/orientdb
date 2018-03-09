@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -502,8 +503,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     hooks.clear();
     registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
-    registerHook(new OLiveQueryHook(this), ORecordHook.HOOK_POSITION.LAST);
-    registerHook(new OLiveQueryHookV2(this), ORecordHook.HOOK_POSITION.LAST);
   }
 
   @Override
@@ -744,12 +743,19 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       if (success)
         try {
           microTransaction.commit();
+          OLiveQueryHook.notifyForTxChanges(this);
+          OLiveQueryHookV2.notifyForTxChanges(this);
         } catch (Exception e) {
           microTransaction.rollbackAfterFailedCommit();
+          OLiveQueryHook.removePendingDatabaseOps(this);
+          OLiveQueryHookV2.removePendingDatabaseOps(this);
           throw e;
         }
-      else
+      else {
         microTransaction.rollback();
+        OLiveQueryHook.removePendingDatabaseOps(this);
+        OLiveQueryHookV2.removePendingDatabaseOps(this);
+      }
     } finally {
       if (!microTransaction.isActive())
         microTransaction = null;
@@ -855,6 +861,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           getMetadata().getScheduler().scheduleEvent(new OScheduledEvent(doc));
         }
       }
+      OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, this);
+      OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, this);
     }
     callbackHooks(ORecordHook.TYPE.AFTER_CREATE, id);
   }
@@ -873,6 +881,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(this, doc);
         }
       }
+      OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, this);
+      OLiveQueryHookV2.addOp(doc, ORecordOperation.UPDATED, this);
     }
     callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
   }
@@ -895,8 +905,23 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           getMetadata().getScheduler().removeEvent(eventName);
         }
       }
+      OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, this);
+      OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, this);
     }
     callbackHooks(ORecordHook.TYPE.AFTER_DELETE, id);
   }
 
+  @Override
+  protected void afterCommitOperations() {
+    super.afterCommitOperations();
+    OLiveQueryHook.notifyForTxChanges(this);
+    OLiveQueryHookV2.notifyForTxChanges(this);
+  }
+
+  @Override
+  protected void afterRollbackOperations() {
+    super.afterRollbackOperations();
+    OLiveQueryHook.removePendingDatabaseOps(this);
+    OLiveQueryHookV2.removePendingDatabaseOps(this);
+  }
 }

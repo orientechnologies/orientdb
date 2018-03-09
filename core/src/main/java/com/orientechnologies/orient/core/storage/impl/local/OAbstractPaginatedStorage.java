@@ -98,11 +98,7 @@ import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.Lock;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -200,11 +196,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected volatile OAtomicOperationsManager atomicOperationsManager;
   private volatile boolean                  wereNonTxOperationsPerformedInPreviousOpen = false;
   private volatile OLowDiskSpaceInformation lowDiskSpace                               = null;
-
+  private volatile boolean                  pessimisticLock                            = false;
   /**
    * Set of pages which were detected as broken and need to be repaired.
    */
-  private final Set<OPair<String, Long>> brokenPages = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final    Set<OPair<String, Long>> brokenPages                                = Collections
+      .newSetFromMap(new ConcurrentHashMap<>());
 
   protected volatile OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
 
@@ -268,6 +265,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         if (!exists())
           throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
+
+        pessimisticLock = contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
 
         fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
         fuzzyCheckpointExecutor.setMaximumPoolSize(1);
@@ -451,6 +450,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         if (exists())
           throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it already exists");
+
+        pessimisticLock = contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
 
         fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
         fuzzyCheckpointExecutor.setMaximumPoolSize(1);
@@ -1397,18 +1398,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
 
         final OCluster cluster = doGetAndCheckCluster(clusterId);
-        OPhysicalPosition[] nextPositions = cluster.higherPositions(new OPhysicalPosition(lastPosition));
-        if (nextPositions.length > 0) {
-          long newLastPosition = nextPositions[nextPositions.length - 1].clusterPosition;
-          List<OClusterBrowseEntry> nexv = new ArrayList<>();
-          for (OPhysicalPosition pos : nextPositions) {
-            final ORawBuffer buff = cluster.readRecord(pos.clusterPosition, false);
-            nexv.add(new OClusterBrowseEntry(pos.clusterPosition, buff));
-          }
-          return new OClusterBrowsePage(nexv, newLastPosition);
-        } else {
-          return null;
-        }
+        return cluster.nextPage(lastPosition);
       } finally {
         stateLock.releaseReadLock();
       }
@@ -1912,6 +1902,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final List<ORecordOperation> result = new ArrayList<>();
       stateLock.acquireReadLock();
       try {
+        if (pessimisticLock) {
+          List<ORID> recordLocks = new ArrayList<>();
+          for (ORecordOperation recordOperation : recordOperations) {
+            if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
+              recordLocks.add(recordOperation.getRID());
+            }
+          }
+          Collections.sort(recordLocks);
+          for (ORID rid : recordLocks) {
+            acquireWriteLock(rid);
+          }
+        }
         try {
           try {
 
@@ -2011,7 +2013,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           database.getMetadata().clearThreadLocalSchemaSnapshot();
         }
       } finally {
-        stateLock.releaseReadLock();
+        try {
+          if (pessimisticLock) {
+            for (ORecordOperation recordOperation : recordOperations) {
+              if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
+                releaseWriteLock(recordOperation.getRID());
+              }
+            }
+          }
+        } finally {
+          stateLock.releaseReadLock();
+        }
       }
 
       if (OLogManager.instance().isDebugEnabled())
@@ -2461,7 +2473,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public void updateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) throws OInvalidIndexEngineIdException {
+  public void updateIndexEntry(int indexId, Object key, OIndexKeyUpdater<Object> valueCreator)
+      throws OInvalidIndexEngineIdException {
     try {
       if (transaction.get() != null) {
         doUpdateIndexEntry(indexId, key, valueCreator);
@@ -2550,7 +2563,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   }
 
-  private void doUpdateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) throws OInvalidIndexEngineIdException {
+  private void doUpdateIndexEntry(int indexId, Object key, OIndexKeyUpdater<Object> valueCreator)
+      throws OInvalidIndexEngineIdException {
     try {
       atomicOperationsManager.startAtomicOperation((String) null, true);
     } catch (IOException e) {
@@ -2564,11 +2578,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OIndexEngine engine = indexEngines.get(indexId);
       makeStorageDirty();
 
-      final Object value = valueCreator.call();
-      if (value == null)
-        engine.remove(key);
-      else
-        engine.put(key, value);
+      engine.update(key, valueCreator);
 
       atomicOperationsManager.endAtomicOperation(false, null);
     } catch (OInvalidIndexEngineIdException e) {
@@ -4001,13 +4011,23 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     stateLock.acquireReadLock();
     try {
+      if (pessimisticLock) {
+        acquireReadLock(rid);
+      }
+
       ORawBuffer buff;
       checkOpenness();
 
       buff = doReadRecordIfNotLatest(cluster, rid, recordVersion);
       return buff;
     } finally {
-      stateLock.releaseReadLock();
+      try {
+        if (pessimisticLock) {
+          releaseReadLock(rid);
+        }
+      } finally {
+        stateLock.releaseReadLock();
+      }
     }
   }
 
@@ -4026,10 +4046,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     stateLock.acquireReadLock();
     try {
+      if (pessimisticLock) {
+        acquireReadLock(rid);
+      }
       checkOpenness();
       return doReadRecord(clusterSegment, rid, prefetchRecords);
     } finally {
-      stateLock.releaseReadLock();
+      try {
+        if (pessimisticLock) {
+          releaseReadLock(rid);
+        }
+      } finally {
+        stateLock.releaseReadLock();
+      }
     }
   }
 

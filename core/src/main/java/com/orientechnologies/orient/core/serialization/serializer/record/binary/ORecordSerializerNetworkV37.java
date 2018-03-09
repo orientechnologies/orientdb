@@ -890,10 +890,30 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   @Override
   public int getMinSupportedVersion() {
     return 0;
+  }  
+
+  @Override
+  public boolean getSupportBinaryEvaluate() {
+    return false;
   }
 
   @Override
-  public String[] getFieldNames(ODocument reference, byte[] iSource) {
+  public String getName() {
+    return NAME;
+  }
+
+  @Override
+  public <RET> RET deserializeFieldFromRoot(byte[] record, String iFieldName) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
+  public <RET> RET deserializeFieldFromEmbedded(byte[] record, String iFieldName, int serializerVersion) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
+  @Override
+  public String[] getFieldNamesRoot(ODocument reference, byte[] iSource) {
     if (iSource == null || iSource.length == 0)
       return new String[0];
 
@@ -907,14 +927,9 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       throw e;
     }
   }
-
+  
   @Override
-  public boolean getSupportBinaryEvaluate() {
-    return false;
-  }
-
-  @Override
-  public String getName() {
-    return NAME;
+  public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int serializerVersion) {
+    return getFieldNamesRoot(reference, iSource);
   }
 }

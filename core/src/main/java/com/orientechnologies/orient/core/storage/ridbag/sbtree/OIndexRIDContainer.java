@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
@@ -55,10 +56,23 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   /**
    * Should be called inside of lock to ensure uniqueness of entity on disk !!!
    */
-  public OIndexRIDContainer(String name, boolean durableNonTxMode) {
-    fileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
+  public OIndexRIDContainer(String name, boolean durableNonTxMode, AtomicLong bonsayFileId) {
+    long gotFileId = bonsayFileId.get();
+    if (gotFileId == 0) {
+      gotFileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
+      bonsayFileId.set(gotFileId);
+    }
+    this.fileId = gotFileId;
+
     underlying = new HashSet<>();
     isEmbedded = true;
+    this.durableNonTxMode = durableNonTxMode;
+  }
+
+  public OIndexRIDContainer(long fileId, Set<OIdentifiable> underlying, boolean durableNonTxMode) {
+    this.fileId = fileId;
+    this.underlying = underlying;
+    isEmbedded = !(underlying instanceof OIndexRIDContainerSBTree);
     this.durableNonTxMode = durableNonTxMode;
   }
 
@@ -109,13 +123,6 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }
-  }
-
-  public OIndexRIDContainer(long fileId, Set<OIdentifiable> underlying, boolean durableNonTxMode) {
-    this.fileId = fileId;
-    this.underlying = underlying;
-    isEmbedded = !(underlying instanceof OIndexRIDContainerSBTree);
-    this.durableNonTxMode = durableNonTxMode;
   }
 
   public long getFileId() {

@@ -37,6 +37,8 @@ import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowseEntry;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
@@ -659,43 +661,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           if (positionEntry == null)
             return null;
 
-          final int recordPosition = positionEntry.getRecordPosition();
-          final long pageIndex = positionEntry.getPageIndex();
-
-          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-          if (getFilledUpTo(atomicOperation, fileId) <= pageIndex)
-            return null;
-
-          int recordVersion;
-          final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount);
-          try {
-            final OClusterPage localPage = new OClusterPage(cacheEntry, false);
-            if (localPage.isDeleted(recordPosition))
-              return null;
-
-            recordVersion = localPage.getRecordVersion(recordPosition);
-          } finally {
-            releasePageFromRead(atomicOperation, cacheEntry);
-          }
-
-          final byte[] fullContent = readFullEntry(clusterPosition, pageIndex, recordPosition, atomicOperation, pageCount);
-          if (fullContent == null)
-            return null;
-
-          int fullContentPosition = 0;
-
-          final byte recordType = fullContent[fullContentPosition];
-          fullContentPosition++;
-
-          final int readContentSize = OIntegerSerializer.INSTANCE.deserializeNative(fullContent, fullContentPosition);
-          fullContentPosition += OIntegerSerializer.INT_SIZE;
-
-          byte[] recordContent = Arrays.copyOfRange(fullContent, fullContentPosition, fullContentPosition + readContentSize);
-
-          recordContent = encryption.decrypt(recordContent);
-          recordContent = compression.uncompress(recordContent);
-
-          return new ORawBuffer(recordContent, recordVersion, recordType);
+          return internalReadRecord(clusterPosition, positionEntry.getPageIndex(), positionEntry.getRecordPosition(), pageCount);
         } finally {
           releaseSharedLock();
         }
@@ -708,6 +674,44 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       completeOperation();
     }
 
+  }
+
+  private ORawBuffer internalReadRecord(long clusterPosition, long pageIndex, int recordPosition, int pageCount)
+      throws IOException {
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+    if (getFilledUpTo(atomicOperation, fileId) <= pageIndex)
+      return null;
+
+    int recordVersion;
+    final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount);
+    try {
+      final OClusterPage localPage = new OClusterPage(cacheEntry, false);
+      if (localPage.isDeleted(recordPosition))
+        return null;
+
+      recordVersion = localPage.getRecordVersion(recordPosition);
+    } finally {
+      releasePageFromRead(atomicOperation, cacheEntry);
+    }
+
+    final byte[] fullContent = readFullEntry(clusterPosition, pageIndex, recordPosition, atomicOperation, pageCount);
+    if (fullContent == null)
+      return null;
+
+    int fullContentPosition = 0;
+
+    final byte recordType = fullContent[fullContentPosition];
+    fullContentPosition++;
+
+    final int readContentSize = OIntegerSerializer.INSTANCE.deserializeNative(fullContent, fullContentPosition);
+    fullContentPosition += OIntegerSerializer.INT_SIZE;
+
+    byte[] recordContent = Arrays.copyOfRange(fullContent, fullContentPosition, fullContentPosition + readContentSize);
+
+    recordContent = encryption.decrypt(recordContent);
+    recordContent = compression.uncompress(recordContent);
+
+    return new ORawBuffer(recordContent, recordVersion, recordType);
   }
 
   @Override
@@ -2216,5 +2220,37 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   @Override
   public String toString() {
     return "plocal cluster: " + getName();
+  }
+
+  @Override
+  public OClusterBrowsePage nextPage(long lastPosition) throws IOException {
+    startOperation();
+    try {
+      atomicOperationsManager.acquireReadLock(this);
+      try {
+        acquireSharedLock();
+        try {
+
+          OClusterPositionMap.OClusterPositionEntry[] nextPositions = clusterPositionMap.higherPositionsEntries(lastPosition);
+          if (nextPositions.length > 0) {
+            long newLastPosition = nextPositions[nextPositions.length - 1].getPosition();
+            List<OClusterBrowseEntry> nexv = new ArrayList<>();
+            for (OClusterPositionMap.OClusterPositionEntry pos : nextPositions) {
+              final ORawBuffer buff = internalReadRecord(pos.getPosition(), pos.getPage(), pos.getOffset(), 1);
+              nexv.add(new OClusterBrowseEntry(pos.getPosition(), buff));
+            }
+            return new OClusterBrowsePage(nexv, newLastPosition);
+          } else {
+            return null;
+          }
+        } finally {
+          releaseSharedLock();
+        }
+      } finally {
+        atomicOperationsManager.releaseReadLock(this);
+      }
+    } finally {
+      completeOperation();
+    }
   }
 }
