@@ -83,6 +83,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     seq1.createSequence(sequenceName, SEQUENCE_TYPE.ORDERED, null);
     Assert.assertEquals(SEQUENCE_TYPE.ORDERED, seq1.getSequence(sequenceName).getSequenceType());
 
+    dbs[1].activateOnCurrentThread();
     Assert.assertNotNull("The sequence has not be propagated to the 2nd server", seq2.getSequence(sequenceName));
 
     dbs[0].activateOnCurrentThread();

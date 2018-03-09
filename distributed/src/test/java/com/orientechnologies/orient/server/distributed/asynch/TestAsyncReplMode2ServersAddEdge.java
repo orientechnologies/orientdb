@@ -8,7 +8,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
+import org.junit.Ignore;
 
+@Ignore
 public class TestAsyncReplMode2ServersAddEdge extends BareBoneBase2ServerTest {
 
   private static final int NUM_OF_LOOP_ITERATIONS = 100;
