@@ -17,8 +17,8 @@ import java.util.Map;
 /**
  * Created by tglman on 15/06/17.
  */
-public class ChangeSerializationHelper {
-  public static final ChangeSerializationHelper INSTANCE = new ChangeSerializationHelper();
+public class ChangeSerializationHelper_V1 {
+  public static final ChangeSerializationHelper_V1 INSTANCE = new ChangeSerializationHelper_V1();
 
   public static Change createChangeInstance(byte type, int value) {
     switch (type) {
@@ -47,7 +47,7 @@ public class ChangeSerializationHelper {
       
       ORecordId rid = new ORecordId(clusterId, clusterPosition);
       
-      Change change = ChangeSerializationHelper.INSTANCE.deserializeChange(stream, container.offset);
+      Change change = deserializeChange(stream, container.offset);
       container.offset += Change.SIZE;
            
       final OIdentifiable identifiable;
