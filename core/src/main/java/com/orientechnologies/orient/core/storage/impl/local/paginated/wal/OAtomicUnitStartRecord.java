@@ -32,7 +32,7 @@ public class OAtomicUnitStartRecord extends OOperationUnitRecord {
   public OAtomicUnitStartRecord() {
   }
 
-  OAtomicUnitStartRecord(final boolean isRollbackSupported, final OOperationUnitId unitId) {
+  public OAtomicUnitStartRecord(final boolean isRollbackSupported, final OOperationUnitId unitId) {
     super(unitId);
     this.isRollbackSupported = isRollbackSupported;
   }

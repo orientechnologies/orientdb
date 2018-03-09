@@ -1,10 +1,13 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
+import com.orientechnologies.common.concur.lock.OComparableLockManager;
+import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
+import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
-import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -12,14 +15,19 @@ import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 
+import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
@@ -36,8 +44,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -45,7 +55,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -55,15 +64,18 @@ import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
 public class OCASDiskWriteAheadLog {
-  public static final String WAL_SEGMENT_EXTENSION = ".wal";
-  private final       int    BATCH_READ_SIZE       = 320;
+  public static final String MASTER_RECORD_EXTENSION = ".wmr";
+  public static final String WAL_SEGMENT_EXTENSION   = ".wal";
+
+  private static final int MASTER_RECORD_SIZE = 20;
+  private final        int BATCH_READ_SIZE    = 320;
 
   private final long walSizeHardLimit = OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024;
 
   private final List<WeakReference<OLowDiskSpaceListener>>      lowDiskSpaceListeners   = new CopyOnWriteArrayList<>();
   private final List<WeakReference<OCheckpointRequestListener>> fullCheckpointListeners = new CopyOnWriteArrayList<>();
 
-  private long walSizeLimit = walSizeHardLimit;
+  private volatile long walSizeLimit = walSizeHardLimit;
 
   private final int maxSegmentSize;
 
@@ -71,8 +83,8 @@ public class OCASDiskWriteAheadLog {
   private final    long      freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024;
   private volatile long      freeSpace      = -1;
 
-  private final ConcurrentLinkedDeque<OWALRecord> records        = new ConcurrentLinkedDeque<>();
-  private final AtomicLong                        currentSegment = new AtomicLong();
+  private final    ConcurrentLinkedDeque<OWALRecord> records        = new ConcurrentLinkedDeque<>();
+  private volatile long                              currentSegment = 0;
 
   private final AtomicLong segmentSize = new AtomicLong();
   private final AtomicLong logSize     = new AtomicLong();
@@ -95,11 +107,21 @@ public class OCASDiskWriteAheadLog {
 
   private long segmentId = -1;
 
-  private final ConcurrentSkipListMap<OLogSequenceNumber, Integer> cutTillLimits = new ConcurrentSkipListMap<>();
+  private final OPartitionedLockManager segmentRemovalLocks = new OPartitionedLockManager(true);
 
   private final ScheduledFuture<?> recordsWriterFuture;
 
   private long lastRecordPosition = -1;
+  private final Path masterRecordPath;
+
+  private volatile OLogSequenceNumber lastCheckpoint;
+  private volatile boolean            useFirstMasterRecord;
+
+  private volatile FileChannel masterRecordLSNHolder;
+
+  private final ConcurrentNavigableMap<OLogSequenceNumber, Runnable> events = new ConcurrentSkipListMap<>();
+
+  private final OReadersWriterSpinLock segmentLock = new OReadersWriterSpinLock();
 
   private static final boolean assertions;
 
@@ -128,6 +150,13 @@ public class OCASDiskWriteAheadLog {
       Files.createDirectories(walLocation);
     }
 
+    masterRecordPath = walLocation.resolve(storageName + MASTER_RECORD_EXTENSION);
+    masterRecordLSNHolder = FileChannel
+        .open(masterRecordPath, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE,
+            StandardOpenOption.SYNC);
+
+    readLastCheckpointInfo();
+
     this.fileStore = Files.getFileStore(walLocation);
     this.storageName = storageName;
     this.maxCacheSize = maxPagesCacheSize * OCASWALPage.PAGE_SIZE;
@@ -142,13 +171,13 @@ public class OCASDiskWriteAheadLog {
       nextSegmentId = segments.last() + 1;
     }
 
-    currentSegment.set(nextSegmentId);
+    currentSegment = nextSegmentId;
     this.maxSegmentSize = maxSegmentSize;
 
     //we log empty record on open so end of WAL will always contain valid value
     final OStartWALRecord startRecord = new OStartWALRecord();
 
-    startRecord.setLsn(new OLogSequenceNumber(currentSegment.get(), OCASWALPage.RECORDS_OFFSET));
+    startRecord.setLsn(new OLogSequenceNumber(currentSegment, OCASWALPage.RECORDS_OFFSET));
     startRecord.setDistance(0);
     startRecord.setDiskSize(OCASWALPage.RECORDS_OFFSET);
 
@@ -158,6 +187,107 @@ public class OCASDiskWriteAheadLog {
 
     this.recordsWriterFuture = commitExecutor
         .scheduleAtFixedRate(new RecordsWriter(), commitDelay, commitDelay, TimeUnit.MILLISECONDS);
+  }
+
+  private void readLastCheckpointInfo() throws IOException {
+    boolean firstRecord = true;
+    OLogSequenceNumber checkPoint = null;
+
+    if (masterRecordLSNHolder.size() > 0) {
+      OLogSequenceNumber firstMasterRecord = readMasterRecord(0);
+      OLogSequenceNumber secondMasterRecord = readMasterRecord(1);
+
+      if (firstMasterRecord == null) {
+        firstRecord = true;
+        checkPoint = secondMasterRecord;
+      } else if (secondMasterRecord == null) {
+        firstRecord = false;
+        checkPoint = firstMasterRecord;
+      } else {
+        if (firstMasterRecord.compareTo(secondMasterRecord) >= 0) {
+          checkPoint = firstMasterRecord;
+          firstRecord = false;
+        } else {
+          checkPoint = secondMasterRecord;
+          firstRecord = true;
+        }
+      }
+    }
+
+    this.lastCheckpoint = checkPoint;
+    this.useFirstMasterRecord = firstRecord;
+  }
+
+  private void updateCheckpoint(OLogSequenceNumber checkPointLSN) throws IOException {
+    if (lastCheckpoint == null || lastCheckpoint.compareTo(checkPointLSN) < 0) {
+      if (useFirstMasterRecord) {
+        writeMasterRecord(0, checkPointLSN);
+
+        useFirstMasterRecord = false;
+      } else {
+        writeMasterRecord(1, checkPointLSN);
+
+        useFirstMasterRecord = true;
+      }
+
+      lastCheckpoint = checkPointLSN;
+    }
+  }
+
+  private void writeMasterRecord(int index, OLogSequenceNumber masterRecord) throws IOException {
+    masterRecordLSNHolder.position();
+    final CRC32 crc32 = new CRC32();
+
+    final byte[] serializedLSN = new byte[2 * OLongSerializer.LONG_SIZE];
+    OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getSegment(), serializedLSN, 0);
+    OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getPosition(), serializedLSN, OLongSerializer.LONG_SIZE);
+    crc32.update(serializedLSN);
+
+    ByteBuffer buffer = ByteBuffer.allocate(MASTER_RECORD_SIZE);
+
+    buffer.putInt((int) crc32.getValue());
+    buffer.putLong(masterRecord.getSegment());
+    buffer.putLong(masterRecord.getPosition());
+    buffer.rewind();
+
+    OIOUtils.writeByteBuffer(buffer, masterRecordLSNHolder, index * (OIntegerSerializer.INT_SIZE + 2L * OLongSerializer.LONG_SIZE));
+  }
+
+  private OLogSequenceNumber readMasterRecord(int index) throws IOException {
+    final long masterPosition = index * (OIntegerSerializer.INT_SIZE + 2L * OLongSerializer.LONG_SIZE);
+
+    if (masterRecordLSNHolder.size() < masterPosition + MASTER_RECORD_SIZE) {
+      OLogManager.instance().debug(this, "Cannot restore %d WAL master record for storage %s", index, storageName);
+      return null;
+    }
+
+    final CRC32 crc32 = new CRC32();
+    try {
+      ByteBuffer buffer = ByteBuffer.allocate(MASTER_RECORD_SIZE);
+
+      OIOUtils.readByteBuffer(buffer, masterRecordLSNHolder, masterPosition, true);
+      buffer.rewind();
+
+      int firstCRC = buffer.getInt();
+      final long segment = buffer.getLong();
+      final long position = buffer.getLong();
+
+      byte[] serializedLSN = new byte[2 * OLongSerializer.LONG_SIZE];
+      OLongSerializer.INSTANCE.serializeLiteral(segment, serializedLSN, 0);
+      OLongSerializer.INSTANCE.serializeLiteral(position, serializedLSN, OLongSerializer.LONG_SIZE);
+      crc32.update(serializedLSN);
+
+      if (firstCRC != ((int) crc32.getValue())) {
+        OLogManager.instance()
+            .error(this, "Cannot restore %d WAL master record for storage %s crc check is failed", null, index, storageName);
+        return null;
+      }
+
+      return new OLogSequenceNumber(segment, position);
+    } catch (EOFException eofException) {
+      OLogManager.instance().debug(this, "Cannot restore %d WAL master record for storage %s", eofException, index, storageName);
+      return null;
+    }
   }
 
   private void initSegmentSet(boolean filterWALFiles, Locale locale) throws IOException {
@@ -513,6 +643,37 @@ public class OCASDiskWriteAheadLog {
     }
   }
 
+  public void addEventAt(OLogSequenceNumber lsn, Runnable event) {
+    // may be executed by multiple threads simultaneously
+
+    final OLogSequenceNumber localFlushedLsn = flushedLSN;
+
+    if (localFlushedLsn != null && lsn.compareTo(localFlushedLsn) <= 0)
+      event.run();
+    else {
+      events.put(lsn, event);
+
+      final OLogSequenceNumber potentiallyUpdatedLocalFlushedLsn = flushedLSN;
+      if (potentiallyUpdatedLocalFlushedLsn != null && lsn.compareTo(potentiallyUpdatedLocalFlushedLsn) <= 0)
+        commitExecutor.execute(() -> fireEventsFor(potentiallyUpdatedLocalFlushedLsn));
+    }
+  }
+
+  public void delete() throws IOException {
+    final List<Long> segmentsToDelete = new ArrayList<>(this.segments.size());
+    segmentsToDelete.addAll(segments);
+
+    close(false);
+
+    Files.deleteIfExists(masterRecordPath);
+
+    for (long segment : segmentsToDelete) {
+      final String segmentName = getSegmentName(segment);
+      final Path segmentPath = walLocation.resolve(segmentName);
+      Files.deleteIfExists(segmentPath);
+    }
+  }
+
   private boolean pageIsBroken(ByteBuffer buffer) {
     buffer.position(OCASWALPage.MAGIC_NUMBER_OFFSET);
 
@@ -536,67 +697,58 @@ public class OCASDiskWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    while (true) {
-      final Integer oldCounter = cutTillLimits.get(lsn);
-
-      final Integer newCounter;
-
-      if (oldCounter == null) {
-        if (cutTillLimits.putIfAbsent(lsn, 1) == null)
-          break;
-      } else {
-        newCounter = oldCounter + 1;
-
-        if (cutTillLimits.replace(lsn, oldCounter, newCounter)) {
-          break;
-        }
-      }
-    }
+    segmentRemovalLocks.acquireSharedLock(lsn.getSegment());
   }
 
   public void removeCutTillLimit(OLogSequenceNumber lsn) {
     if (lsn == null)
       throw new NullPointerException();
 
-    while (true) {
-      final Integer oldCounter = cutTillLimits.get(lsn);
+    segmentRemovalLocks.releaseSharedLock(lsn.getSegment());
+  }
 
-      if (oldCounter == null)
-        throw new IllegalArgumentException(String.format("Limit %s is going to be removed but it was not added", lsn));
+  public OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) {
+    OAtomicUnitStartRecord record = new OAtomicUnitStartRecord(isRollbackSupported, unitId);
+    return log(record);
+  }
 
-      final Integer newCounter = oldCounter - 1;
-      if (cutTillLimits.replace(lsn, oldCounter, newCounter)) {
-        if (newCounter == 0) {
-          cutTillLimits.remove(lsn, newCounter);
-        }
-
-        break;
-      }
-    }
+  public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback,
+      OLogSequenceNumber startLsn, Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata) {
+    final OAtomicUnitEndRecord record = new OAtomicUnitEndRecord(operationUnitId, rollback, atomicOperationMetadata);
+    return log(record);
   }
 
   public OLogSequenceNumber log(OWriteableWALRecord writeableRecord) {
-    if (writeableRecord instanceof OAtomicUnitStartRecord) {
-      ongoingTXs.increment();
-    }
+    final long segSize;
+    final long size;
+    final OLogSequenceNumber recordLSN;
 
-    final OLogSequenceNumber recordLSN = doLogRecord(writeableRecord);
+    segmentLock.acquireReadLock();
+    try {
+      final int diskSize = writeableRecord.getDiskSize();
+      segSize = segmentSize.addAndGet(diskSize);
+      size = logSize.addAndGet(diskSize);
+
+      if (writeableRecord instanceof OAtomicUnitStartRecord) {
+        ongoingTXs.increment();
+      }
+
+      recordLSN = doLogRecord(writeableRecord);
+
+      if (writeableRecord instanceof OAtomicUnitEndRecord) {
+        ongoingTXs.decrement();
+      }
+    } finally {
+      segmentLock.releaseReadLock();
+    }
 
     final long qsize = queueSize.getAndAdd(writeableRecord.getBinaryContent().length);
     if (qsize >= maxCacheSize) {
       doFlush();
     }
 
-    final int diskSize = writeableRecord.getDiskSize();
-    final long segSize = segmentSize.addAndGet(diskSize);
-    final long size = logSize.addAndGet(diskSize);
-
-    if (writeableRecord instanceof OAtomicUnitEndRecord) {
-      ongoingTXs.decrement();
-    }
-
     if (walSizeHardLimit < 0 && freeSpace > -1) {
-      walSizeLimit += (size + freeSpace) / 2;
+      walSizeLimit = size + freeSpace / 2;
     }
 
     if (walSizeLimit > -1 && size > walSizeLimit && segments.size() > 1) {
@@ -610,19 +762,187 @@ public class OCASDiskWriteAheadLog {
     return recordLSN;
   }
 
-  public void appendNewSegment() {
-    if (ongoingTXs.sum() > 0) {
-      throw new IllegalStateException("There are on going txs, such call can be dangerous and unpredictable");
+  public OLogSequenceNumber begin(long segmentId) {
+    if (segments.contains(segmentId)) {
+      return new OLogSequenceNumber(segmentId, OCASWALPage.RECORDS_OFFSET);
     }
 
-    currentSegment.incrementAndGet();
+    return null;
+  }
 
-    logMilestoneRecord();
+  public boolean cutAllSegmentsSmallerThan(long segmentId) throws IOException {
+    if (lastCheckpoint != null && segmentId >= lastCheckpoint.getSegment()) {
+      segmentId = lastCheckpoint.getSegment();
+    }
+
+    final OWALRecord first = records.peekFirst();
+    final OLogSequenceNumber firstLSN = first.getLsn();
+
+    if (firstLSN.getPosition() > -1) {
+      if (segmentId > firstLSN.getSegment()) {
+        segmentId = firstLSN.getSegment();
+      }
+    }
+
+    if (segmentId <= segments.first()) {
+      return false;
+    }
+
+    boolean removed = false;
+
+    final Iterator<Long> segmentIterator = segments.iterator();
+    while (segmentIterator.hasNext()) {
+      final long segment = segmentIterator.next();
+      if (segment < segmentId) {
+        final boolean locked = segmentRemovalLocks.tryAcquireExclusiveLock(segment);
+        if (!locked) {
+          break;
+        }
+        try {
+          segmentIterator.remove();
+          final String segmentName = getSegmentName(segment);
+          final Path segmentPath = walLocation.resolve(segmentName);
+          Files.deleteIfExists(segmentPath);
+
+          removed = true;
+        } finally {
+          segmentRemovalLocks.releaseExclusiveLock(segment);
+        }
+      } else {
+        break;
+      }
+    }
+
+    return removed;
+  }
+
+  public boolean cutTill(OLogSequenceNumber lsn) throws IOException {
+    final long segmentId = lsn.getSegment();
+    return cutAllSegmentsSmallerThan(segmentId);
+  }
+
+  public long activeSegment() {
+    return currentSegment;
+  }
+
+  public void appendNewSegment() {
+    segmentLock.acquireWriteLock();
+    try {
+      if (ongoingTXs.sum() > 0) {
+        throw new IllegalStateException("There are on going txs, such call can be dangerous and unpredictable");
+      }
+
+      //noinspection NonAtomicOperationOnVolatileField
+      currentSegment++;
+
+      logMilestoneRecord();
+    } finally {
+      segmentLock.releaseWriteLock();
+    }
+  }
+
+  public void appendSegment(long segmentIndex) {
+    if (segmentIndex <= currentSegment) {
+      return;
+    }
+
+    segmentLock.acquireWriteLock();
+    try {
+      if (ongoingTXs.sum() > 0) {
+        throw new IllegalStateException("There are on going txs, such call can be dangerous and unpredictable");
+      }
+
+      currentSegment = segmentIndex;
+
+      logMilestoneRecord();
+    } finally {
+      segmentLock.releaseWriteLock();
+    }
+  }
+
+  public List<String> getWalFiles() {
+    final List<String> result = new ArrayList<>();
+
+    for (long segment : segments) {
+      final String segmentName = getSegmentName(segment);
+      final Path segmentPath = walLocation.resolve(segmentName);
+
+      if (segmentPath.toFile().exists()) {
+        result.add(segmentPath.toAbsolutePath().toString());
+      }
+    }
+
+    return result;
+  }
+
+  public Path getWMRFile() {
+    return masterRecordPath;
+  }
+
+  public void moveLsnAfter(OLogSequenceNumber lsn) {
+    final long segment = lsn.getSegment() + 1;
+    appendSegment(segment);
+  }
+
+  public long[] nonActiveSegments() {
+    final OWALRecord firstRecord = records.peekFirst();
+    final OLogSequenceNumber firstLSN = firstRecord.getLsn();
+
+    long maxSegment = currentSegment;
+
+    if (firstLSN.getPosition() > -1 && firstLSN.getSegment() < maxSegment) {
+      maxSegment = firstLSN.getSegment();
+    }
+
+    final List<Long> result = new ArrayList<>();
+    for (long segment : segments) {
+      if (segment < maxSegment) {
+        result.add(segment);
+      } else {
+        break;
+      }
+    }
+
+    final long[] segs = new long[result.size()];
+    for (int i = 0; i < segs.length; i++) {
+      segs[i] = result.get(i);
+    }
+
+    return segs;
+  }
+
+  public File[] nonActiveSegments(long fromSegment) {
+    final OWALRecord firstRecord = records.peekFirst();
+    final OLogSequenceNumber firstLSN = firstRecord.getLsn();
+
+    long maxSegment = currentSegment;
+
+    if (firstLSN.getPosition() > -1 && firstLSN.getSegment() < maxSegment) {
+      maxSegment = firstLSN.getSegment();
+    }
+
+    final List<File> result = new ArrayList<>();
+
+    for (long segment : segments) {
+      if (segment < maxSegment) {
+        final String segmentName = getSegmentName(segment);
+        final Path segmentPath = walLocation.resolve(segmentName);
+
+        final File segFile = segmentPath.toFile();
+        if (segFile.exists()) {
+          result.add(segFile);
+        }
+      } else {
+        break;
+      }
+    }
+
+    return result.toArray(new File[0]);
   }
 
   private OLogSequenceNumber doLogRecord(OWriteableWALRecord writeableRecord) {
     writeableRecord.setBinaryContent(OWALRecordsFactory.INSTANCE.toStream(writeableRecord));
-    writeableRecord.setLsn(new OLogSequenceNumber(currentSegment.get(), -1));
+    writeableRecord.setLsn(new OLogSequenceNumber(currentSegment, -1));
 
     records.add(writeableRecord);
 
@@ -665,7 +985,7 @@ public class OCASDiskWriteAheadLog {
     }
 
     walChannel.close();
-    cutTillLimits.clear();
+    segments.clear();
 
     if (recordsWriterFuture.isDone()) {
       try {
@@ -791,7 +1111,7 @@ public class OCASDiskWriteAheadLog {
 
   private OMilestoneWALRecord logMilestoneRecord() {
     final OMilestoneWALRecord milestoneRecord = new OMilestoneWALRecord();
-    milestoneRecord.setLsn(new OLogSequenceNumber(currentSegment.get(), -1));
+    milestoneRecord.setLsn(new OLogSequenceNumber(currentSegment, -1));
 
     records.add(milestoneRecord);
 
@@ -948,6 +1268,16 @@ public class OCASDiskWriteAheadLog {
     return start;
   }
 
+  private void fireEventsFor(OLogSequenceNumber lsn) {
+    // may be executed by only one thread at every instant of time
+
+    final Iterator<Runnable> eventsToFire = events.headMap(lsn, true).values().iterator();
+    while (eventsToFire.hasNext()) {
+      eventsToFire.next().run();
+      eventsToFire.remove();
+    }
+  }
+
   private String getSegmentName(long segment) {
     return storageName + "." + segment + WAL_SEGMENT_EXTENSION;
   }
@@ -975,6 +1305,7 @@ public class OCASDiskWriteAheadLog {
 
         OLogSequenceNumber lastLSN = null;
 
+        OLogSequenceNumber checkPointLSN = null;
         while (true) {
           record = recordIterator.next();
 
@@ -1078,6 +1409,11 @@ public class OCASDiskWriteAheadLog {
           }
 
           lastLSN = record.getLsn();
+
+          if (writeableRecord.isUpdateMasterRecord()) {
+            checkPointLSN = lastLSN;
+          }
+
           queueSize.addAndGet(-recordContent.length);
           recordIterator.remove();
         }
@@ -1090,6 +1426,10 @@ public class OCASDiskWriteAheadLog {
 
         walChannel.force(true);
         flushedLSN = lastLSN;
+
+        if (checkPointLSN != null) {
+          updateCheckpoint(checkPointLSN);
+        }
 
         checkFreeSpace();
       } catch (IOException e)

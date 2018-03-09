@@ -191,6 +191,19 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     return lock;
   }
 
+  public boolean tryAcquireExclusiveLock(final long value) {
+    final int hashCode = longHashCode(value);
+    final int index = index(hashCode);
+
+    if (useSpinLock) {
+      assert spinLocks != null;
+      return spinLocks[index].tryAcquireWriteLock();
+    } else {
+      assert locks != null;
+      return locks[index].writeLock().tryLock();
+    }
+  }
+
   @Override
   public Lock acquireExclusiveLock(T value) {
     final int index;
@@ -248,10 +261,27 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     else
       index = index(value.hashCode());
 
+    assert locks != null;
     final ReadWriteLock rwLock = locks[index];
 
     final Lock lock = rwLock.writeLock();
     return lock.tryLock(timeout, TimeUnit.MILLISECONDS);
+  }
+
+  public boolean tryAcquireExclusiveLock(final T value) {
+    final int index;
+    if (value == null)
+      index = 0;
+    else
+      index = index(value.hashCode());
+
+    if (useSpinLock) {
+      assert spinLocks != null;
+      return spinLocks[index].tryAcquireWriteLock();
+    } else {
+      assert locks != null;
+      return locks[index].writeLock().tryLock();
+    }
   }
 
   @Override

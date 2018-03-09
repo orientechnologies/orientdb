@@ -45,7 +45,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   public OAtomicUnitEndRecord() {
   }
 
-  OAtomicUnitEndRecord(final OOperationUnitId operationUnitId, final boolean rollback,
+  public OAtomicUnitEndRecord(final OOperationUnitId operationUnitId, final boolean rollback,
       final Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap) {
     super(operationUnitId);
 

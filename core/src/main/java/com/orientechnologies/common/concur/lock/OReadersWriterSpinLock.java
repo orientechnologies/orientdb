@@ -208,6 +208,58 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
     assert lHolds.intValue() == -1;
   }
 
+  public boolean tryAcquireWriteLock() {
+    final OModifiableInteger lHolds = lockHolds.get();
+
+    if (lHolds.intValue() < 0) {
+      lHolds.decrement();
+      return true;
+    }
+
+    final WNode node = myNode.get();
+    node.locked = true;
+
+    final WNode pNode = tail.getAndSet(myNode.get());
+
+    if (pNode.locked) {
+      node.locked = false;
+
+      myNode.set(new WNode());
+
+      final Thread waitingWriter = node.waitingWriter;
+      if (waitingWriter != null) {
+        LockSupport.unpark(waitingWriter);
+      }
+
+      while (!node.waitingReaders.isEmpty()) {
+        final Set<Thread> readers = node.waitingReaders.keySet();
+        final Iterator<Thread> threadIterator = readers.iterator();
+
+        while (threadIterator.hasNext()) {
+          final Thread reader = threadIterator.next();
+          threadIterator.remove();
+
+          LockSupport.unpark(reader);
+        }
+      }
+
+      return false;
+    }
+
+    pNode.waitingWriter = null;
+
+    while (distributedCounter.sum() != 0) {
+      Thread.yield();
+    }
+
+    setExclusiveOwnerThread(Thread.currentThread());
+
+    lHolds.decrement();
+    assert lHolds.intValue() == -1;
+
+    return true;
+  }
+
   public void releaseWriteLock() {
     final OModifiableInteger lHolds = lockHolds.get();
 
