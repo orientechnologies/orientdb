@@ -107,8 +107,6 @@ public class OCASDiskWriteAheadLog {
 
   private long segmentId = -1;
 
-  private final OPartitionedLockManager segmentRemovalLocks = new OPartitionedLockManager(true);
-
   private final ScheduledFuture<?> recordsWriterFuture;
 
   private long lastRecordPosition = -1;
@@ -122,6 +120,9 @@ public class OCASDiskWriteAheadLog {
   private final ConcurrentNavigableMap<OLogSequenceNumber, Runnable> events = new ConcurrentSkipListMap<>();
 
   private final OReadersWriterSpinLock segmentLock = new OReadersWriterSpinLock();
+
+  private final ConcurrentSkipListMap<OLogSequenceNumber, Integer> cutTillLimits = new ConcurrentSkipListMap<OLogSequenceNumber, Integer>();
+  private final OReadersWriterSpinLock                             cuttingLock   = new OReadersWriterSpinLock();
 
   private static final boolean assertions;
 
@@ -697,14 +698,48 @@ public class OCASDiskWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    segmentRemovalLocks.acquireSharedLock(lsn.getSegment());
+    cuttingLock.acquireReadLock();
+    try {
+      while (true) {
+        final Integer oldCounter = cutTillLimits.get(lsn);
+
+        final Integer newCounter;
+
+        if (oldCounter == null) {
+          if (cutTillLimits.putIfAbsent(lsn, 1) == null)
+            break;
+        } else {
+          newCounter = oldCounter + 1;
+
+          if (cutTillLimits.replace(lsn, oldCounter, newCounter)) {
+            break;
+          }
+        }
+      }
+    } finally {
+      cuttingLock.releaseReadLock();
+    }
   }
 
   public void removeCutTillLimit(OLogSequenceNumber lsn) {
     if (lsn == null)
       throw new NullPointerException();
 
-    segmentRemovalLocks.releaseSharedLock(lsn.getSegment());
+    while (true) {
+      final Integer oldCounter = cutTillLimits.get(lsn);
+
+      if (oldCounter == null)
+        throw new IllegalArgumentException(String.format("Limit %s is going to be removed but it was not added", lsn));
+
+      final Integer newCounter = oldCounter - 1;
+      if (cutTillLimits.replace(lsn, oldCounter, newCounter)) {
+        if (newCounter == 0) {
+          cutTillLimits.remove(lsn, newCounter);
+        }
+
+        break;
+      }
+    }
   }
 
   public OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) {
@@ -771,49 +806,55 @@ public class OCASDiskWriteAheadLog {
   }
 
   public boolean cutAllSegmentsSmallerThan(long segmentId) throws IOException {
-    if (lastCheckpoint != null && segmentId >= lastCheckpoint.getSegment()) {
-      segmentId = lastCheckpoint.getSegment();
-    }
-
-    final OWALRecord first = records.peekFirst();
-    final OLogSequenceNumber firstLSN = first.getLsn();
-
-    if (firstLSN.getPosition() > -1) {
-      if (segmentId > firstLSN.getSegment()) {
-        segmentId = firstLSN.getSegment();
+    cuttingLock.acquireWriteLock();
+    try {
+      if (lastCheckpoint != null && segmentId >= lastCheckpoint.getSegment()) {
+        segmentId = lastCheckpoint.getSegment();
       }
-    }
 
-    if (segmentId <= segments.first()) {
-      return false;
-    }
+      final OWALRecord first = records.peekFirst();
+      final OLogSequenceNumber firstLSN = first.getLsn();
 
-    boolean removed = false;
-
-    final Iterator<Long> segmentIterator = segments.iterator();
-    while (segmentIterator.hasNext()) {
-      final long segment = segmentIterator.next();
-      if (segment < segmentId) {
-        final boolean locked = segmentRemovalLocks.tryAcquireExclusiveLock(segment);
-        if (!locked) {
-          break;
+      if (firstLSN.getPosition() > -1) {
+        if (segmentId > firstLSN.getSegment()) {
+          segmentId = firstLSN.getSegment();
         }
-        try {
+      }
+
+      final Map.Entry<OLogSequenceNumber, Integer> firsEntry = cutTillLimits.firstEntry();
+
+      if (firsEntry != null) {
+        if (segmentId > firsEntry.getKey().getSegment()) {
+          segmentId = firsEntry.getKey().getSegment();
+        }
+      }
+
+      if (segmentId <= segments.first()) {
+        return false;
+      }
+
+      boolean removed = false;
+
+      final Iterator<Long> segmentIterator = segments.iterator();
+      while (segmentIterator.hasNext()) {
+        final long segment = segmentIterator.next();
+        if (segment < segmentId) {
           segmentIterator.remove();
+
           final String segmentName = getSegmentName(segment);
           final Path segmentPath = walLocation.resolve(segmentName);
           Files.deleteIfExists(segmentPath);
 
           removed = true;
-        } finally {
-          segmentRemovalLocks.releaseExclusiveLock(segment);
+        } else {
+          break;
         }
-      } else {
-        break;
       }
-    }
 
-    return removed;
+      return removed;
+    } finally {
+      cuttingLock.releaseWriteLock();
+    }
   }
 
   public boolean cutTill(OLogSequenceNumber lsn) throws IOException {
