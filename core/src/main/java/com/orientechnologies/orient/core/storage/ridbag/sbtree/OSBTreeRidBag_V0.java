@@ -622,25 +622,14 @@ public class OSBTreeRidBag_V0 implements OSBTreeRidBag{
 
   @Override
   public int getSerializedSize() {
-//    int result = 2 * OLongSerializer.LONG_SIZE + 3 * OIntegerSerializer.INT_SIZE;
-//    if (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy
-//        || ORecordSerializationContext.getContext() == null)
-//      result += getChangesSerializedSize();
-//    return result;
     return 0;
   }
   
 
   @Override
-  public int serialize(BytesContainer bytes, UUID ownerUuid) {
-    //third int is for changes size used in ChangeSerializationHelper_V0
+  public int serialize(BytesContainer bytes, UUID ownerUuid) {    
     int allocSize = 2 * OLongSerializer.LONG_SIZE + 2 * OIntegerSerializer.INT_SIZE;
-//    int changesSerializationSize = 0;
-//    if (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy
-//        || ORecordSerializationContext.getContext() == null)
-//      changesSerializationSize = getChangesSerializedSize();
-//    
-//    allocSize += changesSerializationSize;    
+
     bytes.offset = bytes.alloc(allocSize);
     byte[] stream = bytes.bytes;
     int offset = bytes.offset;
@@ -685,8 +674,7 @@ public class OSBTreeRidBag_V0 implements OSBTreeRidBag{
     OIntegerSerializer.INSTANCE.serializeLiteral(size, stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
     
-    if (context == null) {
-      //third int allocated is used here
+    if (context == null) {      
       BytesContainer container = new BytesContainer(stream);
       container.offset = offset;      
       OSBTreeRidBagFactory.getInstance().getChangeSerializationHelper(0).serializeChanges(changes, OLinkSerializer.INSTANCE, container);
@@ -894,12 +882,6 @@ public class OSBTreeRidBag_V0 implements OSBTreeRidBag{
     this.size = size;
     return size;
   }
-
-//  private int getChangesSerializedSize() {
-//    Set<OIdentifiable> changedIds = new HashSet<>(changes.keySet());
-//    changedIds.addAll(newEntries.keySet());
-//    return OSBTreeRidBagFactory.getInstance().getChangeSerializationHelper(0).getChangesSerializedSize(changedIds.size());
-//  }
 
   private int getHighLevelDocClusterId() {
     ORecordElement owner = this.owner;

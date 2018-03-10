@@ -38,6 +38,5 @@ public abstract class ChangeSerializationHelper {
   }
   
   public abstract Map<OIdentifiable, Change> deserializeChanges(BytesContainer container);
-  public abstract <K extends OIdentifiable> int serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, BytesContainer bytes);
-  protected abstract int getChangesSerializedSize(int changesCount);
+  public abstract <K extends OIdentifiable> int serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, BytesContainer bytes);  
 }

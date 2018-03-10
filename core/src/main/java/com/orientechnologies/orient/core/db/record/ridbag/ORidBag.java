@@ -76,6 +76,9 @@ import java.util.*;
  */
 public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiable>, ORecordLazyMultiValue,
     OTrackedMultiValue<OIdentifiable, OIdentifiable>, OCollection<OIdentifiable> {
+  
+  public static final int DELEGATE_VERSION = 0;
+  
   private ORidBagDelegate delegate;
 
   private int topThreshold    = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();

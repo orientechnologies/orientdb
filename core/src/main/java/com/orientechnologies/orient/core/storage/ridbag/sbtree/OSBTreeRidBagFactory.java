@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
@@ -28,7 +29,7 @@ public class OSBTreeRidBagFactory {
   
   private static OSBTreeRidBagFactory instance = null;
   
-  private final int DEFAULT_DELEGATE_VERSION = 0;        
+  private final int DEFAULT_DELEGATE_VERSION = ORidBag.DELEGATE_VERSION;       
   private final Class<? extends OSBTreeRidBag>[] versionClasses;
   private final ChangeSerializationHelper[] helpers;
   

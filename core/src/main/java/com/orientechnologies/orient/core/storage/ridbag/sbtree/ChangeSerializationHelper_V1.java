@@ -76,9 +76,8 @@ public class ChangeSerializationHelper_V1 extends ChangeSerializationHelper{
     }
     return bytes.offset;
   }
-
-  @Override
-  protected int getChangesSerializedSize(int changesCount) {
+  
+  private int getChangesSerializedSize(int changesCount) {
     int size = 0;
     if (ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy
         || ORecordSerializationContext.getContext() == null)      

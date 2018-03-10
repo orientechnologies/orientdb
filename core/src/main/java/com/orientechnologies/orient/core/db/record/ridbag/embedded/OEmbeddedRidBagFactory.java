@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.record.ridbag.embedded;
 
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
@@ -26,7 +27,7 @@ public class OEmbeddedRidBagFactory {
   
   private static OEmbeddedRidBagFactory instance = null;
   
-  private static final int DEFAULT_DELEGATE_VERSION = 0;
+  private static final int DEFAULT_DELEGATE_VERSION = ORidBag.DELEGATE_VERSION;
   
   private final Class<? extends OEmbeddedRidBag>[] versionClasses;
   

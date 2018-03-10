@@ -478,6 +478,7 @@ public class OEmbeddedRidBag_V0 implements OEmbeddedRidBag {
     return Collections.unmodifiableList(changeListeners);
   }
 
+  @Override
   public void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
     if (changeListeners != null) {
       for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {

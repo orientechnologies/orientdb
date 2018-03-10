@@ -76,9 +76,8 @@ public class ChangeSerializationHelper_V0 extends ChangeSerializationHelper{
     bytes.offset = offset;
     return bytes.offset;
   }
-
-  @Override
-  protected int getChangesSerializedSize(int changesCount) {
+  
+  private int getChangesSerializedSize(int changesCount) {
     return changesCount * (OLinkSerializer.RID_SIZE + Change.SIZE);
   }
 }
