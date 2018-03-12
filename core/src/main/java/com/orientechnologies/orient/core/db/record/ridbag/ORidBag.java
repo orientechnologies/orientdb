@@ -77,7 +77,8 @@ import java.util.*;
 public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiable>, ORecordLazyMultiValue,
     OTrackedMultiValue<OIdentifiable, OIdentifiable>, OCollection<OIdentifiable> {
   
-  public static final int DELEGATE_VERSION = 0;
+  //version can be up to 15 4-bits for version
+  public static final byte DELEGATE_VERSION = 0;
   
   private ORidBagDelegate delegate;
 
@@ -209,6 +210,20 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return delegate instanceof OEmbeddedRidBag;
   }
 
+  //four bits for serializer version
+  //from third to sixth bit
+  private byte setDelegateVersionInConfigByte(byte version, byte configByte){
+    version <<= 2;
+    return configByte |= version;
+  }
+  
+  //read serializer versionn from config byte
+  private byte readDelegateVersionFromConfigByte(byte configByte){
+    configByte >>= 2;
+    configByte &= 0b00001111;
+    return configByte;
+  }
+  
   public int toStream(BytesContainer bytesContainer) throws OSerializationException {
 
     checkAndConvert();
@@ -234,6 +249,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
     if (hasUuid)
       configByte |= 2;
+    
+    configByte = setDelegateVersionInConfigByte(DELEGATE_VERSION, configByte);
     
     bytesContainer.bytes[bytesContainer.offset++] = configByte;
 
@@ -322,11 +339,14 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   public void fromStream(BytesContainer stream) {
     final byte first = stream.bytes[stream.offset++];
+    
+    byte delegateVersion = readDelegateVersionFromConfigByte(first);
+    
     if ((first & 1) == 1)
-      delegate = OEmbeddedRidBagFactory.getInstance().getOEmbeddedRidBag();
+      delegate = OEmbeddedRidBagFactory.getInstance().getOEmbeddedRidBag(delegateVersion);
     else
-      delegate = OSBTreeRidBagFactory.getInstance().getOSBTreeRidBag();
-
+      delegate = OSBTreeRidBagFactory.getInstance().getOSBTreeRidBag(delegateVersion);
+        
     if ((first & 2) == 2) {
       uuid = OUUIDSerializer.INSTANCE.deserialize(stream.bytes, stream.offset);
       stream.skip(OUUIDSerializer.UUID_SIZE);
