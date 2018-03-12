@@ -1,22 +1,43 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.OUUIDSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Triple;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Tuple;
 import java.util.*;
 import java.util.Map.Entry;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.util.ODateHelper;
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{          
-  
+
   private enum Signal{
     CONTINUE,
     RETURN,
@@ -490,5 +511,340 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   public boolean isSerializingClassNameForEmbedded() {
     return true;
   }
-     
+  
+  @Override
+  public int serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
+    int pointer = 0;
+    switch (type) {
+    case INTEGER:
+    case LONG:
+    case SHORT:
+      pointer = OVarIntSerializer.write(bytes, ((Number) value).longValue());
+      break;
+    case STRING:
+      pointer = writeString(bytes, value.toString());
+      break;
+    case DOUBLE:
+      long dg = Double.doubleToLongBits(((Number) value).doubleValue());
+      pointer = bytes.alloc(OLongSerializer.LONG_SIZE);
+      OLongSerializer.INSTANCE.serializeLiteral(dg, bytes.bytes, pointer);
+      break;
+    case FLOAT:
+      int fg = Float.floatToIntBits(((Number) value).floatValue());
+      pointer = bytes.alloc(OIntegerSerializer.INT_SIZE);
+      OIntegerSerializer.INSTANCE.serializeLiteral(fg, bytes.bytes, pointer);
+      break;
+    case BYTE:
+      pointer = bytes.alloc(1);
+      bytes.bytes[pointer] = ((Number) value).byteValue();
+      break;
+    case BOOLEAN:
+      pointer = bytes.alloc(1);
+      bytes.bytes[pointer] = ((Boolean) value) ? (byte) 1 : (byte) 0;
+      break;
+    case DATETIME:
+      if (value instanceof Number) {
+        pointer = OVarIntSerializer.write(bytes, ((Number) value).longValue());
+      } else
+        pointer = OVarIntSerializer.write(bytes, ((Date) value).getTime());
+      break;
+    case DATE:
+      long dateValue;
+      if (value instanceof Number) {
+        dateValue = ((Number) value).longValue();
+      } else
+        dateValue = ((Date) value).getTime();
+      dateValue = convertDayToTimezone(ODateHelper.getDatabaseTimeZone(), TimeZone.getTimeZone("GMT"), dateValue);
+      pointer = OVarIntSerializer.write(bytes, dateValue / MILLISEC_PER_DAY);
+      break;
+    case EMBEDDED:
+      pointer = bytes.offset;
+      if (value instanceof ODocumentSerializable) {
+        ODocument cur = ((ODocumentSerializable) value).toDocument();
+        cur.field(ODocumentSerializable.CLASS_NAME, value.getClass().getName());
+        serializeWithClassName(cur, bytes, false);
+      } else {
+        serializeWithClassName((ODocument) value, bytes, false);
+      }
+      break;
+    case EMBEDDEDSET:
+    case EMBEDDEDLIST:
+      if (value.getClass().isArray())
+        pointer = writeEmbeddedCollection(bytes, Arrays.asList(OMultiValue.array(value)), linkedType);
+      else
+        pointer = writeEmbeddedCollection(bytes, (Collection<?>) value, linkedType);
+      break;
+    case DECIMAL:
+      BigDecimal decimalValue = (BigDecimal) value;
+      pointer = bytes.alloc(ODecimalSerializer.INSTANCE.getObjectSize(decimalValue));
+      ODecimalSerializer.INSTANCE.serialize(decimalValue, bytes.bytes, pointer);
+      break;
+    case BINARY:
+      pointer = writeBinary(bytes, (byte[]) (value));
+      break;
+    case LINKSET:
+    case LINKLIST:
+      Collection<OIdentifiable> ridCollection = (Collection<OIdentifiable>) value;
+      pointer = writeLinkCollection(bytes, ridCollection);
+      break;
+    case LINK:
+      if (!(value instanceof OIdentifiable))
+        throw new OValidationException("Value '" + value + "' is not a OIdentifiable");
+
+      pointer = writeOptimizedLink(bytes, (OIdentifiable) value);
+      break;
+    case LINKMAP:
+      pointer = writeLinkMap(bytes, (Map<Object, OIdentifiable>) value);
+      break;
+    case EMBEDDEDMAP:
+      pointer = writeEmbeddedMap(bytes, (Map<Object, Object>) value);
+      break;
+    case LINKBAG:
+      ORidBag ridbag = ((ORidBag) value);
+      pointer = writeRidBag(bytes, ridbag);
+      break;
+    case CUSTOM:
+      if (!(value instanceof OSerializableStream))
+        value = new OSerializableWrapper((Serializable) value);
+      pointer = writeString(bytes, value.getClass().getName());
+      writeBinary(bytes, ((OSerializableStream) value).toStream());
+      break;
+    case TRANSIENT:
+      break;
+    case ANY:
+      break;
+    }
+    return pointer;
+  }
+  
+  @Override
+  protected Object deserializeValue(final BytesContainer bytes, final OType type, final ODocument ownerDocument, boolean embeddedAsDocument, 
+          int valueLengthInBytes, int serializerVersion, boolean justRunThrough) {
+    Object value = null;
+    switch (type) {
+    case INTEGER:
+      value = OVarIntSerializer.readAsInteger(bytes);
+      break;
+    case LONG:
+      value = OVarIntSerializer.readAsLong(bytes);
+      break;
+    case SHORT:
+      value = OVarIntSerializer.readAsShort(bytes);
+      break;
+    case STRING:
+      if (justRunThrough){
+        int length = OVarIntSerializer.readAsInteger(bytes);
+        bytes.skip(length);
+      }
+      else{
+        value = readString(bytes);
+      }
+      break;
+    case DOUBLE:
+      if (justRunThrough){
+        bytes.skip(OLongSerializer.LONG_SIZE);
+      }
+      else{
+        value = Double.longBitsToDouble(readLong(bytes));
+      }
+      break;
+    case FLOAT:
+      if (justRunThrough){
+        bytes.skip(OIntegerSerializer.INT_SIZE);
+      }
+      else{
+        value = Float.intBitsToFloat(readInteger(bytes));
+      }
+      break;
+    case BYTE:
+      value = readByte(bytes);
+      break;
+    case BOOLEAN:
+      value = readByte(bytes) == 1;
+      break;
+    case DATETIME:      
+      value = new Date(OVarIntSerializer.readAsLong(bytes));      
+      break;
+    case DATE:
+      long savedTime = OVarIntSerializer.readAsLong(bytes) * MILLISEC_PER_DAY;
+      if (!justRunThrough){
+        savedTime = convertDayToTimezone(TimeZone.getTimeZone("GMT"), ODateHelper.getDatabaseTimeZone(), savedTime);
+        value = new Date(savedTime);
+      }
+      break;
+    case EMBEDDED:
+      if (embeddedAsDocument){
+        value = deserializeEmbeddedAsDocument(bytes, ownerDocument);
+      }
+      else{
+        value = deserializeEmbeddedAsBytes(bytes, valueLengthInBytes, serializerVersion);        
+      }      
+      break;
+    case EMBEDDEDSET:
+      if (embeddedAsDocument){
+        value = readEmbeddedSet(bytes, ownerDocument);
+      }
+      else{
+        value = deserializeEmbeddedCollectionAsCollectionOfBytes(bytes, serializerVersion);        
+      }      
+      break;
+    case EMBEDDEDLIST:
+      if (embeddedAsDocument){        
+        value = readEmbeddedList(bytes, ownerDocument);        
+      }
+      else{
+        value = deserializeEmbeddedCollectionAsCollectionOfBytes(bytes, serializerVersion);        
+      }
+      break;
+    case LINKSET:
+      value = readLinkCollection(bytes, new ORecordLazySet(ownerDocument));
+      break;
+    case LINKLIST:
+      value = readLinkCollection(bytes, new ORecordLazyList(ownerDocument));
+      break;
+    case BINARY:
+      if (justRunThrough){
+        int len = OVarIntSerializer.readAsInteger(bytes);
+        bytes.skip(len);
+      }
+      else{
+        value = readBinary(bytes);
+      }
+      break;
+    case LINK:      
+      value = readOptimizedLink(bytes);      
+      break;
+    case LINKMAP:
+      value = readLinkMap(bytes, ownerDocument);
+      break;
+    case EMBEDDEDMAP:
+      if (embeddedAsDocument){
+        value = readEmbeddedMap(bytes, ownerDocument);
+      }
+      else{
+        value = deserializeEmbeddedMapAsMapOfBytes(bytes, serializerVersion);                
+      }
+      break;
+    case DECIMAL:            
+      value = ODecimalSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
+      bytes.skip(ODecimalSerializer.INSTANCE.getObjectSize(bytes.bytes, bytes.offset));
+      break;
+    case LINKBAG:
+      ORidBag bag = readRidbag(bytes);
+      bag.setOwner(ownerDocument);
+      value = bag;
+      break;
+    case TRANSIENT:
+      break;
+    case CUSTOM:
+      try {
+        String className = readString(bytes);
+        Class<?> clazz = Class.forName(className);
+        OSerializableStream stream = (OSerializableStream) clazz.newInstance();
+        byte[] bytesRepresentation = readBinary(bytes);
+        if (embeddedAsDocument){
+          stream.fromStream(bytesRepresentation);
+          if (stream instanceof OSerializableWrapper)
+            value = ((OSerializableWrapper) stream).getSerializable();
+          else
+            value = stream;
+        }
+        else{
+          OResultBinary retVal = new OResultBinary(bytesRepresentation, 0, bytesRepresentation.length, serializerVersion);
+          return retVal;
+        }
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+      break;
+    case ANY:
+      break;
+
+    }
+    return value;
+  }
+  
+  private static int writeRidBag(BytesContainer bytes, ORidBag ridbag) {
+    int positionOffset = bytes.offset;
+    final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.instance().get()
+        .getSbTreeCollectionManager();
+    UUID uuid = null;
+    if (sbTreeCollectionManager != null)
+      uuid = sbTreeCollectionManager.listenForChanges(ridbag);
+    
+    byte configByte = 0;
+    if (ridbag.isEmbedded() || OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger() >= ridbag.size())
+      configByte |= 1;
+
+    if (uuid != null)
+      configByte |= 2;
+    
+    //alloc will move offset and do skip
+    int posForWrite = bytes.alloc(OByteSerializer.BYTE_SIZE);
+    OByteSerializer.INSTANCE.serialize(configByte, bytes.bytes, posForWrite);    
+    
+//    if (uuid != null){
+//      posForWrite = bytes.alloc(OUUIDSerializer.UUID_SIZE);
+//      OUUIDSerializer.INSTANCE.serialize(uuid, bytes.bytes, posForWrite);
+//    }
+    
+    if (ridbag.isEmbedded() || OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger() >= ridbag.size()) {
+      OVarIntSerializer.write(bytes, ridbag.size());
+      Iterator<OIdentifiable> iterator = ridbag.rawIterator();
+      while (iterator.hasNext()) {
+        OIdentifiable itemValue = iterator.next();
+        if (itemValue == null)
+          //should never happen
+          throw new NullPointerException("Null link in ridbag");
+        else
+          writeOptimizedLink(bytes, itemValue);
+      }
+    } else {      
+      OBonsaiCollectionPointer pointer = ridbag.getPointer();
+      if (pointer == null)
+        pointer = OBonsaiCollectionPointer.INVALID;
+      OVarIntSerializer.write(bytes, pointer.getFileId());
+      OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageIndex());
+      OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageOffset());
+//      OVarIntSerializer.write(bytes, ridbag.size());      
+    }
+    return positionOffset;
+  }
+  
+  private static ORidBag readRidbag(BytesContainer bytes){
+    byte configByte = OByteSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset++);
+    boolean isEmbedded = (configByte | 1) != 0;
+    boolean hasUUID = (configByte | 2) != 0;
+    ORidBag ridbag = null;
+    if (isEmbedded){
+      ridbag = new ORidBag();
+      int size = OVarIntSerializer.readAsInteger(bytes);
+      for (int i = 0; i < size; i++){
+        OIdentifiable record = readOptimizedLink(bytes);
+        ridbag.add(record);
+      }
+    }
+    else{
+      long fileId = OVarIntSerializer.readAsLong(bytes);
+      long pageIndex = OVarIntSerializer.readAsLong(bytes);
+      int pageOffset = OVarIntSerializer.readAsInteger(bytes);
+//      int bagSize = OVarIntSerializer.readAsInteger(bytes);
+      OBonsaiCollectionPointer pointer = null;
+      if (fileId != -1)
+        pointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
+      ridbag = new ORidBag(pointer, new HashMap<OIdentifiable, Change>(), null);
+    }
+    return ridbag;
+  }
+  
+  private static OIdentifiable readOptimizedLink(final BytesContainer bytes) {
+    ORecordId id = new ORecordId(OVarIntSerializer.readAsInteger(bytes), OVarIntSerializer.readAsLong(bytes));
+    if (id.isTemporary()) {
+      OIdentifiable persRef = id.getRecord();
+      if (persRef != null)
+        return persRef;
+    }
+    return id;
+  }
+  
 }

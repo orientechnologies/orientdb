@@ -1136,6 +1136,7 @@ public class ODocument extends ORecordAbstract
    *
    * @return field value if defined, otherwise null
    */
+  @Override
   public <RET> RET field(final String iFieldName) {
     RET value = this.rawField(iFieldName);
 
