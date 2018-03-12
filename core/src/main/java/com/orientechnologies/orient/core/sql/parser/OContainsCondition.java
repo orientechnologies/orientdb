@@ -34,7 +34,18 @@ public class OContainsCondition extends OBooleanExpression {
   public boolean execute(Object left, Object right) {
     if (left instanceof Collection) {
       if (right instanceof Collection) {
-        return ((Collection) left).containsAll((Collection) right);
+        if (((Collection) left).containsAll((Collection) right)) {
+          return true;
+        }
+
+        if (((Collection) right).size() == 1) {
+          Object item = ((Collection) right).iterator().next();
+          if (item instanceof OResult && ((OResult) item).getPropertyNames().size() == 1) {
+            Object propValue = ((OResult) item).getProperty(((OResult) item).getPropertyNames().iterator().next());
+            return ((Collection) left).contains(propValue);
+          }
+        }
+        return false;
       }
       if (right instanceof Iterable) {
         right = ((Iterable) right).iterator();

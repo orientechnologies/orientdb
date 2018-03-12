@@ -109,14 +109,25 @@ public class OInCondition extends OBooleanExpression {
       for (final Object o : OMultiValue.getMultiValueIterable(iRight, false)) {
         if (OQueryOperatorEquals.equals(iLeft, o))
           return true;
+        if (OMultiValue.isMultiValue(iLeft) && OMultiValue.getSize(iLeft) == 1) {
+
+          Object item = OMultiValue.getFirstValue(iLeft);
+          if (item instanceof OResult && ((OResult) item).getPropertyNames().size() == 1) {
+            Object propValue = ((OResult) item).getProperty(((OResult) item).getPropertyNames().iterator().next());
+            if (OQueryOperatorEquals.equals(propValue, o))
+              return true;
+          }
+        }
+
       }
     } else if (iRight.getClass().isArray()) {
-
       for (final Object o : (Object[]) iRight) {
         if (OQueryOperatorEquals.equals(iLeft, o))
           return true;
       }
-    } else if (iRight instanceof OResultSet) {
+    } else if (iRight instanceof OResultSet)
+
+    {
       OResultSet rsRight = (OResultSet) iRight;
       rsRight.reset();
       while (((OResultSet) iRight).hasNext()) {
