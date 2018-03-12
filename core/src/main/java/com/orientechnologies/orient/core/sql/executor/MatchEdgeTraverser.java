@@ -120,7 +120,7 @@ public class MatchEdgeTraverser {
       targetRid = targetRid(item, iCommandContext);
     }
 
-    Set<OResultInternal> result = new HashSet<>();
+    List<OResultInternal> result = new ArrayList<>();
 
     if (whileCondition == null && maxDepth == null) {// in this case starting point is not returned and only one level depth is
       // evaluated
