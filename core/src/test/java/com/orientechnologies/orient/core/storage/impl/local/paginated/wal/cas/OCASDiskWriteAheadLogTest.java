@@ -824,7 +824,6 @@ public class OCASDiskWriteAheadLogTest {
 
         wal.close();
 
-        Thread.sleep(1);
         System.out.printf("%d iterations out of %d were passed\n", n, iterations);
       } catch (Exception | Error e) {
         System.out.println("testAddRecordsMix : " + seed);

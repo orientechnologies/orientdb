@@ -158,12 +158,14 @@ public class OFileUtils {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
           Files.deleteIfExists(file);
+          assert !file.toFile().exists();
           return FileVisitResult.CONTINUE;
         }
 
         @Override
         public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
           Files.deleteIfExists(dir);
+          assert !dir.toFile().exists();
           return FileVisitResult.CONTINUE;
         }
       });
