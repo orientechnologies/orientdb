@@ -658,7 +658,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
   
-  public void serializeChangesWithContext(ORecordSerializationContext context,
+  public void handleContextSBTree(ORecordSerializationContext context,
           OBonsaiCollectionPointer pointer){
     rearrangeChanges();
     this.collectionPointer = pointer;
@@ -710,7 +710,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (context == null) {
       ChangeSerializationHelper.INSTANCE.serializeChanges(changes, OLinkSerializer.INSTANCE, stream, offset);
     } else {
-      serializeChangesWithContext(context, collectionPointer);
+      handleContextSBTree(context, collectionPointer);
       // 0-length serialized list of changes
       OIntegerSerializer.INSTANCE.serializeLiteral(0, stream, offset); 
       offset += OIntegerSerializer.INT_SIZE;
