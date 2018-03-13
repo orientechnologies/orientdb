@@ -83,4 +83,6 @@ public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMul
   public List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> getChangeListeners();
 
   NavigableMap<OIdentifiable,Change> getChanges();
+  
+  void setSize(int size);
 }

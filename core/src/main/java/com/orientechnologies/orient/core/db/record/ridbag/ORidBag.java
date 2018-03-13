@@ -471,7 +471,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     }
   }
 
-  protected ORidBagDelegate getDelegate() {
+  public ORidBagDelegate getDelegate() {
     return delegate;
   }
 
