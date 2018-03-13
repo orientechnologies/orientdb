@@ -1683,7 +1683,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public OEdge newEdge(OVertex from, OVertex to, String type) {
     OClass cl = getClass(type);
-    if (!cl.isEdgeType()) {
+    if (cl == null || !cl.isEdgeType()) {
       throw new IllegalArgumentException("" + type + " is not an edge class");
     }
     ODocument doc = new OEdgeDocument(cl);
