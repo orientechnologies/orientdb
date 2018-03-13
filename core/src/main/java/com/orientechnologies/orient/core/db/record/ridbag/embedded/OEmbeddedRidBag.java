@@ -58,8 +58,17 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     this.size = size;
   }
 
+  @Override
+  public int getSize() {
+    return size;
+  }
+
   private static enum Tombstone {
     TOMBSTONE
+  }
+  
+  public Object[] getEntries(){
+    return entries;
   }
 
   private final class EntriesIterator implements Iterator<OIdentifiable>, OResettable, OSizeable {

@@ -72,6 +72,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     this.size = size;
   }
 
+  @Override
+  public int getSize() {
+    return size;
+  }
+
   private final class RIDBagIterator implements Iterator<OIdentifiable>, OResettable, OSizeable, OAutoConvertToRecord {
     private final NavigableMap<OIdentifiable, Change>                    changedValues;
     private final SBTreeMapEntryIterator                                 sbTreeIterator;
@@ -637,6 +642,29 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     return getSerializedSize();
   }
 
+  public void rearrangeChanges(){
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    for (Entry<OIdentifiable, Change> change : this.changes.entrySet()) {
+      OIdentifiable key = change.getKey();
+      if (db != null && db.getTransaction().isActive()) {
+        if (!key.getIdentity().isPersistent()) {
+          OIdentifiable newKey = db.getTransaction().getRecord(key.getIdentity());
+          if (newKey != null) {
+            changes.remove(key);
+            changes.put(newKey, change.getValue());
+          }
+        }
+      }
+    }
+  }
+  
+  public void serializeChangesWithContext(ORecordSerializationContext context,
+          OBonsaiCollectionPointer pointer){
+    rearrangeChanges();
+    this.collectionPointer = pointer;
+    context.push(new ORidBagUpdateSerializationOperation(changes, collectionPointer));       
+  }
+  
   @Override
   public int serialize(byte[] stream, int offset, UUID ownerUuid) {
     applyNewEntries();
@@ -682,25 +710,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (context == null) {
       ChangeSerializationHelper.INSTANCE.serializeChanges(changes, OLinkSerializer.INSTANCE, stream, offset);
     } else {
-
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-      for (Entry<OIdentifiable, Change> change : this.changes.entrySet()) {
-        OIdentifiable key = change.getKey();
-        if (db != null && db.getTransaction().isActive()) {
-          if (!key.getIdentity().isPersistent()) {
-            OIdentifiable newKey = db.getTransaction().getRecord(key.getIdentity());
-            if (newKey != null) {
-              changes.remove(key);
-              changes.put(newKey, change.getValue());
-            }
-          }
-        }
-      }
-      this.collectionPointer = collectionPointer;
-      context.push(new ORidBagUpdateSerializationOperation(changes, collectionPointer));
-
+      serializeChangesWithContext(context, collectionPointer);
       // 0-length serialized list of changes
-      OIntegerSerializer.INSTANCE.serializeLiteral(0, stream, offset);
+      OIntegerSerializer.INSTANCE.serializeLiteral(0, stream, offset); 
       offset += OIntegerSerializer.INT_SIZE;
     }
 
