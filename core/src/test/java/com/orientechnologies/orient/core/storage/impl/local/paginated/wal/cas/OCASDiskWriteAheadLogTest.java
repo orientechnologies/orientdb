@@ -5,6 +5,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
 import org.junit.Assert;
@@ -605,6 +606,135 @@ public class OCASDiskWriteAheadLogTest {
   }
 
   @Test
+  public void testAddNSegments() throws Exception {
+    int iterations = 300;
+
+    for (int n = 0; n < iterations; n++) {
+      final long seed = System.nanoTime();
+      final Random random = new Random(seed);
+
+      OFileUtils.deleteRecursively(testDirectory.toFile());
+      try {
+        final int numberOfSegmentsToAdd = random.nextInt(4) + 3;
+
+        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, Integer.MAX_VALUE, 1000,
+            true, Locale.US);
+
+        List<TestRecord> records = new ArrayList<>();
+
+        for (int i = 0; i < numberOfSegmentsToAdd; i++) {
+          wal.appendNewSegment();
+
+          final int recordsCount = random.nextInt(10_000) + 100;
+          for (int k = 0; k < recordsCount; k++) {
+            final TestRecord walRecord = new TestRecord(random, 2 * OCASWALPage.PAGE_SIZE, OCASWALPage.PAGE_SIZE);
+            wal.log(walRecord);
+
+            records.add(walRecord);
+          }
+        }
+
+        Assert.assertEquals(numberOfSegmentsToAdd + 1, wal.activeSegment());
+
+        for (int i = 0; i < records.size(); i++) {
+          final TestRecord testRecord = records.get(i);
+          final List<OWriteableWALRecord> result = wal.read(testRecord.getLsn(), 10);
+
+          Assert.assertTrue(!result.isEmpty());
+
+          final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
+          final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
+
+          while (resultIterator.hasNext()) {
+            TestRecord record = recordIterator.next();
+            TestRecord resultRecord = (TestRecord) resultIterator.next();
+
+            Assert.assertArrayEquals(record.data, resultRecord.data);
+            Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
+          }
+        }
+
+        wal.close();
+
+        long walSize = Files.walk(testDirectory).filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
+            .mapToLong(p -> p.toFile().length()).sum();
+
+        long calculatedWalSize = ((wal.size() + OCASWALPage.PAGE_SIZE - 1) / OCASWALPage.PAGE_SIZE) * OCASWALPage.PAGE_SIZE;
+
+        Assert.assertEquals(calculatedWalSize, walSize);
+
+        wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, Integer.MAX_VALUE, 1000, true, Locale.US);
+        Assert.assertEquals(numberOfSegmentsToAdd + 2, wal.activeSegment());
+
+        for (int i = 0; i < records.size(); i++) {
+          final TestRecord testRecord = records.get(i);
+          final List<OWriteableWALRecord> result = wal.read(testRecord.getLsn(), 10);
+
+          Assert.assertTrue(!result.isEmpty());
+
+          final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
+          final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
+
+          while (resultIterator.hasNext() && recordIterator.hasNext()) {
+            TestRecord record = recordIterator.next();
+            TestRecord resultRecord = (TestRecord) resultIterator.next();
+
+            Assert.assertArrayEquals(record.data, resultRecord.data);
+            Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
+          }
+        }
+
+        final int recordsCount = random.nextInt(10_000) + 100;
+        for (int k = 0; k < recordsCount; k++) {
+          final TestRecord walRecord = new TestRecord(random, 2 * OCASWALPage.PAGE_SIZE, OCASWALPage.PAGE_SIZE);
+          wal.log(walRecord);
+
+          records.add(walRecord);
+        }
+
+        for (int i = 0; i < records.size(); i++) {
+          final TestRecord testRecord = records.get(i);
+          final List<OWriteableWALRecord> result = wal.read(testRecord.getLsn(), 10);
+
+          Assert.assertTrue(!result.isEmpty());
+
+          final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
+          final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
+
+          while (resultIterator.hasNext()) {
+            OWriteableWALRecord writeableRecord = resultIterator.next();
+            if (writeableRecord instanceof OEmptyWALRecord) {
+              continue;
+            }
+
+            TestRecord record = recordIterator.next();
+            TestRecord resultRecord = (TestRecord) writeableRecord;
+
+            Assert.assertArrayEquals(record.data, resultRecord.data);
+            Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
+          }
+        }
+
+        wal.close();
+
+        walSize = Files.walk(testDirectory).filter(p -> p.toFile().isFile() && p.getFileName().toString().endsWith(".wal"))
+            .mapToLong(p -> p.toFile().length()).sum();
+
+        calculatedWalSize = ((wal.size() + OCASWALPage.PAGE_SIZE - 1) / OCASWALPage.PAGE_SIZE) * OCASWALPage.PAGE_SIZE;
+
+        Assert.assertEquals(calculatedWalSize, walSize);
+
+        Thread.sleep(2);
+
+        System.out.printf("%d iterations out of %d were passed\n", n, iterations);
+      } catch (Exception | Error e) {
+        System.out.println("testAddNSegments seed : " + seed);
+        throw e;
+      }
+    }
+  }
+
+  @Test
   public void testAddNBigRecords() throws Exception {
     final int iterations = 30;
 
@@ -925,8 +1055,8 @@ public class OCASDiskWriteAheadLogTest {
         final Random random = new Random(seed);
         final int recordsCount = random.nextInt(10_000) + 100;
 
-        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100,
-            Integer.MAX_VALUE, 1000, true, Locale.US);
+        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, Integer.MAX_VALUE, 1000,
+            true, Locale.US);
         for (int i = 0; i < recordsCount; i++) {
 
           final TestRecord testRecord = new TestRecord(random, 4 * OCASWALPage.PAGE_SIZE, 1);

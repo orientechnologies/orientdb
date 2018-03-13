@@ -8,6 +8,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
+import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -111,7 +112,9 @@ public class OCASDiskWriteAheadLog {
 
   private final ScheduledFuture<?> recordsWriterFuture;
 
-  private long lastRecordPosition = -1;
+  private long lastRecordPosition   = -1;
+  private long prevSegmentSpaceLeft = 0;
+
   private final Path masterRecordPath;
 
   private volatile OLogSequenceNumber lastCheckpoint;
@@ -164,7 +167,7 @@ public class OCASDiskWriteAheadLog {
     this.storageName = storageName;
     this.maxCacheSize = maxPagesCacheSize * OCASWALPage.PAGE_SIZE;
 
-    initSegmentSet(filterWALFiles, locale);
+    logSize.set(initSegmentSet(filterWALFiles, locale));
 
     long nextSegmentId;
 
@@ -293,9 +296,10 @@ public class OCASDiskWriteAheadLog {
     }
   }
 
-  private void initSegmentSet(boolean filterWALFiles, Locale locale) throws IOException {
+  private long initSegmentSet(boolean filterWALFiles, Locale locale) throws IOException {
     Stream<Path> walFiles;
 
+    OModifiableLong walSize = new OModifiableLong();
     if (filterWALFiles)
       walFiles = Files.find(walLocation, 1,
           (Path path, BasicFileAttributes attributes) -> validateName(path.getFileName().toString(), storageName, locale));
@@ -307,7 +311,12 @@ public class OCASDiskWriteAheadLog {
       throw new IllegalStateException(
           "Location passed in WAL does not exist, or IO error was happened. DB cannot work in durable mode in such case");
 
-    walFiles.forEach((Path path) -> segments.add(extractSegmentId(path.getFileName().toString())));
+    walFiles.forEach((Path path) -> {
+      segments.add(extractSegmentId(path.getFileName().toString()));
+      walSize.increment(path.toFile().length());
+    });
+
+    return walSize.value;
   }
 
   private long extractSegmentId(String name) {
@@ -432,6 +441,10 @@ public class OCASDiskWriteAheadLog {
 
   long segSize() {
     return segmentSize.get();
+  }
+
+  long size() {
+    return logSize.get();
   }
 
   private List<OWriteableWALRecord> readFromDisk(OLogSequenceNumber lsn, int limit) throws IOException {
@@ -1290,11 +1303,18 @@ public class OCASDiskWriteAheadLog {
 
         return newPosition;
       } else {
-        final long end = prevRecord.getLsn().getPosition() + prevRecord.getDistance();
+        final long prevPosition = prevRecord.getLsn().getPosition();
+        final long end = prevPosition + prevRecord.getDistance();
         final long pageIndex = end / OCASWALPage.PAGE_SIZE;
-        final int pageFreeSpace = (int) ((pageIndex + 1) * OCASWALPage.PAGE_SIZE - end);
+        final int pageOffset = (int) (end - pageIndex * OCASWALPage.PAGE_SIZE);
 
-        record.setDiskSize(pageFreeSpace + OCASWALPage.RECORDS_OFFSET);
+        if (pageOffset == OCASWALPage.RECORDS_OFFSET) {
+          record.setDiskSize(OCASWALPage.RECORDS_OFFSET);
+        } else {
+          final int pageFreeSpace = OCASWALPage.PAGE_SIZE - pageOffset;
+          record.setDiskSize(pageFreeSpace + OCASWALPage.RECORDS_OFFSET);
+        }
+
         record.setDistance(0);
 
         return OCASWALPage.RECORDS_OFFSET;
@@ -1391,6 +1411,13 @@ public class OCASDiskWriteAheadLog {
 
           if (segmentId != lsn.getSegment()) {
             if (walChannel != null) {
+              if (ptr > 0) {
+                writeBuffer(walChannel, buffer);
+                Native.free(ptr);
+              }
+
+              ptr = 0;
+
               walChannel.force(true);
               walChannel.close();
             }
@@ -1400,7 +1427,21 @@ public class OCASDiskWriteAheadLog {
                 .open(walLocation.resolve(getSegmentName(segmentId)), StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
             segments.add(segmentId);
 
-            lastRecordPosition = 0;
+            if (assertions) {
+              if (lastRecordPosition > -1) {
+                final long pageIndex = lastRecordPosition / OCASWALPage.PAGE_SIZE;
+                final int pageOffset = (int) (lastRecordPosition - pageIndex * OCASWALPage.PAGE_SIZE);
+
+                if (pageOffset > 0) {
+                  prevSegmentSpaceLeft = OCASWALPage.PAGE_SIZE - pageOffset;
+                } else {
+                  prevSegmentSpaceLeft = 0;
+                }
+              }
+
+              lastRecordPosition = 0;
+            }
+
             assert lsn.getPosition() == OCASWALPage.RECORDS_OFFSET;
           }
 
@@ -1477,10 +1518,12 @@ public class OCASDiskWriteAheadLog {
 
             if (assertions && buffer != null) {
               if (lastRecordPosition >= 0) {
-                assert walChannel.position() - lastRecordPosition + buffer.position() == record.getDiskSize();
+                assert
+                    walChannel.position() - lastRecordPosition + buffer.position() + prevSegmentSpaceLeft == record.getDiskSize();
               }
 
               lastRecordPosition = walChannel.position() + buffer.position();
+              prevSegmentSpaceLeft = 0;
             }
 
             lastLSN = record.getLsn();
