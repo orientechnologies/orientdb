@@ -12,10 +12,7 @@ import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -35,6 +32,7 @@ import org.apache.lucene.search.highlight.TextFragment;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static com.orientechnologies.lucene.OLuceneIndexFactory.LUCENE_ALGORITHM;
@@ -47,6 +45,7 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   private final OStorage  storage;
   private final String    indexName;
   private       ODocument metadata;
+  private final AtomicLong bonsayFileId = new AtomicLong(0);
 
   public OLuceneCrossClassIndexEngine(OStorage storage, String indexName) {
 
@@ -205,6 +204,11 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
   @Override
   public void put(Object key, Object value) {
 
+  }
+
+  @Override
+  public void update(Object key, OIndexKeyUpdater<Object> updater) {
+    put(key, updater.update(null, bonsayFileId).getValue());
   }
 
   @Override
