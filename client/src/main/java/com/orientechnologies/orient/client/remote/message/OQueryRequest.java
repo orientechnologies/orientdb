@@ -84,6 +84,8 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     network.writeString(statement);
     network.writeByte(operationType);
     network.writeInt(recordsPerPage);
+    //THIS IS FOR POSSIBLE FUTURE FETCH PLAN
+    network.writeString(null);
 
     // params
     ODocument parms = new ODocument();
@@ -99,6 +101,8 @@ public final class OQueryRequest implements OBinaryRequest<OQueryResponse> {
     this.statement = channel.readString();
     this.operationType = channel.readByte();
     this.recordsPerPage = channel.readInt();
+    //THIS IS FOR POSSIBLE FUTURE FETCH PLAN
+    channel.readString();
 
     // params
     ODocument paramsDoc = new ODocument();
