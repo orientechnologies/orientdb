@@ -887,10 +887,10 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     int posForWrite = bytes.alloc(OByteSerializer.BYTE_SIZE);
     OByteSerializer.INSTANCE.serialize(configByte, bytes.bytes, posForWrite);    
     
-    if (uuid != null){
-      posForWrite = bytes.alloc(OUUIDSerializer.UUID_SIZE);
-      OUUIDSerializer.INSTANCE.serialize(uuid, bytes.bytes, posForWrite);
-    }        
+//    if (uuid != null){
+//      posForWrite = bytes.alloc(OUUIDSerializer.UUID_SIZE);
+//      OUUIDSerializer.INSTANCE.serialize(uuid, bytes.bytes, posForWrite);
+//    }        
     
     if (ridbag.isEmbedded()) {
       writeEmbeddedRidbag(bytes, ridbag);
@@ -906,10 +906,10 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     boolean hasUUID = (configByte & 2) != 0;
     
     UUID uuid = null;
-    if (hasUUID){
-      uuid = OUUIDSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
-      bytes.skip(OUUIDSerializer.UUID_SIZE);
-    }
+//    if (hasUUID){
+//      uuid = OUUIDSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
+//      bytes.skip(OUUIDSerializer.UUID_SIZE);
+//    }
     
     ORidBag ridbag = null;
     if (isEmbedded){
