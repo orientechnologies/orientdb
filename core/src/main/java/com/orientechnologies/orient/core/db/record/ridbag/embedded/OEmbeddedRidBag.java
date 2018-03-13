@@ -58,11 +58,6 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     this.size = size;
   }
 
-  @Override
-  public int getSize() {
-    return size;
-  }
-
   private static enum Tombstone {
     TOMBSTONE
   }
@@ -228,10 +223,6 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       add(value);
   }
 
-  public void add(final OIdentifiable identifiable, boolean fireChangeEvent){
-    
-  }
-  
   @Override
   public void add(final OIdentifiable identifiable) {
     if (identifiable == null)
