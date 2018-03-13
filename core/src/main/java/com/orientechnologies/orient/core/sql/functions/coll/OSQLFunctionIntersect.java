@@ -93,7 +93,11 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Object
       }
     }
 
-    return iterator;
+    List result = new ArrayList();
+    while (iterator.hasNext()) {
+      result.add(iterator.next());
+    }
+    return result;
   }
 
   @Override
