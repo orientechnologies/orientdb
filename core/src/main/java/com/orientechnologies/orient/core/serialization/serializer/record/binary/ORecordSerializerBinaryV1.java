@@ -843,24 +843,26 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     OVarIntSerializer.write(bytes, ridbag.size());
 
     if (context != null){
-      ((OSBTreeRidBag)ridbag.getDelegate()).serializeChangesWithContext(context, pointer);
+      ((OSBTreeRidBag)ridbag.getDelegate()).handleContextSBTree(context, pointer);
       OVarIntSerializer.write(bytes, 0);
     }
     else{
-      Map<? extends OIdentifiable, Change> changes = ridbag.getChanges();
-      OVarIntSerializer.write(bytes, changes.size());
-      for (Map.Entry<? extends OIdentifiable, Change> entry : changes.entrySet()) {
-        OIdentifiable key = entry.getKey();
-
-        if (key.getIdentity().isTemporary())
-          //noinspection unchecked
-          key = key.getRecord();
-
-        writeLinkOptimized(bytes, key);
-
-        bytes.offset = bytes.alloc(OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE);
-        bytes.offset += entry.getValue().serialize(bytes.bytes, bytes.offset);
-      }
+      OVarIntSerializer.write(bytes, 0);
+      
+//      Map<? extends OIdentifiable, Change> changes = ridbag.getChanges();
+//      OVarIntSerializer.write(bytes, changes.size());
+//      for (Map.Entry<? extends OIdentifiable, Change> entry : changes.entrySet()) {
+//        OIdentifiable key = entry.getKey();
+//
+//        if (key.getIdentity().isTemporary())
+//          //noinspection unchecked
+//          key = key.getRecord();
+//
+//        writeLinkOptimized(bytes, key);
+//
+//        bytes.offset = bytes.alloc(OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE);
+//        bytes.offset += entry.getValue().serialize(bytes.bytes, bytes.offset);
+//      }
     }
   }
   
