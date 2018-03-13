@@ -71,12 +71,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   public void setSize(int size) {
     this.size = size;
   }
-
-  @Override
-  public int getSize() {
-    return size;
-  }
-
+  
   private final class RIDBagIterator implements Iterator<OIdentifiable>, OResettable, OSizeable, OAutoConvertToRecord {
     private final NavigableMap<OIdentifiable, Change>                    changedValues;
     private final SBTreeMapEntryIterator                                 sbTreeIterator;
@@ -972,6 +967,5 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     //do nothing not needed
   }
-  
-  
+    
 }
