@@ -67,6 +67,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   private           List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners;
   private transient ORecord                                                       owner;
 
+  @Override
+  public void setSize(int size) {
+    this.size = size;
+  }
+
   private final class RIDBagIterator implements Iterator<OIdentifiable>, OResettable, OSizeable, OAutoConvertToRecord {
     private final NavigableMap<OIdentifiable, Change>                    changedValues;
     private final SBTreeMapEntryIterator                                 sbTreeIterator;
@@ -702,7 +707,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     return offset;
   }
 
-  private void applyNewEntries() {
+  public void applyNewEntries() {
     for (Entry<OIdentifiable, OModifiableInteger> entry : newEntries.entrySet()) {
       OIdentifiable identifiable = entry.getKey();
       assert identifiable instanceof ORecord;
@@ -955,4 +960,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     //do nothing not needed
   }
+  
+  
 }
