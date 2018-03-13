@@ -8,6 +8,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -18,6 +19,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.*;
@@ -787,7 +789,84 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     return -1;
   }
   
+  private static void writeEmbeddedRidbag(BytesContainer bytes, ORidBag ridbag){
+    OVarIntSerializer.write(bytes, ridbag.size());
+    Object[] entries = ((OEmbeddedRidBag)ridbag.getDelegate()).getEntries();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    for (int i = 0; i < entries.length; i++) {
+      Object entry = entries[i];
+      if (entry instanceof OIdentifiable){
+        OIdentifiable itemValue = (OIdentifiable)entry;
+        final ORID rid = itemValue.getIdentity();
+        if (db != null && !db.isClosed() && db.getTransaction().isActive()) {
+          if (!itemValue.getIdentity().isPersistent()) {
+            itemValue = db.getTransaction().getRecord(itemValue.getIdentity());
+          }
+        }
+        if (itemValue == null)
+          //should never happen
+          throw new NullPointerException("Null link in ridbag: " + rid);
+        else{
+          entries[i] = itemValue.getIdentity();
+          writeLinkOptimized(bytes, itemValue);
+        }
+      }
+    }
+  }
+  
+  private static void writeSBTreeRidbag(BytesContainer bytes, ORidBag ridbag, UUID ownerUuid){
+    ((OSBTreeRidBag)ridbag.getDelegate()).applyNewEntries();
+      
+    OBonsaiCollectionPointer pointer = ridbag.getPointer();
+
+    final ORecordSerializationContext context;
+    boolean remoteMode = ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy;
+    if (remoteMode) {
+      context = null;
+    } else
+      context = ORecordSerializationContext.getContext();
+
+    if (pointer == null) {
+      if (context != null) {
+        final int clusterId = getHighLevelDocClusterId(ridbag);
+        assert clusterId > -1;
+        pointer = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager()
+            .createSBTree(clusterId, ownerUuid);
+      }
+    }
+
+    ((OSBTreeRidBag)ridbag.getDelegate()).setCollectionPointer(pointer);
+
+    OVarIntSerializer.write(bytes, pointer.getFileId());
+    OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageIndex());
+    OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageOffset());
+    OVarIntSerializer.write(bytes, ridbag.size());
+
+    if (context != null){
+      ((OSBTreeRidBag)ridbag.getDelegate()).serializeChangesWithContext(context, pointer);
+      OVarIntSerializer.write(bytes, 0);
+    }
+    else{
+      Map<? extends OIdentifiable, Change> changes = ridbag.getChanges();
+      OVarIntSerializer.write(bytes, changes.size());
+      for (Map.Entry<? extends OIdentifiable, Change> entry : changes.entrySet()) {
+        OIdentifiable key = entry.getKey();
+
+        if (key.getIdentity().isTemporary())
+          //noinspection unchecked
+          key = key.getRecord();
+
+        writeLinkOptimized(bytes, key);
+
+        bytes.offset = bytes.alloc(OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE);
+        bytes.offset += entry.getValue().serialize(bytes.bytes, bytes.offset);
+      }
+    }
+  }
+  
   private static int writeRidBag(BytesContainer bytes, ORidBag ridbag) {    
+    ridbag.checkAndConvert();
+    
     UUID ownerUuid = ridbag.getTemporaryId();
     
     int positionOffset = bytes.offset;
@@ -814,58 +893,9 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     }        
     
     if (ridbag.isEmbedded()) {
-      OVarIntSerializer.write(bytes, ridbag.size());
-      Iterator<OIdentifiable> iterator = ridbag.iterator();
-      while (iterator.hasNext()) {
-        OIdentifiable itemValue = iterator.next();
-        if (itemValue == null)
-          //should never happen
-          throw new NullPointerException("Null link in ridbag");
-        else
-          writeOptimizedLink(bytes, itemValue);
-      }
+      writeEmbeddedRidbag(bytes, ridbag);
     } else { 
-      ((OSBTreeRidBag)ridbag.getDelegate()).applyNewEntries();
-      
-      OBonsaiCollectionPointer pointer = ridbag.getPointer();
-      
-      final ORecordSerializationContext context;
-      boolean remoteMode = ODatabaseRecordThreadLocal.instance().get().getStorage() instanceof OStorageProxy;
-      if (remoteMode) {
-        context = null;
-      } else
-        context = ORecordSerializationContext.getContext();
-      
-      if (pointer == null) {
-        if (context != null) {
-          final int clusterId = getHighLevelDocClusterId(ridbag);
-          assert clusterId > -1;
-          pointer = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager()
-              .createSBTree(clusterId, ownerUuid);
-        }
-      }
-      
-      ((OSBTreeRidBag)ridbag.getDelegate()).setCollectionPointer(pointer);
-      
-      OVarIntSerializer.write(bytes, pointer.getFileId());
-      OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageIndex());
-      OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageOffset());
-      OVarIntSerializer.write(bytes, ridbag.size());
-
-      Map<? extends OIdentifiable, Change> changes = ridbag.getChanges();
-      OVarIntSerializer.write(bytes, changes.size());
-      for (Map.Entry<? extends OIdentifiable, Change> entry : changes.entrySet()) {
-        OIdentifiable key = entry.getKey();
-
-        if (key.getIdentity().isTemporary())
-          //noinspection unchecked
-          key = key.getRecord();
-
-        writeOptimizedLink(bytes, key);
-        
-        bytes.offset = bytes.alloc(OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE);
-        bytes.offset += entry.getValue().serialize(bytes.bytes, bytes.offset);
-      }
+      writeSBTreeRidbag(bytes, ridbag, ownerUuid);
     }
     return positionOffset;
   }
@@ -887,7 +917,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       int size = OVarIntSerializer.readAsInteger(bytes);
       ridbag.getDelegate().setSize(size);
       for (int i = 0; i < size; i++){
-        OIdentifiable record = readOptimizedLink(bytes);
+        OIdentifiable record = readLinkOptimizedEmbedded(bytes);
         if (record == null)
           throw new NullPointerException();
         else
@@ -898,7 +928,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       long fileId = OVarIntSerializer.readAsLong(bytes);
       long pageIndex = OVarIntSerializer.readAsLong(bytes);
       int pageOffset = OVarIntSerializer.readAsInteger(bytes);
-      int bagSize = OVarIntSerializer.readAsInteger(bytes);
+      int bagSize = OVarIntSerializer.readAsInteger(bytes);            
       
       OBonsaiCollectionPointer pointer = null;
       if (fileId != -1)
@@ -908,12 +938,13 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       
       int changesSize = OVarIntSerializer.readAsInteger(bytes);
       for (int i = 0; i < changesSize; i++){        
-        OIdentifiable recId = readOptimizedLink(bytes);                        
+        OIdentifiable recId = readLinkOptimizedSBTree(bytes);                        
         Change change = deserializeChange(bytes);        
         changes.put(recId, change);
       }
       
       ridbag = new ORidBag(pointer, changes, uuid);
+      ridbag.getDelegate().setSize(-1);
     }
     return ridbag;
   }
@@ -926,14 +957,32 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     return ChangeSerializationHelper.createChangeInstance(type, change);
   }
   
-  private static OIdentifiable readOptimizedLink(final BytesContainer bytes) {
-    ORecordId id = new ORecordId(OVarIntSerializer.readAsInteger(bytes), OVarIntSerializer.readAsLong(bytes));
-    if (id.isTemporary()) {
-      OIdentifiable persRef = id.getRecord();
-      if (persRef != null)
-        return persRef;
-    }
-    return id;
+  private static OIdentifiable readLinkOptimizedEmbedded(final BytesContainer bytes) {
+    ORID rid = new ORecordId(OVarIntSerializer.readAsInteger(bytes), OVarIntSerializer.readAsLong(bytes));
+    OIdentifiable identifiable = null;
+    if (rid.isTemporary())
+      identifiable = rid.getRecord();
+
+    if (identifiable == null)
+      identifiable = rid;
+    
+    return identifiable;
+  }
+  
+  private static OIdentifiable readLinkOptimizedSBTree(final BytesContainer bytes) {
+    ORID rid = new ORecordId(OVarIntSerializer.readAsInteger(bytes), OVarIntSerializer.readAsLong(bytes));
+    final OIdentifiable identifiable;
+    if (rid.isTemporary() && rid.getRecord() != null)
+      identifiable = rid.getRecord();
+    else
+      identifiable = rid;
+    return identifiable;
+  }
+  
+  private static void writeLinkOptimized(final BytesContainer bytes, OIdentifiable link){
+    ORID id = link.getIdentity();
+    OVarIntSerializer.write(bytes, id.getClusterId());
+    OVarIntSerializer.write(bytes, id.getClusterPosition());
   }
   
 }

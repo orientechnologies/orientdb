@@ -244,6 +244,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return pointer;
   }
 
+  //vazno
   public void checkAndConvert() {
     ODatabaseInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (database != null && !database.getStorage().isRemote()) {
