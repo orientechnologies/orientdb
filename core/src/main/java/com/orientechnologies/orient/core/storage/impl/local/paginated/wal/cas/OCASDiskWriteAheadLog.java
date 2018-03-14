@@ -927,6 +927,10 @@ public class OCASDiskWriteAheadLog {
         throw new IllegalStateException("There are on going txs, such call can be dangerous and unpredictable");
       }
 
+      if (segmentIndex <= currentSegment) {
+        return;
+      }
+
       currentSegment = segmentIndex;
       segmentSize.set(0);
 
