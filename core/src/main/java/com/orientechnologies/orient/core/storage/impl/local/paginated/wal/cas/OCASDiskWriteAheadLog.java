@@ -1406,6 +1406,8 @@ public class OCASDiskWriteAheadLog {
         ByteBuffer buffer = null;
 
         OLogSequenceNumber lastLSN = null;
+        OLogSequenceNumber lastRecordLSN = null;
+        String lastRecordClass = null;
 
         int lastBufferPos = -1;
         long lastChannelPos = -1;
@@ -1464,6 +1466,9 @@ public class OCASDiskWriteAheadLog {
           }
 
           if (record instanceof OMilestoneWALRecord || record instanceof OStartWALRecord) {
+            lastRecordLSN = record.getLsn();
+            lastRecordClass = record.getClass().getSimpleName();
+
             recordIterator.remove();
           } else {
             final OWriteableWALRecord writeableRecord = (OWriteableWALRecord) record;
@@ -1499,8 +1504,9 @@ public class OCASDiskWriteAheadLog {
                 assert
                     walChannel.position() + buffer.position() == lsn.getPosition() :
                     "lsn : " + lsn + " disk pos: " + walChannel.position() + " buffer pos: " + buffer.position() + " last lsn: "
-                        + lastLSN + " last channel position: " + lastChannelPos + " last buffer position: " + lastBufferPos
-                        + " last distance: " + lastDistance + " last content size: " + lastContentSize;
+                        + lastRecordLSN + " last channel position: " + lastChannelPos + " last buffer position: " + lastBufferPos
+                        + " last distance: " + lastDistance + " last content size: " + lastContentSize + " last record class "
+                        + lastRecordClass;
 
                 lastChannelPos = walChannel.position();
                 lastBufferPos = buffer.position();
@@ -1554,6 +1560,8 @@ public class OCASDiskWriteAheadLog {
             lastLSN = record.getLsn();
             lastDistance = record.getDistance();
             lastContentSize = writeableRecord.getBinaryContent().length;
+            lastRecordLSN = record.getLsn();
+            lastRecordClass = record.getClass().getSimpleName();
 
             if (writeableRecord.isUpdateMasterRecord()) {
               checkPointLSN = lastLSN;
