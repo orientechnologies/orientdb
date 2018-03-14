@@ -3,7 +3,9 @@ package com.orientechnologies.orient.core.ridbag;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
+import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBagFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import org.junit.Test;
 
 import java.util.UUID;
@@ -17,16 +19,17 @@ public class OEmbeddedRidBagBasicTest {
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + OEmbeddedRidBag.class.getSimpleName());
     db.create();
     try {
-      OEmbeddedRidBag bag = new OEmbeddedRidBag();
+      OEmbeddedRidBag bag = OEmbeddedRidBagFactory.getInstance().getOEmbeddedRidBag();
 
       bag.add(new ORecordId(3, 1000));
       bag.convertLinks2Records();
       bag.convertRecords2Links();
       byte[] bytes = new byte[1024];
+      BytesContainer container = new BytesContainer(bytes);
       UUID id = UUID.randomUUID();
-      bag.serialize(bytes, 0, id);
+      bag.serialize(container, id);
 
-      OEmbeddedRidBag bag1 = new OEmbeddedRidBag();
+      OEmbeddedRidBag bag1 = OEmbeddedRidBagFactory.getInstance().getOEmbeddedRidBag();
       bag1.deserialize(bytes, 0);
 
       assertEquals(bag.size(), 1);
@@ -40,7 +43,7 @@ public class OEmbeddedRidBagBasicTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testExceptionInCaseOfNull() {
-    OEmbeddedRidBag bag = new OEmbeddedRidBag();
+    OEmbeddedRidBag bag = OEmbeddedRidBagFactory.getInstance().getOEmbeddedRidBag();
     bag.add(null);
   }
 }

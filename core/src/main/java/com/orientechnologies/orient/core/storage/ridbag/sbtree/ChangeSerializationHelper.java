@@ -1,21 +1,31 @@
+/*
+ * Copyright 2018 OrientDB.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-
-import java.util.HashMap;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import java.util.Map;
 
 /**
- * Created by tglman on 15/06/17.
+ *
+ * @author mdjurovi
  */
-public class ChangeSerializationHelper {
-  public static final ChangeSerializationHelper INSTANCE = new ChangeSerializationHelper();
-
+public abstract class ChangeSerializationHelper {
+  
   public static Change createChangeInstance(byte type, int value) {
     switch (type) {
     case AbsoluteChange.TYPE:
@@ -26,54 +36,7 @@ public class ChangeSerializationHelper {
       throw new IllegalArgumentException("Change type is incorrect");
     }
   }
-
-  public Change deserializeChange(final byte[] stream, final int offset) {
-    int value = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset + OByteSerializer.BYTE_SIZE);
-    return createChangeInstance(OByteSerializer.INSTANCE.deserializeLiteral(stream, offset), value);
-  }
-
-  public Map<OIdentifiable, Change> deserializeChanges(final byte[] stream, int offset) {
-    final int count = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    final HashMap<OIdentifiable, Change> res = new HashMap<>();
-    for (int i = 0; i < count; i++) {
-      ORecordId rid = OLinkSerializer.INSTANCE.deserialize(stream, offset);
-      offset += OLinkSerializer.RID_SIZE;
-      Change change = ChangeSerializationHelper.INSTANCE.deserializeChange(stream, offset);
-      offset += Change.SIZE;
-
-      final OIdentifiable identifiable;
-      if (rid.isTemporary() && rid.getRecord() != null)
-        identifiable = rid.getRecord();
-      else
-        identifiable = rid;
-
-      res.put(identifiable, change);
-    }
-
-    return res;
-  }
-
-  public <K extends OIdentifiable> void serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, byte[] stream, int offset) {
-    OIntegerSerializer.INSTANCE.serializeLiteral(changes.size(), stream, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    for (Map.Entry<K, Change> entry : changes.entrySet()) {
-      K key = entry.getKey();
-
-      if (key.getIdentity().isTemporary())
-        //noinspection unchecked
-        key = key.getRecord();
-
-      keySerializer.serialize(key, stream, offset);
-      offset += keySerializer.getObjectSize(key);
-
-      offset += entry.getValue().serialize(stream, offset);
-    }
-  }
-
-  public int getChangesSerializedSize(int changesCount) {
-    return changesCount * (OLinkSerializer.RID_SIZE + Change.SIZE);
-  }
+  
+  public abstract Map<OIdentifiable, Change> deserializeChanges(BytesContainer container);
+  public abstract <K extends OIdentifiable> int serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, BytesContainer bytes);  
 }
