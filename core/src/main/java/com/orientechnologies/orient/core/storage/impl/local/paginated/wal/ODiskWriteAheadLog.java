@@ -914,7 +914,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       for (int i = 0; i < logSegments.size() - 1; i++) {
         final OLogSegment logSegment = logSegments.get(i);
 
-        if (logSegment.end().compareTo(lsn) < 0)
+        OLogSequenceNumber end = logSegment.end();
+        if (end != null && end.compareTo(lsn) < 0)
           lastTruncateIndex = i;
         else
           break;
