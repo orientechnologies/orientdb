@@ -74,4 +74,8 @@ public class OLocalBackupUploader {
   public String executeDownload(OBackupUploadFinishedLog upload) {
     return this.uploadingStrategy.executeDownload(upload);
   }
+
+  public ODocument mergeSecret(ODocument newCfg, ODocument oldCfg) {
+    return this.uploadingStrategy.mergeSecret(newCfg, oldCfg);
+  }
 }

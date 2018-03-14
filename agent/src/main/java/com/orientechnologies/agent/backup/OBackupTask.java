@@ -69,6 +69,10 @@ public class OBackupTask implements OBackupListener {
 
   }
 
+
+  public ODocument mergeSecret(ODocument newCfg,ODocument oldCfg) {
+    return strategy.mergeSecret(newCfg,oldCfg);
+  }
   public OBackupStrategy getStrategy() {
     return strategy;
   }

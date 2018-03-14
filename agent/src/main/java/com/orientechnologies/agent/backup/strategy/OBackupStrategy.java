@@ -170,7 +170,7 @@ public abstract class OBackupStrategy {
 
   private void validateBackup(OBackupFinishedLog finished) {
 
-    if(finished.getUpload()==null) {
+    if (finished.getUpload() == null) {
       File f = new File(finished.getPath());
       if (!f.exists()) {
         throw new IllegalArgumentException("Cannot restore the backup from path (" + finished.getPath() + ").");
@@ -375,4 +375,13 @@ public abstract class OBackupStrategy {
     }
 
   }
+
+  public ODocument mergeSecret(ODocument newCfg, ODocument oldCfg) {
+
+    if (uploader.isPresent()) {
+      return uploader.get().mergeSecret(newCfg, oldCfg);
+    }
+    return newCfg;
+  }
+
 }

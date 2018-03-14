@@ -98,8 +98,8 @@ public class OBackupManager implements OServerLifecycleListener {
 
   public void changeBackup(String uuid, ODocument doc) {
 
-    config.changeBackup(uuid, doc);
     OBackupTask oBackupTask = tasks.get(uuid);
+    config.changeBackup(uuid, doc, oBackupTask::mergeSecret);
     oBackupTask.changeConfig(config, doc);
   }
 

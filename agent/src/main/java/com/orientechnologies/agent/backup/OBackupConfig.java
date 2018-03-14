@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.*;
+import java.util.function.BiFunction;
 
 /**
  * Created by Enrico Risa on 22/03/16.
@@ -118,6 +119,7 @@ public class OBackupConfig {
 
   private void pushBackup(ODocument doc) {
     Collection<ODocument> backups = configuration.field(BACKUPS);
+
     backups.add(doc);
     writeConfiguration();
   }
@@ -170,14 +172,16 @@ public class OBackupConfig {
 
   }
 
-  public ODocument changeBackup(String uuid, ODocument doc) {
+  public ODocument changeBackup(String uuid, ODocument doc, BiFunction<ODocument,ODocument,ODocument> obscurer) {
     validateBackup(doc);
-    removeBackup(uuid);
-    pushBackup(doc);
+    ODocument oldConfig = removeBackup(uuid);
+
+
+    pushBackup(obscurer.apply(doc,oldConfig));
     return doc;
   }
 
-  public void removeBackup(String uuid) {
+  public ODocument removeBackup(String uuid) {
     synchronized (this) {
       Collection<ODocument> backups = configuration.field(BACKUPS);
       ODocument toRemove = null;
@@ -190,6 +194,8 @@ public class OBackupConfig {
         backups.remove(toRemove);
       }
       writeConfiguration();
+
+      return toRemove;
     }
   }
 

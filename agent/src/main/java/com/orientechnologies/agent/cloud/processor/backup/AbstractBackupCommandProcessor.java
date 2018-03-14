@@ -54,9 +54,15 @@ public abstract class AbstractBackupCommandProcessor implements CloudCommandProc
     ODocument upload = document.field("upload");
 
     if (upload != null) {
-      info.setUpload(upload.toMap());
+      info.setUpload(removeSensitiveField(upload.toMap()) );
     }
     info.setModes(mappedModes);
     return info;
+  }
+  protected static Map<String,Object> removeSensitiveField(Map<String,Object> upload) {
+    upload.remove("password");
+    upload.remove("secretKey");
+    upload.remove("accessKey");
+    return upload;
   }
 }

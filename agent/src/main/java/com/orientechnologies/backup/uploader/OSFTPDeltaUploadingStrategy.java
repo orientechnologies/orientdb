@@ -253,4 +253,27 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
     }
     return null;
   }
+
+  @Override
+  public ODocument mergeSecret(ODocument newCfg, ODocument oldCfg) {
+
+    ODocument newUploader = newCfg.field("upload");
+    ODocument oldUploader = oldCfg.field("upload");
+
+    if (newUploader != null && oldUploader != null) {
+
+      String strategy = newUploader.field("strategy");
+      if (strategy.equalsIgnoreCase("sftp")) {
+        String newPassword = newUploader.field("password");
+
+        String oldPassword = oldUploader.field("password");
+
+        if (newPassword == null) {
+          newUploader.field("password", oldPassword);
+        }
+      }
+    }
+
+    return newCfg;
+  }
 }

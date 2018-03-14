@@ -255,4 +255,33 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
 
     return null;
   }
+
+  @Override
+  public ODocument mergeSecret(ODocument newCfg, ODocument oldCfg) {
+
+    ODocument newUploader = newCfg.field("upload");
+    ODocument oldUploader = oldCfg.field("upload");
+
+    if (newUploader != null && oldUploader != null) {
+
+      String strategy = newUploader.field("strategy");
+
+      if (strategy.equalsIgnoreCase("s3")) {
+        String newAccessKey = newUploader.field("accessKey");
+        String newSecretKey = newUploader.field("secretKey");
+
+        String oldAccessKey = oldUploader.field("accessKey");
+        String oldSecretKey = oldUploader.field("secretKey");
+
+        if (newAccessKey == null) {
+          newUploader.field("accessKey", oldAccessKey);
+        }
+        if (newSecretKey == null) {
+          newUploader.field("secretKey", oldSecretKey);
+        }
+      }
+    }
+
+    return newCfg;
+  }
 }
