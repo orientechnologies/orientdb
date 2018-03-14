@@ -571,6 +571,7 @@ TOKEN :
 | < BETWEEN: ( "B" | "b") ( "E" | "e") ( "T" | "t") ( "W" | "w") ( "E" | "e") ( "E" | "e") ( "N" | "n")>
 | < CONTAINS: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) >
 | < CONTAINSALL: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "A" | "a" ) ( "L" | "l" ) ( "L" | "l" ) >
+| < CONTAINSANY: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "A" | "a" ) ( "N" | "n" ) ( "Y" | "y" ) >
 | < CONTAINSKEY: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "K" | "k" ) ( "E" | "e" ) ( "Y" | "y" ) >
 | < CONTAINSVALUE: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "V" | "v" ) ( "A" | "a" ) ( "L" | "l" ) ( "U" | "u" ) ( "E" | "e" ) >
 | < CONTAINSTEXT: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "X" | "x" ) ( "T" | "t" ) >
@@ -2758,6 +2759,9 @@ OBooleanExpression ConditionBlock():
 	LOOKAHEAD( ContainsAllCondition() )
     result = ContainsAllCondition()
     |
+    LOOKAHEAD( ContainsAnyCondition() )
+    result = ContainsAnyCondition()
+    |
     LOOKAHEAD( ContainsTextCondition() )
 	result = ContainsTextCondition()
 	|
@@ -3146,6 +3150,23 @@ OBooleanExpression ContainsAllCondition():
     (
     	jjtThis.left = Expression()
     	<CONTAINSALL>
+    	(
+        	LOOKAHEAD( 3 )
+        	( <LPAREN> jjtThis.rightBlock = OrBlock() <RPAREN> )
+        	|
+        	LOOKAHEAD( Expression() )
+        	jjtThis.right = Expression()
+        )
+    )
+    {return jjtThis;}
+}
+
+OBooleanExpression ContainsAnyCondition():
+{}
+{
+    (
+    	jjtThis.left = Expression()
+    	<CONTAINSANY>
     	(
         	LOOKAHEAD( 3 )
         	( <LPAREN> jjtThis.rightBlock = OrBlock() <RPAREN> )

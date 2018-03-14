@@ -471,41 +471,43 @@ public interface OrientSqlConstants {
   /** RegularExpression Id. */
   int CONTAINSALL = 238;
   /** RegularExpression Id. */
-  int CONTAINSKEY = 239;
+  int CONTAINSANY = 239;
   /** RegularExpression Id. */
-  int CONTAINSVALUE = 240;
+  int CONTAINSKEY = 240;
   /** RegularExpression Id. */
-  int CONTAINSTEXT = 241;
+  int CONTAINSVALUE = 241;
   /** RegularExpression Id. */
-  int MATCHES = 242;
+  int CONTAINSTEXT = 242;
   /** RegularExpression Id. */
-  int KEY = 243;
+  int MATCHES = 243;
   /** RegularExpression Id. */
-  int INSTANCEOF = 244;
+  int KEY = 244;
   /** RegularExpression Id. */
-  int CLUSTER = 245;
+  int INSTANCEOF = 245;
   /** RegularExpression Id. */
-  int IDENTIFIER = 246;
+  int CLUSTER = 246;
   /** RegularExpression Id. */
-  int QUOTED_IDENTIFIER = 247;
+  int IDENTIFIER = 247;
   /** RegularExpression Id. */
-  int INDEX_COLON = 248;
+  int QUOTED_IDENTIFIER = 248;
   /** RegularExpression Id. */
-  int INDEXVALUES_IDENTIFIER = 249;
+  int INDEX_COLON = 249;
   /** RegularExpression Id. */
-  int INDEXVALUESASC_IDENTIFIER = 250;
+  int INDEXVALUES_IDENTIFIER = 250;
   /** RegularExpression Id. */
-  int INDEXVALUESDESC_IDENTIFIER = 251;
+  int INDEXVALUESASC_IDENTIFIER = 251;
   /** RegularExpression Id. */
-  int CLUSTER_IDENTIFIER = 252;
+  int INDEXVALUESDESC_IDENTIFIER = 252;
   /** RegularExpression Id. */
-  int CLUSTER_NUMBER_IDENTIFIER = 253;
+  int CLUSTER_IDENTIFIER = 253;
   /** RegularExpression Id. */
-  int METADATA_IDENTIFIER = 254;
+  int CLUSTER_NUMBER_IDENTIFIER = 254;
   /** RegularExpression Id. */
-  int LETTER = 255;
+  int METADATA_IDENTIFIER = 255;
   /** RegularExpression Id. */
-  int PART_LETTER = 256;
+  int LETTER = 256;
+  /** RegularExpression Id. */
+  int PART_LETTER = 257;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -755,6 +757,7 @@ public interface OrientSqlConstants {
     "<BETWEEN>",
     "<CONTAINS>",
     "<CONTAINSALL>",
+    "<CONTAINSANY>",
     "<CONTAINSKEY>",
     "<CONTAINSVALUE>",
     "<CONTAINSTEXT>",

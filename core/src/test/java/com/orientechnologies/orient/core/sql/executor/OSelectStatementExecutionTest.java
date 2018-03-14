@@ -3424,12 +3424,51 @@ public class OSelectStatementExecutionTest {
     db.command("insert into " + className + 2 + "  set tags = ['baz', 'bar']");
     db.command("insert into " + className + 2 + "  set tags = ['foo']");
 
-    try (OResultSet result = db.query("select from " + className + 2 + " where (select from " + className + 1 + " where name = 'foo') in tags")) {
+    try (OResultSet result = db
+        .query("select from " + className + 2 + " where (select from " + className + 1 + " where name = 'foo') in tags")) {
 
       Assert.assertTrue(result.hasNext());
       result.next();
       Assert.assertTrue(result.hasNext());
       result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+  }
+
+  @Test
+  public void testContainsAny() {
+    String className = "testContainsAny";
+    OClass clazz = db.createClassIfNotExist(className);
+    clazz.createProperty("tags", OType.EMBEDDEDLIST);
+
+    db.command("insert into " + className + "  set tags = ['foo', 'bar']");
+    db.command("insert into " + className + "  set tags = ['bbb', 'FFF']");
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','baz']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','bar']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','bbb']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['xx','baz']")) {
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany []")) {
       Assert.assertFalse(result.hasNext());
     }
   }

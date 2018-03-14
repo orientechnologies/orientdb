@@ -783,6 +783,13 @@ public class OSelectStatementTest {
     checkWrongSyntax("select from V LOCK FOO");
   }
 
+  @Test
+  public void testContainsAny() {
+    checkRightSyntax("select from V WHERE foo containsany ['foo', 'bar']");
+    checkRightSyntax("select from V WHERE foo CONTAINSANY ['foo', 'bar']");
+    checkWrongSyntax("select from V WHERE foo CONTAINSANY ");
+  }
+
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());
     OrientSql osql = new OrientSql(is);
