@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
-import com.orientechnologies.common.concur.lock.OComparableLockManager;
-import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -25,8 +23,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
-import org.apache.bcel.generic.IF_ACMPEQ;
 
 import java.io.EOFException;
 import java.io.File;
@@ -72,19 +68,19 @@ public class OCASDiskWriteAheadLog {
   private static final int MASTER_RECORD_SIZE = 20;
   private static final int BATCH_READ_SIZE    = 320;
 
-  private final long walSizeHardLimit = OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024;
+  private final long walSizeHardLimit;
 
   private final List<WeakReference<OLowDiskSpaceListener>>      lowDiskSpaceListeners    = new CopyOnWriteArrayList<>();
   private final List<WeakReference<OCheckpointRequestListener>> fullCheckpointListeners  = new CopyOnWriteArrayList<>();
   private final List<WeakReference<OSegmentOverflowListener>>   segmentOverflowListeners = new CopyOnWriteArrayList<>();
 
-  private volatile long walSizeLimit = walSizeHardLimit;
+  private volatile long walSizeLimit;
 
   private final int maxSegmentSize;
 
-  private final    LongAdder ongoingTXs     = new LongAdder();
-  private final    long      freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024;
-  private volatile long      freeSpace      = -1;
+  private final LongAdder ongoingTXs = new LongAdder();
+  private final long freeSpaceLimit;
+  private volatile long freeSpace = -1;
 
   private final    ConcurrentLinkedDeque<OWALRecord> records        = new ConcurrentLinkedDeque<>();
   private volatile long                              currentSegment = 0;
@@ -140,7 +136,7 @@ public class OCASDiskWriteAheadLog {
   }
 
   public OCASDiskWriteAheadLog(String storageName, Path storagePath, final Path walPath, int maxPagesCacheSize, int maxSegmentSize,
-      int commitDelay, boolean filterWALFiles, Locale locale) throws IOException {
+      int commitDelay, boolean filterWALFiles, Locale locale, long walSizeHardLimit, long freeSpaceLimit) throws IOException {
     commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
@@ -148,6 +144,11 @@ public class OCASDiskWriteAheadLog {
       thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       return thread;
     });
+
+    this.walSizeHardLimit = walSizeHardLimit;
+    this.freeSpaceLimit = freeSpaceLimit;
+
+    walSizeLimit = walSizeHardLimit;
 
     commitExecutor.setMaximumPoolSize(1);
 
@@ -606,7 +607,20 @@ public class OCASDiskWriteAheadLog {
               OWALRecord nextRecord = recordIterator.next();
 
               if (nextRecord instanceof OWriteableWALRecord) {
-                return Collections.singletonList((OWriteableWALRecord) nextRecord);
+                OLogSequenceNumber nextLSN = nextRecord.getLsn();
+
+                if (nextLSN.getPosition() == -1) {
+                  calculateRecordsLSNs();
+
+                  nextLSN = nextRecord.getLsn();
+                  assert nextLSN.getPosition() > -1;
+                }
+
+                if (nextLSN.compareTo(lsn) > 0) {
+                  return Collections.singletonList((OWriteableWALRecord) nextRecord);
+                } else {
+                  assert nextLSN.compareTo(lsn) == 0;
+                }
               }
             }
 
@@ -620,7 +634,7 @@ public class OCASDiskWriteAheadLog {
               logRecordLSN = logRecord.getLsn();
 
               if (logRecordLSN.getPosition() < 0) {
-                return Collections.emptyList();
+                calculateRecordsLSNs();
               }
             } else {
               recordIterator = records.iterator();
@@ -919,6 +933,7 @@ public class OCASDiskWriteAheadLog {
       }
 
       currentSegment = segmentIndex;
+      segmentSize.set(0);
 
       logMilestoneRecord();
     } finally {
