@@ -124,8 +124,8 @@ public class OClassRemote extends OClassImpl {
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final String cmd = String.format("alter class `%s` custom %s=%s", getName(), name, value);
-      database.command(cmd);
+      final String cmd = String.format("alter class `%s` custom %s = ?", getName(), name);
+      database.command(cmd, value);
       return this;
     } finally {
       releaseSchemaWriteLock();

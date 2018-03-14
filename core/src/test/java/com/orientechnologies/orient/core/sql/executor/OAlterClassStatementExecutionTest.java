@@ -191,6 +191,18 @@ public class OAlterClassStatementExecutionTest {
   }
 
   @Test
+  public void testCustom2() {
+    String className = "testCustom2";
+    OSchema schema = db.getMetadata().getSchema();
+    schema.createClass(className);
+    OResultSet result = db.command("alter class " + className + " custom foo = ?", "bar");
+    schema.reload();
+    OClass clazz = schema.getClass(className);
+    Assert.assertEquals("bar", clazz.getCustom("foo"));
+    result.close();
+  }
+
+  @Test
   public void testAbstract() {
     String className = "testAbstract";
     OSchema schema = db.getMetadata().getSchema();
