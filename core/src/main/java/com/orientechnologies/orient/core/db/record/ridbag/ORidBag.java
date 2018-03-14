@@ -243,8 +243,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     delegate.serialize(stream, offset, oldUuid);
     return pointer;
   }
-
-  //vazno
+  
   public void checkAndConvert() {
     ODatabaseInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (database != null && !database.getStorage().isRemote()) {
