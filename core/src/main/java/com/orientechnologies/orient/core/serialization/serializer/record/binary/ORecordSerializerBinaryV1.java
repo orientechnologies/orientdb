@@ -793,14 +793,12 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       if (entry instanceof OIdentifiable){
         OIdentifiable itemValue = (OIdentifiable)entry;
         final ORID rid = itemValue.getIdentity();
-        if (db != null && !db.isClosed() && db.getTransaction().isActive()) {
-          if (!itemValue.getIdentity().isPersistent()) {
-            itemValue = db.getTransaction().getRecord(itemValue.getIdentity());
-          }
+        if (db != null && !db.isClosed() && db.getTransaction().isActive() && !itemValue.getIdentity().isPersistent()) {
+          itemValue = db.getTransaction().getRecord(itemValue.getIdentity());          
         }
         if (itemValue == null)
           //should never happen
-          throw new NullPointerException("Null link in ridbag: " + rid);
+          throw new OSerializationException("Found null entry in ridbag with rid=" + rid);
         else{
           entries[i] = itemValue.getIdentity();
           writeLinkOptimized(bytes, itemValue);
@@ -821,13 +819,11 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     } else
       context = ORecordSerializationContext.getContext();
 
-    if (pointer == null) {
-      if (context != null) {
-        final int clusterId = getHighLevelDocClusterId(ridbag);
-        assert clusterId > -1;
-        pointer = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager()
-            .createSBTree(clusterId, ownerUuid);
-      }
+    if (pointer == null && context != null) {      
+      final int clusterId = getHighLevelDocClusterId(ridbag);
+      assert clusterId > -1;
+      pointer = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager()
+          .createSBTree(clusterId, ownerUuid);      
     }
 
     ((OSBTreeRidBag)ridbag.getDelegate()).setCollectionPointer(pointer);
@@ -897,7 +893,8 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       for (int i = 0; i < size; i++){
         OIdentifiable record = readLinkOptimizedEmbedded(bytes);
         if (record == null)
-          throw new NullPointerException();
+          //should never happen
+          throw new OSerializationException("Deserialized null object");
         else
           ((OEmbeddedRidBag)ridbag.getDelegate()).addEntry(record);
       }
