@@ -1406,9 +1406,11 @@ public class OCASDiskWriteAheadLog {
         ByteBuffer buffer = null;
 
         OLogSequenceNumber lastLSN = null;
+
         int lastBufferPos = -1;
         long lastChannelPos = -1;
         int lastDistance = -1;
+        int lastContentSize = -1;
 
         OLogSequenceNumber checkPointLSN = null;
 
@@ -1498,7 +1500,10 @@ public class OCASDiskWriteAheadLog {
                     walChannel.position() + buffer.position() == lsn.getPosition() :
                     "lsn : " + lsn + " disk pos: " + walChannel.position() + " buffer pos: " + buffer.position() + " last lsn: "
                         + lastLSN + " last channel position: " + lastChannelPos + " last buffer position: " + lastBufferPos
-                        + " last distance: " + lastDistance;
+                        + " last distance: " + lastDistance + " last content size: " + lastContentSize;
+
+                lastChannelPos = walChannel.position();
+                lastBufferPos = buffer.position();
               }
 
               final int chunkSize = Math.min(bytesToWrite - written, buffer.remaining());
@@ -1547,9 +1552,8 @@ public class OCASDiskWriteAheadLog {
             }
 
             lastLSN = record.getLsn();
-            lastChannelPos = walChannel.position();
-            lastBufferPos = buffer.position();
             lastDistance = record.getDistance();
+            lastContentSize = writeableRecord.getBinaryContent().length;
 
             if (writeableRecord.isUpdateMasterRecord()) {
               checkPointLSN = lastLSN;
