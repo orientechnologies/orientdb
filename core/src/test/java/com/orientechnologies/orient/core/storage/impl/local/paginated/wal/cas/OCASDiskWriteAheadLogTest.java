@@ -1111,7 +1111,7 @@ public class OCASDiskWriteAheadLogTest {
   }
 
   @Test
-  public void appendMTTest() throws Exception {
+  public void appendMT10MSegSmallCacheTest() throws Exception {
     for (int n = 0; n < 240; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
