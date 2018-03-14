@@ -1228,8 +1228,13 @@ public class OCASDiskWriteAheadLogTest {
 
     @Override
     public Void call() {
-      wal.appendSegment(segment + 1);
-      System.out.printf("%d segment was appended \n", segment + 1);
+      try {
+        wal.appendSegment(segment + 1);
+        System.out.printf("%d segment was appended \n", segment + 1);
+      } catch (Exception | Error e) {
+        e.printStackTrace();
+      }
+
       return null;
     }
   }

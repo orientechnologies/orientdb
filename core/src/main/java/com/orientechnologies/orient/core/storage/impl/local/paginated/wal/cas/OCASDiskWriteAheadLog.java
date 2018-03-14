@@ -70,9 +70,9 @@ public class OCASDiskWriteAheadLog {
 
   private final long walSizeHardLimit;
 
-  private final List<WeakReference<OLowDiskSpaceListener>>      lowDiskSpaceListeners    = new CopyOnWriteArrayList<>();
-  private final List<WeakReference<OCheckpointRequestListener>> fullCheckpointListeners  = new CopyOnWriteArrayList<>();
-  private final List<WeakReference<OSegmentOverflowListener>>   segmentOverflowListeners = new CopyOnWriteArrayList<>();
+  private final List<OLowDiskSpaceListener>      lowDiskSpaceListeners    = new CopyOnWriteArrayList<>();
+  private final List<OCheckpointRequestListener> fullCheckpointListeners  = new CopyOnWriteArrayList<>();
+  private final List<OSegmentOverflowListener>   segmentOverflowListeners = new CopyOnWriteArrayList<>();
 
   private volatile long walSizeLimit;
 
@@ -816,19 +816,14 @@ public class OCASDiskWriteAheadLog {
     }
 
     if (walSizeLimit > -1 && size > walSizeLimit && segments.size() > 1) {
-      for (WeakReference<OCheckpointRequestListener> listenerWeakReference : fullCheckpointListeners) {
-        final OCheckpointRequestListener listener = listenerWeakReference.get();
-        if (listener != null)
-          listener.requestCheckpoint();
+      for (OCheckpointRequestListener listener : fullCheckpointListeners) {
+        listener.requestCheckpoint();
       }
     }
 
     if (segSize > maxSegmentSize) {
-      for (WeakReference<OSegmentOverflowListener> listenerWeakReference : segmentOverflowListeners) {
-        final OSegmentOverflowListener listener = listenerWeakReference.get();
-        if (listener != null) {
-          listener.onSegmentOverflow(logSegment);
-        }
+      for (OSegmentOverflowListener listener : segmentOverflowListeners) {
+        listener.onSegmentOverflow(logSegment);
       }
     }
 
@@ -1090,27 +1085,34 @@ public class OCASDiskWriteAheadLog {
       return;
 
     if (freeSpace < freeSpaceLimit) {
-      for (WeakReference<OLowDiskSpaceListener> listenerWeakReference : lowDiskSpaceListeners) {
-        final OLowDiskSpaceListener lowDiskSpaceListener = listenerWeakReference.get();
-
-        if (lowDiskSpaceListener != null)
-          lowDiskSpaceListener.lowDiskSpace(new OLowDiskSpaceInformation(freeSpace, freeSpaceLimit));
+      for (OLowDiskSpaceListener listener : lowDiskSpaceListeners) {
+        listener.lowDiskSpace(new OLowDiskSpaceInformation(freeSpace, freeSpaceLimit));
       }
     }
   }
 
+  private String dumpRecords() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("records : {");
+
+    for (OWALRecord record : records) {
+      builder.append(record.getClass().getName()).append(":").append(record.getLsn().toString()).append(",");
+    }
+
+    builder.append("}");
+    return builder.toString();
+  }
+
   public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
-    lowDiskSpaceListeners.add(new WeakReference<>(listener));
+    lowDiskSpaceListeners.add(listener);
   }
 
   public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {
-    List<WeakReference<OLowDiskSpaceListener>> itemsToRemove = new ArrayList<>();
+    List<OLowDiskSpaceListener> itemsToRemove = new ArrayList<>();
 
-    for (WeakReference<OLowDiskSpaceListener> ref : lowDiskSpaceListeners) {
-      final OLowDiskSpaceListener lowDiskSpaceListener = ref.get();
-
-      if (lowDiskSpaceListener == null || lowDiskSpaceListener.equals(listener)) {
-        itemsToRemove.add(ref);
+    for (OLowDiskSpaceListener lowDiskSpaceListener : lowDiskSpaceListeners) {
+      if (lowDiskSpaceListener.equals(listener)) {
+        itemsToRemove.add(lowDiskSpaceListener);
       }
     }
 
@@ -1118,17 +1120,15 @@ public class OCASDiskWriteAheadLog {
   }
 
   public void addFullCheckpointListener(OCheckpointRequestListener listener) {
-    fullCheckpointListeners.add(new WeakReference<>(listener));
+    fullCheckpointListeners.add(listener);
   }
 
   public void removeFullCheckpointListener(OCheckpointRequestListener listener) {
-    List<WeakReference<OCheckpointRequestListener>> itemsToRemove = new ArrayList<>();
+    List<OCheckpointRequestListener> itemsToRemove = new ArrayList<>();
 
-    for (WeakReference<OCheckpointRequestListener> ref : fullCheckpointListeners) {
-      final OCheckpointRequestListener fullCheckpointRequestListener = ref.get();
-
-      if (fullCheckpointRequestListener == null || fullCheckpointRequestListener.equals(listener)) {
-        itemsToRemove.add(ref);
+    for (OCheckpointRequestListener fullCheckpointRequestListener : fullCheckpointListeners) {
+      if (fullCheckpointRequestListener.equals(listener)) {
+        itemsToRemove.add(fullCheckpointRequestListener);
       }
     }
 
@@ -1136,17 +1136,15 @@ public class OCASDiskWriteAheadLog {
   }
 
   public void addSegmentOverflowListener(OSegmentOverflowListener listener) {
-    segmentOverflowListeners.add(new WeakReference<>(listener));
+    segmentOverflowListeners.add(listener);
   }
 
   public void removeSegmentOverflowListener(OSegmentOverflowListener listener) {
-    List<WeakReference<OSegmentOverflowListener>> itemsToRemove = new ArrayList<>();
+    List<OSegmentOverflowListener> itemsToRemove = new ArrayList<>();
 
-    for (WeakReference<OSegmentOverflowListener> ref : segmentOverflowListeners) {
-      final OSegmentOverflowListener segmentOverflowListener = ref.get();
-
-      if (segmentOverflowListener == null || segmentOverflowListener.equals(listener)) {
-        itemsToRemove.add(ref);
+    for (OSegmentOverflowListener segmentOverflowListener : segmentOverflowListeners) {
+      if (segmentOverflowListener.equals(listener)) {
+        itemsToRemove.add(segmentOverflowListener);
       }
     }
 
@@ -1408,6 +1406,9 @@ public class OCASDiskWriteAheadLog {
         ByteBuffer buffer = null;
 
         OLogSequenceNumber lastLSN = null;
+        int lastBufferPos = -1;
+        long lastChannelPos = -1;
+        int lastDistance = -1;
 
         OLogSequenceNumber checkPointLSN = null;
 
@@ -1493,7 +1494,11 @@ public class OCASDiskWriteAheadLog {
               }
 
               if (written == 0) {
-                assert walChannel.position() + buffer.position() == lsn.getPosition();
+                assert
+                    walChannel.position() + buffer.position() == lsn.getPosition() :
+                    "lsn : " + lsn + " disk pos: " + walChannel.position() + " buffer pos: " + buffer.position() + " last lsn: "
+                        + lastLSN + " last channel position: " + lastChannelPos + " last buffer position: " + lastBufferPos
+                        + " last distance: " + lastDistance;
               }
 
               final int chunkSize = Math.min(bytesToWrite - written, buffer.remaining());
@@ -1542,6 +1547,9 @@ public class OCASDiskWriteAheadLog {
             }
 
             lastLSN = record.getLsn();
+            lastChannelPos = walChannel.position();
+            lastBufferPos = buffer.position();
+            lastDistance = record.getDistance();
 
             if (writeableRecord.isUpdateMasterRecord()) {
               checkPointLSN = lastLSN;
