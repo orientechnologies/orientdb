@@ -14,10 +14,13 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.conn.ssl.AllowAllHostnameVerifier;
+import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ConnectException;
@@ -76,11 +79,11 @@ public class OEnterpriseCloudManager extends Thread {
       } catch (CloudException e) {
         if (e.getStatus() == 401) {
           if (refreshing.compareAndSet(false, true)) {
-            OLogManager.instance().info(this, "Token is Expired. Negotiation in progress.");
+            OLogManager.instance().debug(this, "Token is Expired. Negotiation in progress.");
             tryRefreshToken();
-            OLogManager.instance().info(this, "Token negotiation finished");
+            OLogManager.instance().debug(this, "Token negotiation finished");
           } else {
-            OLogManager.instance().info(this, "Waiting for token generation.");
+            OLogManager.instance().debug(this, "Waiting for token generation.");
             waitForRefresh();
           }
 
@@ -144,7 +147,7 @@ public class OEnterpriseCloudManager extends Thread {
     try {
 
       URI uri = new URIBuilder(new URI(cloudBaseUrl + tokenPath)).addParameter("projectId", projectId).addParameter("token", token)
-          .addParameter("grant_type", "customAgent").build();
+          .addParameter("node", agent.getNodeName()).addParameter("grant_type", "customAgent").build();
 
       String auth = "agent" + ":";
       byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(Charset.forName("ISO-8859-1")));
@@ -186,7 +189,7 @@ public class OEnterpriseCloudManager extends Thread {
   }
 
   public String get(String path, String authentication) throws IOException, CloudException {
-    CloseableHttpClient client = HttpClients.createDefault();
+    CloseableHttpClient client = createClient();
 
     try {
       HttpGet request = new HttpGet(cloudBaseUrl + path);
@@ -214,7 +217,7 @@ public class OEnterpriseCloudManager extends Thread {
   }
 
   public String post(String path, String authentication, String body) throws IOException, CloudException {
-    CloseableHttpClient client = HttpClients.createDefault();
+    CloseableHttpClient client = createClient();
 
     try {
       HttpPost request = new HttpPost(cloudBaseUrl + path);
@@ -282,24 +285,29 @@ public class OEnterpriseCloudManager extends Thread {
       cloudEndpoint.start();
       cloudPushEndpoint.start();
     } else {
+      agent.installCommands();
 
-//      List<String> params = new ArrayList<>();
-//
-//      if (cloudBaseUrl == null) {
-//        params.add(OGlobalConfiguration.CLOUD_BASE_URL.getKey());
-//      }
-//      if (projectId == null) {
-//        params.add(OGlobalConfiguration.CLOUD_PROJECT_ID.getKey());
-//      }
-//      if (token == null) {
-//        params.add(OGlobalConfiguration.CLOUD_PROJECT_TOKEN.getKey());
-//      }
-//
-//      String missing = String.join(" , ", params);
-//
-//      OLogManager.instance().info(this, "OrientDB cloud is disabled. Configuration parameters missing : [%s]", missing);
+      //      List<String> params = new ArrayList<>();
+      //
+      //      if (cloudBaseUrl == null) {
+      //        params.add(OGlobalConfiguration.CLOUD_BASE_URL.getKey());
+      //      }
+      //      if (projectId == null) {
+      //        params.add(OGlobalConfiguration.CLOUD_PROJECT_ID.getKey());
+      //      }
+      //      if (token == null) {
+      //        params.add(OGlobalConfiguration.CLOUD_PROJECT_TOKEN.getKey());
+      //      }
+      //
+      //      String missing = String.join(" , ", params);
+      //
+      //      OLogManager.instance().info(this, "OrientDB cloud is disabled. Configuration parameters missing : [%s]", missing);
     }
 
+  }
+
+  private CloseableHttpClient createClient() {
+    return HttpClients.createDefault();
   }
 
   public interface ConsumerWithToken<T> {
@@ -307,7 +315,7 @@ public class OEnterpriseCloudManager extends Thread {
   }
 
   public boolean isConnected() {
-    return isConnected;
+    return true;
   }
 
   public CloudCommandProcessorFactory getCommandFactory() {
