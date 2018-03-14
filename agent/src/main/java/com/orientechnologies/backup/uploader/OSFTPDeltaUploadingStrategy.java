@@ -40,6 +40,7 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
   private Integer port;
   private String  username;
   private String  password;
+  private String  key;
   private String  path;
 
   public OSFTPDeltaUploadingStrategy() {
@@ -202,6 +203,7 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
     username = cfg.field("username");
     password = cfg.field("password");
     path = cfg.field("path");
+    key = cfg.field("key");
   }
 
   @Override
@@ -216,7 +218,12 @@ public class OSFTPDeltaUploadingStrategy implements OUploadingStrategy {
       Map<String, String> metadata = upload.getMetadata();
       JSch ssh = new JSch();
       session = ssh.getSession(username, host, port);
-      session.setPassword(password);
+      if (password != null) {
+        session.setPassword(password);
+      }
+      if (key != null) {
+        ssh.addIdentity(key);
+      }
       java.util.Properties config = new java.util.Properties();
       config.put("StrictHostKeyChecking", "no");
       session.setConfig(config);
