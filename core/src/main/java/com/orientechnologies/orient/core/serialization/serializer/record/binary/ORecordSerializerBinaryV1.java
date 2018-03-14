@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -796,9 +797,13 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
         if (db != null && !db.isClosed() && db.getTransaction().isActive() && !itemValue.getIdentity().isPersistent()) {
           itemValue = db.getTransaction().getRecord(itemValue.getIdentity());          
         }
-        if (itemValue == null)
+        if (itemValue == null){
           //should never happen
-          throw new OSerializationException("Found null entry in ridbag with rid=" + rid);
+          String errorMessage = "Found null entry in ridbag with rid=" + rid;
+          OSerializationException exc = new OSerializationException(errorMessage);
+          OLogManager.instance().error(ORecordSerializerBinaryV1.class, errorMessage, null);
+          throw exc;
+        }
         else{
           entries[i] = itemValue.getIdentity();
           writeLinkOptimized(bytes, itemValue);
@@ -892,9 +897,13 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       ridbag.getDelegate().setSize(size);
       for (int i = 0; i < size; i++){
         OIdentifiable record = readLinkOptimizedEmbedded(bytes);
-        if (record == null)
+        if (record == null){
           //should never happen
-          throw new OSerializationException("Deserialized null object");
+          String errorMessage = "Deserialized null object during ridbag deserialization";
+          OSerializationException exc = new OSerializationException("");
+          OLogManager.instance().error(ORecordSerializerBinaryV1.class, errorMessage, null);
+          throw exc;
+        }
         else
           ((OEmbeddedRidBag)ridbag.getDelegate()).addEntry(record);
       }
