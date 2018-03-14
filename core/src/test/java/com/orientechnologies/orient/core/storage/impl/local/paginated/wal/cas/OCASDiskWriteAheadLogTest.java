@@ -1116,7 +1116,7 @@ public class OCASDiskWriteAheadLogTest {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 10 * 1024 * 1024, 1000,
-          true, Locale.US, 20 * 1024 * 1024 * 1024L, -1);
+          true, Locale.US, 10 * 1024 * 1024 * 1024L, -1);
 
       AtomicBoolean walIsFull = new AtomicBoolean();
 

@@ -806,7 +806,7 @@ public class OCASDiskWriteAheadLog {
       segmentLock.releaseReadLock();
     }
 
-    final long qsize = queueSize.getAndAdd(writeableRecord.getBinaryContent().length);
+    final long qsize = queueSize.addAndGet(writeableRecord.getBinaryContent().length);
     if (qsize >= maxCacheSize) {
       doFlush();
     }
