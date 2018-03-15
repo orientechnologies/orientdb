@@ -173,5 +173,9 @@ public class OCollection extends SimpleNode {
     }
     return true;
   }
+
+  public List<OExpression> getExpressions() {
+    return expressions;
+  }
 }
 /* JavaCC - OriginalChecksum=c93b20138b2ae58c5f76e458c34b5946 (do not edit this line) */

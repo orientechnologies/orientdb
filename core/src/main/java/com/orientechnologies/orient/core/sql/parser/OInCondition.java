@@ -338,6 +338,26 @@ public class OInCondition extends OBooleanExpression {
   public void setLeft(OExpression left) {
     this.left = left;
   }
+
+  public OSelectStatement getRightStatement() {
+    return rightStatement;
+  }
+
+  public OInputParameter getRightParam() {
+    return rightParam;
+  }
+
+  public OMathExpression getRightMathExpression() {
+    return rightMathExpression;
+  }
+
+  public void setRightParam(OInputParameter rightParam) {
+    this.rightParam = rightParam;
+  }
+
+  public void setRightMathExpression(OMathExpression rightMathExpression) {
+    this.rightMathExpression = rightMathExpression;
+  }
 }
 /* JavaCC - OriginalChecksum=00df7cb1877c0a12d24205c1700653c7 (do not edit this line) */
 

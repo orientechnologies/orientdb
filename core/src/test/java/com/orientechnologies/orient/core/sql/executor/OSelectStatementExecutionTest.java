@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
@@ -3439,7 +3440,7 @@ public class OSelectStatementExecutionTest {
   public void testContainsAny() {
     String className = "testContainsAny";
     OClass clazz = db.createClassIfNotExist(className);
-    clazz.createProperty("tags", OType.EMBEDDEDLIST);
+    clazz.createProperty("tags", OType.EMBEDDEDLIST, OType.STRING);
 
     db.command("insert into " + className + "  set tags = ['foo', 'bar']");
     db.command("insert into " + className + "  set tags = ['bbb', 'FFF']");
@@ -3470,6 +3471,83 @@ public class OSelectStatementExecutionTest {
 
     try (OResultSet result = db.query("select from " + className + " where tags containsany []")) {
       Assert.assertFalse(result.hasNext());
+    }
+  }
+
+  @Test
+  public void testContainsAnyWithIndex() {
+    String className = "testContainsAnyWithIndex";
+    OClass clazz = db.createClassIfNotExist(className);
+    OProperty prop = clazz.createProperty("tags", OType.EMBEDDEDLIST, OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    db.command("insert into " + className + "  set tags = ['foo', 'bar']");
+    db.command("insert into " + className + "  set tags = ['bbb', 'FFF']");
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','baz']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','bar']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','bbb']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['xx','baz']")) {
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany []")) {
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
+
+
+  @Test
+  public void testInWithIndex() {
+    String className = "testInWithIndex";
+    OClass clazz = db.createClassIfNotExist(className);
+    OProperty prop = clazz.createProperty("tag", OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    db.command("insert into " + className + "  set tag = 'foo'");
+    db.command("insert into " + className + "  set tag = 'bar'");
+
+    try (OResultSet result = db.query("select from " + className + " where tag in ['foo','baz']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tag in ['foo','bar']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tag in []")) {
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
     }
   }
 }

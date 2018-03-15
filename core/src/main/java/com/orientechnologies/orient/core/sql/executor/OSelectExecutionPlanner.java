@@ -107,7 +107,7 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleLockRecord(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx, boolean enableProfiling) {
-    if(info.lockRecord!=null){
+    if (info.lockRecord != null) {
       result.chain(new LockRecordStep(info.lockRecord, ctx, enableProfiling));
     }
   }
@@ -1482,6 +1482,9 @@ public class OSelectExecutionPlanner {
                 .toArray();
           }
           subPlan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
+          if (requiresMultipleIndexLookups(bestIndex.keyCondition)) {
+            subPlan.chain(new DistinctExecutionStep(ctx, profilingEnabled));
+          }
           if (!block.getSubBlocks().isEmpty()) {
             subPlan.chain(new FilterStep(createWhereFrom(block), ctx, profilingEnabled));
           }
@@ -1775,6 +1778,9 @@ public class OSelectExecutionPlanner {
             .toArray();
       }
       result.add(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
+      if (requiresMultipleIndexLookups(desc.keyCondition)) {
+        result.add(new DistinctExecutionStep(ctx, profilingEnabled));
+      }
       if (orderAsc != null && info.orderBy != null && fullySorted(info.orderBy, desc.keyCondition, desc.idx)
           && info.serverToClusters.size() == 1) {
         info.orderApplied = true;
@@ -1889,12 +1895,31 @@ public class OSelectExecutionPlanner {
             .toArray();
       }
       subPlan.chain(new GetValueFromIndexEntryStep(ctx, filterClusterIds, profilingEnabled));
+      if (requiresMultipleIndexLookups(desc.keyCondition)) {
+        subPlan.chain(new DistinctExecutionStep(ctx, profilingEnabled));
+      }
       if (desc.remainingCondition != null && !desc.remainingCondition.isEmpty()) {
         subPlan.chain(new FilterStep(createWhereFrom(desc.remainingCondition), ctx, profilingEnabled));
       }
       subPlans.add(subPlan);
     }
     return new ParallelExecStep(subPlans, ctx, profilingEnabled);
+  }
+
+  /**
+   * checks whether the condition has CONTAINSANY or similar expressions, that require multiple index evaluations
+   *
+   * @param keyCondition
+   *
+   * @return
+   */
+  private boolean requiresMultipleIndexLookups(OAndBlock keyCondition) {
+    for (OBooleanExpression oBooleanExpression : keyCondition.getSubBlocks()) {
+      if (!(oBooleanExpression instanceof OBinaryCondition)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private OWhereClause createWhereFrom(OBooleanExpression remainingCondition) {
@@ -1990,6 +2015,54 @@ public class OSelectExecutionPlanner {
                     break;
                   }
                 }
+                break;
+              }
+            }
+          }
+        } else if (singleExp instanceof OContainsAnyCondition) {
+          OExpression left = ((OContainsAnyCondition) singleExp).getLeft();
+          if (left.isBaseIdentifier()) {
+            String fieldName = left.getDefaultAlias().getStringValue();
+            if (indexField.equals(fieldName)) {
+              if (!((OContainsAnyCondition) singleExp).getRight().isEarlyCalculated()) {
+                continue; //this cannot be used because the value depends on single record
+              }
+              found = true;
+              indexFieldFound = true;
+              OContainsAnyCondition condition = new OContainsAnyCondition(-1);
+              condition.setLeft(left);
+              condition.setRight(((OContainsAnyCondition) singleExp).getRight().copy());
+              indexKeyValue.getSubBlocks().add(condition);
+              blockIterator.remove();
+              break;
+            }
+          }
+        } else if (singleExp instanceof OInCondition) {
+          OExpression left = ((OInCondition) singleExp).getLeft();
+          if (left.isBaseIdentifier()) {
+            String fieldName = left.getDefaultAlias().getStringValue();
+            if (indexField.equals(fieldName)) {
+              if (((OInCondition) singleExp).getRightMathExpression() != null) {
+
+                if (!((OInCondition) singleExp).getRightMathExpression().isEarlyCalculated()) {
+                  continue; //this cannot be used because the value depends on single record
+                }
+                found = true;
+                indexFieldFound = true;
+                OInCondition condition = new OInCondition(-1);
+                condition.setLeft(left);
+                condition.setRightMathExpression(((OInCondition) singleExp).getRightMathExpression().copy());
+                indexKeyValue.getSubBlocks().add(condition);
+                blockIterator.remove();
+                break;
+              } else if (((OInCondition) singleExp).getRightParam() != null) {
+                found = true;
+                indexFieldFound = true;
+                OInCondition condition = new OInCondition(-1);
+                condition.setLeft(left);
+                condition.setRightParam(((OInCondition) singleExp).getRightParam().copy());
+                indexKeyValue.getSubBlocks().add(condition);
+                blockIterator.remove();
                 break;
               }
             }

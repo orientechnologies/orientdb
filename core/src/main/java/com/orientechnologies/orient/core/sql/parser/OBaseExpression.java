@@ -468,6 +468,10 @@ public class OBaseExpression extends OMathExpression {
 
     return true;
   }
+
+  public void setInputParam(OInputParameter inputParam) {
+    this.inputParam = inputParam;
+  }
 }
 
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

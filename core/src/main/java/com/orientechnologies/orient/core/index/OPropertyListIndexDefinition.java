@@ -27,11 +27,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.*;
 
 /**
- * Index implementation bound to one schema class property that presents
- * {@link com.orientechnologies.orient.core.metadata.schema.OType#EMBEDDEDLIST},
- * {@link com.orientechnologies.orient.core.metadata.schema.OType#LINKLIST},
- * {@link com.orientechnologies.orient.core.metadata.schema.OType#LINKSET} or
- * {@link com.orientechnologies.orient.core.metadata.schema.OType#EMBEDDEDSET} properties.
+ * Index implementation bound to one schema class property that presents {@link com.orientechnologies.orient.core.metadata.schema.OType#EMBEDDEDLIST},
+ * {@link com.orientechnologies.orient.core.metadata.schema.OType#LINKLIST}, {@link com.orientechnologies.orient.core.metadata.schema.OType#LINKSET}
+ * or {@link com.orientechnologies.orient.core.metadata.schema.OType#EMBEDDEDSET} properties.
  */
 public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiValue {
 
@@ -55,7 +53,7 @@ public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiV
       params = (List) Collections.singletonList(params);
 
     final Collection<?> multiValueCollection = (Collection<?>) params.get(0);
-    final List<Object> values = new ArrayList<Object>(multiValueCollection.size());
+    final List<Object> values = new ArrayList<>(multiValueCollection.size());
     for (final Object item : multiValueCollection) {
       values.add(createSingleValue(item));
     }
@@ -64,12 +62,17 @@ public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiV
 
   @Override
   public Object createValue(final Object... params) {
-    if (!(params[0] instanceof Collection)) {
-      return null;
+    Object param = params[0];
+    if (!(param instanceof Collection)) {
+      try {
+        return OType.convert(param, keyType.getDefaultJavaType());
+      } catch (Exception e) {
+        return null;
+      }
     }
 
-    final Collection<?> multiValueCollection = (Collection<?>) params[0];
-    final List<Object> values = new ArrayList<Object>(multiValueCollection.size());
+    final Collection<?> multiValueCollection = (Collection<?>) param;
+    final List<Object> values = new ArrayList<>(multiValueCollection.size());
     for (final Object item : multiValueCollection) {
       values.add(createSingleValue(item));
     }

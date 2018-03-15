@@ -35,6 +35,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private boolean inited = false;
   private OIndexCursor cursor;
+  private List<OIndexCursor> nextCursors = new ArrayList<>();
+
   OMultiCollectionIterator<Map.Entry<Object, OIdentifiable>> customIterator;
   private Iterator nullKeyIterator;
   private Map.Entry<Object, OIdentifiable> nextEntry = null;
@@ -127,6 +129,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     nextEntry = null;
     if (cursor != null) {
       nextEntry = cursor.nextEntry();
+      while (nextEntry == null && nextCursors.size() > 0) {
+        cursor = nextCursors.remove(0);
+        nextEntry = cursor.nextEntry();
+      }
     }
     if (nextEntry == null && customIterator != null && customIterator.hasNext()) {
       nextEntry = customIterator.next();
@@ -215,10 +221,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       } else if (condition instanceof OAndBlock) {
         processAndBlock();
       } else if (condition instanceof OInCondition) {
-        //TODO
         processInCondition();
-
       } else {
+        //TODO process containsAny
         throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
       }
     } finally {
@@ -321,23 +326,73 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   private void init(OCollection fromKey, boolean fromKeyIncluded, OCollection toKey, boolean toKeyIncluded) {
-    Object secondValue = fromKey.execute((OResult) null, ctx);
-    Object thirdValue = toKey.execute((OResult) null, ctx);
-    OIndexDefinition indexDef = index.getDefinition();
-    secondValue = convertToIndexDefinitionTypes(secondValue, indexDef.getTypes());
-    thirdValue = convertToIndexDefinitionTypes(thirdValue, indexDef.getTypes());
-    if (index.supportsOrderedIterations()) {
-      cursor = index
-          .iterateEntriesBetween(toBetweenIndexKey(indexDef, secondValue), fromKeyIncluded, toBetweenIndexKey(indexDef, thirdValue),
-              toKeyIncluded, isOrderAsc());
-    } else if (additionalRangeCondition == null && allEqualities((OAndBlock) condition)) {
-      cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
-    } else {
-      throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
+    List<OCollection> secondValueCombinations = cartesianProduct(fromKey);
+    List<OCollection> thirdValueCombinations = cartesianProduct(toKey);
+
+    for (int i = 0; i < secondValueCombinations.size(); i++) {
+
+      Object secondValue = secondValueCombinations.get(i).execute((OResult) null, ctx);
+      Object thirdValue = thirdValueCombinations.get(i).execute((OResult) null, ctx);
+
+      OIndexDefinition indexDef = index.getDefinition();
+      secondValue = convertToIndexDefinitionTypes(secondValue, indexDef.getTypes());
+      thirdValue = convertToIndexDefinitionTypes(thirdValue, indexDef.getTypes());
+      OIndexCursor cursor;
+      if (index.supportsOrderedIterations()) {
+        cursor = index.iterateEntriesBetween(toBetweenIndexKey(indexDef, secondValue), fromKeyIncluded,
+            toBetweenIndexKey(indexDef, thirdValue), toKeyIncluded, isOrderAsc());
+      } else if (additionalRangeCondition == null && allEqualities((OAndBlock) condition)) {
+        cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
+      } else {
+        throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
+      }
+      nextCursors.add(cursor);
+
     }
-    if (cursor != null) {
+    if (nextCursors.size() > 0) {
+      cursor = nextCursors.remove(0);
       fetchNextEntry();
     }
+  }
+
+  private List<OCollection> cartesianProduct(OCollection key) {
+    return cartesianProduct(new OCollection(-1), key);//TODO
+  }
+
+  private List<OCollection> cartesianProduct(OCollection head, OCollection key) {
+    if (key.getExpressions().size() == 0) {
+      return Collections.singletonList(head);
+    }
+    OExpression nextElementInKey = key.getExpressions().get(0);
+    Object value = nextElementInKey.execute(new OResultInternal(), ctx);
+    if (value instanceof Iterable && !(value instanceof OIdentifiable)) {
+      List<OCollection> result = new ArrayList<>();
+      for (Object elemInKey : (Collection) value) {
+        OCollection newHead = new OCollection(-1);
+        for (OExpression exp : head.getExpressions()) {
+          newHead.add(exp.copy());
+        }
+        newHead.add(toExpression(elemInKey, ctx));
+        OCollection tail = key.copy();
+        tail.getExpressions().remove(0);
+        result.addAll(cartesianProduct(newHead, tail));
+      }
+      return result;
+    } else {
+      OCollection newHead = new OCollection(-1);
+      for (OExpression exp : head.getExpressions()) {
+        newHead.add(exp.copy());
+      }
+      newHead.add(nextElementInKey);
+      OCollection tail = key.copy();
+      tail.getExpressions().remove(0);
+      return cartesianProduct(newHead, tail);
+    }
+
+  }
+
+  private OExpression toExpression(Object value, OCommandContext ctx) {
+    return new OValueExpression(value);
   }
 
   private Object convertToIndexDefinitionTypes(Object val, OType[] types) {
@@ -470,6 +525,22 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         } else if (additional != null) {
           result.add(additional.getRight());
         }
+      } else if (exp instanceof OInCondition) {
+        OExpression item = new OExpression(-1);
+        if (((OInCondition) exp).getRightMathExpression() != null) {
+          item.setMathExpression(((OInCondition) exp).getRightMathExpression());
+          result.add(item);
+        } else {
+          throw new UnsupportedOperationException("Cannot execute index query with " + exp);
+        }
+
+      } else if (exp instanceof OContainsAnyCondition) {
+        if (((OContainsAnyCondition) exp).getRight() != null) {
+          result.add(((OContainsAnyCondition) exp).getRight());
+        } else {
+          throw new UnsupportedOperationException("Cannot execute index query with " + exp);
+        }
+
       } else {
         throw new UnsupportedOperationException("Cannot execute index query with " + exp);
       }
@@ -489,6 +560,22 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         } else if (additional != null) {
           result.add(additional.getRight());
         }
+      } else if (exp instanceof OInCondition) {
+        OExpression item = new OExpression(-1);
+        if (((OInCondition) exp).getRightMathExpression() != null) {
+          item.setMathExpression(((OInCondition) exp).getRightMathExpression());
+          result.add(item);
+        } else {
+          throw new UnsupportedOperationException("Cannot execute index query with " + exp);
+        }
+
+      } else if (exp instanceof OContainsAnyCondition) {
+        if (((OContainsAnyCondition) exp).getRight() != null) {
+          result.add(((OContainsAnyCondition) exp).getRight());
+        } else {
+          throw new UnsupportedOperationException("Cannot execute index query with " + exp);
+        }
+
       } else {
         throw new UnsupportedOperationException("Cannot execute index query with " + exp);
       }
@@ -498,9 +585,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private boolean indexKeyFromIncluded(OAndBlock keyCondition, OBinaryCondition additional) {
     OBooleanExpression exp = keyCondition.getSubBlocks().get(keyCondition.getSubBlocks().size() - 1);
+    OBinaryCompareOperator additionalOperator = additional == null ? null : additional.getOperator();
     if (exp instanceof OBinaryCondition) {
       OBinaryCompareOperator operator = ((OBinaryCondition) exp).getOperator();
-      OBinaryCompareOperator additionalOperator = additional == null ? null : ((OBinaryCondition) additional).getOperator();
       if (isGreaterOperator(operator)) {
         if (isIncludeOperator(operator)) {
           return true;
@@ -508,6 +595,12 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           return false;
         }
       } else if (additionalOperator == null || (isIncludeOperator(additionalOperator) && isGreaterOperator(additionalOperator))) {
+        return true;
+      } else {
+        return false;
+      }
+    } else if (exp instanceof OInCondition || exp instanceof OContainsAnyCondition) {
+      if (additional == null || (isIncludeOperator(additionalOperator) && isGreaterOperator(additionalOperator))) {
         return true;
       } else {
         return false;
@@ -540,9 +633,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private boolean indexKeyToIncluded(OAndBlock keyCondition, OBinaryCondition additional) {
     OBooleanExpression exp = keyCondition.getSubBlocks().get(keyCondition.getSubBlocks().size() - 1);
+    OBinaryCompareOperator additionalOperator = additional == null ? null : ((OBinaryCondition) additional).getOperator();
     if (exp instanceof OBinaryCondition) {
       OBinaryCompareOperator operator = ((OBinaryCondition) exp).getOperator();
-      OBinaryCompareOperator additionalOperator = additional == null ? null : ((OBinaryCondition) additional).getOperator();
       if (isLessOperator(operator)) {
         if (isIncludeOperator(operator)) {
           return true;
@@ -550,6 +643,12 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           return false;
         }
       } else if (additionalOperator == null || (isIncludeOperator(additionalOperator) && isLessOperator(additionalOperator))) {
+        return true;
+      } else {
+        return false;
+      }
+    } else if (exp instanceof OInCondition || exp instanceof OContainsAnyCondition) {
+      if (additionalOperator == null || (isIncludeOperator(additionalOperator) && isLessOperator(additionalOperator))) {
         return true;
       } else {
         return false;
