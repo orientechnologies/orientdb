@@ -599,8 +599,8 @@ public class OCASDiskWriteAheadLog {
       OWALRecord logRecord = recordIterator.next();
       OLogSequenceNumber logRecordLSN = logRecord.getLsn();
 
-      List<OLogSequenceNumber> traversedLSNs = new ArrayList<>();
-      traversedLSNs.add(logRecordLSN);
+      List<String> traversedLSNs = new ArrayList<>();
+      traversedLSNs.add(logRecordLSN + "in");
       while (logRecordLSN.getPosition() >=0 && logRecordLSN.compareTo(lsn) <= 0) {
         while (true) {
           final int compare = logRecordLSN.compareTo(lsn);
@@ -628,20 +628,20 @@ public class OCASDiskWriteAheadLog {
 
             logRecord = recordIterator.next();
             logRecordLSN = logRecord.getLsn();
-            traversedLSNs.add(logRecordLSN);
+            traversedLSNs.add(logRecordLSN + "c0n");
             break;
           } else if (compare < 0) {
             if (recordIterator.hasNext()) {
               logRecord = recordIterator.next();
               logRecordLSN = logRecord.getLsn();
-              traversedLSNs.add(logRecordLSN);
+              traversedLSNs.add(logRecordLSN + "c<0");
 
               assert logRecordLSN.getPosition() >= 0;
             } else {
               recordIterator = records.iterator();
               logRecord = recordIterator.next();
               logRecordLSN = logRecord.getLsn();
-              traversedLSNs.add(logRecordLSN);
+              traversedLSNs.add(logRecordLSN + "c<0n");
 
               break;
             }
