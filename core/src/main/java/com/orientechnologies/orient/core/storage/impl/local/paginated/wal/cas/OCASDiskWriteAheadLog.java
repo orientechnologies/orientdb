@@ -598,7 +598,16 @@ public class OCASDiskWriteAheadLog {
       OWALRecord logRecord = recordIterator.next();
       OLogSequenceNumber logRecordLSN = logRecord.getLsn();
 
-      while (logRecord.getLsn().getPosition() > 0 && logRecordLSN.compareTo(lsn) <= 0) {
+      if (logRecordLSN.getPosition() < 0) {
+        calculateRecordsLSNs();
+        logRecordLSN = logRecord.getLsn();
+      }
+
+      assert logRecordLSN.getPosition() >= 0;
+
+      while (logRecordLSN.compareTo(lsn) <= 0) {
+        assert logRecordLSN.getPosition() >= 0;
+
         while (true) {
           final int compare = logRecordLSN.compareTo(lsn);
 
@@ -609,7 +618,7 @@ public class OCASDiskWriteAheadLog {
               if (nextRecord instanceof OWriteableWALRecord) {
                 OLogSequenceNumber nextLSN = nextRecord.getLsn();
 
-                if (nextLSN.getPosition() == -1) {
+                if (nextLSN.getPosition() < 0) {
                   calculateRecordsLSNs();
 
                   nextLSN = nextRecord.getLsn();
@@ -625,8 +634,16 @@ public class OCASDiskWriteAheadLog {
             }
 
             recordIterator = records.iterator();
-            logRecord = recordIterator.next();
 
+            logRecord = recordIterator.next();
+            logRecordLSN = logRecord.getLsn();
+
+            if (logRecordLSN.getPosition() < 0) {
+              calculateRecordsLSNs();
+              logRecordLSN = logRecord.getLsn();
+            }
+
+            assert logRecordLSN.getPosition() >= 0;
             break;
           } else if (compare < 0) {
             if (recordIterator.hasNext()) {
@@ -635,10 +652,21 @@ public class OCASDiskWriteAheadLog {
 
               if (logRecordLSN.getPosition() < 0) {
                 calculateRecordsLSNs();
+                logRecordLSN = logRecord.getLsn();
               }
+
+              assert logRecordLSN.getPosition() >= 0;
             } else {
               recordIterator = records.iterator();
               logRecord = recordIterator.next();
+              logRecordLSN = logRecord.getLsn();
+
+              if (logRecordLSN.getPosition() < 0) {
+                calculateRecordsLSNs();
+                logRecordLSN = logRecord.getLsn();
+              }
+
+              assert logRecordLSN.getPosition() >= 0;
               break;
             }
           } else {
