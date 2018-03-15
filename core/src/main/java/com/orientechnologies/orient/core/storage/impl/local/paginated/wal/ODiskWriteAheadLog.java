@@ -942,21 +942,18 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    while (true) {
+    syncObject.lock();
+    try {
       final Integer oldCounter = cutTillLimits.get(lsn);
 
-      final Integer newCounter;
-
       if (oldCounter == null) {
-        if (cutTillLimits.putIfAbsent(lsn, 1) == null)
-          break;
+        cutTillLimits.put(lsn, 1);
       } else {
-        newCounter = oldCounter + 1;
-
-        if (cutTillLimits.replace(lsn, oldCounter, newCounter)) {
-          break;
-        }
+        cutTillLimits.put(lsn, oldCounter + 1);
       }
+
+    } finally {
+      syncObject.unlock();
     }
   }
 
@@ -965,20 +962,21 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    while (true) {
+    syncObject.lock();
+    try {
       final Integer oldCounter = cutTillLimits.get(lsn);
-
       if (oldCounter == null)
         throw new IllegalArgumentException(String.format("Limit %s is going to be removed but it was not added", lsn));
 
       final Integer newCounter = oldCounter - 1;
-      if (cutTillLimits.replace(lsn, oldCounter, newCounter)) {
-        if (newCounter == 0) {
-          cutTillLimits.remove(lsn, newCounter);
-        }
 
-        break;
+      if (newCounter == 0) {
+        cutTillLimits.remove(lsn);
+      } else {
+        cutTillLimits.put(lsn, newCounter);
       }
+    } finally {
+      syncObject.unlock();
     }
   }
 
