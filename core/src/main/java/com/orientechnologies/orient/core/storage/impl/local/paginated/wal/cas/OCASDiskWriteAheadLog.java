@@ -429,6 +429,7 @@ public class OCASDiskWriteAheadLog {
           } else {
             recordIterator = records.iterator();
             record = recordIterator.next();
+            logRecordLSN = record.getLsn();
             break;
           }
         }
@@ -598,16 +599,7 @@ public class OCASDiskWriteAheadLog {
       OWALRecord logRecord = recordIterator.next();
       OLogSequenceNumber logRecordLSN = logRecord.getLsn();
 
-      if (logRecordLSN.getPosition() < 0) {
-        calculateRecordsLSNs();
-        logRecordLSN = logRecord.getLsn();
-      }
-
-      assert logRecordLSN.getPosition() >= 0;
-
-      while (logRecordLSN.compareTo(lsn) <= 0) {
-        assert logRecordLSN.getPosition() >= 0;
-
+      while (logRecordLSN.getPosition() >=0 && logRecordLSN.compareTo(lsn) <= 0) {
         while (true) {
           final int compare = logRecordLSN.compareTo(lsn);
 
@@ -619,10 +611,7 @@ public class OCASDiskWriteAheadLog {
                 OLogSequenceNumber nextLSN = nextRecord.getLsn();
 
                 if (nextLSN.getPosition() < 0) {
-                  calculateRecordsLSNs();
-
-                  nextLSN = nextRecord.getLsn();
-                  assert nextLSN.getPosition() > -1;
+                  return Collections.emptyList();
                 }
 
                 if (nextLSN.compareTo(lsn) > 0) {
@@ -638,22 +627,11 @@ public class OCASDiskWriteAheadLog {
             logRecord = recordIterator.next();
             logRecordLSN = logRecord.getLsn();
 
-            if (logRecordLSN.getPosition() < 0) {
-              calculateRecordsLSNs();
-              logRecordLSN = logRecord.getLsn();
-            }
-
-            assert logRecordLSN.getPosition() >= 0;
             break;
           } else if (compare < 0) {
             if (recordIterator.hasNext()) {
               logRecord = recordIterator.next();
               logRecordLSN = logRecord.getLsn();
-
-              if (logRecordLSN.getPosition() < 0) {
-                calculateRecordsLSNs();
-                logRecordLSN = logRecord.getLsn();
-              }
 
               assert logRecordLSN.getPosition() >= 0;
             } else {
@@ -661,12 +639,6 @@ public class OCASDiskWriteAheadLog {
               logRecord = recordIterator.next();
               logRecordLSN = logRecord.getLsn();
 
-              if (logRecordLSN.getPosition() < 0) {
-                calculateRecordsLSNs();
-                logRecordLSN = logRecord.getLsn();
-              }
-
-              assert logRecordLSN.getPosition() >= 0;
               break;
             }
           } else {
