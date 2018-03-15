@@ -981,21 +981,13 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    while (true) {
-      final Integer oldCounter = cutTillLimits.get(lsn);
+    syncObject.lock();
+    try {
 
-      final Integer newCounter;
+      cutTillLimits.merge(lsn, 1, (a, b) -> a + b);
 
-      if (oldCounter == null) {
-        if (cutTillLimits.putIfAbsent(lsn, 1) == null)
-          break;
-      } else {
-        newCounter = oldCounter + 1;
-
-        if (cutTillLimits.replace(lsn, oldCounter, newCounter)) {
-          break;
-        }
-      }
+    } finally {
+      syncObject.unlock();
     }
   }
 
@@ -1004,23 +996,23 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    while (true) {
+    syncObject.lock();
+    try {
       final Integer oldCounter = cutTillLimits.get(lsn);
-
       if (oldCounter == null)
         throw new IllegalArgumentException(String.format("Limit %s is going to be removed but it was not added", lsn));
 
       final Integer newCounter = oldCounter - 1;
-      if (cutTillLimits.replace(lsn, oldCounter, newCounter)) {
-        if (newCounter == 0) {
-          cutTillLimits.remove(lsn, newCounter);
-        }
 
-        break;
+      if (newCounter == 0) {
+        cutTillLimits.remove(lsn);
+      } else {
+        cutTillLimits.put(lsn, newCounter);
       }
+    } finally {
+      syncObject.unlock();
     }
   }
-
   private OLogSegment removeHeadSegmentFromList() {
     if (logSegments.size() < 2)
       return null;

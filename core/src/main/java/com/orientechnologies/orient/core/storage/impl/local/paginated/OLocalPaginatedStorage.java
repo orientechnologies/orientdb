@@ -197,18 +197,30 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           } catch (Exception e) {
             OLogManager.instance().error(this, "Error on callback invocation during backup", e);
           }
+        OLogSequenceNumber freezeLSN = null;
+        if (writeAheadLog != null) {
+          freezeLSN = writeAheadLog.begin();
+          writeAheadLog.addCutTillLimit(freezeLSN);
+        }
 
-        final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
         try {
-          return OZIPCompressionUtil
-              .compressDirectory(getStoragePath().toString(), bo, new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION },
-                  iOutput, compressionLevel);
+          final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
+          try {
+            return OZIPCompressionUtil
+                .compressDirectory(getStoragePath().toString(), bo, new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION },
+                    iOutput, compressionLevel);
+          } finally {
+            if (bufferSize > 0) {
+              bo.flush();
+              bo.close();
+            }
+          }
         } finally {
-          if (bufferSize > 0) {
-            bo.flush();
-            bo.close();
+          if (freezeLSN != null) {
+            writeAheadLog.removeCutTillLimit(freezeLSN);
           }
         }
+
       } finally {
         release();
       }
