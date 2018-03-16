@@ -297,6 +297,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       } catch (OTokenException | OTokenSecurityException e) {
         connectionManager.release(network);
         if (session.isStickToSession()) {
+          session.removeServerSession(network.getServerURL());
           throw OException.wrapException(new OStorageException(errorMessage), e);
         } else {
           session.removeServerSession(network.getServerURL());
