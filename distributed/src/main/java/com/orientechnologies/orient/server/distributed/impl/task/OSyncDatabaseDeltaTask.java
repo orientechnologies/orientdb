@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
@@ -95,7 +96,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
 
     iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
 
-    final ODistributedDatabase dDatabase = checkIfCurrentDatabaseIsNotOlder(iManager, databaseName);
+    final ODistributedDatabase dDatabase = checkIfCurrentDatabaseIsNotOlder(iManager, databaseName, database);
 
     iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
@@ -205,11 +206,11 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
   }
 
   protected ODistributedDatabase checkIfCurrentDatabaseIsNotOlder(final ODistributedServerManager iManager,
-      final String databaseName) {
+      final String databaseName, ODatabaseDocumentInternal database) {
     final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
 
     if (lastLSN != null) {
-      final OLogSequenceNumber currentLSN = dDatabase.getSyncConfiguration().getLastLSN(iManager.getLocalNodeName());
+      final OLogSequenceNumber currentLSN = ((OLocalPaginatedStorage) database.getStorage().getUnderlying()).getLSN();
       if (currentLSN != null) {
         // LOCAL AND REMOTE LSN PRESENT
         if (lastLSN.compareTo(currentLSN) <= 0)
