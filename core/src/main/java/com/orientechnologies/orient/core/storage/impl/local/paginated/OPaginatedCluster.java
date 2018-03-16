@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
@@ -184,10 +185,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         initCusterState(atomicOperation);
 
-        if (config.root.clusters.size() <= config.id)
-          config.root.clusters.add(config);
-        else
-          config.root.clusters.set(config.id, config);
+        registerInStorageConfig(config.root);
 
         clusterPositionMap.create();
 
@@ -201,6 +199,24 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       }
     } finally {
       completeOperation();
+    }
+  }
+
+  public void registerInStorageConfig(OStorageConfiguration root) {
+    if (root.getClusters().size() <= config.id) {
+      final int diff = config.id - root.getClusters().size();
+      for (int i = 0; i < diff; i++) {
+        root.getClusters().add(null);
+      }
+
+      root.getClusters().add(config);
+    } else {
+      if (root.getClusters().get(config.id) != null) {
+        throw new OStorageException(
+            "Cluster with id " + config.id + " already exists with name '" + root.getClusters().get(config.id).getName() + "'");
+      }
+
+      root.getClusters().set(config.id, config);
     }
   }
 
