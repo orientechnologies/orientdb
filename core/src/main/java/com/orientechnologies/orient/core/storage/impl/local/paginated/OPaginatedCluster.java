@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.compression.OCompressionFactory;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -34,6 +35,7 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
@@ -183,10 +185,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         pinnedStateEntryIndex = initCusterState(fileId, atomicOperation);
 
-        if (config.root.clusters.size() <= config.id)
-          config.root.clusters.add(config);
-        else
-          config.root.clusters.set(config.id, config);
+        registerInStorageConfig(config.root);
 
         clusterPositionMap.create();
 
@@ -200,6 +199,24 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       }
     } finally {
       completeOperation();
+    }
+  }
+
+  public void registerInStorageConfig(OStorageConfiguration root) {
+    if (root.clusters.size() <= config.id) {
+      final int diff = config.id - root.clusters.size();
+      for (int i = 0; i < diff; i++) {
+        root.clusters.add(null);
+      }
+
+      root.clusters.add(config);
+    } else {
+      if (root.clusters.get(config.id) != null) {
+        throw new OStorageException(
+            "Cluster with id " + config.id + " already exists with name '" + root.clusters.get(config.id).getName() + "'");
+      }
+
+      root.clusters.set(config.id, config);
     }
   }
 

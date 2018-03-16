@@ -4349,6 +4349,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         cluster.create(-1);
       } else {
         cluster.open();
+        ((OPaginatedCluster) cluster).registerInStorageConfig(configuration);
       }
 
       configuration.update();
