@@ -7,6 +7,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableLong;
+import com.orientechnologies.common.util.OTriple;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -21,13 +22,15 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.Cursor;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.MPSCFAAArrayDequeue;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.Node;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -44,7 +47,6 @@ import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -82,8 +84,8 @@ public class OCASDiskWriteAheadLog {
   private final long freeSpaceLimit;
   private volatile long freeSpace = -1;
 
-  private final    ConcurrentLinkedDeque<OWALRecord> records        = new ConcurrentLinkedDeque<>();
-  private volatile long                              currentSegment = 0;
+  private final    MPSCFAAArrayDequeue records        = new MPSCFAAArrayDequeue();
+  private volatile long                currentSegment = 0;
 
   private final AtomicLong segmentSize = new AtomicLong();
   private final AtomicLong logSize     = new AtomicLong();
@@ -144,13 +146,12 @@ public class OCASDiskWriteAheadLog {
       thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       return thread;
     });
+    commitExecutor.setMaximumPoolSize(1);
 
     this.walSizeHardLimit = walSizeHardLimit;
     this.freeSpaceLimit = freeSpaceLimit;
 
     walSizeLimit = walSizeHardLimit;
-
-    commitExecutor.setMaximumPoolSize(1);
 
     this.walLocation = calculateWalPath(storagePath, walPath);
     if (!Files.exists(walLocation)) {
@@ -188,7 +189,7 @@ public class OCASDiskWriteAheadLog {
     startRecord.setDistance(0);
     startRecord.setDiskSize(OCASWALPage.RECORDS_OFFSET);
 
-    records.add(startRecord);
+    records.offer(startRecord);
 
     log(new OEmptyWALRecord());
 
@@ -402,9 +403,8 @@ public class OCASDiskWriteAheadLog {
 
     addCutTillLimit(lsn);
     try {
-      Iterator<OWALRecord> recordIterator = records.iterator();
-
-      OWALRecord record = recordIterator.next();
+      Cursor recordCursor = records.peekFirst();
+      OWALRecord record = recordCursor.getRecord();
       OLogSequenceNumber logRecordLSN = record.getLsn();
 
       while (logRecordLSN.getPosition() > 0 && logRecordLSN.compareTo(lsn) <= 0) {
@@ -419,16 +419,17 @@ public class OCASDiskWriteAheadLog {
             return Collections.emptyList();
           }
 
-          if (recordIterator.hasNext()) {
-            record = recordIterator.next();
+          recordCursor = MPSCFAAArrayDequeue.next(recordCursor);
+          if (recordCursor != null) {
+            record = recordCursor.getRecord();
             logRecordLSN = record.getLsn();
 
             if (logRecordLSN.getPosition() < 0) {
               return Collections.emptyList();
             }
           } else {
-            recordIterator = records.iterator();
-            record = recordIterator.next();
+            recordCursor = records.peekFirst();
+            record = recordCursor.getRecord();
             logRecordLSN = record.getLsn();
             break;
           }
@@ -594,20 +595,20 @@ public class OCASDiskWriteAheadLog {
         throw new IllegalArgumentException("Invalid LSN was passed " + lsn);
       }
 
-      Iterator<OWALRecord> recordIterator = records.iterator();
+      Cursor recordCursor = records.peekFirst();
 
-      OWALRecord logRecord = recordIterator.next();
+      OWALRecord logRecord = recordCursor.getRecord();
       OLogSequenceNumber logRecordLSN = logRecord.getLsn();
 
-      List<String> traversedLSNs = new ArrayList<>();
-      traversedLSNs.add(logRecordLSN + "in");
-      while (logRecordLSN.getPosition() >=0 && logRecordLSN.compareTo(lsn) <= 0) {
+      while (logRecordLSN.getPosition() >= 0 && logRecordLSN.compareTo(lsn) <= 0) {
         while (true) {
           final int compare = logRecordLSN.compareTo(lsn);
 
           if (compare == 0) {
-            while (recordIterator.hasNext()) {
-              OWALRecord nextRecord = recordIterator.next();
+            recordCursor = MPSCFAAArrayDequeue.next(recordCursor);
+
+            while (recordCursor != null) {
+              OWALRecord nextRecord = recordCursor.getRecord();
 
               if (nextRecord instanceof OWriteableWALRecord) {
                 OLogSequenceNumber nextLSN = nextRecord.getLsn();
@@ -622,31 +623,31 @@ public class OCASDiskWriteAheadLog {
                   assert nextLSN.compareTo(lsn) == 0;
                 }
               }
+
+              recordCursor = MPSCFAAArrayDequeue.next(recordCursor);
             }
 
-            recordIterator = records.iterator();
-
-            logRecord = recordIterator.next();
+            recordCursor = records.peekFirst();
+            logRecord = recordCursor.getRecord();
             logRecordLSN = logRecord.getLsn();
-            traversedLSNs.add(logRecordLSN + "c0n");
             break;
           } else if (compare < 0) {
-            if (recordIterator.hasNext()) {
-              logRecord = recordIterator.next();
+            recordCursor = MPSCFAAArrayDequeue.next(recordCursor);
+
+            if (recordCursor != null) {
+              logRecord = recordCursor.getRecord();
               logRecordLSN = logRecord.getLsn();
-              traversedLSNs.add(logRecordLSN + "c<0");
 
               assert logRecordLSN.getPosition() >= 0;
             } else {
-              recordIterator = records.iterator();
-              logRecord = recordIterator.next();
+              recordCursor = records.peekFirst();
+              logRecord = recordCursor.getRecord();
               logRecordLSN = logRecord.getLsn();
-              traversedLSNs.add(logRecordLSN + "c<0n");
 
               break;
             }
           } else {
-            throw new IllegalArgumentException("Invalid LSN was passed " + lsn + " - " + traversedLSNs);
+            throw new IllegalArgumentException("Invalid LSN was passed " + lsn);
           }
         }
       }
@@ -849,7 +850,7 @@ public class OCASDiskWriteAheadLog {
         segmentId = lastCheckpoint.getSegment();
       }
 
-      final OWALRecord first = records.peekFirst();
+      final OWALRecord first = records.peek();
       final OLogSequenceNumber firstLSN = first.getLsn();
 
       if (firstLSN.getPosition() > -1) {
@@ -969,7 +970,7 @@ public class OCASDiskWriteAheadLog {
   }
 
   public long[] nonActiveSegments() {
-    final OWALRecord firstRecord = records.peekFirst();
+    final OWALRecord firstRecord = records.peek();
     final OLogSequenceNumber firstLSN = firstRecord.getLsn();
 
     long maxSegment = currentSegment;
@@ -996,7 +997,7 @@ public class OCASDiskWriteAheadLog {
   }
 
   public File[] nonActiveSegments(long fromSegment) {
-    final OWALRecord firstRecord = records.peekFirst();
+    final OWALRecord firstRecord = records.peek();
     final OLogSequenceNumber firstLSN = firstRecord.getLsn();
 
     long maxSegment = currentSegment;
@@ -1028,7 +1029,7 @@ public class OCASDiskWriteAheadLog {
     writeableRecord.setBinaryContent(OWALRecordsFactory.INSTANCE.toStream(writeableRecord));
     writeableRecord.setLsn(new OLogSequenceNumber(currentSegment, -1));
 
-    records.add(writeableRecord);
+    records.offer(writeableRecord);
 
     calculateRecordsLSNs();
 
@@ -1099,18 +1100,6 @@ public class OCASDiskWriteAheadLog {
     }
   }
 
-  private String dumpRecords() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("records : {");
-
-    for (OWALRecord record : records) {
-      builder.append(record.getClass().getName()).append(":").append(record.getLsn().toString()).append(",");
-    }
-
-    builder.append("}");
-    return builder.toString();
-  }
-
   public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
     lowDiskSpaceListeners.add(listener);
   }
@@ -1174,11 +1163,12 @@ public class OCASDiskWriteAheadLog {
   }
 
   private void calculateRecordsLSNs() {
-    final Iterator<OWALRecord> iterator = records.descendingIterator();
     final List<OWALRecord> unassignedList = new ArrayList<>();
 
-    while (iterator.hasNext()) {
-      final OWALRecord record = iterator.next();
+    Cursor cursor = records.peekLast();
+    while (cursor != null) {
+      final OWALRecord record = cursor.getRecord();
+
       final OLogSequenceNumber lsn = record.getLsn();
 
       if (lsn.getPosition() == -1) {
@@ -1187,6 +1177,8 @@ public class OCASDiskWriteAheadLog {
         unassignedList.add(record);
         break;
       }
+
+      cursor = MPSCFAAArrayDequeue.prev(cursor);
     }
 
     if (!unassignedList.isEmpty()) {
@@ -1219,7 +1211,7 @@ public class OCASDiskWriteAheadLog {
     final OMilestoneWALRecord milestoneRecord = new OMilestoneWALRecord();
     milestoneRecord.setLsn(new OLogSequenceNumber(currentSegment, -1));
 
-    records.add(milestoneRecord);
+    records.offer(milestoneRecord);
 
     calculateRecordsLSNs();
 
@@ -1424,10 +1416,8 @@ public class OCASDiskWriteAheadLog {
 
         OLogSequenceNumber checkPointLSN = null;
 
-        final Iterator<OWALRecord> recordIterator = records.iterator();
-
         while (true) {
-          OWALRecord record = recordIterator.next();
+          OWALRecord record = records.peek();
 
           if (record == milestoneWALRecord) {
             break;
@@ -1477,7 +1467,7 @@ public class OCASDiskWriteAheadLog {
             lastRecordLSN = record.getLsn();
             lastRecordClass = record.getClass().getSimpleName();
 
-            recordIterator.remove();
+            records.poll();
           } else {
             final OWriteableWALRecord writeableRecord = (OWriteableWALRecord) record;
 
@@ -1576,7 +1566,7 @@ public class OCASDiskWriteAheadLog {
             }
 
             queueSize.addAndGet(-recordContent.length);
-            recordIterator.remove();
+            records.poll();
           }
         }
 
@@ -1609,17 +1599,19 @@ public class OCASDiskWriteAheadLog {
     }
 
     private boolean checkPresenceWritableRecords() {
-      final Iterator<OWALRecord> recordIterator = records.iterator();
-      assert recordIterator.hasNext();
+      Cursor recordCursor = records.peekFirst();
 
-      OWALRecord record = recordIterator.next();
+      OWALRecord record = recordCursor.getRecord();
       assert record instanceof OMilestoneWALRecord || record instanceof OStartWALRecord;
 
-      while (recordIterator.hasNext()) {
-        record = recordIterator.next();
+      recordCursor = MPSCFAAArrayDequeue.next(recordCursor);
+      while (recordCursor != null) {
+        record = recordCursor.getRecord();
         if (record instanceof OWriteableWALRecord) {
           return true;
         }
+
+        recordCursor = MPSCFAAArrayDequeue.next(recordCursor);
       }
 
       return false;
