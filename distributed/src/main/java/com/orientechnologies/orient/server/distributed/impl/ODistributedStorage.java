@@ -243,6 +243,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         ((OCommandExecutorSQLDelegate) executor).getDelegate() :
         executor;
 
+    if (!exec.isIdempotent()) {
+      resetLastValidBackup();
+    }
+
     if (exec.isIdempotent() && !dManager.isNodeAvailable(dManager.getLocalNodeName(), getName())) {
       // SPECIAL CASE: NODE IS OFFLINE AND THE COMMAND IS IDEMPOTENT, EXECUTE IT LOCALLY ONLY
       ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
@@ -1247,15 +1251,18 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   @Override
   public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+    resetLastValidBackup();
     return wrapped.addCluster(iClusterName, iRequestedId, iParameters);
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
+    resetLastValidBackup();
     return wrapped.dropCluster(iClusterName, iTruncate);
   }
 
   @Override
   public boolean dropCluster(final int iId, final boolean iTruncate) {
+    resetLastValidBackup();
     return wrapped.dropCluster(iId, iTruncate);
   }
 
@@ -1623,9 +1630,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new UnsupportedOperationException("Storage engine " + wrapped.getType() + " does not support freeze operation");
   }
 
-  private void resetLastValidBackup() {
-    if (lastValidBackup != null) {
-      lastValidBackup = null;
+  public void resetLastValidBackup() {
+    File backupFile = lastValidBackup;
+    lastValidBackup = null;
+    if (backupFile != null) {
+      if (backupFile.exists()) {
+        backupFile.delete();
+      }
     }
   }
 
@@ -1829,7 +1840,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   protected File getDistributedConfigFile() {
     return new File(serverInstance.getDatabaseDirectory() + getName() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
   }
-
 
   public ODistributedDatabase getLocalDistributedDatabase() {
     return localDistributedDatabase;
