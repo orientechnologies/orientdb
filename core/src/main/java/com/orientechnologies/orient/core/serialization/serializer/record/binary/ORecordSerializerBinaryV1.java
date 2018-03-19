@@ -372,7 +372,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
    return result.toArray(new String[result.size()]);
   }
 
-  private int serializeAllocateSpace(final BytesContainer bytes,
+  private int serializationAllocateHeaderSpace(final BytesContainer bytes,
           final Entry<String, ODocumentEntry> values[], final Map<String, OProperty> props,
           final Set<Entry<String, ODocumentEntry>> fields, final int[] pos) {
     int i = 0;
@@ -398,7 +398,9 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
           pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
         }
       } else {
+        //write field name
         writeString(bytes, entry.getKey());
+        //alloc space for data pointer and type
         pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
       }
       values[i] = entry;
@@ -435,7 +437,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     final int[] pos = new int[fields.size()];    
 
     final Entry<String, ODocumentEntry> values[] = new Entry[fields.size()];
-    int i = serializeAllocateSpace(bytes, values, props, fields, pos);
+    int i = serializationAllocateHeaderSpace(bytes, values, props, fields, pos);
     writeEmptyString(bytes);    
 
     serializeWriteValues(bytes, document, i, values, pos);
