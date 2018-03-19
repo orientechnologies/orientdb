@@ -50,6 +50,10 @@
     "Supported engines are : <br> <ul class='indexType'><li><strong>SBTREE</strong></li><li><strong>HASHINDEX</strong></li><li><strong>LUCENE</strong></li></ul> For more details about supported engines, visit the <a href='{{engine}}' target='_blank'>docs</a>",
   "agent.notFound":
     "This feature is available in OrientDB Enterprise Edition. To susbscribe to OrientDB Enterprise Edition click <a href='{{ee}}' target='_blank'>here</a>.",
+  "agent.notConnected":
+    "The current instance is not connected to the OrientDB Cloud. To start monitoring OrientDB instances with the Cloud Console create an account <a href='{{eecloud}}' target='_blank'>here</a>.",
+  "agent.Connected":
+    "Connected to the OrientDB Cloud. To start monitoring this instance with the Cloud Console click <a href='{{eeCloudProject}}' target='_blank'>here</a>.",
   "agent.moved":
     "The following features have been moved to the Cloud Dashboard:",
   "agent.moved1":

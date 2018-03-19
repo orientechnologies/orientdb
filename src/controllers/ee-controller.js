@@ -3235,6 +3235,22 @@ ee.controller("OServerConfigController", [
   }
 ]);
 
+ee.controller("CloudController", [
+  "$scope",
+  "DatabaseApi",
+  function($scope, DatabaseApi) {
+    $scope.agent = {};
+
+    $scope.links = {
+      ee: "http://www.orientdb.com/orientdb-enterprise",
+      eecloud: "http://cloud.orientdb.com"
+    };
+    DatabaseApi.isEE().then(data => {
+      $scope.links.eeCloudProject = data.monitoringUrl;
+      $scope.agent = data;
+    });
+  }
+]);
 ee.controller("RestartController", [
   "$scope",
   "Notification",

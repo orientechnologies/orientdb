@@ -1,21 +1,13 @@
-<div>
-    <div class="col-md-12 studio-well-tips">
-        <h4 ng-bind-html=" 'agent.moved' | translate:links "></h4>
-        <ul>
-            <li>Dashboard</li>
-            <li>Server Management
-                <ol>
-                    <li>
-                        Overview
-                    </li>
-                    <li>
-                        Thread Dump
-                    </li>
-                </ol>
-            </li>
-            <li>Backup management</li>
-        </ul>
-        <h4 ng-bind-html=" 'agent.moved1' | translate:links "></h4>
+<div ng-controller="CloudController">
+
+    <div class="col-md-12 studio-well-tips" ng-show="agent.enterprise && !agent.cloud">
+        <h4 ng-bind-html=" 'agent.notConnected' | translate:links"></h4>
+    </div>
+    <div class="col-md-12 studio-well-tips" ng-show="agent.enterprise && agent.cloud">
+        <h4 ng-bind-html=" 'agent.Connected' | translate:links"></h4>
+    </div>
+    <div class="col-md-12 studio-well-tips" ng-show="!agent.enterprise">
+        <h4 ng-bind-html=" 'agent.notFound' | translate:links"></h4>
     </div>
 
 

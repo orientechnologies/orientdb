@@ -161,8 +161,6 @@ function routing($routeProvider, $httpProvider, $translateProvider) {
             Notification.clear();
             $rootScope.$broadcast("server:down");
           } else if (rejection.status == 401 && checkError401(rejection.data)) {
-            console.log(rejection.data);
-
             if (isUnauthorized(rejection.data)) {
               $timeout(() => {
                 Notification.push({
