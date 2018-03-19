@@ -14,13 +14,10 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.conn.ssl.AllowAllHostnameVerifier;
-import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ConnectException;
@@ -306,6 +303,7 @@ public class OEnterpriseCloudManager extends Thread {
 
   }
 
+
   private CloseableHttpClient createClient() {
     return HttpClients.createDefault();
   }
@@ -315,7 +313,7 @@ public class OEnterpriseCloudManager extends Thread {
   }
 
   public boolean isConnected() {
-    return true;
+    return isConnected;
   }
 
   public CloudCommandProcessorFactory getCommandFactory() {

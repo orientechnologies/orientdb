@@ -24,6 +24,7 @@ import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.profiler.OProfilerListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
@@ -119,8 +120,8 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
   }
 
   @Override
-  public boolean isEnterpriseEdition() {
-    return agent.isCloudConnected();
+  public ODocument getContext() {
+    return new ODocument().field("enterprise", true).field("cloud", agent.isCloudConnected());
   }
 
   public boolean startRecording() {
@@ -190,6 +191,11 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
       return -1;
 
     return realTime.getCounter(iStatName);
+  }
+
+  @Override
+  public boolean isEnterpriseEdition() {
+    return true;
   }
 
   public void resetRealtime(final String iText) {

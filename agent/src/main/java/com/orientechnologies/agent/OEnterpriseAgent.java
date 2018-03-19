@@ -469,6 +469,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     return cloudManager.isConnected();
   }
 
+
+
   public String getNodeName() {
     return isDistributed() ? server.getDistributedManager().getLocalNodeName() : "orientdb";
   }
