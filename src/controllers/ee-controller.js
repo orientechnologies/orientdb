@@ -1344,12 +1344,12 @@ ee.controller("EEDashboardController", [
     });
 
     $scope.menus = [
-      // {
-      //   name: "stats",
-      //   title: "Dashboard",
-      //   template: "stats",
-      //   icon: "fa-dashboard"
-      // },
+      {
+        name: "stats",
+        title: "Dashboard",
+        template: "stats",
+        icon: "fa-dashboard"
+      },
       {
         name: "general",
         title: "Servers Management",
@@ -1362,12 +1362,12 @@ ee.controller("EEDashboardController", [
         template: "distributed",
         icon: "fa-sitemap"
       },
-      // {
-      //   name: "backup",
-      //   title: "Backup Management",
-      //   template: "backup",
-      //   icon: "fa-clock-o"
-      // },
+      {
+        name: "backup",
+        title: "Backup Management",
+        template: "backup",
+        icon: "fa-clock-o"
+      },
       {
         name: "profiler",
         title: "Query Profiler",
@@ -2408,7 +2408,9 @@ ee.controller("BackupConfigController", [
             if (idx == 0) {
               $scope.database = b;
             }
-            $scope.databases[b.dbName] = b;
+            if (!$scope.databases[b.dbName]) {
+              $scope.databases[b.dbName] = b;
+            }
           });
 
           $scope.server.databases.forEach(function(db) {

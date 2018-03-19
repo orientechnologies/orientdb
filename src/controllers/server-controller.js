@@ -470,13 +470,13 @@ ServerModule.controller("ServerDashboardController", [
     $scope.dirtyProperties = [];
 
     $scope.menus = [
-      // {
-      //   name: "stats",
-      //   title: "Dashboard",
-      //   template: "stats",
-      //   icon: "fa-dashboard",
-      //   wiki: "Studio-Dashboard.html"
-      // },
+      {
+        name: "stats",
+        title: "Dashboard",
+        template: "stats",
+        icon: "fa-dashboard",
+        wiki: "Studio-Dashboard.html"
+      },
       {
         name: "general",
         title: "Servers Management",
@@ -549,7 +549,7 @@ ServerModule.controller("ServerDashboardController", [
     }
 
     if (!$scope.active) {
-      $scope.active = "general";
+      $scope.active = "stats";
       $scope.current = $scope.menus[0];
     }
 

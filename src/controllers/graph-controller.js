@@ -1331,7 +1331,6 @@ GraphModule.controller("GraphController", ['$scope', '$routeParams', '$location'
       limit: $scope.config.limit
     }).then(function (data) {
 
-      console.log($scope.graph);
       $scope.graph.data(data.graph).redraw();
       $scope.history = History.push(queryBuffer);
       $scope.currentIndex = -1;

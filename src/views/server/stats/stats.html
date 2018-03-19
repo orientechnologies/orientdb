@@ -1,11 +1,11 @@
 <div ng-controller="MultipleServerController">
 
-  <div >
+  <div ng-show="!agentActive">
     <div class="col-md-12 studio-well-tips">
-      <h4 ng-bind-html=" 'agent.moved' | translate:links "></h4>
+      <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
     </div>
   </div>
-  <!-- <div class="row" ng-show="agentActive">
+  <div class="row" ng-show="agentActive">
     <div class="{{serverClass}}" ng-repeat="server in servers" ng-controller="SingleServerController">
       <div class="panel panel-default">
         <div class="panel-heading">
@@ -29,7 +29,9 @@
               <div class="chart-label text-center">
                 <span>RAM</span>
                 <br>
-                <span><b>{{usedRam | toSizeString}} / {{maxRam | toSizeString}}</b></span>
+                <span>
+                  <b>{{usedRam | toSizeString}} / {{maxRam | toSizeString}}</b>
+                </span>
               </div>
             </div>
             <div class="col-md-3">
@@ -38,7 +40,9 @@
               <div class="chart-label text-center">
                 <span>DISK CACHE</span>
                 <br>
-                <span><b>{{totalDiskCache | toSizeString}} / {{maxDiskCacke | toSizeString}}</b></span>
+                <span>
+                  <b>{{totalDiskCache | toSizeString}} / {{maxDiskCacke | toSizeString}}</b>
+                </span>
               </div>
             </div>
             <div class="col-md-3">
@@ -52,11 +56,11 @@
           <hr>
           <div class="row">
             <div class="col-md-6">
-              <b>Status:</b> <span ng-class="getStatusLabel(server.status)">{{ server.status }}</span>
+              <b>Status:</b>
+              <span ng-class="getStatusLabel(server.status)">{{ server.status }}</span>
 
-              <a ng-show="!agent" href="javascript:void(0)" tabindex="1"
-                 data-trigger="focus" data-placement="bottom"
-                 data-content="{{ 'agent.notFound' | translate:links }}" bs-popover>
+              <a ng-show="!agent" href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="bottom" data-content="{{ 'agent.notFound' | translate:links }}"
+                bs-popover>
                 <i class="fa fa-question-circle"></i>
               </a>
             </div>
@@ -92,12 +96,12 @@
           <b>Server {{ server.name}} Operations / Sec </b>
         </div>
         <div class="panel-body">
-          
+
 
           <div server-chart server="server" headers="transactionHeaders"></div>
 
         </div>
       </div>
     </div>
-  </div> -->
+  </div>
 </div>
