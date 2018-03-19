@@ -49,50 +49,52 @@ public class MPSCFAAArrayDequeue extends AtomicReference<Node> {
     while (true) {
       Node head = this.head;
 
-      if (head.deqidx >= head.enqidx.get() && head.getNext() == null) {
-        return null;
+      final int deqidx = head.deqidx;
+      final int enqidx = head.enqidx.get();
+
+      if (deqidx >= enqidx || deqidx >= BUFFER_SIZE) {
+        if (head.getNext() == null) {
+          return null;
+        }
+
+        this.head = head.getNext();
+        continue;
       }
 
       final int idx = head.deqidx++;
-
-      if (idx > BUFFER_SIZE - 1) { // This node has been drained, check if there is another one
-        if (head.getNext() == null)
-          return null;  // No more nodes in the queue
-
-        this.head = head.getNext();
-
-        head.clearPrev();
-        head.clearNext();
-
-        continue;
-      }
 
       final OWALRecord item = head.items.get(idx);
       head.items.set(idx, null);
 
       assert item != null;
 
+      if (idx == BUFFER_SIZE - 1) {
+        if (head.getNext() != null) {
+          this.head = head.getNext();
+        }
+      }
+
       return item;
     }
   }
 
   public OWALRecord peek() {
+    Node head = this.head;
+
     while (true) {
-      Node head = this.head;
+      final int deqidx = head.deqidx;
+      final int enqidx = head.enqidx.get();
 
-      if (head.deqidx >= head.enqidx.get() && head.getNext() == null) {
-        return null;
-      }
+      if (deqidx >= enqidx || deqidx >= BUFFER_SIZE) {
+        if (head.getNext() == null) {
+          return null;
+        }
 
-      int idx = head.deqidx;
-
-      if (idx > BUFFER_SIZE - 1) { // This node has been drained, check if there is another one
-        if (head.getNext() == null)
-          return null;  // No more nodes in the queue
-
+        head = head.getNext();
         continue;
       }
 
+      final int idx = deqidx;
       final OWALRecord item = head.items.get(idx);
       if (item == null) {
         continue;
@@ -103,22 +105,22 @@ public class MPSCFAAArrayDequeue extends AtomicReference<Node> {
   }
 
   public Cursor peekFirst() {
+    Node head = this.head;
+
     while (true) {
-      Node head = this.head;
+      final int deqidx = head.deqidx;
+      final int enqidx = head.enqidx.get();
 
-      if (head.deqidx >= head.enqidx.get() && head.getNext() == null) {
-        return null;
-      }
+      if (deqidx >= enqidx || deqidx >= BUFFER_SIZE) {
+        if (head.getNext() == null) {
+          return null;
+        }
 
-      int idx = head.deqidx;
-
-      if (idx > BUFFER_SIZE - 1) { // This node has been drained, check if there is another one
-        if (head.getNext() == null)
-          return null;  // No more nodes in the queue
-
+        head = head.getNext();
         continue;
       }
 
+      final int idx = deqidx;
       final OWALRecord record = head.items.get(idx);
       if (record == null) {
         continue;
@@ -137,13 +139,14 @@ public class MPSCFAAArrayDequeue extends AtomicReference<Node> {
     int idx = cursor.pageIndex + 1;
 
     while (node != null) {
-      int inqidx = node.enqidx.get();
+      int enqidx = node.enqidx.get();
 
-      if (idx >= inqidx) {
-        if (inqidx < BUFFER_SIZE) {
+      if (idx >= enqidx || idx >= BUFFER_SIZE) {
+        if (enqidx < BUFFER_SIZE) {
           return null; //reached the end of the queue
         } else {
           node = node.getNext();
+          idx = 0;
           continue;
         }
       }
@@ -163,25 +166,24 @@ public class MPSCFAAArrayDequeue extends AtomicReference<Node> {
     while (true) {
       Node tail = get();
 
-      if (tail.deqidx >= tail.enqidx.get() && tail.getPrev() == null) {
-        return null;
+      final int enqidx = tail.enqidx.get();
+      final int deqidx = tail.deqidx;
+      if (deqidx >= enqidx || deqidx >= BUFFER_SIZE) {
+        return null; //we remove only from the head, so if tail is empty it means that queue is empty
       }
 
-      int idx = tail.enqidx.get();
+      final int idx = enqidx;
 
-      if (idx <= 0) { // This node is empty check if there is predecessor of it.
-        if (tail.getPrev() == null)
-          return null;  // No more nodes in the queue
-
-        continue;
+      if (idx <= 0) {
+        return null;  // No more nodes in the queue
       }
 
       final OWALRecord item = tail.items.get(idx - 1);
       if (item == null) {
-        continue;
+        continue;//should be not null, concurrent modification
       }
 
-      return new Cursor(tail, idx, item);
+      return new Cursor(tail, idx - 1, item);
     }
   }
 
@@ -196,11 +198,12 @@ public class MPSCFAAArrayDequeue extends AtomicReference<Node> {
     while (node != null) {
       int deqidx = node.deqidx;
 
-      if (deqidx >= idx) {
+      if (deqidx > idx || deqidx >= BUFFER_SIZE) {//idx == enqidx -1, that is why we use >, but not >=
         if (deqidx > 0) {
           return null; //reached the end of the queue
         } else {
           node = node.getPrev();
+          idx = BUFFER_SIZE - 1;
           continue;
         }
       }
