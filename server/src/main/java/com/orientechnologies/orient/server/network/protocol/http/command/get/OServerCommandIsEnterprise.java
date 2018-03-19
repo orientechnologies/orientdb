@@ -18,15 +18,11 @@
 
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.profiler.OProfilerStub;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
 import java.io.IOException;
@@ -48,7 +44,6 @@ public class OServerCommandIsEnterprise extends OServerCommandAuthenticatedServe
     return NAMES;
   }
 
-
   @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 
@@ -65,16 +60,12 @@ public class OServerCommandIsEnterprise extends OServerCommandAuthenticatedServe
 
     if ("isEE".equalsIgnoreCase(parts[0])) {
 
-      boolean isEE = Orient.instance().getProfiler().isEnterpriseEdition();
+      ODocument context = Orient.instance().getProfiler().getContext();
 
-      final ODocument result = new ODocument();
-
-        if (isEE)
-          result.field("enterprise", true);
-        else
-          result.field("enterprise", false);
-
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, result.toJSON("prettyPrint"), null);
+      if (context.getProperty("enterprise") == null) {
+        context.setProperty("enterprise", false);
+      }
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, context.toJSON("prettyPrint"), null);
 
     } else {
       throw new IllegalArgumentException("");
