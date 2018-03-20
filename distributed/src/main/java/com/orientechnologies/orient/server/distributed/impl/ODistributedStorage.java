@@ -227,6 +227,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         ((OCommandExecutorSQLDelegate) executor).getDelegate() :
         executor;
 
+    if (!exec.isIdempotent()) {
+      resetLastValidBackup();
+    }
+
     if (exec.isIdempotent() && !dManager.isNodeAvailable(dManager.getLocalNodeName(), getName())) {
       // SPECIAL CASE: NODE IS OFFLINE AND THE COMMAND IS IDEMPOTENT, EXECUTE IT LOCALLY ONLY
       ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
@@ -1547,6 +1551,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   @Override
   public int addCluster(final String iClusterName, boolean forceListBased, final Object... iParameters) {
+    resetLastValidBackup();
     for (int retry = 0; retry < 10; ++retry) {
       final AtomicInteger clId = new AtomicInteger();
 
@@ -1619,10 +1624,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   @Override
   public int addCluster(String iClusterName, int iRequestedId, boolean forceListBased, Object... iParameters) {
+    resetLastValidBackup();
     return wrapped.addCluster(iClusterName, iRequestedId, forceListBased, iParameters);
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
+    resetLastValidBackup();
     return wrapped.dropCluster(iClusterName, iTruncate);
   }
 
