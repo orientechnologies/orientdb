@@ -39,5 +39,12 @@ public class OIfStatementExecutionTest {
     results.close();
   }
 
+  @Test public void testIfReturn() {
+    OResultSet results = db.command("if(1=1){ return 'yes'; }");
+    Assert.assertTrue(results.hasNext());
+    Assert.assertEquals("yes", results.next().getProperty("value"));
+    Assert.assertFalse(results.hasNext());
+    results.close();
+  }
 
 }
