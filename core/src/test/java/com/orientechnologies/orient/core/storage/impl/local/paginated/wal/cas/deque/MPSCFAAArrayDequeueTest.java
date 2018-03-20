@@ -238,6 +238,8 @@ public class MPSCFAAArrayDequeueTest {
       dequer.get();
 
       executor.shutdown();
+
+      System.out.printf("%d iterations were passed out of %d \n", n, iterations);
     }
   }
 
@@ -270,9 +272,10 @@ public class MPSCFAAArrayDequeueTest {
       dequer.get();
 
       executor.shutdown();
+
+      System.out.printf("%d iterations were passed out of %d \n", n, iterations);
     }
   }
-
 
   private static final class Enquer implements Callable<Void> {
     private final int                              limit;
