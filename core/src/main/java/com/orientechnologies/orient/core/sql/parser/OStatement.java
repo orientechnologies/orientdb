@@ -134,5 +134,8 @@ public class OStatement extends SimpleNode {
     return originalStatement;
   }
 
+  public void setOriginalStatement(String originalStatement) {
+    this.originalStatement = originalStatement;
+  }
 }
 /* JavaCC - OriginalChecksum=589c4dcc8287f430e46d8eb12b0412c5 (do not edit this line) */

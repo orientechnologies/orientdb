@@ -38,6 +38,9 @@ public class OSqlScriptExecutor implements OScriptExecutor {
       if (rs != null) {
         rs.close();
       }
+      if (stm.getOriginalStatement() == null) {
+        stm.setOriginalStatement(stm.toString());
+      }
       rs = stm.execute(database, (Map) null, scriptContext);
     }
     if (rs == null) {

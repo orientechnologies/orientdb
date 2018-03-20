@@ -76,7 +76,7 @@ public class OLocalResultSet implements OResultSet {
         final OSecurityUser user = db.getUser();
         final String userString = user != null ? user.toString() : null;
         Orient.instance().getProfiler()
-            .stopChrono("db." + ODatabaseRecordThreadLocal.instance().get().getName() + ".command." + executionPlan.getStatement(),
+            .stopChrono("db." + ODatabaseRecordThreadLocal.instance().get().getName() + ".command.sql." + executionPlan.getStatement(),
                 "Command executed against the database", System.currentTimeMillis() - totalExecutionTime, "db.*.command.*", null,
                 userString);
       }
