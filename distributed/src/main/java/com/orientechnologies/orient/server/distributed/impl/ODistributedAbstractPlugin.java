@@ -1277,42 +1277,42 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     ODistributedServerLog
         .info(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Requesting deploy of database '%s' on local server...",
             databaseName);
+    for (String noteToSend : selectedNodes) {
+      final OLogSequenceNumber lastLSN = distrDatabase.getSyncConfiguration().getLastLSN(noteToSend);
+      final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask(lastLSN,
+          distrDatabase.getSyncConfiguration().getLastOperationTimestamp());
+      List<String> singleNode = new ArrayList<>();
+      singleNode.add(noteToSend);
+      final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, singleNode, deployTask,
+          getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null).getPayload();
 
-    final OLogSequenceNumber lastLSN = distrDatabase.getSyncConfiguration().getLastLSN(getLocalNodeName());
+      ODistributedServerLog.debug(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Deploy returned: %s", results);
 
-    final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask(lastLSN,
-        distrDatabase.getSyncConfiguration().getLastOperationTimestamp());
+      final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
 
-    final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, selectedNodes, deployTask,
-        getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null).getPayload();
+      // EXTRACT THE REAL RESULT
+      for (Map.Entry<String, Object> r : results.entrySet()) {
+        final Object value = r.getValue();
 
-    ODistributedServerLog.debug(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Deploy returned: %s", results);
+        if (value instanceof Boolean) {
+          distrDatabase.setOnline();
+          continue;
+        } else if (value instanceof ODatabaseIsOldException) {
 
-    final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
+          // MANAGE THIS EXCEPTION AT UPPER LEVEL
+          throw (ODatabaseIsOldException) value;
 
-    // EXTRACT THE REAL RESULT
-    for (Map.Entry<String, Object> r : results.entrySet()) {
-      final Object value = r.getValue();
+        } else if (value instanceof Throwable) {
+          ODistributedServerLog
+              .error(this, nodeName, r.getKey(), DIRECTION.IN, "Error on installing database '%s' in %s", (Throwable) value,
+                  databaseName, dbPath);
 
-      if (value instanceof Boolean) {
-        distrDatabase.setOnline();
-        continue;
-      } else if (value instanceof ODatabaseIsOldException) {
+          setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
 
-        // MANAGE THIS EXCEPTION AT UPPER LEVEL
-        throw (ODatabaseIsOldException) value;
+          if (value instanceof ODistributedException)
+            throw (ODistributedException) value;
 
-      } else if (value instanceof Throwable) {
-        ODistributedServerLog
-            .error(this, nodeName, r.getKey(), DIRECTION.IN, "Error on installing database '%s' in %s", (Throwable) value,
-                databaseName, dbPath);
-
-        setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
-
-        if (value instanceof ODistributedException)
-          throw (ODistributedException) value;
-
-      } else if (value instanceof ODistributedDatabaseChunk) {
+        } else if (value instanceof ODistributedDatabaseChunk) {
 
         // DISABLED BECAUSE MOMENTUM IS NOT RELIABLE YET
         // distrDatabase.filterBeforeThisMomentum(((ODistributedDatabaseChunk) value).getMomentum());
@@ -1326,17 +1326,18 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         else if (stg != null)
           stg.close(true, false);
 
-        installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(), (ODistributedDatabaseChunk) value, false,
-            uniqueClustersBackupDirectory, cfg);
+          installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(), (ODistributedDatabaseChunk) value, false,
+              uniqueClustersBackupDirectory, cfg);
 
-        OStorage storage = storages.get(databaseName);
-        replaceStorageInSessions(storage);
-        distrDatabase.resume();
+          OStorage storage = storages.get(databaseName);
+          replaceStorageInSessions(storage);
+          distrDatabase.resume();
 
-        return true;
+          return true;
 
-      } else
-        throw new IllegalArgumentException("Type " + value + " not supported");
+        } else
+          throw new IllegalArgumentException("Type " + value + " not supported");
+      }
     }
 
     throw new ODistributedException("No response received from remote nodes for auto-deploy of database '" + databaseName + "'");
