@@ -524,13 +524,13 @@ ServerModule.controller("ServerDashboardController", [
         template: "importersManager",
         icon: "fa-plug"
       },
-      {
-        name: "alerts",
-        title: "Alerts Management",
-        template: "events",
-        icon: "fa-bell",
-        wiki: "Studio-Alert-Management.html"
-      },
+      // {
+      //   name: "alerts",
+      //   title: "Alerts Management",
+      //   template: "events",
+      //   icon: "fa-bell",
+      //   wiki: "Studio-Alert-Management.html"
+      // },
       {
         name: "cloud",
         title: "Cloud Management",

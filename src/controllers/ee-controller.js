@@ -1380,12 +1380,12 @@ ee.controller("EEDashboardController", [
         template: "security",
         icon: "fa-lock"
       },
-      {
-        name: "alerts",
-        title: "Alerts Management",
-        template: "events",
-        icon: "fa-bell"
-      },
+      // {
+      //   name: "alerts",
+      //   title: "Alerts Management",
+      //   template: "events",
+      //   icon: "fa-bell"
+      // },
       {
         name: "importers",
         title: "Importer",
