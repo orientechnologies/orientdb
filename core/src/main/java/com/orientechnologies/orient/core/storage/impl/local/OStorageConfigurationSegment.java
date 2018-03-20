@@ -20,18 +20,23 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
-import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -41,42 +46,62 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED")
 public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
-  private static final long serialVersionUID = 638874446554389034L;
+  //This class uses "double write" pattern.
+  //Whenever we want to update configuration, first we write data in backup file and make fsync. Then we write the same data
+  //in primary file and make fsync. Then we remove backup file. So does not matter if we have error on any of this stages
+  //we always will have consistent storage configuration.
+  //Downside of this approach is the double overhead during write of configuration, but it was chosen to keep binary compatibility
+  //between versions.
 
-  private static final int START_SIZE = 10000;
-  private final transient OSingleFileSegment segment;
+  /**
+   * Name of primary file
+   */
+  private static final String NAME = "database.ocf";
+
+  /**
+   * Name of backup file which is used when we update storage configuration using double write pattern
+   */
+  private static final String BACKUP_NAME = "database.ocf2";
 
   private static final long ENCODING_FLAG_1 = 128975354756545L;
   private static final long ENCODING_FLAG_2 = 587138568122547L;
   private static final long ENCODING_FLAG_3 = 812587836547249L;
 
-  public OStorageConfigurationSegment(final OLocalPaginatedStorage iStorage) {
-    super(iStorage, Charset.forName("UTF-8"));
+  private final String storageName;
+  private final Path   storagePath;
 
-    segment = new OSingleFileSegment((OLocalPaginatedStorage) storage,
-        new OStorageFileConfiguration(null, getDirectory() + "/database.ocf", "classic", fileTemplate.maxSize,
-            fileTemplate.fileIncrementSize));
-  }
+  public OStorageConfigurationSegment(final OLocalPaginatedStorage storage) {
+    super(storage, Charset.forName("UTF-8"));
 
-  @Override
-  public void close() throws IOException {
-    super.close();
-    segment.close();
+    this.storageName = storage.getName();
+    this.storagePath = storage.getStoragePath();
   }
 
   @Override
   public void delete() throws IOException {
     super.delete();
-    segment.delete();
+
+    clearConfigurationFiles();
+  }
+
+  /**
+   * Remove both backup and primary configuration files on delete
+   *
+   * @see #update()
+   */
+  private void clearConfigurationFiles() throws IOException {
+    final Path file = storagePath.resolve(NAME);
+    Files.deleteIfExists(file);
+
+    final Path backupFile = storagePath.resolve(BACKUP_NAME);
+    Files.deleteIfExists(backupFile);
   }
 
   @Override
   public void create() throws IOException {
-    segment.create(START_SIZE);
-    super.create();
+    clearConfigurationFiles();
 
-    final OFile f = segment.getFile();
-    f.synch();
+    super.create();
   }
 
   @Override
@@ -84,58 +109,68 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
     try {
       initConfiguration(configuration);
 
-      if (segment.getFile().exists())
-        segment.open();
-      else {
-        segment.create(START_SIZE);
+      final Path file = storagePath.resolve(NAME);
+      final Path backupFile = storagePath.resolve(BACKUP_NAME);
 
-        // @COMPATIBILITY0.9.25
-        // CHECK FOR OLD VERSION OF DATABASE
-        final ORawBuffer rawRecord = storage.readRecord(CONFIG_RID, null, false, false, null).getResult();
-        if (rawRecord != null)
-          //noinspection deprecation
-          fromStream(rawRecord.buffer);
+      final Path activeFile;
 
-        update();
-        return this;
+      if (Files.exists(file)) {
+        activeFile = file;
+      } else if (Files.exists(backupFile)) {
+        OLogManager.instance().warn(this,
+            "Seems like previous update to the storage '%s' configuration was finished incorrectly, reading from backup",
+            backupFile);
+        activeFile = backupFile;
+      } else {
+        throw new OStorageException("Can not find configuration file for storage " + storageName);
       }
 
-      final int size = segment.getFile().readInt(0);
+      final ByteBuffer byteBuffer;
+
+      try (final FileChannel channel = FileChannel.open(activeFile, StandardOpenOption.READ)) {
+        byteBuffer = ByteBuffer.allocate((int) channel.size());
+        OIOUtils.readByteBuffer(byteBuffer, channel);
+      }
+
+      byteBuffer.position(0);
+
+      final int size = byteBuffer.getInt();//size of string which contains database configuration
       byte[] buffer = new byte[size];
-      segment.getFile().read(OBinaryProtocol.SIZE_INT, buffer, size);
 
-      if (segment.getFile().getFileSize() >= size + 2 * OIntegerSerializer.INT_SIZE + 3 * OLongSerializer.LONG_SIZE) {
-        //previous versions of database encode data using native charset encoding
-        //as result special characters in cluster or index names can be broken
-        //in new versions we use UTF-8 encoding to check which encoding is used
-        //encoding flag was added, we check it to know whether we should use UTF-8 or native encoding
+      byteBuffer.get(buffer);
 
-        final long encodingFagOne = segment.getFile().readLong(OIntegerSerializer.INT_SIZE + size);
-        final long encodingFagTwo = segment.getFile().readLong(OIntegerSerializer.INT_SIZE + size + OLongSerializer.LONG_SIZE);
-        final long encodingFagThree = segment.getFile()
-            .readLong(OIntegerSerializer.INT_SIZE + size + 2 * OLongSerializer.LONG_SIZE);
+      if (byteBuffer.limit() >= size + 2 * OIntegerSerializer.INT_SIZE + 3 * OLongSerializer.LONG_SIZE) {
+        final long encodingFagOne = byteBuffer.getLong();
+        final long encodingFagTwo = byteBuffer.getLong();
+        final long encodingFagThree = byteBuffer.getLong();
 
-        Charset streamEncoding = Charset.defaultCharset();
+        final Charset streamEncoding;
 
+        //those flags are added to distinguish between old version of configuration file and new one.
         if (encodingFagOne == ENCODING_FLAG_1 && encodingFagTwo == ENCODING_FLAG_2 && encodingFagThree == ENCODING_FLAG_3) {
           final byte[] utf8Encoded = "UTF-8".getBytes(Charset.forName("UTF-8"));
 
-          final int encodingNameLength = segment.getFile()
-              .readInt(OIntegerSerializer.INT_SIZE + size + 3 * OLongSerializer.LONG_SIZE);
+          final int encodingNameLength = byteBuffer.getInt();
 
           if (encodingNameLength == utf8Encoded.length) {
             final byte[] binaryEncodingName = new byte[encodingNameLength];
-            segment.getFile().read(2 * OIntegerSerializer.INT_SIZE + size + 3 * OLongSerializer.LONG_SIZE, binaryEncodingName,
-                encodingNameLength);
+            byteBuffer.get(binaryEncodingName);
+
             final String encodingName = new String(binaryEncodingName, "UTF-8");
 
             if (encodingName.equals("UTF-8")) {
               streamEncoding = Charset.forName("UTF-8");
+            } else {
+              throw new OStorageException("Invalid format for configuration file " + activeFile + " for storage" + storageName);
             }
-          }
-        }
 
-        fromStream(buffer, 0, buffer.length, streamEncoding);
+            fromStream(buffer, 0, buffer.length, streamEncoding);
+          } else {
+            throw new OStorageException("Invalid format for configuration file " + activeFile + " for storage" + storageName);
+          }
+        } else {
+          throw new OStorageException("Invalid format for configuration file " + activeFile + " for storage" + storageName);
+        }
       } else {
         fromStream(buffer, 0, buffer.length, Charset.defaultCharset());
       }
@@ -149,46 +184,54 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
 
   @Override
   public void update() throws OSerializationException {
+    final Charset utf8 = Charset.forName("UTF-8");
+    final byte[] buffer = toStream(utf8);
+
+    final String encodingName = "UTF-8";
+    final byte[] binaryEncodingName = encodingName.getBytes(utf8);
+    //length of presentation of configuration + configuration + 3 utf-8 encoding flags + length of utf-8 encoding name +
+    //utf-8 encoding name
+    final int len = buffer.length + 2 * OBinaryProtocol.SIZE_INT + binaryEncodingName.length + 3 * OLongSerializer.LONG_SIZE;
+
+    final ByteBuffer byteBuffer = ByteBuffer.allocate(len);
+    byteBuffer.putInt(buffer.length);
+    byteBuffer.put(buffer);
+
+    byteBuffer.putLong(ENCODING_FLAG_1);
+    byteBuffer.putLong(ENCODING_FLAG_2);
+    byteBuffer.putLong(ENCODING_FLAG_3);
+
+    byteBuffer.putInt(binaryEncodingName.length);
+    byteBuffer.put(binaryEncodingName);
+
     try {
-      final OFile f = segment.getFile();
+      if (!Files.exists(storagePath)) {
+        Files.createDirectories(storagePath);
+      }
 
-      if (!f.isOpen())
-        return;
+      final Path backupFile = storagePath.resolve(BACKUP_NAME);
+      Files.deleteIfExists(backupFile);
 
-      Charset utf8 = Charset.forName("UTF-8");
-      final byte[] buffer = toStream(utf8);
+      try (FileChannel channel = FileChannel.open(backupFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
+        byteBuffer.position(0);
+        OIOUtils.writeByteBuffer(byteBuffer, channel, 0);
 
-      final String encodingName = "UTF-8";
-      final byte[] binaryEncodingName = encodingName.getBytes(utf8);
+        channel.force(true);
+      }
 
-      //length of presentation of configuration + configuration + 3 utf-8 encoding flags + length of utf-8 encoding name +
-      //utf-8 encoding name
-      final int len = buffer.length + 2 * OBinaryProtocol.SIZE_INT + binaryEncodingName.length + 3 * OLongSerializer.LONG_SIZE;
+      final Path file = storagePath.resolve(NAME);
+      Files.deleteIfExists(file);
 
-      if (len > f.getFileSize())
-        f.allocateSpace(len - f.getFileSize());
+      try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
+        byteBuffer.position(0);
+        OIOUtils.writeByteBuffer(byteBuffer, channel, 0);
 
-      f.writeInt(0, buffer.length);
-      f.write(OBinaryProtocol.SIZE_INT, buffer);
+        channel.force(true);
+      }
 
-      //indicator that stream is encoded using UTF-8 encoding
-      f.writeLong(OIntegerSerializer.INT_SIZE + buffer.length, ENCODING_FLAG_1);
-      f.writeLong(OIntegerSerializer.INT_SIZE + buffer.length + OLongSerializer.LONG_SIZE, ENCODING_FLAG_2);
-      f.writeLong(OIntegerSerializer.INT_SIZE + buffer.length + 2 * OLongSerializer.LONG_SIZE, ENCODING_FLAG_3);
-
-      f.writeInt(OIntegerSerializer.INT_SIZE + buffer.length + 3 * OLongSerializer.LONG_SIZE, binaryEncodingName.length);
-      f.write(2 * OIntegerSerializer.INT_SIZE + buffer.length + 3 * OLongSerializer.LONG_SIZE, binaryEncodingName);
-
-      f.synch();
-
+      Files.delete(backupFile);
     } catch (Exception e) {
       throw OException.wrapException(new OSerializationException("Error on update storage configuration"), e);
     }
   }
-
-  @Override
-  public void synch() throws IOException {
-    segment.getFile().synch();
-  }
-
 }

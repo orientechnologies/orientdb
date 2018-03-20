@@ -604,8 +604,6 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, 0, OBlob.RECORD_TYPE, (byte) 0, null);
   }
 
-  public void synch() throws IOException {
-  }
 
   public void delete() throws IOException {
     close();

@@ -68,9 +68,4 @@ public class OStorageMemoryConfiguration extends OStorageConfigurationImpl {
     }
 
   }
-
-  @Override
-  public void synch() throws IOException {
-  }
-
 }

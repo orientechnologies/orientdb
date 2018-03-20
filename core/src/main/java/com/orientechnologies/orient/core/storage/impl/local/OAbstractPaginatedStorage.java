@@ -3195,9 +3195,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             writeCache.flush();
 
-            if (configuration != null)
-              getConfiguration().synch();
-
             clearStorageDirty();
           } else {
             OLogManager.instance().errorNoDb(this, "Sync can not be performed because of JVM error on storage", null);
@@ -3933,9 +3930,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       try {
         writeAheadLog.flush();
-
-        if (configuration != null)
-          getConfiguration().synch();
 
         //so we will be able to cut almost all the log
         writeAheadLog.appendNewSegment();
