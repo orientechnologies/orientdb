@@ -1,19 +1,17 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+public class Cursor<T> {
+  final Node<T> node;
+  final int  pageIndex;
+  final T    item;
 
-public class Cursor {
-  final Node       node;
-  final int        pageIndex;
-  final OWALRecord record;
-
-  public Cursor(Node node, int pageIndex, OWALRecord record) {
+  public Cursor(Node<T> node, int pageIndex, T item) {
     this.node = node;
     this.pageIndex = pageIndex;
-    this.record = record;
+    this.item = item;
   }
 
-  public OWALRecord getRecord() {
-    return record;
+  public T getItem() {
+    return item;
   }
 }

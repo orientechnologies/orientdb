@@ -6,19 +6,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-public class Node extends AtomicReference<Node> {
+public class Node<T> extends AtomicReference<Node<T>> {
   static final int BUFFER_SIZE = 128;
 
-  private volatile Node prev;
+  private volatile Node<T> prev;
 
-  public volatile int                              deqidx = 0;
-  public final    AtomicReferenceArray<OWALRecord> items  = new AtomicReferenceArray<>(BUFFER_SIZE);
-  public final    AtomicInteger                    enqidx = new AtomicInteger(1);
+  public volatile int                     deqidx = 0;
+  public final    AtomicReferenceArray<T> items  = new AtomicReferenceArray<>(BUFFER_SIZE);
+  public final    AtomicInteger           enqidx = new AtomicInteger(1);
 
   Node() {
   }
 
-  Node(OWALRecord record, Node prev) {
+  Node(T record, Node<T> prev) {
     items.lazySet(0, record);
     this.prev = prev;
   }
@@ -31,15 +31,15 @@ public class Node extends AtomicReference<Node> {
     set(null);
   }
 
-  public boolean casNext(Node oldNode, Node newNode) {
+  public boolean casNext(Node<T> oldNode, Node<T> newNode) {
     return compareAndSet(oldNode, newNode);
   }
 
-  public Node getNext() {
+  public Node<T> getNext() {
     return get();
   }
 
-  public Node getPrev() {
+  public Node<T> getPrev() {
     return prev;
   }
 }
