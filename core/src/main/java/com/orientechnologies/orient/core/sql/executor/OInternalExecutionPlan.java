@@ -38,4 +38,12 @@ public interface OInternalExecutionPlan extends OExecutionPlan {
   }
 
   boolean canBeCached();
+
+  default String getStatement() {
+    return null;
+  }
+
+  default void setStatement(String stm) {
+
+  }
 }

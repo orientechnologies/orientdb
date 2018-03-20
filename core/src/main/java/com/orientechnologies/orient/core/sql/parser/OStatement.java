@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class OStatement extends SimpleNode {
 
-  //only for internal use!!! (caching)
+  //only for internal use!!! (caching and profiling)
   protected String originalStatement;
 
   public static final String CUSTOM_STRICT_SQL = "strictSql";

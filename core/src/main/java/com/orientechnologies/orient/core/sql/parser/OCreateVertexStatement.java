@@ -61,7 +61,9 @@ public class OCreateVertexStatement extends OStatement {
 
   @Override public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OCreateVertexExecutionPlanner planner = new OCreateVertexExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx, enableProfiling);
+    OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
+    result.setStatement(this.originalStatement);
+    return result;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

@@ -71,7 +71,9 @@ public class ODeleteEdgeStatement extends OStatement {
 
   public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     ODeleteEdgeExecutionPlanner planner = new ODeleteEdgeExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx, enableProfiling);
+    ODeleteExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
+    result.setStatement(this.originalStatement);
+    return result;
   }
 
 
