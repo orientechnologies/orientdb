@@ -109,8 +109,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
           continue;
         }
-        valuePos = readInteger(bytes);
-        type = readOType(bytes);
+        Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(bytes);
+        valuePos = pointerAndType.getFirstVal();
+        type = pointerAndType.getSecondVal();
       } else {
         // LOAD GLOBAL PROPERTY BY ID
         final OGlobalProperty prop = getGlobalProperty(document, len);
@@ -185,8 +186,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
             }
 
           bytes.skip(len);
-          final int valuePos = readInteger(bytes);
-          final OType type = readOType(bytes);
+          Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(bytes);
+          final int valuePos = pointerAndType.getFirstVal();
+          final OType type = pointerAndType.getSecondVal();
 
           if (valuePos == 0)
             return null;
@@ -263,8 +265,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         // PARSE FIELD NAME
         fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
         bytes.skip(len);
-        valuePos = readInteger(bytes);
-        type = readOType(bytes);
+        Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(bytes);
+        valuePos = pointerAndType.getFirstVal();
+        type = pointerAndType.getSecondVal();
       } else {
         // LOAD GLOBAL PROPERTY BY ID
         prop = getGlobalProperty(document, len);
@@ -429,7 +432,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
   
   //get positions for all embedded nested fields
-  private void getPositionsForAllChildren(List<Integer> destinationList, BytesContainer record, OType fieldType, int serializerVersion){
+  protected void getPositionsForAllChildren(List<Integer> destinationList, BytesContainer record, OType fieldType, int serializerVersion){
     if (null != fieldType)switch (fieldType) {
       case EMBEDDED:
         //no need for level up because root byte array is already devided
@@ -454,7 +457,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
   }
   
-  private List<Integer> getPositionsPointersToUpdateFromSimpleEmbedded(BytesContainer record, int serializerVersion){    
+  protected List<Integer> getPositionsPointersToUpdateFromSimpleEmbedded(BytesContainer record, int serializerVersion){    
     List<Integer> retList = new ArrayList<>();    
     int len = -1;      
     //skip class name
@@ -467,11 +470,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         record.offset += len;
         //add this offset to result List;        
         retList.add(record.offset);
-        int valuePos = readInteger(record);                    
-
-        //read type
-        byte typeId = readByte(record);          
-        OType type = OType.getById(typeId);
+        Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(record);
+        int valuePos = pointerAndType.getFirstVal();
+        OType type = pointerAndType.getSecondVal();
         
         int currentCursor = record.offset;
         record.offset = valuePos;
@@ -1241,8 +1242,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
             }
 
           bytes.skip(len);
-          int valuePos = readInteger(bytes);
-          OType type = readOType(bytes);
+          Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(bytes);
+          int valuePos = pointerAndType.getFirstVal();
+          OType type = pointerAndType.getSecondVal();
 
           if (valuePos == 0)
             return null;
@@ -1307,4 +1309,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return true;
   }
   
+  Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes){
+    int valuePos = readInteger(bytes);
+    byte typeId = readByte(bytes);
+    OType type = OType.getById(typeId);
+    return new Tuple<>(valuePos, type);
+  }
+  
+  @Override
+  public boolean areTypeAndPointerFlipped(){
+    return false;
+  }
 }

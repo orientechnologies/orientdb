@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -263,6 +264,11 @@ public class ORecordSerializerBinaryTest {
       if (len > 0){
         //read field name
         container.offset += len;
+        
+        if (serializer.getCurrentSerializer().areTypeAndPointerFlipped()){
+          container.skip(OByteSerializer.BYTE_SIZE);
+        }
+        
         //read data pointer
         int pointer = readInteger(container);
         //shift pointer by start ofset
@@ -270,7 +276,9 @@ public class ORecordSerializerBinaryTest {
         //write to byte container
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, container.bytes, container.offset - OIntegerSerializer.INT_SIZE);
         //read type
-        container.offset++;
+        if (!serializer.getCurrentSerializer().areTypeAndPointerFlipped()){
+          container.offset++;
+        }
       }
       else if (len < 0){
         //rtead data pointer

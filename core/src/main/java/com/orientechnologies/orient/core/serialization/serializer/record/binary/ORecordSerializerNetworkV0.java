@@ -873,4 +873,9 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     return true;
   }
   
+  @Override
+  public boolean areTypeAndPointerFlipped(){
+    return false;
+  }
+  
 }

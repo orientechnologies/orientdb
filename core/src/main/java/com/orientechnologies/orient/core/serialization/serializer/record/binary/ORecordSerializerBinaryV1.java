@@ -112,8 +112,9 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
           bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
           continue;
         }
-        valuePos = readInteger(bytes);
-        type = readOType(bytes);
+        Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(bytes);
+        valuePos = pointerAndType.getFirstVal();
+        type = pointerAndType.getSecondVal();
       } else {
         // LOAD GLOBAL PROPERTY BY ID
         Tuple<Signal, Triple<Integer, OType, String>> actionSignal = processLessThanZeroDeserializePartialFields(document, len, iFields, bytes);
@@ -182,8 +183,9 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       boolean match = checkMatchForLargerThenZero(bytes, field, len);
 
       bytes.skip(len);
-      final int valuePos = readInteger(bytes);
-      final OType type = readOType(bytes);
+      Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(bytes);
+      final int valuePos = pointerAndType.getFirstVal();
+      final OType type = pointerAndType.getSecondVal();
 
       if (valuePos == 0)
         return new Tuple<>(Signal.RETURN_VALUE, null);
@@ -287,8 +289,9 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
         // PARSE FIELD NAME
         fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
         bytes.skip(len);
-        valuePos = readInteger(bytes);
-        type = readOType(bytes);
+        Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(bytes);
+        valuePos = pointerAndType.getFirstVal();
+        type = pointerAndType.getSecondVal();
       } else {
         // LOAD GLOBAL PROPERTY BY ID
         prop = getGlobalProperty(document, len);
@@ -398,10 +401,19 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
           pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
         }
       } else {
+        OType type = getFieldType(docEntry);
         //write field name
         writeString(bytes, entry.getKey());
         //alloc space for data pointer and type
-        pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
+        pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);         
+        ++(pos[i]);
+        if (docEntry.value != null){
+          if (type == null) {
+            throw new OSerializationException(
+                "Impossible serialize value of type " + docEntry.value.getClass() + " with the ODocument binary serializer");
+          }
+          writeOType(bytes, pos[i] - 1, type);          
+        }
       }
       values[i] = entry;
       i++;
@@ -422,7 +434,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
         }
         pointer = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
-        if (values[i].getValue().property == null || values[i].getValue().property.getType() == OType.ANY)
+        if (values[i].getValue().property != null && values[i].getValue().property.getType() == OType.ANY)
           writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
     }
@@ -492,5 +504,63 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   public boolean isSerializingClassNameForEmbedded() {
     return true;
   }
-     
+  
+  @Override
+  Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes){
+    byte typeId = readByte(bytes);
+    int valuePos = readInteger(bytes);    
+    OType type = OType.getById(typeId);
+    return new Tuple<>(valuePos, type);
+  }
+  
+  @Override
+  protected List<Integer> getPositionsPointersToUpdateFromSimpleEmbedded(BytesContainer record, int serializerVersion){    
+    List<Integer> retList = new ArrayList<>();    
+    int len = -1;      
+    //skip class name
+    readString(record);
+    //update positions and check for embedded records
+    while (len != 0){
+      len = OVarIntSerializer.readAsInteger(record);
+      if (len > 0){
+        //read field name
+        record.offset += len;
+        //add this offset incremented by 1 (because of type first) to result List;        
+        retList.add(record.offset + 1);
+        Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(record);
+        int valuePos = pointerAndType.getFirstVal();
+        OType type = pointerAndType.getSecondVal();
+        
+        int currentCursor = record.offset;
+        record.offset = valuePos;
+        getPositionsForAllChildren(retList, record, type, serializerVersion);        
+        record.offset = currentCursor;
+      }
+      else if (len < 0){
+        final int id = (len * -1) - 1;
+        final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
+        final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
+        OGlobalProperty property = _schema.getGlobalPropertyById(id);
+        OType type;
+        if (property.getType() != OType.ANY)
+          type = property.getType();
+        else
+          type = readOType(record);
+        
+        retList.add(record.offset);
+        int valuePos = readInteger(record);
+        
+        int currentCursor = record.offset;
+        record.offset = valuePos;
+        getPositionsForAllChildren(retList, record, type, serializerVersion);        
+        record.offset = currentCursor;
+      }
+    }
+    return retList;
+  }
+  
+  @Override
+  public boolean areTypeAndPointerFlipped(){
+    return true;
+  }
 }
