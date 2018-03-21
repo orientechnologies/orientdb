@@ -48,7 +48,7 @@ public class LocalPaginatedClusterTest {
     OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
 
     paginatedCluster = new OPaginatedCluster("paginatedClusterTest", storage);
-    paginatedCluster.configure(storage, 5, "paginatedClusterTest", buildDirectory, -1);
+    paginatedCluster.configure(storage, 42, "paginatedClusterTest", buildDirectory, -1);
     paginatedCluster.create(-1);
   }
 
