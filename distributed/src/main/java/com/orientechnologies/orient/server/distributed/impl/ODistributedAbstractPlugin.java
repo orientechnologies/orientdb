@@ -1281,7 +1281,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final OLogSequenceNumber lastLSN = distrDatabase.getSyncConfiguration().getLastLSN(noteToSend);
       final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask(lastLSN,
           distrDatabase.getSyncConfiguration().getLastOperationTimestamp());
-      List<String> singleNode = new ArrayList<>();
+      List<String> singleNode = new ArrayList<String>();
       singleNode.add(noteToSend);
       final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, singleNode, deployTask,
           getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null).getPayload();
