@@ -245,7 +245,7 @@ public class MPSCFAAArrayDequeueTest {
 
   @Test
   public void mtTestForwardTwoThreads() throws Exception {
-    final int iterations = 3_000;
+    final int iterations = 300;
 
     for (int n = 0; n < iterations; n++) {
       final ExecutorService executor = Executors.newCachedThreadPool();
@@ -358,15 +358,17 @@ public class MPSCFAAArrayDequeueTest {
         Arrays.fill(segmentPositions, -1);
 
         while (!stop.get()) {
-          final EmptyRecord record = dequeue.poll();
-          if (record == null) {
-            continue;
-          }
+          while (true) {
+            final EmptyRecord record = dequeue.poll();
+            if (record == null) {
+              break;
+            }
 
-          final OLogSequenceNumber lsn = record.getLsn();
-          final int segment = (int) lsn.getSegment();
-          Assert.assertEquals(segmentPositions[segment] + 1, lsn.getPosition());
-          segmentPositions[segment]++;
+            final OLogSequenceNumber lsn = record.getLsn();
+            final int segment = (int) lsn.getSegment();
+            Assert.assertEquals(segmentPositions[segment] + 1, lsn.getPosition());
+            segmentPositions[segment]++;
+          }
         }
 
         for (int position : segmentPositions) {
