@@ -27,9 +27,6 @@ public class Node<T> extends AtomicReference<Node<T>> {
     prev = null;
   }
 
-  public void clearNext() {
-    set(null);
-  }
 
   public boolean casNext(Node<T> oldNode, Node<T> newNode) {
     return compareAndSet(oldNode, newNode);

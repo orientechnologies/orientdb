@@ -57,6 +57,8 @@ public class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
 
       if (deqidx >= BUFFER_SIZE) {
         this.head = head.getNext();
+
+        head.clearPrev();//allow gc to clear previous items
         continue;
       }
 
