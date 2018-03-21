@@ -429,10 +429,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     } else
       ODocumentInternal.addOwner((ODocument) value, ownerDocument);
     return value;
-  }
+  }    
   
   //get positions for all embedded nested fields
-  protected void getPositionsForAllChildren(List<Integer> destinationList, BytesContainer record, OType fieldType, int serializerVersion){
+  protected void getPositionsForAllDescendants(List<Integer> destinationList, BytesContainer record, OType fieldType, int serializerVersion){
     if (null != fieldType)switch (fieldType) {
       case EMBEDDED:
         //no need for level up because root byte array is already devided
@@ -476,7 +476,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         
         int currentCursor = record.offset;
         record.offset = valuePos;
-        getPositionsForAllChildren(retList, record, type, serializerVersion);        
+        getPositionsForAllDescendants(retList, record, type, serializerVersion);        
         record.offset = currentCursor;
       }
       else if (len < 0){
@@ -495,7 +495,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         
         int currentCursor = record.offset;
         record.offset = valuePos;
-        getPositionsForAllChildren(retList, record, type, serializerVersion);        
+        getPositionsForAllDescendants(retList, record, type, serializerVersion);        
         record.offset = currentCursor;
       }
     }
@@ -523,7 +523,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       int currentOffset = bytes.offset;
       bytes.offset = valuePos;
       
-      getPositionsForAllChildren(recordInfo.fieldRelatedPositions, bytes, valueType, serializerVersion);      
+      getPositionsForAllDescendants(recordInfo.fieldRelatedPositions, bytes, valueType, serializerVersion);      
       
       //get field length
       bytes.offset = valuePos;
@@ -559,7 +559,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       
       int currentCursor = bytes.offset;
       
-      getPositionsForAllChildren(fieldInfo.fieldRelatedPositions, bytes, dataType, serializerVersion);
+      getPositionsForAllDescendants(fieldInfo.fieldRelatedPositions, bytes, dataType, serializerVersion);
       
       bytes.offset = currentCursor;
       //TODO find better way to skip data bytes;
@@ -616,7 +616,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return new OResultBinary(bytes.bytes, startOffset, valueLength, serializerVersion);
   }  
     
-  private Object deserializeValue(final BytesContainer bytes, final OType type, final ODocument ownerDocument, boolean embeddedAsDocument, 
+  protected Object deserializeValue(final BytesContainer bytes, final OType type, final ODocument ownerDocument, boolean embeddedAsDocument, 
           int valueLengthInBytes, int serializerVersion, boolean justRunThrough) {
     Object value = null;
     switch (type) {
@@ -1211,7 +1211,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     bytes.skip(classNameLen);
   }
   
-  private int getEmbeddedFieldSize(BytesContainer bytes, int currentFieldDataPos, 
+  protected int getEmbeddedFieldSize(BytesContainer bytes, int currentFieldDataPos, 
           int serializerVersion, OType type){
     int startOffset = bytes.offset;
     bytes.offset = currentFieldDataPos;
