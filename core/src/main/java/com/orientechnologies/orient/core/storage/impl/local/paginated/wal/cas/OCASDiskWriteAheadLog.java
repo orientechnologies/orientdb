@@ -83,7 +83,7 @@ public class OCASDiskWriteAheadLog {
   private volatile long freeSpace = -1;
 
   private final    MPSCFAAArrayDequeue<OWALRecord> records        = new MPSCFAAArrayDequeue<>();
-  private volatile long                currentSegment = 0;
+  private volatile long                            currentSegment = 0;
 
   private final AtomicLong segmentSize = new AtomicLong();
   private final AtomicLong logSize     = new AtomicLong();
@@ -102,7 +102,8 @@ public class OCASDiskWriteAheadLog {
 
   private volatile FileChannel walChannel = null;
 
-  private volatile OLogSequenceNumber flushedLSN = null;
+  private volatile OLogSequenceNumber                  flushedLSN = null;
+  private final    AtomicReference<OLogSequenceNumber> writtenLSN = new AtomicReference<>();
 
   private long segmentId = -1;
 
@@ -395,6 +396,10 @@ public class OCASDiskWriteAheadLog {
   public List<OWriteableWALRecord> read(final OLogSequenceNumber lsn, int limit) throws IOException {
     final OLogSequenceNumber endLSN = end.get();
 
+    if (endLSN == null) {
+      return Collections.emptyList();
+    }
+
     if (lsn.compareTo(endLSN) > 0) {
       return Collections.emptyList();
     }
@@ -434,9 +439,23 @@ public class OCASDiskWriteAheadLog {
         }
       }
 
+      //taken from the queue but not written to the disk yet
+      ensureThatRecordWrittenOnDisk(lsn);
+
       return readFromDisk(lsn, limit);
     } finally {
       removeCutTillLimit(lsn);
+    }
+  }
+
+  private void ensureThatRecordWrittenOnDisk(OLogSequenceNumber lsn) {
+    final OLogSequenceNumber flushedLSN = this.flushedLSN;
+
+    if (flushedLSN == null || flushedLSN.compareTo(lsn) < 0) {
+      final OLogSequenceNumber writtenLSN = this.writtenLSN.get();
+      if (writtenLSN == null || writtenLSN.compareTo(lsn) < 0) {
+        doFlush();
+      }
     }
   }
 
@@ -580,19 +599,24 @@ public class OCASDiskWriteAheadLog {
   }
 
   public List<OWriteableWALRecord> next(final OLogSequenceNumber lsn, int limit) throws IOException {
+    final OLogSequenceNumber endLSN = end.get();
+
+    if (endLSN == null) {
+      return Collections.emptyList();
+    }
+
+    final int compareEnd = lsn.compareTo(endLSN);
+
+    if (compareEnd == 0) {
+      return Collections.emptyList();
+    }
+
+    if (compareEnd > 0) {
+      throw new IllegalArgumentException("Invalid LSN was passed " + lsn);
+    }
+
     addCutTillLimit(lsn);
     try {
-      final OLogSequenceNumber endLSN = end.get();
-      final int compareEnd = lsn.compareTo(endLSN);
-
-      if (compareEnd == 0) {
-        return Collections.emptyList();
-      }
-
-      if (compareEnd > 0) {
-        throw new IllegalArgumentException("Invalid LSN was passed " + lsn);
-      }
-
       Cursor<OWALRecord> recordCursor = records.peekFirst();
 
       OWALRecord logRecord = recordCursor.getItem();
@@ -650,8 +674,10 @@ public class OCASDiskWriteAheadLog {
         }
       }
 
+      ensureThatRecordWrittenOnDisk(lsn);
+
       List<OWriteableWALRecord> result;
-      if (limit <= 0) {
+      if (limit < 0) {
         result = readFromDisk(lsn, 0);
       } else {
         result = readFromDisk(lsn, limit + 1);
@@ -1430,6 +1456,10 @@ public class OCASDiskWriteAheadLog {
               if (ptr > 0) {
                 writeBuffer(walChannel, buffer);
                 Native.free(ptr);
+
+                if (lastLSN != null) {
+                  writtenLSN.lazySet(lastLSN);
+                }
               }
 
               ptr = 0;
@@ -1485,6 +1515,10 @@ public class OCASDiskWriteAheadLog {
                 if (ptr > 0) {
                   writeBuffer(walChannel, buffer);
                   Native.free(ptr);
+
+                  if (lastLSN != null) {
+                    writtenLSN.lazySet(lastLSN);
+                  }
                 }
 
                 ptr = Native.malloc(OCASWALPage.PAGE_SIZE);
@@ -1572,6 +1606,8 @@ public class OCASDiskWriteAheadLog {
           buffer.put(OCASWALPage.STOP_PAGE_OFFSET, (byte) 1);
           writeBuffer(walChannel, buffer);
           Native.free(ptr);
+
+          writtenLSN.lazySet(lastLSN);
         }
 
         walChannel.force(true);
@@ -1582,9 +1618,7 @@ public class OCASDiskWriteAheadLog {
         }
 
         checkFreeSpace();
-      } catch (IOException e)
-
-      {
+      } catch (IOException e) {
         OLogManager.instance().errorNoDb(this, "Error during WAL writing", e);
 
         throw new IllegalStateException(e);
