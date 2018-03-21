@@ -111,6 +111,8 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
     // LINE A
     execute(USA,
         "create edge Follows from (select from `Client-Type` where name = 'mike') to (select from `Client-Type` where name = 'phoebe')");
+    USA.close();
+    EUR.close();
   }
 
   static Set<String> execute(ODatabaseDocument db, String command) throws InterruptedException {
@@ -121,19 +123,16 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
 
     db.activateOnCurrentThread();
 
-    try {
-      Object o = db.command(new OCommandSQL(command)).execute();
-      if (o instanceof List) {
-        List<ODocument> resultList = (List) o;
-        for (OIdentifiable d : resultList) {
-          if (d.getRecord() instanceof ODocument) {
-            resultSet.add((String) ((ODocument) d.getRecord()).field("name"));
-          }
+    Object o = db.command(new OCommandSQL(command)).execute();
+    if (o instanceof List) {
+      List<ODocument> resultList = (List) o;
+      for (OIdentifiable d : resultList) {
+        if (d.getRecord() instanceof ODocument) {
+          resultSet.add((String) ((ODocument) d.getRecord()).field("name"));
         }
       }
-    } finally {
-      db.close();
     }
+
     return resultSet;
   }
 
