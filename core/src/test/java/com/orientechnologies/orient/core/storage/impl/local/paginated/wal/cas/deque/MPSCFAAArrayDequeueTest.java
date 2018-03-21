@@ -210,7 +210,7 @@ public class MPSCFAAArrayDequeueTest {
   }
 
   @Test
-  public void mtTestForwardSevenThreads() throws Exception {
+  public void mtTestForwardEightThreads() throws Exception {
     final int iterations = 150;
 
     for (int n = 0; n < iterations; n++) {
@@ -226,7 +226,7 @@ public class MPSCFAAArrayDequeueTest {
       final List<Future<Void>> enquers = new ArrayList<>();
 
       for (int i = 0; i < enquersCount; i++) {
-        enquers.add(executor.submit(new Enquer(limit, i, dequeue, enquersCount)));
+        enquers.add(executor.submit(new EnquerForward(limit, i, dequeue, enquersCount)));
       }
 
       for (Future<Void> enquer : enquers) {
@@ -260,7 +260,7 @@ public class MPSCFAAArrayDequeueTest {
       final List<Future<Void>> enquers = new ArrayList<>();
 
       for (int i = 0; i < enquersCount; i++) {
-        enquers.add(executor.submit(new Enquer(limit, i, dequeue, enquersCount)));
+        enquers.add(executor.submit(new EnquerForward(limit, i, dequeue, enquersCount)));
       }
 
       for (Future<Void> enquer : enquers) {
@@ -277,13 +277,81 @@ public class MPSCFAAArrayDequeueTest {
     }
   }
 
-  private static final class Enquer implements Callable<Void> {
+  @Test
+  public void mtTestBackwardTwoThreads() throws Exception {
+    final int iterations = 300;
+
+    for (int n = 0; n < iterations; n++) {
+      final ExecutorService executor = Executors.newCachedThreadPool();
+      final MPSCFAAArrayDequeue<EmptyRecord> dequeue = new MPSCFAAArrayDequeue<>();
+
+      final int enquersCount = 1;
+      final int limit = 1_000_000_000;
+
+      final AtomicBoolean stop = new AtomicBoolean();
+      final Future<Void> dequer = executor.submit(new Dequer(dequeue, stop, enquersCount, limit));
+
+      final List<Future<Void>> enquers = new ArrayList<>();
+
+      for (int i = 0; i < enquersCount; i++) {
+        enquers.add(executor.submit(new EnquerBackward(limit, i, dequeue, enquersCount)));
+      }
+
+      for (Future<Void> enquer : enquers) {
+        enquer.get();
+      }
+
+      stop.set(true);
+
+      dequer.get();
+
+      executor.shutdown();
+
+      System.out.printf("%d iterations were passed out of %d \n", n, iterations);
+    }
+  }
+
+  @Test
+  public void mtTestBackwardEightThreads() throws Exception {
+    final int iterations = 150;
+
+    for (int n = 0; n < iterations; n++) {
+      final ExecutorService executor = Executors.newCachedThreadPool();
+      final MPSCFAAArrayDequeue<EmptyRecord> dequeue = new MPSCFAAArrayDequeue<>();
+
+      final int enquersCount = 7;
+      final int limit = 100_000_000;
+
+      final AtomicBoolean stop = new AtomicBoolean();
+      final Future<Void> dequer = executor.submit(new Dequer(dequeue, stop, enquersCount, limit));
+
+      final List<Future<Void>> enquers = new ArrayList<>();
+
+      for (int i = 0; i < enquersCount; i++) {
+        enquers.add(executor.submit(new EnquerBackward(limit, i, dequeue, enquersCount)));
+      }
+
+      for (Future<Void> enquer : enquers) {
+        enquer.get();
+      }
+
+      stop.set(true);
+
+      dequer.get();
+
+      executor.shutdown();
+
+      System.out.printf("%d iterations were passed out of %d \n", n, iterations);
+    }
+  }
+
+  private static final class EnquerForward implements Callable<Void> {
     private final int                              limit;
     private final int                              segment;
     private final MPSCFAAArrayDequeue<EmptyRecord> dequeue;
     private final int                              segments;
 
-    Enquer(int limit, int segment, MPSCFAAArrayDequeue<EmptyRecord> dequeue, int segments) {
+    EnquerForward(int limit, int segment, MPSCFAAArrayDequeue<EmptyRecord> dequeue, int segments) {
       this.limit = limit;
       this.segment = segment;
       this.dequeue = dequeue;
@@ -333,6 +401,67 @@ public class MPSCFAAArrayDequeueTest {
         segmentPositions[segment] = (int) lsn.getPosition();
 
         cursor = MPSCFAAArrayDequeue.next(cursor);
+        counter++;
+      }
+    }
+  }
+
+  private static final class EnquerBackward implements Callable<Void> {
+    private final int                              limit;
+    private final int                              segment;
+    private final MPSCFAAArrayDequeue<EmptyRecord> dequeue;
+    private final int                              segments;
+
+    EnquerBackward(int limit, int segment, MPSCFAAArrayDequeue<EmptyRecord> dequeue, int segments) {
+      this.limit = limit;
+      this.segment = segment;
+      this.dequeue = dequeue;
+      this.segments = segments;
+    }
+
+    @Override
+    public Void call() {
+      try {
+        final ThreadLocalRandom random = ThreadLocalRandom.current();
+
+        for (int i = 0; i < limit; i++) {
+          final EmptyRecord record = new EmptyRecord();
+          record.setLsn(new OLogSequenceNumber(segment, i));
+
+          dequeue.offer(record);
+
+          if (random.nextDouble() <= 0.2) {
+            iterateBackward(random);
+          }
+        }
+      } catch (Exception | Error e) {
+        e.printStackTrace();
+        throw e;
+      }
+
+      return null;
+    }
+
+    private void iterateBackward(ThreadLocalRandom random) {
+      final int batchSize = random.nextInt(10_000) + 1;
+      int counter = 0;
+
+      int[] segmentPositions = new int[segments];
+      Arrays.fill(segmentPositions, -1);
+
+      Cursor<EmptyRecord> cursor = dequeue.peekLast();
+
+      while (cursor != null && counter < batchSize) {
+        final OLogSequenceNumber lsn = cursor.item.getLsn();
+        final int segment = (int) lsn.getSegment();
+
+        if (segmentPositions[segment] > 0) {
+          Assert.assertEquals(segmentPositions[segment] - 1, lsn.getPosition());
+        }
+
+        segmentPositions[segment] = (int) lsn.getPosition();
+
+        cursor = MPSCFAAArrayDequeue.prev(cursor);
         counter++;
       }
     }

@@ -167,7 +167,10 @@ public class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
         return null; //we remove only from the head, so if tail is empty it means that queue is empty
       }
 
-      final int idx = enqidx;
+      int idx = enqidx;
+      if (idx >= BUFFER_SIZE) {
+        idx = BUFFER_SIZE - 1;
+      }
 
       if (idx <= 0) {
         return null;  // No more nodes in the queue
