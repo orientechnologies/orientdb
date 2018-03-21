@@ -56,6 +56,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
 
     OSequence seq1 = dbs[0].getMetadata().getSequenceLibrary()
         .createSequence(sequenceName, SEQUENCE_TYPE.CACHED, new OSequence.CreateParams().setDefaults().setCacheSize(CACHE_SIZE));
+    dbs[1].activateOnCurrentThread();
     OSequence seq2 = dbs[1].getMetadata().getSequenceLibrary().getSequence(sequenceName);
 
     Assert.assertEquals(seq1.getName(), seq2.getName());
