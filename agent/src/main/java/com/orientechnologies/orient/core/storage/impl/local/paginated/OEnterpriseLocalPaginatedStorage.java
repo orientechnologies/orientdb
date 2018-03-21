@@ -28,6 +28,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.exception.OBackupInProgressException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -281,7 +282,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
               final ZipEntry configurationEntry = new ZipEntry(CONF_UTF_8_ENTRY_NAME);
 
               zipOutputStream.putNextEntry(configurationEntry);
-              final byte[] btConf =  getConfiguration() .toStream(Charset.forName("UTF-8"));
+              final byte[] btConf =  ((OStorageConfigurationImpl)getConfiguration()).toStream(Charset.forName("UTF-8"));
 
               zipOutputStream.write(btConf);
               zipOutputStream.closeEntry();
@@ -609,12 +610,13 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       }
     }
 
-    getConfiguration().fromStream(buffer, 0, rb, charset);
-    getConfiguration().update();
 
-    getConfiguration().close();
+    ((OStorageConfigurationImpl)getConfiguration()).fromStream(buffer, 0, rb, charset);
+    ((OStorageConfigurationImpl)getConfiguration()).update();
 
-    getConfiguration().load(config);
+    ((OStorageConfigurationImpl)getConfiguration()).close();
+
+    ((OStorageConfigurationImpl)getConfiguration()).load(config);
   }
 
 }
