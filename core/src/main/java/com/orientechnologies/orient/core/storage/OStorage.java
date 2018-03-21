@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 /**
@@ -246,4 +247,34 @@ public interface OStorage extends OBackupable, OSharedContainer {
    * that storage will be merely closed, but sometimes additional operations are need to be taken in account.
    */
   void shutdown();
+
+  void setSchemaRecordId(String schemaRecordId);
+
+  void setDateFormat(String dateFormat);
+
+  void setTimeZone(TimeZone timeZoneValue);
+
+  void setLocaleLanguage(String locale);
+
+  void setCharset(String charset);
+
+  void setIndexMgrRecordId(String indexMgrRecordId);
+
+  void setDateTimeFormat(String dateTimeFormat);
+
+  void setLocaleCountry(String localeCountry);
+
+  void setClusterSelection(String clusterSelection);
+
+  void setMinimumClusters(int minimumClusters);
+
+  void setValidation(boolean validation);
+
+  void removeProperty(String property);
+
+  void setProperty(String property, String value);
+
+  void setRecordSerializer(String recordSerializer, int version);
+
+  void clearProperties();
 }

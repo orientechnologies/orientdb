@@ -2100,4 +2100,79 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void returnSocket(OChannelBinary network) {
     this.connectionManager.remove((OChannelBinaryAsynchClient) network);
   }
+
+  @Override
+  public void setSchemaRecordId(String schemaRecordId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setDateFormat(String dateFormat) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setTimeZone(TimeZone timeZoneValue) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setLocaleLanguage(String locale) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setCharset(String charset) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setIndexMgrRecordId(String indexMgrRecordId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setDateTimeFormat(String dateTimeFormat) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setLocaleCountry(String localeCountry) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setClusterSelection(String clusterSelection) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setMinimumClusters(int minimumClusters) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setValidation(boolean validation) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void removeProperty(String property) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setProperty(String property, String value) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setRecordSerializer(String recordSerializer, int version) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void clearProperties() {
+    throw new UnsupportedOperationException();
+  }
 }

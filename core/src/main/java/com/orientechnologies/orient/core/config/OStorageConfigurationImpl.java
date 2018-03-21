@@ -69,16 +69,16 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   private final List<OStorageEntryConfiguration> properties = new ArrayList<>();
   protected final transient  OAbstractPaginatedStorage              storage;
   private volatile           OContextConfiguration                  configuration;
-  public volatile            int                                    version;
-  public volatile            String                                 name;
-  public volatile            String                                 schemaRecordId;
-  public volatile            String                                 dictionaryRecordId;
-  public volatile            String                                 indexMgrRecordId;
-  public volatile            String                                 dateFormat;
-  public volatile            String                                 dateTimeFormat;
-  public volatile            int                                    binaryFormatVersion;
+  private volatile           int                                    version;
+  private volatile           String                                 name;
+  private volatile           String                                 schemaRecordId;
+  private volatile           String                                 dictionaryRecordId;
+  private volatile           String                                 indexMgrRecordId;
+  private volatile           String                                 dateFormat;
+  private volatile           String                                 dateTimeFormat;
+  private volatile           int                                    binaryFormatVersion;
   protected volatile         OStorageSegmentConfiguration           fileTemplate;
-  public volatile            List<OStorageClusterConfiguration>     clusters;
+  private volatile           List<OStorageClusterConfiguration>     clusters;
   private volatile           String                                 localeLanguage;
   private volatile           String                                 localeCountry;
   private volatile           TimeZone                               timeZone;
@@ -604,7 +604,6 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, 0, OBlob.RECORD_TYPE, (byte) 0, null);
   }
 
-
   public void delete() throws IOException {
     close();
   }
@@ -618,6 +617,24 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     if (iClusterId < clusters.size()) {
       clusters.set(iClusterId, null);
       update();
+    }
+  }
+
+  public void addCluster(OStoragePaginatedClusterConfiguration config) {
+    if (clusters.size() <= config.id) {
+      final int diff = config.id - clusters.size();
+      for (int i = 0; i < diff; i++) {
+        clusters.add(null);
+      }
+
+      clusters.add(config);
+    } else {
+      if (clusters.get(config.id) != null) {
+        throw new OStorageException(
+            "Cluster with id " + config.id + " already exists with name '" + clusters.get(config.id).getName() + "'");
+      }
+
+      clusters.set(config.id, config);
     }
   }
 
@@ -640,6 +657,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     return Collections.unmodifiableSet(indexEngines.keySet());
   }
 
+  @Override
   public IndexEngineData getIndexEngine(String name) {
     return indexEngines.get(name);
   }
@@ -957,7 +975,6 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     return schemaRecordId;
   }
 
-  @Override
   public void setSchemaRecordId(String schemaRecordId) {
     this.schemaRecordId = schemaRecordId;
   }
@@ -967,17 +984,14 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     return indexMgrRecordId;
   }
 
-  @Override
   public void setIndexMgrRecordId(String indexMgrRecordId) {
     this.indexMgrRecordId = indexMgrRecordId;
   }
 
-  @Override
   public void setDateFormat(String dateFormat) {
     this.dateFormat = dateFormat;
   }
 
-  @Override
   public void setDateTimeFormat(String dateTimeFormat) {
     this.dateTimeFormat = dateTimeFormat;
   }
@@ -998,7 +1012,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   }
 
   public List<OStorageClusterConfiguration> getClusters() {
-    return clusters;
+    return Collections.unmodifiableList(clusters);
   }
 
   public void setConfigurationUpdateListener(OStorageConfigurationUpdateListener updateListener) {

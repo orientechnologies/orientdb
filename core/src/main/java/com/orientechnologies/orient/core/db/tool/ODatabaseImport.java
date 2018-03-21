@@ -1003,8 +1003,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       ODocument indexDocument = new ODocument();
       indexDocument.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
 
-      database.getStorage().getConfiguration().setIndexMgrRecordId(indexDocument.getIdentity().toString());
-      database.getStorage().getConfiguration().update();
+      database.getStorage().setIndexMgrRecordId(indexDocument.getIdentity().toString());
     }
 
     return total;

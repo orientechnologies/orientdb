@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.config;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.TimeZone;
 
 public interface OStorageConfiguration {
@@ -22,19 +23,11 @@ public interface OStorageConfiguration {
 
   String getSchemaRecordId();
 
-  void setSchemaRecordId(String s);
-
-  void update();
-
   int getMinimumClusters();
 
   boolean isStrictSql();
 
-  OStorageConfiguration load(OContextConfiguration contextConfiguration);
-
   String getIndexMgrRecordId();
-
-  void setIndexMgrRecordId(String indexMgrRecordId);
 
   TimeZone getTimeZone();
 
@@ -56,31 +49,7 @@ public interface OStorageConfiguration {
 
   boolean isValidationEnabled();
 
-  void setDateFormat(String stringValue);
-
-  void setDateTimeFormat(String stringValue);
-
-  void setTimeZone(TimeZone timeZoneValue);
-
-  void setLocaleCountry(String stringValue);
-
-  void setLocaleLanguage(String stringValue);
-
-  void setCharset(String stringValue);
-
-  void setClusterSelection(String stringValue);
-
-  void setMinimumClusters(int i);
-
-  void setConflictStrategy(String stringValue);
-
-  void setValidation(boolean b);
-
-  void setProperty(String iName, String iValue);
-
-  void removeProperty(String iName);
-
-  void clearProperties();
+  OStorageConfigurationImpl.IndexEngineData getIndexEngine(String name);
 
   String getRecordSerializer();
 
@@ -99,4 +68,8 @@ public interface OStorageConfiguration {
   String getDirectory();
 
   List<OStorageClusterConfiguration> getClusters();
+
+  String getCreatedAtVersion();
+
+  Set<String> indexEngines();
 }

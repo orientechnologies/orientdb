@@ -25,7 +25,7 @@ import com.orientechnologies.common.util.OCommonConst;
 
 @SuppressWarnings("serial")
 public class OStorageSegmentConfiguration implements Serializable {
-  public transient OStorageConfigurationImpl root;
+  public transient OStorageConfiguration root;
   public volatile  int                       id;
   public volatile  String                    name;
   public volatile String                 maxSize           = "0";
@@ -46,7 +46,7 @@ public class OStorageSegmentConfiguration implements Serializable {
     infoFiles = OCommonConst.EMPTY_FILE_CONFIGURATIONS_ARRAY;
   }
 
-  public OStorageSegmentConfiguration(final OStorageConfigurationImpl iRoot, final String iSegmentName, final int iId) {
+  public OStorageSegmentConfiguration(final OStorageConfiguration iRoot, final String iSegmentName, final int iId) {
     root = iRoot;
     name = iSegmentName;
     id = iId;

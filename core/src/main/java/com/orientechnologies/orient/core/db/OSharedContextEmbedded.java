@@ -45,7 +45,7 @@ public class OSharedContextEmbedded extends OSharedContext {
 
     queryStats = new OQueryStats();
     activeDistributedQueries = new HashMap<>();
-    (((OAbstractPaginatedStorage) storage).getConfiguration()).setConfigurationUpdateListener(update -> {
+    ((OAbstractPaginatedStorage) storage).setStorageConfigurationUpdateListener(update -> {
       for (OMetadataUpdateListener listener : browseListeners()) {
         listener.onStorageConfigurationUpdate(storage.getName(), update);
       }
