@@ -56,6 +56,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readInteger;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
 public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
@@ -237,7 +238,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
-        pointer = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
+        pointer = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey())).getFirstVal();
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
@@ -510,8 +511,10 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @SuppressWarnings("unchecked")
-  public int serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
+  @Override
+  public HelperClasses.Tuple<Integer, Integer> serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
     int pointer = 0;
+    int startOffset = bytes.offset;
     switch (type) {
     case INTEGER:
     case LONG:
@@ -610,7 +613,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     case ANY:
       break;
     }
-    return pointer;
+    int length = bytes.offset - startOffset;
+    return new HelperClasses.Tuple<>(pointer, length);
   }
 
   private int writeBinary(final BytesContainer bytes, final byte[] valueBytes) {
@@ -675,7 +679,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
-        pointer = serializeValue(bytes, value, type, null);
+        pointer = serializeValue(bytes, value, type, null).getFirstVal();
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
@@ -876,6 +880,14 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   @Override
   public boolean areTypeAndPointerFlipped(){
     return false;
+  }
+  
+  @Override
+  public HelperClasses.Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes){
+    int valuePos = readInteger(bytes);
+    byte typeId = readByte(bytes);
+    OType type = OType.getById(typeId);
+    return new HelperClasses.Tuple<>(valuePos, type);
   }
   
 }

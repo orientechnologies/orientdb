@@ -50,8 +50,11 @@ public class ORecordSerializerBinaryDebug extends ORecordSerializerBinaryV0 {
           // PARSE FIELD NAME
           fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
           bytes.skip(len);
-          valuePos = readInteger(bytes);
-          type = readOType(bytes);
+          
+          ORecordSerializerBinary serializer = new ORecordSerializerBinary();
+          Tuple<Integer, OType> valuePositionAndType = serializer.getCurrentSerializer().getPointerAndTypeFromCurrentPosition(bytes);
+          valuePos = valuePositionAndType.getFirstVal();
+          type = valuePositionAndType.getSecondVal();
         } else {
           // LOAD GLOBAL PROPERTY BY ID
           final int id = (len * -1) - 1;

@@ -30,7 +30,7 @@ public interface ODocumentSerializer {
   
   void serializeWithClassName(ODocument document, BytesContainer bytes, boolean iClassOnly);
 
-  int serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
+  HelperClasses.Tuple<Integer, Integer> serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
 
   void deserialize(ODocument document, BytesContainer bytes);
   
@@ -61,4 +61,6 @@ public interface ODocumentSerializer {
   <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, int serializerVersion);
 
   boolean areTypeAndPointerFlipped();
+  
+  HelperClasses.Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes);
 }

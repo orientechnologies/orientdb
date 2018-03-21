@@ -36,7 +36,7 @@ public class HelperClasses {
   protected static final ORecordId    NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
   protected static final long       MILLISEC_PER_DAY = 86400000;
   
-  protected static class Tuple<T1, T2>{
+  public static class Tuple<T1, T2>{
     
     private final T1 firstVal;
     private final T2 secondVal;

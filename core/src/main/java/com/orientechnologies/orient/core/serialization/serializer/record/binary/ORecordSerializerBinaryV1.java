@@ -423,8 +423,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   
   private void serializeWriteValues(final BytesContainer bytes, final ODocument document,
           int size, final Entry<String, ODocumentEntry> values[], final int[] pos){
-    for (int i = 0; i < size; i++) {
-      int pointer;
+    for (int i = 0; i < size; i++) {      
       final Object value = values[i].getValue().value;
       if (value != null) {
         final OType type = getFieldType(values[i].getValue());
@@ -432,7 +431,9 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
-        pointer = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
+        Tuple<Integer, Integer> dataPointerAndLength = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
+        int pointer = dataPointerAndLength.getFirstVal();
+        int valueLength = dataPointerAndLength.getSecondVal();
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         if (values[i].getValue().property != null && values[i].getValue().property.getType() == OType.ANY)
           writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
@@ -506,7 +507,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   }
   
   @Override
-  Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes){
+  public Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes){
     byte typeId = readByte(bytes);
     int valuePos = readInteger(bytes);    
     OType type = OType.getById(typeId);
