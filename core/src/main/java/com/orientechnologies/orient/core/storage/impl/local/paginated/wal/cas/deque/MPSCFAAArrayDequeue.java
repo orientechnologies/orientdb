@@ -171,7 +171,7 @@ public class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
 
       int idx = enqidx;
       if (idx >= BUFFER_SIZE) {
-        idx = BUFFER_SIZE - 1;
+        idx = BUFFER_SIZE;
       }
 
       if (idx <= 0) {

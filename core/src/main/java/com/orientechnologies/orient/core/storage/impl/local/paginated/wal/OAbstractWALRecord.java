@@ -98,7 +98,7 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
   @Override
   public int getDistance() {
     if (distance < 0) {
-      throw new IllegalStateException("Distance is not set");
+      throw new IllegalStateException("Record distance is not set");
     }
 
     return distance;
@@ -107,7 +107,7 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
   @Override
   public int getDiskSize() {
     if (diskSize < 0) {
-      throw new IllegalStateException("Disk size is not set");
+      throw new IllegalStateException("Record disk size is not set");
     }
 
     return diskSize;
