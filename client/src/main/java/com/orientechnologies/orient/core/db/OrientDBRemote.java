@@ -40,6 +40,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_LOCK_TIMEOUT;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_SOCKET_RETRY;
 
 /**
  * Created by tglman on 08/04/16.
@@ -171,16 +172,25 @@ public class OrientDBRemote implements OrientDBInternal {
   private <T> T connectEndExecute(String name, String user, String password, Operation<T> operation) {
     checkOpen();
     OServerAdmin admin = null;
-    try {
-      admin = new OServerAdmin(this, buildUrl(name));
-      admin.connect(user, password);
-      return operation.execute(admin);
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error createing remote database "), e);
-    } finally {
-      if (admin != null)
-        admin.close();
+    int retry = configurations.getConfigurations().getValueAsInteger(NETWORK_SOCKET_RETRY);
+    while (retry > 0) {
+      try {
+        admin = new OServerAdmin(this, buildUrl(name));
+        admin.connect(user, password);
+        return operation.execute(admin);
+      } catch (IOException e) {
+        retry--;
+        if (retry == 0)
+          throw OException
+              .wrapException(new ODatabaseException("Reached maximum retry limit on admin operations, the server may be offline"),
+                  e);
+      } finally {
+        if (admin != null)
+          admin.close();
+      }
     }
+    // SHOULD NEVER REACH THIS POINT
+    throw new ODatabaseException("Reached maximum retry limit on admin operations, the server may be offline");
   }
 
   @Override
