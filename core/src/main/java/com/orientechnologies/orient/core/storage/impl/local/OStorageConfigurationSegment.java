@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -28,6 +29,7 @@ import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -65,15 +67,17 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
 
   private static final long serialVersionUID = 638874446554389034L;
 
-  private static final long ENCODING_FLAG_1        = 128975354756545L;
-  private static final long ENCODING_FLAG_2        = 587138568122547L;
-  private static final long ENCODING_FLAG_3        = 812587836547249L;
-  private static final long ENCODING_FLAG_3_CRC_32 = 224737381L;
+  private static final long ENCODING_FLAG_1 = 128975354756545L;
+  private static final long ENCODING_FLAG_2 = 587138568122547L;
+  private static final long ENCODING_FLAG_3 = 812587836547249L;
+
+  private static final int  CRC_32_OFFSET  = 100;
+  private static final byte FORMAT_VERSION = (byte) 42;
 
   private final String storageName;
   private final String storagePath;
 
-  public OStorageConfigurationSegment(final OLocalPaginatedStorage storage) throws IOException {
+  public OStorageConfigurationSegment(final OLocalPaginatedStorage storage) {
     super(storage, Charset.forName("UTF-8"));
 
     this.storageName = storage.getName();
@@ -180,28 +184,10 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
     final Charset utf8 = Charset.forName("UTF-8");
     final byte[] buffer = toStream(utf8);
 
-    final String encodingName = "UTF-8";
-    final byte[] binaryEncodingName = encodingName.getBytes(utf8);
-    //length of presentation of configuration + configuration + 3 utf-8 encoding flags + length of utf-8 encoding name +
-    //utf-8 encoding name + crc_32
-    final int len = buffer.length + 3 * OBinaryProtocol.SIZE_INT + binaryEncodingName.length + 3 * OLongSerializer.LONG_SIZE;
-
-    final ByteBuffer byteBuffer = ByteBuffer.allocate(len);
-    byteBuffer.putInt(buffer.length);
-    byteBuffer.put(buffer);
-
-    byteBuffer.putLong(ENCODING_FLAG_1);
-    byteBuffer.putLong(ENCODING_FLAG_2);
-    byteBuffer.putLong(ENCODING_FLAG_3_CRC_32);
-
-    byteBuffer.putInt(binaryEncodingName.length);
-    byteBuffer.put(binaryEncodingName);
-
-    CRC32 crc32 = new CRC32();
+    final CRC32 crc32 = new CRC32();
     crc32.update(buffer);
 
-    byteBuffer.putInt((int) crc32.getValue());
-
+    final int crc32content = (int) crc32.getValue();
     try {
       final File storagePath = new File(this.storagePath);
       if (!storagePath.exists()) {
@@ -219,12 +205,7 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
 
       RandomAccessFile rnd = new RandomAccessFile(backupFile, "rw");
       try {
-        rnd.seek(OFileClassic.HEADER_SIZE);//padding is added to keep binary compatibility with previous versions
-        rnd.write(byteBuffer.array());
-
-        if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean()) {
-          rnd.getFD().sync();
-        }
+        writeConfigFile(buffer, crc32content, rnd);
       } finally {
         rnd.close();
       }
@@ -238,12 +219,7 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
 
       rnd = new RandomAccessFile(file, "rw");
       try {
-        rnd.seek(OFileClassic.HEADER_SIZE);//padding is added to keep binary compatibility with previous versions
-        rnd.write(byteBuffer.array());
-
-        if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean()) {
-          rnd.getFD().sync();
-        }
+        writeConfigFile(buffer, crc32content, rnd);
       } finally {
         rnd.close();
       }
@@ -257,9 +233,52 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
     }
   }
 
+  private void writeConfigFile(byte[] buffer, int crc32content, RandomAccessFile rnd) throws IOException {
+    rnd.seek(OFileClassic.VERSION_OFFSET);
+    rnd.write(FORMAT_VERSION);
+
+    rnd.seek(CRC_32_OFFSET);
+    rnd.writeInt(crc32content);
+
+    if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean()) {
+      rnd.getFD().sync();
+    }
+
+    rnd.seek(OFileClassic.HEADER_SIZE);
+    rnd.writeInt(buffer.length);
+    rnd.write(buffer);
+
+    if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean()) {
+      rnd.getFD().sync();
+    }
+  }
+
   private boolean readData(File file) throws IOException {
     final RandomAccessFile rnd = new RandomAccessFile(file, "r");
     try {
+      final byte fileVersion;
+      final int crc32content;
+
+      //file header + size of content + at least one byte of content
+      if (rnd.length() < OFileClassic.HEADER_SIZE + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE) {
+        return false;
+      }
+
+      rnd.seek(OFileClassic.VERSION_OFFSET);
+      final int ver = rnd.read();
+      if (ver < 0) {
+        return false;
+      }
+
+      fileVersion = (byte) ver;
+
+      if (fileVersion >= FORMAT_VERSION) {
+        rnd.seek(CRC_32_OFFSET);
+        crc32content = rnd.readInt();
+      } else {
+        crc32content = 0;
+      }
+
       rnd.seek(OFileClassic.HEADER_SIZE);//padding is added to keep binary compatibility with previous versions
 
       final int size = rnd.readInt();//size of string which contains database configuration
@@ -267,16 +286,16 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
 
       rnd.readFully(buffer);
 
-      if (rnd.length() >= size + 2 * OIntegerSerializer.INT_SIZE + 3 * OLongSerializer.LONG_SIZE) {
-        final long encodingFagOne = rnd.readLong();
-        final long encodingFagTwo = rnd.readLong();
-        final long encodingFagThree = rnd.readLong();
+      if (fileVersion < FORMAT_VERSION) {
+        if (rnd.length() >= size + 2 * OIntegerSerializer.INT_SIZE + 3 * OLongSerializer.LONG_SIZE) {
+          final long encodingFagOne = rnd.readLong();
+          final long encodingFagTwo = rnd.readLong();
+          final long encodingFagThree = rnd.readLong();
 
-        final Charset streamEncoding;
+          final Charset streamEncoding;
 
-        //those flags are added to distinguish between old version of configuration file and new one.
-        if (encodingFagOne == ENCODING_FLAG_1 && encodingFagTwo == ENCODING_FLAG_2) {
-          if (encodingFagThree == ENCODING_FLAG_3 || encodingFagThree == ENCODING_FLAG_3_CRC_32) {
+          //those flags are added to distinguish between old version of configuration file and new one.
+          if (encodingFagOne == ENCODING_FLAG_1 && encodingFagTwo == ENCODING_FLAG_2 && encodingFagThree == ENCODING_FLAG_3) {
             final byte[] utf8Encoded = "UTF-8".getBytes(Charset.forName("UTF-8"));
 
             final int encodingNameLength = rnd.readInt();
@@ -293,19 +312,14 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
                 return false;
               }
 
-              if (encodingFagThree == ENCODING_FLAG_3_CRC_32) {
-                if (rnd.length() == rnd.getFilePointer() + OIntegerSerializer.INT_SIZE) {
-                  final int contentCRC32 = rnd.readInt();
-                  final CRC32 crc32 = new CRC32();
-                  crc32.update(buffer);
-
-                  if ((int) crc32.getValue() != contentCRC32) {
-                    return false;
-                  }
-                }
+              try {
+                fromStream(buffer, 0, buffer.length, streamEncoding);
+              } catch (Exception e) {
+                OLogManager.instance()
+                    .errorNoDb(this, "Error during reading of configuration %s of storage %s", e, file, storageName);
+                return false;
               }
 
-              fromStream(buffer, 0, buffer.length, streamEncoding);
             } else {
               return false;
             }
@@ -313,10 +327,28 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
             return false;
           }
         } else {
-          return false;
+          try {
+            fromStream(buffer, 0, buffer.length, Charset.defaultCharset());
+          } catch (Exception e) {
+            OLogManager.instance().errorNoDb(this, "Error during reading of configuration %s of storage %s", e, file, storageName);
+            return false;
+          }
+
         }
       } else {
-        fromStream(buffer, 0, buffer.length, Charset.defaultCharset());
+        final CRC32 crc32 = new CRC32();
+        crc32.update(buffer);
+
+        if (crc32content != (int) crc32.getValue()) {
+          return false;
+        }
+
+        try {
+          fromStream(buffer, 0, buffer.length, Charset.forName("UTF-8"));
+        } catch (Exception e) {
+          OLogManager.instance().errorNoDb(this, "Error during reading of configuration %s of storage %s", e, file, storageName);
+          return false;
+        }
       }
     } finally {
       rnd.close();

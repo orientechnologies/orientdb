@@ -41,9 +41,9 @@ public class OStorageTest {
     OFileUtils.deleteRecursively(new File(buildPath, OStorageTest.class.getSimpleName()));
 
     database = new ODatabaseDocumentTx("plocal:" + new File(buildPath, OStorageTest.class.getSimpleName()).getCanonicalPath());
-    database.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 1);
 
     database.create();
+    database.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 1);
 
     OMetadata metadata = database.getMetadata();
     OSchema schema = metadata.getSchema();
@@ -99,9 +99,8 @@ public class OStorageTest {
     OFileUtils.deleteRecursively(new File(buildPath, OStorageTest.class.getSimpleName()));
 
     database = new ODatabaseDocumentTx("plocal:" + new File(buildPath, OStorageTest.class.getSimpleName()).getCanonicalPath());
-    database.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 1);
-
     database.create();
+    database.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 1);
 
     OMetadata metadata = database.getMetadata();
     OSchema schema = metadata.getSchema();
