@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -140,13 +141,11 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
             return this;
           }
 
-          OLogManager.instance()
-              .warnNoDb(this, "Backup configuration file %s is broken too, try to read from main file if possible");
-          readNoValidation(file);
+          OLogManager.instance().errorNoDb(this, "Backup configuration file %s is broken too", null);
+          throw new OStorageException("Invalid format for configuration file " + file + " for storage" + storageName);
         } else {
-          OLogManager.instance()
-              .warnNoDb(this, "Backup configuration file %s does not exist, try to read from main file if possible");
-          readNoValidation(file);
+          OLogManager.instance().errorNoDb(this, "Backup configuration file %s does not exist", null, backupFile);
+          throw new OStorageException("Invalid format for configuration file " + file + " for storage" + storageName);
         }
       } else if (backupFile.exists()) {
         OLogManager.instance().warn(this, "Seems like previous update to the storage '%s' configuration was finished incorrectly, "
@@ -156,8 +155,8 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
           return this;
         }
 
-        OLogManager.instance().warnNoDb(this, "Backup configuration file %s is broken, try to read from it if possible");
-        readNoValidation(backupFile);
+        OLogManager.instance().errorNoDb(this, "Backup configuration file %s is broken", null, backupFile);
+        throw new OStorageException("Invalid format for configuration file " + backupFile + " for storage" + storageName);
       } else {
         throw new OStorageException("Can not find configuration file for storage " + storageName);
       }
@@ -166,8 +165,6 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
       throw OException
           .wrapException(new OSerializationException("Cannot load database configuration. The database seems corrupted"), e);
     }
-
-    return this;
   }
 
   @Override
@@ -222,6 +219,7 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
 
       RandomAccessFile rnd = new RandomAccessFile(backupFile, "rw");
       try {
+        rnd.seek(OFileClassic.HEADER_SIZE);//padding is added to keep binary compatibility with previous versions
         rnd.write(byteBuffer.array());
 
         if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean()) {
@@ -240,6 +238,7 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
 
       rnd = new RandomAccessFile(file, "rw");
       try {
+        rnd.seek(OFileClassic.HEADER_SIZE);//padding is added to keep binary compatibility with previous versions
         rnd.write(byteBuffer.array());
 
         if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean()) {
@@ -261,6 +260,8 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
   private boolean readData(File file) throws IOException {
     final RandomAccessFile rnd = new RandomAccessFile(file, "r");
     try {
+      rnd.seek(OFileClassic.HEADER_SIZE);//padding is added to keep binary compatibility with previous versions
+
       final int size = rnd.readInt();//size of string which contains database configuration
       byte[] buffer = new byte[size];
 
@@ -322,19 +323,6 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
     }
 
     return true;
-  }
-
-  private void readNoValidation(File file) throws IOException {
-    final RandomAccessFile rnd = new RandomAccessFile(file, "r");
-    try {
-      final int size = rnd.readInt();
-      byte[] buffer = new byte[size];
-      rnd.readFully(buffer);
-      fromStream(buffer, 0, buffer.length, Charset.defaultCharset());
-    } finally {
-      rnd.close();
-    }
-
   }
 
   public void synch() {
