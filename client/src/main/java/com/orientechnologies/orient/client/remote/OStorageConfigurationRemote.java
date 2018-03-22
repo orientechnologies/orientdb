@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.orient.client.remote.message.OReloadResponse37;
 import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
 import com.orientechnologies.orient.core.config.*;
 

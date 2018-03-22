@@ -105,7 +105,7 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
 
   private void createPaginatedCluster() throws IOException {
     paginatedCluster = new OPaginatedCluster("actualPaginatedClusterWithWALTest", storage);
-    paginatedCluster.configure(storage, 6, "actualPaginatedClusterWithWALTest", buildDirectory, -1);
+    paginatedCluster.configure(storage, 42, "actualPaginatedClusterWithWALTest", buildDirectory, -1);
     paginatedCluster.create(-1);
   }
 

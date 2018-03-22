@@ -26,10 +26,12 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.zip.CRC32;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -37,6 +39,7 @@ import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -66,6 +69,9 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
   private static final long ENCODING_FLAG_1 = 128975354756545L;
   private static final long ENCODING_FLAG_2 = 587138568122547L;
   private static final long ENCODING_FLAG_3 = 812587836547249L;
+
+  private static final int  CRC_32_OFFSET  = 100;
+  private static final byte FORMAT_VERSION = (byte) 42;
 
   private final String storageName;
   private final Path   storagePath;
@@ -112,33 +118,139 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
       final Path file = storagePath.resolve(NAME);
       final Path backupFile = storagePath.resolve(BACKUP_NAME);
 
-      final Path activeFile;
-
       if (Files.exists(file)) {
-        activeFile = file;
+        if (readData(file)) {
+          return this;
+        }
+
+        OLogManager.instance()
+            .warnNoDb(this, "Main storage configuration file %s is broken in storage %s, try to read from backup file %s", file,
+                storageName, backupFile);
+
+        if (Files.exists(backupFile)) {
+          if (readData(backupFile)) {
+            return this;
+          }
+
+          OLogManager.instance().errorNoDb(this, "Backup configuration file %s is broken too", null);
+          throw new OStorageException("Invalid format for configuration file " + file + " for storage" + storageName);
+        } else {
+          OLogManager.instance().errorNoDb(this, "Backup configuration file %s does not exist", null, backupFile);
+          throw new OStorageException("Invalid format for configuration file " + file + " for storage" + storageName);
+        }
       } else if (Files.exists(backupFile)) {
-        OLogManager.instance().warn(this,
-            "Seems like previous update to the storage '%s' configuration was finished incorrectly, reading from backup",
-            backupFile);
-        activeFile = backupFile;
+        OLogManager.instance().warn(this, "Seems like previous update to the storage '%s' configuration was finished incorrectly, "
+            + "main configuration file %s is absent, reading from backup", backupFile, file);
+
+        if (readData(backupFile)) {
+          return this;
+        }
+
+        OLogManager.instance().errorNoDb(this, "Backup configuration file %s is broken", null, backupFile);
+        throw new OStorageException("Invalid format for configuration file " + backupFile + " for storage" + storageName);
       } else {
         throw new OStorageException("Can not find configuration file for storage " + storageName);
       }
+    } catch (IOException e) {
+      throw OException
+          .wrapException(new OSerializationException("Cannot load database configuration. The database seems corrupted"), e);
+    }
+  }
 
-      final ByteBuffer byteBuffer;
+  @Override
+  public void update() throws OSerializationException {
+    final Charset utf8 = Charset.forName("UTF-8");
+    final byte[] buffer = toStream(utf8);
 
-      try (final FileChannel channel = FileChannel.open(activeFile, StandardOpenOption.READ)) {
-        byteBuffer = ByteBuffer.allocate((int) channel.size());
-        OIOUtils.readByteBuffer(byteBuffer, channel);
+    final ByteBuffer byteBuffer = ByteBuffer.allocate(buffer.length + OIntegerSerializer.INT_SIZE);
+    byteBuffer.putInt(buffer.length);
+    byteBuffer.put(buffer);
+
+    try {
+      if (!Files.exists(storagePath)) {
+        Files.createDirectories(storagePath);
       }
 
-      byteBuffer.position(0);
+      final Path backupFile = storagePath.resolve(BACKUP_NAME);
+      Files.deleteIfExists(backupFile);
 
-      final int size = byteBuffer.getInt();//size of string which contains database configuration
-      byte[] buffer = new byte[size];
+      try (FileChannel channel = FileChannel.open(backupFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
+        writeConfigFile(buffer, byteBuffer, channel);
+      }
 
-      byteBuffer.get(buffer);
+      final Path file = storagePath.resolve(NAME);
+      Files.deleteIfExists(file);
 
+      try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
+        writeConfigFile(buffer, byteBuffer, channel);
+      }
+
+      Files.delete(backupFile);
+    } catch (Exception e) {
+      throw OException.wrapException(new OSerializationException("Error on update storage configuration"), e);
+    }
+  }
+
+  private void writeConfigFile(byte[] buffer, ByteBuffer byteBuffer, FileChannel channel) throws IOException {
+    final ByteBuffer versionBuffer = ByteBuffer.allocate(1);
+    versionBuffer.put(FORMAT_VERSION);
+
+    versionBuffer.position(0);
+    OIOUtils.writeByteBuffer(versionBuffer, channel, OFileClassic.VERSION_OFFSET);
+
+    final ByteBuffer crc32buffer = ByteBuffer.allocate(OIntegerSerializer.INT_SIZE);
+    final CRC32 crc32 = new CRC32();
+    crc32.update(buffer);
+    crc32buffer.putInt((int) crc32.getValue());
+
+    crc32buffer.position(0);
+    OIOUtils.writeByteBuffer(crc32buffer, channel, CRC_32_OFFSET);
+
+    channel.force(true);
+
+    byteBuffer.position(0);
+    OIOUtils.writeByteBuffer(byteBuffer, channel, OFileClassic.HEADER_SIZE);
+
+    channel.force(true);
+  }
+
+  private boolean readData(Path file) throws IOException {
+    final ByteBuffer byteBuffer;
+    final byte fileVersion;
+    final int crc32content;
+
+    try (final FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
+      //file header + size of content + at least one byte of content
+      if (channel.size() < OFileClassic.HEADER_SIZE + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE) {
+        return false;
+      }
+
+      final ByteBuffer versionBuffer = ByteBuffer.allocate(1);
+      OIOUtils.readByteBuffer(versionBuffer, channel, OFileClassic.VERSION_OFFSET, true);
+      versionBuffer.position(0);
+
+      fileVersion = versionBuffer.get();
+      if (fileVersion >= 42) {
+        final ByteBuffer crc32buffer = ByteBuffer.allocate(OIntegerSerializer.INT_SIZE);
+        OIOUtils.readByteBuffer(crc32buffer, channel, CRC_32_OFFSET, true);
+
+        crc32buffer.position(0);
+        crc32content = crc32buffer.getInt();
+      } else {
+        crc32content = 0;
+      }
+
+      byteBuffer = ByteBuffer.allocate((int) channel.size() - OFileClassic.HEADER_SIZE);
+      OIOUtils.readByteBuffer(byteBuffer, channel, OFileClassic.HEADER_SIZE, true);
+    }
+
+    byteBuffer.position(0);
+    final int size = byteBuffer.getInt();//size of string which contains database configuration
+    byte[] buffer = new byte[size];
+
+    byteBuffer.get(buffer);
+
+    if (fileVersion < 42) {
       if (byteBuffer.limit() >= size + 2 * OIntegerSerializer.INT_SIZE + 3 * OLongSerializer.LONG_SIZE) {
         final long encodingFagOne = byteBuffer.getLong();
         final long encodingFagTwo = byteBuffer.getLong();
@@ -161,77 +273,47 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
             if (encodingName.equals("UTF-8")) {
               streamEncoding = Charset.forName("UTF-8");
             } else {
-              throw new OStorageException("Invalid format for configuration file " + activeFile + " for storage" + storageName);
+              return false;
             }
 
-            fromStream(buffer, 0, buffer.length, streamEncoding);
+            try {
+              fromStream(buffer, 0, buffer.length, streamEncoding);
+            } catch (Exception e) {
+              OLogManager.instance().errorNoDb(this, "Error during reading of configuration %s of storage %s", e, file, storageName);
+              return false;
+            }
+
           } else {
-            throw new OStorageException("Invalid format for configuration file " + activeFile + " for storage" + storageName);
+            return false;
           }
+
         } else {
-          throw new OStorageException("Invalid format for configuration file " + activeFile + " for storage" + storageName);
+          return false;
         }
       } else {
-        fromStream(buffer, 0, buffer.length, Charset.defaultCharset());
+        try {
+          fromStream(buffer, 0, buffer.length, Charset.defaultCharset());
+        } catch (Exception e) {
+          OLogManager.instance().errorNoDb(this, "Error during reading of configuration %s of storage %s", e, file, storageName);
+          return false;
+        }
+      }
+    } else {
+      CRC32 crc32 = new CRC32();
+      crc32.update(buffer);
+
+      if (crc32content != (int) crc32.getValue()) {
+        return false;
       }
 
-    } catch (IOException e) {
-      throw OException
-          .wrapException(new OSerializationException("Cannot load database configuration. The database seems corrupted"), e);
+      try {
+        fromStream(buffer, 0, buffer.length, Charset.forName("UTF-8"));
+      } catch (Exception e) {
+        OLogManager.instance().errorNoDb(this, "Error during reading of configuration %s of storage %s", e, file, storageName);
+        return false;
+      }
     }
-    return this;
-  }
 
-  @Override
-  public void update() throws OSerializationException {
-    final Charset utf8 = Charset.forName("UTF-8");
-    final byte[] buffer = toStream(utf8);
-
-    final String encodingName = "UTF-8";
-    final byte[] binaryEncodingName = encodingName.getBytes(utf8);
-    //length of presentation of configuration + configuration + 3 utf-8 encoding flags + length of utf-8 encoding name +
-    //utf-8 encoding name
-    final int len = buffer.length + 2 * OBinaryProtocol.SIZE_INT + binaryEncodingName.length + 3 * OLongSerializer.LONG_SIZE;
-
-    final ByteBuffer byteBuffer = ByteBuffer.allocate(len);
-    byteBuffer.putInt(buffer.length);
-    byteBuffer.put(buffer);
-
-    byteBuffer.putLong(ENCODING_FLAG_1);
-    byteBuffer.putLong(ENCODING_FLAG_2);
-    byteBuffer.putLong(ENCODING_FLAG_3);
-
-    byteBuffer.putInt(binaryEncodingName.length);
-    byteBuffer.put(binaryEncodingName);
-
-    try {
-      if (!Files.exists(storagePath)) {
-        Files.createDirectories(storagePath);
-      }
-
-      final Path backupFile = storagePath.resolve(BACKUP_NAME);
-      Files.deleteIfExists(backupFile);
-
-      try (FileChannel channel = FileChannel.open(backupFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
-        byteBuffer.position(0);
-        OIOUtils.writeByteBuffer(byteBuffer, channel, 0);
-
-        channel.force(true);
-      }
-
-      final Path file = storagePath.resolve(NAME);
-      Files.deleteIfExists(file);
-
-      try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
-        byteBuffer.position(0);
-        OIOUtils.writeByteBuffer(byteBuffer, channel, 0);
-
-        channel.force(true);
-      }
-
-      Files.delete(backupFile);
-    } catch (Exception e) {
-      throw OException.wrapException(new OSerializationException("Error on update storage configuration"), e);
-    }
+    return true;
   }
 }

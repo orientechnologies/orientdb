@@ -51,7 +51,7 @@ public class OFileClassic implements OFile, OClosableItem {
   private static final int    CURRENT_VERSION = 2;
 
   public static final  int HEADER_SIZE    = 1024;
-  private static final int VERSION_OFFSET = 48;
+  public static final  int VERSION_OFFSET = 48;
   private static final int SIZE_OFFSET    = 52;
 
   private static final int OPEN_RETRY_MAX = 10;
