@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.entity;
 
 import com.orientechnologies.orient.core.config.OStorageClusterHoleConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.config.OStorageDataHoleConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
@@ -55,7 +55,7 @@ public class OClassDictionary {
       return OUser.class;
 
     case '7':
-      return OStorageConfiguration.class;
+      return OStorageConfigurationImpl.class;
     case 'a':
       return OStorageClusterHoleConfiguration.class;
     case 'b':
@@ -82,7 +82,7 @@ public class OClassDictionary {
     if (iClass.equals(OUser.class))
       return '6';
 
-    if (iClass.equals(OStorageConfiguration.class))
+    if (iClass.equals(OStorageConfigurationImpl.class))
       return '7';
     if (iClass.equals(OStorageClusterHoleConfiguration.class))
       return 'a';

@@ -32,7 +32,6 @@ import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
@@ -319,24 +318,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   @Override
-  public OStorageConfiguration getConfiguration() {
-    try {
-      stateLock.acquireReadLock();
-      try {
-        return super.getConfiguration();
-      } finally {
-        stateLock.releaseReadLock();
-      }
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  @Override
   protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
 
     File[] nonActiveSegments;
@@ -438,7 +419,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   @Override
   protected void preOpenSteps() throws IOException {
-    if (configuration.binaryFormatVersion >= 11) {
+    if (configuration.getBinaryFormatVersion() >= 11) {
       if (dirtyFlag.exists())
         dirtyFlag.open();
       else {

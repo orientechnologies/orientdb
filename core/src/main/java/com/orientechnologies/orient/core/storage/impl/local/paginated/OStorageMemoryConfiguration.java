@@ -25,7 +25,7 @@ import java.nio.charset.Charset;
 import java.util.Map;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 7/15/14
  */
-public class OStorageMemoryConfiguration extends OStorageConfiguration {
+public class OStorageMemoryConfiguration extends OStorageConfigurationImpl {
   private static final long serialVersionUID = 7001342008735208586L;
 
   private byte[] serializedContent;
@@ -51,7 +51,7 @@ public class OStorageMemoryConfiguration extends OStorageConfiguration {
   }
 
   @Override
-  public OStorageConfiguration load(final Map<String, Object> iProperties) throws OSerializationException {
+  public OStorageConfigurationImpl load(final Map<String, Object> iProperties) throws OSerializationException {
     initConfiguration();
 
     bindPropertiesToContext(iProperties);

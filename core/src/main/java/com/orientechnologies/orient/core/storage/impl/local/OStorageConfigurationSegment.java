@@ -24,7 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -43,7 +43,7 @@ import java.util.Map;
  */
 @SuppressWarnings("serial")
 @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED")
-public class OStorageConfigurationSegment extends OStorageConfiguration {
+public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
   //This class uses "double write" pattern.
   //Whenever we want to update configuration, first we write data in backup file and make fsync. Then we write the same data
   //in primary file and make fsync. Then we remove backup file. So does not matter if we have error on any of this stages
@@ -115,7 +115,7 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   }
 
   @Override
-  public OStorageConfiguration load(final Map<String, Object> iProperties) throws OSerializationException {
+  public OStorageConfigurationImpl load(final Map<String, Object> iProperties) throws OSerializationException {
     try {
       initConfiguration();
 

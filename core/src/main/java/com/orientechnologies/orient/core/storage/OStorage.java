@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 /**
@@ -124,19 +125,15 @@ public interface OStorage extends OBackupable, OSharedContainer {
   /**
    * Add a new cluster into the storage.
    *
-   * @param iClusterName   name of the cluster
-   * @param forceListBased
-   * @param iParameters
+   * @param iClusterName name of the cluster
    */
   int addCluster(String iClusterName, boolean forceListBased, Object... iParameters);
 
   /**
    * Add a new cluster into the storage.
    *
-   * @param iClusterName   name of the cluster
-   * @param iRequestedId   requested id of the cluster
-   * @param forceListBased
-   * @param iParameters
+   * @param iClusterName name of the cluster
+   * @param iRequestedId requested id of the cluster
    */
   int addCluster(String iClusterName, int iRequestedId, boolean forceListBased, Object... iParameters);
 
@@ -212,15 +209,11 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   /**
    * Returns the current storage's status
-   *
-   * @return
    */
   STATUS getStatus();
 
   /**
    * Returns the storage's type.
-   *
-   * @return
    */
   String getType();
 
@@ -247,8 +240,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   void setConflictStrategy(ORecordConflictStrategy iResolver);
 
   /**
-   * @param backupDirectory
-   *
    * @return Backup file name
    */
   String incrementalBackup(String backupDirectory);
@@ -260,4 +251,36 @@ public interface OStorage extends OBackupable, OSharedContainer {
    * that storage will be merely closed, but sometimes additional operations are need to be taken in account.
    */
   void shutdown();
+
+  void updateConfiguration();
+
+  void setRecordSerializer(String recordSerializer, int version);
+
+  void setProperty(String property, String value);
+
+  void setDateFormat(String dateFormat);
+
+  void setDateTimeFormat(String dateTimeFormat);
+
+  void setTimeZone(final TimeZone timeZone);
+
+  void setLocaleCountry(String localeCountry);
+
+  void setLocaleLanguage(String localeLanguage);
+
+  void setCharset(String charset);
+
+  void setClusterSelection(String clusterSelection);
+
+  void setMinimumClusters(int minimumClusters);
+
+  void setValidation(boolean validation);
+
+  void clearProperties();
+
+  void removeProperty(String property);
+
+  void setSchemaRecordId(String schemaRecordId);
+
+  void setIndexMgrRecordId(String indexMgrRecordId);
 }

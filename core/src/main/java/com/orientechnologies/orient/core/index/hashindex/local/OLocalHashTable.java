@@ -682,7 +682,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
               getChanges(atomicOperation, hashStateEntry), false);
 
           OBinarySerializerFactory serializerFactory = OBinarySerializerFactory
-              .create(storage.getConfiguration().binaryFormatVersion);
+              .create(storage.getConfiguration().getBinaryFormatVersion());
 
           keySerializer = (OBinarySerializer<K>) serializerFactory.getObjectSerializer(page.getKeySerializerId());
           valueSerializer = (OBinarySerializer<V>) serializerFactory.getObjectSerializer(page.getValueSerializerId());

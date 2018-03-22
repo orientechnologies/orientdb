@@ -26,8 +26,8 @@ import com.orientechnologies.common.util.OCommonConst;
 @SuppressWarnings("serial")
 public class OStorageSegmentConfiguration implements Serializable {
   public transient OStorageConfiguration root;
-  public volatile int                    id;
-  public volatile String                 name;
+  public volatile  int                       id;
+  public volatile  String                    name;
   public volatile String                 maxSize           = "0";
   public volatile String                 fileType          = "mmap";
   public volatile String                 fileStartSize     = "500Kb";

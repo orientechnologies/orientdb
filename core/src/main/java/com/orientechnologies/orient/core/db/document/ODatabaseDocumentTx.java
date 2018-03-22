@@ -433,10 +433,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         for (Map.Entry<OGlobalConfiguration, Object> e : iInitialSettings.entrySet()) {
           ctxCfg.setValue(e.getKey(), e.getValue());
         }
-        storage.getConfiguration().update();
       }
 
       storage.create(properties);
+      storage.updateConfiguration();
 
       status = STATUS.OPEN;
 
@@ -444,13 +444,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       localCache.startup();
 
-      getStorage().getConfiguration().setRecordSerializer(getSerializer().toString());
-      getStorage().getConfiguration().setRecordSerializerVersion(getSerializer().getCurrentVersion());
-
+      getStorage().setRecordSerializer(getSerializer().toString(), getSerializer().getCurrentVersion());
       // since 2.1 newly created databases use strict SQL validation by default
-      getStorage().getConfiguration().setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
-
-      getStorage().getConfiguration().update();
+      getStorage().setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
 
       // THIS IF SHOULDN'T BE NEEDED, CREATE HAPPEN ONLY IN EMBEDDED
       if (!(getStorage() instanceof OStorageProxy))
@@ -1520,10 +1516,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     case TYPE:
       return getMetadata().getImmutableSchemaSnapshot().existsClass("V") ? "graph" : "document";
     case DATEFORMAT:
-      return storage.getConfiguration().dateFormat;
+      return storage.getConfiguration().getDateFormat();
 
     case DATETIMEFORMAT:
-      return storage.getConfiguration().dateTimeFormat;
+      return storage.getConfiguration().getDateTimeFormat();
 
     case TIMEZONE:
       return storage.getConfiguration().getTimeZone().getID();
@@ -1591,8 +1587,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       // CHECK FORMAT
       new SimpleDateFormat(stringValue).format(new Date());
 
-      storage.getConfiguration().dateFormat = stringValue;
-      storage.getConfiguration().update();
+      storage.setDateFormat(stringValue);
       break;
 
     case DATETIMEFORMAT:
@@ -1602,8 +1597,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       // CHECK FORMAT
       new SimpleDateFormat(stringValue).format(new Date());
 
-      storage.getConfiguration().dateTimeFormat = stringValue;
-      storage.getConfiguration().update();
+      storage.setDateTimeFormat(stringValue);
       break;
 
     case TIMEZONE:
@@ -1616,23 +1610,19 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         timeZoneValue = TimeZone.getTimeZone(stringValue);
       }
 
-      storage.getConfiguration().setTimeZone(timeZoneValue);
-      storage.getConfiguration().update();
+      storage.setTimeZone(timeZoneValue);
       break;
 
     case LOCALECOUNTRY:
-      storage.getConfiguration().setLocaleCountry(stringValue);
-      storage.getConfiguration().update();
+      storage.setLocaleCountry(stringValue);
       break;
 
     case LOCALELANGUAGE:
-      storage.getConfiguration().setLocaleLanguage(stringValue);
-      storage.getConfiguration().update();
+      storage.setLocaleLanguage(stringValue);
       break;
 
     case CHARSET:
-      storage.getConfiguration().setCharset(stringValue);
-      storage.getConfiguration().update();
+      storage.setCharset(stringValue);
       break;
 
     case CUSTOM:
@@ -1653,32 +1643,27 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       break;
 
     case CLUSTERSELECTION:
-      storage.getConfiguration().setClusterSelection(stringValue);
-      storage.getConfiguration().update();
+      storage.setClusterSelection(stringValue);
       break;
 
     case MINIMUMCLUSTERS:
       if (iValue != null) {
         if (iValue instanceof Number)
-          storage.getConfiguration().setMinimumClusters(((Number) iValue).intValue());
+          storage.setMinimumClusters(((Number) iValue).intValue());
         else
-          storage.getConfiguration().setMinimumClusters(Integer.parseInt(stringValue));
+          storage.setMinimumClusters(Integer.parseInt(stringValue));
       } else
         // DEFAULT = 1
-        storage.getConfiguration().setMinimumClusters(1);
+        storage.setMinimumClusters(1);
 
-      storage.getConfiguration().update();
       break;
 
     case CONFLICTSTRATEGY:
       storage.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(stringValue));
-      storage.getConfiguration().setConflictStrategy(stringValue);
-      storage.getConfiguration().update();
       break;
 
     case VALIDATION:
-      storage.getConfiguration().setValidation(Boolean.parseBoolean(stringValue));
-      storage.getConfiguration().update();
+      storage.setValidation(Boolean.parseBoolean(stringValue));
       break;
 
     default:
@@ -3284,7 +3269,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   private void clearCustomInternal() {
-    storage.getConfiguration().clearProperties();
+    storage.clearProperties();
   }
 
   private void removeCustomInternal(final String iName) {
@@ -3294,12 +3279,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private void setCustomInternal(final String iName, final String iValue) {
     if (iValue == null || "null".equalsIgnoreCase(iValue))
       // REMOVE
-      storage.getConfiguration().removeProperty(iName);
+      storage.removeProperty(iName);
     else
       // SET
-      storage.getConfiguration().setProperty(iName, iValue);
-
-    storage.getConfiguration().update();
+      storage.setProperty(iName, iValue);
   }
 
   private void callbackHookFailure(ORecord record, boolean wasNew, byte[] stream) {

@@ -851,10 +851,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass
 
     rwSpinLock.acquireWriteLock();
     try {
-      if (!new ORecordId(getDatabase().getStorage().getConfiguration().schemaRecordId).isValid())
+      if (!new ORecordId(getDatabase().getStorage().getConfiguration().getSchemaRecordId()).isValid())
         throw new OSchemaNotCreatedException("Schema is not created and cannot be loaded");
 
-      ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().schemaRecordId);
+      ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().getSchemaRecordId());
       reload("*:-1 index:0");
 
       snapshot = new OImmutableSchema(this);
@@ -870,8 +870,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     try {
       final ODatabaseDocumentInternal db = getDatabase();
       super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
-      db.getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
-      db.getStorage().getConfiguration().update();
+      db.getStorage().setSchemaRecordId(document.getIdentity().toString());
       snapshot = new OImmutableSchema(this);
     } finally {
       rwSpinLock.releaseWriteLock();

@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.common.concur.lock.OReadWriteLock;
-import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.exception.OException;

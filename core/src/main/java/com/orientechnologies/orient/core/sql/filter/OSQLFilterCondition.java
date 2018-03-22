@@ -332,7 +332,7 @@ public class OSQLFilterCondition {
 
     SimpleDateFormat formatter = config.getDateFormatInstance();
 
-    if (stringValue.length() > config.dateFormat.length())
+    if (stringValue.length() > config.getDateTimeFormat().length())
     // ASSUMES YOU'RE USING THE DATE-TIME FORMATTE
     {
       formatter = config.getDateTimeFormatInstance();

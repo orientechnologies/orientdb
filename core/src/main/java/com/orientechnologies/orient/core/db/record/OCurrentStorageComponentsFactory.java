@@ -32,7 +32,7 @@ public class OCurrentStorageComponentsFactory {
   public final OBinarySerializerFactory binarySerializerFactory;
 
   public OCurrentStorageComponentsFactory(OStorageConfiguration configuration) {
-    this.binaryFormatVersion = configuration.binaryFormatVersion;
+    this.binaryFormatVersion = configuration.getBinaryFormatVersion();
 
     binarySerializerFactory = OBinarySerializerFactory.create(binaryFormatVersion);
   }

@@ -22,10 +22,11 @@ public class TestOrderBy {
   @Test
   public void testGermanOrderBy() {
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:testGermanOrderBy");
-    db.set(ATTRIBUTES.LOCALECOUNTRY, Locale.GERMANY.getCountry());
-    db.set(ATTRIBUTES.LOCALELANGUAGE, Locale.GERMANY.getLanguage());
     db.create();
     try {
+      db.set(ATTRIBUTES.LOCALECOUNTRY, Locale.GERMANY.getCountry());
+      db.set(ATTRIBUTES.LOCALELANGUAGE, Locale.GERMANY.getLanguage());
+
       db.getMetadata().getSchema().createClass("test");
       ORecord res1 = db.save(new ODocument("test").field("name", "Ähhhh"));
       ORecord res2 = db.save(new ODocument("test").field("name", "Ahhhh"));

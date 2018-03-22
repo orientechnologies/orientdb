@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
@@ -2219,5 +2220,85 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   protected File getDistributedConfigFile() {
     return new File(serverInstance.getDatabaseDirectory() + getName() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
+  }
+
+  @Override
+  public void updateConfiguration() {
+    wrapped.updateConfiguration();
+  }
+
+  @Override
+  public void setRecordSerializer(String recordSerializer, int version) {
+    wrapped.setRecordSerializer(recordSerializer, version);
+  }
+
+  @Override
+  public void setProperty(String property, String value) {
+    wrapped.setProperty(property, value);
+  }
+
+  @Override
+  public void setDateFormat(String dateFormat) {
+    wrapped.setDateFormat(dateFormat);
+  }
+
+  @Override
+  public void setDateTimeFormat(String dateTimeFormat) {
+    wrapped.setDateTimeFormat(dateTimeFormat);
+  }
+
+  @Override
+  public void setTimeZone(TimeZone timeZone) {
+    wrapped.setTimeZone(timeZone);
+  }
+
+  @Override
+  public void setLocaleCountry(String localeCountry) {
+    wrapped.setLocaleCountry(localeCountry);
+  }
+
+  @Override
+  public void setLocaleLanguage(String localeLanguage) {
+    wrapped.setLocaleLanguage(localeLanguage);
+  }
+
+  @Override
+  public void setCharset(String charset) {
+    wrapped.setCharset(charset);
+  }
+
+  @Override
+  public void setClusterSelection(String clusterSelection) {
+    wrapped.setClusterSelection(clusterSelection);
+  }
+
+  @Override
+  public void setMinimumClusters(int minimumClusters) {
+    wrapped.setMinimumClusters(minimumClusters);
+  }
+
+  @Override
+  public void setValidation(boolean validation) {
+    wrapped.setValidation(validation);
+  }
+
+  @Override
+  public void clearProperties() {
+    wrapped.clearProperties();
+  }
+
+  @Override
+  public void removeProperty(String property) {
+    wrapped.removeProperty(property);
+  }
+
+  @Override
+  public void setSchemaRecordId(String schemaRecordId) {
+    wrapped.setSchemaRecordId(schemaRecordId);
+  }
+
+  @Override
+  public void setIndexMgrRecordId(String indexMgrRecordId) {
+    wrapped.setIndexMgrRecordId(indexMgrRecordId);
   }
 }

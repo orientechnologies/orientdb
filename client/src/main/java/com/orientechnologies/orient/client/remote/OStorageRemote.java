@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -364,7 +365,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         openRemoteDatabase();
 
-        final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this, recordFormat);
+        final OStorageConfigurationImpl storageConfiguration = new OStorageRemoteConfiguration(this, recordFormat);
         storageConfiguration.load(iOptions);
 
         configuration = storageConfiguration;
@@ -422,7 +423,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           } finally {
             endResponse(network);
           }
-          configuration.load(new HashMap<String, Object>());
+
+          ((OStorageConfigurationImpl) configuration).load(new HashMap<String, Object>());
           return null;
         } finally {
           stateLock.releaseWriteLock();
@@ -1565,8 +1567,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             final OCluster cluster = clusters[iClusterId];
             clusters[iClusterId] = null;
             clusterMap.remove(cluster.getName());
-            if (configuration.clusters.size() > iClusterId)
-              configuration.dropCluster(iClusterId); // endResponse must be called before this line, which call updateRecord
+            if (configuration.getClusters().size() > iClusterId)
+              ((OStorageConfigurationImpl) configuration)
+                  .dropCluster(iClusterId); // endResponse must be called before this line, which call updateRecord
 
             return true;
           }
@@ -2654,4 +2657,116 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }, "Error sending import request", 0);
   }
 
+  @Override
+  public void updateConfiguration() {
+    ((OStorageConfigurationImpl) configuration).update();
+  }
+
+  @Override
+  public void setRecordSerializer(String recordSerializer, int version) {
+    final OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+    storageConfiguration.setRecordSerializer(recordSerializer);
+    storageConfiguration.setRecordSerializerVersion(version);
+    storageConfiguration.update();
+  }
+
+  @Override
+  public void setProperty(String property, String value) {
+    final OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+    storageConfiguration.setProperty(property, value);
+    storageConfiguration.update();
+
+  }
+
+  @Override
+  public void setDateFormat(String dateFormat) {
+    final OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+    storageConfiguration.setDateFormat(dateFormat);
+    storageConfiguration.update();
+  }
+
+  @Override
+  public void setDateTimeFormat(String dateTimeFormat) {
+    final OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+    storageConfiguration.setDateTimeFormat(dateTimeFormat);
+    storageConfiguration.update();
+
+  }
+
+  @Override
+  public void setTimeZone(TimeZone timeZone) {
+    final OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+    storageConfiguration.setTimeZone(timeZone);
+    storageConfiguration.update();
+
+  }
+
+  @Override
+  public void setLocaleCountry(String localeCountry) {
+    final OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+    storageConfiguration.setLocaleCountry(localeCountry);
+    storageConfiguration.update();
+
+  }
+
+  @Override
+  public void setLocaleLanguage(String localeLanguage) {
+    final OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+    storageConfiguration.setLocaleLanguage(localeLanguage);
+    storageConfiguration.update();
+
+  }
+
+  @Override
+  public void setCharset(String charset) {
+    final OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+    storageConfiguration.setCharset(charset);
+    storageConfiguration.update();
+
+  }
+
+  @Override
+  public void setClusterSelection(String clusterSelection) {
+    final OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+    storageConfiguration.setClusterSelection(clusterSelection);
+    storageConfiguration.update();
+  }
+
+  @Override
+  public void setMinimumClusters(int minimumClusters) {
+    final OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+    storageConfiguration.setMinimumClusters(minimumClusters);
+    storageConfiguration.update();
+  }
+
+  @Override
+  public void setValidation(boolean validation) {
+    final OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+    storageConfiguration.setValidation(validation);
+    storageConfiguration.update();
+  }
+
+  @Override
+  public void clearProperties() {
+    final OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+    storageConfiguration.clearProperties();
+    storageConfiguration.update();
+  }
+
+  @Override
+  public void removeProperty(String property) {
+    final OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+    storageConfiguration.removeProperty(property);
+    storageConfiguration.update();
+  }
+
+  @Override
+  public void setSchemaRecordId(String schemaRecordId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setIndexMgrRecordId(String indexMgrRecordId) {
+    throw new UnsupportedOperationException();
+  }
 }

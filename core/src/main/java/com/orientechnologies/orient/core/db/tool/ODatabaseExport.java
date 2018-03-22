@@ -25,7 +25,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -339,8 +338,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       writer.writeAttribute(2, true, "engine-build", engineBuild);
     writer.writeAttribute(2, true, "storage-config-version", OStorageConfiguration.CURRENT_VERSION);
     writer.writeAttribute(2, true, "schema-version", OSchemaShared.CURRENT_VERSION_NUMBER);
-    writer.writeAttribute(2, true, "schemaRecordId", database.getStorage().getConfiguration().schemaRecordId);
-    writer.writeAttribute(2, true, "indexMgrRecordId", database.getStorage().getConfiguration().indexMgrRecordId);
+    writer.writeAttribute(2, true, "schemaRecordId", database.getStorage().getConfiguration().getSchemaRecordId());
+    writer.writeAttribute(2, true, "indexMgrRecordId", database.getStorage().getConfiguration().getIndexMgrRecordId());
     writer.endObject(1, true);
 
     listener.onMessage("OK");

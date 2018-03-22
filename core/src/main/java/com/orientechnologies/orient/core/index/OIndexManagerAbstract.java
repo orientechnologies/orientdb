@@ -76,12 +76,12 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     if (!autoRecreateIndexesAfterCrash()) {
       acquireExclusiveLock();
       try {
-        if (getDatabase().getStorage().getConfiguration().indexMgrRecordId == null)
+        if (getDatabase().getStorage().getConfiguration().getIndexMgrRecordId() == null)
           // @COMPATIBILITY: CREATE THE INDEX MGR
           create();
 
         // RELOAD IT
-        ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().indexMgrRecordId);
+        ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().getIndexMgrRecordId());
         super.reload("*:-1 index:0");
       } finally {
         releaseExclusiveLock();
@@ -151,8 +151,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
           save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
         }
       }
-      getDatabase().getStorage().getConfiguration().indexMgrRecordId = document.getIdentity().toString();
-      getDatabase().getStorage().getConfiguration().update();
+      getDatabase().getStorage().setIndexMgrRecordId(document.getIdentity().toString());
 
       OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY.toString(), null);
       createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(),

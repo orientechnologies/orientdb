@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -1895,7 +1896,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         final byte[] storageStream = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
           @Override
           public byte[] call() throws Exception {
-            return connection.getDatabase().getStorage().getConfiguration()
+            return ((OStorageConfigurationImpl) connection.getDatabase().getStorage().getConfiguration())
                 .toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
           }
         }, false);
@@ -1998,7 +1999,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         final byte[] storageStream = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
           @Override
           public byte[] call() throws Exception {
-            return connection.getDatabase().getStorage().getConfiguration()
+            return ((OStorageConfigurationImpl) connection.getDatabase().getStorage().getConfiguration())
                 .toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
           }
         }, false);
@@ -2876,7 +2877,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     database.save(currentRecord);
 
-    if (currentRecord.getIdentity().toString().equals(database.getStorage().getConfiguration().indexMgrRecordId) && !database
+    if (currentRecord.getIdentity().toString().equals(database.getStorage().getConfiguration().getIndexMgrRecordId()) && !database
         .getStatus().equals(ODatabase.STATUS.IMPORTING)) {
       // FORCE INDEX MANAGER UPDATE. THIS HAPPENS FOR DIRECT CHANGES FROM REMOTE LIKE IN GRAPH
       database.getMetadata().getIndexManager().reload();

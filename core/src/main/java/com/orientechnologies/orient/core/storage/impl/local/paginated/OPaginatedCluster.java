@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.compression.OCompressionFactory;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -185,7 +185,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         pinnedStateEntryIndex = initCusterState(fileId, atomicOperation);
 
-        registerInStorageConfig(config.root);
+        registerInStorageConfig((OStorageConfigurationImpl) config.root);
 
         clusterPositionMap.create();
 
@@ -202,22 +202,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
-  public void registerInStorageConfig(OStorageConfiguration root) {
-    if (root.clusters.size() <= config.id) {
-      final int diff = config.id - root.clusters.size();
-      for (int i = 0; i < diff; i++) {
-        root.clusters.add(null);
-      }
-
-      root.clusters.add(config);
-    } else {
-      if (root.clusters.get(config.id) != null) {
-        throw new OStorageException(
-            "Cluster with id " + config.id + " already exists with name '" + root.clusters.get(config.id).getName() + "'");
-      }
-
-      root.clusters.set(config.id, config);
-    }
+  public void registerInStorageConfig(OStorageConfigurationImpl root) {
+    root.addCluster(config);
+    root.update();
   }
 
   @Override
@@ -1737,7 +1724,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   private String setRecordConflictStrategy(final String stringValue) {
     recordConflictStrategy = Orient.instance().getRecordConflictStrategy().getStrategy(stringValue);
     config.conflictStrategy = stringValue;
-    storageLocal.getConfiguration().update();
+    ((OStorageConfigurationImpl) storageLocal.getConfiguration()).update();
     return recordConflictStrategy == null ? null : recordConflictStrategy.getName();
   }
 
@@ -1778,7 +1765,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       compression = OCompressionFactory.INSTANCE.getCompression(iCompressionMethod, iCompressionOptions);
       config.compression = iCompressionMethod;
-      storageLocal.getConfiguration().update();
+      ((OStorageConfigurationImpl)storageLocal.getConfiguration()).update();
     } catch (IllegalArgumentException e) {
       throw OException.wrapException(
           new OPaginatedClusterException("Invalid value for " + OCluster.ATTRIBUTES.COMPRESSION + " attribute", this), e);
@@ -1789,7 +1776,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       encryption = OEncryptionFactory.INSTANCE.getEncryption(iMethod, iKey);
       config.encryption = iMethod;
-      storageLocal.getConfiguration().update();
+      ((OStorageConfigurationImpl)storageLocal.getConfiguration()).update();
     } catch (IllegalArgumentException e) {
       throw OException
           .wrapException(new OPaginatedClusterException("Invalid value for " + ATTRIBUTES.ENCRYPTION + " attribute", this), e);
@@ -1803,7 +1790,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         throw new OPaginatedClusterException(OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR + " cannot be less than 1", this);
 
       config.recordOverflowGrowFactor = growFactor;
-      storageLocal.getConfiguration().update();
+      ((OStorageConfigurationImpl)storageLocal.getConfiguration()).update();
     } catch (NumberFormatException nfe) {
       throw OException.wrapException(new OPaginatedClusterException(
           "Invalid value for cluster attribute " + OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR + " was passed [" + stringValue
@@ -1818,7 +1805,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         throw new OPaginatedClusterException(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR + " cannot be less than 1", this);
 
       config.recordGrowFactor = growFactor;
-      storageLocal.getConfiguration().update();
+      ((OStorageConfigurationImpl)storageLocal.getConfiguration()).update();
     } catch (NumberFormatException nfe) {
       throw OException.wrapException(new OPaginatedClusterException(
           "Invalid value for cluster attribute " + OCluster.ATTRIBUTES.RECORD_GROW_FACTOR + " was passed [" + stringValue + "]",
@@ -1835,7 +1822,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     storageLocal.renameCluster(getName(), newName);
     setName(newName);
 
-    storageLocal.getConfiguration().update();
+    ((OStorageConfigurationImpl)storageLocal.getConfiguration()).update();
   }
 
   private OPhysicalPosition createPhysicalPosition(final byte recordType, final long clusterPosition, final int version) {

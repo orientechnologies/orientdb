@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -264,13 +264,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (!exists())
           throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
-        configuration.load(iProperties);
-
-        final String cs = configuration.getConflictStrategy();
-        if (cs != null) {
-          // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
-          setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs));
-        }
+        ((OStorageConfigurationImpl) configuration).load(iProperties);
 
         componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
@@ -299,6 +293,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         writeCache.startFuzzyCheckpoints();
 
         status = STATUS.OPEN;
+
+        final String cs = configuration.getConflictStrategy();
+        if (cs != null) {
+          // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
+          setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs));
+        }
 
         readCache.loadCacheState(writeCache);
       } catch (Exception e) {
@@ -343,7 +343,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     final Set<String> indexNames = configuration.indexEngines();
     for (String indexName : indexNames) {
-      final OStorageConfiguration.IndexEngineData engineData = configuration.getIndexEngine(indexName);
+      final OStorageConfigurationImpl.IndexEngineData engineData = configuration.getIndexEngine(indexName);
       final OIndexEngine engine = OIndexes
           .createIndexEngine(engineData.getName(), engineData.getAlgorithm(), engineData.getIndexType(),
               engineData.getDurableInNonTxMode(), this, engineData.getVersion(), engineData.getEngineProperties(), null);
@@ -370,8 +370,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     addDefaultClusters();
 
     // REGISTER CLUSTER
-    for (int i = 0; i < configuration.clusters.size(); ++i) {
-      final OStorageClusterConfiguration clusterConfig = configuration.clusters.get(i);
+    final List<OStorageClusterConfiguration> configurationsClusters = configuration.getClusters();
+    for (int i = 0; i < configurationsClusters.size(); ++i) {
+      final OStorageClusterConfiguration clusterConfig = configurationsClusters.get(i);
 
       if (clusterConfig != null) {
         pos = createClusterFromConfig(clusterConfig);
@@ -485,8 +486,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
         doAddCluster(OMetadataDefault.CLUSTER_INTERNAL_NAME, null);
 
-        configuration.create();
-        configuration.setCreationVersion(OConstants.getVersion());
+        ((OStorageConfigurationImpl) configuration).create();
+        ((OStorageConfigurationImpl) configuration).setCreationVersion(OConstants.getVersion());
 
         // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
         // INDEXING
@@ -788,7 +789,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         clusters.set(clusterId, null);
 
         // UPDATE CONFIGURATION
-        configuration.dropCluster(clusterId);
+        ((OStorageConfigurationImpl) configuration).dropCluster(clusterId);
 
         return true;
       } catch (Exception e) {
@@ -836,7 +837,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           newCluster = new OOfflineCluster(this, clusterId, cluster.getName());
         } else {
 
-          newCluster = OPaginatedClusterFactory.INSTANCE.createCluster(cluster.getName(), configuration.version, this);
+          newCluster = OPaginatedClusterFactory.INSTANCE.createCluster(cluster.getName(), configuration.getVersion(), this);
           newCluster.configure(this, clusterId, cluster.getName());
           newCluster.open();
         }
@@ -846,7 +847,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         // UPDATE CONFIGURATION
         makeStorageDirty();
-        configuration.setClusterStatus(clusterId, iStatus);
+        ((OStorageConfigurationImpl) configuration).setClusterStatus(clusterId, iStatus);
 
         makeFullCheckpoint();
         return true;
@@ -1956,7 +1957,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         // this method introduced for binary compatibility only
-        if (configuration.binaryFormatVersion > 15)
+        if (configuration.getBinaryFormatVersion() > 15)
           return -1;
 
         final String originalName = engineName;
@@ -1972,9 +1973,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final OType[] keyTypes = indexDefinition != null ? indexDefinition.getTypes() : null;
         final boolean nullValuesSupport = indexDefinition != null && !indexDefinition.isNullValuesIgnored();
 
-        final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
-            indexType, durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic, keyTypes,
-            nullValuesSupport, keySize, engineProperties);
+        final OStorageConfigurationImpl.IndexEngineData engineData = new OStorageConfigurationImpl.IndexEngineData(originalName,
+            algorithm, indexType, durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic,
+            keyTypes, nullValuesSupport, keySize, engineProperties);
 
         final OIndexEngine engine = OIndexes
             .createIndexEngine(originalName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties, null);
@@ -1983,7 +1984,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         indexEngineNameMap.put(engineName, engine);
         indexEngines.add(engine);
-        configuration.addIndexEngine(engineName, engineData);
+        ((OStorageConfigurationImpl) configuration).addIndexEngine(engineName, engineData);
 
         return indexEngines.size() - 1;
       } catch (IOException e) {
@@ -2022,7 +2023,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           final OIndexEngine engine = indexEngineNameMap.remove(engineName);
           if (engine != null) {
             indexEngines.remove(engine);
-            configuration.deleteIndexEngine(engineName);
+            ((OStorageConfigurationImpl) configuration).deleteIndexEngine(engineName);
             engine.delete();
           }
         }
@@ -2050,11 +2051,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         indexEngines.add(engine);
 
-        final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
-            indexType, durableInNonTxMode, version, serializerId, keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport,
-            keySize, engineProperties);
+        final OStorageConfigurationImpl.IndexEngineData engineData = new OStorageConfigurationImpl.IndexEngineData(originalName,
+            algorithm, indexType, durableInNonTxMode, version, serializerId, keySerializer.getId(), isAutomatic, keyTypes,
+            nullValuesSupport, keySize, engineProperties);
 
-        configuration.addIndexEngine(engineName, engineData);
+        ((OStorageConfigurationImpl) configuration).addIndexEngine(engineName, engineData);
 
         return indexEngines.size() - 1;
       } catch (IOException e) {
@@ -2122,7 +2123,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         final String engineName = engine.getName().toLowerCase(configuration.getLocaleInstance());
         indexEngineNameMap.remove(engineName);
-        configuration.deleteIndexEngine(engineName);
+        ((OStorageConfigurationImpl) configuration).deleteIndexEngine(engineName);
       } catch (IOException e) {
         throw OException.wrapException(new OStorageException("Error on index deletion"), e);
       } finally {
@@ -2936,9 +2937,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           writeCache.flush();
 
-          if (configuration != null)
-            configuration.synch();
-
           clearStorageDirty();
         } catch (IOException e) {
           throw OException.wrapException(new OStorageException("Error on synch storage '" + name + "'"), e);
@@ -3203,14 +3201,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         synch();
-        try {
-          if (configuration != null)
-            configuration.setSoftlyClosed(true);
-
-        } catch (IOException e) {
-          atomicOperationsManager.releaseAtomicOperations(freezeId);
-          throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
-        }
       } finally {
         stateLock.releaseReadLock();
       }
@@ -3225,17 +3215,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public void release() {
     try {
-      try {
-        for (OIndexEngine indexEngine : indexEngines)
-          if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent)
-            ((OFreezableStorageComponent) indexEngine).release();
-
-        if (configuration != null)
-          configuration.setSoftlyClosed(false);
-
-      } catch (IOException e) {
-        throw OException.wrapException(new OStorageException("Error on release of storage '" + name + "'"), e);
-      }
+      for (OIndexEngine indexEngine : indexEngines)
+        if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent)
+          ((OFreezableStorageComponent) indexEngine).release();
 
       atomicOperationsManager.releaseAtomicOperations(-1);
     } catch (RuntimeException e) {
@@ -3629,14 +3611,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void setConflictStrategy(final ORecordConflictStrategy conflictResolver) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
     try {
+      checkOpeness();
+
       this.recordConflictStrategy = conflictResolver;
+      ((OStorageConfigurationImpl) configuration).setConflictStrategy(conflictResolver.getName());
+      ((OStorageConfigurationImpl) configuration).update();
     } catch (RuntimeException e) {
       throw logAndPrepareForRethrow(e);
     } catch (Error e) {
       throw logAndPrepareForRethrow(e);
     } catch (Throwable t) {
       throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
     }
   }
 
@@ -3699,9 +3689,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       try {
         writeAheadLog.flush();
-
-        if (configuration != null)
-          configuration.synch();
 
         //so we will be able to cut almost all the log
         writeAheadLog.appendNewSegment();
@@ -4272,7 +4259,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     if (config.getStatus() == OStorageClusterConfiguration.STATUS.ONLINE)
-      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(config.getName(), configuration.version, this);
+      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(config.getName(), configuration.getVersion(), this);
     else
       cluster = new OOfflineCluster(this, config.getId(), config.getName());
     cluster.configure(this, config);
@@ -4336,7 +4323,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (clusterName != null) {
       clusterName = clusterName.toLowerCase(configuration.getLocaleInstance());
 
-      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(clusterName, configuration.version, this);
+      cluster = OPaginatedClusterFactory.INSTANCE.createCluster(clusterName, configuration.getVersion(), this);
       cluster.configure(this, clusterPos, clusterName, parameters);
     } else {
       cluster = null;
@@ -4349,10 +4336,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         cluster.create(-1);
       } else {
         cluster.open();
-        ((OPaginatedCluster) cluster).registerInStorageConfig(configuration);
+        ((OPaginatedCluster) cluster).registerInStorageConfig((OStorageConfigurationImpl) configuration);
       }
-
-      configuration.update();
     }
 
     if (OLogManager.instance().isDebugEnabled())
@@ -4420,9 +4405,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       if (configuration != null)
         if (onDelete)
-          configuration.delete();
+          ((OStorageConfigurationImpl) configuration).delete();
         else
-          configuration.close();
+          ((OStorageConfigurationImpl) configuration).close();
 
       super.close(force, onDelete);
 
@@ -5287,4 +5272,341 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return new RuntimeException(throwable);
   }
 
+  @Override
+  public void updateConfiguration() {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      ((OStorageConfigurationImpl) configuration).update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void setRecordSerializer(String recordSerializer, int version) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.setRecordSerializer(recordSerializer);
+      storageConfiguration.setRecordSerializerVersion(version);
+
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void setProperty(String property, String value) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.setProperty(property, value);
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+
+  }
+
+  @Override
+  public void setDateFormat(String dateFormat) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.setDateFormat(dateFormat);
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+
+  }
+
+  @Override
+  public void setDateTimeFormat(String dateTimeFormat) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.setDateTimeFormat(dateTimeFormat);
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+
+  }
+
+  @Override
+  public void setTimeZone(TimeZone timeZone) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.setTimeZone(timeZone);
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void setLocaleCountry(String localeCountry) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.setLocaleCountry(localeCountry);
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+
+  }
+
+  @Override
+  public void setLocaleLanguage(String localeLanguage) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.setLocaleLanguage(localeLanguage);
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void setCharset(String charset) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.setCharset(charset);
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void setClusterSelection(String clusterSelection) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.setClusterSelection(clusterSelection);
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void setMinimumClusters(int minimumClusters) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.setMinimumClusters(minimumClusters);
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void setValidation(boolean validation) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.setValidation(validation);
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void clearProperties() {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.clearProperties();
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void removeProperty(String property) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.removeProperty(property);
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void setSchemaRecordId(String schemaRecordId) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.setSchemaRecordId(schemaRecordId);
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
+
+  @Override
+  public void setIndexMgrRecordId(String indexMgrRecordId) {
+    checkOpeness();
+    stateLock.acquireWriteLock();
+    try {
+      checkOpeness();
+
+      OStorageConfigurationImpl storageConfiguration = (OStorageConfigurationImpl) configuration;
+      storageConfiguration.setIndexMgrRecordId(indexMgrRecordId);
+      storageConfiguration.update();
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+  }
 }

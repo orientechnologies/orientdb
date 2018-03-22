@@ -54,7 +54,7 @@ public class OIntentMassiveInsert implements OIntent {
     // DISABLE TX IN GRAPH SQL OPERATIONS
     previousTxRequiredForSQLGraphOperations = ownerDb.getStorage().getConfiguration().isTxRequiredForSQLGraphOperations();
     if (previousTxRequiredForSQLGraphOperations)
-      ownerDb.getStorage().getConfiguration().setProperty("txRequiredForSQLGraphOperations", Boolean.FALSE.toString());
+      ownerDb.getStorage().setProperty("txRequiredForSQLGraphOperations", Boolean.FALSE.toString());
 
     if (!enableCache) {
       ownerDb.getLocalCache().setEnable(enableCache);
@@ -104,7 +104,7 @@ public class OIntentMassiveInsert implements OIntent {
         ownerDb.setUser(currentUser);
 
     if (previousTxRequiredForSQLGraphOperations)
-      ownerDb.getStorage().getConfiguration().setProperty("txRequiredForSQLGraphOperations", Boolean.TRUE.toString());
+      ownerDb.getStorage().setProperty("txRequiredForSQLGraphOperations", Boolean.TRUE.toString());
 
     if (!enableCache) {
       ownerDb.getLocalCache().setEnable(!enableCache);

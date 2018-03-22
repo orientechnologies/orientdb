@@ -44,6 +44,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 /**
@@ -540,6 +541,86 @@ public class PostponedEngineStartTest {
 
         @Override
         public void shutdown() {
+
+        }
+
+        @Override
+        public void updateConfiguration() {
+
+        }
+
+        @Override
+        public void setRecordSerializer(String recordSerializer, int version) {
+
+        }
+
+        @Override
+        public void setProperty(String property, String value) {
+
+        }
+
+        @Override
+        public void setDateFormat(String dateFormat) {
+
+        }
+
+        @Override
+        public void setDateTimeFormat(String dateTimeFormat) {
+
+        }
+
+        @Override
+        public void setTimeZone(TimeZone timeZone) {
+
+        }
+
+        @Override
+        public void setLocaleCountry(String localeCountry) {
+
+        }
+
+        @Override
+        public void setLocaleLanguage(String localeLanguage) {
+
+        }
+
+        @Override
+        public void setCharset(String charset) {
+
+        }
+
+        @Override
+        public void setClusterSelection(String clusterSelection) {
+
+        }
+
+        @Override
+        public void setMinimumClusters(int minimumClusters) {
+
+        }
+
+        @Override
+        public void setValidation(boolean validation) {
+
+        }
+
+        @Override
+        public void clearProperties() {
+
+        }
+
+        @Override
+        public void removeProperty(String property) {
+
+        }
+
+        @Override
+        public void setSchemaRecordId(String schemaRecordId) {
+
+        }
+
+        @Override
+        public void setIndexMgrRecordId(String indexMgrRecordId) {
 
         }
       };
