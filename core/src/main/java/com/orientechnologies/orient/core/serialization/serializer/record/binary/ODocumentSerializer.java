@@ -23,14 +23,15 @@ package com.orientechnologies.orient.core.serialization.serializer.record.binary
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.List;
 
 public interface ODocumentSerializer {
 
-  void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
+  List<Integer> serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
   
-  void serializeWithClassName(ODocument document, BytesContainer bytes, boolean iClassOnly);
+  List<Integer> serializeWithClassName(ODocument document, BytesContainer bytes, boolean iClassOnly);
 
-  HelperClasses.Tuple<Integer, Integer> serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
+  HelperClasses.Triple<Integer, Integer, List<Integer>> serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
 
   void deserialize(ODocument document, BytesContainer bytes);
   

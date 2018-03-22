@@ -608,6 +608,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return this;
   }
 
+  @Override
   public OUser getUser(final String iUserName) {
     List<ODocument> result = getDatabase().<OCommandRequest>command(
         new OSQLSynchQuery<ODocument>("select from OUser where name = ? limit 1").setFetchPlan("roles:1")).execute(iUserName);

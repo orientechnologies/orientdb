@@ -103,6 +103,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
       else
         serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
     } catch (RuntimeException e) {
+      e.printStackTrace();
       OLogManager.instance()
           .warn(this, "Error deserializing record with id %s send this data for debugging: %s ", iRecord.getIdentity().toString(),
               Base64.getEncoder().encodeToString(iSource));

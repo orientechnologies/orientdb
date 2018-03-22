@@ -196,18 +196,18 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public void serializeWithClassName(final ODocument document, final BytesContainer bytes, final boolean iClassOnly){
-    serialize(document, bytes, iClassOnly);
+  public List<Integer> serializeWithClassName(final ODocument document, final BytesContainer bytes, final boolean iClassOnly){
+    return serialize(document, bytes, iClassOnly);
   }
   
   @SuppressWarnings("unchecked")
   @Override
-  public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
+  public List<Integer> serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
 
     final OClass clazz = serializeClass(document, bytes);
     if (iClassOnly) {
       writeEmptyString(bytes);
-      return;
+      return null;
     }
 
     final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);
@@ -243,7 +243,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
     }
-
+    
+    return null;
   }
 
   @Override
@@ -512,7 +513,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
 
   @SuppressWarnings("unchecked")
   @Override
-  public HelperClasses.Tuple<Integer, Integer> serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
+  public HelperClasses.Triple<Integer, Integer, List<Integer>> serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
     int pointer = 0;
     int startOffset = bytes.offset;
     switch (type) {
@@ -614,7 +615,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       break;
     }
     int length = bytes.offset - startOffset;
-    return new HelperClasses.Tuple<>(pointer, length);
+    return new HelperClasses.Triple<>(pointer, length, null);
   }
 
   private int writeBinary(final BytesContainer bytes, final byte[] valueBytes) {
