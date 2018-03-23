@@ -85,9 +85,14 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
 
   @Override
   public void delete() throws IOException {
-    super.delete();
+    lock.acquireWriteLock();
+    try {
+      super.delete();
 
-    clearConfigurationFiles();
+      clearConfigurationFiles();
+    } finally {
+      lock.releaseWriteLock();
+    }
   }
 
   /**
@@ -105,13 +110,19 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
 
   @Override
   public void create() throws IOException {
-    clearConfigurationFiles();
+    lock.acquireWriteLock();
+    try {
+      clearConfigurationFiles();
 
-    super.create();
+      super.create();
+    } finally {
+      lock.releaseWriteLock();
+    }
   }
 
   @Override
   public OStorageConfigurationImpl load(final OContextConfiguration configuration) throws OSerializationException {
+    lock.acquireWriteLock();
     try {
       initConfiguration(configuration);
 
@@ -154,40 +165,47 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
     } catch (IOException e) {
       throw OException
           .wrapException(new OSerializationException("Cannot load database configuration. The database seems corrupted"), e);
+    } finally {
+      lock.releaseWriteLock();
     }
   }
 
   @Override
   public void update() throws OSerializationException {
-    final Charset utf8 = Charset.forName("UTF-8");
-    final byte[] buffer = toStream(utf8);
-
-    final ByteBuffer byteBuffer = ByteBuffer.allocate(buffer.length + OIntegerSerializer.INT_SIZE);
-    byteBuffer.putInt(buffer.length);
-    byteBuffer.put(buffer);
-
+    lock.acquireWriteLock();
     try {
-      if (!Files.exists(storagePath)) {
-        Files.createDirectories(storagePath);
+      final Charset utf8 = Charset.forName("UTF-8");
+      final byte[] buffer = toStream(utf8);
+
+      final ByteBuffer byteBuffer = ByteBuffer.allocate(buffer.length + OIntegerSerializer.INT_SIZE);
+      byteBuffer.putInt(buffer.length);
+      byteBuffer.put(buffer);
+
+      try {
+        if (!Files.exists(storagePath)) {
+          Files.createDirectories(storagePath);
+        }
+
+        final Path backupFile = storagePath.resolve(BACKUP_NAME);
+        Files.deleteIfExists(backupFile);
+
+        try (FileChannel channel = FileChannel.open(backupFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
+          writeConfigFile(buffer, byteBuffer, channel);
+        }
+
+        final Path file = storagePath.resolve(NAME);
+        Files.deleteIfExists(file);
+
+        try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
+          writeConfigFile(buffer, byteBuffer, channel);
+        }
+
+        Files.delete(backupFile);
+      } catch (Exception e) {
+        throw OException.wrapException(new OSerializationException("Error on update storage configuration"), e);
       }
-
-      final Path backupFile = storagePath.resolve(BACKUP_NAME);
-      Files.deleteIfExists(backupFile);
-
-      try (FileChannel channel = FileChannel.open(backupFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
-        writeConfigFile(buffer, byteBuffer, channel);
-      }
-
-      final Path file = storagePath.resolve(NAME);
-      Files.deleteIfExists(file);
-
-      try (FileChannel channel = FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)) {
-        writeConfigFile(buffer, byteBuffer, channel);
-      }
-
-      Files.delete(backupFile);
-    } catch (Exception e) {
-      throw OException.wrapException(new OSerializationException("Error on update storage configuration"), e);
+    } finally {
+      lock.releaseWriteLock();
     }
   }
 
