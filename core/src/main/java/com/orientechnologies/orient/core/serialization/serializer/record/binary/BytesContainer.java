@@ -67,6 +67,9 @@ public class BytesContainer {
   }
 
   public byte[] fitBytes() {
+    if (bytes.length ==  offset){
+      return bytes;
+    }
     final byte[] fitted = new byte[offset];
     System.arraycopy(bytes, 0, fitted, 0, offset);
     return fitted;
