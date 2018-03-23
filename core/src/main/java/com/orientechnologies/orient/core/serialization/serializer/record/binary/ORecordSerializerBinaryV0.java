@@ -1348,7 +1348,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
   
   @Override
-  public void getDebugDeserialization(BytesContainer bytes, ODatabaseDocumentInternal db,
+  public void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db,
           ORecordSerializationDebug debugInfo, OImmutableSchema schema){
     
     debugInfo.properties = new ArrayList<>();

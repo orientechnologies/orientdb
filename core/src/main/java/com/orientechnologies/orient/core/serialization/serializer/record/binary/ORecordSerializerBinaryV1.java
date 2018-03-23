@@ -110,16 +110,14 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     bytes.skip(OIntegerSerializer.INT_SIZE);
     int headerStart = bytes.offset;
     int cumulativeLength = 0;
-
-    int cycle = -1;
+    
     while (true) {
-      cycle++;
+      if (bytes.offset >= headerStart + headerLength)
+        break;
+      
       final int len = OVarIntSerializer.readAsInteger(bytes);
 
-      if (len == 0) {
-        // SCAN COMPLETED
-        break;
-      } else if (len > 0) {
+      if (len > 0) {
         // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
         Tuple<Boolean, String> matchFieldName = processLenLargerThanZeroDeserializePartial(iFields, bytes, len, fields);
         boolean match = matchFieldName.getFirstVal();
@@ -271,12 +269,12 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     int cumulativeLength = 0;
     
     while (true) {
+      if (bytes.offset >= headerStart + headerLength)
+        return null;
+      
       final int len = OVarIntSerializer.readAsInteger(bytes);
 
-      if (len == 0) {
-        // SCAN COMPLETED, NO FIELD FOUND
-        return null;
-      } else if (len > 0) {
+      if (len > 0) {
         // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
         Triple<Signal, OBinaryField, Integer> actionSignal = processLenLargerThanZeroDeserializeField(bytes, iFieldName, 
                 field, len, cumulativeLength, headerStart, headerLength);
@@ -326,13 +324,14 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     OType type;
     int cumulativeSize = 0;
     while (true) {
+      
+      if (bytes.offset >= headerStart + headerLength)
+        break;
+      
       OGlobalProperty prop;
       final int len = OVarIntSerializer.readAsInteger(bytes);
       int fieldLength;
-      if (len == 0) {
-        // SCAN COMPLETED
-        break;
-      } else if (len > 0) {
+      if (len > 0) {
         // PARSE FIELD NAME
         fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
         bytes.skip(len);
@@ -396,18 +395,20 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
    }
 
    //skip header length
+   int headerLength = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
    bytes.skip(OIntegerSerializer.INT_SIZE);
+   int headerStart = bytes.offset;
    
    final List<String> result = new ArrayList<>();
 
    String fieldName;
    while (true) {
+     if (bytes.offset >= headerStart + headerLength)
+       break;
+     
      OGlobalProperty prop = null;
      final int len = OVarIntSerializer.readAsInteger(bytes);
-     if (len == 0) {
-       // SCAN COMPLETED
-       break;
-     } else if (len > 0) {
+     if (len > 0) {
        // PARSE FIELD NAME
        fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
        result.add(fieldName);
@@ -497,7 +498,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       }
     }
     //signal for header end maybe this is not necessary because there is header length
-    writeEmptyString(headerBuffer);
+//    writeEmptyString(headerBuffer);
         
     return pointersToUpdate;
   }
@@ -591,12 +592,12 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
 
     while (true) {
+      if (bytes.offset >= headerStart + headerLength)
+        return null;
+      
       int len = OVarIntSerializer.readAsInteger(bytes);
 
-      if (len == 0) {
-        // SCAN COMPLETED, NO FIELD FOUND
-        return null;
-      } else if (len > 0) {
+      if (len > 0) {
         // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME        
         boolean match = checkMatchForLargerThenZero(bytes, field, len);
 
@@ -671,7 +672,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   }
   
   @Override
-  public void getDebugDeserialization(BytesContainer bytes, ODatabaseDocumentInternal db,
+  public void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db,
           ORecordSerializationDebug debugInfo, OImmutableSchema schema){
     
     int headerLength = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
@@ -682,7 +683,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     int last = 0;
     String fieldName;    
     OType type;
-    int cumulativeLength = 0;
+    int cumulativeLength = 0;    
     while (true) {
       ORecordSerializationDebugProperty debugProperty = new ORecordSerializationDebugProperty();
       OGlobalProperty prop = null;
@@ -690,13 +691,13 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       int fieldLength;
       
       try {
-        final int len = OVarIntSerializer.readAsInteger(bytes);
-        if (len != 0)
-          debugInfo.properties.add(debugProperty);
-        if (len == 0) {
-          // SCAN COMPLETED
+        if (bytes.offset >= headerPos + headerLength)
           break;
-        } else if (len > 0) {
+        
+        final int len = OVarIntSerializer.readAsInteger(bytes);
+//        if (len != 0)
+        debugInfo.properties.add(debugProperty);
+        if (len > 0) {
           // PARSE FIELD NAME
           fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
           bytes.skip(len);

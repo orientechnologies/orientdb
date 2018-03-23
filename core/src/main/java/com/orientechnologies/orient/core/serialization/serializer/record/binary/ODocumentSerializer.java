@@ -67,6 +67,6 @@ public interface ODocumentSerializer {
   
   HelperClasses.Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes);
   
-  void getDebugDeserialization(BytesContainer bytes, ODatabaseDocumentInternal db,
+  void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db,
           ORecordSerializationDebug debugInfo, OImmutableSchema schema);
 }

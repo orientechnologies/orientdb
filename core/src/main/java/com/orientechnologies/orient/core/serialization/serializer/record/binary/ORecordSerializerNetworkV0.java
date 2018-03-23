@@ -893,7 +893,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public void getDebugDeserialization(BytesContainer bytes, ODatabaseDocumentInternal db, ORecordSerializationDebug debugInfo, OImmutableSchema schema) {
+  public void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db, ORecordSerializationDebug debugInfo, OImmutableSchema schema) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
   
