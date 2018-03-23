@@ -619,8 +619,8 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     return responses.size();
   }
 
-  protected int getMissingResponses() {
-    return getExpectedResponses() - receivedResponses;
+  public synchronized boolean isFinished() {
+    return getExpectedResponses() - receivedResponses == 0;
   }
 
   protected int getReceivedResponsesCount() {

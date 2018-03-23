@@ -56,4 +56,6 @@ public interface ODistributedResponseManager {
   List<String> getMissingNodes();
 
   String getDatabaseName();
+
+  boolean isFinished();
 }
