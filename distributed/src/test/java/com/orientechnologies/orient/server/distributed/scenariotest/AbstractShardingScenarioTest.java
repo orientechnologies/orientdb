@@ -135,7 +135,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     OrientDB orientDB = serverInstance.get(0).getServerInstance().getContext();
     // checking inserted vertice
     // checking total amount of records (map-reduce aggregation)
-    if (orientDB.exists(getDatabaseName())) {
+    if (!orientDB.exists(getDatabaseName())) {
       orientDB.create(getDatabaseName(), ODatabaseType.PLOCAL);
     }
     ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
@@ -156,7 +156,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     for (ServerRun server : serverInstance) {
       if (server.isActive()) {
         OrientDB orientDB1 = server.getServerInstance().getContext();
-        if (orientDB1.exists(getDatabaseName())) {
+        if (!orientDB1.exists(getDatabaseName())) {
           orientDB1.create(getDatabaseName(), ODatabaseType.PLOCAL);
         }
         graph = orientDB1.open(getDatabaseName(), "admin", "admin");
