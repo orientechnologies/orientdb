@@ -53,4 +53,9 @@ public class OMilestoneWALRecord implements OWALRecord {
 
     return diskSize;
   }
+
+  @Override
+  public String toString() {
+    return "OMilestoneWALRecord{" + "lsn=" + lsn + '}';
+  }
 }

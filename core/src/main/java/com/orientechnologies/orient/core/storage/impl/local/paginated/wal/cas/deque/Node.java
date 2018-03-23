@@ -39,4 +39,9 @@ public class Node<T> extends AtomicReference<Node<T>> {
   public Node<T> getPrev() {
     return prev;
   }
+
+  @Override
+  public String toString() {
+    return "Node{" + "deqidx=" + deqidx + ", items=" + items + ", enqidx=" + enqidx + '}';
+  }
 }

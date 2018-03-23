@@ -14,4 +14,9 @@ public class Cursor<T> {
   public T getItem() {
     return item;
   }
+
+  @Override
+  public String toString() {
+    return "Cursor{" + "node=" + node + ", pageIndex=" + pageIndex + ", item=" + item + '}';
+  }
 }

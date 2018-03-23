@@ -1202,7 +1202,13 @@ public class OCASDiskWriteAheadLog {
         break;
       }
 
-      cursor = MPSCFAAArrayDequeue.prev(cursor);
+      Cursor<OWALRecord> nextCursor = MPSCFAAArrayDequeue.prev(cursor);
+      if (nextCursor == null && record.getLsn().getPosition() < 0) {
+        System.out.println(cursor.toString());
+        throw new IllegalStateException("Invalid last record");
+      }
+
+      cursor = nextCursor;
     }
 
     if (!unassignedList.isEmpty()) {
