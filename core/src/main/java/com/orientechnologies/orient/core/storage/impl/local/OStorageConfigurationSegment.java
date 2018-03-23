@@ -287,7 +287,7 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
       rnd.readFully(buffer);
 
       if (fileVersion < FORMAT_VERSION) {
-        if (rnd.length() >= size + 2 * OIntegerSerializer.INT_SIZE + 3 * OLongSerializer.LONG_SIZE) {
+        if (rnd.length() >= OFileClassic.HEADER_SIZE + size + 2 * OIntegerSerializer.INT_SIZE + 3 * OLongSerializer.LONG_SIZE) {
           final long encodingFagOne = rnd.readLong();
           final long encodingFagTwo = rnd.readLong();
           final long encodingFagThree = rnd.readLong();
