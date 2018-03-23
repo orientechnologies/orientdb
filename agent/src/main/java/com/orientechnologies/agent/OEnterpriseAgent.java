@@ -468,6 +468,9 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   public boolean isCloudConnected() {
     return cloudManager.isConnected();
   }
+  public String getMonitoringUrl() {
+    return cloudManager.getMonitoringUrl();
+  }
 
 
 
