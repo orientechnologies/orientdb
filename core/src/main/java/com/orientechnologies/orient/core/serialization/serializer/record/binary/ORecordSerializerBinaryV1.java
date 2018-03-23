@@ -69,21 +69,13 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   private Triple<Signal, Triple<Integer, OType, String>, Integer> processLessThanZeroDeserializePartialFields(final ODocument document,
           final int len, final String[] iFields, final BytesContainer bytes, int cumulativeLength, int headerStart, int headerLength){
     // LOAD GLOBAL PROPERTY BY ID
-    final OGlobalProperty prop = getGlobalProperty(document, len);
-    if (prop == null){
-      int a = 0;
-      ++a;
-    }
+    final OGlobalProperty prop = getGlobalProperty(document, len);    
     Tuple<Boolean, String> matchFieldName = processLenSmallerThanZeroDeserializePartial(prop, iFields);
 
     boolean matchField = matchFieldName.getFirstVal();
     String fieldName = matchFieldName.getSecondVal();
 
-    Integer fieldLength = OVarIntSerializer.readAsInteger(bytes);
-    if (fieldLength <= 0){
-      int a = 0;
-      ++a;
-    }
+    Integer fieldLength = OVarIntSerializer.readAsInteger(bytes);    
     OType type= getTypeForLenLessThanZero(prop, bytes);    
     
     if (!matchField) {            
@@ -103,23 +95,9 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   
   @Override
    public void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields){
-    // TRANSFORMS FIELDS FOM STRINGS TO BYTE[]
-    
-    if (document.getIdentity().getClusterId() == 4 && document.getIdentity().getClusterPosition() == 0){
-      int a = 0;
-      ++a;
-    }
-    
+    // TRANSFORMS FIELDS FOM STRINGS TO BYTE[]            
     final byte[][] fields = new byte[iFields.length][];
-    for (int i = 0; i < iFields.length; ++i){
-      if (iFields[i].equals("inheritedRole")){
-        int a = 0;
-        ++a;
-      }
-      if (iFields[i].equals("mode")){
-        int a = 0;
-        ++a;
-      }
+    for (int i = 0; i < iFields.length; ++i){      
       fields[i] = iFields[i].getBytes();
     }
 
@@ -148,10 +126,6 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
         fieldName = matchFieldName.getSecondVal();
         Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(bytes);
         int fieldLength = pointerAndType.getFirstVal();
-        if (fieldLength < 0){
-          int a = 0;
-          ++a;
-        }
         
         if (!match) {
           // FIELD NOT INCLUDED: SKIP IT
@@ -571,11 +545,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     }
     //signal for header end maybe this is not necessary because there is header length
     writeEmptyString(headerBuffer);
-    
-    if (pointersToUpdate.size() > 0){
-      int a = 0;
-      ++a;
-    }
+        
     return pointersToUpdate;
   }
   
@@ -592,17 +562,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   private List<Integer> serializeDocument(final ODocument document, final BytesContainer bytes, final OClass clazz){         
     //allocate space for header length
     int headerLengthOffset = bytes.alloc(OIntegerSerializer.INT_SIZE);
-    int headerOffset = bytes.offset;
-    
-    if (document.containsField("name") && document.containsField("password")){
-      int a = 0;
-      ++a;
-    }
-    
-    if (document.containsField("inheritedRole")){
-      int a = 0;
-      ++a;
-    }
+    int headerOffset = bytes.offset;        
     
     final Map<String, OProperty> props = clazz != null ? clazz.propertiesMap() : null;
     final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);    
@@ -612,11 +572,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     List<Integer> pointers = serializeWriteValues(bytes, valuesBuffer, document, fields, props);
     int headerLength = bytes.offset - headerOffset;
     //write header length as soon as possible
-    OIntegerSerializer.INSTANCE.serialize(headerLength, bytes.bytes, headerLengthOffset);
-    if (bytes.bytes[4] == 33){
-      int a = 0;
-      ++a;
-    }
+    OIntegerSerializer.INSTANCE.serialize(headerLength, bytes.bytes, headerLengthOffset);    
     
     updatePointers(valuesBuffer, pointers, bytes.offset);
     pointers = updatePointersToPointers(pointers, bytes.offset);    
