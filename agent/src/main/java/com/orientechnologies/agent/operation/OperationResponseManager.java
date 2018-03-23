@@ -162,4 +162,9 @@ public class OperationResponseManager implements ODistributedResponseManager {
   public List<OperationResponseFromNode> getResponses() {
     return responses;
   }
+
+  @Override
+  public boolean isFinished() {
+    return waitingFor.getCount() == 0;
+  }
 }
