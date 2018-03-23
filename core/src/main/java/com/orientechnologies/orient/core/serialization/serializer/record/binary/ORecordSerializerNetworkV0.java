@@ -31,6 +31,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
@@ -47,6 +48,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -56,7 +58,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readInteger;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
 public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
@@ -889,6 +890,11 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     byte typeId = readByte(bytes);
     OType type = OType.getById(typeId);
     return new HelperClasses.Tuple<>(valuePos, type);
+  }
+
+  @Override
+  public void getDebugDeserialization(BytesContainer bytes, ODatabaseDocumentInternal db, ORecordSerializationDebug debugInfo, OImmutableSchema schema) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
   
 }

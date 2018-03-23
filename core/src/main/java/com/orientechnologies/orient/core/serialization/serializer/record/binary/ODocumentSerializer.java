@@ -20,7 +20,9 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.List;
@@ -64,4 +66,7 @@ public interface ODocumentSerializer {
   boolean areTypeAndPointerFlipped();
   
   HelperClasses.Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes);
+  
+  void getDebugDeserialization(BytesContainer bytes, ODatabaseDocumentInternal db,
+          ORecordSerializationDebug debugInfo, OImmutableSchema schema);
 }
