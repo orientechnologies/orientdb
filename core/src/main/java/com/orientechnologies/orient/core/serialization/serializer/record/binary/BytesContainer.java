@@ -49,6 +49,17 @@ public class BytesContainer {
       resize();
     return cur;
   }
+  
+  public int allocExact(final int toAlloc) {
+    final int cur = offset;
+    offset += toAlloc;
+    if (bytes.length < offset){
+      byte[] newArray = new byte[offset];
+      System.arraycopy(bytes, 0, newArray, 0, bytes.length);
+      bytes = newArray;
+    }
+    return cur;
+  }
 
   public BytesContainer skip(final int read) {
     offset += read;

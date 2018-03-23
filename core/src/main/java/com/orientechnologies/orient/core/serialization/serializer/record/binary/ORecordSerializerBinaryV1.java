@@ -433,53 +433,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
    }
 
    return result.toArray(new String[result.size()]);
-  }
-
-  private int serializationAllocateHeaderSpace(final BytesContainer bytes,
-          final Entry<String, ODocumentEntry> values[], final Map<String, OProperty> props,
-          final Set<Entry<String, ODocumentEntry>> fields, final int[] pos) {
-    int i = 0;
-    
-    for (Entry<String, ODocumentEntry> entry : fields) {
-      ODocumentEntry docEntry = entry.getValue();
-      if (!docEntry.exist()) {
-        continue;
-      }
-      if (docEntry.property == null && props != null) {
-        OProperty prop = props.get(entry.getKey());
-        if (prop != null && docEntry.type == prop.getType()) {
-          docEntry.property = prop;
-        }
-      }
-
-      if (docEntry.property != null) {
-        int id = docEntry.property.getId();
-        OVarIntSerializer.write(bytes, (id + 1) * -1);
-        if (docEntry.property.getType() != OType.ANY) {
-          pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE);
-        } else {
-          pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
-        }
-      } else {
-        OType type = getFieldType(docEntry);
-        //write field name
-        writeString(bytes, entry.getKey());
-        //alloc space for data pointer and type
-        pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);         
-        ++(pos[i]);
-        if (docEntry.value != null){
-          if (type == null) {
-            throw new OSerializationException(
-                "Impossible serialize value of type " + docEntry.value.getClass() + " with the ODocument binary serializer");
-          }
-          writeOType(bytes, pos[i] - 1, type);          
-        }
-      }
-      values[i] = entry;
-      i++;
-    }
-    return i;
-  }
+  }  
   
   private static void updatePointers(BytesContainer buffer, List<Integer> pointers, int offset){    
     for (Integer pointer : pointers){
@@ -523,7 +477,6 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
         Triple<Integer, Integer, List<Integer>> dataPointerAndLength = serializeValue(valuesBuffer, value, type, getLinkedType(document, type, field.getKey()));
-//        int pointer = dataPointerAndLength.getFirstVal();
         int valueLength = dataPointerAndLength.getSecondVal();
         if (type.isEmbedded()){
           List<Integer> pointers = (List<Integer>)dataPointerAndLength.getThirdVal();
@@ -550,7 +503,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   }
   
   private void merge(BytesContainer destinationBuffer, BytesContainer sourceBuffer){    
-    destinationBuffer.offset = destinationBuffer.alloc(sourceBuffer.offset);
+    destinationBuffer.offset = destinationBuffer.allocExact(sourceBuffer.offset);
     System.arraycopy(sourceBuffer.bytes, 0, destinationBuffer.bytes, destinationBuffer.offset, sourceBuffer.offset);
     destinationBuffer.offset += sourceBuffer.offset;
   }
