@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -18,21 +22,30 @@ public class OLocalResultSet implements OResultSet {
   private final OInternalExecutionPlan executionPlan;
   private boolean finished = false;
 
+  long totalExecutionTime = 0;
+
   public OLocalResultSet(OInternalExecutionPlan executionPlan) {
     this.executionPlan = executionPlan;
     fetchNext();
   }
 
   private boolean fetchNext() {
-    lastFetch = executionPlan.fetchNext(100);
-    if (!lastFetch.hasNext()) {
-      finished = true;
-      return false;
+    long begin = System.currentTimeMillis();
+    try {
+      lastFetch = executionPlan.fetchNext(100);
+      if (!lastFetch.hasNext()) {
+        finished = true;
+        logProfiling();
+        return false;
+      }
+      return true;
+    } finally {
+      totalExecutionTime += (System.currentTimeMillis() - begin);
     }
-    return true;
   }
 
-  @Override public boolean hasNext() {
+  @Override
+  public boolean hasNext() {
     if (finished) {
       return false;
     }
@@ -43,7 +56,8 @@ public class OLocalResultSet implements OResultSet {
     }
   }
 
-  @Override public OResult next() {
+  @Override
+  public OResult next() {
     if (finished) {
       throw new IllegalStateException();
     }
@@ -55,15 +69,32 @@ public class OLocalResultSet implements OResultSet {
     return lastFetch.next();
   }
 
-  @Override public void close() {
+  private void logProfiling() {
+    if (executionPlan.getStatement() != null && Orient.instance().getProfiler().isRecording()) {
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+      if (db != null) {
+        final OSecurityUser user = db.getUser();
+        final String userString = user != null ? user.toString() : null;
+        Orient.instance().getProfiler()
+            .stopChrono("db." + ODatabaseRecordThreadLocal.instance().get().getName() + ".command.sql." + executionPlan.getStatement(),
+                "Command executed against the database", System.currentTimeMillis() - totalExecutionTime, "db.*.command.*", null,
+                userString);
+      }
+    }
+  }
+
+  @Override
+  public void close() {
     executionPlan.close();
   }
 
-  @Override public Optional<OExecutionPlan> getExecutionPlan() {
+  @Override
+  public Optional<OExecutionPlan> getExecutionPlan() {
     return Optional.of(executionPlan);
   }
 
-  @Override public Map<String, Long> getQueryStats() {
+  @Override
+  public Map<String, Long> getQueryStats() {
     return new HashMap<>();//TODO
   }
 

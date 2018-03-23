@@ -638,7 +638,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
 
           OBinarySerializerFactory serializerFactory = OBinarySerializerFactory
-              .create(storage.getConfiguration().binaryFormatVersion);
+              .create(storage.getConfiguration().getBinaryFormatVersion());
 
           //noinspection unchecked
           keySerializer = (OBinarySerializer<K>) serializerFactory.getObjectSerializer(page.getKeySerializerId());

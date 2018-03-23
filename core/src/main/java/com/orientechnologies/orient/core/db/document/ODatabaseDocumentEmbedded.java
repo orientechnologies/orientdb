@@ -209,8 +209,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   /**
    * {@inheritDoc}
-   *
-   * @param config
    */
   public void internalCreate(OrientDBConfig config) {
     this.status = STATUS.OPEN;
@@ -308,8 +306,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       // CHECK FORMAT
       new SimpleDateFormat(stringValue).format(new Date());
 
-      storage.getConfiguration().setDateFormat(stringValue);
-      storage.getConfiguration().update();
+      storage.setDateFormat(stringValue);
       break;
 
     case DATETIMEFORMAT:
@@ -319,8 +316,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       // CHECK FORMAT
       new SimpleDateFormat(stringValue).format(new Date());
 
-      storage.getConfiguration().setDateTimeFormat(stringValue);
-      storage.getConfiguration().update();
+      storage.setDateTimeFormat(stringValue);
       break;
 
     case TIMEZONE:
@@ -333,23 +329,19 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         timeZoneValue = TimeZone.getTimeZone(stringValue);
       }
 
-      storage.getConfiguration().setTimeZone(timeZoneValue);
-      storage.getConfiguration().update();
+      storage.setTimeZone(timeZoneValue);
       break;
 
     case LOCALECOUNTRY:
-      storage.getConfiguration().setLocaleCountry(stringValue);
-      storage.getConfiguration().update();
+      storage.setLocaleCountry(stringValue);
       break;
 
     case LOCALELANGUAGE:
-      storage.getConfiguration().setLocaleLanguage(stringValue);
-      storage.getConfiguration().update();
+      storage.setLocaleLanguage(stringValue);
       break;
 
     case CHARSET:
-      storage.getConfiguration().setCharset(stringValue);
-      storage.getConfiguration().update();
+      storage.setCharset(stringValue);
       break;
 
     case CUSTOM:
@@ -370,32 +362,27 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       break;
 
     case CLUSTERSELECTION:
-      storage.getConfiguration().setClusterSelection(stringValue);
-      storage.getConfiguration().update();
+      storage.setClusterSelection(stringValue);
       break;
 
     case MINIMUMCLUSTERS:
       if (iValue != null) {
         if (iValue instanceof Number)
-          storage.getConfiguration().setMinimumClusters(((Number) iValue).intValue());
+          storage.setMinimumClusters(((Number) iValue).intValue());
         else
-          storage.getConfiguration().setMinimumClusters(Integer.parseInt(stringValue));
+          storage.setMinimumClusters(Integer.parseInt(stringValue));
       } else
         // DEFAULT = 1
-        storage.getConfiguration().setMinimumClusters(1);
+        storage.setMinimumClusters(1);
 
-      storage.getConfiguration().update();
       break;
 
     case CONFLICTSTRATEGY:
       storage.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(stringValue));
-      storage.getConfiguration().setConflictStrategy(stringValue);
-      storage.getConfiguration().update();
       break;
 
     case VALIDATION:
-      storage.getConfiguration().setValidation(Boolean.parseBoolean(stringValue));
-      storage.getConfiguration().update();
+      storage.setValidation(Boolean.parseBoolean(stringValue));
       break;
 
     default:
@@ -407,7 +394,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   }
 
   private void clearCustomInternal() {
-    getStorage().getConfiguration().clearProperties();
+    getStorage().clearProperties();
   }
 
   private void removeCustomInternal(final String iName) {
@@ -418,12 +405,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     final OStorage storage = getStorage();
     if (iValue == null || "null".equalsIgnoreCase(iValue))
       // REMOVE
-      storage.getConfiguration().removeProperty(iName);
+      storage.removeProperty(iName);
     else
       // SET
-      storage.getConfiguration().setProperty(iName, iValue);
-
-    storage.getConfiguration().update();
+      storage.setProperty(iName, iValue);
   }
 
   public <DB extends ODatabase> DB setCustom(final String name, final Object iValue) {

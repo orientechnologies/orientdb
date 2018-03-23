@@ -166,7 +166,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OMatchExecutionPlanner planner = new OMatchExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx, enableProfiling);
+    OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
+    result.setStatement(originalStatement);
+    return result;
   }
 
   /**

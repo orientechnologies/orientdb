@@ -588,6 +588,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public boolean commit2pc(ODistributedRequestId transactionId) {
+    getStorageDistributed().resetLastValidBackup();
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.getTxContext(transactionId);
     if (txContext != null) {
@@ -628,6 +629,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean local) {
+    getStorageDistributed().resetLastValidBackup();
     acquireLocksForTx(txContext.getTransaction(), txContext);
 
     for (Map.Entry<String, OTransactionIndexChanges> change : txContext.getTransaction().getIndexOperations().entrySet()) {

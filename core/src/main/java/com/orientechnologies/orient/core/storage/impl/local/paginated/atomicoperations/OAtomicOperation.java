@@ -405,6 +405,7 @@ public class OAtomicOperation {
     try {
       if (writeAheadLog != null) {
         for (long deletedFileId : deletedFiles) {
+          writeAheadLog.log(new OFileDeletedWALRecord(operationUnitId, deletedFileId));
           readCache.deleteFile(deletedFileId, writeCache);
         }
 

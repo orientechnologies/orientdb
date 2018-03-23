@@ -185,7 +185,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         initCusterState(atomicOperation);
 
-        registerInStorageConfig(config.root);
+        registerInStorageConfig((OStorageConfigurationImpl) config.root);
 
         clusterPositionMap.create();
 
@@ -202,22 +202,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
-  public void registerInStorageConfig(OStorageConfiguration root) {
-    if (root.getClusters().size() <= config.id) {
-      final int diff = config.id - root.getClusters().size();
-      for (int i = 0; i < diff; i++) {
-        root.getClusters().add(null);
-      }
-
-      root.getClusters().add(config);
-    } else {
-      if (root.getClusters().get(config.id) != null) {
-        throw new OStorageException(
-            "Cluster with id " + config.id + " already exists with name '" + root.getClusters().get(config.id).getName() + "'");
-      }
-
-      root.getClusters().set(config.id, config);
-    }
+  public void registerInStorageConfig(OStorageConfigurationImpl root) {
+    root.addCluster(config);
+    root.update();
   }
 
   @Override
@@ -1730,7 +1717,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   private void setRecordConflictStrategy(final String stringValue) {
     recordConflictStrategy = Orient.instance().getRecordConflictStrategy().getStrategy(stringValue);
     config.conflictStrategy = stringValue;
-    storageLocal.getConfiguration().update();
+    ((OStorageConfigurationImpl) storageLocal.getConfiguration()).update();
   }
 
   private void updateClusterState(long sizeDiff, long recordsSizeDiff, OAtomicOperation atomicOperation) throws IOException {
@@ -1766,7 +1753,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       encryption = OEncryptionFactory.INSTANCE.getEncryption(iMethod, iKey);
       config.encryption = iMethod;
-      storageLocal.getConfiguration().update();
+      ((OStorageConfigurationImpl) storageLocal.getConfiguration()).update();
     } catch (IllegalArgumentException e) {
       throw OException
           .wrapException(new OPaginatedClusterException("Invalid value for " + ATTRIBUTES.ENCRYPTION + " attribute", this), e);
@@ -1780,7 +1767,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         throw new OPaginatedClusterException(OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR + " cannot be less than 1", this);
 
       config.recordOverflowGrowFactor = growFactor;
-      storageLocal.getConfiguration().update();
+      ((OStorageConfigurationImpl) storageLocal.getConfiguration()).update();
     } catch (NumberFormatException nfe) {
       throw OException.wrapException(new OPaginatedClusterException(
           "Invalid value for cluster attribute " + OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR + " was passed [" + stringValue
@@ -1795,7 +1782,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         throw new OPaginatedClusterException(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR + " cannot be less than 1", this);
 
       config.recordGrowFactor = growFactor;
-      storageLocal.getConfiguration().update();
+      ((OStorageConfigurationImpl) storageLocal.getConfiguration()).update();
     } catch (NumberFormatException nfe) {
       throw OException.wrapException(new OPaginatedClusterException(
           "Invalid value for cluster attribute " + OCluster.ATTRIBUTES.RECORD_GROW_FACTOR + " was passed [" + stringValue + "]",
@@ -1812,7 +1799,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     storageLocal.renameCluster(getName(), newName);
     setName(newName);
 
-    storageLocal.getConfiguration().update();
+    ((OStorageConfigurationImpl) storageLocal.getConfiguration()).update();
   }
 
   private OPhysicalPosition createPhysicalPosition(final byte recordType, final long clusterPosition, final int version) {

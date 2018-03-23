@@ -119,7 +119,9 @@ public class ODeleteStatement extends OStatement {
 
   public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     ODeleteExecutionPlanner planner = new ODeleteExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx, enableProfiling);
+    ODeleteExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
+    result.setStatement(this.originalStatement);
+    return result;
   }
 
   public OFromClause getFromClause() {

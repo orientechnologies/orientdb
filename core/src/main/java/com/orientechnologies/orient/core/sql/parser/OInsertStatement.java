@@ -122,7 +122,9 @@ public class OInsertStatement extends OStatement {
 
   public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OInsertExecutionPlanner planner = new OInsertExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx, enableProfiling);
+    OInsertExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
+    result.setStatement(originalStatement);
+    return result;
   }
 
   @Override public boolean equals(Object o) {

@@ -92,7 +92,9 @@ public class OTraverseStatement extends OStatement {
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OTraverseExecutionPlanner planner = new OTraverseExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx, enableProfiling);
+    OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
+    result.setStatement(originalStatement);
+    return result;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

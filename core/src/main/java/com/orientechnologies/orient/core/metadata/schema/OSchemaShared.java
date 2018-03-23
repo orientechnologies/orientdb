@@ -599,8 +599,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     rwSpinLock.acquireWriteLock();
     try {
       super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
-      database.getStorage().getConfiguration().setSchemaRecordId(document.getIdentity().toString());
-      database.getStorage().getConfiguration().update();
+      database.getStorage().setSchemaRecordId(document.getIdentity().toString());
       snapshot = new OImmutableSchema(this);
     } finally {
       rwSpinLock.releaseWriteLock();

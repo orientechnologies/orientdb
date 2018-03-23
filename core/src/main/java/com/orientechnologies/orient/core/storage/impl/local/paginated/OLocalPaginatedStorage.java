@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
@@ -241,6 +240,20 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         close(true, false);
       try {
         stateLock.acquireWriteLock();
+        File dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
+        final File[] storageFiles = dbDir.listFiles();
+        if (storageFiles != null) {
+          // TRY TO DELETE ALL THE FILES
+          for (File f : storageFiles) {
+            // DELETE ONLY THE SUPPORTED FILES
+            for (String ext : ALL_FILE_EXTENSIONS)
+              if (f.getPath().endsWith(ext)) {
+                f.delete();
+                break;
+              }
+          }
+        }
+
         OZIPCompressionUtil.uncompressDirectory(in, getStoragePath().toString(), iListener);
 
         final Path cacheStateFile = getStoragePath().resolve(O2QCache.CACHE_STATE_FILE);
@@ -272,24 +285,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       }
 
       open(null, null, new OContextConfiguration());
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  @Override
-  public OStorageConfigurationImpl getConfiguration() {
-    try {
-      stateLock.acquireReadLock();
-      try {
-        return super.getConfiguration();
-      } finally {
-        stateLock.releaseReadLock();
-      }
     } catch (RuntimeException e) {
       throw logAndPrepareForRethrow(e);
     } catch (Error e) {
@@ -390,7 +385,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void preOpenSteps() throws IOException {
-    if (getConfiguration().binaryFormatVersion >= 11) {
+    if (configuration.getBinaryFormatVersion() >= 11) {
       if (dirtyFlag.exists())
         dirtyFlag.open();
       else {

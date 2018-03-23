@@ -170,8 +170,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
           save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
         }
       }
-      database.getStorage().getConfiguration().setIndexMgrRecordId(document.getIdentity().toString());
-      database.getStorage().getConfiguration().update();
+      database.getStorage().setIndexMgrRecordId(document.getIdentity().toString());
 
       OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY.toString(), null);
       createIndex(DICTIONARY_NAME, OClass.INDEX_TYPE.DICTIONARY.toString(),

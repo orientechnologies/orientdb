@@ -67,7 +67,7 @@ public interface OResultSet extends Spliterator<OResult>, Iterator<OResult>, Aut
    * @return
    */
   default Stream<OResult> stream() {
-    return StreamSupport.stream(this, false);
+    return StreamSupport.stream(this, false).onClose(() -> this.close());
   }
 
   /**
@@ -105,7 +105,7 @@ public interface OResultSet extends Spliterator<OResult>, Iterator<OResult>, Aut
       public int characteristics() {
         return ORDERED;
       }
-    }, false);
+    }, false).onClose(() -> this.close());
   }
 
   /**
@@ -143,12 +143,12 @@ public interface OResultSet extends Spliterator<OResult>, Iterator<OResult>, Aut
       public int characteristics() {
         return ORDERED;
       }
-    }, false);
+    }, false).onClose(() -> this.close());
   }
 
   /**
-   * Returns the result set as a stream of vertices (filters only the results that are edges - where the isEdge() method
-   * returns true). IMPORTANT: the stream consumes the result set!
+   * Returns the result set as a stream of vertices (filters only the results that are edges - where the isEdge() method returns
+   * true). IMPORTANT: the stream consumes the result set!
    *
    * @return
    */
@@ -181,6 +181,6 @@ public interface OResultSet extends Spliterator<OResult>, Iterator<OResult>, Aut
       public int characteristics() {
         return ORDERED;
       }
-    }, false);
+    }, false).onClose(() -> this.close());
   }
 }

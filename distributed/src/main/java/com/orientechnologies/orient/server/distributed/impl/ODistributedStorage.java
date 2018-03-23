@@ -29,12 +29,11 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -86,10 +85,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedStorage implements OStorage, OFreezableStorageComponent, OAutoshardedStorage {
-  private final String                    name;
-  private final OServer                   serverInstance;
-  private final ODistributedServerManager dManager;
-  private       OAbstractPaginatedStorage wrapped;
+  private final    String                    name;
+  private final    OServer                   serverInstance;
+  private final    ODistributedServerManager dManager;
+  private volatile OAbstractPaginatedStorage wrapped;
 
   private BlockingQueue<OAsynchDistributedOperation> asynchronousOperationsQueue;
   private Thread                                     asynchWorker;
@@ -242,6 +241,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ?
         ((OCommandExecutorSQLDelegate) executor).getDelegate() :
         executor;
+
+    if (!exec.isIdempotent()) {
+      resetLastValidBackup();
+    }
 
     if (exec.isIdempotent() && !dManager.isNodeAvailable(dManager.getLocalNodeName(), getName())) {
       // SPECIAL CASE: NODE IS OFFLINE AND THE COMMAND IS IDEMPOTENT, EXECUTE IT LOCALLY ONLY
@@ -1149,7 +1152,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public OStorageConfigurationImpl getConfiguration() {
+  public OStorageConfiguration getConfiguration() {
     return wrapped.getConfiguration();
   }
 
@@ -1247,15 +1250,18 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   @Override
   public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+    resetLastValidBackup();
     return wrapped.addCluster(iClusterName, iRequestedId, iParameters);
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
+    resetLastValidBackup();
     return wrapped.dropCluster(iClusterName, iTruncate);
   }
 
   @Override
   public boolean dropCluster(final int iId, final boolean iTruncate) {
+    resetLastValidBackup();
     return wrapped.dropCluster(iId, iTruncate);
   }
 
@@ -1623,9 +1629,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new UnsupportedOperationException("Storage engine " + wrapped.getType() + " does not support freeze operation");
   }
 
-  private void resetLastValidBackup() {
-    if (lastValidBackup != null) {
-      lastValidBackup = null;
+  public void resetLastValidBackup() {
+    File backupFile = lastValidBackup;
+    lastValidBackup = null;
+    if (backupFile != null) {
+      if (backupFile.exists()) {
+        backupFile.delete();
+      }
     }
   }
 
@@ -1830,8 +1840,82 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     return new File(serverInstance.getDatabaseDirectory() + getName() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
   }
 
-
   public ODistributedDatabase getLocalDistributedDatabase() {
     return localDistributedDatabase;
+  }
+
+  @Override
+  public void setSchemaRecordId(String schemaRecordId) {
+    wrapped.setSchemaRecordId(schemaRecordId);
+  }
+
+  @Override
+  public void setDateFormat(String dateFormat) {
+    wrapped.setDateFormat(dateFormat);
+  }
+
+  @Override
+  public void setTimeZone(TimeZone timeZoneValue) {
+    wrapped.setTimeZone(timeZoneValue);
+  }
+
+  @Override
+  public void setLocaleLanguage(String locale) {
+    wrapped.setLocaleLanguage(locale);
+  }
+
+  @Override
+  public void setCharset(String charset) {
+    wrapped.setCharset(charset);
+  }
+
+  @Override
+  public void setIndexMgrRecordId(String indexMgrRecordId) {
+    wrapped.setIndexMgrRecordId(indexMgrRecordId);
+  }
+
+  @Override
+  public void setDateTimeFormat(String dateTimeFormat) {
+    wrapped.setDateTimeFormat(dateTimeFormat);
+  }
+
+  @Override
+  public void setLocaleCountry(String localeCountry) {
+    wrapped.setLocaleCountry(localeCountry);
+  }
+
+  @Override
+  public void setClusterSelection(String clusterSelection) {
+    wrapped.setClusterSelection(clusterSelection);
+  }
+
+  @Override
+  public void setMinimumClusters(int minimumClusters) {
+    wrapped.setMinimumClusters(minimumClusters);
+  }
+
+  @Override
+  public void setValidation(boolean validation) {
+    wrapped.setValidation(validation);
+  }
+
+  @Override
+  public void removeProperty(String property) {
+    wrapped.removeProperty(property);
+  }
+
+  @Override
+  public void setProperty(String property, String value) {
+    wrapped.setProperty(property, value);
+  }
+
+  @Override
+  public void setRecordSerializer(String recordSerializer, int version) {
+    wrapped.setRecordSerializer(recordSerializer, version);
+  }
+
+  @Override
+  public void clearProperties() {
+    wrapped.clearProperties();
   }
 }

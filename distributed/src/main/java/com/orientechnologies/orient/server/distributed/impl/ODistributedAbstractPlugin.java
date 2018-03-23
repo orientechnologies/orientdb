@@ -2008,6 +2008,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         });
       } finally {
         in.close();
+        f.delete();
+        fCompleted.delete();
       }
 
       ODatabaseDocumentInternal database = serverInstance.openDatabase(databaseName);

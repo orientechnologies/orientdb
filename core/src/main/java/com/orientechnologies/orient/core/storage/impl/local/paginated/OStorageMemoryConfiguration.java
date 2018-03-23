@@ -20,14 +20,12 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
@@ -45,32 +43,36 @@ public class OStorageMemoryConfiguration extends OStorageConfigurationImpl {
 
   @Override
   public OStorageConfigurationImpl load(final OContextConfiguration configuration) throws OSerializationException {
-    initConfiguration(configuration);
-
+    lock.acquireWriteLock();
     try {
-      fromStream(serializedContent, 0, serializedContent.length, streamCharset);
-    } catch (Exception e) {
-      throw OException
-          .wrapException(new OSerializationException("Cannot load database configuration. The database seems corrupted"), e);
+      initConfiguration(configuration);
+
+      try {
+        fromStream(serializedContent, 0, serializedContent.length, streamCharset);
+      } catch (Exception e) {
+        throw OException
+            .wrapException(new OSerializationException("Cannot load database configuration. The database seems corrupted"), e);
+      }
+      return this;
+    } finally {
+      lock.releaseWriteLock();
     }
-    return this;
   }
 
   @Override
   public void update() throws OSerializationException {
+    lock.acquireWriteLock();
     try {
-      serializedContent = toStream(streamCharset);
-    } catch (Exception e) {
-      throw OException.wrapException(new OSerializationException("Error on update storage configuration"), e);
+      try {
+        serializedContent = toStream(streamCharset);
+      } catch (Exception e) {
+        throw OException.wrapException(new OSerializationException("Error on update storage configuration"), e);
+      }
+      if (updateListener != null) {
+        updateListener.onUpdate(this);
+      }
+    } finally {
+      lock.releaseWriteLock();
     }
-    if (updateListener != null) {
-      updateListener.onUpdate(this);
-    }
-
   }
-
-  @Override
-  public void synch() throws IOException {
-  }
-
 }

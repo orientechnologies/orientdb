@@ -206,6 +206,11 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
     return quorumReached;
   }
 
+  public synchronized boolean isFinished() {
+    return finished;
+  }
+
+
   @Override
   public void timeout() {
 

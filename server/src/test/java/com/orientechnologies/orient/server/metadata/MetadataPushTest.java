@@ -52,6 +52,7 @@ public class MetadataPushTest {
   public void after() {
     database.activateOnCurrentThread();
     database.close();
+    orientDB.close();
     secondDatabase.activateOnCurrentThread();
     secondDatabase.close();
     secondOrientDB.close();

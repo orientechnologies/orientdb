@@ -66,7 +66,9 @@ public class OCreateEdgeStatement extends OStatement {
 
   public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OCreateEdgeExecutionPlanner planner = new OCreateEdgeExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx, enableProfiling);
+    OInsertExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
+    result.setStatement(this.originalStatement);
+    return result;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
