@@ -407,8 +407,9 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
 
         atomicUnit.clear();
       } else {
-        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
-            || walRecord instanceof ONonTxOperationPerformedWALRecord);
+        Assert.assertTrue("Unexpected type of the WAL record " + walRecord.getClass().getName(),
+            walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
+                || walRecord instanceof ONonTxOperationPerformedWALRecord);
       }
 
       lsn = log.next(lsn);
