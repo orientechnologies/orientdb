@@ -133,7 +133,7 @@ public class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
     }
 
     Node<T> node = cursor.node;
-    int idx = cursor.pageIndex + 1;
+    int idx = cursor.itemIndex + 1;
 
     while (node != null) {
       int enqidx = node.enqidx.get();
@@ -148,8 +148,11 @@ public class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
         }
       }
 
-      final T item = node.items.get(idx);//reached end of the queue
-      if (item == null || item == taken) {
+      final T item = node.items.get(idx);
+      if (item == null) {
+        continue;//counters may be updated but item itslef is not updated yet
+      }
+      if (item == taken) {
         return null;
       }
 
@@ -175,7 +178,7 @@ public class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
       }
 
       if (idx <= 0) {
-        return null;  // No more nodes in the queue
+        return null;  // No more items in the node
       }
 
       final T item = tail.items.get(idx - 1);
@@ -193,7 +196,7 @@ public class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
     }
 
     Node<T> node = cursor.node;
-    int idx = cursor.pageIndex - 1;
+    int idx = cursor.itemIndex - 1;
 
     while (node != null) {
       int deqidx = node.deqidx;
@@ -209,7 +212,10 @@ public class MPSCFAAArrayDequeue<T> extends AtomicReference<Node<T>> {
       }
 
       final T item = node.items.get(idx);//reached end of the queue
-      if (item == null || item == taken) {
+      if (item == null) {
+        continue;//counters may be updated but values are still not updated
+      }
+      if (item == taken) {
         return null;
       }
 
