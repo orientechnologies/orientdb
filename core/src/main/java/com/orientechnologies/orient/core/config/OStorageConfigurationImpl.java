@@ -89,14 +89,13 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   private                 String                                 conflictStrategy;
   private                 String                                 recordSerializer;
   private                 int                                    recordSerializerVersion;
-  private                 boolean                                strictSQL;
   private                 ConcurrentMap<String, IndexEngineData> indexEngines;
   private transient boolean validation = true;
   protected OStorageConfigurationUpdateListener updateListener;
   /**
    * Version of product release under which storage was created
    */
-  private String                              createdAtVersion;
+  private   String                              createdAtVersion;
 
   protected final Charset streamCharset;
 
@@ -178,7 +177,6 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
     recordSerializer = null;
     recordSerializerVersion = 0;
-    strictSQL = false;
     indexEngines = new ConcurrentHashMap<>();
     validation = getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DB_VALIDATION);
 
@@ -970,12 +968,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   }
 
   public boolean isStrictSql() {
-    lock.acquireReadLock();
-    try {
-      return strictSQL;
-    } finally {
-      lock.releaseReadLock();
-    }
+    return true;
   }
 
   public List<OStorageEntryConfiguration> getProperties() {
@@ -990,9 +983,6 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   public void setProperty(final String iName, final String iValue) {
     lock.acquireWriteLock();
     try {
-      if (OStatement.CUSTOM_STRICT_SQL.equalsIgnoreCase(iName))
-        // SET STRICT SQL VARIABLE
-        strictSQL = "true".equalsIgnoreCase(iValue);
 
       if ("validation".equalsIgnoreCase(iName))
         validation = "true".equalsIgnoreCase(iValue);
