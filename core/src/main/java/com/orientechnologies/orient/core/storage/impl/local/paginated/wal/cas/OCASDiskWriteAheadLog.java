@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
-import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
+import com.orientechnologies.common.concur.lock.ScalableRWLock;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -121,10 +121,10 @@ public class OCASDiskWriteAheadLog {
 
   private final ConcurrentNavigableMap<OLogSequenceNumber, Runnable> events = new ConcurrentSkipListMap<>();
 
-  private final OReadersWriterSpinLock segmentLock = new OReadersWriterSpinLock();
+  private final ScalableRWLock segmentLock = new ScalableRWLock();
 
   private final ConcurrentSkipListMap<OLogSequenceNumber, Integer> cutTillLimits = new ConcurrentSkipListMap<OLogSequenceNumber, Integer>();
-  private final OReadersWriterSpinLock                             cuttingLock   = new OReadersWriterSpinLock();
+  private final ScalableRWLock                                     cuttingLock   = new ScalableRWLock();
 
   private static final boolean assertions;
 
@@ -754,7 +754,7 @@ public class OCASDiskWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    cuttingLock.acquireReadLock();
+    cuttingLock.exclusiveLock();
     try {
       while (true) {
         final Integer oldCounter = cutTillLimits.get(lsn);
@@ -773,7 +773,7 @@ public class OCASDiskWriteAheadLog {
         }
       }
     } finally {
-      cuttingLock.releaseReadLock();
+      cuttingLock.exclusiveUnlock();
     }
   }
 
@@ -815,7 +815,7 @@ public class OCASDiskWriteAheadLog {
     final OLogSequenceNumber recordLSN;
 
     long logSegment;
-    segmentLock.acquireReadLock();
+    segmentLock.sharedLock();
     try {
       if (writeableRecord instanceof OAtomicUnitStartRecord) {
         ongoingTXs.increment();
@@ -832,7 +832,7 @@ public class OCASDiskWriteAheadLog {
         ongoingTXs.decrement();
       }
     } finally {
-      segmentLock.releaseReadLock();
+      segmentLock.sharedUnlock();
     }
 
     final long qsize = queueSize.addAndGet(writeableRecord.getBinaryContent().length);
@@ -868,7 +868,7 @@ public class OCASDiskWriteAheadLog {
   }
 
   public boolean cutAllSegmentsSmallerThan(long segmentId) throws IOException {
-    cuttingLock.acquireWriteLock();
+    cuttingLock.exclusiveLock();
     try {
       if (lastCheckpoint != null && segmentId >= lastCheckpoint.getSegment()) {
         segmentId = lastCheckpoint.getSegment();
@@ -915,7 +915,7 @@ public class OCASDiskWriteAheadLog {
 
       return removed;
     } finally {
-      cuttingLock.releaseWriteLock();
+      cuttingLock.exclusiveUnlock();
     }
   }
 
@@ -929,7 +929,7 @@ public class OCASDiskWriteAheadLog {
   }
 
   public void appendNewSegment() {
-    segmentLock.acquireWriteLock();
+    segmentLock.exclusiveLock();
     try {
       if (ongoingTXs.sum() > 0) {
         throw new IllegalStateException("There are on going txs, such call can be dangerous and unpredictable");
@@ -941,7 +941,7 @@ public class OCASDiskWriteAheadLog {
       segmentSize.set(0);
       logMilestoneRecord();
     } finally {
-      segmentLock.releaseWriteLock();
+      segmentLock.exclusiveUnlock();
     }
   }
 
@@ -950,7 +950,7 @@ public class OCASDiskWriteAheadLog {
       return;
     }
 
-    segmentLock.acquireWriteLock();
+    segmentLock.exclusiveLock();
     try {
       if (ongoingTXs.sum() > 0) {
         throw new IllegalStateException("There are on going txs, such call can be dangerous and unpredictable");
@@ -965,7 +965,7 @@ public class OCASDiskWriteAheadLog {
 
       logMilestoneRecord();
     } finally {
-      segmentLock.releaseWriteLock();
+      segmentLock.exclusiveUnlock();
     }
   }
 
@@ -1253,7 +1253,9 @@ public class OCASDiskWriteAheadLog {
   }
 
   private long calculatePosition(OWALRecord record, OWALRecord prevRecord) {
-    assert prevRecord.getLsn().getSegment() <= record.getLsn().getSegment();
+    assert
+        prevRecord.getLsn().getSegment() <= record.getLsn().getSegment() :
+        "prev segment " + prevRecord.getLsn().getSegment() + " segment " + record.getLsn().getSegment();
 
     if (prevRecord instanceof OStartWALRecord) {
       assert prevRecord.getLsn().getSegment() == record.getLsn().getSegment();
