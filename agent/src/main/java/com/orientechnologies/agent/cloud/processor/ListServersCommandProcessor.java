@@ -43,6 +43,7 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
 
       server.setVersion(OConstants.getRawVersion());
       server.setDistributed(false);
+      server.setDatabases(srv.listDatabases());
       OProfiler profiler = Orient.instance().getProfiler();
       ODocument statsDoc = new ODocument().fromJSON(profiler.getStatsAsJson());//change this!!!
 
