@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.util.List;
 
 public interface ODocumentSerializer {
 
@@ -33,7 +32,7 @@ public interface ODocumentSerializer {
   
   void serializeWithClassName(ODocument document, BytesContainer bytes, boolean iClassOnly);
 
-  HelperClasses.Triple<Integer, Integer, List<Integer>> serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
+  HelperClasses.Tuple<Integer, Integer> serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
 
   void deserialize(ODocument document, BytesContainer bytes);
   

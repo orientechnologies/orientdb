@@ -434,18 +434,17 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
    return result.toArray(new String[result.size()]);
   }  
   
-  private static void updatePointers(BytesContainer buffer, List<Integer> pointers, int offset){    
-    for (Integer pointer : pointers){
-      int valuePos = OIntegerSerializer.INSTANCE.deserialize(buffer.bytes, pointer);
-      valuePos += offset;
-      OIntegerSerializer.INSTANCE.serialize(valuePos, buffer.bytes, pointer);
-    }    
-  }
+//  private static void updatePointers(BytesContainer buffer, List<Integer> pointers, int offset){    
+//    for (Integer pointer : pointers){
+//      int valuePos = OIntegerSerializer.INSTANCE.deserialize(buffer.bytes, pointer);
+//      valuePos += offset;
+//      OIntegerSerializer.INSTANCE.serialize(valuePos, buffer.bytes, pointer);
+//    }    
+//  }
   
-  private List<Integer> serializeWriteValues(final BytesContainer headerBuffer, final BytesContainer valuesBuffer, final ODocument document,
+  private void serializeWriteValues(final BytesContainer headerBuffer, final BytesContainer valuesBuffer, final ODocument document,
                                     Set<Entry<String, ODocumentEntry>> fields, final Map<String, OProperty> props){
-    
-    List<Integer> pointersToUpdate = new ArrayList<>();
+        
     for (Entry<String, ODocumentEntry> field : fields) {
       ODocumentEntry docEntry = field.getValue();
       if (!field.getValue().exist()) {
@@ -475,12 +474,8 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
-        Triple<Integer, Integer, List<Integer>> dataPointerAndLength = serializeValue(valuesBuffer, value, type, getLinkedType(document, type, field.getKey()));
-        int valueLength = dataPointerAndLength.getSecondVal();
-        if (type.isEmbedded()){
-          List<Integer> pointers = (List<Integer>)dataPointerAndLength.getThirdVal();
-          pointersToUpdate.addAll(pointers);
-        }
+        Tuple<Integer, Integer> dataPointerAndLength = serializeValue(valuesBuffer, value, type, getLinkedType(document, type, field.getKey()));
+        int valueLength = dataPointerAndLength.getSecondVal();        
         OVarIntSerializer.write(headerBuffer, valueLength);                        
       }
       //handle null fields
@@ -494,11 +489,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
         int typeOffset = headerBuffer.alloc(OByteSerializer.BYTE_SIZE);
         OByteSerializer.INSTANCE.serialize((byte)type.getId(), headerBuffer.bytes, typeOffset);
       }
-    }
-    //signal for header end maybe this is not necessary because there is header length
-//    writeEmptyString(headerBuffer);
-        
-    return pointersToUpdate;
+    }    
   }
   
   private void merge(BytesContainer destinationBuffer, BytesContainer sourceBuffer1, BytesContainer sourceBuffer2){    
@@ -508,11 +499,11 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     destinationBuffer.offset += sourceBuffer1.offset + sourceBuffer2.offset;
   }
   
-  private List<Integer> updatePointersToPointers(List<Integer> pointers, int offset) {
-    return pointers.stream().map((Integer t) -> t + offset).collect(Collectors.toList());
-  }
+//  private List<Integer> updatePointersToPointers(List<Integer> pointers, int offset) {
+//    return pointers.stream().map((Integer t) -> t + offset).collect(Collectors.toList());
+//  }
   
-  private List<Integer> serializeDocument(final ODocument document, final BytesContainer bytes, final OClass clazz){         
+  private void serializeDocument(final ODocument document, final BytesContainer bytes, final OClass clazz){         
     //allocate space for header length
     
     final Map<String, OProperty> props = clazz != null ? clazz.propertiesMap() : null;
@@ -521,15 +512,14 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     BytesContainer valuesBuffer = new BytesContainer();
     BytesContainer headerBuffer = new BytesContainer();
     
-    List<Integer> pointers = serializeWriteValues(headerBuffer, valuesBuffer, document, fields, props);
+    serializeWriteValues(headerBuffer, valuesBuffer, document, fields, props);
     int headerLength = headerBuffer.offset;
     //write header length as soon as possible
     OVarIntSerializer.write(bytes, headerLength);
       
-    updatePointers(valuesBuffer, pointers, bytes.offset);
-    pointers = updatePointersToPointers(pointers, bytes.offset);    
-    merge(bytes, headerBuffer, valuesBuffer);
-    return pointers;
+//    updatePointers(valuesBuffer, pointers, bytes.offset);
+//    pointers = updatePointersToPointers(pointers, bytes.offset);    
+    merge(bytes, headerBuffer, valuesBuffer);    
   }
   
   @Override
@@ -746,9 +736,8 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   
   @SuppressWarnings("unchecked")
   @Override
-  protected Tuple<Integer, List<Integer>> writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
-    final int fullPos = OVarIntSerializer.write(bytes, map.size());
-    List<Integer> pointers = new ArrayList<>();
+  protected int writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
+    final int fullPos = OVarIntSerializer.write(bytes, map.size());    
     for (Entry<Object, Object> entry : map.entrySet()) {
       // TODO:check skip of complex types
       // FIXME: changed to support only string key on map
@@ -763,9 +752,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
         writeOType(bytes, bytes.alloc(1), type);
-        Triple<Integer, Integer, List<Integer>> pointerAndLengthAndPointers = serializeValue(bytes, value, type, null);
-        if (type.isEmbedded())
-            pointers.addAll(pointerAndLengthAndPointers.getThirdVal());
+        serializeValue(bytes, value, type, null);        
       }
       else{
         //signal for null value
@@ -773,7 +760,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       }
     }
 
-    return new Tuple<>(fullPos, pointers);
+    return fullPos;
   }
   
   @Override

@@ -513,7 +513,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
 
   @SuppressWarnings("unchecked")
   @Override
-  public HelperClasses.Triple<Integer, Integer, List<Integer>> serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
+  public HelperClasses.Tuple<Integer, Integer> serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
     int pointer = 0;
     int startOffset = bytes.offset;
     switch (type) {
@@ -615,7 +615,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       break;
     }
     int length = bytes.offset - startOffset;
-    return new HelperClasses.Triple<>(pointer, length, null);
+    return new HelperClasses.Tuple<>(pointer, length);
   }
 
   private int writeBinary(final BytesContainer bytes, final byte[] valueBytes) {

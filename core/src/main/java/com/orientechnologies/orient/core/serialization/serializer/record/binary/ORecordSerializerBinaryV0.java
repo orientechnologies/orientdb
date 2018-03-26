@@ -390,8 +390,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
     writeEmptyString(bytes);
     int size = i;
-
-    List<Integer> allPointers = new ArrayList<>();
+    
     for (i = 0; i < size; i++) {
       int pointer = 0;
       final Object value = values[i].getValue().value;
@@ -401,12 +400,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
-        Triple<Integer, Integer, List<Integer>> pointerAndLengthAndPointers = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
-        pointer = pointerAndLengthAndPointers.getFirstVal();
-        if (type.isEmbedded()){
-          List<Integer> pointers = pointerAndLengthAndPointers.getThirdVal();
-          allPointers.addAll(pointers);
-        }
+        Tuple<Integer, Integer> pointerAndLength = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
+        pointer = pointerAndLength.getFirstVal();        
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         if (values[i].getValue().property == null || values[i].getValue().property.getType() == OType.ANY)
           writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
@@ -846,10 +841,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Triple<Integer, Integer, List<Integer>> serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
+  public Tuple<Integer, Integer> serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
     int pointer = 0;
-    int startOffset = bytes.offset;
-    List<Integer> additionalInfo = new ArrayList<>();
+    int startOffset = bytes.offset;    
     switch (type) {
     case INTEGER:
     case LONG:
@@ -906,11 +900,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     case EMBEDDEDLIST:
       Tuple<Integer, List<Integer>> pointerAndPointers;
       if (value.getClass().isArray())
-        pointerAndPointers = writeEmbeddedCollection(bytes, Arrays.asList(OMultiValue.array(value)), linkedType);
+        pointer = writeEmbeddedCollection(bytes, Arrays.asList(OMultiValue.array(value)), linkedType);
       else
-        pointerAndPointers = writeEmbeddedCollection(bytes, (Collection<?>) value, linkedType);
-      pointer = pointerAndPointers.getFirstVal();
-      additionalInfo = pointerAndPointers.getSecondVal();
+        pointer = writeEmbeddedCollection(bytes, (Collection<?>) value, linkedType);      
       break;
     case DECIMAL:
       BigDecimal decimalValue = (BigDecimal) value;
@@ -935,9 +927,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       pointer = writeLinkMap(bytes, (Map<Object, OIdentifiable>) value);
       break;
     case EMBEDDEDMAP:
-      Tuple<Integer, List<Integer>> embeddedMapInfo = writeEmbeddedMap(bytes, (Map<Object, Object>) value);
-      pointer = embeddedMapInfo.getFirstVal();
-      additionalInfo = embeddedMapInfo.getSecondVal();
+      pointer = writeEmbeddedMap(bytes, (Map<Object, Object>) value);      
       break;
     case LINKBAG:
       pointer = ((ORidBag) value).toStream(bytes);
@@ -954,7 +944,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       break;
     }
     int length = bytes.offset - startOffset;
-    return new Triple<>(pointer, length, additionalInfo);
+    return new Tuple<>(pointer, length);
   }
 
   private int writeBinary(final BytesContainer bytes, final byte[] valueBytes) {
@@ -994,7 +984,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   @SuppressWarnings("unchecked")
-  protected Tuple<Integer, List<Integer>> writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
+  protected int writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
     final int[] pos = new int[map.size()];
     int i = 0;
     Entry<Object, Object> values[] = new Entry[map.size()];
@@ -1009,9 +999,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       values[i] = entry;
       i++;
     }
-
-    //because of double buffering in V1 we need later to update these pointers
-    List<Integer> pointers = new ArrayList<>();
+    
     for (i = 0; i < values.length; i++) {     
       final Object value = values[i].getValue();
       if (value != null) {
@@ -1020,12 +1008,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
-        Triple<Integer, Integer, List<Integer>> pointerAndLengthAndPointers = serializeValue(bytes, value, type, null);
-        int pointer = pointerAndLengthAndPointers.getFirstVal();
+        Tuple<Integer, Integer> pointerAndLength = serializeValue(bytes, value, type, null);
+        int pointer = pointerAndLength.getFirstVal();
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
-        pointers.add(pos[i]);
-        if (type.isEmbedded())
-          pointers.addAll(pointerAndLengthAndPointers.getThirdVal());
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
       else{
@@ -1033,7 +1018,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         writeEmptyString(bytes);
       }
     }
-    return new Tuple<>(fullPos, pointers);
+    return fullPos;
   }
 
   private int writeNullLink(final BytesContainer bytes) {
@@ -1088,11 +1073,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return pos;
   }
 
-  private Tuple<Integer, List<Integer>> writeEmbeddedCollection(final BytesContainer bytes, final Collection<?> value, final OType linkedType) {
+  private int writeEmbeddedCollection(final BytesContainer bytes, final Collection<?> value, final OType linkedType) {
     final int pos = OVarIntSerializer.write(bytes, value.size());
     // TODO manage embedded type from schema and auto-determined.
-    writeOType(bytes, bytes.alloc(1), OType.ANY);
-    List<Integer> allPointers = new ArrayList<>();
+    writeOType(bytes, bytes.alloc(1), OType.ANY);    
     for (Object itemValue : value) {
       // TODO:manage in a better way null entry
       if (itemValue == null) {
@@ -1106,16 +1090,13 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         type = linkedType;
       if (type != null) {
         writeOType(bytes, bytes.alloc(1), type);
-        Triple<Integer, Integer, List<Integer>> pointerAndLengthAndPointers = serializeValue(bytes, itemValue, type, null);
-        if (type.isEmbedded()){
-          allPointers.addAll(pointerAndLengthAndPointers.getThirdVal());
-        }
+        serializeValue(bytes, itemValue, type, null);        
       } else {
         throw new OSerializationException(
             "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
       }
     }
-    return new Tuple<>(pos, allPointers);
+    return pos;
   }
 
   protected OType getFieldType(final ODocumentEntry entry) {
