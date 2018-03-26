@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -188,6 +187,15 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       for (String strategy : strategies) {
         json.write((i > 0 ? "," : "") + "\"" + strategy + "\"");
         i++;
+      }
+      json.endCollection();
+
+      json.beginCollection("clusterSelectionStrategies");
+      Set<String> clusterSelectionStrategies = db.getMetadata().getSchema().getClusterSelectionFactory().getRegisteredNames();
+      int j = 0;
+      for (String strategy : clusterSelectionStrategies) {
+        json.write((j > 0 ? "," : "") + "\"" + strategy + "\"");
+        j++;
       }
       json.endCollection();
 
