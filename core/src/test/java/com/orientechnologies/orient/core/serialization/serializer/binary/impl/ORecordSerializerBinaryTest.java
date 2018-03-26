@@ -49,6 +49,7 @@ public class ORecordSerializerBinaryTest {
   
   private static ODatabaseDocumentTx db = null;
   private final ORecordSerializerBinary serializer;
+  private final int serializerVersion;
 
   @Parameterized.Parameters  
   public static Collection<Object[]> generateParams() {
@@ -69,6 +70,7 @@ public class ORecordSerializerBinaryTest {
     db.createClass("TestClass");
     db.command(new OCommandSQL("create property TestClass.TestEmbedded EMBEDDED")).execute();
     serializer = new ORecordSerializerBinary(serializerIndex);
+    serializerVersion = serializerIndex;
   }    
   
   @Test
@@ -251,6 +253,9 @@ public class ORecordSerializerBinaryTest {
   }
 
   private void decreasePositionsBy(byte[] recordBytes, int stepSize, boolean isNested) {
+    if (serializerVersion > 0)
+      return;
+    
     BytesContainer container = new BytesContainer(recordBytes);
     //for root elements skip serializer version
     if (!isNested)
@@ -265,10 +270,6 @@ public class ORecordSerializerBinaryTest {
         //read field name
         container.offset += len;
         
-        if (serializer.getCurrentSerializer().areTypeAndPointerFlipped()){
-          container.skip(OByteSerializer.BYTE_SIZE);
-        }
-        
         //read data pointer
         int pointer = readInteger(container);
         //shift pointer by start ofset
@@ -276,9 +277,7 @@ public class ORecordSerializerBinaryTest {
         //write to byte container
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, container.bytes, container.offset - OIntegerSerializer.INT_SIZE);
         //read type
-        if (!serializer.getCurrentSerializer().areTypeAndPointerFlipped()){
-          container.offset++;
-        }
+        container.offset++;
       }
       else if (len < 0){
         //rtead data pointer

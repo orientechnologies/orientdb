@@ -880,11 +880,6 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
   
   @Override
-  public boolean areTypeAndPointerFlipped(){
-    return false;
-  }
-  
-  @Override
   public HelperClasses.Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes){
     int valuePos = readInteger(bytes);
     byte typeId = readByte(bytes);

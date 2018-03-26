@@ -108,8 +108,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     OType type;
     int unmarshalledFields = 0;
     
-    int headerLength = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
-    bytes.skip(OIntegerSerializer.INT_SIZE);
+    int headerLength = OVarIntSerializer.readAsInteger(bytes);
     int headerStart = bytes.offset;
     int cumulativeLength = 0;
     
@@ -265,8 +264,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
     final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
 
-    int headerLength = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
-    bytes.skip(OIntegerSerializer.INT_SIZE);
+    int headerLength = OVarIntSerializer.readAsInteger(bytes);
     int headerStart = bytes.offset;
     int cumulativeLength = 0;
     
@@ -317,8 +315,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
 
   @Override
   public void deserialize(final ODocument document, final BytesContainer bytes) {        
-    int headerLength = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
-    bytes.skip(OIntegerSerializer.INT_SIZE);
+    int headerLength = OVarIntSerializer.readAsInteger(bytes);
     int headerStart = bytes.offset;
     
     int last = 0;
@@ -397,8 +394,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
    }
 
    //skip header length
-   int headerLength = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
-   bytes.skip(OIntegerSerializer.INT_SIZE);
+   int headerLength = OVarIntSerializer.readAsInteger(bytes);
    int headerStart = bytes.offset;
    
    final List<String> result = new ArrayList<>();
@@ -505,10 +501,11 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     return pointersToUpdate;
   }
   
-  private void merge(BytesContainer destinationBuffer, BytesContainer sourceBuffer){    
-    destinationBuffer.offset = destinationBuffer.allocExact(sourceBuffer.offset);
-    System.arraycopy(sourceBuffer.bytes, 0, destinationBuffer.bytes, destinationBuffer.offset, sourceBuffer.offset);
-    destinationBuffer.offset += sourceBuffer.offset;
+  private void merge(BytesContainer destinationBuffer, BytesContainer sourceBuffer1, BytesContainer sourceBuffer2){    
+    destinationBuffer.offset = destinationBuffer.allocExact(sourceBuffer1.offset + sourceBuffer2.offset);
+    System.arraycopy(sourceBuffer1.bytes, 0, destinationBuffer.bytes, destinationBuffer.offset, sourceBuffer1.offset);
+    System.arraycopy(sourceBuffer2.bytes, 0, destinationBuffer.bytes, destinationBuffer.offset + sourceBuffer1.offset, sourceBuffer2.offset);
+    destinationBuffer.offset += sourceBuffer1.offset + sourceBuffer2.offset;
   }
   
   private List<Integer> updatePointersToPointers(List<Integer> pointers, int offset) {
@@ -517,22 +514,23 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   
   private List<Integer> serializeDocument(final ODocument document, final BytesContainer bytes, final OClass clazz){         
     //allocate space for header length
-    int headerLengthOffset = bytes.alloc(OIntegerSerializer.INT_SIZE);
-    int headerOffset = bytes.offset;        
+//    int headerLengthOffset = bytes.alloc(OIntegerSerializer.INT_SIZE);        
     
     final Map<String, OProperty> props = clazz != null ? clazz.propertiesMap() : null;
     final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);    
 
     BytesContainer valuesBuffer = new BytesContainer();
+    BytesContainer headerBuffer = new BytesContainer();
     
-    List<Integer> pointers = serializeWriteValues(bytes, valuesBuffer, document, fields, props);
-    int headerLength = bytes.offset - headerOffset;
+    List<Integer> pointers = serializeWriteValues(headerBuffer, valuesBuffer, document, fields, props);
+    int headerLength = headerBuffer.offset;
     //write header length as soon as possible
-    OIntegerSerializer.INSTANCE.serialize(headerLength, bytes.bytes, headerLengthOffset);    
+    OVarIntSerializer.write(bytes, headerLength);
+//    OIntegerSerializer.INSTANCE.serialize(headerLength, bytes.bytes, headerLengthOffset);    
     
     updatePointers(valuesBuffer, pointers, bytes.offset);
     pointers = updatePointersToPointers(pointers, bytes.offset);    
-    merge(bytes, valuesBuffer);
+    merge(bytes, headerBuffer, valuesBuffer);
     return pointers;
   }
   
@@ -585,8 +583,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   protected <RET> RET deserializeFieldTypedLoopAndReturn(BytesContainer bytes, String iFieldName, int serializerVersion){
     final byte[] field = iFieldName.getBytes();
 
-    int headerLength = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
-    bytes.skip(OIntegerSerializer.INT_SIZE);
+    int headerLength = OVarIntSerializer.readAsInteger(bytes);
     int headerStart = bytes.offset;
     int cumulativeLength = 0;
     
@@ -666,19 +663,13 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     byte typeId = readByte(bytes);
     OType type = OType.getById(typeId);
     return new Tuple<>(fieldSize, type);
-  }    
-  
-  @Override
-  public boolean areTypeAndPointerFlipped(){
-    return true;
   }
   
   @Override
   public void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db,
           ORecordSerializationDebug debugInfo, OImmutableSchema schema){
     
-    int headerLength = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
-    bytes.skip(OIntegerSerializer.INT_SIZE);
+    int headerLength = OVarIntSerializer.readAsInteger(bytes);
     int headerPos = bytes.offset;
     
     debugInfo.properties = new ArrayList<>();
@@ -844,6 +835,70 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       }
     }
     
+    return retList;
+  }
+  
+  @Override
+  protected List<Integer> getPositionsPointersToUpdateFromSimpleEmbedded(BytesContainer record, int serializerVersion){    
+    List<Integer> retList = new ArrayList<>();    
+    int len = -1;      
+    //skip class name
+    readString(record);
+    
+    int headerLength = OVarIntSerializer.readAsInteger(record);
+    int headerStart = record.offset;
+    int cumulativeLength = 0;
+    //update positions and check for embedded records
+    while (len != 0){
+      if (record.offset >= headerStart + headerLength)
+        break;
+      
+      len = OVarIntSerializer.readAsInteger(record);
+      if (len > 0){
+        //read field name
+        record.offset += len;
+        //add this offset to result List;        
+        retList.add(record.offset);
+        Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(record);
+        int fieldLength = pointerAndType.getFirstVal();
+        //check if it is null field
+        if (fieldLength != 0){
+          OType type = pointerAndType.getSecondVal();
+
+          int currentCursor = record.offset;
+          int valuePos = headerStart + headerLength + cumulativeLength;
+          cumulativeLength += fieldLength;
+          record.offset = valuePos;
+          getPositionsForAllDescendants(retList, record, type, serializerVersion);        
+          record.offset = currentCursor;
+        }
+      }
+      else if (len < 0){
+        int fieldLength = OVarIntSerializer.readAsInteger(record);
+        
+        final int id = (len * -1) - 1;
+        final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
+        final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
+        OGlobalProperty property = _schema.getGlobalPropertyById(id);
+        OType type;
+        if (property.getType() != OType.ANY)
+          type = property.getType();
+        else
+          type = readOType(record);
+        
+        //check if it is null field
+        if (fieldLength != 0){
+          retList.add(record.offset);
+          int valuePos = headerStart + headerLength + cumulativeLength;
+          cumulativeLength += fieldLength;
+
+          int currentCursor = record.offset;
+          record.offset = valuePos;
+          getPositionsForAllDescendants(retList, record, type, serializerVersion);        
+          record.offset = currentCursor;
+        }
+      }
+    }
     return retList;
   }
   

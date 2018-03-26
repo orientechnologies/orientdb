@@ -62,8 +62,6 @@ public interface ODocumentSerializer {
   
   
   <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, int serializerVersion);
-
-  boolean areTypeAndPointerFlipped();
   
   HelperClasses.Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes);
   

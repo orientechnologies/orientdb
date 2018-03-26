@@ -489,6 +489,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       }
       else if (len < 0){
         final int id = (len * -1) - 1;
+        
+        retList.add(record.offset);
+        int valuePos = readInteger(record);
+        
         final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
         final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
         OGlobalProperty property = _schema.getGlobalPropertyById(id);
@@ -497,9 +501,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           type = property.getType();
         else
           type = readOType(record);
-        
-        retList.add(record.offset);
-        int valuePos = readInteger(record);
         
         int currentCursor = record.offset;
         record.offset = valuePos;
@@ -1344,11 +1345,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     byte typeId = readByte(bytes);
     OType type = OType.getById(typeId);
     return new Tuple<>(valuePos, type);
-  }
-  
-  @Override
-  public boolean areTypeAndPointerFlipped(){
-    return false;
   }
   
   @Override
