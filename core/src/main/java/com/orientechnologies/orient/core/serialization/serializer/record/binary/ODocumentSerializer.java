@@ -29,9 +29,9 @@ import java.util.List;
 
 public interface ODocumentSerializer {
 
-  List<Integer> serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
+  void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
   
-  List<Integer> serializeWithClassName(ODocument document, BytesContainer bytes, boolean iClassOnly);
+  void serializeWithClassName(ODocument document, BytesContainer bytes, boolean iClassOnly);
 
   HelperClasses.Triple<Integer, Integer, List<Integer>> serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
 

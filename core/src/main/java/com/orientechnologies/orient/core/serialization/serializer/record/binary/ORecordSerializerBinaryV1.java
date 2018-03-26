@@ -533,24 +533,24 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   }
   
   @Override
-  public List<Integer> serializeWithClassName(final ODocument document, final BytesContainer bytes, final boolean iClassOnly){
+  public void serializeWithClassName(final ODocument document, final BytesContainer bytes, final boolean iClassOnly){
     final OClass clazz = serializeClass(document, bytes, true);
     if (iClassOnly) {
       writeEmptyString(bytes);
-      return new ArrayList<>();
+      return;
     }
-    return serializeDocument(document, bytes, clazz);
+    serializeDocument(document, bytes, clazz);
   }
   
   @SuppressWarnings("unchecked")
   @Override
-  public List<Integer> serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
+  public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
     final OClass clazz = serializeClass(document, bytes, false);
     if (iClassOnly) {
       writeEmptyString(bytes);
-      return new ArrayList<>();
+      return;
     }
-    return serializeDocument(document, bytes, clazz);
+    serializeDocument(document, bytes, clazz);
   }  
 
   protected OClass serializeClass(final ODocument document, final BytesContainer bytes, boolean serializeClassName) {

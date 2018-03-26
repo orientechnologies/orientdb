@@ -197,18 +197,18 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public List<Integer> serializeWithClassName(final ODocument document, final BytesContainer bytes, final boolean iClassOnly){
-    return serialize(document, bytes, iClassOnly);
+  public void serializeWithClassName(final ODocument document, final BytesContainer bytes, final boolean iClassOnly){
+    serialize(document, bytes, iClassOnly);
   }
   
   @SuppressWarnings("unchecked")
   @Override
-  public List<Integer> serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
+  public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
 
     final OClass clazz = serializeClass(document, bytes);
     if (iClassOnly) {
-      writeEmptyString(bytes);
-      return null;
+      writeEmptyString(bytes);    
+      return;
     }
 
     final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);
@@ -244,8 +244,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
     }
-    
-    return null;
+        
   }
 
   @Override
