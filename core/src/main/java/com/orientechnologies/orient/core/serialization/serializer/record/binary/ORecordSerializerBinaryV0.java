@@ -483,10 +483,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       RecordInfo fieldInfo = new RecordInfo();
       fieldInfo.fieldStartOffset = fieldStart;
       fieldInfo.fieldType = dataType;
-      
-      int currentCursor = bytes.offset;      
-      
-      bytes.offset = currentCursor;
+            
       //TODO find better way to skip data bytes;
       deserializeValue(bytes, dataType, null, true, -1, serializerVersion, true);      
       fieldInfo.fieldLength = bytes.offset - fieldStart;      
@@ -1272,8 +1269,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           // PARSE FIELD NAME
           fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
           bytes.skip(len);
-          
-          ORecordSerializerBinary serializer = new ORecordSerializerBinary();
+                    
           Tuple<Integer, OType> valuePositionAndType = getPointerAndTypeFromCurrentPosition(bytes);
           valuePos = valuePositionAndType.getFirstVal();
           type = valuePositionAndType.getSecondVal();

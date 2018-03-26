@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -18,7 +17,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import java.util.*;
 import java.util.Map.Entry;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
-import java.util.stream.Collectors;
 
 public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{          
   
@@ -31,7 +29,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   
   private Tuple<Boolean, String> processLenLargerThanZeroDeserializePartial(final String[] iFields, final BytesContainer bytes, int len, byte[][] fields){
     boolean match = false;
-    String fieldName = null;
+    String fieldName;
     for (int i = 0; i < iFields.length; ++i) {
       if (iFields[i] != null && iFields[i].length() == len) {
         boolean matchField = true;
@@ -41,8 +39,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
             break;
           }
         }
-        if (matchField) {
-          fieldName = iFields[i];          
+        if (matchField) {                  
           match = true;
           break;
         }
@@ -404,7 +401,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
      if (bytes.offset >= headerStart + headerLength)
        break;
      
-     OGlobalProperty prop = null;
+     OGlobalProperty prop;
      final int len = OVarIntSerializer.readAsInteger(bytes);
      if (len > 0) {
        // PARSE FIELD NAME
@@ -432,15 +429,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
    }
 
    return result.toArray(new String[result.size()]);
-  }  
-  
-//  private static void updatePointers(BytesContainer buffer, List<Integer> pointers, int offset){    
-//    for (Integer pointer : pointers){
-//      int valuePos = OIntegerSerializer.INSTANCE.deserialize(buffer.bytes, pointer);
-//      valuePos += offset;
-//      OIntegerSerializer.INSTANCE.serialize(valuePos, buffer.bytes, pointer);
-//    }    
-//  }
+  }    
   
   private void serializeWriteValues(final BytesContainer headerBuffer, final BytesContainer valuesBuffer, final ODocument document,
                                     Set<Entry<String, ODocumentEntry>> fields, final Map<String, OProperty> props){
@@ -497,11 +486,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     System.arraycopy(sourceBuffer1.bytes, 0, destinationBuffer.bytes, destinationBuffer.offset, sourceBuffer1.offset);
     System.arraycopy(sourceBuffer2.bytes, 0, destinationBuffer.bytes, destinationBuffer.offset + sourceBuffer1.offset, sourceBuffer2.offset);
     destinationBuffer.offset += sourceBuffer1.offset + sourceBuffer2.offset;
-  }
-  
-//  private List<Integer> updatePointersToPointers(List<Integer> pointers, int offset) {
-//    return pointers.stream().map((Integer t) -> t + offset).collect(Collectors.toList());
-//  }
+  } 
   
   private void serializeDocument(final ODocument document, final BytesContainer bytes, final OClass clazz){         
     //allocate space for header length
@@ -517,8 +502,6 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     //write header length as soon as possible
     OVarIntSerializer.write(bytes, headerLength);
       
-//    updatePointers(valuesBuffer, pointers, bytes.offset);
-//    pointers = updatePointersToPointers(pointers, bytes.offset);    
     merge(bytes, headerBuffer, valuesBuffer);    
   }
   
@@ -667,7 +650,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     int cumulativeLength = 0;    
     while (true) {
       ORecordSerializationDebugProperty debugProperty = new ORecordSerializationDebugProperty();
-      OGlobalProperty prop = null;
+      OGlobalProperty prop;
       
       int fieldLength;
       
@@ -806,9 +789,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
         recordInfo.key = key;
         recordInfo.keyType = OType.getById(keyTypeId);
         int currentOffset = bytes.offset;
-
-        //get field length
-        bytes.offset = currentOffset;
+        
         deserializeValue(bytes, valueType, null, true, -1, serializerVersion, true);
         recordInfo.fieldLength = bytes.offset - currentOffset;
 

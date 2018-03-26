@@ -205,7 +205,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   @Override
   public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
 
-    final OClass clazz = serializeClass(document, bytes);
+    serializeClass(document, bytes);
     if (iClassOnly) {
       writeEmptyString(bytes);    
       return;
