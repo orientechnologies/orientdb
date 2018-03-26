@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.io.UnsupportedEncodingException;
 import java.util.Calendar;
-import java.util.List;
 import java.util.TimeZone;
 
 /**
@@ -80,7 +79,7 @@ public class HelperClasses {
   }
   
   protected static class RecordInfo{
-    public List<Integer> fieldRelatedPositions;
+//    public List<Integer> fieldRelatedPositions;
     public int fieldStartOffset;
     public int fieldLength;
     public OType fieldType;

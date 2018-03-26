@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
-
 public class OVarIntSerializer {
 
   public static int write(BytesContainer bytes, long value) {

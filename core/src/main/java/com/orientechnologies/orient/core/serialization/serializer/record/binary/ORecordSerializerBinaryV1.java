@@ -514,7 +514,6 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
   
   private List<Integer> serializeDocument(final ODocument document, final BytesContainer bytes, final OClass clazz){         
     //allocate space for header length
-//    int headerLengthOffset = bytes.alloc(OIntegerSerializer.INT_SIZE);        
     
     final Map<String, OProperty> props = clazz != null ? clazz.propertiesMap() : null;
     final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);    
@@ -526,8 +525,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     int headerLength = headerBuffer.offset;
     //write header length as soon as possible
     OVarIntSerializer.write(bytes, headerLength);
-//    OIntegerSerializer.INSTANCE.serialize(headerLength, bytes.bytes, headerLengthOffset);    
-    
+      
     updatePointers(valuesBuffer, pointers, bytes.offset);
     pointers = updatePointersToPointers(pointers, bytes.offset);    
     merge(bytes, headerBuffer, valuesBuffer);
@@ -688,7 +686,6 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
           break;
         
         final int len = OVarIntSerializer.readAsInteger(bytes);
-//        if (len != 0)
         debugInfo.properties.add(debugProperty);
         if (len > 0) {
           // PARSE FIELD NAME
@@ -817,14 +814,11 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
       if (valueTypeId != -1){
         OType valueType = OType.getById(valueTypeId);
         MapRecordInfo recordInfo = new MapRecordInfo();
-        recordInfo.fieldRelatedPositions = new ArrayList<>();
         recordInfo.fieldStartOffset = bytes.offset;
         recordInfo.fieldType = valueType;
         recordInfo.key = key;
         recordInfo.keyType = OType.getById(keyTypeId);
         int currentOffset = bytes.offset;
-
-        getPositionsForAllDescendants(recordInfo.fieldRelatedPositions, bytes, valueType, serializerVersion);      
 
         //get field length
         bytes.offset = currentOffset;
@@ -836,70 +830,6 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
     }
     
     return retList;
-  }
-  
-  @Override
-  protected List<Integer> getPositionsPointersToUpdateFromSimpleEmbedded(BytesContainer record, int serializerVersion){    
-    List<Integer> retList = new ArrayList<>();    
-    int len = -1;      
-    //skip class name
-    readString(record);
-    
-    int headerLength = OVarIntSerializer.readAsInteger(record);
-    int headerStart = record.offset;
-    int cumulativeLength = 0;
-    //update positions and check for embedded records
-    while (len != 0){
-      if (record.offset >= headerStart + headerLength)
-        break;
-      
-      len = OVarIntSerializer.readAsInteger(record);
-      if (len > 0){
-        //read field name
-        record.offset += len;
-        //add this offset to result List;        
-        retList.add(record.offset);
-        Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(record);
-        int fieldLength = pointerAndType.getFirstVal();
-        //check if it is null field
-        if (fieldLength != 0){
-          OType type = pointerAndType.getSecondVal();
-
-          int currentCursor = record.offset;
-          int valuePos = headerStart + headerLength + cumulativeLength;
-          cumulativeLength += fieldLength;
-          record.offset = valuePos;
-          getPositionsForAllDescendants(retList, record, type, serializerVersion);        
-          record.offset = currentCursor;
-        }
-      }
-      else if (len < 0){
-        int fieldLength = OVarIntSerializer.readAsInteger(record);
-        
-        final int id = (len * -1) - 1;
-        final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
-        final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
-        OGlobalProperty property = _schema.getGlobalPropertyById(id);
-        OType type;
-        if (property.getType() != OType.ANY)
-          type = property.getType();
-        else
-          type = readOType(record);
-        
-        //check if it is null field
-        if (fieldLength != 0){
-          retList.add(record.offset);
-          int valuePos = headerStart + headerLength + cumulativeLength;
-          cumulativeLength += fieldLength;
-
-          int currentCursor = record.offset;
-          record.offset = valuePos;
-          getPositionsForAllDescendants(retList, record, type, serializerVersion);        
-          record.offset = currentCursor;
-        }
-      }
-    }
-    return retList;
-  }
+  }  
   
 }

@@ -437,80 +437,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     } else
       ODocumentInternal.addOwner((ODocument) value, ownerDocument);
     return value;
-  }    
-  
-  //get positions for all embedded nested fields
-  protected void getPositionsForAllDescendants(List<Integer> destinationList, BytesContainer record, OType fieldType, int serializerVersion){
-    if (null != fieldType)switch (fieldType) {
-      case EMBEDDED:
-        //no need for level up because root byte array is already devided
-        destinationList.addAll(getPositionsPointersToUpdateFromSimpleEmbedded(record, serializerVersion));
-        break;
-      case EMBEDDEDLIST:
-      case EMBEDDEDSET:
-        //no need for level up because root byte array is already devided
-        List<RecordInfo> recordsInfo = getPositionsFromEmbeddedCollection(record, serializerVersion);
-        for (RecordInfo recordInfo : recordsInfo){
-          destinationList.addAll(recordInfo.fieldRelatedPositions);
-        }
-        break;          
-      case EMBEDDEDMAP:
-        List<MapRecordInfo> mapRecordInfo = getPositionsFromEmbeddedMap(record, serializerVersion);
-        for (RecordInfo recordInfo : mapRecordInfo){
-          destinationList.addAll(recordInfo.fieldRelatedPositions);
-        }
-        break;
-      default:
-        break;
-    }
-  }
-  
-  protected List<Integer> getPositionsPointersToUpdateFromSimpleEmbedded(BytesContainer record, int serializerVersion){    
-    List<Integer> retList = new ArrayList<>();    
-    int len = -1;      
-    //skip class name
-    readString(record);
-    //update positions and check for embedded records
-    while (len != 0){
-      len = OVarIntSerializer.readAsInteger(record);
-      if (len > 0){
-        //read field name
-        record.offset += len;
-        //add this offset to result List;        
-        retList.add(record.offset);
-        Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(record);
-        int valuePos = pointerAndType.getFirstVal();
-        OType type = pointerAndType.getSecondVal();
-        
-        int currentCursor = record.offset;
-        record.offset = valuePos;
-        getPositionsForAllDescendants(retList, record, type, serializerVersion);        
-        record.offset = currentCursor;
-      }
-      else if (len < 0){
-        final int id = (len * -1) - 1;
-        
-        retList.add(record.offset);
-        int valuePos = readInteger(record);
-        
-        final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
-        final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
-        OGlobalProperty property = _schema.getGlobalPropertyById(id);
-        OType type;
-        if (property.getType() != OType.ANY)
-          type = property.getType();
-        else
-          type = readOType(record);
-        
-        int currentCursor = record.offset;
-        record.offset = valuePos;
-        getPositionsForAllDescendants(retList, record, type, serializerVersion);        
-        record.offset = currentCursor;
-      }
-    }
-    return retList;
-  }
-    
+  }        
   
   protected List<MapRecordInfo> getPositionsFromEmbeddedMap(final BytesContainer bytes, int serializerVersion){
     List<MapRecordInfo> retList = new ArrayList<>();
@@ -524,15 +451,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       byte valueTypeId = readByte(bytes);
       OType valueType = OType.getById(valueTypeId);
       MapRecordInfo recordInfo = new MapRecordInfo();
-      recordInfo.fieldRelatedPositions = new ArrayList<>();
       recordInfo.fieldStartOffset = valuePos;
       recordInfo.fieldType = valueType;
       recordInfo.key = key;
       recordInfo.keyType = OType.getById(keyTypeId);
       int currentOffset = bytes.offset;
-      bytes.offset = valuePos;
-      
-      getPositionsForAllDescendants(recordInfo.fieldRelatedPositions, bytes, valueType, serializerVersion);      
+      bytes.offset = valuePos;       
       
       //get field length
       bytes.offset = valuePos;
@@ -556,6 +480,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     
     for (int i = 0 ; i < numberOfElements; i++){      
       //read element
+      
       //read data type      
       byte typeId = readByte(bytes);
       int fieldStart = bytes.offset;
@@ -563,12 +488,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       
       RecordInfo fieldInfo = new RecordInfo();
       fieldInfo.fieldStartOffset = fieldStart;
-      fieldInfo.fieldRelatedPositions = new ArrayList<>();
       fieldInfo.fieldType = dataType;
       
-      int currentCursor = bytes.offset;
-      
-      getPositionsForAllDescendants(fieldInfo.fieldRelatedPositions, bytes, dataType, serializerVersion);
+      int currentCursor = bytes.offset;      
       
       bytes.offset = currentCursor;
       //TODO find better way to skip data bytes;
