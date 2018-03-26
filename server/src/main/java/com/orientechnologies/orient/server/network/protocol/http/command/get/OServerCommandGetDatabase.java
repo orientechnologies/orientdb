@@ -190,6 +190,15 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       }
       json.endCollection();
 
+      json.beginCollection("clusterSelectionStrategies");
+      Set<String> clusterSelectionStrategies = db.getMetadata().getSchema().getClusterSelectionFactory().getRegisteredNames();
+      int j = 0;
+      for (String strategy : clusterSelectionStrategies) {
+        json.write((j > 0 ? "," : "") + "\"" + strategy + "\"");
+        j++;
+      }
+      json.endCollection();
+
       json.endObject();
 
       if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClasses() != null) {
