@@ -160,7 +160,7 @@ database.factory("Database", [
           delete current.metadata;
           localStorage.removeItem("SimpleAuth");
           localStorageService.cookie.clearAll();
-          
+
           document.cookie = "";
 
           callback();
@@ -498,6 +498,9 @@ database.factory("Database", [
           }
         });
         return strictSql;
+      },
+      getClusterSelection: () => {
+        return current.metadata.server.clusterSelectionStrategies || ["round-robin", "default", "balanced", "local"];
       }
     };
   }
