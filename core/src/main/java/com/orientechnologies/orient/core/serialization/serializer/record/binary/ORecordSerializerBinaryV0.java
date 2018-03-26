@@ -511,7 +511,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
     
   
-  private List<MapRecordInfo> getPositionsFromEmbeddedMap(final BytesContainer bytes, int serializerVersion){
+  protected List<MapRecordInfo> getPositionsFromEmbeddedMap(final BytesContainer bytes, int serializerVersion){
     List<MapRecordInfo> retList = new ArrayList<>();
     
     int numberOfElements = OVarIntSerializer.readAsInteger(bytes);    
@@ -808,7 +808,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
   }
 
-  private Object readEmbeddedMap(final BytesContainer bytes, final ODocument document) {
+  protected Object readEmbeddedMap(final BytesContainer bytes, final ODocument document) {
     int size = OVarIntSerializer.readAsInteger(bytes);
     final OTrackedMap<Object> result = new OTrackedMap<>(document);
 
@@ -1072,7 +1072,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   @SuppressWarnings("unchecked")
-  private Tuple<Integer, List<Integer>> writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
+  protected Tuple<Integer, List<Integer>> writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
     final int[] pos = new int[map.size()];
     int i = 0;
     Entry<Object, Object> values[] = new Entry[map.size()];
@@ -1105,6 +1105,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         if (type.isEmbedded())
           pointers.addAll(pointerAndLengthAndPointers.getThirdVal());
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
+      }
+      else{
+        //signal for null value
+        writeEmptyString(bytes);
       }
     }
     return new Tuple<>(fullPos, pointers);
@@ -1205,7 +1209,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return type;
   }
 
-  private OType getTypeFromValueEmbedded(final Object fieldValue) {
+  protected OType getTypeFromValueEmbedded(final Object fieldValue) {
     OType type = OType.getTypeByValue(fieldValue);
     if (type == OType.LINK && fieldValue instanceof ODocument && !((ODocument) fieldValue).getIdentity().isValid())
       type = OType.EMBEDDED;

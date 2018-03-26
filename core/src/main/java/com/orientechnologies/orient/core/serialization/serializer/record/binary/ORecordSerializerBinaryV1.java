@@ -4,6 +4,8 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.*;
@@ -752,6 +754,97 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0{
         debugInfo.failPosition = bytes.offset;  
       }
     }    
+  }
+  
+  @SuppressWarnings("unchecked")
+  @Override
+  protected Tuple<Integer, List<Integer>> writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
+    final int fullPos = OVarIntSerializer.write(bytes, map.size());
+    List<Integer> pointers = new ArrayList<>();
+    for (Entry<Object, Object> entry : map.entrySet()) {
+      // TODO:check skip of complex types
+      // FIXME: changed to support only string key on map
+      OType type = OType.STRING;
+      writeOType(bytes, bytes.alloc(1), type);
+      writeString(bytes, entry.getKey().toString());
+      final Object value = entry.getValue();
+      if (value != null){
+        type = getTypeFromValueEmbedded(value);
+        if (type == null) {
+          throw new OSerializationException(
+              "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
+        }
+        writeOType(bytes, bytes.alloc(1), type);
+        Triple<Integer, Integer, List<Integer>> pointerAndLengthAndPointers = serializeValue(bytes, value, type, null);
+        if (type.isEmbedded())
+            pointers.addAll(pointerAndLengthAndPointers.getThirdVal());
+      }
+      else{
+        //signal for null value
+        OByteSerializer.INSTANCE.serialize((byte)-1, bytes.bytes, bytes.alloc(1));
+      }
+    }
+
+    return new Tuple<>(fullPos, pointers);
+  }
+  
+  @Override
+  protected Object readEmbeddedMap(final BytesContainer bytes, final ODocument document) {
+    int size = OVarIntSerializer.readAsInteger(bytes);
+    final OTrackedMap<Object> result = new OTrackedMap<>(document);
+
+    result.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+    try {
+      for (int i = 0; i < size; i++) {
+        OType keyType = readOType(bytes);
+        Object key = deserializeValue(bytes, keyType, document);
+        byte typeId = readByte(bytes);
+        if (typeId != -1) {
+          final OType type = OType.getById(typeId);
+          Object value = deserializeValue(bytes, type, document);
+          result.put(key, value);
+        } else
+          result.put(key, null);
+      }
+      return result;
+
+    } finally {
+      result.setInternalStatus(ORecordElement.STATUS.LOADED);
+    }
+  }
+  
+  @Override
+  protected List<MapRecordInfo> getPositionsFromEmbeddedMap(final BytesContainer bytes, int serializerVersion){
+    List<MapRecordInfo> retList = new ArrayList<>();
+    
+    int numberOfElements = OVarIntSerializer.readAsInteger(bytes);    
+    
+    for (int i = 0 ; i < numberOfElements; i++){   
+      byte keyTypeId = readByte(bytes);
+      String key = readString(bytes);
+      byte valueTypeId = readByte(bytes);
+      if (valueTypeId != -1){
+        OType valueType = OType.getById(valueTypeId);
+        MapRecordInfo recordInfo = new MapRecordInfo();
+        recordInfo.fieldRelatedPositions = new ArrayList<>();
+        recordInfo.fieldStartOffset = bytes.offset;
+        recordInfo.fieldType = valueType;
+        recordInfo.key = key;
+        recordInfo.keyType = OType.getById(keyTypeId);
+        int currentOffset = bytes.offset;
+
+        getPositionsForAllDescendants(recordInfo.fieldRelatedPositions, bytes, valueType, serializerVersion);      
+
+        //get field length
+        bytes.offset = currentOffset;
+        deserializeValue(bytes, valueType, null, true, -1, serializerVersion, true);
+        recordInfo.fieldLength = bytes.offset - currentOffset;
+
+        retList.add(recordInfo);
+      }
+    }
+    
+    return retList;
   }
   
 }
