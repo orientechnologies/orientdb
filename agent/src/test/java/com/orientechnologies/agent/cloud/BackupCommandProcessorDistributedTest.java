@@ -284,7 +284,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
       Map<String, Object> upload = backupInfo.getUpload();
 
-      assertThat(upload).containsKeys("strategy", "host", "port", "username", "password", "path");
+      assertThat(upload).containsKeys("strategy", "host", "port", "username", "path");
 
       BackupList payload = getBackupList(firstServer.getNodeName());
 
