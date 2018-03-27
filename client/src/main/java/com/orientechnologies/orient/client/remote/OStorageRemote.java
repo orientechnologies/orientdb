@@ -91,7 +91,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private static final String        DEFAULT_HOST      = "localhost";
   private static final int           DEFAULT_PORT      = 2424;
   private static final int           DEFAULT_SSL_PORT  = 2434;
-  private static final String        ADDRESS_SEPARATOR = ";";
+  public static final  String        ADDRESS_SEPARATOR = ";";
   public static final  String        DRIVER_NAME       = "OrientDB Java";
   private static final String        LOCAL_IP          = "127.0.0.1";
   private static final String        LOCALHOST         = "localhost";

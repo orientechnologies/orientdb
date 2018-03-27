@@ -39,6 +39,7 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
 
+import static com.orientechnologies.orient.client.remote.OStorageRemote.ADDRESS_SEPARATOR;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_LOCK_TIMEOUT;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_SOCKET_RETRY;
 
@@ -64,7 +65,7 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   private String buildUrl(String name) {
-    return String.join(",", hosts) + "/" + name;
+    return String.join(ADDRESS_SEPARATOR, hosts) + "/" + name;
   }
 
   public ODatabaseDocumentInternal open(String name, String user, String password) {

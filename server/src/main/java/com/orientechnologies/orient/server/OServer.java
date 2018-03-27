@@ -606,7 +606,8 @@ public class OServer {
 
   public void waitForShutdown() {
     try {
-      shutdownLatch.await();
+      if (shutdownLatch != null)
+        shutdownLatch.await();
     } catch (InterruptedException e) {
       OLogManager.instance().error(this, "Error during waiting for OrientDB shutdown", e);
     }
