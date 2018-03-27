@@ -563,19 +563,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final int freeListBoundary = OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger() * 1024;
     final int maxKeySize = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
 
-    if (configuration.getPageSize() != pageSize) {
+    if (configuration.getPageSize() != -1 && configuration.getPageSize() != pageSize) {
       throw new OStorageException(
           "Storage is created with value of " + OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getKey() + " parameter equal to "
               + configuration.getPageSize() + " but current value is " + pageSize);
     }
 
-    if (configuration.getFreeListBoundary() != freeListBoundary) {
+    if (configuration.getFreeListBoundary() != -1 && configuration.getFreeListBoundary() != freeListBoundary) {
       throw new OStorageException(
           "Storage is created with value of " + OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getKey()
               + " parameter equal to " + configuration.getFreeListBoundary() + " but current value is " + freeListBoundary);
     }
 
-    if (configuration.getMaxKeySize() != maxKeySize) {
+    if (configuration.getMaxKeySize() != -1 && configuration.getMaxKeySize() != maxKeySize) {
       throw new OStorageException(
           "Storage is created with value of " + OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getKey() + " parameter equal to "
               + configuration.getMaxKeySize() + " but current value is " + maxKeySize);
