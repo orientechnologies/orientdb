@@ -502,6 +502,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OResultSet query(String query, Object[] args) {
+    checkOpenness();
+    checkIfActive();
+
     OStatement statement = OSQLEngine.parse(query, this);
     if (!statement.isIdempotent()) {
       throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
@@ -515,6 +518,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OResultSet query(String query, Map args) {
+    checkOpenness();
+    checkIfActive();
+
     OStatement statement = OSQLEngine.parse(query, this);
     if (!statement.isIdempotent()) {
       throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
@@ -528,6 +534,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OResultSet command(String query, Object[] args) {
+    checkOpenness();
+    checkIfActive();
+
     OStatement statement = OSQLEngine.parse(query, this);
     OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result;
@@ -549,6 +558,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OResultSet command(String query, Map args) {
+    checkOpenness();
+    checkIfActive();
+
     OStatement statement = OSQLEngine.parse(query, this);
     OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result;
@@ -569,6 +581,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OResultSet execute(String language, String script, Object... args) {
+    checkOpenness();
+    checkIfActive();
+
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
     OResultSet original = executor.execute(this, script, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
@@ -579,6 +594,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OResultSet execute(String language, String script, Map<String, ?> args) {
+    checkOpenness();
+    checkIfActive();
+
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
     OResultSet original = executor.execute(this, script, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
@@ -588,6 +606,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   }
 
   public OLocalResultSetLifecycleDecorator query(OExecutionPlan plan, Map<Object, Object> params) {
+    checkOpenness();
+    checkIfActive();
+
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(this);
     ctx.setInputParameters(params);
@@ -606,6 +627,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Object... args) {
+    checkOpenness();
+    checkIfActive();
+
     OLiveQueryListenerV2 queryListener = new LiveQueryListenerImpl(listener, query, this, args);
     ODatabaseDocumentInternal dbCopy = this.copy();
     this.activateOnCurrentThread();
@@ -615,6 +639,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args) {
+    checkOpenness();
+    checkIfActive();
+
     OLiveQueryListenerV2 queryListener = new LiveQueryListenerImpl(listener, query, this, (Map) args);
     ODatabaseDocumentInternal dbCopy = this.copy();
     this.activateOnCurrentThread();
