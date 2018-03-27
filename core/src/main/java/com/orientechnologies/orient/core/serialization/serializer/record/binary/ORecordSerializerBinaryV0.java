@@ -895,7 +895,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       break;
     case EMBEDDEDSET:
     case EMBEDDEDLIST:
-      Tuple<Integer, List<Integer>> pointerAndPointers;
       if (value.getClass().isArray())
         pointer = writeEmbeddedCollection(bytes, Arrays.asList(OMultiValue.array(value)), linkedType);
       else

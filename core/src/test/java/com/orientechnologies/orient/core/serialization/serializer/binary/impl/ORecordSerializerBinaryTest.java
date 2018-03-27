@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -69,9 +68,21 @@ public class ORecordSerializerBinaryTest {
     db = new ODatabaseDocumentTx("memory:test").create();
     db.createClass("TestClass");
     db.command(new OCommandSQL("create property TestClass.TestEmbedded EMBEDDED")).execute();
+    db.command(new OCommandSQL("create property TestClass.TestPropAny ANY")).execute();
     serializer = new ORecordSerializerBinary(serializerIndex);
     serializerVersion = serializerIndex;
   }    
+  
+  @Test
+  public void testGetTypedPropertyOfTypeAny(){    
+    ODocument doc = new ODocument("TestClass");
+    Integer setValue = 15;
+    doc.setProperty("TestPropAny", setValue);
+    db.save(doc);
+    byte[] serializedDoc = serializer.toStream(doc, false);
+    Integer value = serializer.deserializeFieldFromRoot(serializedDoc, "TestPropAny");
+    Assert.assertEquals(setValue, value);
+  }
   
   @Test
   public void testGetTypedFiledSimple(){    
