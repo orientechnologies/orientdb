@@ -132,7 +132,7 @@ public class BackupCommandProcessorTest {
   @Test
   public void testBackupCommandProcessor() {
 
-    ODocument cfg = createBackupConfig();
+    ODocument cfg = createBackupConfig(true);
 
     String uuid = cfg.field("uuid");
 
@@ -153,23 +153,29 @@ public class BackupCommandProcessorTest {
     assertThat(backupInfo.getRetentionDays()).isEqualTo(30);
 
     assertThat(backupInfo.getModes()).containsKeys(BackupMode.FULL_BACKUP);
+
     assertThat(backupInfo.getModes()).containsKeys(BackupMode.INCREMENTAL_BACKUP);
 
     BackupModeConfig incremental = backupInfo.getModes().get(BackupMode.INCREMENTAL_BACKUP);
 
     BackupModeConfig full = backupInfo.getModes().get(BackupMode.FULL_BACKUP);
-
     assertThat(full.getWhen()).isEqualTo("0/5 * * * * ?");
+
     assertThat(incremental.getWhen()).isEqualTo("0/2 * * * * ?");
 
   }
 
   private ODocument createBackupConfig() {
+    return createBackupConfig(false);
+  }
+  private ODocument createBackupConfig(boolean mixed) {
     ODocument modes = new ODocument();
 
     ODocument mode = new ODocument();
-    modes.field("FULL_BACKUP", mode);
-    mode.field("when", "0/5 * * * * ?");
+    if(mixed) {
+      modes.field("FULL_BACKUP", mode);
+      mode.field("when", "0/5 * * * * ?");
+    }
 
     ODocument incrementalMode = new ODocument();
     modes.field("INCREMENTAL_BACKUP", incrementalMode);
@@ -318,7 +324,10 @@ public class BackupCommandProcessorTest {
     AtomicReference<OBackupLog> lastLog = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(3);
     task.registerListener((cfg1, log) -> {
-      lastLog.set(log);
+
+      if (OBackupLogType.BACKUP_FINISHED.equals(log.getType())) {
+        lastLog.set(log);
+      }
       latch.countDown();
       return latch.getCount() > 0;
 
