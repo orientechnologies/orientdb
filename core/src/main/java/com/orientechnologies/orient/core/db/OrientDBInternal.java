@@ -56,7 +56,7 @@ public interface OrientDBInternal extends AutoCloseable {
     if ("embedded".equals(what))
       return embedded(url.substring(url.indexOf(':') + 1), configuration);
     else if ("remote".equals(what))
-      return remote(url.substring(url.indexOf(':') + 1).split(","), configuration);
+      return remote(url.substring(url.indexOf(':') + 1).split(";"), configuration);
     throw new ODatabaseException("not supported database type");
   }
 
