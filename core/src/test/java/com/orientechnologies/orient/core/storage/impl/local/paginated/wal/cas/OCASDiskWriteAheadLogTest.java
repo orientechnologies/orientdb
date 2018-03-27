@@ -1112,7 +1112,8 @@ public class OCASDiskWriteAheadLogTest {
 
   @Test
   public void appendMT10MSegSmallCacheTest() throws Exception {
-    for (int n = 0; n < 240; n++) {
+    final int iterations = 240;
+    for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 10 * 1024 * 1024, 1000,
@@ -1174,12 +1175,15 @@ public class OCASDiskWriteAheadLogTest {
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
       loadedWAL.close();
+
+      System.out.printf("%d iteration out of %d is passed\n", n, iterations);
     }
   }
 
   @Test
   public void appendMT10MSegBigCacheTest() throws Exception {
-    for (int n = 0; n < 240; n++) {
+    final int iterations = 240;
+    for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
       OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory,
@@ -1243,9 +1247,10 @@ public class OCASDiskWriteAheadLogTest {
       System.out.println("Assert WAL content 2");
       assertMTWALInsertion(loadedWAL, addedRecords);
       loadedWAL.close();
+
+      System.out.printf("%d iteration out of %d is passed\n", n, iterations);
     }
   }
-
 
   private void assertMTWALInsertion(OCASDiskWriteAheadLog wal, SortedMap<OLogSequenceNumber, TestRecord> addedRecords)
       throws IOException {
@@ -1300,9 +1305,9 @@ public class OCASDiskWriteAheadLogTest {
     public Void call() {
       try {
         wal.appendSegment(segment + 1);
-        System.out.printf("%d segment was appended \n", segment + 1);
       } catch (Exception | Error e) {
         e.printStackTrace();
+        throw e;
       }
 
       return null;
