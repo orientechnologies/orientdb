@@ -180,7 +180,7 @@
         <osgi.dynamicImport/>
         <osgi.private/>
         <!-- | shared build/report plugins version -->
-        <surefire.version>2.20.1</surefire.version>
+        <surefire.version>2.21.0</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
 

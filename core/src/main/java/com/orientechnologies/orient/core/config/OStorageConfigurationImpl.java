@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
@@ -57,6 +56,7 @@ import java.util.concurrent.ConcurrentMap;
  * <li>14 = no changes, but version was incremented</li>
  * <li>15 = introduced encryption and encryptionKey</li>
  * <li>18 = we keep version of product release under which storage was created</li>
+ * <li>19 = Page size and related parameters are stored inside configuration</li>
  * </ul>
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
@@ -89,14 +89,22 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   private                 String                                 conflictStrategy;
   private                 String                                 recordSerializer;
   private                 int                                    recordSerializerVersion;
-  private                 boolean                                strictSQL;
   private                 ConcurrentMap<String, IndexEngineData> indexEngines;
+
+  /*
+   * Page size and parameters which depend on page size.
+   * Such as minimum size of page in free list and maximum size of key in b-tree.
+   */
+  private int pageSize         = -1;
+  private int freeListBoundary = -1;
+  private int maxKeySize       = -1;
+
   private transient boolean validation = true;
   protected OStorageConfigurationUpdateListener updateListener;
   /**
    * Version of product release under which storage was created
    */
-  private String                              createdAtVersion;
+  private   String                              createdAtVersion;
 
   protected final Charset streamCharset;
 
@@ -109,6 +117,60 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
       initConfiguration(new OContextConfiguration());
       clear();
+    } finally {
+      lock.releaseWriteLock();
+    }
+  }
+
+  public int getPageSize() {
+    lock.acquireReadLock();
+    try {
+      return pageSize;
+    } finally {
+      lock.releaseReadLock();
+    }
+  }
+
+  public void setPageSize(int pageSize) {
+    lock.acquireWriteLock();
+    try {
+      this.pageSize = pageSize;
+    } finally {
+      lock.releaseWriteLock();
+    }
+  }
+
+  public int getFreeListBoundary() {
+    lock.acquireReadLock();
+    try {
+      return freeListBoundary;
+    } finally {
+      lock.releaseReadLock();
+    }
+  }
+
+  public void setFreeListBoundary(int freeListBoundary) {
+    lock.acquireWriteLock();
+    try {
+      this.freeListBoundary = freeListBoundary;
+    } finally {
+      lock.releaseWriteLock();
+    }
+  }
+
+  public int getMaxKeySize() {
+    lock.acquireReadLock();
+    try {
+      return maxKeySize;
+    } finally {
+      lock.releaseReadLock();
+    }
+  }
+
+  public void setMaxKeySize(int maxKeySize) {
+    lock.acquireWriteLock();
+    try {
+      this.maxKeySize = maxKeySize;
     } finally {
       lock.releaseWriteLock();
     }
@@ -178,7 +240,6 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
     recordSerializer = null;
     recordSerializerVersion = 0;
-    strictSQL = false;
     indexEngines = new ConcurrentHashMap<>();
     validation = getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DB_VALIDATION);
 
@@ -222,8 +283,6 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   /**
    * This method load the record information by the internal cluster segment. It's for compatibility with older database than
    * 0.9.25.
-   *
-   * @compatibility 0.9.25
    */
   public OStorageConfigurationImpl load(final OContextConfiguration configuration) throws OSerializationException {
     lock.acquireWriteLock();
@@ -508,8 +567,14 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
       }
 
       if (version > 17) {
-        //noinspection UnusedAssignment
         createdAtVersion = read(values[index++]);
+      }
+
+      if (version > 18) {
+        pageSize = Integer.parseInt(read(values[index++]));
+        freeListBoundary = Integer.parseInt(read(values[index++]));
+        //noinspection UnusedAssignment
+        maxKeySize = Integer.parseInt(read(values[index++]));
       }
     } finally {
       lock.releaseWriteLock();
@@ -670,6 +735,9 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
       }
 
       write(buffer, createdAtVersion);
+      write(buffer, pageSize);
+      write(buffer, freeListBoundary);
+      write(buffer, maxKeySize);
 
       // PLAIN: ALLOCATE ENOUGH SPACE TO REUSE IT EVERY TIME
       buffer.append("|");
@@ -970,12 +1038,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   }
 
   public boolean isStrictSql() {
-    lock.acquireReadLock();
-    try {
-      return strictSQL;
-    } finally {
-      lock.releaseReadLock();
-    }
+    return true;
   }
 
   public List<OStorageEntryConfiguration> getProperties() {
@@ -990,9 +1053,6 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   public void setProperty(final String iName, final String iValue) {
     lock.acquireWriteLock();
     try {
-      if (OStatement.CUSTOM_STRICT_SQL.equalsIgnoreCase(iName))
-        // SET STRICT SQL VARIABLE
-        strictSQL = "true".equalsIgnoreCase(iValue);
 
       if ("validation".equalsIgnoreCase(iName))
         validation = "true".equalsIgnoreCase(iValue);

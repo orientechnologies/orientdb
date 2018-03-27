@@ -273,6 +273,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         transaction = new ThreadLocal<>();
         ((OStorageConfigurationImpl) configuration).load(contextConfiguration);
+        checkPageSizeAndRelatedParameters();
 
         componentsFactory = new OCurrentStorageComponentsFactory(getConfiguration());
 
@@ -442,6 +443,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public void create(OContextConfiguration contextConfiguration) throws IOException {
+    checkPageSizeAndRelatedParametersInGlobalConfiguration();
+
     try {
       stateLock.acquireWriteLock();
       try {
@@ -480,8 +483,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
         doAddCluster(OMetadataDefault.CLUSTER_INTERNAL_NAME, null);
+
         ((OStorageConfigurationImpl) configuration).create();
+
         ((OStorageConfigurationImpl) configuration).setCreationVersion(OConstants.getVersion());
+        ((OStorageConfigurationImpl) configuration)
+            .setPageSize(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
+        ((OStorageConfigurationImpl) configuration)
+            .setFreeListBoundary(OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger() * 1024);
+        ((OStorageConfigurationImpl) configuration).setMaxKeySize(OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger());
 
         // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF
         // INDEXING
@@ -524,6 +534,52 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     OLogManager.instance()
         .infoNoDb(this, "Storage '%s' is created under OrientDB distribution : %s", getURL(), OConstants.getVersion());
+
+  }
+
+  private static void checkPageSizeAndRelatedParametersInGlobalConfiguration() {
+    final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+    final int freeListBoundary = OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger() * 1024;
+    final int maxKeySize = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
+
+    if (freeListBoundary > pageSize / 2) {
+      throw new OStorageException("Value of parameter " + OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getKey()
+          + " should be at least 2 times bigger than value of parameter "
+          + OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getKey() + " but real values are :"
+          + OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getKey() + " = " + pageSize + " , "
+          + OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getKey() + " = " + freeListBoundary);
+    }
+
+    if (maxKeySize > pageSize / 4) {
+      throw new OStorageException("Value of parameter " + OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getKey()
+          + " should be at least 4 times bigger than value of parameter " + OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getKey()
+          + " but real values are :" + OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getKey() + " = " + pageSize + " , "
+          + OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getKey() + " = " + maxKeySize);
+    }
+  }
+
+  private void checkPageSizeAndRelatedParameters() {
+    final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+    final int freeListBoundary = OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger() * 1024;
+    final int maxKeySize = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
+
+    if (configuration.getPageSize() != -1 && configuration.getPageSize() != pageSize) {
+      throw new OStorageException(
+          "Storage is created with value of " + OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getKey() + " parameter equal to "
+              + configuration.getPageSize() + " but current value is " + pageSize);
+    }
+
+    if (configuration.getFreeListBoundary() != -1 && configuration.getFreeListBoundary() != freeListBoundary) {
+      throw new OStorageException(
+          "Storage is created with value of " + OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getKey()
+              + " parameter equal to " + configuration.getFreeListBoundary() + " but current value is " + freeListBoundary);
+    }
+
+    if (configuration.getMaxKeySize() != -1 && configuration.getMaxKeySize() != maxKeySize) {
+      throw new OStorageException(
+          "Storage is created with value of " + OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getKey() + " parameter equal to "
+              + configuration.getMaxKeySize() + " but current value is " + maxKeySize);
+    }
 
   }
 

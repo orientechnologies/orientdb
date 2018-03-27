@@ -1420,12 +1420,16 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   @Override
   public OMatchStatement copy() {
     OMatchStatement result = new OMatchStatement(-1);
-    result.matchExpressions =
-        matchExpressions == null ? null : matchExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
-    result.returnItems = returnItems == null ? null : returnItems.stream().map(x -> x.copy()).collect(Collectors.toList());
-    result.returnAliases = returnAliases == null ? null : returnAliases.stream().map(x -> x.copy()).collect(Collectors.toList());
-    result.returnNestedProjections =
-        returnNestedProjections == null ? null : returnNestedProjections.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.matchExpressions = matchExpressions == null ?
+        null :
+        matchExpressions.stream().map(x -> x == null ? null : x.copy()).collect(Collectors.toList());
+    result.returnItems =
+        returnItems == null ? null : returnItems.stream().map(x -> x == null ? null : x.copy()).collect(Collectors.toList());
+    result.returnAliases =
+        returnAliases == null ? null : returnAliases.stream().map(x -> x == null ? null : x.copy()).collect(Collectors.toList());
+    result.returnNestedProjections = returnNestedProjections == null ?
+        null :
+        returnNestedProjections.stream().map(x -> x == null ? null : x.copy()).collect(Collectors.toList());
     result.groupBy = groupBy == null ? null : groupBy.copy();
     result.orderBy = orderBy == null ? null : orderBy.copy();
     result.unwind = unwind == null ? null : unwind.copy();

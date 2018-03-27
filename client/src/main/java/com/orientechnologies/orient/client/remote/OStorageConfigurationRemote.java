@@ -220,4 +220,18 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public int getPageSize() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public int getFreeListBoundary() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public int getMaxKeySize() {
+    throw new UnsupportedOperationException();
+  }
 }

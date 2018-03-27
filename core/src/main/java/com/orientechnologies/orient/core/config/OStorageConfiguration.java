@@ -10,7 +10,7 @@ public interface OStorageConfiguration {
   String DEFAULT_CHARSET               = "UTF-8";
   String DEFAULT_DATE_FORMAT           = "yyyy-MM-dd";
   String DEFAULT_DATETIME_FORMAT       = "yyyy-MM-dd HH:mm:ss";
-  int    CURRENT_VERSION               = 17;
+  int    CURRENT_VERSION               = 19;
   int    CURRENT_BINARY_FORMAT_VERSION = 12;
 
   SimpleDateFormat getDateTimeFormatInstance();
@@ -72,4 +72,10 @@ public interface OStorageConfiguration {
   String getCreatedAtVersion();
 
   Set<String> indexEngines();
+
+  int getPageSize();
+
+  int getFreeListBoundary();
+
+  int getMaxKeySize();
 }
