@@ -21,7 +21,7 @@
         <relativePath>../</relativePath>
     </parent>
 
-    <artifactId>orientdb-community-gremlin</artifactId>
+    <artifactId>orientdb-tp3</artifactId>
     <packaging>pom</packaging>
 
     <name>OrientDB Community Distribution TinkerPop 3</name>
