@@ -29,6 +29,7 @@ import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerStub;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
@@ -54,17 +55,18 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 
 public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener, OPluginLifecycleListener {
-  public static final  String EE                         = "ee.";
-  private static final String ORIENDB_ENTERPRISE_VERSION = "2.2"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
+  public static final String EE                = "ee.";
+  private             String enterpriseVersion = "";
   public              OServer server;
   private             String  license;
   public static final String  TOKEN;
+
+  private Properties properties = new Properties();
 
   static {
     String t = null;
@@ -108,56 +110,64 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   @Override
   public void startup() {
-    if (checkLicense()) {
-      enabled = true;
-      installProfiler();
-      installBackupManager();
 
-      installPlugins();
+    try {
+      loadProperties();
 
-      registerSecurityComponents();
+      if (checkLicense() && checkVersion()) {
+        enabled = true;
+        installProfiler();
+        installBackupManager();
 
-      Thread installer = new Thread(() -> {
+        installPlugins();
 
-        int retry = 0;
-        while (true) {
-          ODistributedServerManager manager = server.getDistributedManager();
-          if (manager == null) {
-            if (retry == 5) {
+        registerSecurityComponents();
+
+        Thread installer = new Thread(() -> {
+
+          int retry = 0;
+          while (true) {
+            ODistributedServerManager manager = server.getDistributedManager();
+            if (manager == null) {
+              if (retry == 5) {
+                break;
+              }
+              try {
+                Thread.sleep(2000);
+              } catch (InterruptedException e) {
+                e.printStackTrace();
+              }
+              retry++;
+              continue;
+            } else {
+              OHazelcastPlugin plugin = (OHazelcastPlugin) manager;
+              nodesManager = new NodesManager(plugin);
+              try {
+                plugin.waitUntilNodeOnline();
+              } catch (InterruptedException e) {
+                e.printStackTrace();
+              }
+              Map<String, Object> map = manager.getConfigurationMap();
+              map.put(EE + manager.getLocalNodeName(), TOKEN);
+              manager.registerLifecycleListener(profiler);
               break;
             }
-            try {
-              Thread.sleep(2000);
-            } catch (InterruptedException e) {
-              e.printStackTrace();
-            }
-            retry++;
-            continue;
-          } else {
-            OHazelcastPlugin plugin = (OHazelcastPlugin) manager;
-            nodesManager = new NodesManager(plugin);
-            try {
-              plugin.waitUntilNodeOnline();
-            } catch (InterruptedException e) {
-              e.printStackTrace();
-            }
-            Map<String, Object> map = manager.getConfigurationMap();
-            map.put(EE + manager.getLocalNodeName(), TOKEN);
-            manager.registerLifecycleListener(profiler);
-            break;
+
           }
 
-        }
+        });
 
-      });
+        installer.setDaemon(true);
+        installer.start();
+        Orient.instance().addDbLifecycleListener(this);
+        cloudManager = new OEnterpriseCloudManager(this);
 
-      installer.setDaemon(true);
-      installer.start();
-      Orient.instance().addDbLifecycleListener(this);
-      cloudManager = new OEnterpriseCloudManager(this);
-
-      cloudManager.start();
+        cloudManager.start();
+      }
+    } catch (Exception e) {
+      OLogManager.instance().warn(this, "Error loading agent.properties file. EE will be disabled: %s", e.getMessage());
     }
+
   }
 
   @Override
@@ -336,10 +346,43 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
               @Override
               public Object getValue() {
-                return ORIENDB_ENTERPRISE_VERSION;
+                return enterpriseVersion;
               }
             });
 
+    return true;
+  }
+
+  private void loadProperties() throws IOException {
+    final InputStream inputStream = OEnterpriseAgent.class.getResourceAsStream("/com/orientechnologies/agent.properties");
+
+    try {
+      properties.load(inputStream);
+      enterpriseVersion = properties.getProperty("version");
+
+      if (enterpriseVersion == null || enterpriseVersion.isEmpty()) {
+        throw new IllegalArgumentException("Cannot read the agent version from the agent config file");
+      }
+    }finally {
+      if (inputStream != null) {
+        try {
+          inputStream.close();
+        } catch (IOException ignore) {
+          // Ignore
+        }
+      }
+    }
+  }
+
+  private boolean checkVersion() {
+
+    if (!OConstants.getRawVersion().equalsIgnoreCase(enterpriseVersion)) {
+
+      OLogManager.instance()
+          .warn(this, "The current agent version %s is not compatible with OrientDB %s. Please use the same version.",
+              enterpriseVersion, OConstants.getVersion());
+      return false;
+    }
     return true;
   }
 
@@ -468,11 +511,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   public boolean isCloudConnected() {
     return cloudManager.isConnected();
   }
+
   public String getMonitoringUrl() {
     return cloudManager.getMonitoringUrl();
   }
-
-
 
   public String getNodeName() {
     return isDistributed() ? server.getDistributedManager().getLocalNodeName() : "orientdb";
