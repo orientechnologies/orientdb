@@ -149,7 +149,7 @@
             <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
