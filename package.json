@@ -68,8 +68,7 @@
   "scripts": {
     "dist": "yarn install && NODE_ENV=production webpack  --progress --profile --colors",
     "build": "NODE_ENV=production webpack  --progress --profile --colors",
-    "watch": "webpack-dev-server --hot --inline --progress --colors --watch-poll",
-    "test": "./node_modules/.bin/wdio wdio.conf.js"
+    "watch": "webpack-dev-server --hot --inline --progress --colors --watch-poll"
   },
   "devDependencies": {
     "@types/angular": "^1.6.35",
@@ -99,8 +98,7 @@
     "typescript": "^2.5.3",
     "url-loader": "^0.5.7",
     "webpack": "2.2.1",
-    "webpack-dev-server": "2.3.0",
-    "selenium-standalone": "6.4.0"
+    "webpack-dev-server": "2.3.0"
   },
   "engines": {
     "node": ">=0.8.0"
