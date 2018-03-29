@@ -470,6 +470,32 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     updateDatabaseInfo();
   }
 
+  @ConsoleCommand(description = "Add an new cluster to the database with predefined name and id")
+  public void addCluster(
+      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to add") String clusterName,
+      @ConsoleParameter(name = "cluster-id", description = "The id of the cluster to add") String clusterId) {
+    checkForDatabase();
+
+    if (currentDatabase.getStorage() instanceof OStorageProxy) {
+      message("\nYou should use connection to embedded database, to perform this operation. "
+          + "Currently you connected to the database using remote connection.");
+      return;
+    }
+
+    int id;
+    try {
+      id = Integer.parseInt(clusterId);
+    } catch (NumberFormatException e) {
+      message("Incorrect value of cluster-id parameter : '" + clusterId + "'. Number is required");
+      return;
+    }
+
+    currentDatabase.addCluster(clusterName, id, new Object[0]);
+
+    message("\nCluster with name '" + clusterName + "' and id = " + clusterId + " is registered into database " + currentDatabase
+        .getName());
+  }
+
   @ConsoleCommand(splitInWords = false, description = "Alters a cluster in the current database. The cluster can be physical or memory")
   public void alterCluster(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
@@ -2763,7 +2789,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @Override
   protected boolean isCollectingCommands(final String iLine) {
-    return iLine.trim().equalsIgnoreCase("js") ||  iLine.trim().equalsIgnoreCase("jss") || iLine.toLowerCase().startsWith("script");
+    return iLine.trim().equalsIgnoreCase("js") || iLine.trim().equalsIgnoreCase("jss") || iLine.toLowerCase().startsWith("script");
   }
 
   @Override
