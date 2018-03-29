@@ -162,8 +162,11 @@ public class ListServersCommandProcessor implements CloudCommandProcessor {
     serverBasicInfo.setJavaVersion(getString(realtime, "texts", "system.config.java.version"));
 
     ServerStats stats = new ServerStats();
-    stats.setTotalHeapMemory(getLong(realtime, "statistics", "process.runtime.availableMemory", "total"));
-    stats.setUsedHeapMemory(getLong(realtime, "statistics", "process.runtime.availableMemory", "last"));
+    Long max = getLong(realtime, "statistics", "process.runtime.maxMemory", "last");
+    stats.setTotalHeapMemory(max);
+    Long freeMemory = getLong(realtime, "statistics", "process.runtime.availableMemory", "last");
+    Long totalMemoryAllocated = getLong(realtime, "statistics", "process.runtime.totalMemory", "last");
+    stats.setUsedHeapMemory(totalMemoryAllocated - freeMemory);
     stats.setDeleteOps(aggregate((Map) realtime.get("counters"), "db", "deleteRecord"));
     stats.setUpdateOps(aggregate((Map) realtime.get("counters"), "db", "updateRecord"));
     stats.setCreateOps(aggregate((Map) realtime.get("counters"), "db", "createRecord"));
