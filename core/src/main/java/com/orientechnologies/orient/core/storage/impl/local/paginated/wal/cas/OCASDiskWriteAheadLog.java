@@ -507,7 +507,9 @@ public class OCASDiskWriteAheadLog {
               pagesRead++;
 
               if (pageIsBroken(buffer)) {
-                OLogManager.instance().errorNoDb(this, "WAL page %d is broken, read of records will be stopped", null, pageIndex);
+                OLogManager.instance()
+                    .errorNoDb(this, "WAL page %d of segment %s is broken, read of records will be stopped", null, pageIndex,
+                        segmentName);
                 return result;
               }
 
