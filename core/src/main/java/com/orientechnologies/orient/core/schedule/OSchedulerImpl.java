@@ -57,13 +57,21 @@ public class OSchedulerImpl {
       event.schedule();
   }
 
-  public void removeEvent(final String eventName) {
-    OLogManager.instance().debug(this, "Removing scheduled event '%s'...", eventName);
-
+  public OScheduledEvent removeEventInternal(final String eventName) {
     final OScheduledEvent event = events.remove(eventName);
 
     if (event != null) {
       event.interrupt();
+    }
+    return event;
+  }
+
+  public void removeEvent(final String eventName) {
+    OLogManager.instance().debug(this, "Removing scheduled event '%s'...", eventName);
+
+    final OScheduledEvent event = removeEventInternal(eventName);
+
+    if (event != null) {
 
       try {
         event.getDocument().reload();

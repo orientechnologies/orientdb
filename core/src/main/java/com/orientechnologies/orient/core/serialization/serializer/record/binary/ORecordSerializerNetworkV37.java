@@ -890,7 +890,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   @Override
   public int getMinSupportedVersion() {
     return 0;
-  }  
+  }
 
   @Override
   public boolean getSupportBinaryEvaluate() {
@@ -927,7 +927,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       throw e;
     }
   }
-  
+
   @Override
   public String[] getFieldNamesEmbedded(ODocument reference, byte[] iSource, int offset, int serializerVersion) {
     return getFieldNamesRoot(reference, iSource);
