@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -20,6 +21,7 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
   protected final static int SERVERS = 2;
 
   @Test
+  @Ignore
   public void test() throws Exception {
     init(SERVERS);
     prepare(true);

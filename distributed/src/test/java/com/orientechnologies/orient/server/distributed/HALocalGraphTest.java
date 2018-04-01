@@ -31,6 +31,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.*;
@@ -66,6 +67,7 @@ public class HALocalGraphTest extends AbstractServerClusterTxTest {
   private volatile long sleep = 0;
 
   @Test
+  @Ignore
   public void test() throws Exception {
     useTransactions = false;
     init(SERVERS);

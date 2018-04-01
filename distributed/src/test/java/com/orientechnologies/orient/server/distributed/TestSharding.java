@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class TestSharding extends AbstractServerClusterTest {
@@ -36,6 +37,7 @@ public class TestSharding extends AbstractServerClusterTest {
   protected long totalAmount = 0;
 
   @Test
+  @Ignore
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);

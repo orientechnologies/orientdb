@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -54,6 +55,7 @@ public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioTe
                                         };
 
   @Test
+  @Ignore
   public void test() throws Exception {
     maxRetries = 10;
     init(SERVERS);

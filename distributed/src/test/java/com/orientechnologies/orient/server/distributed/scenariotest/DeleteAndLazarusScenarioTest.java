@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -45,6 +46,7 @@ import static org.junit.Assert.*;
 public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
 
   @Test
+  @Ignore
   public void test() throws Exception {
 
     maxRetries = 10;

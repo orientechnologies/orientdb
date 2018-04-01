@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Locale;
@@ -42,6 +43,7 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
   protected OVertex[] vertices;
 
   @Test
+  @Ignore
   public void test() throws Exception {
     final long checkEvery = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY.getValueAsLong();
     final int batchSize = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH.getValueAsInteger();
