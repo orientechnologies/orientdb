@@ -324,7 +324,12 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
               return false;
             }
           } else {
-            return false;
+            try {
+              fromStream(buffer, 0, buffer.length, Charset.defaultCharset());
+            } catch (Exception e) {
+              OLogManager.instance().errorNoDb(this, "Error during reading of configuration %s of storage %s", e, file, storageName);
+              return false;
+            }
           }
         } else {
           try {
