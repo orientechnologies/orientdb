@@ -10,7 +10,9 @@ import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
+import org.junit.Ignore;
 
+@Ignore
 public class TestAsyncReplMode extends BareBoneBase2ClientTest {
 
   private static final int NUM_OF_LOOP_ITERATIONS = 25;

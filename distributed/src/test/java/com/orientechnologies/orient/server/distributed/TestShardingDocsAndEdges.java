@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashSet;
@@ -20,6 +21,7 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
   private ODatabaseDocument EUR;
 
   @Test
+  @Ignore
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);

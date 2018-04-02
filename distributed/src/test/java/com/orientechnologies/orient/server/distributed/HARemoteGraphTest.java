@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server.distributed;
 
+import org.junit.Ignore;
+
 /**
  * Test case to check the right management of distributed exception while a server is starting. Derived from the test provided by
  * Gino John for issue http://www.prjhub.com/#/issues/6449.
@@ -9,6 +11,7 @@ package com.orientechnologies.orient.server.distributed;
  * 
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
+@Ignore
 public class HARemoteGraphTest extends HALocalGraphTest {
   @Override
   protected String getDatabaseURL(final ServerRun server) {

@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -26,6 +27,7 @@ public class SplitBrainNetwork2DynamicServersTest extends AbstractHARemoveNode {
   final static int SERVERS = 2;
 
   @Test
+  @Ignore
   public void test() throws Exception {
     useTransactions = true;
     count = 10;

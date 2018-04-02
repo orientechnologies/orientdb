@@ -914,7 +914,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         }
         if (clazz.isScheduler()) {
           final String eventName = doc.field(OScheduledEvent.PROP_NAME);
-          getMetadata().getScheduler().removeEvent(eventName);
+          getSharedContext().getScheduler().removeEventInternal(eventName);
         }
       }
       OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, this);

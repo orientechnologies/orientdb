@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ import static org.junit.Assert.fail;
 public class IsolatedNodeRejoinScenarioTest extends AbstractScenarioTest {
 
   @Test
+  @Ignore
   public void test() throws Exception {
 
     maxRetries = 10;

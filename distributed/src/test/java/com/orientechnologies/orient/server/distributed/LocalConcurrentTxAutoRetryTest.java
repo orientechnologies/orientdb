@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -30,6 +31,7 @@ public class LocalConcurrentTxAutoRetryTest extends AbstractDistributedConcurren
   private static final int SERVERS = 3;
 
   @Test
+  @Ignore
   public void test() throws Exception {
     expectedConcurrentException = false;
 
