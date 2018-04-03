@@ -3549,5 +3549,18 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
     }
+
+    List<String> params = new ArrayList<>();
+    params.add("foo");
+    params.add("bar");
+    try (OResultSet result = db.query("select from " + className + " where tag in (?)", params)) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
   }
 }

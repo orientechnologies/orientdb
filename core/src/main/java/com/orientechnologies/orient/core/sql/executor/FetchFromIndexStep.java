@@ -530,6 +530,11 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         if (((OInCondition) exp).getRightMathExpression() != null) {
           item.setMathExpression(((OInCondition) exp).getRightMathExpression());
           result.add(item);
+        } else if (((OInCondition) exp).getRightParam() != null) {
+          OBaseExpression e = new OBaseExpression(-1);
+          e.setInputParam(((OInCondition) exp).getRightParam().copy());
+          item.setMathExpression(e);
+          result.add(item);
         } else {
           throw new UnsupportedOperationException("Cannot execute index query with " + exp);
         }
@@ -564,6 +569,11 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         OExpression item = new OExpression(-1);
         if (((OInCondition) exp).getRightMathExpression() != null) {
           item.setMathExpression(((OInCondition) exp).getRightMathExpression());
+          result.add(item);
+        } else if (((OInCondition) exp).getRightParam() != null) {
+          OBaseExpression e = new OBaseExpression(-1);
+          e.setInputParam(((OInCondition) exp).getRightParam().copy());
+          item.setMathExpression(e);
           result.add(item);
         } else {
           throw new UnsupportedOperationException("Cannot execute index query with " + exp);
