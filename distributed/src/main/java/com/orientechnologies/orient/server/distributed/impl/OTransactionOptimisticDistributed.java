@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
@@ -56,11 +55,14 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
       case ORecordOperation.UPDATED:
         if (change.getRecord() instanceof ODocument) {
           ODocument doc = (ODocument) change.getRecord();
+          ODocument original = database.load(doc.getIdentity());
+          original.merge(doc, false, false);
+          doc = original;
           OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, database);
           OLiveQueryHookV2.addOp(doc, ORecordOperation.UPDATED, database);
           OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
           if (clazz != null) {
-            OClassIndexManager.processIndexOnUpdate(database, rec, changes);
+            OClassIndexManager.processIndexOnUpdate(database, doc, changes);
             if (clazz.isFunction()) {
               database.getSharedContext().getFunctionLibrary().updatedFunction(doc);
               Orient.instance().getScriptManager().close(database.getName());
