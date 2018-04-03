@@ -55,15 +55,20 @@ public class OStorageRemotePushThread extends Thread {
           byte push = network.readByte();
           OBinaryPushRequest request = pushHandler.createPush(push);
           request.read(network);
-          OBinaryPushResponse response = request.execute(pushHandler);
-          if (response != null) {
-            synchronized (this) {
-              network.writeByte(OChannelBinaryProtocol.REQUEST_OK_PUSH);
-              //session
-              network.writeInt(-1);
-              response.write(network);
+          try {
+            OBinaryPushResponse response = request.execute(pushHandler);
+            if (response != null) {
+              synchronized (this) {
+                network.writeByte(OChannelBinaryProtocol.REQUEST_OK_PUSH);
+                //session
+                network.writeInt(-1);
+                response.write(network);
+              }
             }
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error executing push request", e);
           }
+
         }
       } catch (IOException e) {
         pushHandler.onPushDisconnect(this.network, e);
