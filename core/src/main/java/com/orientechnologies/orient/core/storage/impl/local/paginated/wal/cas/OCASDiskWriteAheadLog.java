@@ -9,6 +9,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableLong;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -54,6 +55,8 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -66,6 +69,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -82,7 +86,6 @@ public final class OCASDiskWriteAheadLog {
 
   private static final int MASTER_RECORD_SIZE = 20;
   private static final int BATCH_READ_SIZE    = 320;
-  public static final  int MAX_WRITE_BUFFERS  = 4;
 
   private final long walSizeHardLimit;
 
@@ -139,6 +142,9 @@ public final class OCASDiskWriteAheadLog {
 
   private final ConcurrentSkipListMap<OLogSequenceNumber, Integer> cutTillLimits = new ConcurrentSkipListMap<OLogSequenceNumber, Integer>();
   private final ScalableRWLock                                     cuttingLock   = new ScalableRWLock();
+
+  private final ConcurrentLinkedQueue<OPair<Long, FileChannel>> closeQueue     = new ConcurrentLinkedQueue<>();
+  private final AtomicInteger                                   closeQueueSize = new AtomicInteger();
 
   private volatile CountDownLatch flushLatch  = new CountDownLatch(0);
   private volatile Future<?>      writeFuture = null;
@@ -936,6 +942,22 @@ public final class OCASDiskWriteAheadLog {
         return false;
       }
 
+      OPair<Long, FileChannel> pair = closeQueue.poll();
+      while (pair != null) {
+        final FileChannel channel = pair.value;
+
+        closeQueueSize.decrementAndGet();
+        if (pair.key >= segmentId) {
+          channel.force(true);
+          channel.close();
+
+          break;
+        } else {
+          channel.close();
+        }
+        pair = closeQueue.poll();
+      }
+
       boolean removed = false;
 
       final Iterator<Long> segmentIterator = segments.iterator();
@@ -1152,9 +1174,19 @@ public final class OCASDiskWriteAheadLog {
     } catch (InterruptedException e) {
       OLogManager.instance().error(this, "Cannot shutdown background WAL write thread", e);
     }
+
+    for (OPair<Long, FileChannel> pair : closeQueue) {
+      final FileChannel channel = pair.value;
+
+      channel.force(true);
+      channel.close();
+    }
+
+    walChannel.force(true);
     walChannel.close();
     masterRecordLSNHolder.close();
     segments.clear();
+    closeQueue.clear();
 
     if (recordsWriterFuture.isDone()) {
       try {
@@ -1536,10 +1568,9 @@ public final class OCASDiskWriteAheadLog {
                   } catch (InterruptedException e) {
                     //continue
                   }
-                  walChannel.force(true);
-                  walChannel.close();
 
-                  flushedLSN = writtenLSN;
+                  closeQueueSize.incrementAndGet();
+                  closeQueue.offer(new OPair<>(segmentId, walChannel));
                 }
 
                 segmentId = lsn.getSegment();
@@ -1655,17 +1686,40 @@ public final class OCASDiskWriteAheadLog {
         }
 
         final long ts = System.nanoTime();
-
         if (ts - lastFSyncTs > fsyncInterval * 1_000_000) {
           try {
             if (newRecordsWritten) {
-              writeExecutor.submit(() -> {
+              writeExecutor.submit((Callable<?>) () -> {
                 try {
+                  final int qSize = closeQueueSize.get();
+                  if (qSize > 0) {
+                    int counter = 0;
+
+                    while (counter < qSize) {
+                      OPair<Long, FileChannel> pair = closeQueue.poll();
+                      if (pair != null) {
+                        @SuppressWarnings("resource")
+                        final FileChannel channel = pair.value;
+                        channel.force(true);
+                        channel.close();
+
+                        closeQueueSize.decrementAndGet();
+                      } else {
+                        break;
+                      }
+
+                      counter++;
+                    }
+                  }
+
                   walChannel.force(true);
                   flushedLSN = writtenLSN;
                 } catch (IOException e) {
                   OLogManager.instance().error(this, "Error during FSync of WAL data", e);
+                  throw e;
                 }
+
+                return null;
               });
               newRecordsWritten = false;
             }
