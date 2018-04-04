@@ -1392,13 +1392,13 @@ ee.controller("EEDashboardController", [
         template: "importersManager",
         icon: "fa-plug"
       },
-      {
-        name: "cloud",
-        title: "Cloud Management",
-        template: "cloud",
-        icon: "fa-cloud",
-        wiki: "OrientDB-Cloud.html"
-      }
+      // {
+      //   name: "cloud",
+      //   title: "Cloud Management",
+      //   template: "cloud",
+      //   icon: "fa-cloud",
+      //   wiki: "OrientDB-Cloud.html"
+      // }
     ];
 
     $rootScope.$on("$routeChangeStart", function(event, next, current) {

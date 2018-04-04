@@ -531,13 +531,13 @@ ServerModule.controller("ServerDashboardController", [
       //   icon: "fa-bell",
       //   wiki: "Studio-Alert-Management.html"
       // },
-      {
-        name: "cloud",
-        title: "Cloud Management",
-        template: "cloud",
-        icon: "fa-cloud",
-        wiki: "OrientDB-Cloud.html"
-      }
+      // {
+      //   name: "cloud",
+      //   title: "Cloud Management",
+      //   template: "cloud",
+      //   icon: "fa-cloud",
+      //   wiki: "OrientDB-Cloud.html"
+      // }
     ];
     if ($routeParams.tab) {
       $scope.menus.forEach(function(e) {
