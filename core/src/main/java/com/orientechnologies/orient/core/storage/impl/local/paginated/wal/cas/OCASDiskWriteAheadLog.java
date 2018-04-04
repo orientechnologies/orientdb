@@ -50,6 +50,7 @@ import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -137,13 +138,12 @@ public final class OCASDiskWriteAheadLog {
   private final ConcurrentSkipListMap<OLogSequenceNumber, Integer> cutTillLimits = new ConcurrentSkipListMap<OLogSequenceNumber, Integer>();
   private final ScalableRWLock                                     cuttingLock   = new ScalableRWLock();
 
-  private volatile CountDownLatch flushLatch     = new CountDownLatch(0);
-  private          Semaphore      writeSemaphore = new Semaphore(MAX_WRITE_BUFFERS);
+  private volatile CountDownLatch flushLatch = new CountDownLatch(0);
+  private          CountDownLatch writeLatch = new CountDownLatch(0);
 
   private long    lastFSyncTs       = -1;
   private boolean newRecordsWritten = false;
 
-  private final int commitDelay;
   private final int fsyncInterval;
 
   public OCASDiskWriteAheadLog(String storageName, Path storagePath, final Path walPath, int maxPagesCacheSize, int maxSegmentSize,
@@ -166,7 +166,6 @@ public final class OCASDiskWriteAheadLog {
       return thread;
     });
 
-    this.commitDelay = commitDelay;
     this.fsyncInterval = fsyncInterval;
     this.walSizeHardLimit = walSizeHardLimit;
     this.freeSpaceLimit = freeSpaceLimit;
@@ -1134,7 +1133,7 @@ public final class OCASDiskWriteAheadLog {
     }
 
     try {
-      writeSemaphore.acquire(MAX_WRITE_BUFFERS);
+      writeLatch.await();
     } catch (InterruptedException e) {
       //continue
     }
@@ -1150,7 +1149,6 @@ public final class OCASDiskWriteAheadLog {
     walChannel.close();
     masterRecordLSNHolder.close();
     segments.clear();
-    writeSemaphore.release(MAX_WRITE_BUFFERS);
 
     if (recordsWriterFuture.isDone()) {
       try {
@@ -1525,7 +1523,7 @@ public final class OCASDiskWriteAheadLog {
                   pointer = null;
 
                   try {
-                    writeSemaphore.acquire(MAX_WRITE_BUFFERS);
+                    writeLatch.await();
                   } catch (InterruptedException e) {
                     //continue
                   }
@@ -1533,8 +1531,6 @@ public final class OCASDiskWriteAheadLog {
                   walChannel.close();
 
                   flushedLSN = writtenLSN;
-
-                  writeSemaphore.release(MAX_WRITE_BUFFERS);
                 }
 
                 segmentId = lsn.getSegment();
@@ -1727,11 +1723,12 @@ public final class OCASDiskWriteAheadLog {
       buffer.limit(maxPage * OCASWALPage.PAGE_SIZE);
 
       try {
-        writeSemaphore.acquire();
+        writeLatch.await();
       } catch (InterruptedException e) {
         //continue
       }
 
+      writeLatch = new CountDownLatch(1);
       writeExecutor.submit(() -> {
         channel.write(buffer, writePosition, null, new CompletionHandler<Integer, Object>() {
           @Override
@@ -1742,7 +1739,7 @@ public final class OCASDiskWriteAheadLog {
                 writtenLSN = lastLSN;
               }
 
-              writeSemaphore.release();
+              writeLatch.countDown();
             } else {
               channel.write(buffer, writePosition + buffer.position(), null, this);
             }
@@ -1752,7 +1749,7 @@ public final class OCASDiskWriteAheadLog {
           public void failed(Throwable exc, Object attachment) {
             OLogManager.instance().error(this, "Error during WAL write", exc);
             Native.free(pointer);
-            writeSemaphore.release();
+            writeLatch.countDown();
           }
         });
       });
