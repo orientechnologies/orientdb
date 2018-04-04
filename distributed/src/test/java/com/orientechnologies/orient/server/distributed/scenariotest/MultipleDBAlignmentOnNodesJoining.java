@@ -208,7 +208,7 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     List<ODatabaseDocument> dbs = new LinkedList<ODatabaseDocument>();
     for (ServerRun server : checkConsistencyOnServers) {
       try {
-        dbs.add(getDatabase(server));
+        dbs.add(server.getServerInstance().openDatabase(databaseName, "admin", "admin"));
         checkOnServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
       } catch(Exception e) {
         fail(databaseName + " is not present on server" + server.getServerId());
@@ -284,6 +284,7 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     } finally {
 
       for (ODatabaseDocument db : dbs) {
+        db.activateOnCurrentThread();
         db.close();
       }
     }
