@@ -6,6 +6,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
+import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -31,27 +32,36 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.CompletionHandler;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,12 +71,15 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
-public class OCASDiskWriteAheadLog {
+public final class OCASDiskWriteAheadLog {
   public static final String MASTER_RECORD_EXTENSION = ".wmr";
   public static final String WAL_SEGMENT_EXTENSION   = ".wal";
 
+  private static final int BUFFER_SIZE = 64 * 1024 * 1024;
+
   private static final int MASTER_RECORD_SIZE = 20;
   private static final int BATCH_READ_SIZE    = 320;
+  public static final  int MAX_WRITE_BUFFERS  = 4;
 
   private final long walSizeHardLimit;
 
@@ -78,9 +91,9 @@ public class OCASDiskWriteAheadLog {
 
   private final int maxSegmentSize;
 
-  private final LongAdder ongoingTXs = new LongAdder();
-  private final long freeSpaceLimit;
-  private volatile long freeSpace = -1;
+  private final    LongAdder ongoingTXs = new LongAdder();
+  private final    long      freeSpaceLimit;
+  private volatile long      freeSpace  = -1;
 
   private final    MPSCFAAArrayDequeue<OWALRecord> records        = new MPSCFAAArrayDequeue<>();
   private volatile long                            currentSegment = 0;
@@ -95,22 +108,20 @@ public class OCASDiskWriteAheadLog {
   private final ConcurrentSkipListSet<Long>         segments = new ConcurrentSkipListSet<>();
 
   private final OScheduledThreadPoolExecutorWithLogging commitExecutor;
+  private final ThreadPoolExecutor                      writeExecutor;
 
   private final FileStore fileStore;
   private final Path      walLocation;
   private final String    storageName;
 
-  private volatile FileChannel walChannel = null;
+  private volatile AsynchronousFileChannel walChannel = null;
 
-  private volatile OLogSequenceNumber                  flushedLSN = null;
-  private final    AtomicReference<OLogSequenceNumber> writtenLSN = new AtomicReference<>();
+  private volatile OLogSequenceNumber flushedLSN = null;
+  private volatile OLogSequenceNumber writtenLSN = null;
 
   private long segmentId = -1;
 
   private final ScheduledFuture<?> recordsWriterFuture;
-
-  private long lastRecordPosition   = -1;
-  private long prevSegmentSpaceLeft = 0;
 
   private final Path masterRecordPath;
 
@@ -126,18 +137,18 @@ public class OCASDiskWriteAheadLog {
   private final ConcurrentSkipListMap<OLogSequenceNumber, Integer> cutTillLimits = new ConcurrentSkipListMap<OLogSequenceNumber, Integer>();
   private final ScalableRWLock                                     cuttingLock   = new ScalableRWLock();
 
-  private static final boolean assertions;
+  private volatile CountDownLatch flushLatch     = new CountDownLatch(0);
+  private          Semaphore      writeSemaphore = new Semaphore(MAX_WRITE_BUFFERS);
 
-  static {
-    boolean asrt = false;
-    //noinspection ConstantConditions,AssertWithSideEffects
-    assert asrt = true;
-    //noinspection ConstantConditions
-    assertions = asrt;
-  }
+  private long    lastFSyncTs       = -1;
+  private boolean newRecordsWritten = false;
+
+  private final int commitDelay;
+  private final int fsyncInterval;
 
   public OCASDiskWriteAheadLog(String storageName, Path storagePath, final Path walPath, int maxPagesCacheSize, int maxSegmentSize,
-      int commitDelay, boolean filterWALFiles, Locale locale, long walSizeHardLimit, long freeSpaceLimit) throws IOException {
+      int commitDelay, boolean filterWALFiles, Locale locale, long walSizeHardLimit, long freeSpaceLimit, int fsyncInterval)
+      throws IOException {
     commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
@@ -147,6 +158,16 @@ public class OCASDiskWriteAheadLog {
     });
     commitExecutor.setMaximumPoolSize(1);
 
+    writeExecutor = new OThreadPoolExecutorWithLogging(1, 1, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), r -> {
+      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
+      thread.setDaemon(true);
+      thread.setName("OrientDB WAL Write Task (" + storageName + ")");
+      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+      return thread;
+    });
+
+    this.commitDelay = commitDelay;
+    this.fsyncInterval = fsyncInterval;
     this.walSizeHardLimit = walSizeHardLimit;
     this.freeSpaceLimit = freeSpaceLimit;
 
@@ -451,10 +472,17 @@ public class OCASDiskWriteAheadLog {
   private void ensureThatRecordWrittenOnDisk(OLogSequenceNumber lsn) {
     final OLogSequenceNumber flushedLSN = this.flushedLSN;
 
-    if (flushedLSN == null || flushedLSN.compareTo(lsn) < 0) {
-      final OLogSequenceNumber writtenLSN = this.writtenLSN.get();
+    while (flushedLSN == null || flushedLSN.compareTo(lsn) < 0) {
+      final OLogSequenceNumber writtenLSN = this.writtenLSN;
       if (writtenLSN == null || writtenLSN.compareTo(lsn) < 0) {
+        try {
+          flushLatch.await();
+        } catch (InterruptedException e) {
+          //continue
+        }
         doFlush();
+      } else {
+        return;
       }
     }
   }
@@ -837,9 +865,19 @@ public class OCASDiskWriteAheadLog {
       segmentLock.sharedUnlock();
     }
 
-    final long qsize = queueSize.addAndGet(writeableRecord.getBinaryContent().length);
+    long qsize = queueSize.addAndGet(writeableRecord.getBinaryContent().length);
     if (qsize >= maxCacheSize) {
-      doFlush();
+      try {
+        flushLatch.await();
+      } catch (InterruptedException e) {
+        throw new IllegalStateException("Interrupted");
+      }
+
+      qsize = queueSize.addAndGet(writeableRecord.getBinaryContent().length);
+
+      if (qsize >= maxCacheSize) {
+        doFlush();
+      }
     }
 
     if (walSizeHardLimit < 0 && freeSpace > freeSpaceLimit) {
@@ -1095,9 +1133,24 @@ public class OCASDiskWriteAheadLog {
       OLogManager.instance().error(this, "Cannot shutdown background WAL commit thread", e);
     }
 
+    try {
+      writeSemaphore.acquire(MAX_WRITE_BUFFERS);
+    } catch (InterruptedException e) {
+      //continue
+    }
+
+    writeExecutor.shutdown();
+    try {
+      if (!writeExecutor.awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
+        throw new OStorageException("WAL write task for '" + storageName + "' storage cannot be stopped");
+
+    } catch (InterruptedException e) {
+      OLogManager.instance().error(this, "Cannot shutdown background WAL write thread", e);
+    }
     walChannel.close();
     masterRecordLSNHolder.close();
     segments.clear();
+    writeSemaphore.release(MAX_WRITE_BUFFERS);
 
     if (recordsWriterFuture.isDone()) {
       try {
@@ -1430,211 +1483,198 @@ public class OCASDiskWriteAheadLog {
     @Override
     public void run() {
       try {
-        if (!checkPresenceWritableRecords()) {
-          return;
-        }
+        if (checkPresenceWritableRecords()) {
+          newRecordsWritten = true;
+          flushLatch = new CountDownLatch(1);
+          try {
+            int bufferPage = -1;
+            long rawPointer = Native.malloc(BUFFER_SIZE);
+            Pointer pointer = new Pointer(rawPointer);
+            ByteBuffer buffer = pointer.getByteBuffer(0, BUFFER_SIZE).order(ByteOrder.nativeOrder());
 
-        final OMilestoneWALRecord milestoneWALRecord = logMilestoneRecord();
+            final OMilestoneWALRecord milestoneWALRecord = logMilestoneRecord();
 
-        long ptr = -1;
-        ByteBuffer buffer = null;
+            OLogSequenceNumber lastLSN = null;
+            OLogSequenceNumber checkPointLSN = null;
 
-        OLogSequenceNumber lastLSN = null;
-        OLogSequenceNumber lastRecordLSN = null;
-        String lastRecordClass = null;
+            long startPosition = -1;
+            while (true) {
+              OWALRecord record = records.peek();
 
-        int lastBufferPos = -1;
-        long lastChannelPos = -1;
-        int lastDistance = -1;
-        int lastContentSize = -1;
-
-        OLogSequenceNumber checkPointLSN = null;
-
-        while (true) {
-          OWALRecord record = records.peek();
-
-          if (record == milestoneWALRecord) {
-            break;
-          }
-
-          final OLogSequenceNumber lsn = record.getLsn();
-
-          assert lsn.getSegment() >= segmentId;
-
-          if (segmentId != lsn.getSegment()) {
-            if (walChannel != null) {
-              if (ptr > 0) {
-                writeBuffer(walChannel, buffer);
-                Native.free(ptr);
-
-                if (lastLSN != null) {
-                  writtenLSN.lazySet(lastLSN);
-                }
+              if (record == milestoneWALRecord) {
+                break;
               }
 
-              ptr = 0;
+              final OLogSequenceNumber lsn = record.getLsn();
 
-              walChannel.force(true);
-              walChannel.close();
-            }
+              assert lsn.getSegment() >= segmentId;
 
-            segmentId = lsn.getSegment();
-            walChannel = FileChannel
-                .open(walLocation.resolve(getSegmentName(segmentId)), StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
-            segments.add(segmentId);
+              if (segmentId != lsn.getSegment()) {
+                if (walChannel != null) {
+                  if (rawPointer > 0) {
 
-            if (assertions) {
-              if (lastRecordPosition > -1) {
-                final long pageIndex = lastRecordPosition / OCASWALPage.PAGE_SIZE;
-                final int pageOffset = (int) (lastRecordPosition - pageIndex * OCASWALPage.PAGE_SIZE);
+                    if ((buffer.position() & (OCASWALPage.PAGE_SIZE - 1)) != 0) {
+                      buffer.put(bufferPage * OCASWALPage.PAGE_SIZE + OCASWALPage.STOP_PAGE_OFFSET, (byte) 1);
+                    }
 
-                if (pageOffset > 0) {
-                  prevSegmentSpaceLeft = OCASWALPage.PAGE_SIZE - pageOffset;
-                } else {
-                  prevSegmentSpaceLeft = 0;
-                }
-              }
-
-              lastRecordPosition = 0;
-            }
-
-            assert lsn.getPosition() == OCASWALPage.RECORDS_OFFSET;
-          }
-
-          if (record instanceof OMilestoneWALRecord || record instanceof OStartWALRecord) {
-            lastRecordLSN = record.getLsn();
-            lastRecordClass = record.getClass().getSimpleName();
-
-            records.poll();
-          } else {
-            final OWriteableWALRecord writeableRecord = (OWriteableWALRecord) record;
-
-            final byte[] recordContent = writeableRecord.getBinaryContent();
-            assert recordContent != null;
-
-            int written = 0;
-            int bytesToWrite = OIntegerSerializer.INT_SIZE + recordContent.length;
-
-            byte[] recordSize = null;
-            int recordSizeWritten = -1;
-
-            boolean recordSizeIsWritten = false;
-
-            while (written < bytesToWrite) {
-              if (buffer == null || buffer.position() == OCASWALPage.PAGE_SIZE) {
-                if (ptr > 0) {
-                  writeBuffer(walChannel, buffer);
-                  Native.free(ptr);
-
-                  if (lastLSN != null) {
-                    writtenLSN.lazySet(lastLSN);
+                    writeBuffer(walChannel, buffer, startPosition, rawPointer, lastLSN);
                   }
-                }
 
-                ptr = Native.malloc(OCASWALPage.PAGE_SIZE);
+                  rawPointer = 0;
+                  buffer = null;
+                  pointer = null;
 
-                final Pointer pointer = new Pointer(ptr);
-                pointer.setMemory(0, OCASWALPage.PAGE_SIZE, (byte) 0);
-
-                buffer = pointer.getByteBuffer(0, OCASWALPage.PAGE_SIZE).order(ByteOrder.nativeOrder());
-                buffer.position(OCASWALPage.RECORDS_OFFSET);
-              }
-
-              if (written == 0) {
-                assert
-                    walChannel.position() + buffer.position() == lsn.getPosition() :
-                    "lsn : " + lsn + " disk pos: " + walChannel.position() + " buffer pos: " + buffer.position() + " last lsn: "
-                        + lastRecordLSN + " last channel position: " + lastChannelPos + " last buffer position: " + lastBufferPos
-                        + " last distance: " + lastDistance + " last content size: " + lastContentSize + " last record class "
-                        + lastRecordClass;
-
-                lastChannelPos = walChannel.position();
-                lastBufferPos = buffer.position();
-              }
-
-              final int chunkSize = Math.min(bytesToWrite - written, buffer.remaining());
-
-              if (!recordSizeIsWritten) {
-                if (OIntegerSerializer.INT_SIZE <= chunkSize) {
-                  if (recordSizeWritten < 0) {
-                    buffer.putInt(recordContent.length);
-                    written += OIntegerSerializer.INT_SIZE;
-
-                    recordSizeIsWritten = true;
-                    continue;
-                  } else {
-                    buffer.put(recordSize, recordSizeWritten, OIntegerSerializer.INT_SIZE - recordSizeWritten);
-                    written += OIntegerSerializer.INT_SIZE - recordSizeWritten;
-
-                    recordSize = null;
-                    recordSizeWritten = -1;
-                    recordSizeIsWritten = true;
-                    continue;
+                  try {
+                    writeSemaphore.acquire(MAX_WRITE_BUFFERS);
+                  } catch (InterruptedException e) {
+                    //continue
                   }
-                } else {
-                  recordSize = new byte[OIntegerSerializer.INT_SIZE];
-                  OIntegerSerializer.INSTANCE.serializeNative(recordContent.length, recordSize, 0);
+                  walChannel.force(true);
+                  walChannel.close();
 
-                  recordSizeWritten = buffer.remaining();
-                  written += recordSizeWritten;
+                  flushedLSN = writtenLSN;
 
-                  buffer.put(recordSize, 0, recordSizeWritten);
-                  continue;
+                  writeSemaphore.release(MAX_WRITE_BUFFERS);
                 }
+
+                segmentId = lsn.getSegment();
+
+                final Set<OpenOption> openOptions = new HashSet<>();
+                openOptions.add(StandardOpenOption.WRITE);
+                openOptions.add(StandardOpenOption.CREATE_NEW);
+
+                walChannel = AsynchronousFileChannel
+                    .open(walLocation.resolve(getSegmentName(segmentId)), openOptions, writeExecutor);
+                segments.add(segmentId);
+
+                assert lsn.getPosition() == OCASWALPage.RECORDS_OFFSET;
               }
 
-              buffer.put(recordContent, written - OIntegerSerializer.INT_SIZE, chunkSize);
-              written += chunkSize;
+              if (record instanceof OMilestoneWALRecord || record instanceof OStartWALRecord) {
+                records.poll();
+              } else {
+                final OWriteableWALRecord writeableRecord = (OWriteableWALRecord) record;
+                if (startPosition < 0) {
+                  startPosition = lsn.getPosition();
+                }
+
+                final byte[] recordContent = writeableRecord.getBinaryContent();
+                assert recordContent != null;
+
+                int written = 0;
+                int bytesToWrite = OIntegerSerializer.INT_SIZE + recordContent.length;
+
+                byte[] recordSize = null;
+                int recordSizeWritten = -1;
+
+                boolean recordSizeIsWritten = false;
+
+                while (written < bytesToWrite) {
+                  if (buffer == null || buffer.position() == buffer.limit()) {
+                    if (rawPointer > 0) {
+                      writeBuffer(walChannel, buffer, startPosition, rawPointer, lastLSN);
+                    }
+
+                    rawPointer = Native.malloc(BUFFER_SIZE);
+                    pointer = new Pointer(rawPointer);
+
+                    buffer = pointer.getByteBuffer(0, BUFFER_SIZE).order(ByteOrder.nativeOrder());
+                    bufferPage = -1;
+                  }
+
+                  if ((buffer.position() & (OCASWALPage.PAGE_SIZE - 1)) == 0) {
+                    bufferPage++;
+                    pointer.setMemory(bufferPage * OCASWALPage.PAGE_SIZE, OCASWALPage.PAGE_SIZE, (byte) 0);
+                    buffer.position(buffer.position() + OCASWALPage.RECORDS_OFFSET);
+                  }
+
+                  final int chunkSize = Math
+                      .min(bytesToWrite - written, (bufferPage + 1) * OCASWALPage.PAGE_SIZE - buffer.position());
+
+                  if (!recordSizeIsWritten) {
+                    if (OIntegerSerializer.INT_SIZE <= chunkSize) {
+                      if (recordSizeWritten < 0) {
+                        buffer.putInt(recordContent.length);
+                        written += OIntegerSerializer.INT_SIZE;
+
+                        recordSizeIsWritten = true;
+                        continue;
+                      } else {
+                        buffer.put(recordSize, recordSizeWritten, OIntegerSerializer.INT_SIZE - recordSizeWritten);
+                        written += OIntegerSerializer.INT_SIZE - recordSizeWritten;
+
+                        recordSize = null;
+                        recordSizeWritten = -1;
+                        recordSizeIsWritten = true;
+                        continue;
+                      }
+                    } else {
+                      recordSize = new byte[OIntegerSerializer.INT_SIZE];
+                      OIntegerSerializer.INSTANCE.serializeNative(recordContent.length, recordSize, 0);
+
+                      recordSizeWritten = (bufferPage + 1) * OCASWALPage.PAGE_SIZE - buffer.position();
+                      written += recordSizeWritten;
+
+                      buffer.put(recordSize, 0, recordSizeWritten);
+                      continue;
+                    }
+                  }
+
+                  buffer.put(recordContent, written - OIntegerSerializer.INT_SIZE, chunkSize);
+                  written += chunkSize;
+                }
+
+                lastLSN = lsn;
+                if (writeableRecord.isUpdateMasterRecord()) {
+                  checkPointLSN = lastLSN;
+                }
+
+                queueSize.addAndGet(-recordContent.length);
+                records.poll();
+              }
             }
 
-            if (assertions && buffer != null) {
-              if (lastRecordPosition >= 0) {
-                assert
-                    walChannel.position() - lastRecordPosition + buffer.position() + prevSegmentSpaceLeft == record.getDiskSize();
+            if (rawPointer > 0) {
+              if ((buffer.position() & (OCASWALPage.PAGE_SIZE - 1)) != 0) {
+                buffer.put(bufferPage * OCASWALPage.PAGE_SIZE + OCASWALPage.STOP_PAGE_OFFSET, (byte) 1);
               }
 
-              lastRecordPosition = walChannel.position() + buffer.position();
-              prevSegmentSpaceLeft = 0;
+              writeBuffer(walChannel, buffer, startPosition, rawPointer, lastLSN);
             }
 
-            lastLSN = record.getLsn();
-            lastDistance = record.getDistance();
-            lastContentSize = writeableRecord.getBinaryContent().length;
-            lastRecordLSN = record.getLsn();
-            lastRecordClass = record.getClass().getSimpleName();
-
-            if (writeableRecord.isUpdateMasterRecord()) {
-              checkPointLSN = lastLSN;
+            if (checkPointLSN != null) {
+              updateCheckpoint(checkPointLSN);
             }
-
-            queueSize.addAndGet(-recordContent.length);
-            records.poll();
+          } finally {
+            flushLatch.countDown();
           }
         }
 
-        if (ptr > 0) {
-          buffer.put(OCASWALPage.STOP_PAGE_OFFSET, (byte) 1);
-          writeBuffer(walChannel, buffer);
-          Native.free(ptr);
+        final long ts = System.nanoTime();
 
-          writtenLSN.lazySet(lastLSN);
+        if (ts - lastFSyncTs > fsyncInterval * 1_000_000) {
+          try {
+            if (newRecordsWritten) {
+              writeExecutor.submit(() -> {
+                try {
+                  walChannel.force(true);
+                  flushedLSN = writtenLSN;
+                } catch (IOException e) {
+                  OLogManager.instance().error(this, "Error during FSync of WAL data", e);
+                }
+              });
+              newRecordsWritten = false;
+            }
+
+            checkFreeSpace();
+          } finally {
+            lastFSyncTs = ts;
+          }
         }
-
-        walChannel.force(true);
-        flushedLSN = lastLSN;
-
-        if (checkPointLSN != null) {
-          updateCheckpoint(checkPointLSN);
-        }
-
-        checkFreeSpace();
       } catch (IOException e) {
         OLogManager.instance().errorNoDb(this, "Error during WAL writing", e);
-
         throw new IllegalStateException(e);
-      } catch (RuntimeException | Error e)
-
-      {
+      } catch (RuntimeException | Error e) {
         OLogManager.instance().errorNoDb(this, "Error during WAL writing", e);
         throw e;
       }
@@ -1659,24 +1699,63 @@ public class OCASDiskWriteAheadLog {
       return false;
     }
 
-    private void writeBuffer(FileChannel channel, ByteBuffer buffer) throws IOException {
-      buffer.position(OCASWALPage.MAGIC_NUMBER_OFFSET);
-      buffer.putLong(OCASWALPage.MAGIC_NUMBER);
+    private void writeBuffer(AsynchronousFileChannel channel, ByteBuffer buffer, long position, long pointer,
+        OLogSequenceNumber lastLSN) {
+      if (position < 0) {
+        return;
+      }
 
-      CRC32 crc32 = new CRC32();
-      buffer.position(OCASWALPage.RECORDS_OFFSET);
-      crc32.update(buffer);
+      final long startPage = position / OCASWALPage.PAGE_SIZE;
+      final long writePosition = startPage * OCASWALPage.PAGE_SIZE;
+      final int maxPage = (buffer.position() + OCASWALPage.PAGE_SIZE - 1) / OCASWALPage.PAGE_SIZE;
 
-      buffer.position(OCASWALPage.CRC32_OFFSET);
-      buffer.putInt((int) crc32.getValue());
+      for (int start = 0; start < maxPage * OCASWALPage.PAGE_SIZE; start += OCASWALPage.PAGE_SIZE) {
+        buffer.limit(start + OCASWALPage.PAGE_SIZE);
+
+        buffer.position(start + OCASWALPage.MAGIC_NUMBER_OFFSET);
+        buffer.putLong(OCASWALPage.MAGIC_NUMBER);
+
+        CRC32 crc32 = new CRC32();
+        buffer.position(start + OCASWALPage.RECORDS_OFFSET);
+        crc32.update(buffer);
+
+        buffer.position(start + OCASWALPage.CRC32_OFFSET);
+        buffer.putInt((int) crc32.getValue());
+      }
 
       buffer.position(0);
+      buffer.limit(maxPage * OCASWALPage.PAGE_SIZE);
 
-      int written = 0;
-
-      while (written < buffer.limit()) {
-        written += channel.write(buffer);
+      try {
+        writeSemaphore.acquire();
+      } catch (InterruptedException e) {
+        //continue
       }
+
+      writeExecutor.submit(() -> {
+        channel.write(buffer, writePosition, null, new CompletionHandler<Integer, Object>() {
+          @Override
+          public void completed(Integer result, Object attachment) {
+            if (result == buffer.limit()) {
+              Native.free(pointer);
+              if (lastLSN != null) {
+                writtenLSN = lastLSN;
+              }
+
+              writeSemaphore.release();
+            } else {
+              channel.write(buffer, writePosition + buffer.position(), null, this);
+            }
+          }
+
+          @Override
+          public void failed(Throwable exc, Object attachment) {
+            OLogManager.instance().error(this, "Error during WAL write", exc);
+            Native.free(pointer);
+            writeSemaphore.release();
+          }
+        });
+      });
     }
   }
 }
