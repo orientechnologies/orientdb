@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
 import com.orientechnologies.common.concur.lock.ScalableRWLock;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -51,6 +52,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -115,7 +117,7 @@ public final class OCASDiskWriteAheadLog {
   private final Path      walLocation;
   private final String    storageName;
 
-  private volatile AsynchronousFileChannel walChannel = null;
+  private volatile FileChannel walChannel = null;
 
   private volatile OLogSequenceNumber flushedLSN = null;
   private volatile OLogSequenceNumber writtenLSN = null;
@@ -138,8 +140,8 @@ public final class OCASDiskWriteAheadLog {
   private final ConcurrentSkipListMap<OLogSequenceNumber, Integer> cutTillLimits = new ConcurrentSkipListMap<OLogSequenceNumber, Integer>();
   private final ScalableRWLock                                     cuttingLock   = new ScalableRWLock();
 
-  private volatile CountDownLatch flushLatch = new CountDownLatch(0);
-  private          CountDownLatch writeLatch = new CountDownLatch(0);
+  private volatile CountDownLatch flushLatch  = new CountDownLatch(0);
+  private volatile Future<?>      writeFuture = null;
 
   private long    lastFSyncTs       = -1;
   private boolean newRecordsWritten = false;
@@ -869,10 +871,10 @@ public final class OCASDiskWriteAheadLog {
       try {
         flushLatch.await();
       } catch (InterruptedException e) {
-        throw new IllegalStateException("Interrupted");
+        //continue
       }
 
-      qsize = queueSize.addAndGet(writeableRecord.getBinaryContent().length);
+      qsize = queueSize.get();
 
       if (qsize >= maxCacheSize) {
         doFlush();
@@ -1133,9 +1135,13 @@ public final class OCASDiskWriteAheadLog {
     }
 
     try {
-      writeLatch.await();
+      if (writeFuture != null) {
+        writeFuture.get();
+      }
     } catch (InterruptedException e) {
       //continue
+    } catch (ExecutionException e) {
+      throw OException.wrapException(new OStorageException("Error during writint of WAL data"), e);
     }
 
     writeExecutor.shutdown();
@@ -1483,6 +1489,7 @@ public final class OCASDiskWriteAheadLog {
       try {
         if (checkPresenceWritableRecords()) {
           newRecordsWritten = true;
+
           flushLatch = new CountDownLatch(1);
           try {
             int bufferPage = -1;
@@ -1523,7 +1530,9 @@ public final class OCASDiskWriteAheadLog {
                   pointer = null;
 
                   try {
-                    writeLatch.await();
+                    if (writeFuture != null) {
+                      writeFuture.get();
+                    }
                   } catch (InterruptedException e) {
                     //continue
                   }
@@ -1539,8 +1548,7 @@ public final class OCASDiskWriteAheadLog {
                 openOptions.add(StandardOpenOption.WRITE);
                 openOptions.add(StandardOpenOption.CREATE_NEW);
 
-                walChannel = AsynchronousFileChannel
-                    .open(walLocation.resolve(getSegmentName(segmentId)), openOptions, writeExecutor);
+                walChannel = FileChannel.open(walLocation.resolve(getSegmentName(segmentId)), openOptions);
                 segments.add(segmentId);
 
                 assert lsn.getPosition() == OCASWALPage.RECORDS_OFFSET;
@@ -1667,7 +1675,7 @@ public final class OCASDiskWriteAheadLog {
             lastFSyncTs = ts;
           }
         }
-      } catch (IOException e) {
+      } catch (IOException | ExecutionException e) {
         OLogManager.instance().errorNoDb(this, "Error during WAL writing", e);
         throw new IllegalStateException(e);
       } catch (RuntimeException | Error e) {
@@ -1695,14 +1703,11 @@ public final class OCASDiskWriteAheadLog {
       return false;
     }
 
-    private void writeBuffer(AsynchronousFileChannel channel, ByteBuffer buffer, long position, long pointer,
-        OLogSequenceNumber lastLSN) {
+    private void writeBuffer(FileChannel channel, ByteBuffer buffer, long position, long pointer, OLogSequenceNumber lastLSN) {
       if (position < 0) {
         return;
       }
 
-      final long startPage = position / OCASWALPage.PAGE_SIZE;
-      final long writePosition = startPage * OCASWALPage.PAGE_SIZE;
       final int maxPage = (buffer.position() + OCASWALPage.PAGE_SIZE - 1) / OCASWALPage.PAGE_SIZE;
 
       for (int start = 0; start < maxPage * OCASWALPage.PAGE_SIZE; start += OCASWALPage.PAGE_SIZE) {
@@ -1723,35 +1728,32 @@ public final class OCASDiskWriteAheadLog {
       buffer.limit(maxPage * OCASWALPage.PAGE_SIZE);
 
       try {
-        writeLatch.await();
+        if (writeFuture != null) {
+          writeFuture.get();
+        }
       } catch (InterruptedException e) {
         //continue
+      } catch (Exception e) {
+        throw OException.wrapException(new OStorageException("Error during WAL data write"), e);
       }
 
-      writeLatch = new CountDownLatch(1);
-      writeExecutor.submit(() -> {
-        channel.write(buffer, writePosition, null, new CompletionHandler<Integer, Object>() {
-          @Override
-          public void completed(Integer result, Object attachment) {
-            if (result == buffer.limit()) {
-              Native.free(pointer);
-              if (lastLSN != null) {
-                writtenLSN = lastLSN;
-              }
-
-              writeLatch.countDown();
-            } else {
-              channel.write(buffer, writePosition + buffer.position(), null, this);
-            }
+      writeFuture = writeExecutor.submit((Callable<?>) () -> {
+        try {
+          while (buffer.position() < buffer.limit()) {
+            channel.write(buffer);
           }
 
-          @Override
-          public void failed(Throwable exc, Object attachment) {
-            OLogManager.instance().error(this, "Error during WAL write", exc);
-            Native.free(pointer);
-            writeLatch.countDown();
+          if (lastLSN != null) {
+            writtenLSN = lastLSN;
           }
-        });
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Error during WAL data write", e);
+          throw e;
+        } finally {
+          Native.free(pointer);
+        }
+
+        return null;
       });
     }
   }

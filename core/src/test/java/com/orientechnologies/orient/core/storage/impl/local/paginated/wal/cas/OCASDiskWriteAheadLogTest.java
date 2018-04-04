@@ -14,9 +14,12 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -1698,7 +1701,8 @@ public class OCASDiskWriteAheadLogTest {
 
   @Test
   public void writeBenchmarkTest() throws Exception {
-    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 49_152, 256 * 1024 * 1024, 250,
+    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory,
+        49_152, 256 * 1024 * 1024, 250,
         true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000);
 
     AtomicBoolean walIsFull = new AtomicBoolean();
