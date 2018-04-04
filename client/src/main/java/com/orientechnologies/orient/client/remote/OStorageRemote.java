@@ -1109,7 +1109,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         iClusterId = defaultClusterId;
 
       if (iClusterId >= clusters.length) {
+        stateLock.releaseReadLock();
         reload();
+        stateLock.acquireReadLock();
       }
 
       return clusters[iClusterId];
@@ -1400,7 +1402,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     nodeSession.setSession(sessionId, token);
 
     OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
-
 
     // READ CLUSTER CONFIGURATION
 //    updateClusterConfiguration(network.getServerURL(), response.getDistributedConfiguration());

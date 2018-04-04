@@ -1251,12 +1251,107 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   @Override
   public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
     resetLastValidBackup();
-    return wrapped.addCluster(iClusterName, iRequestedId, iParameters);
+    for (int retry = 0; retry < 10; ++retry) {
+      final AtomicInteger clId = new AtomicInteger();
+
+      if (!isLocalEnv()) {
+
+        final StringBuilder cmd = new StringBuilder("create cluster `");
+        cmd.append(iClusterName);
+        cmd.append("`");
+        cmd.append(" ID ");
+        cmd.append(iRequestedId);
+
+        // EXECUTE THIS OUTSIDE LOCK TO AVOID DEADLOCKS
+        Object result = null;
+        try {
+          result = dManager
+              .executeInDistributedDatabaseLock(getName(), 20000, dManager.getDatabaseConfiguration(getName()).modify(),
+                  new OCallable<Object, OModifiableDistributedConfiguration>() {
+                    @Override
+                    public Object call(OModifiableDistributedConfiguration iArgument) {
+                      clId.set(wrapped.addCluster(iClusterName, iRequestedId, iParameters));
+
+                      final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
+                      commandSQL.addExcludedNode(getNodeId());
+                      return command(commandSQL);
+                    }
+                  });
+        } catch (Exception e) {
+          // RETRY
+          wrapped.dropCluster(iClusterName, false);
+
+          try {
+            Thread.sleep(300);
+          } catch (InterruptedException e2) {
+          }
+
+          continue;
+        }
+
+        if (result != null && ((Integer) result).intValue() != clId.get()) {
+          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+              "Error on creating cluster '%s' on distributed nodes: ids are different (local=%d and remote=%d). Local clusters %s. Retrying %d/%d...",
+              iClusterName, clId.get(), ((Integer) result).intValue(), getClusterNames(), retry, 10);
+
+          wrapped.dropCluster(clId.get(), false);
+
+          // REMOVE ON REMOTE NODES TOO
+          cmd.setLength(0);
+          cmd.append("drop cluster ");
+          cmd.append(iClusterName);
+
+          final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
+          commandSQL.addExcludedNode(getNodeId());
+          command(commandSQL);
+
+          try {
+            Thread.sleep(300);
+          } catch (InterruptedException e) {
+          }
+
+          wrapped.reload(); // TODO: RELOAD DOESN'T DO ANYTHING WHILE HERE IT'S NEEDED A WAY TO CLOSE/OPEN THE DB
+          continue;
+        }
+      } else
+        clId.set(wrapped.addCluster(iClusterName, iRequestedId, iParameters));
+      return clId.get();
+    }
+
+    throw new ODistributedException(
+        "Error on creating cluster '" + iClusterName + "' on distributed nodes: local and remote ids assigned are different");
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     resetLastValidBackup();
-    return wrapped.dropCluster(iClusterName, iTruncate);
+    final AtomicBoolean clId = new AtomicBoolean();
+
+    if (!isLocalEnv()) {
+
+      final StringBuilder cmd = new StringBuilder();
+      if (iTruncate) {
+        cmd.append("truncate cluster `");
+      } else {
+        cmd.append("create cluster `");
+      }
+      cmd.append(iClusterName);
+      cmd.append("`");
+
+      // EXECUTE THIS OUTSIDE LOCK TO AVOID DEADLOCKS
+      dManager.executeInDistributedDatabaseLock(getName(), 20000, dManager.getDatabaseConfiguration(getName()).modify(),
+          new OCallable<Object, OModifiableDistributedConfiguration>() {
+            @Override
+            public Object call(OModifiableDistributedConfiguration iArgument) {
+              clId.set(wrapped.dropCluster(iClusterName, iTruncate));
+
+              final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
+              commandSQL.addExcludedNode(getNodeId());
+              return command(commandSQL);
+            }
+          });
+      return clId.get();
+    } else
+      return wrapped.dropCluster(iClusterName, iTruncate);
   }
 
   @Override

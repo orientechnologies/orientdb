@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -25,6 +26,7 @@ public class HATest extends AbstractHARemoveNode {
   final static int SERVERS = 3;
 
   @Test
+  @Ignore
   public void test() throws Exception {
     useTransactions = false;
     count = 10;
