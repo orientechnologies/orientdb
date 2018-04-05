@@ -91,7 +91,7 @@ public class OCASDiskWriteAheadLogTest {
         Assert.assertTrue(records.get(1) instanceof OEmptyWALRecord);
         wal.close();
 
-        Thread.sleep(2);
+        Thread.sleep(1);
 
         if (i > 0 && i % 1000 == 0) {
           System.out.printf("%d iterations out of %d were passed\n", i, iterations);

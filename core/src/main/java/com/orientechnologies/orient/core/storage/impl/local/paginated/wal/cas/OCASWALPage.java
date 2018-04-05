@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.OShortSerializer;
 
 public class OCASWALPage {
   static final long MAGIC_NUMBER = 0xEF31BCAFL;
@@ -18,11 +19,11 @@ public class OCASWALPage {
    */
   public static final int MAGIC_NUMBER_OFFSET = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  public static final int STOP_PAGE_OFFSET = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+  public static final int PAGE_SIZE_OFFSET = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
   public static final int PAGE_SIZE = 4 * 1024;
 
-  public static final int RECORDS_OFFSET = STOP_PAGE_OFFSET + OByteSerializer.BYTE_SIZE;
+  public static final int RECORDS_OFFSET = PAGE_SIZE_OFFSET + OShortSerializer.SHORT_SIZE;
 
   public static final int MAX_RECORD_SIZE = PAGE_SIZE - RECORDS_OFFSET;
 
