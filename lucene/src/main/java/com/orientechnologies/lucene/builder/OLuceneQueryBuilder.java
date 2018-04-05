@@ -118,9 +118,10 @@ public class OLuceneQueryBuilder {
         Optional.ofNullable(metadata.<Boolean>getProperty("allowLeadingWildcard"))
             .orElse(allowLeadingWildcard));
 
-    queryParser.setLowercaseExpandedTerms(
-        Optional.ofNullable(metadata.<Boolean>getProperty("lowercaseExpandedTerms"))
-            .orElse(lowercaseExpandedTerms));
+    //  TODO   REMOVED
+//    queryParser.setLowercaseExpandedTerms(
+//        Optional.ofNullable(metadata.<Boolean>getProperty("lowercaseExpandedTerms"))
+//            .orElse(lowercaseExpandedTerms));
 
     try {
       return queryParser.parse(query);

@@ -57,7 +57,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
   private final List<String>        highlighted;
   private final int                 maxNumFragments;
   private       TopDocs             topDocs;
-  private int deletedMatchCount = 0;
+  private long deletedMatchCount = 0;
 
   public OLuceneResultSet(OLuceneIndexEngine engine, OLuceneQueryContext queryContext, ODocument metadata) {
     this.engine = engine;
@@ -157,13 +157,13 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
     OLuceneIndexEngineUtils.sendLookupTime(indexName, commandContext, topDocs, -1, start);
   }
 
-  protected int calculateDeletedMatch() {
+  protected long calculateDeletedMatch() {
     return queryContext.deletedDocs(query);
   }
 
   @Override
   public int size() {
-    return Math.max(0, topDocs.totalHits - deletedMatchCount);
+    return (int) Math.max(0, topDocs.totalHits - deletedMatchCount);
   }
 
   @Override
@@ -176,7 +176,7 @@ public class OLuceneResultSet implements Set<OIdentifiable> {
     private ScoreDoc[] scoreDocs;
     private int        index;
     private int        localIndex;
-    private int        totalHits;
+    private long        totalHits;
 
     public OLuceneResultSetIteratorTx() {
       totalHits = topDocs.totalHits;
