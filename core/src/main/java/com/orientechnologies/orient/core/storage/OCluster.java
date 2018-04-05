@@ -170,4 +170,6 @@ public interface OCluster {
    * Acquires exclusive lock in the active atomic operation running on the current thread for this cluster.
    */
   void acquireAtomicExclusiveLock();
+
+  int checkClusterConsistency() throws IOException;
 }

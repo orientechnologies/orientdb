@@ -85,7 +85,7 @@ public class OTinyPageCache implements OPageCache {
       }
     }
 
-    final OCacheEntry entry = readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
+    final OCacheEntry entry = readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true, null);
     if (entry == null)
       return null;
 

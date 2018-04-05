@@ -120,7 +120,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private volatile ThreadLocal<OStorageTransaction> transaction          = new ThreadLocal<OStorageTransaction>();
   private final    AtomicBoolean                    checkpointInProgress = new AtomicBoolean();
-  protected final OSBTreeCollectionManagerShared sbTreeCollectionManager;
+  protected final  OSBTreeCollectionManagerShared   sbTreeCollectionManager;
 
   private final OPerformanceStatisticManager performanceStatisticManager = new OPerformanceStatisticManager(this,
       OGlobalConfiguration.STORAGE_PROFILER_SNAPSHOT_INTERVAL.getValueAsInteger() * 1000000L,
@@ -135,10 +135,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private volatile ORecordConflictStrategy recordConflictStrategy = Orient.instance().getRecordConflictStrategy()
       .getDefaultImplementation();
 
-  private volatile int defaultClusterId = -1;
+  private volatile   int                      defaultClusterId  = -1;
   protected volatile OAtomicOperationsManager atomicOperationsManager;
-  private volatile OLowDiskSpaceInformation lowDiskSpace      = null;
-  private volatile boolean                  checkpointRequest = false;
+  private volatile   OLowDiskSpaceInformation lowDiskSpace      = null;
+  private volatile   boolean                  checkpointRequest = false;
 
   private volatile Throwable dataFlushException = null;
 
@@ -3862,6 +3862,35 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  public int checkClustersConsistency() {
+    int errors = 0;
+    try {
+      checkOpeness();
+
+      stateLock.acquireWriteLock();
+      try {
+        checkOpeness();
+
+        OLogManager.instance().info(this, "Start checking clusters consistency\n");
+        for (OCluster cluster : clusters) {
+          final OPaginatedCluster paginatedCluster = (OPaginatedCluster) cluster;
+          errors += paginatedCluster.checkClusterConsistency();
+        }
+        OLogManager.instance().info(this, "Clusters consistency check is completed\n");
+      } finally {
+        stateLock.releaseWriteLock();
+      }
+    } catch (RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+
+    return errors;
+  }
+
   private void endStorageTx() throws IOException {
     atomicOperationsManager.endAtomicOperation(false, null, (String) null);
 
@@ -4980,7 +5009,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final long pageIndex = updatePageRecord.getPageIndex();
         fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
 
-        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, false);
+        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, false, null);
         if (cacheEntry == null) {
           do {
             if (cacheEntry != null)

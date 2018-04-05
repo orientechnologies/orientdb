@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
@@ -53,13 +54,11 @@ public interface OWriteCache {
 
   /**
    * Registers new file in write cache and returns file id assigned to this file.
-   * <p>
    * File id consist of two parts:
    * <ol>
    * <li>Internal id is permanent and can not be changed during life of storage {@link #internalFileId(long)}</li>
    * <li>Write cache id  which is changed between storage open/close cycles</li>
    * </ol>
-   * <p>
    * If file with the same name is deleted and then new file is created this file with have the same internal id.
    *
    * @param fileName Name of file to register inside storage.
@@ -92,7 +91,7 @@ public interface OWriteCache {
   Future store(long fileId, long pageIndex, OCachePointer dataPointer);
 
   OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
-      boolean verifyChecksums) throws IOException;
+      boolean verifyChecksums, OChecksumMode checksumMode) throws IOException;
 
   void flush(long fileId);
 

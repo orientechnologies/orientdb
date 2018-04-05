@@ -223,7 +223,7 @@ public class ReadWriteCacheConcurrentTest {
     }
 
     private void writeToFile(int fileNumber, long pageIndex) throws IOException {
-      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, true);
+      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, true, null);
       if (cacheEntry == null) {
         do {
           if (cacheEntry != null)
@@ -235,7 +235,7 @@ public class ReadWriteCacheConcurrentTest {
 
       if (cacheEntry.getPageIndex() > pageIndex) {
         readBuffer.release(cacheEntry, writeBuffer);
-        cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, true);
+        cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, true, null);
       }
 
       OCachePointer pointer = cacheEntry.getCachePointer();
@@ -294,7 +294,7 @@ public class ReadWriteCacheConcurrentTest {
       long pageIndex = Math.abs(new Random().nextInt() % PAGE_COUNT);
       int fileNumber = new Random().nextInt(FILE_COUNT);
 
-      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, true);
+      OCacheEntry cacheEntry = readBuffer.load(fileIds.get(fileNumber), pageIndex, false, writeBuffer, 1, true, null);
       OCachePointer pointer = cacheEntry.getCachePointer();
 
       final ByteBuffer buffer = pointer.getBufferDuplicate();

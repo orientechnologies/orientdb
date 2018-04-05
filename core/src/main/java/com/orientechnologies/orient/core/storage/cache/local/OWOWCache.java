@@ -34,6 +34,7 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OPageIsBrokenException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OWriteCacheException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -116,7 +117,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final List<WeakReference<OPageIsBrokenListener>> pageIsBrokenListeners = new CopyOnWriteArrayList<WeakReference<OPageIsBrokenListener>>();
 
   private final AtomicLong lastDiskSpaceCheck = new AtomicLong(0);
-  private final String storagePath;
+  private final String     storagePath;
 
   private final ConcurrentSkipListMap<PageKey, PageGroup> writeCachePages         = new ConcurrentSkipListMap<PageKey, PageGroup>();
   private final ConcurrentSkipListSet<PageKey>            exclusiveWritePages     = new ConcurrentSkipListSet<PageKey>();
@@ -131,12 +132,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final int            pageSize;
   private final long           groupTTL;
   private final OWriteAheadLog writeAheadLog;
-  private final AtomicLong amountOfNewPagesAdded = new AtomicLong();
+  private final AtomicLong     amountOfNewPagesAdded = new AtomicLong();
 
   private final OLockManager<PageKey> lockManager = new OPartitionedLockManager<PageKey>();
 
-  private final OLocalPaginatedStorage storageLocal;
-  private final OReadersWriterSpinLock filesLock = new OReadersWriterSpinLock();
+  private final OLocalPaginatedStorage   storageLocal;
+  private final OReadersWriterSpinLock   filesLock = new OReadersWriterSpinLock();
   private final ScheduledExecutorService commitExecutor;
 
   /**
@@ -730,7 +731,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
-      boolean verifyChecksums) throws IOException {
+      boolean verifyChecksums, OChecksumMode checksumMode) throws IOException {
+
+    if (checksumMode == null) {
+      checksumMode = this.checksumMode;
+    }
 
     final int intId = extractFileId(fileId);
     if (pageCount < 1)
@@ -770,7 +775,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         OCachePointer pagePointers[];
         try {
           //load requested page and preload requested amount of pages
-          pagePointers = loadFileContent(intId, startPageIndex, pageCount, verifyChecksums);
+          pagePointers = loadFileContent(intId, startPageIndex, pageCount, verifyChecksums, checksumMode);
 
           if (pagePointers != null) {
             assert pagePointers.length > 0;
@@ -878,7 +883,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
         //this is case when we allocated space but requested page was outside of allocated space
         //in such case we read it again
-        return load(fileId, startPageIndex, pageCount, true, cacheHit, verifyChecksums);
+        return load(fileId, startPageIndex, pageCount, true, cacheHit, verifyChecksums, checksumMode);
 
       } else {
         startPageGroup.page.incrementReadersReferrer();
@@ -1498,8 +1503,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  private OCachePointer[] loadFileContent(final int intId, final long startPageIndex, final int pageCount, boolean verifyChecksums)
-      throws IOException {
+  private OCachePointer[] loadFileContent(final int intId, final long startPageIndex, final int pageCount, boolean verifyChecksums,
+      OChecksumMode checksumMode) throws IOException {
     final long fileId = composeFileId(id, intId);
 
     try {
@@ -1532,7 +1537,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
               if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow
                   || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode))
-                verifyChecksum(buffer, fileId, startPageIndex, null);
+                verifyChecksum(buffer, fileId, startPageIndex, null, checksumMode);
 
               buffer.position(0);
 
@@ -1555,7 +1560,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             if (verifyChecksums && (checksumMode == OChecksumMode.StoreAndVerify || checksumMode == OChecksumMode.StoreAndThrow
                 || checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode))
               for (int i = 0; i < buffers.length; ++i)
-                verifyChecksum(buffers[i], fileId, startPageIndex + i, buffers);
+                verifyChecksum(buffers[i], fileId, startPageIndex + i, buffers, checksumMode);
 
             final OCachePointer[] dataPointers = new OCachePointer[buffers.length];
             for (int n = 0; n < buffers.length; n++) {
@@ -1596,7 +1601,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     return pageGroup;
   }
 
-  private void verifyChecksum(ByteBuffer buffer, long fileId, long pageIndex, ByteBuffer[] buffersToRelease) {
+  private void verifyChecksum(ByteBuffer buffer, long fileId, long pageIndex, ByteBuffer[] buffersToRelease,
+      OChecksumMode checksumMode) {
     assert buffer.order() == ByteOrder.nativeOrder();
 
     buffer.position(MAGIC_NUMBER_OFFSET);
@@ -1613,7 +1619,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             for (ByteBuffer bufferToRelease : buffersToRelease)
               bufferPool.release(bufferToRelease);
 
-          throw new OStorageException(message);
+          throw new OPageIsBrokenException(message);
         } else if (checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode) {
           callPageIsBrokenListeners(fileNameById(fileId), pageIndex);
         }
@@ -1661,7 +1667,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           for (ByteBuffer bufferToRelease : buffersToRelease)
             bufferPool.release(bufferToRelease);
 
-        throw new OStorageException(message);
+        throw new OPageIsBrokenException(message);
       } else if (checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode) {
         callPageIsBrokenListeners(fileNameById(fileId), pageIndex);
       }

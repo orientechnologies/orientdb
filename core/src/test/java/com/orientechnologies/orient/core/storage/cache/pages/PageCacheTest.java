@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.cache.pages;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
@@ -262,8 +263,8 @@ public class PageCacheTest {
 
     @Override
     public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
-        boolean verifyChecksums) throws IOException {
-      final OCachePointer[] pointers = writeCache.load(fileId, pageIndex, pageCount, false, null, verifyChecksums);
+        boolean verifyChecksums, OChecksumMode checksumMode) throws IOException {
+      final OCachePointer[] pointers = writeCache.load(fileId, pageIndex, pageCount, false, null, verifyChecksums, checksumMode);
       return pointers == null || pointers.length == 0 ? null : new OCacheEntry(fileId, pageIndex, pointers[0], false);
     }
 
@@ -274,7 +275,8 @@ public class PageCacheTest {
 
     @Override
     public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums) throws IOException {
-      final OCachePointer[] pointers = writeCache.load(fileId, writeCache.getFilledUpTo(fileId), 1, true, null, verifyChecksums);
+      final OCachePointer[] pointers = writeCache.load(fileId, writeCache.getFilledUpTo(fileId), 1, true, null, verifyChecksums,
+          null);
       return new OCacheEntry(fileId, pointers[0].getPageIndex(), pointers[0], false);
     }
 
@@ -422,7 +424,7 @@ public class PageCacheTest {
 
     @Override
     public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
-        boolean verifyChecksums) throws IOException {
+        boolean verifyChecksums, OChecksumMode checksumMode) throws IOException {
 
       final long size = getFilledUpTo(fileId);
       final boolean exists = startPageIndex < size;

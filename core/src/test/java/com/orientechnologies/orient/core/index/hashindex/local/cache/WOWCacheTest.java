@@ -118,7 +118,8 @@ public class WOWCacheTest {
 
       pageData[i] = data;
 
-      final OCachePointer cachePointer = wowCache.load(fileId, i, 1, true, new OModifiableBoolean(), true)[0];
+      final OCachePointer cachePointer = wowCache.load(fileId, i, 1, true, new OModifiableBoolean(),
+          true, null)[0];
       cachePointer.acquireExclusiveLock();
 
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
@@ -133,7 +134,8 @@ public class WOWCacheTest {
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataOne = pageData[i];
 
-      OCachePointer cachePointer = wowCache.load(fileId, i, 1, false, new OModifiableBoolean(), true)[0];
+      OCachePointer cachePointer = wowCache.load(fileId, i, 1, false, new OModifiableBoolean(),
+          true, null)[0];
       byte[] dataTwo = new byte[8];
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
       buffer.position(systemOffset);
@@ -166,7 +168,8 @@ public class WOWCacheTest {
 
       pageIndexDataMap.put(pageIndex, data);
 
-      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, true, new OModifiableBoolean(), true)[0];
+      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, true, new OModifiableBoolean(),
+          true, null)[0];
       cachePointer.acquireExclusiveLock();
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
       buffer.position(systemOffset);
@@ -181,7 +184,8 @@ public class WOWCacheTest {
       long pageIndex = entry.getKey();
       byte[] dataOne = entry.getValue();
 
-      OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, false, new OModifiableBoolean(), true)[0];
+      OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, false, new OModifiableBoolean(),
+          true, null)[0];
       byte[] dataTwo = new byte[8];
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
       buffer.position(systemOffset);
@@ -202,7 +206,8 @@ public class WOWCacheTest {
       random.nextBytes(data);
       pageIndexDataMap.put(pageIndex, data);
 
-      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, true, new OModifiableBoolean(), true)[0];
+      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, true, new OModifiableBoolean(),
+          true, null)[0];
 
       cachePointer.acquireExclusiveLock();
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
@@ -217,7 +222,8 @@ public class WOWCacheTest {
     for (Map.Entry<Long, byte[]> entry : pageIndexDataMap.entrySet()) {
       long pageIndex = entry.getKey();
       byte[] dataOne = entry.getValue();
-      OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, false, new OModifiableBoolean(), true)[0];
+      OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, false, new OModifiableBoolean(),
+          true, null)[0];
       byte[] dataTwo = new byte[8];
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
       buffer.position(systemOffset);
@@ -247,7 +253,8 @@ public class WOWCacheTest {
 
       pageData[i] = data;
 
-      final OCachePointer cachePointer = wowCache.load(fileId, i, 1, true, new OModifiableBoolean(), true)[0];
+      final OCachePointer cachePointer = wowCache.load(fileId, i, 1, true, new OModifiableBoolean(),
+          true, null)[0];
       cachePointer.acquireExclusiveLock();
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
       buffer.position(systemOffset);
@@ -261,7 +268,8 @@ public class WOWCacheTest {
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataOne = pageData[i];
 
-      OCachePointer cachePointer = wowCache.load(fileId, i, 1, false, new OModifiableBoolean(), true)[0];
+      OCachePointer cachePointer = wowCache.load(fileId, i, 1, false, new OModifiableBoolean(),
+          true, null)[0];
       byte[] dataTwo = new byte[8];
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
       buffer.position(systemOffset);
@@ -340,7 +348,8 @@ public class WOWCacheTest {
     wowCache.setChecksumMode(OChecksumMode.StoreAndThrow);
 
     final long fileId = wowCache.addFile(fileName);
-    final OCachePointer cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), true)[0];
+    final OCachePointer cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(),
+        true, null)[0];
 
     cachePointer.acquireExclusiveLock();
     final ByteBuffer buffer = cachePointer.getBufferDuplicate();
@@ -362,7 +371,8 @@ public class WOWCacheTest {
     Assert.assertThrows(OStorageException.class, new Assert.ThrowingRunnable() {
       @Override
       public void run() throws Throwable {
-        wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), true);
+        wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(),
+            true, null);
       }
     });
   }
@@ -372,7 +382,8 @@ public class WOWCacheTest {
     wowCache.setChecksumMode(OChecksumMode.StoreAndThrow);
 
     final long fileId = wowCache.addFile(fileName);
-    final OCachePointer cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), true)[0];
+    final OCachePointer cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(),
+        true, null)[0];
 
     cachePointer.acquireExclusiveLock();
     final ByteBuffer buffer = cachePointer.getBufferDuplicate();
@@ -394,7 +405,8 @@ public class WOWCacheTest {
     Assert.assertThrows(OStorageException.class, new Assert.ThrowingRunnable() {
       @Override
       public void run() throws Throwable {
-        wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), true);
+        wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(),
+            true, null);
       }
     });
   }
@@ -404,7 +416,8 @@ public class WOWCacheTest {
     wowCache.setChecksumMode(OChecksumMode.StoreAndThrow);
 
     final long fileId = wowCache.addFile(fileName);
-    OCachePointer cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), true)[0];
+    OCachePointer cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(),
+        true, null)[0];
 
     cachePointer.acquireExclusiveLock();
     final ByteBuffer buffer = cachePointer.getBufferDuplicate();
@@ -423,7 +436,8 @@ public class WOWCacheTest {
     file.writeByte(systemOffset, (byte) 1);
     file.close();
 
-    cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), false)[0];
+    cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(),
+        false, null)[0];
     cachePointer.decrementReadersReferrer();
   }
 
@@ -432,7 +446,8 @@ public class WOWCacheTest {
     wowCache.setChecksumMode(OChecksumMode.Off);
 
     final long fileId = wowCache.addFile(fileName);
-    OCachePointer cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), true)[0];
+    OCachePointer cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(),
+        true, null)[0];
 
     cachePointer.acquireExclusiveLock();
     final ByteBuffer buffer = cachePointer.getBufferDuplicate();
@@ -451,7 +466,8 @@ public class WOWCacheTest {
     file.writeByte(systemOffset, (byte) 1);
     file.close();
 
-    cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), true)[0];
+    cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(),
+        true, null)[0];
     cachePointer.decrementReadersReferrer();
   }
 
@@ -460,7 +476,8 @@ public class WOWCacheTest {
     wowCache.setChecksumMode(OChecksumMode.Store);
 
     final long fileId = wowCache.addFile(fileName);
-    OCachePointer cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), true)[0];
+    OCachePointer cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(),
+        true, null)[0];
 
     cachePointer.acquireExclusiveLock();
     final ByteBuffer buffer = cachePointer.getBufferDuplicate();
@@ -479,7 +496,8 @@ public class WOWCacheTest {
     file.writeByte(systemOffset, (byte) 1);
     file.close();
 
-    cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), true)[0];
+    cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(),
+        true, null)[0];
     cachePointer.decrementReadersReferrer();
   }
 
@@ -488,7 +506,8 @@ public class WOWCacheTest {
     wowCache.setChecksumMode(OChecksumMode.Off);
 
     final long fileId = wowCache.addFile(fileName);
-    OCachePointer cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), true)[0];
+    OCachePointer cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(),
+        true, null)[0];
 
     cachePointer.acquireExclusiveLock();
     final ByteBuffer buffer = cachePointer.getBufferDuplicate();
@@ -508,7 +527,8 @@ public class WOWCacheTest {
     file.close();
 
     wowCache.setChecksumMode(OChecksumMode.StoreAndThrow);
-    cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), true)[0];
+    cachePointer = wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(),
+        true, null)[0];
     cachePointer.decrementReadersReferrer();
   }
 

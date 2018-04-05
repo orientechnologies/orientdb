@@ -424,7 +424,7 @@ public class OAtomicOperation {
 
           OCacheEntry cacheEntry = filePageChanges.isNew ? null : pageCache.purgePage(fileId, pageIndex, writeCache);
           if (cacheEntry == null) {
-            cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, true);
+            cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, true, null);
             if (cacheEntry == null) {
               assert filePageChanges.isNew;
               do {

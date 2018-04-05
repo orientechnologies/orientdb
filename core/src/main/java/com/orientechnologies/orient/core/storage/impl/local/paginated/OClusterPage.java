@@ -73,6 +73,15 @@ public class OClusterPage extends ODurablePage {
     }
   }
 
+  public void clearAndMarkAsFilled() throws IOException {
+    setLongValue(NEXT_PAGE_OFFSET, -1);
+    setLongValue(PREV_PAGE_OFFSET, -1);
+
+    setIntValue(FREE_POSITION_OFFSET, PAGE_SIZE);
+    setIntValue(FREE_SPACE_COUNTER_OFFSET, 0);
+    setIntValue(PAGE_INDEXES_LENGTH_OFFSET, 0);
+  }
+
   public int appendRecord(final int recordVersion, final byte[] record) throws IOException {
     int freePosition = getIntValue(FREE_POSITION_OFFSET);
     final int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);

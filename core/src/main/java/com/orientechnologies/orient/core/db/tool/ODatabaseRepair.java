@@ -19,23 +19,29 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 
 import java.util.Iterator;
 import java.util.List;
 
 /**
  * Repair database tool.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  * @since v2.2.0
  */
 public class ODatabaseRepair extends ODatabaseTool {
   private boolean removeBrokenLinks = true;
+  private boolean checkClusters     = false;
 
   @Override
   protected void parseSetting(final String option, final List<String> items) {
@@ -47,16 +53,36 @@ public class ODatabaseRepair extends ODatabaseTool {
 
       removeBrokenLinks = Boolean.parseBoolean(items.get(0));
 
+    } else if (option.equalsIgnoreCase("-checkClusters")) {
+      checkClusters = true;
     }
   }
 
   public void run() {
     long errors = 0;
 
-    if (removeBrokenLinks)
+    if (removeBrokenLinks) {
       errors += removeBrokenLinks();
+    }
+    if (checkClusters) {
+      errors += checkClusters();
+    }
 
     message("\nRepair database complete (" + errors + " errors)");
+  }
+
+  private int checkClusters() {
+    int errors = 0;
+    final OStorage storage = ((ODatabaseDocumentInternal) database).getStorage();
+    if (storage instanceof OStorageProxy) {
+      message("\n- You use remote connection to the storage, please open it as embedded storage and try again");
+      return 0;
+    } else {
+      final OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
+      errors += paginatedStorage.checkClustersConsistency();
+    }
+
+    return errors;
   }
 
   protected long removeBrokenLinks() {
@@ -96,8 +122,9 @@ public class ODatabaseRepair extends ODatabaseTool {
                     fixedLinks++;
                     changed = true;
                     if (verbose)
-                      message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as item " + i
-                          + " in collection of field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
+                      message(
+                          "\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as item " + i + " in collection of field '"
+                              + fieldName + "' (rid=" + doc.getIdentity() + ")");
                   }
                 }
               }
@@ -124,8 +151,8 @@ public class ODatabaseRepair extends ODatabaseTool {
   /**
    * Checks if the link must be fixed.
    *
-   * @param fieldValue
-   *          Field containing the OIdentifiable (RID or Record)
+   * @param fieldValue Field containing the OIdentifiable (RID or Record)
+   *
    * @return true to fix it, otherwise false
    */
   protected boolean fixLink(final Object fieldValue) {

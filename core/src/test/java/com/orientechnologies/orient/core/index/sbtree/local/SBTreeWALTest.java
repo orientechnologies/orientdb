@@ -287,7 +287,7 @@ public class SBTreeWALTest extends SBTreeTest {
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1, false);
+            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1, false, null);
             if (cacheEntry == null) {
               do {
                 if (cacheEntry != null)

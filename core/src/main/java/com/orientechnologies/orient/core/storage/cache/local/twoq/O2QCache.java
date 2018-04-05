@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedExcept
 import com.orientechnologies.orient.core.exception.OLoadCacheStateException;
 import com.orientechnologies.orient.core.exception.OReadCacheException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
@@ -279,7 +280,7 @@ public class O2QCache implements OReadCache {
 
   @Override
   public OCacheEntry load(long fileId, final long pageIndex, final boolean checkPinnedPages, OWriteCache writeCache,
-      final int pageCount, boolean verifyChecksums) throws IOException {
+      final int pageCount, boolean verifyChecksums, OChecksumMode checksumMode) throws IOException {
 
     final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = writeCache.getPerformanceStatisticManager()
         .getSessionPerformanceStatistic();
@@ -292,7 +293,7 @@ public class O2QCache implements OReadCache {
       fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
 
       final UpdateCacheResult cacheResult = doLoad(fileId, pageIndex, checkPinnedPages, false, writeCache, pageCount,
-          sessionStoragePerformanceStatistic, verifyChecksums);
+          sessionStoragePerformanceStatistic, verifyChecksums, checksumMode);
       if (cacheResult == null)
         return null;
 
@@ -316,7 +317,7 @@ public class O2QCache implements OReadCache {
 
   private UpdateCacheResult doLoad(long fileId, long pageIndex, boolean checkPinnedPages, boolean addNewPages,
       OWriteCache writeCache, final int pageCount, final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic,
-      boolean verifyChecksums) throws IOException {
+      boolean verifyChecksums, OChecksumMode checksumMode) throws IOException {
 
     if (pageCount < 1)
       throw new IllegalArgumentException(
@@ -359,7 +360,7 @@ public class O2QCache implements OReadCache {
 
           if (cacheEntry == null) {
             UpdateCacheResult cacheResult = updateCache(fileId, pageIndex, addNewPages, writeCache, pageCount, cacheHit,
-                verifyChecksums);
+                verifyChecksums, checksumMode);
             if (cacheResult == null)
               return null;
 
@@ -409,7 +410,8 @@ public class O2QCache implements OReadCache {
         try {
           final long filledUpTo = writeCache.getFilledUpTo(fileId);
           assert filledUpTo >= 0;
-          cacheResult = doLoad(fileId, filledUpTo, false, true, writeCache, 1, sessionStoragePerformanceStatistic, verifyChecksums);
+          cacheResult = doLoad(fileId, filledUpTo, false, true, writeCache, 1, sessionStoragePerformanceStatistic, verifyChecksums,
+              null);
         } finally {
           fileLockManager.releaseExclusiveLock(fileId);
         }
@@ -872,7 +874,7 @@ public class O2QCache implements OReadCache {
 
       //some queue items may be deleted because it reached size limit
       if (cacheEntry != null && cacheEntry.getCachePointer() == null) {
-        final OCachePointer[] pointers = writeCache.load(pageKey.fileId, pageKey.pageIndex, 1, false, cacheHit, true);
+        final OCachePointer[] pointers = writeCache.load(pageKey.fileId, pageKey.pageIndex, 1, false, cacheHit, true, null);
 
         if (pointers.length == 0) {
           queue.remove(pageKey.fileId, pageKey.pageIndex);
@@ -1135,7 +1137,8 @@ public class O2QCache implements OReadCache {
   }
 
   private UpdateCacheResult updateCache(final long fileId, final long pageIndex, final boolean addNewPages, OWriteCache writeCache,
-      final int pageCount, final OModifiableBoolean cacheHit, boolean verifyChecksums) throws IOException {
+      final int pageCount, final OModifiableBoolean cacheHit, boolean verifyChecksums, OChecksumMode checksumMode)
+      throws IOException {
 
     assert pageCount > 0;
 
@@ -1152,7 +1155,7 @@ public class O2QCache implements OReadCache {
 
     cacheEntry = a1out.remove(fileId, pageIndex);
     if (cacheEntry != null) {
-      dataPointers = writeCache.load(fileId, pageIndex, pageCount, false, cacheHit, verifyChecksums);
+      dataPointers = writeCache.load(fileId, pageIndex, pageCount, false, cacheHit, verifyChecksums, checksumMode);
 
       OCachePointer dataPointer = dataPointers[0];
       removeColdPages = entryWasInA1OutQueue(fileId, pageIndex, dataPointer, cacheEntry);
@@ -1163,7 +1166,7 @@ public class O2QCache implements OReadCache {
         removeColdPages = entryIsInA1InQueue(fileId, pageIndex);
         cacheHit.setValue(true);
       } else {
-        dataPointers = writeCache.load(fileId, pageIndex, pageCount, addNewPages, cacheHit, verifyChecksums);
+        dataPointers = writeCache.load(fileId, pageIndex, pageCount, addNewPages, cacheHit, verifyChecksums, checksumMode);
 
         if (dataPointers.length == 0)
           return null;

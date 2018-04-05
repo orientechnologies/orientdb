@@ -276,4 +276,9 @@ public class OOfflineCluster implements OCluster {
   public void acquireAtomicExclusiveLock() {
     // do nothing, anyway there is no real data behind to lock it
   }
+
+  @Override
+  public int checkClusterConsistency() throws IOException {
+    throw new OOfflineClusterException("Cannot check an offline cluster '" + name + "'");
+  }
 }

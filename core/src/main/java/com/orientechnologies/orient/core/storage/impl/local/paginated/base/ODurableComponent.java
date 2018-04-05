@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
@@ -36,7 +37,6 @@ import java.io.IOException;
 /**
  * Base class for all durable data structures, that is data structures state of which can be consistently restored after system
  * crash but results of last operations in small interval before crash may be lost.
- * <p>
  * This class contains methods which are used to support such concepts as:
  * <ol>
  * <li>"atomic operation" - set of operations which should be either applied together or not. It includes not only changes on
@@ -44,8 +44,6 @@ import java.io.IOException;
  * operation.</li>
  * <li>write ahead log - log of all changes which were done with page content after loading it from cache.</li>
  * </ol>
- * <p>
- * <p>
  * To support of "atomic operation" concept following should be done:
  * <ol>
  * <li>Call {@link #startAtomicOperation(boolean)} method.</li>
@@ -139,13 +137,13 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected OCacheEntry loadPage(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
       final boolean checkPinnedPages) throws IOException {
-    return loadPage(atomicOperation, fileId, pageIndex, checkPinnedPages, 1);
+    return loadPage(atomicOperation, fileId, pageIndex, checkPinnedPages, 1, null);
   }
 
   protected OCacheEntry loadPage(OAtomicOperation atomicOperation, long fileId, long pageIndex, boolean checkPinnedPages,
-      final int pageCount) throws IOException {
+      final int pageCount, OChecksumMode checksumMode) throws IOException {
     if (atomicOperation == null)
-      return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
+      return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true, checksumMode);
 
     return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages, pageCount);
   }

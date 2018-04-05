@@ -252,4 +252,9 @@ public class OClusterRemote implements OCluster {
   public void acquireAtomicExclusiveLock() {
     throw new UnsupportedOperationException("remote cluster doesn't support atomic locking");
   }
+
+  @Override
+  public int checkClusterConsistency() throws IOException {
+    throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
+  }
 }

@@ -53,6 +53,15 @@ public class OClusterPositionMapBucket extends ODurablePage {
     super(cacheEntry, changes);
   }
 
+  public void fillWithDeletedEntries() throws IOException {
+    setIntValue(SIZE_OFFSET, MAX_ENTRIES);
+
+    for (int i = 0; i < MAX_ENTRIES; i++) {
+      final int position = entryPosition(i);
+      setByteValue(position, REMOVED);
+    }
+  }
+
   public int add(long pageIndex, int recordPosition) throws IOException {
     int size = getIntValue(SIZE_OFFSET);
 
