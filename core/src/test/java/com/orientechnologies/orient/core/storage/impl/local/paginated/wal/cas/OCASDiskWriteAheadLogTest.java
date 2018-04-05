@@ -488,7 +488,7 @@ public class OCASDiskWriteAheadLogTest {
 
   @Test
   public void testAddNSmallRecords() throws Exception {
-    final int iterations = 30;
+    final int iterations = 1000;
 
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
@@ -573,7 +573,7 @@ public class OCASDiskWriteAheadLogTest {
 
   @Test
   public void testNextAddNSmallRecords() throws Exception {
-    final int iterations = 30;
+    final int iterations = 1000;
 
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
