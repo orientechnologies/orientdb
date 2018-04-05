@@ -135,11 +135,12 @@ public final class OCASDiskWriteAheadLog {
   private final ConcurrentSkipListMap<OLogSequenceNumber, Integer> cutTillLimits = new ConcurrentSkipListMap<OLogSequenceNumber, Integer>();
   private final ScalableRWLock                                     cuttingLock   = new ScalableRWLock();
 
-  private final ConcurrentLinkedQueue<OPair<Long, FileChannel>> closeQueue     = new ConcurrentLinkedQueue<>();
-  private final AtomicInteger                                   closeQueueSize = new AtomicInteger();
+  private final ConcurrentLinkedQueue<OPair<Long, FileChannel>> channelCloseQueue     = new ConcurrentLinkedQueue<>();
+  private final AtomicInteger                                   channelCloseQueueSize = new AtomicInteger();
 
-  private volatile CountDownLatch flushLatch  = new CountDownLatch(0);
-  private volatile Future<?>      writeFuture = null;
+  private volatile CountDownLatch     flushLatch        = new CountDownLatch(0);
+  private volatile Future<?>          writeFuture       = null;
+  private volatile OLogSequenceNumber writtenCheckpoint = null;
 
   private       long lastFSyncTs = -1;
   private final int  fsyncInterval;
@@ -244,6 +245,10 @@ public final class OCASDiskWriteAheadLog {
   }
 
   private void updateCheckpoint(OLogSequenceNumber checkPointLSN) throws IOException {
+    if (checkPointLSN == null) {
+      return;
+    }
+
     if (lastCheckpoint == null || lastCheckpoint.compareTo(checkPointLSN) < 0) {
       if (useFirstMasterRecord) {
         writeMasterRecord(0, checkPointLSN);
@@ -927,11 +932,11 @@ public final class OCASDiskWriteAheadLog {
         return false;
       }
 
-      OPair<Long, FileChannel> pair = closeQueue.poll();
+      OPair<Long, FileChannel> pair = channelCloseQueue.poll();
       while (pair != null) {
         final FileChannel channel = pair.value;
 
-        closeQueueSize.decrementAndGet();
+        channelCloseQueueSize.decrementAndGet();
         if (pair.key >= segmentId) {
           channel.force(true);
           channel.close();
@@ -940,7 +945,7 @@ public final class OCASDiskWriteAheadLog {
         } else {
           channel.close();
         }
-        pair = closeQueue.poll();
+        pair = channelCloseQueue.poll();
       }
 
       boolean removed = false;
@@ -979,15 +984,7 @@ public final class OCASDiskWriteAheadLog {
   public void appendNewSegment() {
     segmentLock.exclusiveLock();
     try {
-      if (ongoingTXs.sum() > 0) {
-        throw new IllegalStateException("There are on going txs, such call can be dangerous and unpredictable");
-      }
-
-      //noinspection NonAtomicOperationOnVolatileField
-      currentSegment++;
-
-      segmentSize.set(0);
-      logMilestoneRecord();
+      appendSegment(currentSegment + 1);
     } finally {
       segmentLock.exclusiveUnlock();
     }
@@ -1160,18 +1157,19 @@ public final class OCASDiskWriteAheadLog {
       OLogManager.instance().error(this, "Cannot shutdown background WAL write thread", e);
     }
 
-    for (OPair<Long, FileChannel> pair : closeQueue) {
+    for (OPair<Long, FileChannel> pair : channelCloseQueue) {
       final FileChannel channel = pair.value;
 
       channel.force(true);
       channel.close();
     }
+    channelCloseQueueSize.set(0);
 
     walChannel.force(true);
     walChannel.close();
     masterRecordLSNHolder.close();
     segments.clear();
-    closeQueue.clear();
+    channelCloseQueue.clear();
 
     if (recordsWriterFuture.isDone()) {
       try {
@@ -1536,7 +1534,7 @@ public final class OCASDiskWriteAheadLog {
               if (segmentId != lsn.getSegment()) {
                 if (walChannel != null) {
                   if (pointer > 0) {
-                    writeBuffer(walChannel, buffer, startPosition, pointer, lastLSN);
+                    writeBuffer(walChannel, buffer, startPosition, pointer, lastLSN, checkPointLSN);
                   }
 
                   pointer = 0;
@@ -1550,8 +1548,8 @@ public final class OCASDiskWriteAheadLog {
                     //continue
                   }
 
-                  closeQueueSize.incrementAndGet();
-                  closeQueue.offer(new OPair<>(segmentId, walChannel));
+                  channelCloseQueueSize.incrementAndGet();
+                  channelCloseQueue.offer(new OPair<>(segmentId, walChannel));
                 }
 
                 segmentId = lsn.getSegment();
@@ -1585,7 +1583,7 @@ public final class OCASDiskWriteAheadLog {
                 while (written < bytesToWrite) {
                   if (buffer == null || buffer.position() == buffer.limit()) {
                     if (pointer > 0) {
-                      writeBuffer(walChannel, buffer, startPosition, pointer, lastLSN);
+                      writeBuffer(walChannel, buffer, startPosition, pointer, lastLSN, checkPointLSN);
                     }
 
                     pointer = Native.malloc(BUFFER_SIZE);
@@ -1644,11 +1642,7 @@ public final class OCASDiskWriteAheadLog {
             }
 
             if (pointer > 0) {
-              writeBuffer(walChannel, buffer, startPosition, pointer, lastLSN);
-            }
-
-            if (checkPointLSN != null) {
-              updateCheckpoint(checkPointLSN);
+              writeBuffer(walChannel, buffer, startPosition, pointer, lastLSN, checkPointLSN);
             }
           } finally {
             flushLatch.countDown();
@@ -1660,19 +1654,19 @@ public final class OCASDiskWriteAheadLog {
           try {
             writeExecutor.submit((Callable<?>) () -> {
               try {
-                final int qSize = closeQueueSize.get();
+                final int qSize = channelCloseQueueSize.get();
                 if (qSize > 0) {
                   int counter = 0;
 
                   while (counter < qSize) {
-                    OPair<Long, FileChannel> pair = closeQueue.poll();
+                    OPair<Long, FileChannel> pair = channelCloseQueue.poll();
                     if (pair != null) {
                       @SuppressWarnings("resource")
                       final FileChannel channel = pair.value;
                       channel.force(true);
                       channel.close();
 
-                      closeQueueSize.decrementAndGet();
+                      channelCloseQueueSize.decrementAndGet();
                     } else {
                       break;
                     }
@@ -1683,6 +1677,7 @@ public final class OCASDiskWriteAheadLog {
 
                 walChannel.force(true);
                 flushedLSN = writtenLSN;
+                updateCheckpoint(writtenCheckpoint);
               } catch (IOException e) {
                 OLogManager.instance().error(this, "Error during FSync of WAL data", e);
                 throw e;
@@ -1724,7 +1719,8 @@ public final class OCASDiskWriteAheadLog {
       return false;
     }
 
-    private void writeBuffer(FileChannel channel, ByteBuffer buffer, long position, long pointer, OLogSequenceNumber lastLSN) {
+    private void writeBuffer(FileChannel channel, ByteBuffer buffer, long position, long pointer, OLogSequenceNumber lastLSN,
+        OLogSequenceNumber checkpointLSN) {
       if (position < 0) {
         return;
       }
@@ -1776,7 +1772,13 @@ public final class OCASDiskWriteAheadLog {
           }
 
           if (lastLSN != null) {
+            assert writtenLSN == null || writtenLSN.compareTo(lastLSN) < 0;
             writtenLSN = lastLSN;
+          }
+
+          if (checkpointLSN != null) {
+            assert writtenCheckpoint == null || writtenCheckpoint.compareTo(checkpointLSN) < 0;
+            writtenCheckpoint = checkpointLSN;
           }
         } catch (IOException e) {
           OLogManager.instance().error(this, "Error during WAL data write", e);
