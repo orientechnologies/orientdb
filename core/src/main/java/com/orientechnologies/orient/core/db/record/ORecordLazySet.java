@@ -42,14 +42,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * operations</li>
  * <li></li>
  * </ul>
- * 
+ * <p>
  * </p>
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
-public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement,
-    OIdentityChangeListener {
+public class ORecordLazySet extends ORecordTrackedSet
+    implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement, OIdentityChangeListener {
   protected boolean autoConvertToRecord = true;
 
   public ORecordLazySet(final ODocument iSourceRecord) {
@@ -71,10 +70,11 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
   public Iterator<OIdentifiable> iterator() {
     return new OLazyRecordIterator(new OLazyIterator<OIdentifiable>() {
       {
-          iter = ORecordLazySet.super.map.entrySet().iterator();
+        iter = ORecordLazySet.super.map.entrySet().iterator();
       }
+
       private Iterator<Entry<OIdentifiable, Object>> iter;
-      private Entry<OIdentifiable, Object>           last;
+      private Entry<OIdentifiable, Object> last;
 
       @Override
       public boolean hasNext() {
@@ -120,7 +120,8 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       map.put(null, null);
     else if (e instanceof ORecord && e.getIdentity().isNew()) {
       ORecordInternal.addIdentityChangeListener((ORecord) e, this);
-      ORecordInternal.track(sourceRecord, e);
+      if (sourceRecord != null)
+        ORecordInternal.track(sourceRecord, e);
       map.put(e, e);
     } else if (!e.getIdentity().isPersistent()) {
       // record id is not fixed yet, so we need to be able to watch for id changes, so get the record for this id to be able to do
@@ -129,14 +130,15 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       if (record == null)
         throw new IllegalArgumentException("Record with id " + e.getIdentity() + " has not be found");
       ORecordInternal.addIdentityChangeListener(record, this);
-      ORecordInternal.track(sourceRecord, e);
+      if (sourceRecord != null)
+        ORecordInternal.track(sourceRecord, e);
       map.put(e, record);
     } else
       map.put(e, ENTRY_REMOVAL);
     setDirty();
 
-    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e,
-        e));
+    fireCollectionChangedEvent(
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
 
     return true;
   }
@@ -206,8 +208,9 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
         ORecordInternal.removeIdentityChangeListener((ORecord) o, this);
 
       setDirty();
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o, null, (OIdentifiable) o));
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o,
+              null, (OIdentifiable) o));
       return true;
     }
     return false;
