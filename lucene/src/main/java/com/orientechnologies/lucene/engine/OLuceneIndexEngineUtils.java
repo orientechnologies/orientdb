@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  */
 public class OLuceneIndexEngineUtils {
 
-  public static void sendTotalHits(String indexName, OCommandContext context, int totalHits) {
+  public static void sendTotalHits(String indexName, OCommandContext context, long totalHits) {
     if (context != null) {
 
       if (context.getVariable("totalHits") == null) {

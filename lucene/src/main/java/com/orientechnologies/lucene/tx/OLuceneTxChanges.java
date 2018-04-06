@@ -49,7 +49,7 @@ public interface OLuceneTxChanges {
 
   boolean isUpdated(Document document, Object key, OIdentifiable value);
 
-  default int deletedDocs(Query query) {
+  default long deletedDocs(Query query) {
     return 0;
   }
 }

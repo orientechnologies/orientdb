@@ -17,3 +17,4 @@
 #
 
 com.orientechnologies.lucene.operator.OLuceneOperatorFactory
+com.orientechnologies.spatial.operator.OLuceneSpatialOperatorFactory

@@ -137,20 +137,6 @@ public class OLuceneIndexType {
     return queryBuilder.build();
   }
 
-  public static Sort sort(Query query, OIndexDefinition index, boolean ascSortOrder) {
-    String key = index.getFields().iterator().next();
-    Number number = ((LegacyNumericRangeQuery<Number>) query).getMin();
-    number = number != null ? number : ((LegacyNumericRangeQuery<Number>) query).getMax();
-    SortField.Type fieldType = SortField.Type.INT;
-    if (number instanceof Long) {
-      fieldType = SortField.Type.LONG;
-    } else if (number instanceof Float) {
-      fieldType = SortField.Type.FLOAT;
-    } else if (number instanceof Double) {
-      fieldType = SortField.Type.DOUBLE;
-    }
 
-    return new Sort(new SortField(key, fieldType, ascSortOrder));
-  }
 
 }
