@@ -63,6 +63,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -98,8 +99,9 @@ public final class OCASDiskWriteAheadLog {
   private final    long      freeSpaceLimit;
   private volatile long      freeSpace  = -1;
 
-  private final    MPSCFAAArrayDequeue<OWALRecord> records        = new MPSCFAAArrayDequeue<>();
-  private volatile long                            currentSegment = 0;
+  private final MPSCFAAArrayDequeue<OWALRecord> records = new MPSCFAAArrayDequeue<>();
+
+  private volatile long currentSegment;
 
   private final AtomicLong segmentSize = new AtomicLong();
   private final AtomicLong logSize     = new AtomicLong();
@@ -529,89 +531,93 @@ public final class OCASDiskWriteAheadLog {
         final String segmentName = getSegmentName(segment);
         final Path segmentPath = walLocation.resolve(segmentName);
 
-        try (FileChannel channel = FileChannel.open(segmentPath, StandardOpenOption.READ)) {
-          final long chSize = channel.size();
+        if (Files.exists(segmentPath)) {
+          try (FileChannel channel = FileChannel.open(segmentPath, StandardOpenOption.READ)) {
+            final long chSize = channel.size();
 
-          while (pageIndex * OCASWALPage.PAGE_SIZE < chSize) {
-            channel.position(pageIndex * OCASWALPage.PAGE_SIZE);
+            while (pageIndex * OCASWALPage.PAGE_SIZE < chSize) {
+              channel.position(pageIndex * OCASWALPage.PAGE_SIZE);
 
-            final long ptr = Native.malloc(OCASWALPage.PAGE_SIZE);
-            try {
-              ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, OCASWALPage.PAGE_SIZE).order(ByteOrder.nativeOrder());
-              OIOUtils.readByteBuffer(buffer, channel);
-              pagesRead++;
+              final long ptr = Native.malloc(OCASWALPage.PAGE_SIZE);
+              try {
+                ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, OCASWALPage.PAGE_SIZE).order(ByteOrder.nativeOrder());
+                OIOUtils.readByteBuffer(buffer, channel);
+                pagesRead++;
 
-              if (pageIsBroken(buffer)) {
-                OLogManager.instance()
-                    .errorNoDb(this, "WAL page %d of segment %s is broken, read of records will be stopped", null, pageIndex,
-                        segmentName);
-                return result;
-              }
+                if (pageIsBroken(buffer)) {
+                  OLogManager.instance()
+                      .errorNoDb(this, "WAL page %d of segment %s is broken, read of records will be stopped", null, pageIndex,
+                          segmentName);
+                  return result;
+                }
 
-              buffer.position((int) (position - pageIndex * OCASWALPage.PAGE_SIZE));
-              while (buffer.remaining() > 0) {
-                if (recordLen == -1) {
-                  if (recordLenBytes == null) {
-                    lsnPos = pageIndex * OCASWALPage.PAGE_SIZE + buffer.position();
+                buffer.position((int) (position - pageIndex * OCASWALPage.PAGE_SIZE));
+                while (buffer.remaining() > 0) {
+                  if (recordLen == -1) {
+                    if (recordLenBytes == null) {
+                      lsnPos = pageIndex * OCASWALPage.PAGE_SIZE + buffer.position();
 
-                    if (buffer.remaining() >= OIntegerSerializer.INT_SIZE) {
-                      recordLen = buffer.getInt();
+                      if (buffer.remaining() >= OIntegerSerializer.INT_SIZE) {
+                        recordLen = buffer.getInt();
+                      } else {
+                        recordLenBytes = new byte[OIntegerSerializer.INT_SIZE];
+                        recordLenRead = buffer.remaining();
+
+                        buffer.get(recordLenBytes, 0, recordLenRead);
+                        continue;
+                      }
                     } else {
-                      recordLenBytes = new byte[OIntegerSerializer.INT_SIZE];
-                      recordLenRead = buffer.remaining();
+                      if (recordLenRead < OIntegerSerializer.INT_SIZE) {
+                        buffer.get(recordLenBytes, recordLenRead, OIntegerSerializer.INT_SIZE - recordLenRead);
+                      }
 
-                      buffer.get(recordLenBytes, 0, recordLenRead);
-                      continue;
-                    }
-                  } else {
-                    if (recordLenRead < OIntegerSerializer.INT_SIZE) {
-                      buffer.get(recordLenBytes, recordLenRead, OIntegerSerializer.INT_SIZE - recordLenRead);
+                      recordLen = OIntegerSerializer.INSTANCE.deserializeNative(recordLenBytes, 0);
                     }
 
-                    recordLen = OIntegerSerializer.INSTANCE.deserializeNative(recordLenBytes, 0);
+                    if (recordLen == 0) {
+                      //end of page is reached
+                      recordLen = -1;
+                      recordLenBytes = null;
+                      recordLenRead = -1;
+
+                      break;
+                    }
+
+                    recordContent = new byte[recordLen];
                   }
 
-                  if (recordLen == 0) {
-                    //end of page is reached
+                  final int bytesToRead = Math.min(recordLen - bytesRead, buffer.remaining());
+                  buffer.get(recordContent, bytesRead, bytesToRead);
+                  bytesRead += bytesToRead;
+
+                  if (bytesRead == recordLen) {
+                    final OWriteableWALRecord walRecord = OWALRecordsFactory.INSTANCE.fromStream(recordContent);
+                    walRecord.setLsn(new OLogSequenceNumber(segment, lsnPos));
+
+                    recordContent = null;
+                    bytesRead = 0;
                     recordLen = -1;
+
                     recordLenBytes = null;
                     recordLenRead = -1;
 
-                    break;
-                  }
+                    result.add(walRecord);
 
-                  recordContent = new byte[recordLen];
-                }
-
-                final int bytesToRead = Math.min(recordLen - bytesRead, buffer.remaining());
-                buffer.get(recordContent, bytesRead, bytesToRead);
-                bytesRead += bytesToRead;
-
-                if (bytesRead == recordLen) {
-                  final OWriteableWALRecord walRecord = OWALRecordsFactory.INSTANCE.fromStream(recordContent);
-                  walRecord.setLsn(new OLogSequenceNumber(segment, lsnPos));
-
-                  recordContent = null;
-                  bytesRead = 0;
-                  recordLen = -1;
-
-                  recordLenBytes = null;
-                  recordLenRead = -1;
-
-                  result.add(walRecord);
-
-                  if (result.size() == limit) {
-                    return result;
+                    if (result.size() == limit) {
+                      return result;
+                    }
                   }
                 }
+              } finally {
+                Native.free(ptr);
               }
-            } finally {
-              Native.free(ptr);
-            }
 
-            pageIndex++;
-            position = pageIndex * OCASWALPage.PAGE_SIZE + OCASWALPage.RECORDS_OFFSET;
+              pageIndex++;
+              position = pageIndex * OCASWALPage.PAGE_SIZE + OCASWALPage.RECORDS_OFFSET;
+            }
           }
+        } else {
+          break;
         }
 
         pageIndex = 0;
@@ -862,6 +868,10 @@ public final class OCASDiskWriteAheadLog {
       segSize = segmentSize.addAndGet(diskSize);
       size = logSize.addAndGet(diskSize);
 
+      if (segSize == diskSize) {
+        segments.add(currentSegment);
+      }
+
       if (writeableRecord instanceof OAtomicUnitEndRecord) {
         ongoingTXs.decrement();
       }
@@ -901,6 +911,11 @@ public final class OCASDiskWriteAheadLog {
     }
 
     return recordLSN;
+  }
+
+  public OLogSequenceNumber begin() {
+    final long first = segments.first();
+    return new OLogSequenceNumber(first, OCASWALPage.RECORDS_OFFSET);
   }
 
   public OLogSequenceNumber begin(long segmentId) {
@@ -1036,7 +1051,7 @@ public final class OCASDiskWriteAheadLog {
       final String segmentName = getSegmentName(segment);
       final Path segmentPath = walLocation.resolve(segmentName);
 
-      if (segmentPath.toFile().exists()) {
+      if (Files.exists(segmentPath)) {
         result.add(segmentPath.toAbsolutePath().toString());
       }
     }
@@ -1571,7 +1586,6 @@ public final class OCASDiskWriteAheadLog {
 
                 walChannel = FileChannel
                     .open(walLocation.resolve(getSegmentName(segmentId)), StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
-                segments.add(segmentId);
 
                 assert lsn.getPosition() == OCASWALPage.RECORDS_OFFSET;
               }
