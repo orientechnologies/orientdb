@@ -180,10 +180,11 @@ public class OLuceneCrossClassIndexEngine implements OLuceneIndexEngine {
           Optional.ofNullable(metadata.<Boolean>getProperty("allowLeadingWildcard"))
               .orElse(false));
 
-      p.setLowercaseExpandedTerms(
-          Optional.ofNullable(metadata.<Boolean>getProperty("lowercaseExpandedTerms"))
-              .orElse(false));
 
+      p.setSplitOnWhitespace(
+          Optional.ofNullable(metadata.<Boolean>getProperty("splitOnWhitespace")).orElse(true));
+
+      
       Object params = keyAndMeta.key.getKeys().get(0);
 
       Query query = p.parse(params.toString());
