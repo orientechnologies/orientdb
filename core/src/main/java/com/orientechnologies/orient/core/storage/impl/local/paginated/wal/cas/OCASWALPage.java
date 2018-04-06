@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
-import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
@@ -11,13 +10,13 @@ public class OCASWALPage {
   /**
    * Offset of position which stores CRC32 value of content stored on this page.
    */
-  public static final int CRC32_OFFSET = 0;
+  public static final int XX_OFFSET = 0;
 
   /**
    * Offset of magic number value. Randomly generated constant which is used to identify whether page is broken on disk and
    * version of binary format is used to store page.
    */
-  public static final int MAGIC_NUMBER_OFFSET = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
+  public static final int MAGIC_NUMBER_OFFSET = XX_OFFSET + OLongSerializer.LONG_SIZE;
 
   public static final int PAGE_SIZE_OFFSET = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 

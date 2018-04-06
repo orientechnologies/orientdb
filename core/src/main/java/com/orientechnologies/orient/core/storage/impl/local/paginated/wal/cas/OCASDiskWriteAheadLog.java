@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.de
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.MPSCFAAArrayDequeue;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import net.jpountz.xxhash.XXHash64;
+import net.jpountz.xxhash.XXHashFactory;
 
 import java.io.EOFException;
 import java.io.File;
@@ -71,6 +73,9 @@ import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
 public final class OCASDiskWriteAheadLog {
+  private final static XXHashFactory xxHashFactory = XXHashFactory.fastestInstance();
+  private static final int           XX_SEED       = 0x9747b28c;
+
   public static final String MASTER_RECORD_EXTENSION = ".wmr";
   public static final String WAL_SEGMENT_EXTENSION   = ".wal";
 
@@ -761,16 +766,18 @@ public final class OCASDiskWriteAheadLog {
 
     final int pageSize = buffer.getShort(OCASWALPage.PAGE_SIZE_OFFSET);
     if (pageSize == 0 || pageSize > OCASWALPage.PAGE_SIZE) {
-      return false;
+      return true;
     }
 
     buffer.limit(pageSize);
-    CRC32 crc32 = new CRC32();
-    buffer.position(OCASWALPage.RECORDS_OFFSET);
 
-    crc32.update(buffer);
-    buffer.position(OCASWALPage.CRC32_OFFSET);
-    if (((int) crc32.getValue()) != buffer.getInt()) {
+    buffer.position(OCASWALPage.RECORDS_OFFSET);
+    final XXHash64 hash64 = xxHashFactory.hash64();
+
+    final long hash = hash64.hash(buffer, XX_SEED);
+
+    buffer.position(OCASWALPage.XX_OFFSET);
+    if (hash != buffer.getLong()) {
       return true;
     }
 
@@ -1740,12 +1747,12 @@ public final class OCASDiskWriteAheadLog {
         buffer.position(start + OCASWALPage.PAGE_SIZE_OFFSET);
         buffer.putShort((short) pageSize);
 
-        CRC32 crc32 = new CRC32();
         buffer.position(start + OCASWALPage.RECORDS_OFFSET);
-        crc32.update(buffer);
+        final XXHash64 xxHash64 = xxHashFactory.hash64();
+        final long hash = xxHash64.hash(buffer, XX_SEED);
 
-        buffer.position(start + OCASWALPage.CRC32_OFFSET);
-        buffer.putInt((int) crc32.getValue());
+        buffer.position(start + OCASWALPage.XX_OFFSET);
+        buffer.putLong(hash);
       }
 
       buffer.position(0);

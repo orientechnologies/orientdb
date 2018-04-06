@@ -666,7 +666,8 @@ public class OCASDiskWriteAheadLogTest {
       try {
         final int numberOfSegmentsToAdd = random.nextInt(4) + 3;
 
-        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, Integer.MAX_VALUE, 1000,
+        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100,
+            Integer.MAX_VALUE, 1000,
             true, Locale.US, -1, -1, 1000);
 
         List<TestRecord> records = new ArrayList<>();
