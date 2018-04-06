@@ -488,7 +488,7 @@ public class OCASDiskWriteAheadLogTest {
 
   @Test
   public void testAddNSmallRecords() throws Exception {
-    final int iterations = 1000;
+    final int iterations = 200;
 
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
@@ -573,7 +573,7 @@ public class OCASDiskWriteAheadLogTest {
 
   @Test
   public void testNextAddNSmallRecords() throws Exception {
-    final int iterations = 1000;
+    final int iterations = 200;
 
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
@@ -786,7 +786,7 @@ public class OCASDiskWriteAheadLogTest {
 
   @Test
   public void testAddNBigRecords() throws Exception {
-    final int iterations = 30;
+    final int iterations = 200;
 
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
@@ -861,7 +861,7 @@ public class OCASDiskWriteAheadLogTest {
 
   @Test
   public void testNextAddNBigRecords() throws Exception {
-    final int iterations = 30;
+    final int iterations = 200;
 
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
@@ -944,7 +944,7 @@ public class OCASDiskWriteAheadLogTest {
 
   @Test
   public void testAddRecordsMix() throws Exception {
-    final int iterations = 30;
+    final int iterations = 200;
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
 
@@ -1017,7 +1017,7 @@ public class OCASDiskWriteAheadLogTest {
 
   @Test
   public void testNextAddRecordsMix() throws Exception {
-    final int iterations = 10;
+    final int iterations = 200;
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
 
