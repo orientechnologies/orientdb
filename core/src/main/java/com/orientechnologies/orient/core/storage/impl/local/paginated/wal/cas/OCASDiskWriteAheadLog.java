@@ -991,7 +991,15 @@ public final class OCASDiskWriteAheadLog {
   public void appendNewSegment() {
     segmentLock.exclusiveLock();
     try {
-      appendSegment(currentSegment + 1);
+      if (ongoingTXs.sum() > 0) {
+        throw new IllegalStateException("There are on going txs, such call can be dangerous and unpredictable");
+      }
+
+      //noinspection NonAtomicOperationOnVolatileField
+      currentSegment++;
+      segmentSize.set(0);
+
+      logMilestoneRecord();
     } finally {
       segmentLock.exclusiveUnlock();
     }
