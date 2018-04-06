@@ -450,9 +450,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     case EMBEDDEDLIST:
       value = readEmbeddedList(bytes, ownerDocument);
       break;
-    case LINKSET:
-      value = readLinkCollection(bytes, new ORecordLazySet(ownerDocument));
-      break;
+    case LINKSET: {
+      ORecordLazySet set = new ORecordLazySet(null);
+      value = readLinkCollection(bytes, set);
+      set.setOwner(ownerDocument);
+    }
+    break;
     case LINKLIST:
       value = readLinkCollection(bytes, new ORecordLazyList(ownerDocument));
       break;

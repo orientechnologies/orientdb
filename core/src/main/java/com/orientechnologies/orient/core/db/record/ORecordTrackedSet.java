@@ -29,16 +29,15 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 /**
  * Implementation of Set bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand when
  * the set is changed.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
-public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> implements Set<OIdentifiable>,
-    OTrackedMultiValue<OIdentifiable, OIdentifiable>, ORecordElement {
-  protected final ORecord                                               sourceRecord;
-  protected Map<OIdentifiable, Object>                                  map             = new HashMap<OIdentifiable, Object>();
-  private STATUS                                                        status          = STATUS.NOT_LOADED;
-  protected final static Object                                         ENTRY_REMOVAL   = new Object();
+public class ORecordTrackedSet extends AbstractCollection<OIdentifiable>
+    implements Set<OIdentifiable>, OTrackedMultiValue<OIdentifiable, OIdentifiable>, ORecordElement {
+  protected ORecord sourceRecord;
+  protected              Map<OIdentifiable, Object> map           = new HashMap<OIdentifiable, Object>();
+  private                STATUS                     status        = STATUS.NOT_LOADED;
+  protected final static Object                     ENTRY_REMOVAL = new Object();
   private List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners;
 
   public ORecordTrackedSet(final ORecord iSourceRecord) {
@@ -52,6 +51,10 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
     return sourceRecord;
   }
 
+  public void setOwner(ORecord owner) {
+    this.sourceRecord = owner;
+  }
+
   public Iterator<OIdentifiable> iterator() {
     return new ORecordTrackedIterator(sourceRecord, map.keySet().iterator());
   }
@@ -62,14 +65,14 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
 
     map.put(e, ENTRY_REMOVAL);
     setDirty();
-    
+
     ORecordInternal.track(sourceRecord, e);
-    
+
     if (e instanceof ODocument)
       ODocumentInternal.addOwner((ODocument) e, this);
 
-    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e,
-        e));
+    fireCollectionChangedEvent(
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
     return true;
   }
 
@@ -85,8 +88,9 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
         ODocumentInternal.removeOwner((ODocument) o, this);
 
       setDirty();
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o, null, (OIdentifiable) o));
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o,
+              null, (OIdentifiable) o));
       return true;
     }
     return false;
@@ -139,8 +143,8 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
 
   @SuppressWarnings("unchecked")
   public ORecordTrackedSet setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !(sourceRecord.isDirty() && ORecordInternal
+        .isContentChanged(sourceRecord)))
       sourceRecord.setDirty();
     return this;
   }
@@ -160,7 +164,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
   }
 
   public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
-    if(changeListeners == null)
+    if (changeListeners == null)
       changeListeners = new LinkedList<OMultiValueChangeListener<OIdentifiable, OIdentifiable>>();
     changeListeners.add(changeListener);
   }
@@ -193,7 +197,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
   }
 
   public void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
-    if (getOwner().getInternalStatus() == STATUS.UNMARSHALLING)
+    if (getOwner() != null && getOwner().getInternalStatus() == STATUS.UNMARSHALLING)
       return;
 
     setDirty();
@@ -209,7 +213,6 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
   public Class<?> getGenericClass() {
     return OIdentifiable.class;
   }
-
 
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {

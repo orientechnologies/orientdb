@@ -346,8 +346,11 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     case EMBEDDEDLIST:
       value = readEmbeddedCollection(bytes, new OTrackedList<Object>(document), document);
       break;
-    case LINKSET:
-      value = readLinkCollection(bytes, new ORecordLazySet(document));
+    case LINKSET: {
+      ORecordLazySet set = new ORecordLazySet(null);
+      value = readLinkCollection(bytes, set);
+      set.setOwner(document);
+    }
       break;
     case LINKLIST:
       value = readLinkCollection(bytes, new ORecordLazyList(document));
