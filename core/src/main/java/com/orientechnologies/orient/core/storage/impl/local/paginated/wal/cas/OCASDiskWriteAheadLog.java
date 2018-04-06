@@ -1534,7 +1534,7 @@ public final class OCASDiskWriteAheadLog {
               if (segmentId != lsn.getSegment()) {
                 if (walChannel != null) {
                   if (pointer > 0) {
-                    writeBuffer(walChannel, buffer, startPosition, pointer, lastLSN, checkPointLSN);
+                    writeBuffer(walChannel, buffer, pointer, lastLSN, checkPointLSN);
                   }
 
                   pointer = 0;
@@ -1583,7 +1583,7 @@ public final class OCASDiskWriteAheadLog {
                 while (written < bytesToWrite) {
                   if (buffer == null || buffer.position() == buffer.limit()) {
                     if (pointer > 0) {
-                      writeBuffer(walChannel, buffer, startPosition, pointer, lastLSN, checkPointLSN);
+                      writeBuffer(walChannel, buffer, pointer, lastLSN, checkPointLSN);
                     }
 
                     pointer = Native.malloc(BUFFER_SIZE);
@@ -1642,7 +1642,7 @@ public final class OCASDiskWriteAheadLog {
             }
 
             if (pointer > 0) {
-              writeBuffer(walChannel, buffer, startPosition, pointer, lastLSN, checkPointLSN);
+              writeBuffer(walChannel, buffer, pointer, lastLSN, checkPointLSN);
             }
           } finally {
             flushLatch.countDown();
@@ -1719,18 +1719,14 @@ public final class OCASDiskWriteAheadLog {
       return false;
     }
 
-    private void writeBuffer(FileChannel channel, ByteBuffer buffer, long position, long pointer, OLogSequenceNumber lastLSN,
+    private void writeBuffer(FileChannel channel, ByteBuffer buffer, long pointer, OLogSequenceNumber lastLSN,
         OLogSequenceNumber checkpointLSN) {
-      if (position < 0) {
-        return;
-      }
-
       final int maxPage = (buffer.position() + OCASWALPage.PAGE_SIZE - 1) / OCASWALPage.PAGE_SIZE;
-      final int lastPageSize = (int) (position - (maxPage - 1) * OCASWALPage.PAGE_SIZE);
+      final int lastPageSize = buffer.position() - (maxPage - 1) * OCASWALPage.PAGE_SIZE;
 
       for (int start = 0, page = 0; start < maxPage * OCASWALPage.PAGE_SIZE; start += OCASWALPage.PAGE_SIZE, page++) {
         final int pageSize;
-        if (page < maxPage) {
+        if (page < maxPage - 1) {
           pageSize = OCASWALPage.PAGE_SIZE;
         } else {
           pageSize = lastPageSize;
