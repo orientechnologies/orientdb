@@ -28,7 +28,6 @@ public class OLuceneMultiFieldQueryParser extends MultiFieldQueryParser {
   public OLuceneMultiFieldQueryParser(Map<String, OType> types, String[] fields, Analyzer analyzer, Map<String, Float> boosts) {
     super(fields, analyzer, boosts);
     this.types = types;
-
   }
 
   @Override
