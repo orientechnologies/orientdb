@@ -424,18 +424,19 @@ public final class OCASDiskWriteAheadLog {
   }
 
   public List<OWriteableWALRecord> read(final OLogSequenceNumber lsn, int limit) throws IOException {
-    final OLogSequenceNumber endLSN = end.get();
-
-    if (endLSN == null) {
-      return Collections.emptyList();
-    }
-
-    if (lsn.compareTo(endLSN) > 0) {
-      return Collections.emptyList();
-    }
-
     addCutTillLimit(lsn);
     try {
+      final OLogSequenceNumber begin = begin();
+      final OLogSequenceNumber endLSN = end.get();
+
+      if (begin.compareTo(lsn) > 0) {
+        return Collections.emptyList();
+      }
+
+      if (lsn.compareTo(endLSN) > 0) {
+        return Collections.emptyList();
+      }
+
       Cursor<OWALRecord> recordCursor = records.peekFirst();
       OWALRecord record = recordCursor.getItem();
       OLogSequenceNumber logRecordLSN = record.getLsn();
@@ -469,30 +470,28 @@ public final class OCASDiskWriteAheadLog {
         }
       }
 
-      //taken from the queue but not written to the disk yet
-      ensureThatRecordWrittenOnDisk(lsn);
-
-      return readFromDisk(lsn, limit);
-    } finally {
-      removeCutTillLimit(lsn);
-    }
-  }
-
-  private void ensureThatRecordWrittenOnDisk(OLogSequenceNumber lsn) {
-    final OLogSequenceNumber flushedLSN = this.flushedLSN;
-
-    while (flushedLSN == null || flushedLSN.compareTo(lsn) < 0) {
-      final OLogSequenceNumber writtenLSN = this.writtenLSN;
-      if (writtenLSN == null || writtenLSN.compareTo(lsn) < 0) {
+      //ensure that next record is written on disk
+      OLogSequenceNumber writtenLSN = this.writtenLSN;
+      while (writtenLSN == null || writtenLSN.compareTo(lsn) < 0) {
         try {
           flushLatch.await();
         } catch (InterruptedException e) {
           //continue
         }
-        doFlush(false);
-      } else {
-        return;
+
+        writtenLSN = this.writtenLSN;
+        assert writtenLSN != null;
+
+        if (writtenLSN.compareTo(lsn) < 0) {
+          doFlush(false);
+        }
+
+        writtenLSN = this.writtenLSN;
       }
+
+      return readFromDisk(lsn, limit);
+    } finally {
+      removeCutTillLimit(lsn);
     }
   }
 
@@ -631,24 +630,19 @@ public final class OCASDiskWriteAheadLog {
   }
 
   public List<OWriteableWALRecord> next(final OLogSequenceNumber lsn, int limit) throws IOException {
-    final OLogSequenceNumber endLSN = end.get();
-
-    if (endLSN == null) {
-      return Collections.emptyList();
-    }
-
-    final int compareEnd = lsn.compareTo(endLSN);
-
-    if (compareEnd == 0) {
-      return Collections.emptyList();
-    }
-
-    if (compareEnd > 0) {
-      throw new IllegalArgumentException("Invalid LSN was passed " + lsn);
-    }
-
     addCutTillLimit(lsn);
     try {
+      final OLogSequenceNumber begin = begin();
+
+      if (begin.compareTo(lsn) > 0) {
+        return Collections.emptyList();
+      }
+
+      final OLogSequenceNumber end = this.end.get();
+      if (lsn.compareTo(end) >= 0) {
+        return Collections.emptyList();
+      }
+
       Cursor<OWALRecord> recordCursor = records.peekFirst();
 
       OWALRecord logRecord = recordCursor.getItem();
@@ -706,26 +700,32 @@ public final class OCASDiskWriteAheadLog {
         }
       }
 
-      ensureThatRecordWrittenOnDisk(lsn);
+      //ensure that next record is written on disk
+      OLogSequenceNumber writtenLSN = this.writtenLSN;
+      while (writtenLSN == null || writtenLSN.compareTo(lsn) <= 0) {
+        try {
+          flushLatch.await();
+        } catch (InterruptedException e) {
+          //continue
+        }
 
-      List<OWriteableWALRecord> result;
-      if (limit < 0) {
-        result = readFromDisk(lsn, 0);
-      } else {
-        result = readFromDisk(lsn, limit + 1);
+        writtenLSN = this.writtenLSN;
+        assert writtenLSN != null;
+
+        if (writtenLSN.compareTo(lsn) <= 0) {
+          doFlush(false);
+        }
+        writtenLSN = this.writtenLSN;
       }
 
-      if (result.size() == 1) {
-        //current record already on disk, but next record in the queue
-        doFlush(false);
-      }
-
+      final List<OWriteableWALRecord> result;
       if (limit <= 0) {
         result = readFromDisk(lsn, 0);
       } else {
         result = readFromDisk(lsn, limit + 1);
       }
 
+      assert result.size() > 1;
       return result.subList(1, result.size());
     } finally {
       removeCutTillLimit(lsn);
