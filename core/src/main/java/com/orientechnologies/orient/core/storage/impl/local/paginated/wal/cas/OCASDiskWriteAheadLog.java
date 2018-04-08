@@ -216,6 +216,8 @@ public final class OCASDiskWriteAheadLog {
 
     records.offer(startRecord);
 
+    this.writtenLSN = new OLogSequenceNumber(currentSegment, 0);
+
     log(new OEmptyWALRecord());
 
     this.recordsWriterFuture = commitExecutor
