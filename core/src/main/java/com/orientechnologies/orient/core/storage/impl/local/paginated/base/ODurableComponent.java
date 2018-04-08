@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
-import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
@@ -137,13 +136,13 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected OCacheEntry loadPage(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
       final boolean checkPinnedPages) throws IOException {
-    return loadPage(atomicOperation, fileId, pageIndex, checkPinnedPages, 1, null);
+    return loadPage(atomicOperation, fileId, pageIndex, checkPinnedPages, 1);
   }
 
   protected OCacheEntry loadPage(OAtomicOperation atomicOperation, long fileId, long pageIndex, boolean checkPinnedPages,
-      final int pageCount, OChecksumMode checksumMode) throws IOException {
+      final int pageCount) throws IOException {
     if (atomicOperation == null)
-      return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true, checksumMode);
+      return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
 
     return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages, pageCount);
   }

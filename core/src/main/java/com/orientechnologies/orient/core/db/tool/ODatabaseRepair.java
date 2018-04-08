@@ -53,7 +53,7 @@ public class ODatabaseRepair extends ODatabaseTool {
 
       removeBrokenLinks = Boolean.parseBoolean(items.get(0));
 
-    } else if (option.equalsIgnoreCase("-checkClusters")) {
+    } else if (option.equalsIgnoreCase("--fix-cluster")) {
       checkClusters = true;
     }
   }
@@ -61,12 +61,14 @@ public class ODatabaseRepair extends ODatabaseTool {
   public void run() {
     long errors = 0;
 
-    if (removeBrokenLinks) {
-      errors += removeBrokenLinks();
-    }
     if (checkClusters) {
       errors += checkClusters();
     }
+
+    if (removeBrokenLinks) {
+      errors += removeBrokenLinks();
+    }
+
 
     message("\nRepair database complete (" + errors + " errors)");
   }

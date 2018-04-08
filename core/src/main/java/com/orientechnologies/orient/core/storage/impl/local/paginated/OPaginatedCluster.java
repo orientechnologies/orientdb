@@ -246,15 +246,15 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         final long filledUpTo = writeCache.getFilledUpTo(fileId);
 
-        for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
+        for (long pageIndex = 1; pageIndex < filledUpTo; pageIndex++) {
           try {
-            final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, true, 1, OChecksumMode.StoreAndThrow);
+            final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, true, 1);
             releasePage(atomicOperation, cacheEntry);
           } catch (OPageIsBrokenException e) {
             OLogManager.instance()
                 .error(this, "Page " + pageIndex + " of " + getFullName() + " is broken, will clean it up\n", null);
 
-            final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, true, 1, OChecksumMode.Off);
+            final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, true, 1);
             cacheEntry.acquireExclusiveLock();
             try {
               final OClusterPage clusterPage = new OClusterPage(cacheEntry, false, getChanges(atomicOperation, cacheEntry));
@@ -766,7 +766,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       return null;
 
     int recordVersion;
-    final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, pageCount, null);
+    final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, pageCount);
     cacheEntry.acquireSharedLock();
     try {
       final OClusterPage localPage = new OClusterPage(cacheEntry, false, getChanges(atomicOperation, cacheEntry));
@@ -1898,7 +1898,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     long nextPagePointer;
     boolean firstEntry = true;
     do {
-      OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, pageCount, null);
+      OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, pageCount);
       cacheEntry.acquireSharedLock();
       try {
         final OClusterPage localPage = new OClusterPage(cacheEntry, false, getChanges(atomicOperation, cacheEntry));

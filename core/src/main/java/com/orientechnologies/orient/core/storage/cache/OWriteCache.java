@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
@@ -91,7 +90,7 @@ public interface OWriteCache {
   Future store(long fileId, long pageIndex, OCachePointer dataPointer);
 
   OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
-      boolean verifyChecksums, OChecksumMode checksumMode) throws IOException;
+      boolean verifyChecksums) throws IOException;
 
   void flush(long fileId);
 
@@ -180,4 +179,6 @@ public interface OWriteCache {
   long externalFileId(int fileId);
 
   OPerformanceStatisticManager getPerformanceStatisticManager();
+
+  boolean verifyPage(long fileId, long pageIndex) throws IOException;
 }

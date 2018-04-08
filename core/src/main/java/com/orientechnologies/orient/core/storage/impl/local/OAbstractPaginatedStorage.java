@@ -5009,7 +5009,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final long pageIndex = updatePageRecord.getPageIndex();
         fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
 
-        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, false, null);
+        OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, false);
         if (cacheEntry == null) {
           do {
             if (cacheEntry != null)

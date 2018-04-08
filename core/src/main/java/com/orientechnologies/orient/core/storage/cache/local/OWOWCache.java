@@ -731,12 +731,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   public OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
-      boolean verifyChecksums, OChecksumMode checksumMode) throws IOException {
-
-    if (checksumMode == null) {
-      checksumMode = this.checksumMode;
-    }
-
+      boolean verifyChecksums) throws IOException {
     final int intId = extractFileId(fileId);
     if (pageCount < 1)
       throw new IllegalArgumentException("Amount of pages to load should be not less than 1 but provided value is " + pageCount);
@@ -775,7 +770,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         OCachePointer pagePointers[];
         try {
           //load requested page and preload requested amount of pages
-          pagePointers = loadFileContent(intId, startPageIndex, pageCount, verifyChecksums, checksumMode);
+          pagePointers = loadFileContent(intId, startPageIndex, pageCount, verifyChecksums);
 
           if (pagePointers != null) {
             assert pagePointers.length > 0;
@@ -883,7 +878,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
         //this is case when we allocated space but requested page was outside of allocated space
         //in such case we read it again
-        return load(fileId, startPageIndex, pageCount, true, cacheHit, verifyChecksums, checksumMode);
+        return load(fileId, startPageIndex, pageCount, true, cacheHit, verifyChecksums);
 
       } else {
         startPageGroup.page.incrementReadersReferrer();
@@ -898,6 +893,29 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     } finally {
       filesLock.releaseReadLock();
     }
+  }
+
+  @Override
+  public boolean verifyPage(long fileId, long pageIndex) throws IOException {
+    final int intId = extractFileId(fileId);
+    filesLock.acquireReadLock();
+    try {
+      //first check that requested page is already cached so we do not need to load it from file
+      final PageKey pageKey = new PageKey(intId, pageIndex);
+      final Lock pageLock = lockManager.acquireSharedLock(pageKey);
+      try {
+        checkFileContent(intId, pageIndex);
+      } catch (OPageIsBrokenException e) {
+        return false;
+      } finally {
+        pageLock.unlock();
+      }
+
+    } finally {
+      filesLock.releaseReadLock();
+    }
+
+    return true;
   }
 
   @Override
@@ -1503,8 +1521,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  private OCachePointer[] loadFileContent(final int intId, final long startPageIndex, final int pageCount, boolean verifyChecksums,
-      OChecksumMode checksumMode) throws IOException {
+  private OCachePointer[] loadFileContent(final int intId, final long startPageIndex, final int pageCount, boolean verifyChecksums)
+      throws IOException {
     final long fileId = composeFileId(id, intId);
 
     try {
@@ -1577,6 +1595,43 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           }
         } else
           return null;
+      } finally {
+        files.release(entry);
+      }
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OStorageException("Data load was interrupted"), e);
+    }
+  }
+
+  private boolean checkFileContent(final int intId, final long pageIndex) throws IOException {
+    final long fileId = composeFileId(id, intId);
+
+    try {
+      final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
+      try {
+        final OFileClassic fileClassic = entry.get();
+        if (fileClassic == null)
+          throw new IllegalArgumentException("File with id " + intId + " not found in write Cache");
+
+        final long pageStartPosition = pageIndex * pageSize;
+        final long pageEndPosition = pageStartPosition + pageSize;
+
+        if (fileClassic.getFileSize() >= pageEndPosition) {
+          final ByteBuffer buffer = bufferPool.acquireDirect(false);
+          try {
+            assert buffer.position() == 0;
+
+            fileClassic.read(pageStartPosition, buffer, false);
+            verifyChecksum(buffer, fileId, pageIndex, null, OChecksumMode.StoreAndThrow);
+          } catch (OPageIsBrokenException e) {
+            return false;
+          } finally {
+            bufferPool.release(buffer);
+          }
+
+          return true;
+        } else
+          return true;
       } finally {
         files.release(entry);
       }

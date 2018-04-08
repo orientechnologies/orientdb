@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.storage.cache;
 
-import com.orientechnologies.orient.core.storage.OChecksumMode;
-
 import java.io.IOException;
 
 /**
@@ -67,7 +65,7 @@ public interface OReadCache {
   long addFile(String fileName, long fileId, OWriteCache writeCache) throws IOException;
 
   OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
-      boolean verifyChecksums, OChecksumMode checksumMode) throws IOException;
+      boolean verifyChecksums) throws IOException;
 
   void pinPage(OCacheEntry cacheEntry) throws IOException;
 

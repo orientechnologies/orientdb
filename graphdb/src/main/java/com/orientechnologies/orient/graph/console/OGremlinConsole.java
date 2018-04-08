@@ -279,7 +279,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       new OGraphRepair().repair(OrientGraphFactory.getNoTxGraphImplFactory().getGraph(currentDatabase), this, options);
     }
 
-    final boolean fix_links = iOptions == null || iOptions.contains("--fix-links");
+    final boolean fix_links = iOptions == null || iOptions.contains("--fix-links") || iOptions.contains("--fix-cluster");
     if (fix_links) {
       // REPAIR DATABASE AT LOW LEVEL
       super.repairDatabase(iOptions);

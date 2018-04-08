@@ -2155,7 +2155,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       public void onMessage(String iText) {
         message(iText);
       }
-    }).setVerbose(verbose).run();
+    }).setVerbose(verbose).setOptions(iOptions).run();
   }
 
   @ConsoleCommand(description = "Compare two databases")
