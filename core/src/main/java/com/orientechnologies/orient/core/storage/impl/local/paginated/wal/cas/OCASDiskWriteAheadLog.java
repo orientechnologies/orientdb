@@ -1546,7 +1546,13 @@ public final class OCASDiskWriteAheadLog {
             long pointer = Native.malloc(BUFFER_SIZE);
             ByteBuffer buffer = new Pointer(pointer).getByteBuffer(0, BUFFER_SIZE).order(ByteOrder.nativeOrder());
 
-            final OMilestoneWALRecord milestoneWALRecord = logMilestoneRecord();
+            final OMilestoneWALRecord milestoneWALRecord;
+            segmentLock.sharedLock();
+            try {
+              milestoneWALRecord = logMilestoneRecord();
+            } finally {
+              segmentLock.sharedUnlock();
+            }
 
             OLogSequenceNumber lastLSN = null;
             OLogSequenceNumber checkPointLSN = null;
