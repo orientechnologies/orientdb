@@ -2015,7 +2015,7 @@ public class OCASDiskWriteAheadLogTest {
         record = recordsIterator.next();
 
         Assert.assertEquals(record.getLsn(), readRecord.getLsn());
-        Assert.assertArrayEquals("Record LSN " + record.getLsn(), record.data, readRecord.data);
+        Assert.assertArrayEquals("Record LSN " + record.getLsn() + ", record data length " + record.data.length, record.data, readRecord.data);
         lastLSN = record.getLsn();
       }
     }
