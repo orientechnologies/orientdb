@@ -1577,6 +1577,7 @@ public final class OCASDiskWriteAheadLog {
 
                   pointer = 0;
                   buffer = null;
+                  page = -1;
 
                   try {
                     if (writeFuture != null) {
