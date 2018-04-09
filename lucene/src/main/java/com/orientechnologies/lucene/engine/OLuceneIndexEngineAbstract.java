@@ -209,10 +209,11 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
   private void open() throws IOException {
 
-    if (!closed.get())
-      return;
 
     openCloseLock.lock();
+
+    if (!closed.get())
+      return;
 
     try {
       OLuceneDirectoryFactory directoryFactory = new OLuceneDirectoryFactory();
