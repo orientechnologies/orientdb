@@ -1433,7 +1433,8 @@ public class OCASDiskWriteAheadLogTest {
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(), new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, OCASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(loadedWAL.end(),
+          new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, OCASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -1513,7 +1514,8 @@ public class OCASDiskWriteAheadLogTest {
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(), new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, OCASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(loadedWAL.end(),
+          new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, OCASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -1594,7 +1596,8 @@ public class OCASDiskWriteAheadLogTest {
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(), new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, OCASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(loadedWAL.end(),
+          new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, OCASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -1675,7 +1678,8 @@ public class OCASDiskWriteAheadLogTest {
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(), new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, OCASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(loadedWAL.end(),
+          new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, OCASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -1756,7 +1760,8 @@ public class OCASDiskWriteAheadLogTest {
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(), new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, OCASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(loadedWAL.end(),
+          new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, OCASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -1837,7 +1842,8 @@ public class OCASDiskWriteAheadLogTest {
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(), new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, OCASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(loadedWAL.end(),
+          new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, OCASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -1918,7 +1924,8 @@ public class OCASDiskWriteAheadLogTest {
       assertMTWALInsertion(loadedWAL, addedRecords);
 
       Assert.assertEquals(loadedWAL.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
-      Assert.assertEquals(loadedWAL.end(), new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, OCASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(loadedWAL.end(),
+          new OLogSequenceNumber(addedRecords.lastKey().getSegment() + 1, OCASWALPage.RECORDS_OFFSET));
 
       loadedWAL.close();
 
@@ -2165,6 +2172,8 @@ public class OCASDiskWriteAheadLogTest {
       OLogSequenceNumber lsn = records.get(0).getLsn();
 
       List<OWriteableWALRecord> readRecords = wal.read(lsn, 10);
+      OLogSequenceNumber callLSN = lsn;
+
       Iterator<OWriteableWALRecord> readIterator = readRecords.iterator();
 
       OLogSequenceNumber lastLSN = null;
@@ -2183,7 +2192,15 @@ public class OCASDiskWriteAheadLogTest {
             if (compare < 0) {
               continue;
             } else if (compare == 0) {
-              Assert.assertArrayEquals(record.data, ((TestRecord) walRecord).data);
+              try {
+                Assert.assertArrayEquals(record.data, ((TestRecord) walRecord).data);
+              } catch (AssertionError e) {
+                System.out.println("Call LSN " + callLSN + ", record lsn " + recordLSN + ", record length " + record.data.length + ", wal record length"
+                    + ((TestRecord) walRecord).data.length + ", record distance " + record.getDistance() + ", wal record distance "
+                    + walRecord.getDistance() + ", record size " + record.getDiskSize() + ", WAL record size " + walRecord
+                    .getDiskSize());
+                throw e;
+              }
               break;
             } else {
               Assert.fail();
@@ -2192,6 +2209,8 @@ public class OCASDiskWriteAheadLogTest {
           } else {
             Assert.assertNotNull(lastLSN);
             readRecords = wal.next(lastLSN, 10);
+            callLSN = lastLSN;
+
             readIterator = readRecords.iterator();
 
             Assert.assertTrue(readIterator.hasNext());
