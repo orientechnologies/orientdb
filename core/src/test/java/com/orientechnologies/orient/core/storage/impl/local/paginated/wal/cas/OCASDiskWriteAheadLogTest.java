@@ -2192,28 +2192,24 @@ public class OCASDiskWriteAheadLogTest {
             if (compare < 0) {
               continue;
             } else if (compare == 0) {
-              try {
-                Assert.assertArrayEquals(record.data, ((TestRecord) walRecord).data);
-              } catch (AssertionError e) {
-                System.out.println("Call LSN " + callLSN + ", record lsn " + recordLSN + ", record length " + record.data.length + ", wal record length"
-                    + ((TestRecord) walRecord).data.length + ", record distance " + record.getDistance() + ", wal record distance "
-                    + walRecord.getDistance() + ", record size " + record.getDiskSize() + ", WAL record size " + walRecord
-                    .getDiskSize());
-                throw e;
-              }
+                Assert.assertArrayEquals(
+                    "Call LSN " + callLSN + ", record LSN " + recordLSN + ", record length " + record.data.length
+                        + ", wal record length" + ((TestRecord) walRecord).data.length + ", record distance " + record.getDistance()
+                        + ", wal record distance " + walRecord.getDistance() + ", record size " + record.getDiskSize()
+                        + ", WAL record size " + walRecord.getDiskSize(), record.data, ((TestRecord) walRecord).data);
               break;
             } else {
-              Assert.fail();
+              Assert.fail("Call LSN " + callLSN + ", record LSN " + recordLSN + ", WAL record LSN " + walRecordLSN);
             }
 
           } else {
-            Assert.assertNotNull(lastLSN);
+            Assert.assertNotNull("Call LSN " + callLSN, lastLSN);
             readRecords = wal.next(lastLSN, 10);
             callLSN = lastLSN;
 
             readIterator = readRecords.iterator();
 
-            Assert.assertTrue(readIterator.hasNext());
+            Assert.assertTrue("Call LSN " + callLSN, readIterator.hasNext());
           }
         }
 
@@ -2268,6 +2264,7 @@ public class OCASDiskWriteAheadLogTest {
       OLogSequenceNumber lsn = records.get(0).getLsn();
 
       List<OWriteableWALRecord> readRecords = wal.read(lsn, 10);
+      OLogSequenceNumber callLSN = lsn;
       Iterator<OWriteableWALRecord> readIterator = readRecords.iterator();
 
       OLogSequenceNumber lastLSN = null;
@@ -2286,18 +2283,24 @@ public class OCASDiskWriteAheadLogTest {
             if (compare < 0) {
               continue;
             } else if (compare == 0) {
-              Assert.assertArrayEquals(record.data, ((TestRecord) walRecord).data);
+              Assert.assertArrayEquals(
+                  "Call LSN " + callLSN + ", record LSN " + recordLSN + ", record length " + record.data.length
+                      + ", wal record length" + ((TestRecord) walRecord).data.length + ", record distance " + record.getDistance()
+                      + ", wal record distance " + walRecord.getDistance() + ", record size " + record.getDiskSize()
+                      + ", WAL record size " + walRecord.getDiskSize(), record.data, ((TestRecord) walRecord).data);
+
               break;
             } else {
-              Assert.fail();
+              Assert.fail("Call LSN " + callLSN + ", record LSN " + recordLSN + ", WAL record LSN " + walRecordLSN);
             }
 
           } else {
-            Assert.assertNotNull(lastLSN);
+            Assert.assertNotNull("Call LSN " + callLSN, lastLSN);
             readRecords = wal.next(lastLSN, 10);
+            callLSN = lastLSN;
             readIterator = readRecords.iterator();
 
-            Assert.assertTrue(readIterator.hasNext());
+            Assert.assertTrue("Call LSN " + callLSN, readIterator.hasNext());
           }
         }
 
