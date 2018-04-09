@@ -19,7 +19,7 @@
         <module>agent</module>
         <module>lucene-cross-class</module>
 
-        <module>distribution-spatial</module>
+        <!--<module>distribution-spatial</module>-->
         <module>distribution-community-importers</module>
         <module>distribution-community-tp2-importers</module>
         <module>distribution</module>
