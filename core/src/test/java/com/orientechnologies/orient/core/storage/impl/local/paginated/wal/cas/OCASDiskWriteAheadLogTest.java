@@ -2192,11 +2192,9 @@ public class OCASDiskWriteAheadLogTest {
             if (compare < 0) {
               continue;
             } else if (compare == 0) {
-                Assert.assertArrayEquals(
-                    "Call LSN " + callLSN + ", record LSN " + recordLSN + ", record length " + record.data.length
-                        + ", wal record length" + ((TestRecord) walRecord).data.length + ", record distance " + record.getDistance()
-                        + ", wal record distance " + walRecord.getDistance() + ", record size " + record.getDiskSize()
-                        + ", WAL record size " + walRecord.getDiskSize(), record.data, ((TestRecord) walRecord).data);
+              Assert.assertArrayEquals("Call LSN " + callLSN + ", record LSN " + recordLSN + ", record length " + record.data.length
+                  + ", wal record length" + ((TestRecord) walRecord).data.length + ", record distance " + record.getDistance()
+                  + ", record size " + record.getDiskSize(), record.data, ((TestRecord) walRecord).data);
               break;
             } else {
               Assert.fail("Call LSN " + callLSN + ", record LSN " + recordLSN + ", WAL record LSN " + walRecordLSN);
@@ -2283,11 +2281,9 @@ public class OCASDiskWriteAheadLogTest {
             if (compare < 0) {
               continue;
             } else if (compare == 0) {
-              Assert.assertArrayEquals(
-                  "Call LSN " + callLSN + ", record LSN " + recordLSN + ", record length " + record.data.length
-                      + ", wal record length" + ((TestRecord) walRecord).data.length + ", record distance " + record.getDistance()
-                      + ", wal record distance " + walRecord.getDistance() + ", record size " + record.getDiskSize()
-                      + ", WAL record size " + walRecord.getDiskSize(), record.data, ((TestRecord) walRecord).data);
+              Assert.assertArrayEquals("Call LSN " + callLSN + ", record LSN " + recordLSN + ", record length " + record.data.length
+                  + ", wal record length" + ((TestRecord) walRecord).data.length + ", record distance " + record.getDistance()
+                  + ", record size " + record.getDiskSize(), record.data, ((TestRecord) walRecord).data);
 
               break;
             } else {
