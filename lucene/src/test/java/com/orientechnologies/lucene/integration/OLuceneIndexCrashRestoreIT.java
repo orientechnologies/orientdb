@@ -111,45 +111,48 @@ public class OLuceneIndexCrashRestoreIT {
 
   @Test
   public void testEntriesAddition() throws Exception {
-    createSchema(databasePool);
-
     List<DataPropagationTask> futures = new ArrayList<>();
     ODatabaseSession db;
     OResultSet res;
-    for (int i = 0; i < 1; i++) {
-      //first round
-      System.out.println("Start data propagation ::" + i);
+    try {
+      createSchema(databasePool);
 
-      futures = startLoaders();
+      for (int i = 0; i < 1; i++) {
+        //first round
+        System.out.println("Start data propagation ::" + i);
 
-      System.out.println("Wait for 1 minutes");
-      TimeUnit.MINUTES.sleep(1);
-      System.out.println("Stop loaders");
-      stopLoaders(futures);
+        futures = startLoaders();
 
-      System.out.println("Wait for 30 seconds");
-      TimeUnit.SECONDS.sleep(30);
+        System.out.println("Wait for 1 minutes");
+        TimeUnit.MINUTES.sleep(1);
+        System.out.println("Stop loaders");
+        stopLoaders(futures);
 
-      db = databasePool.acquire();
-      //wildcard will not work
-      res = db.query("select from Person where name lucene 'Rob*' ");
-      assertThat(res).hasSize(0);
-      res.close();
+        System.out.println("Wait for 30 seconds");
+        TimeUnit.SECONDS.sleep(30);
 
-      //plain name fetch docs
-      res = db.query("select from Person where name lucene 'Robert' LIMIT 20");
-      assertThat(res).hasSize(20);
-      res.close();
-      db.close();
-      System.out.println("END data propagation ::" + i);
+        db = databasePool.acquire();
+        //wildcard will not work
+        res = db.query("select from Person where name lucene 'Rob*' ");
+        assertThat(res).hasSize(0);
+        res.close();
 
+        //plain name fetch docs
+        res = db.query("select from Person where name lucene 'Robert' LIMIT 20");
+        assertThat(res).hasSize(20);
+        res.close();
+        db.close();
+        System.out.println("END data propagation ::" + i);
+
+      }
+    } finally {
+      //crash the server
+
+      serverProcess.destroyForcibly();
+
+      serverProcess.waitFor();
+      //crash the server
     }
-    //crash the server
-
-    serverProcess.destroyForcibly();
-
-    serverProcess.waitFor();
-    //crash the server
 
     System.out.println("Process was CRASHED");
 
