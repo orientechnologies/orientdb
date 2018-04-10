@@ -426,7 +426,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   }
 
   protected void dropIndexNode1() {
-    // DISABLED WAITING FOR THE RESOLUTION OF ISSUE https://github.com/orientechnologies/orientdb/issues/7335 REPRODUCIBLE WITH TEST OneNodeBackupTest.java
+    // DISABLED WAITING FOR THE RESOLUTION OF ISSUE https://github.com/orientechnologies/orientdb/issues/7335 REPRODUCIBLE WITH TEST OneNodeBackupIT.java
 //    ServerRun server = serverInstance.get(0);
 //    ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
 //    try {
@@ -449,7 +449,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   }
 
   protected void recreateIndexNode2() {
-    // DISABLED WAITING FOR THE RESOLUTION OF ISSUE https://github.com/orientechnologies/orientdb/issues/7335 REPRODUCIBLE WITH TEST OneNodeBackupTest.java
+    // DISABLED WAITING FOR THE RESOLUTION OF ISSUE https://github.com/orientechnologies/orientdb/issues/7335 REPRODUCIBLE WITH TEST OneNodeBackupIT.java
 
 //    // RE-CREATE INDEX ON NODE 1
 //    ServerRun server = serverInstance.get(1);
