@@ -81,7 +81,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public static final     String                              ADMIN               = "admin";
   private static volatile ThreadLocal<OrientBaseGraph>        activeGraph         = new ThreadLocal<OrientBaseGraph>();
   private static volatile ThreadLocal<Deque<OrientBaseGraph>> initializationStack = new InitializationStackThreadLocal();
-  private Map<String, Object> properties;
+  private                 Map<String, Object>                 properties;
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -1099,6 +1099,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         }
       }
 
+    } catch (ONeedRetryException e) {
+      throw e;
     } catch (RuntimeException e) {
       OLogManager.instance().error(this, "Error during context close for db " + url, e);
       throw e;
@@ -1113,6 +1115,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
             database = null;
           }
         }
+        pollGraphFromStack(closeDb);
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during context close for db " + url, e);
       }
@@ -1121,8 +1124,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     url = null;
     username = null;
     password = null;
-
-    pollGraphFromStack(closeDb);
 
     if (!closeDb)
       getDatabase().activateOnCurrentThread();
