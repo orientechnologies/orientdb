@@ -31,8 +31,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * @since 12.12.13
  */
 public abstract class OAbstractWALRecord implements OWriteableWALRecord {
-  private int distance = -1;
-  private int diskSize = -1;
+  private volatile int distance = -1;
+  private volatile int diskSize = -1;
 
   private byte[] binaryContent;
 
