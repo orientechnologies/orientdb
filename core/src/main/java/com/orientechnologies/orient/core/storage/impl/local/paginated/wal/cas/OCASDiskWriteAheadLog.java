@@ -901,10 +901,6 @@ public final class OCASDiskWriteAheadLog {
       }
     }
 
-    if (walSizeHardLimit < 0 && freeSpace > freeSpaceLimit) {
-      walSizeLimit = size + freeSpace / 2;
-    }
-
     if (walSizeLimit > -1 && size > walSizeLimit && segments.size() > 1) {
       for (OCheckpointRequestListener listener : fullCheckpointListeners) {
         listener.requestCheckpoint();
@@ -1227,6 +1223,10 @@ public final class OCASDiskWriteAheadLog {
     //system has unlimited amount of free space
     if (freeSpace < 0)
       return;
+
+    if (walSizeHardLimit < 0 && freeSpace > freeSpaceLimit) {
+      walSizeLimit = logSize.get() + freeSpace / 2;
+    }
 
     if (freeSpace < freeSpaceLimit) {
       for (OLowDiskSpaceListener listener : lowDiskSpaceListeners) {
