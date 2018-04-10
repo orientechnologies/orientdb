@@ -534,7 +534,12 @@ public final class OCASDiskWriteAheadLog {
 
         if (Files.exists(segmentPath)) {
           try (FileChannel channel = FileChannel.open(segmentPath, StandardOpenOption.READ)) {
-            final long chSize = channel.size();
+            long chSize = channel.size();
+            OLogSequenceNumber wLSN = this.writtenLSN;
+
+            if (segment == wLSN.getSegment()) {
+              chSize = Math.min(chSize, wLSN.getPosition());
+            }
 
             while (pageIndex * OCASWALPage.PAGE_SIZE < chSize) {
               channel.position(pageIndex * OCASWALPage.PAGE_SIZE);
@@ -1619,7 +1624,7 @@ public final class OCASDiskWriteAheadLog {
                 boolean recordSizeIsWritten = false;
 
                 while (written < bytesToWrite) {
-                  if (buffer == null || buffer.position() == buffer.limit()) {
+                  if (buffer == null || buffer.remaining() == 0) {
                     if (pointer > 0) {
                       writeBuffer(walChannel, buffer, pointer, lastLSN, checkPointLSN);
                     }
@@ -1801,7 +1806,7 @@ public final class OCASDiskWriteAheadLog {
 
       writeFuture = writeExecutor.submit((Callable<?>) () -> {
         try {
-          while (buffer.position() < buffer.limit()) {
+          while (buffer.remaining() > 0) {
             channel.write(buffer);
           }
 
