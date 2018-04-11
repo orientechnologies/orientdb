@@ -247,10 +247,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         final long filledUpTo = writeCache.getFilledUpTo(fileId);
 
         for (long pageIndex = 1; pageIndex < filledUpTo; pageIndex++) {
-          try {
-            final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, true, 1);
-            releasePage(atomicOperation, cacheEntry);
-          } catch (OPageIsBrokenException e) {
+          if (!writeCache.verifyPage(fileId, pageIndex)) {
             OLogManager.instance()
                 .error(this, "Page " + pageIndex + " of " + getFullName() + " is broken, will clean it up\n", null);
 

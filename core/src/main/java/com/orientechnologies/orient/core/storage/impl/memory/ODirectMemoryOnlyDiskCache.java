@@ -310,6 +310,11 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
+  public boolean verifyPage(long fileId, long pageIndex) throws IOException {
+    return true;
+  }
+
+  @Override
   public void renameFile(long fileId, String oldFileName, String newFileName) {
     int intId = extractFileId(fileId);
 

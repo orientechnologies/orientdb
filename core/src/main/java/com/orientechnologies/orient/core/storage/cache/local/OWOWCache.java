@@ -904,9 +904,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       final PageKey pageKey = new PageKey(intId, pageIndex);
       final Lock pageLock = lockManager.acquireSharedLock(pageKey);
       try {
-        checkFileContent(intId, pageIndex);
-      } catch (OPageIsBrokenException e) {
-        return false;
+        return checkFileContent(intId, pageIndex);
       } finally {
         pageLock.unlock();
       }
@@ -914,8 +912,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     } finally {
       filesLock.releaseReadLock();
     }
-
-    return true;
   }
 
   @Override

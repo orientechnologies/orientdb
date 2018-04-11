@@ -172,13 +172,9 @@ public class OClusterPositionMap extends ODurableComponent {
     try {
       final long filledUpTo = writeCache.getFilledUpTo(fileId);
       for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
-        try {
-          final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, true, 1);
-          releasePage(atomicOperation, cacheEntry);
-        } catch (OPageIsBrokenException e) {
-          OLogManager.instance().error(this, "Page " + pageIndex + " of " + getFullName() + " is broken, will clean it up\n", null);
-
-          final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, true, 1);
+        OLogManager.instance().error(this, "Page " + pageIndex + " of " + getFullName() + " is broken, will clean it up\n", null);
+        if (!writeCache.verifyPage(fileId, pageIndex)) {
+          final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, true);
           cacheEntry.acquireExclusiveLock();
           try {
             final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry,

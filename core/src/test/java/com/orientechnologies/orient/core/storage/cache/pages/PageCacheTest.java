@@ -458,6 +458,11 @@ public class PageCacheTest {
     }
 
     @Override
+    public boolean verifyPage(long fileId, long pageIndex) throws IOException {
+      return true;
+    }
+
+    @Override
     public long getFilledUpTo(long fileId) throws IOException {
       return fileSizes[(int) fileId];
     }
