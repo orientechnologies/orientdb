@@ -1781,8 +1781,13 @@ public final class OCASDiskWriteAheadLog {
         return;
       }
 
-      final int maxPage = (buffer.position() + OCASWALPage.PAGE_SIZE - 1) / OCASWALPage.PAGE_SIZE;
-      final int lastPageSize = buffer.position() - (maxPage - 1) * OCASWALPage.PAGE_SIZE;
+      int maxPage = (buffer.position() + OCASWALPage.PAGE_SIZE - 1) / OCASWALPage.PAGE_SIZE;
+      int lastPageSize = buffer.position() - (maxPage - 1) * OCASWALPage.PAGE_SIZE;
+
+      if (lastPageSize <= OCASWALPage.RECORDS_OFFSET) {
+        maxPage--;
+        lastPageSize = OCASWALPage.PAGE_SIZE;
+      }
 
       for (int start = 0, page = 0; start < maxPage * OCASWALPage.PAGE_SIZE; start += OCASWALPage.PAGE_SIZE, page++) {
         final int pageSize;
