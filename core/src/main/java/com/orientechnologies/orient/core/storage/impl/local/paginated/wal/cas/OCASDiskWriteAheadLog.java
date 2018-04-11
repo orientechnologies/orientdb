@@ -1611,15 +1611,15 @@ public final class OCASDiskWriteAheadLog {
                   channelCloseQueue.offer(new OPair<>(segmentId, walChannel));
                 }
 
-                if (batchWrite && queueSize.get() < BUFFER_SIZE) {
-                  break;
-                }
-
                 segmentId = lsn.getSegment();
 
                 walChannel = FileChannel
                     .open(walLocation.resolve(getSegmentName(segmentId)), StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW,
                         StandardOpenOption.APPEND);
+
+                if (batchWrite && queueSize.get() < BUFFER_SIZE) {
+                  break;
+                }
 
                 assert lsn.getPosition() == OCASWALPage.RECORDS_OFFSET;
               }
@@ -1643,9 +1643,6 @@ public final class OCASDiskWriteAheadLog {
                   if (buffer == null || buffer.remaining() == 0) {
                     if (pointer > 0) {
                       writeBuffer(walChannel, buffer, pointer, lastLSN, checkPointLSN);
-                      if (batchWrite && queueSize.get() < BUFFER_SIZE) {
-                        break;
-                      }
                     }
 
                     pointer = Native.malloc(BUFFER_SIZE);
@@ -1698,8 +1695,15 @@ public final class OCASDiskWriteAheadLog {
                   checkPointLSN = lastLSN;
                 }
 
-                queueSize.addAndGet(-recordContent.length);
+                final long newQSize = queueSize.addAndGet(-recordContent.length);
                 records.poll();
+
+                if (batchWrite && newQSize < BUFFER_SIZE && buffer.position() <= OCASWALPage.RECORDS_OFFSET) {
+                  Native.free(pointer);
+                  pointer = 0;
+                  buffer = null;
+                  break;
+                }
               }
             }
 
@@ -1771,6 +1775,12 @@ public final class OCASDiskWriteAheadLog {
 
     private void writeBuffer(FileChannel channel, ByteBuffer buffer, long pointer, OLogSequenceNumber lastLSN,
         OLogSequenceNumber checkpointLSN) {
+
+      if (buffer.position() <= OCASWALPage.RECORDS_OFFSET) {
+        Native.free(pointer);
+        return;
+      }
+
       final int maxPage = (buffer.position() + OCASWALPage.PAGE_SIZE - 1) / OCASWALPage.PAGE_SIZE;
       final int lastPageSize = buffer.position() - (maxPage - 1) * OCASWALPage.PAGE_SIZE;
 
@@ -1800,6 +1810,7 @@ public final class OCASDiskWriteAheadLog {
 
       buffer.position(0);
       buffer.limit(maxPage * OCASWALPage.PAGE_SIZE);
+      assert buffer.limit() <= buffer.capacity();
 
       try {
         if (writeFuture != null) {
