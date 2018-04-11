@@ -172,8 +172,8 @@ public class OClusterPositionMap extends ODurableComponent {
     try {
       final long filledUpTo = writeCache.getFilledUpTo(fileId);
       for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
-        OLogManager.instance().error(this, "Page " + pageIndex + " of " + getFullName() + " is broken, will clean it up\n", null);
         if (!writeCache.verifyPage(fileId, pageIndex)) {
+          OLogManager.instance().error(this, "Page " + pageIndex + " of " + getFullName() + " is broken, will clean it up\n", null);
           final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, true);
           cacheEntry.acquireExclusiveLock();
           try {

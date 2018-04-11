@@ -55,6 +55,7 @@ public class ODatabaseRepair extends ODatabaseTool {
 
     } else if (option.equalsIgnoreCase("--fix-cluster")) {
       checkClusters = true;
+      removeBrokenLinks = false;
     }
   }
 
@@ -68,7 +69,6 @@ public class ODatabaseRepair extends ODatabaseTool {
     if (removeBrokenLinks) {
       errors += removeBrokenLinks();
     }
-
 
     message("\nRepair database complete (" + errors + " errors)");
   }
