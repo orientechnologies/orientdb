@@ -251,7 +251,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     String serverUrl = null;
     do {
-      session.commandExecuting = true;
       OChannelBinaryAsynchClient network = null;
 
       if (serverUrl == null)
@@ -273,6 +272,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       } while (network == null);
 
       try {
+        session.commandExecuting = true;
+
         // In case i do not have a token or i'm switching between server i've to execute a open operation.
         OStorageRemoteNodeSession nodeSession = session.getServerSession(network.getServerURL());
         if (nodeSession == null || !nodeSession.isValid()) {
