@@ -1,17 +1,27 @@
 package com.orientechnologies.orient.core.encryption.impl;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.Base64;
+
+import javax.crypto.AEADBadTagException;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.ShortBufferException;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-
-import javax.crypto.*;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.ByteBuffer;
-import java.security.*;
-import java.util.Base64;
 
 import static java.lang.String.format;
 import static javax.crypto.Cipher.DECRYPT_MODE;
@@ -29,16 +39,17 @@ public class OAESGCMEncryption extends OAbstractEncryption {
 
   private static final String ALGORITHM_NAME = "AES";
   private static final String TRANSFORMATION = "AES/GCM/NoPadding";
+  // Cipher.getInstance is slow, so we don't want to call it in every encrypt/decrypt call. Instead we reuse existing instances:
+  private static final ThreadLocal<Cipher> CIPHER = ThreadLocal.withInitial(OAESGCMEncryption::getCipherInstance);
 
   private static final int GCM_NONCE_SIZE_IN_BYTES = 12;
   private static final int GCM_TAG_SIZE_IN_BYTES = 16;
 
+  private static final String NO_SUCH_CIPHER = "AES/GCM/NoPadding not supported.";
   private static final String MISSING_KEY_ERROR = "AESGCMEncryption encryption has been selected, but no key was found. Please configure it by passing the key as property at database create/open. The property key is: '%s'";
   private static final String INVALID_KEY_ERROR = "Failed to initialize AESGCMEncryption. Assure the key is a 128, 192 or 256 bits long BASE64 value";
   private static final String ENCRYPTION_NOT_INITIALIZED_ERROR = "OAESGCMEncryption not properly initialized";
-  private static final String SECURE_RANDOM_CREATION_ERROR = "OAESGCMEncryption could not create SecureRandom";
   private static final String AUTHENTICATION_ERROR = "Authentication of encrypted data failed. The encrypted data may have been altered.";
-
 
   private boolean initialized;
   private SecretKey key;
@@ -49,9 +60,7 @@ public class OAESGCMEncryption extends OAbstractEncryption {
     return NAME;
   }
 
-  public OAESGCMEncryption() {
-  }
-
+  @Override
   public OEncryption configure(final String base64EncodedKey) {
     initialized = false;
 
@@ -62,9 +71,17 @@ public class OAESGCMEncryption extends OAbstractEncryption {
     return this;
   }
 
-  public byte[] encryptOrDecrypt(final int mode, final byte[] input, final int offset, final int length) throws Exception {
+  @Override
+  public byte[] encryptOrDecrypt(final int mode, final byte[] input, final int offset, final int length) {
     assertInitialized();
-    return encryptOrDecrypt(mode, ByteBuffer.wrap(input, offset, length)).array();
+    switch (mode) {
+      case ENCRYPT_MODE:
+        return encrypt(input, offset, length);
+      case DECRYPT_MODE:
+        return decrypt(input, offset, length);
+      default:
+        throw new IllegalArgumentException(format("Unexpected mode %d", mode));
+    }
   }
 
   private SecretKey createKey(String base64EncodedKey) {
@@ -75,7 +92,7 @@ public class OAESGCMEncryption extends OAbstractEncryption {
       final byte[] keyBytes = Base64.getDecoder().decode(base64EncodedKey);
       validateKeySize(keyBytes.length);
       return new SecretKeySpec(keyBytes, ALGORITHM_NAME);
-    } catch (Exception e) {
+    } catch (IllegalArgumentException e) {
       throw OException.wrapException(new OInvalidStorageEncryptionKeyException(INVALID_KEY_ERROR), e);
     }
   }
@@ -84,48 +101,43 @@ public class OAESGCMEncryption extends OAbstractEncryption {
     try {
       return SecureRandom.getInstanceStrong();
     } catch (NoSuchAlgorithmException e) {
-      throw OException.wrapException(new OSecurityException(SECURE_RANDOM_CREATION_ERROR), e);
+      // Contract: Every implementation of the Java platform is required to support at least one strong {@code SecureRandom} implementation.
+      throw new IllegalStateException(e);
     }
   }
 
-  private ByteBuffer encryptOrDecrypt(int mode, ByteBuffer input) throws GeneralSecurityException {
-    switch (mode) {
-      case ENCRYPT_MODE:
-        return encrypt(input);
-      case DECRYPT_MODE:
-        return decrypt(input);
-      default:
-        throw new IllegalArgumentException(format("Unexpected mode %d", mode));
-    }
-  }
-
-  private ByteBuffer encrypt(ByteBuffer input) throws GeneralSecurityException {
-    Cipher cipher = Cipher.getInstance(TRANSFORMATION);
+  @Override
+  public byte[] encrypt(final byte[] input, final int offset, final int length) {
+    assertInitialized();
     byte[] nonce = randomNonce();
-    cipher.init(ENCRYPT_MODE, key, gcmParameterSpec(nonce));
+    Cipher cipher = getAndInitializeCipher(ENCRYPT_MODE, nonce);
 
-    ByteBuffer output = ByteBuffer.allocate(GCM_NONCE_SIZE_IN_BYTES + cipher.getOutputSize(input.remaining()));
-    output.put(nonce);
-    cipher.doFinal(input, output);
-    output.flip();
+    int outputLength = GCM_NONCE_SIZE_IN_BYTES + cipher.getOutputSize(length);
+    byte[] output = Arrays.copyOf(nonce, outputLength);
 
-    return output;
-  }
-
-  private ByteBuffer decrypt(ByteBuffer input) throws GeneralSecurityException {
-    Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-    byte[] nonce = readNonce(input);
-    cipher.init(DECRYPT_MODE, key, gcmParameterSpec(nonce));
-
-    ByteBuffer output = ByteBuffer.allocate(cipher.getOutputSize(input.remaining()));
     try {
-      cipher.doFinal(input, output);
+      cipher.doFinal(input, offset, length, output, GCM_NONCE_SIZE_IN_BYTES);
+      return output;
     } catch (AEADBadTagException e) {
       throw OException.wrapException(new OSecurityException(AUTHENTICATION_ERROR), e);
+    } catch (IllegalBlockSizeException | BadPaddingException | ShortBufferException e) {
+      throw new IllegalStateException("Unexpected exception during GCM decryption.", e);
     }
-    output.flip();
+  }
 
-    return output;
+  @Override
+  public byte[] decrypt(final byte[] input, final int offset, final int length) {
+    assertInitialized();
+    byte[] nonce = readNonce(input);
+    Cipher cipher = getAndInitializeCipher(DECRYPT_MODE, nonce);
+
+    try {
+      return cipher.doFinal(input, offset + GCM_NONCE_SIZE_IN_BYTES, length - GCM_NONCE_SIZE_IN_BYTES);
+    } catch (AEADBadTagException e) {
+      throw OException.wrapException(new OSecurityException(AUTHENTICATION_ERROR), e);
+    } catch (IllegalBlockSizeException | BadPaddingException e) {
+      throw new IllegalStateException("Unexpected exception during GCM decryption.", e);
+    }
   }
 
   private void validateKeySize(int numBytes) {
@@ -146,14 +158,32 @@ public class OAESGCMEncryption extends OAbstractEncryption {
     return nonce;
   }
 
-  private byte[] readNonce(ByteBuffer input) {
-    byte[] nonce = new byte[GCM_NONCE_SIZE_IN_BYTES];
-    input.get(nonce);
-    return nonce;
+  private byte[] readNonce(byte[] input) {
+    return Arrays.copyOf(input, GCM_NONCE_SIZE_IN_BYTES);
+  }
+
+  private Cipher getAndInitializeCipher(final int mode, final byte[] nonce) {
+    try {
+      Cipher cipher = CIPHER.get();
+      cipher.init(mode, key, gcmParameterSpec(nonce));
+      return cipher;
+    } catch (InvalidKeyException e) {
+      throw OException.wrapException(new OInvalidStorageEncryptionKeyException(INVALID_KEY_ERROR), e);
+    } catch (InvalidAlgorithmParameterException e) {
+      throw new IllegalArgumentException("Invalid or re-used nonce.", e);
+    }
   }
 
   private GCMParameterSpec gcmParameterSpec(byte[] nonce) {
     return new GCMParameterSpec(GCM_TAG_SIZE_IN_BYTES * Byte.SIZE, nonce);
+  }
+
+  private static Cipher getCipherInstance() {
+	try {
+      return Cipher.getInstance(TRANSFORMATION);
+    } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+      throw OException.wrapException(new OSecurityException(NO_SUCH_CIPHER), e);
+    }
   }
 
 }
