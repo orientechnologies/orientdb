@@ -21,6 +21,7 @@ import static javax.crypto.Cipher.ENCRYPT_MODE;
  * OEncryption implementation using AES/GCM/NoPadding with a 12 byte nonce and 16 byte tag size.
  *
  * @author Skymatic / Markus Kreusch (markus.kreusch--(at)--skymatic.de)
+ * @author Skymatic / Sebastian Stenzel (sebastian.stenzel--(at)--skymatic.de)
  */
 public class OAESGCMEncryption extends OAbstractEncryption {
 
@@ -41,7 +42,7 @@ public class OAESGCMEncryption extends OAbstractEncryption {
 
   private boolean initialized;
   private SecretKey key;
-  private SecureRandom random;
+  private SecureRandom csprng;
 
   @Override
   public String name() {
@@ -55,9 +56,9 @@ public class OAESGCMEncryption extends OAbstractEncryption {
     initialized = false;
 
     key = createKey(base64EncodedKey);
-    random = createSecureRandom();
+    csprng = createSecureRandom();
 
-    this.initialized = true;
+    initialized = true;
     return this;
   }
 
@@ -72,7 +73,7 @@ public class OAESGCMEncryption extends OAbstractEncryption {
     }
     try {
       final byte[] keyBytes = Base64.getDecoder().decode(base64EncodedKey);
-      validateKeySize(keyBytes);
+      validateKeySize(keyBytes.length);
       return new SecretKeySpec(keyBytes, ALGORITHM_NAME);
     } catch (Exception e) {
       throw OException.wrapException(new OInvalidStorageEncryptionKeyException(INVALID_KEY_ERROR), e);
@@ -91,7 +92,7 @@ public class OAESGCMEncryption extends OAbstractEncryption {
     switch (mode) {
       case ENCRYPT_MODE:
         return encrypt(input);
-      case Cipher.DECRYPT_MODE:
+      case DECRYPT_MODE:
         return decrypt(input);
       default:
         throw new IllegalArgumentException(format("Unexpected mode %d", mode));
@@ -127,8 +128,8 @@ public class OAESGCMEncryption extends OAbstractEncryption {
     return output;
   }
 
-  private void validateKeySize(byte[] keyBytes) {
-    if (keyBytes.length != 16 && keyBytes.length != 24 && keyBytes.length != 32) {
+  private void validateKeySize(int numBytes) {
+    if (numBytes != 16 && numBytes != 24 && numBytes != 32) {
       throw new OInvalidStorageEncryptionKeyException(INVALID_KEY_ERROR);
     }
   }
@@ -141,7 +142,7 @@ public class OAESGCMEncryption extends OAbstractEncryption {
 
   private byte[] randomNonce() {
     byte[] nonce = new byte[GCM_NONCE_SIZE_IN_BYTES];
-    random.nextBytes(nonce);
+    csprng.nextBytes(nonce);
     return nonce;
   }
 
