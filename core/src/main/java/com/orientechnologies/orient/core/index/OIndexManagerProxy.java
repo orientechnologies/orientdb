@@ -105,26 +105,21 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     if (metadata != null)
       createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_METADATA + " " + metadata.toJSON();
 
-    delegate.acquireExclusiveLock();
-    try {
-      if (progressListener != null)
-        progressListener.onBegin(this, 0, false);
+    if (progressListener != null)
+      progressListener.onBegin(this, 0, false);
 
-      getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
+    getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 
-      ORecordInternal
-          .setIdentity(delegate.getDocument(), new ORecordId(getDatabase().getStorage().getConfiguration().getIndexMgrRecordId()));
+    ORecordInternal
+        .setIdentity(delegate.getDocument(), new ORecordId(getDatabase().getStorage().getConfiguration().getIndexMgrRecordId()));
 
-      if (progressListener != null)
-        progressListener.onCompletition(this, true);
+    if (progressListener != null)
+      progressListener.onCompletition(this, true);
 
-      reload();
+    reload();
 
-      final Locale locale = delegate.getServerLocale();
-      return delegate.preProcessBeforeReturn(getDatabase(), delegate.getIndex(iName));
-    } finally {
-      delegate.releaseExclusiveLock();
-    }
+    final Locale locale = delegate.getServerLocale();
+    return delegate.preProcessBeforeReturn(getDatabase(), delegate.getIndex(iName));
   }
 
   public ODocument getConfiguration() {
@@ -144,17 +139,12 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
 
     String dropIndexDDL = "DROP INDEX `" + iName + "`";
 
-    delegate.acquireExclusiveLock();
-    try {
-      getDatabase().command(new OCommandSQL(dropIndexDDL)).execute();
-      ORecordInternal
-          .setIdentity(delegate.getDocument(), new ORecordId(getDatabase().getStorage().getConfiguration().getIndexMgrRecordId()));
+    getDatabase().command(new OCommandSQL(dropIndexDDL)).execute();
+    ORecordInternal
+        .setIdentity(delegate.getDocument(), new ORecordId(getDatabase().getStorage().getConfiguration().getIndexMgrRecordId()));
 
-      reload();
+    reload();
 
-    } finally {
-      delegate.releaseExclusiveLock();
-    }
   }
 
   public String getDefaultClusterName() {
