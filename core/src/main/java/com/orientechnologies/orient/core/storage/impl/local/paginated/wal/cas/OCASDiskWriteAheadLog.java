@@ -122,8 +122,8 @@ public final class OCASDiskWriteAheadLog {
 
   private volatile OLogSequenceNumber flushedLSN = null;
 
-  private volatile WrittenUpTo writtenUpTo;
-  private          long        segmentId = -1;
+  private final AtomicReference<WrittenUpTo> writtenUpTo = new AtomicReference<>();
+  private       long                         segmentId   = -1;
 
   private final ScheduledFuture<?> recordsWriterFuture;
 
@@ -144,9 +144,9 @@ public final class OCASDiskWriteAheadLog {
   private final ConcurrentLinkedQueue<OPair<Long, FileChannel>> channelCloseQueue     = new ConcurrentLinkedQueue<>();
   private final AtomicInteger                                   channelCloseQueueSize = new AtomicInteger();
 
-  private volatile CountDownLatch     flushLatch        = new CountDownLatch(0);
-  private volatile Future<?>          writeFuture       = null;
-  private volatile OLogSequenceNumber writtenCheckpoint = null;
+  private final    AtomicReference<CountDownLatch> flushLatch        = new AtomicReference<>(new CountDownLatch(0));
+  private          Future<?>                       writeFuture       = null;
+  private volatile OLogSequenceNumber              writtenCheckpoint = null;
 
   private       long lastFSyncTs = -1;
   private final int  fsyncInterval;
@@ -215,7 +215,7 @@ public final class OCASDiskWriteAheadLog {
 
     records.offer(startRecord);
 
-    writtenUpTo = new WrittenUpTo(new OLogSequenceNumber(currentSegment, 0), 0);
+    writtenUpTo.set(new WrittenUpTo(new OLogSequenceNumber(currentSegment, 0), 0));
 
     log(new OEmptyWALRecord());
 
@@ -472,22 +472,22 @@ public final class OCASDiskWriteAheadLog {
       }
 
       //ensure that next record is written on disk
-      OLogSequenceNumber writtenLSN = this.writtenUpTo.lsn;
+      OLogSequenceNumber writtenLSN = this.writtenUpTo.get().lsn;
       while (writtenLSN == null || writtenLSN.compareTo(lsn) < 0) {
         try {
-          flushLatch.await();
+          flushLatch.get().await();
         } catch (InterruptedException e) {
           //continue
         }
 
-        writtenLSN = this.writtenUpTo.lsn;
+        writtenLSN = this.writtenUpTo.get().lsn;
         assert writtenLSN != null;
 
         if (writtenLSN.compareTo(lsn) < 0) {
           doFlush(false, true);
         }
 
-        writtenLSN = this.writtenUpTo.lsn;
+        writtenLSN = this.writtenUpTo.get().lsn;
       }
 
       return readFromDisk(lsn, limit);
@@ -534,7 +534,7 @@ public final class OCASDiskWriteAheadLog {
         if (Files.exists(segmentPath)) {
           try (FileChannel channel = FileChannel.open(segmentPath, StandardOpenOption.READ)) {
             long chSize = channel.size();
-            final WrittenUpTo written = this.writtenUpTo;
+            final WrittenUpTo written = this.writtenUpTo.get();
 
             if (segment == written.lsn.getSegment()) {
               chSize = Math.min(chSize, written.position);
@@ -707,21 +707,21 @@ public final class OCASDiskWriteAheadLog {
       }
 
       //ensure that next record is written on disk
-      OLogSequenceNumber writtenLSN = this.writtenUpTo.lsn;
+      OLogSequenceNumber writtenLSN = this.writtenUpTo.get().lsn;
       while (writtenLSN == null || writtenLSN.compareTo(lsn) <= 0) {
         try {
-          flushLatch.await();
+          flushLatch.get().await();
         } catch (InterruptedException e) {
           //continue
         }
 
-        writtenLSN = this.writtenUpTo.lsn;
+        writtenLSN = this.writtenUpTo.get().lsn;
         assert writtenLSN != null;
 
         if (writtenLSN.compareTo(lsn) <= 0) {
           doFlush(false, true);
         }
-        writtenLSN = this.writtenUpTo.lsn;
+        writtenLSN = this.writtenUpTo.get().lsn;
       }
 
       final List<OWriteableWALRecord> result;
@@ -888,7 +888,7 @@ public final class OCASDiskWriteAheadLog {
     long qsize = queueSize.addAndGet(writeableRecord.getBinaryContent().length);
     if (qsize >= maxCacheSize) {
       try {
-        flushLatch.await();
+        flushLatch.get().await();
       } catch (InterruptedException e) {
         //continue
       }
@@ -1560,8 +1560,8 @@ public final class OCASDiskWriteAheadLog {
         }
 
         if (write) {
-          //TODO:consider to use lazy set
-          flushLatch = new CountDownLatch(1);
+          final CountDownLatch fl = new CountDownLatch(1);
+          flushLatch.lazySet(fl);
           try {
             int page = -1;
             long pointer = Native.malloc(BUFFER_SIZE);
@@ -1616,11 +1616,6 @@ public final class OCASDiskWriteAheadLog {
                 walChannel = FileChannel
                     .open(walLocation.resolve(getSegmentName(segmentId)), StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW,
                         StandardOpenOption.APPEND);
-
-                if (batchWrite && queueSize.get() < BUFFER_SIZE) {
-                  break;
-                }
-
                 assert lsn.getPosition() == OCASWALPage.RECORDS_OFFSET;
               }
 
@@ -1695,15 +1690,8 @@ public final class OCASDiskWriteAheadLog {
                   checkPointLSN = lastLSN;
                 }
 
-                final long newQSize = queueSize.addAndGet(-recordContent.length);
+                queueSize.addAndGet(-recordContent.length);
                 records.poll();
-
-                if (batchWrite && newQSize < BUFFER_SIZE && buffer.position() <= OCASWALPage.RECORDS_OFFSET) {
-                  Native.free(pointer);
-                  pointer = 0;
-                  buffer = null;
-                  break;
-                }
               }
             }
 
@@ -1711,7 +1699,7 @@ public final class OCASDiskWriteAheadLog {
               writeBuffer(walChannel, buffer, pointer, lastLSN, checkPointLSN);
             }
           } finally {
-            flushLatch.countDown();
+            fl.countDown();
           }
         }
 
@@ -1749,7 +1737,7 @@ public final class OCASDiskWriteAheadLog {
                 }
 
                 walChannel.force(true);
-                flushedLSN = writtenUpTo.lsn;
+                flushedLSN = writtenUpTo.get().lsn;
                 updateCheckpoint(writtenCheckpoint);
               } catch (IOException e) {
                 OLogManager.instance().error(this, "Error during FSync of WAL data", e);
@@ -1839,17 +1827,17 @@ public final class OCASDiskWriteAheadLog {
           }
 
           if (lastLSN != null) {
-            final WrittenUpTo written = writtenUpTo;
+            final WrittenUpTo written = writtenUpTo.get();
 
             assert written == null || written.lsn.compareTo(lastLSN) < 0;
 
             if (written == null) {
-              writtenUpTo = new WrittenUpTo(lastLSN, buffer.limit());
+              writtenUpTo.lazySet(new WrittenUpTo(lastLSN, buffer.limit()));
             } else {
               if (written.lsn.getSegment() == lastLSN.getSegment()) {
-                writtenUpTo = new WrittenUpTo(lastLSN, written.position + buffer.limit());
+                writtenUpTo.lazySet(new WrittenUpTo(lastLSN, written.position + buffer.limit()));
               } else {
-                writtenUpTo = new WrittenUpTo(lastLSN, buffer.limit());
+                writtenUpTo.lazySet(new WrittenUpTo(lastLSN, buffer.limit()));
               }
             }
           }

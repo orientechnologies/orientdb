@@ -31,8 +31,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * @since 12.12.13
  */
 public abstract class OAbstractWALRecord implements OWriteableWALRecord {
-  private volatile int distance = -1;
-  private volatile int diskSize = -1;
+  private int distance = 0;
+  private int diskSize = 0;
 
   private byte[] binaryContent;
 
@@ -97,7 +97,7 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
 
   @Override
   public int getDistance() {
-    if (distance < 0) {
+    if (distance <= 0) {
       throw new IllegalStateException("Record distance is not set");
     }
 
@@ -106,7 +106,7 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
 
   @Override
   public int getDiskSize() {
-    if (diskSize < 0) {
+    if (diskSize <= 0) {
       throw new IllegalStateException("Record disk size is not set");
     }
 

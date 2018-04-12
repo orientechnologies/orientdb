@@ -6,8 +6,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRe
 import java.util.concurrent.atomic.AtomicReference;
 
 public class OMilestoneWALRecord implements OWALRecord {
-  private volatile int distance = -1;
-  private volatile int diskSize = -1;
+  private int distance = -1;
+  private int diskSize = -1;
 
   private final AtomicReference<OLogSequenceNumber> lsn = new AtomicReference<>();
 

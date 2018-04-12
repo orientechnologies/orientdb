@@ -1366,7 +1366,8 @@ public class OCASDiskWriteAheadLogTest {
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
-      OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 10 * 1024 * 1024, 20,
+      OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100,
+          10 * 1024 * 1024, 20,
           true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -1448,7 +1449,8 @@ public class OCASDiskWriteAheadLogTest {
     for (int n = 0; n < iterations; n++) {
       OFileUtils.deleteRecursively(testDirectory.toFile());
 
-      OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 10 * 1024 * 1024, 20,
+      OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory,
+          48_000, 10 * 1024 * 1024, 20,
           true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000);
 
       Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
@@ -2208,9 +2210,9 @@ public class OCASDiskWriteAheadLogTest {
             if (compare < 0) {
               continue;
             } else if (compare == 0) {
-//              Assert.assertArrayEquals("Call LSN " + callLSN + ", record LSN " + recordLSN + ", record length " + record.data.length
-//                  + ", wal record length" + ((TestRecord) walRecord).data.length + ", record distance " + record.getDistance()
-//                  + ", record size " + record.getDiskSize(), record.data, ((TestRecord) walRecord).data);
+              Assert.assertArrayEquals("Call LSN " + callLSN + ", record LSN " + recordLSN + ", record length " + record.data.length
+                  + ", wal record length" + ((TestRecord) walRecord).data.length + ", record distance " + record.getDistance()
+                  + ", record size " + record.getDiskSize(), record.data, ((TestRecord) walRecord).data);
               break;
             } else {
               Assert.fail("Call LSN " + callLSN + ", record LSN " + recordLSN + ", WAL record LSN " + walRecordLSN);
