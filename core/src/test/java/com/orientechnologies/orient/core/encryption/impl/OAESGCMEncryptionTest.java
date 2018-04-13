@@ -1,5 +1,13 @@
 package com.orientechnologies.orient.core.encryption.impl;
 
+import java.io.File;
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -11,13 +19,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import java.io.File;
-import java.util.List;
 
 /**
  * @author Skymatic / Markus Kreusch (markus.kreusch--(at)--skymatic.de)
@@ -28,7 +29,7 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
   private static final String DBNAME_CLUSTERTEST  = "testCreatedAESGCMEncryptedCluster";
 
   @Rule
-  public ExpectedException expectedException = ExpectedException.none();
+  public ExpectedException    expectedException   = ExpectedException.none();
 
   @Test
   public void testOAESGCMEncryptionWithoutKey() {
