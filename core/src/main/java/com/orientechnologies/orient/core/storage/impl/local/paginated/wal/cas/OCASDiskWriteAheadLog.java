@@ -1725,7 +1725,7 @@ public final class OCASDiskWriteAheadLog {
                 if (cqSize > 0) {
                   int counter = 0;
 
-                  while (counter < qSize) {
+                  while (counter < cqSize) {
                     OPair<Long, FileChannel> pair = channelCloseQueue.poll();
                     if (pair != null) {
                       @SuppressWarnings("resource")
