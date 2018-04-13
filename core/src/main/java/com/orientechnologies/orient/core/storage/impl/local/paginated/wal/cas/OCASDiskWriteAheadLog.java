@@ -620,6 +620,12 @@ public final class OCASDiskWriteAheadLog {
               pageIndex++;
               position = pageIndex * OCASWALPage.PAGE_SIZE + OCASWALPage.RECORDS_OFFSET;
             }
+
+            //we can jump to a new segment and skip and of the current file because of thread racing
+            //so we stop here to start to read from next batch
+            if (segment == written.lsn.getSegment()) {
+              break;
+            }
           }
         } else {
           break;

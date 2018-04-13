@@ -49,7 +49,7 @@ public class OCASDiskWriteAheadLogTest {
 
   @Before
   public void before() {
-    OFileUtils.deleteRecursively(testDirectory.toFile());
+    //OFileUtils.deleteRecursively(testDirectory.toFile());
   }
 
   @Test
@@ -1275,6 +1275,20 @@ public class OCASDiskWriteAheadLogTest {
         throw e;
       }
     }
+  }
+
+  @Test
+  public void testLoadDirectory() throws Exception {
+    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory,
+        100, 10 * 1024 * 1024, 20, true,
+        Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000);
+
+    List<OWriteableWALRecord> records = wal.read(new OLogSequenceNumber(351, 9780470), 10);
+    while (!records.isEmpty()) {
+      records = wal.next(records.get(records.size() - 1).getLsn(), 10);
+    }
+
+    wal.close();
   }
 
   @Test
