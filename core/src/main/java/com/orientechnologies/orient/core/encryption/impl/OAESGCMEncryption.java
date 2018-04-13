@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Locale;
 
 import javax.crypto.AEADBadTagException;
 import javax.crypto.BadPaddingException;
@@ -33,7 +34,7 @@ import static javax.crypto.Cipher.ENCRYPT_MODE;
  * @author Skymatic / Markus Kreusch (markus.kreusch--(at)--skymatic.de)
  * @author Skymatic / Sebastian Stenzel (sebastian.stenzel--(at)--skymatic.de)
  */
-public class OAESGCMEncryption extends OAbstractEncryption {
+public class OAESGCMEncryption implements OEncryption {
 
   public static final String NAME = "aes/gcm";
 
@@ -44,12 +45,15 @@ public class OAESGCMEncryption extends OAbstractEncryption {
 
   private static final int GCM_NONCE_SIZE_IN_BYTES = 12;
   private static final int GCM_TAG_SIZE_IN_BYTES = 16;
+  private static final int MIN_CIPHERTEXT_SIZE = GCM_NONCE_SIZE_IN_BYTES + GCM_TAG_SIZE_IN_BYTES;
 
   private static final String NO_SUCH_CIPHER = "AES/GCM/NoPadding not supported.";
   private static final String MISSING_KEY_ERROR = "AESGCMEncryption encryption has been selected, but no key was found. Please configure it by passing the key as property at database create/open. The property key is: '%s'";
   private static final String INVALID_KEY_ERROR = "Failed to initialize AESGCMEncryption. Assure the key is a 128, 192 or 256 bits long BASE64 value";
   private static final String ENCRYPTION_NOT_INITIALIZED_ERROR = "OAESGCMEncryption not properly initialized";
-  private static final String AUTHENTICATION_ERROR = "Authentication of encrypted data failed. The encrypted data may have been altered.";
+  private static final String AUTHENTICATION_ERROR = "Authentication of encrypted data failed. The encrypted data may have been altered or the used key is incorrect";
+  private static final String INVALID_CIPHERTEXT_SIZE_ERROR = "Invalid ciphertext size: minimum: %d, actual: %d";
+  private static final String INVALID_RANGE_ERROR = "Invalid range: array size: %d, offset: %d, length: %d";
 
   private boolean initialized;
   private SecretKey key;
@@ -72,15 +76,49 @@ public class OAESGCMEncryption extends OAbstractEncryption {
   }
 
   @Override
-  public byte[] encryptOrDecrypt(final int mode, final byte[] input, final int offset, final int length) {
+  public byte[] encrypt(byte[] input) {
+    return encrypt(input, 0, input.length);
+  }
+
+  @Override
+  public byte[] decrypt(byte[] input) {
+    return decrypt(input, 0, input.length);
+  }
+
+  @Override
+  public byte[] encrypt(final byte[] input, final int offset, final int length) {
     assertInitialized();
-    switch (mode) {
-      case ENCRYPT_MODE:
-        return encrypt(input, offset, length);
-      case DECRYPT_MODE:
-        return decrypt(input, offset, length);
-      default:
-        throw new IllegalArgumentException(format("Unexpected mode %d", mode));
+    assertRangeIsValid(input.length, offset, length);
+
+    byte[] nonce = randomNonce();
+    Cipher cipher = getAndInitializeCipher(ENCRYPT_MODE, nonce);
+
+    int outputLength = GCM_NONCE_SIZE_IN_BYTES + cipher.getOutputSize(length);
+    byte[] output = Arrays.copyOf(nonce, outputLength);
+
+    try {
+      cipher.doFinal(input, offset, length, output, GCM_NONCE_SIZE_IN_BYTES);
+      return output;
+    } catch (IllegalBlockSizeException | BadPaddingException | ShortBufferException e) {
+      throw new IllegalStateException("Unexpected exception during GCM decryption.", e);
+    }
+  }
+
+  @Override
+  public byte[] decrypt(final byte[] input, final int offset, final int length) {
+    assertInitialized();
+    assertRangeIsValid(input.length, offset, length);
+    assertCiphertextSizeIsValid(length);
+
+    byte[] nonce = readNonce(input);
+    Cipher cipher = getAndInitializeCipher(DECRYPT_MODE, nonce);
+
+    try {
+      return cipher.doFinal(input, offset + GCM_NONCE_SIZE_IN_BYTES, length - GCM_NONCE_SIZE_IN_BYTES);
+    } catch (AEADBadTagException e) {
+      throw OException.wrapException(new OSecurityException(AUTHENTICATION_ERROR), e);
+    } catch (IllegalBlockSizeException | BadPaddingException e) {
+      throw new IllegalStateException("Unexpected exception during GCM decryption.", e);
     }
   }
 
@@ -106,40 +144,6 @@ public class OAESGCMEncryption extends OAbstractEncryption {
     }
   }
 
-  @Override
-  public byte[] encrypt(final byte[] input, final int offset, final int length) {
-    assertInitialized();
-    byte[] nonce = randomNonce();
-    Cipher cipher = getAndInitializeCipher(ENCRYPT_MODE, nonce);
-
-    int outputLength = GCM_NONCE_SIZE_IN_BYTES + cipher.getOutputSize(length);
-    byte[] output = Arrays.copyOf(nonce, outputLength);
-
-    try {
-      cipher.doFinal(input, offset, length, output, GCM_NONCE_SIZE_IN_BYTES);
-      return output;
-    } catch (AEADBadTagException e) {
-      throw OException.wrapException(new OSecurityException(AUTHENTICATION_ERROR), e);
-    } catch (IllegalBlockSizeException | BadPaddingException | ShortBufferException e) {
-      throw new IllegalStateException("Unexpected exception during GCM decryption.", e);
-    }
-  }
-
-  @Override
-  public byte[] decrypt(final byte[] input, final int offset, final int length) {
-    assertInitialized();
-    byte[] nonce = readNonce(input);
-    Cipher cipher = getAndInitializeCipher(DECRYPT_MODE, nonce);
-
-    try {
-      return cipher.doFinal(input, offset + GCM_NONCE_SIZE_IN_BYTES, length - GCM_NONCE_SIZE_IN_BYTES);
-    } catch (AEADBadTagException e) {
-      throw OException.wrapException(new OSecurityException(AUTHENTICATION_ERROR), e);
-    } catch (IllegalBlockSizeException | BadPaddingException e) {
-      throw new IllegalStateException("Unexpected exception during GCM decryption.", e);
-    }
-  }
-
   private void validateKeySize(int numBytes) {
     if (numBytes != 16 && numBytes != 24 && numBytes != 32) {
       throw new OInvalidStorageEncryptionKeyException(INVALID_KEY_ERROR);
@@ -149,6 +153,18 @@ public class OAESGCMEncryption extends OAbstractEncryption {
   private void assertInitialized() {
     if (!initialized) {
       throw new OSecurityException(ENCRYPTION_NOT_INITIALIZED_ERROR);
+    }
+  }
+
+  private void assertRangeIsValid(int arraySize, int offset, int length) {
+    if (offset >= arraySize || offset + length > arraySize) {
+      throw new IllegalArgumentException(format(INVALID_RANGE_ERROR, arraySize, offset, length));
+    }
+  }
+
+  private void assertCiphertextSizeIsValid(int size) {
+    if (size < MIN_CIPHERTEXT_SIZE) {
+      throw new OSecurityException(format(INVALID_CIPHERTEXT_SIZE_ERROR, MIN_CIPHERTEXT_SIZE, size));
     }
   }
 
@@ -179,7 +195,7 @@ public class OAESGCMEncryption extends OAbstractEncryption {
   }
 
   private static Cipher getCipherInstance() {
-	try {
+    try {
       return Cipher.getInstance(TRANSFORMATION);
     } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
       throw OException.wrapException(new OSecurityException(NO_SUCH_CIPHER), e);
