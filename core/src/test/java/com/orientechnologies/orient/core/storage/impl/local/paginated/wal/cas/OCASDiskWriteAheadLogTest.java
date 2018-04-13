@@ -49,7 +49,7 @@ public class OCASDiskWriteAheadLogTest {
 
   @Before
   public void before() {
-    //OFileUtils.deleteRecursively(testDirectory.toFile());
+    OFileUtils.deleteRecursively(testDirectory.toFile());
   }
 
   @Test
@@ -1949,7 +1949,8 @@ public class OCASDiskWriteAheadLogTest {
 
   @Test
   public void writeBenchmarkTest() throws Exception {
-    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 49_152, 256 * 1024 * 1024, 20,
+    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 49_152,
+        512 * 1024 * 1024, 20,
         true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000);
 
     AtomicBoolean walIsFull = new AtomicBoolean();

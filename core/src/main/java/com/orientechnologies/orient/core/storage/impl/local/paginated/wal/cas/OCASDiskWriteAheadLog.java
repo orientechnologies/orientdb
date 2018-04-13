@@ -1719,39 +1719,35 @@ public final class OCASDiskWriteAheadLog {
               //continue
             }
 
-            writeFuture = writeExecutor.submit((Callable<?>) () -> {
-              try {
-                final int cqSize = channelCloseQueueSize.get();
-                if (cqSize > 0) {
-                  int counter = 0;
+            try {
+              final int cqSize = channelCloseQueueSize.get();
+              if (cqSize > 0) {
+                int counter = 0;
 
-                  while (counter < qSize) {
-                    OPair<Long, FileChannel> pair = channelCloseQueue.poll();
-                    if (pair != null) {
-                      @SuppressWarnings("resource")
-                      final FileChannel channel = pair.value;
-                      channel.force(true);
-                      channel.close();
+                while (counter < qSize) {
+                  OPair<Long, FileChannel> pair = channelCloseQueue.poll();
+                  if (pair != null) {
+                    @SuppressWarnings("resource")
+                    final FileChannel channel = pair.value;
+                    channel.force(true);
+                    channel.close();
 
-                      channelCloseQueueSize.decrementAndGet();
-                    } else {
-                      break;
-                    }
-
-                    counter++;
+                    channelCloseQueueSize.decrementAndGet();
+                  } else {
+                    break;
                   }
-                }
 
-                walChannel.force(true);
-                flushedLSN = writtenUpTo.get().lsn;
-                updateCheckpoint(writtenCheckpoint);
-              } catch (IOException e) {
-                OLogManager.instance().error(this, "Error during FSync of WAL data", e);
-                throw e;
+                  counter++;
+                }
               }
 
-              return null;
-            });
+              walChannel.force(true);
+              flushedLSN = writtenUpTo.get().lsn;
+              updateCheckpoint(writtenCheckpoint);
+            } catch (IOException e) {
+              OLogManager.instance().error(this, "Error during FSync of WAL data", e);
+              throw e;
+            }
 
             checkFreeSpace();
           } finally {
