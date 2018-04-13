@@ -84,12 +84,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final AtomicReference<WaitingListNode> waitingTail = new AtomicReference<WaitingListNode>();
 
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<OAtomicOperation>();
-  private final OPerformanceStatisticManager performanceStatisticManager;
+  private final           OPerformanceStatisticManager  performanceStatisticManager;
 
   /**
    * Flag which indicates whether we work in unsafe mode for current thread. Unsafe mode means that all operations in this thread
    * may violate violate ACID properties but system performance will be faster.
-   * <p>
    * <p>To start unsafe mode call {@link #switchOnUnsafeMode()}, to stop unsafe mode call {@link #switchOffUnsafeMode()}.
    */
   private static final ThreadLocal<Boolean> unsafeMode = new ThreadLocal<Boolean>() {
@@ -114,12 +113,12 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     });
   }
 
-  private final OAbstractPaginatedStorage storage;
-  private final OWriteAheadLog            writeAheadLog;
+  private final OAbstractPaginatedStorage          storage;
+  private final OWriteAheadLog                     writeAheadLog;
   private final OOneEntryPerKeyLockManager<String> lockManager = new OOneEntryPerKeyLockManager<String>(true, -1,
       OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
-  private final OReadCache  readCache;
-  private final OWriteCache writeCache;
+  private final OReadCache                         readCache;
+  private final OWriteCache                        writeCache;
 
   private final Map<OOperationUnitId, OPair<String, Deque<OPair<String, StackTraceElement[]>>>> activeAtomicOperations = new ConcurrentHashMap<OOperationUnitId, OPair<String, Deque<OPair<String, StackTraceElement[]>>>>();
 
@@ -148,13 +147,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * Starts atomic operation inside of current thread. If atomic operation has been already started, current atomic operation
    * instance will be returned. All durable components have to call this method at the beginning of any data modification
    * operation.
-   * <p>
    * <p>In current implementation of atomic operation, each component which is participated in atomic operation is hold under
    * exclusive lock till atomic operation will not be completed (committed or rollbacked).
-   * <p>
    * <p>If other thread is going to read data from component it has to acquire read lock inside of atomic operation manager {@link
    * #acquireReadLock(ODurableComponent)}, otherwise data consistency will be compromised.
-   * <p>
    * <p>Atomic operation may be delayed if start of atomic operations is prohibited by call of {@link
    * #freezeAtomicOperations(Class, String)} method. If mentioned above method is called then execution of current method will be
    * stopped till call of {@link #releaseAtomicOperations(long)} method or exception will be thrown. Concrete behaviour depends on
@@ -241,7 +237,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   /**
    * Switch off unsafe mode. During this mode it is not guaranteed that operations will support ACID properties but system
    * performance will be faster.
-   * <p>
    * <p>To switch off unsafe mode call {@link #switchOffUnsafeMode()}
    */
   public void switchOnUnsafeMode() {
@@ -443,6 +438,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       operation.rollback(exception);
     }
 
+    final int counter = operation.getCounter();
+    assert counter > 0;
+
     if (operation.isRollback() && !rollback) {
       final StringWriter writer = new StringWriter();
       writer.append("Atomic operation was rolled back by internal component");
@@ -454,40 +452,63 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
       atomicOperationsCount.decrement();
 
+      operation.decrementCounter();
+
+      if (counter == 1) {
+        for (String lockObject : operation.lockedObjects()) {
+          lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+        }
+
+        currentOperation.set(null);
+      }
+
       final ONestedRollbackException nre = new ONestedRollbackException(writer.toString());
       throw OException.wrapException(nre, exception);
     }
 
-    final int counter = operation.getCounter();
-    assert counter > 0;
-
     if (counter == 1) {
-      final boolean useWal = useWal();
+      try {
+        final boolean useWal = useWal();
 
-      if (!operation.isRollback())
-        operation.commitChanges(useWal ? writeAheadLog : null);
+        if (!operation.isRollback()) {
+          operation.commitChanges(useWal ? writeAheadLog : null);
+        }
 
-      if (useWal)
-        writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(),
-            operation.getMetadata());
+        if (useWal) {
+          writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(),
+              operation.getMetadata());
+        }
 
-      // We have to decrement the counter after the disk operations, otherwise, if they
-      // fail, we will be unable to rollback the atomic operation later.
-      operation.decrementCounter();
-      currentOperation.set(null);
+        // We have to decrement the counter after the disk operations, otherwise, if they
+        // fail, we will be unable to rollback the atomic operation later.
+        operation.decrementCounter();
+        currentOperation.set(null);
 
-      if (trackAtomicOperations) {
-        activeAtomicOperations.remove(operation.getOperationUnitId());
+        if (trackAtomicOperations) {
+          activeAtomicOperations.remove(operation.getOperationUnitId());
+        }
+
+      } finally {
+        for (String lockObject : operation.lockedObjects()) {
+          lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+        }
+
+        atomicOperationsCount.decrement();
       }
-
-      for (String lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
-
-      atomicOperationsCount.decrement();
-    } else
+    } else {
       operation.decrementCounter();
+    }
 
     return operation;
+  }
+
+  public void ensureThatComponentsUnlocked() {
+    final OAtomicOperation operation = currentOperation.get();
+    if (operation != null) {
+      for (String lockObject : operation.lockedObjects()) {
+        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+      }
+    }
   }
 
   /**

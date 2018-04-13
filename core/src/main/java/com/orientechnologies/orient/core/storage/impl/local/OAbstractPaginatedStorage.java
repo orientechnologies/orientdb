@@ -1875,6 +1875,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             transaction.set(null);
           }
         } finally {
+          atomicOperationsManager.ensureThatComponentsUnlocked();
           databaseRecord.getMetadata().clearThreadLocalSchemaSnapshot();
         }
       } finally {

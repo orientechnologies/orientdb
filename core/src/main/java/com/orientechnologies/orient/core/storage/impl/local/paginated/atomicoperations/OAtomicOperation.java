@@ -54,11 +54,11 @@ public class OAtomicOperation {
   private boolean   rollback;
   private Exception rollbackException;
 
-  private Set<String>            lockedObjects        = new HashSet<String>();
-  private Map<Long, FileChanges> fileChanges          = new HashMap<Long, FileChanges>();
-  private Map<String, Long>      newFileNamesId       = new HashMap<String, Long>();
-  private Set<Long>              deletedFiles         = new HashSet<Long>();
-  private Map<String, Long>      deletedFileNameIdMap = new HashMap<String, Long>();
+  private final Set<String>            lockedObjects        = new HashSet<String>();
+  private       Map<Long, FileChanges> fileChanges          = new HashMap<Long, FileChanges>();
+  private       Map<String, Long>      newFileNamesId       = new HashMap<String, Long>();
+  private       Set<Long>              deletedFiles         = new HashSet<Long>();
+  private       Map<String, Long>      deletedFileNameIdMap = new HashMap<String, Long>();
 
   private OReadCache  readCache;
   private OWriteCache writeCache;
