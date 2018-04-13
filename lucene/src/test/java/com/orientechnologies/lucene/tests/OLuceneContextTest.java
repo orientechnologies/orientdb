@@ -67,7 +67,7 @@ public class OLuceneContextTest extends OLuceneBaseTest {
   }
 
   @Test
-  public void shouldReturnToalHits() throws Exception {
+  public void shouldReturnTotalHits() throws Exception {
     OResultSet docs = db.query(
         "select *,$totalHits,$Song_title_totalHits from Song where search_class('title:man')= true  limit 1");
 
@@ -77,8 +77,8 @@ public class OLuceneContextTest extends OLuceneBaseTest {
     OResult doc = results.get(0);
     System.out.println("doc.toElement().toJSON() = " + doc.toElement().toJSON());
 
-    assertThat(doc.<Integer>getProperty("$totalHits")).isEqualTo(14);
-    assertThat(doc.<Integer>getProperty("$Song_title_totalHits")).isEqualTo(14);
+    assertThat(doc.<Long>getProperty("$totalHits")).isEqualTo(14l);
+    assertThat(doc.<Long>getProperty("$Song_title_totalHits")).isEqualTo(14l);
     docs.close();
   }
 }

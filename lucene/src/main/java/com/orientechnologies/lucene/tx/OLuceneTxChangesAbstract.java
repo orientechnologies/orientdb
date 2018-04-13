@@ -59,7 +59,7 @@ public abstract class OLuceneTxChangesAbstract implements OLuceneTxChanges {
   }
 
   @Override
-  public int deletedDocs(Query query) {
+  public long deletedDocs(Query query) {
 
     try {
       IndexSearcher indexSearcher = new IndexSearcher(DirectoryReader.open(deletedIdx, true, true));

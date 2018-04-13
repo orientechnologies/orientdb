@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>3.0.0-SNAPSHOT</version>
+        <version>3.0.1-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -42,7 +42,8 @@
         <javac.target.version>1.6</javac.target.version>
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
         <osgi.import>com.hazelcast.*;resolution:=optional,*</osgi.import>
-        <osgi.export>com.orientechnologies.orient.server.hazelcast.*,com.orientechnologies.orient.server.distributed.impl.*</osgi.export>
+        <osgi.export>com.orientechnologies.orient.server.hazelcast.*,com.orientechnologies.orient.server.distributed.impl.*
+        </osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>-ea
             -Xmx${heapSize}
@@ -65,39 +66,6 @@
     </properties>
 
     <profiles>
-        <profile>
-            <id>development</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <skipTests>true</skipTests>
-            </properties>
-        </profile>
-        <profile>
-            <id>ci</id>
-            <activation>
-                <property>
-                    <name>orientdb.test.env</name>
-                    <value>ci</value>
-                </property>
-            </activation>
-            <properties>
-                <skipTests>true</skipTests>
-            </properties>
-        </profile>
-        <profile>
-            <id>release</id>
-            <activation>
-                <property>
-                    <name>orientdb.test.env</name>
-                    <value>release</value>
-                </property>
-            </activation>
-            <properties>
-                <skipTests>true</skipTests>
-            </properties>
-        </profile>
         <profile>
             <id>crash-tests</id>
             <build>

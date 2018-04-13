@@ -2687,7 +2687,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return result;
   }
 
-  public void queryStarted(String id, OResultSet rs) {
+  public synchronized void queryStarted(String id, OResultSet rs) {
     if (this.activeQueries.size() > 1 && this.activeQueries.size() % 10 == 0) {
       StringBuilder msg = new StringBuilder();
       msg.append("This database instance has ");
@@ -2702,11 +2702,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     this.activeQueries.put(id, rs);
   }
 
-  public void queryClosed(String id) {
+  public synchronized void queryClosed(String id) {
     this.activeQueries.remove(id);
   }
 
-  protected void closeActiveQueries() {
+  protected synchronized void closeActiveQueries() {
     while (activeQueries.size() > 0) {
       this.activeQueries.values().iterator().next().close();//the query automatically unregisters itself
     }

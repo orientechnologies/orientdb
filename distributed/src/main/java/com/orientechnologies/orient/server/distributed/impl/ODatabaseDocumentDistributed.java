@@ -85,6 +85,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @return the cluster map for current deploy
    */
   public Map<String, Set<String>> getActiveClusterMap() {
+    if(getStorageDistributed().getLocalDistributedDatabase().getManager().isOffline()){
+      return super.getActiveClusterMap();
+    }
     Map<String, Set<String>> result = new HashMap<>();
     ODistributedConfiguration cfg = getStorageDistributed().getDistributedConfiguration();
 

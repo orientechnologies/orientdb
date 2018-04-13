@@ -114,9 +114,9 @@ public class OLuceneQueryContext {
     }
   }
 
-  public int deletedDocs(Query query) {
+  public long deletedDocs(Query query) {
 
-    return changes.map(c -> c.deletedDocs(query)).orElse(0);
+    return changes.map(c -> c.deletedDocs(query)).orElse(0l);
   }
 
   public boolean isUpdated(Document doc, Object key, OIdentifiable value) {
