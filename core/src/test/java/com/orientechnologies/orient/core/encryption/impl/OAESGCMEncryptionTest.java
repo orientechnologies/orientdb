@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -108,29 +109,31 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
       storage.close(true, false);
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "invalidPassword");
+      OSecurityException exception = null;
       try {
         db.open("admin", "admin");
         storage = ((ODatabaseDocumentInternal) db).getStorage();
-        Assert.fail();
       } catch (OSecurityException e) {
-        assertTrue(true);
+        exception = e;
       } finally {
         db.activateOnCurrentThread();
         db.close();
         storage.close(true, false);
+        assertNotNull(exception);
       }
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA=-");
+      exception = null;
       try {
         db.open("admin", "admin");
         storage = ((ODatabaseDocumentInternal) db).getStorage();
-        Assert.fail();
       } catch (OSecurityException e) {
-        assertTrue(true);
+        exception = e;
       } finally {
         db.activateOnCurrentThread();
         db.close();
         storage.close(true, false);
+        assertNotNull(exception);
       }
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
@@ -184,34 +187,34 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
       storage.close(true, false);
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "invalidPassword");
+      OSecurityException exception = null;
       try {
         db.open("admin", "admin");
         storage = ((ODatabaseDocumentInternal) db).getStorage();
         db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
 
-        result = db.query(new OSQLSynchQuery<ODocument>("select from OUser"));
-        Assert.assertFalse(result.isEmpty());
-
-        Assert.fail();
+        db.query(new OSQLSynchQuery<ODocument>("select from OUser"));
       } catch (OSecurityException e) {
-        assertTrue(true);
+        exception = e;
       } finally {
         db.close();
         storage.close(true, false);
+        assertNotNull(exception);
       }
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA=-");
+      exception = null;
       try {
         db.open("admin", "admin");
         storage = ((ODatabaseDocumentInternal) db).getStorage();
         db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
-        Assert.fail();
       } catch (OSecurityException e) {
-        assertTrue(true);
+        exception = e;
       } finally {
         db.activateOnCurrentThread();
         db.close();
         storage.close(true, false);
+        assertNotNull(exception);
       }
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
