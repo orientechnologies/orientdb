@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
 
-public final class OEmptyWALRecord extends OAbstractWALRecord {
+public class OEmptyWALRecord extends OAbstractWALRecord {
   public OEmptyWALRecord() {
   }
 

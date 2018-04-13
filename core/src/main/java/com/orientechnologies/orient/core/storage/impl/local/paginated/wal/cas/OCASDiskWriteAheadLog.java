@@ -26,10 +26,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.Cursor;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.MPSCFAAArrayDequeue;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.tasks.ForceTask;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.tasks.StopTask;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.tasks.Task;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.tasks.WriteTask;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import net.jpountz.xxhash.XXHash64;
@@ -53,7 +49,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -150,8 +145,7 @@ public final class OCASDiskWriteAheadLog {
   private final AtomicInteger                                   channelCloseQueueSize = new AtomicInteger();
 
   private final    AtomicReference<CountDownLatch> flushLatch        = new AtomicReference<>(new CountDownLatch(0));
-  private final    Future<?>                       writeFuture;
-  private final    ArrayBlockingQueue<Task>        taskBlockingQueue = new ArrayBlockingQueue<>(2);
+  private          Future<?>                       writeFuture       = null;
   private volatile OLogSequenceNumber              writtenCheckpoint = null;
 
   private       long lastFSyncTs = -1;
@@ -175,103 +169,6 @@ public final class OCASDiskWriteAheadLog {
       thread.setName("OrientDB WAL Write Task (" + storageName + ")");
       thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       return thread;
-    });
-
-    writeFuture = writeExecutor.submit((Callable<?>) () -> {
-      try {
-        while (true) {
-          final Task task = taskBlockingQueue.take();
-          switch (task.getType()) {
-          case STOP: {
-            return null;
-          }
-
-          case FORCE: {
-            try {
-              final int cqSize = channelCloseQueueSize.get();
-              if (cqSize > 0) {
-                int counter = 0;
-
-                while (counter < cqSize) {
-                  OPair<Long, FileChannel> pair = channelCloseQueue.poll();
-                  if (pair != null) {
-                    @SuppressWarnings("resource")
-                    final FileChannel channel = pair.value;
-                    channel.force(true);
-                    channel.close();
-
-                    channelCloseQueueSize.decrementAndGet();
-                  } else {
-                    break;
-                  }
-
-                  counter++;
-                }
-              }
-
-              walChannel.force(true);
-              flushedLSN = writtenUpTo.get().lsn;
-              updateCheckpoint(writtenCheckpoint);
-            } catch (IOException e) {
-              OLogManager.instance().error(this, "Error during FSync of WAL data", e);
-              throw e;
-            }
-
-            break;
-          }
-
-          case WRITE: {
-            final WriteTask writeTask = (WriteTask) task;
-            final ByteBuffer buffer = writeTask.getBuffer();
-            final OLogSequenceNumber lastLSN = writeTask.getLastLSN();
-            final OLogSequenceNumber checkpointLSN = writeTask.getCheckpointLSN();
-            final long pointer = writeTask.getPointer();
-
-            try {
-              assert buffer.position() == 0;
-
-              while (buffer.remaining() > 0) {
-                int initialPos = buffer.position();
-                int written = walChannel.write(buffer);
-
-                assert buffer.position() == initialPos + written;
-              }
-
-              if (lastLSN != null) {
-                final WrittenUpTo written = writtenUpTo.get();
-
-                assert written == null || written.lsn.compareTo(lastLSN) < 0;
-
-                if (written == null) {
-                  writtenUpTo.lazySet(new WrittenUpTo(lastLSN, buffer.limit()));
-                } else {
-                  if (written.lsn.getSegment() == lastLSN.getSegment()) {
-                    writtenUpTo.lazySet(new WrittenUpTo(lastLSN, written.position + buffer.limit()));
-                  } else {
-                    writtenUpTo.lazySet(new WrittenUpTo(lastLSN, buffer.limit()));
-                  }
-                }
-              }
-
-              if (checkpointLSN != null) {
-                assert writtenCheckpoint == null || writtenCheckpoint.compareTo(checkpointLSN) < 0;
-                writtenCheckpoint = checkpointLSN;
-              }
-            } catch (IOException e) {
-              OLogManager.instance().error(this, "Error during WAL data write", e);
-              throw e;
-            } finally {
-              Native.free(pointer);
-            }
-
-            break;
-          }
-          }
-        }
-      } catch (InterruptedException e) {
-        return null;
-      }
-
     });
 
     this.fsyncInterval = fsyncInterval;
@@ -1280,12 +1177,6 @@ public final class OCASDiskWriteAheadLog {
     }
 
     try {
-      taskBlockingQueue.put(new StopTask());
-    } catch (InterruptedException e) {
-      OLogManager.instance().error(this, "Cannot shutdown background WAL commit thread", e);
-    }
-
-    try {
       if (writeFuture != null) {
         writeFuture.get();
       }
@@ -1707,12 +1598,20 @@ public final class OCASDiskWriteAheadLog {
               if (segmentId != lsn.getSegment()) {
                 if (walChannel != null) {
                   if (pointer > 0) {
-                    writeBuffer(buffer, pointer, lastLSN, checkPointLSN);
+                    writeBuffer(walChannel, buffer, pointer, lastLSN, checkPointLSN);
                   }
 
                   pointer = 0;
                   buffer = null;
                   page = -1;
+
+                  try {
+                    if (writeFuture != null) {
+                      writeFuture.get();
+                    }
+                  } catch (InterruptedException e) {
+                    //continue
+                  }
 
                   channelCloseQueueSize.incrementAndGet();
                   channelCloseQueue.offer(new OPair<>(segmentId, walChannel));
@@ -1744,7 +1643,7 @@ public final class OCASDiskWriteAheadLog {
                 while (written < bytesToWrite) {
                   if (buffer == null || buffer.remaining() == 0) {
                     if (pointer > 0) {
-                      writeBuffer(buffer, pointer, lastLSN, checkPointLSN);
+                      writeBuffer(walChannel, buffer, pointer, lastLSN, checkPointLSN);
                     }
 
                     pointer = Native.malloc(BUFFER_SIZE);
@@ -1803,7 +1702,7 @@ public final class OCASDiskWriteAheadLog {
             }
 
             if (pointer > 0) {
-              writeBuffer(buffer, pointer, lastLSN, checkPointLSN);
+              writeBuffer(walChannel, buffer, pointer, lastLSN, checkPointLSN);
             }
           } finally {
             fl.countDown();
@@ -1813,17 +1712,53 @@ public final class OCASDiskWriteAheadLog {
         if (makeFSync) {
           try {
             try {
-              taskBlockingQueue.put(new ForceTask());
+              if (writeFuture != null) {
+                writeFuture.get();
+              }
             } catch (InterruptedException e) {
               //continue
             }
+
+            writeFuture = writeExecutor.submit((Callable<?>) () -> {
+              try {
+                final int cqSize = channelCloseQueueSize.get();
+                if (cqSize > 0) {
+                  int counter = 0;
+
+                  while (counter < qSize) {
+                    OPair<Long, FileChannel> pair = channelCloseQueue.poll();
+                    if (pair != null) {
+                      @SuppressWarnings("resource")
+                      final FileChannel channel = pair.value;
+                      channel.force(true);
+                      channel.close();
+
+                      channelCloseQueueSize.decrementAndGet();
+                    } else {
+                      break;
+                    }
+
+                    counter++;
+                  }
+                }
+
+                walChannel.force(true);
+                flushedLSN = writtenUpTo.get().lsn;
+                updateCheckpoint(writtenCheckpoint);
+              } catch (IOException e) {
+                OLogManager.instance().error(this, "Error during FSync of WAL data", e);
+                throw e;
+              }
+
+              return null;
+            });
 
             checkFreeSpace();
           } finally {
             lastFSyncTs = ts;
           }
         }
-      } catch (IOException e) {
+      } catch (IOException | ExecutionException e) {
         OLogManager.instance().errorNoDb(this, "Error during WAL writing", e);
         throw new IllegalStateException(e);
       } catch (RuntimeException | Error e) {
@@ -1832,7 +1767,8 @@ public final class OCASDiskWriteAheadLog {
       }
     }
 
-    private void writeBuffer(ByteBuffer buffer, long pointer, OLogSequenceNumber lastLSN, OLogSequenceNumber checkpointLSN) {
+    private void writeBuffer(FileChannel channel, ByteBuffer buffer, long pointer, OLogSequenceNumber lastLSN,
+        OLogSequenceNumber checkpointLSN) {
 
       if (buffer.position() <= OCASWALPage.RECORDS_OFFSET) {
         Native.free(pointer);
@@ -1876,10 +1812,55 @@ public final class OCASDiskWriteAheadLog {
       assert buffer.limit() <= buffer.capacity();
 
       try {
-        taskBlockingQueue.put(new WriteTask(buffer, pointer, lastLSN, checkpointLSN));
+        if (writeFuture != null) {
+          writeFuture.get();
+        }
       } catch (InterruptedException e) {
         //continue
+      } catch (Exception e) {
+        throw OException.wrapException(new OStorageException("Error during WAL data write"), e);
       }
+
+      writeFuture = writeExecutor.submit((Callable<?>) () -> {
+        try {
+          assert buffer.position() == 0;
+
+          while (buffer.remaining() > 0) {
+            int initialPos = buffer.position();
+            int written = channel.write(buffer);
+
+            assert buffer.position() == initialPos + written;
+          }
+
+          if (lastLSN != null) {
+            final WrittenUpTo written = writtenUpTo.get();
+
+            assert written == null || written.lsn.compareTo(lastLSN) < 0;
+
+            if (written == null) {
+              writtenUpTo.lazySet(new WrittenUpTo(lastLSN, buffer.limit()));
+            } else {
+              if (written.lsn.getSegment() == lastLSN.getSegment()) {
+                writtenUpTo.lazySet(new WrittenUpTo(lastLSN, written.position + buffer.limit()));
+              } else {
+                writtenUpTo.lazySet(new WrittenUpTo(lastLSN, buffer.limit()));
+              }
+            }
+          }
+
+          if (checkpointLSN != null) {
+            assert writtenCheckpoint == null || writtenCheckpoint.compareTo(checkpointLSN) < 0;
+            writtenCheckpoint = checkpointLSN;
+          }
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Error during WAL data write", e);
+          throw e;
+        } finally {
+          Native.free(pointer);
+        }
+
+        return null;
+      });
     }
   }
 

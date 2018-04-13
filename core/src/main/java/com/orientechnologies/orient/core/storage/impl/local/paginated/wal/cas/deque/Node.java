@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-public final class Node<T> extends AtomicReference<Node<T>> {
+public class Node<T> extends AtomicReference<Node<T>> {
   static final int BUFFER_SIZE = 1024;
 
   private volatile Node<T> prev;
