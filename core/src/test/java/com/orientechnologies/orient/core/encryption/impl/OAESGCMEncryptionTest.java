@@ -57,29 +57,17 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
 
   @Test
   public void testOAESEncryptedWith128BitKey() {
-    testEncryption(OAESGCMEncryption.NAME, "T1JJRU5UREJfSVNfQ09PTA==");
-
-    // codacy reports that the test does not contain assert or fail but this happens in testEncryption
-    // so assert true here to make codacy happy
-    assertTrue(true);
+    assertTrue(testEncryption(OAESGCMEncryption.NAME, "T1JJRU5UREJfSVNfQ09PTA=="));
   }
 
   @Test
   public void testOAESEncryptedWith192BitKey() {
-    testEncryption(OAESGCMEncryption.NAME, "T1JJRU5UREJfSVNfQ09PTF9TT19DT09M");
-
-    // codacy reports that the test does not contain assert or fail but this happens in testEncryption
-    // so assert true here to make codacy happy
-    assertTrue(true);
+    assertTrue(testEncryption(OAESGCMEncryption.NAME, "T1JJRU5UREJfSVNfQ09PTF9TT19DT09M"));
   }
 
   @Test
   public void testOAESEncryptedWith256BitKey() {
-    testEncryption(OAESGCMEncryption.NAME, "T1JJRU5UREJfSVNfQ09PTF9TT19DT09MX1NPX0NPT0w=");
-
-    // codacy reports that the test does not contain assert or fail but this happens in testEncryption
-    // so assert true here to make codacy happy
-    assertTrue(true);
+    assertTrue(testEncryption(OAESGCMEncryption.NAME, "T1JJRU5UREJfSVNfQ09PTF9TT19DT09MX1NPX0NPT0w="));
   }
 
   @Test

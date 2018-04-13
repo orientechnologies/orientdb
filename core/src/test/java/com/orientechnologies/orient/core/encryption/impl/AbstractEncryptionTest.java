@@ -24,11 +24,11 @@ import static org.assertj.core.api.Assertions.*;
  */
 public abstract class AbstractEncryptionTest {
 
-  public void testEncryption(String name) {
-    testEncryption(name, null);
+  public boolean testEncryption(String name) {
+    return testEncryption(name, null);
   }
 
-  public void testEncryption(String name, String options) {
+  public boolean testEncryption(String name, String options) {
     long seed = System.currentTimeMillis();
     System.out.println(name + " - Encryption seed " + seed);
 
@@ -66,6 +66,8 @@ public abstract class AbstractEncryptionTest {
     System.out.println(
         "Encryption/Decryption test against " + name + " took: " + (System.currentTimeMillis() - seed) + "ms, total byte size: "
             + encryptedSize);
+
+    return true;
   }
 
   public void verifyDatabaseEncryption(ODatabase db) {
