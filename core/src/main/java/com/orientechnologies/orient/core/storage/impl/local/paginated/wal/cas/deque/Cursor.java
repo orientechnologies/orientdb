@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque;
 
-public class Cursor<T> {
+public final class Cursor<T> {
   final Node<T> node;
   final int     itemIndex;
   final T       item;
