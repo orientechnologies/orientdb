@@ -70,6 +70,7 @@ public class OAESGCMEncryption implements OEncryption {
 
     key = createKey(base64EncodedKey);
     csprng = createSecureRandom();
+    getCipherInstance(); // fail early if cipher algorithm is not available
 
     initialized = true;
     return this;
