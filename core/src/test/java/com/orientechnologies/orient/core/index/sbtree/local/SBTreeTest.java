@@ -292,7 +292,10 @@ public class SBTreeTest {
 
   public void testIterateEntriesBetween() {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
-    Random random = new Random();
+    final long seed = System.nanoTime();
+
+    System.out.println("testIterateEntriesBetween : " + seed);
+    Random random = new Random(seed);
 
     while (keyValues.size() < KEYS_COUNT) {
       int key = random.nextInt(Integer.MAX_VALUE);
@@ -635,6 +638,10 @@ public class SBTreeTest {
 
       long startTime = System.currentTimeMillis();
       int iteration = 0;
+
+      if (i == 15) {
+        System.out.println();
+      }
       while (iterator.hasNext()) {
         iteration++;
 
