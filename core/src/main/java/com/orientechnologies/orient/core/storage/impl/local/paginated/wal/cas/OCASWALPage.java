@@ -4,7 +4,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 
-public class OCASWALPage {
+public final class OCASWALPage {
   static final long MAGIC_NUMBER = 0xEF31BCAFL;
 
   /**

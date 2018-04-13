@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRe
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public class OStartWALRecord implements OWALRecord {
+public final class OStartWALRecord implements OWALRecord {
   private volatile OLogSequenceNumber lsn;
 
   @Override

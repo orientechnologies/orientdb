@@ -96,7 +96,6 @@ public final class OCASDiskWriteAheadLog {
 
   private final    LongAdder ongoingTXs = new LongAdder();
   private final    long      freeSpaceLimit;
-  private volatile long      freeSpace  = -1;
 
   private final MPSCFAAArrayDequeue<OWALRecord> records = new MPSCFAAArrayDequeue<>();
 
@@ -144,9 +143,10 @@ public final class OCASDiskWriteAheadLog {
   private final ConcurrentLinkedQueue<OPair<Long, FileChannel>> channelCloseQueue     = new ConcurrentLinkedQueue<>();
   private final AtomicInteger                                   channelCloseQueueSize = new AtomicInteger();
 
-  private final    AtomicReference<CountDownLatch> flushLatch        = new AtomicReference<>(new CountDownLatch(0));
-  private          Future<?>                       writeFuture       = null;
-  private volatile OLogSequenceNumber              writtenCheckpoint = null;
+  private final AtomicReference<CountDownLatch> flushLatch        = new AtomicReference<>(new CountDownLatch(0));
+  private       Future<?>                       writeFuture       = null;
+  //not volatile because used only inside of write thread.
+  private       OLogSequenceNumber              writtenCheckpoint = null;
 
   private       long lastFSyncTs = -1;
   private final int  fsyncInterval;
@@ -1223,7 +1223,7 @@ public final class OCASDiskWriteAheadLog {
   }
 
   private void checkFreeSpace() throws IOException {
-    freeSpace = fileStore.getUsableSpace();
+    final long freeSpace = fileStore.getUsableSpace();
 
     //system has unlimited amount of free space
     if (freeSpace < 0)
