@@ -20,6 +20,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import static org.junit.Assert.assertTrue;
+
 /**
  * @author Skymatic / Markus Kreusch (markus.kreusch--(at)--skymatic.de)
  */
@@ -56,16 +58,28 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
   @Test
   public void testOAESEncryptedWith128BitKey() {
     testEncryption(OAESGCMEncryption.NAME, "T1JJRU5UREJfSVNfQ09PTA==");
+
+    // codacy reports that the test does not contain assert or fail but this happens in testEncryption
+    // so assert true here to make codacy happy
+    assertTrue(true);
   }
 
   @Test
   public void testOAESEncryptedWith192BitKey() {
     testEncryption(OAESGCMEncryption.NAME, "T1JJRU5UREJfSVNfQ09PTF9TT19DT09M");
+
+    // codacy reports that the test does not contain assert or fail but this happens in testEncryption
+    // so assert true here to make codacy happy
+    assertTrue(true);
   }
 
   @Test
   public void testOAESEncryptedWith256BitKey() {
     testEncryption(OAESGCMEncryption.NAME, "T1JJRU5UREJfSVNfQ09PTF9TT19DT09MX1NPX0NPT0w=");
+
+    // codacy reports that the test does not contain assert or fail but this happens in testEncryption
+    // so assert true here to make codacy happy
+    assertTrue(true);
   }
 
   @Test
@@ -111,7 +125,7 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
         storage = ((ODatabaseDocumentInternal) db).getStorage();
         Assert.fail();
       } catch (OSecurityException e) {
-        Assert.assertTrue(true);
+        assertTrue(true);
       } finally {
         db.activateOnCurrentThread();
         db.close();
@@ -124,7 +138,7 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
         storage = ((ODatabaseDocumentInternal) db).getStorage();
         Assert.fail();
       } catch (OSecurityException e) {
-        Assert.assertTrue(true);
+        assertTrue(true);
       } finally {
         db.activateOnCurrentThread();
         db.close();
@@ -192,7 +206,7 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
 
         Assert.fail();
       } catch (OSecurityException e) {
-        Assert.assertTrue(true);
+        assertTrue(true);
       } finally {
         db.close();
         storage.close(true, false);
@@ -205,7 +219,7 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
         db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
         Assert.fail();
       } catch (OSecurityException e) {
-        Assert.assertTrue(true);
+        assertTrue(true);
       } finally {
         db.activateOnCurrentThread();
         db.close();
