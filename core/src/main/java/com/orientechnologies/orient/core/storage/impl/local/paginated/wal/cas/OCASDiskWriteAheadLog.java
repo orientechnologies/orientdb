@@ -94,8 +94,7 @@ public final class OCASDiskWriteAheadLog {
 
   private final int maxSegmentSize;
 
-  private final    LongAdder ongoingTXs = new LongAdder();
-  private final    long      freeSpaceLimit;
+  private final long freeSpaceLimit;
 
   private final MPSCFAAArrayDequeue<OWALRecord> records = new MPSCFAAArrayDequeue<>();
 
@@ -439,6 +438,7 @@ public final class OCASDiskWriteAheadLog {
       }
 
       Cursor<OWALRecord> recordCursor = records.peekFirst();
+      assert recordCursor != null;
       OWALRecord record = recordCursor.getItem();
       OLogSequenceNumber logRecordLSN = record.getLsn();
 
@@ -464,6 +464,7 @@ public final class OCASDiskWriteAheadLog {
             }
           } else {
             recordCursor = records.peekFirst();
+            assert recordCursor != null;
             record = recordCursor.getItem();
             logRecordLSN = record.getLsn();
             break;
@@ -484,7 +485,7 @@ public final class OCASDiskWriteAheadLog {
         assert writtenLSN != null;
 
         if (writtenLSN.compareTo(lsn) < 0) {
-          doFlush(false, true);
+          doFlush(false);
         }
 
         writtenLSN = this.writtenUpTo.get().lsn;
@@ -657,6 +658,7 @@ public final class OCASDiskWriteAheadLog {
 
       Cursor<OWALRecord> recordCursor = records.peekFirst();
 
+      assert recordCursor != null;
       OWALRecord logRecord = recordCursor.getItem();
       OLogSequenceNumber logRecordLSN = logRecord.getLsn();
 
@@ -688,6 +690,7 @@ public final class OCASDiskWriteAheadLog {
             }
 
             recordCursor = records.peekFirst();
+            assert recordCursor != null;
             logRecord = recordCursor.getItem();
             logRecordLSN = logRecord.getLsn();
             break;
@@ -701,6 +704,7 @@ public final class OCASDiskWriteAheadLog {
               assert logRecordLSN.getPosition() >= 0;
             } else {
               recordCursor = records.peekFirst();
+              assert recordCursor != null;
               logRecord = recordCursor.getItem();
               logRecordLSN = logRecord.getLsn();
 
@@ -725,7 +729,7 @@ public final class OCASDiskWriteAheadLog {
         assert writtenLSN != null;
 
         if (writtenLSN.compareTo(lsn) <= 0) {
-          doFlush(false, true);
+          doFlush(false);
         }
         writtenLSN = this.writtenUpTo.get().lsn;
       }
@@ -869,10 +873,6 @@ public final class OCASDiskWriteAheadLog {
     long logSegment;
     segmentLock.sharedLock();
     try {
-      if (writeableRecord instanceof OAtomicUnitStartRecord) {
-        ongoingTXs.increment();
-      }
-
       logSegment = currentSegment;
       recordLSN = doLogRecord(writeableRecord);
 
@@ -882,10 +882,6 @@ public final class OCASDiskWriteAheadLog {
 
       if (segSize == diskSize) {
         segments.add(currentSegment);
-      }
-
-      if (writeableRecord instanceof OAtomicUnitEndRecord) {
-        ongoingTXs.decrement();
       }
     } finally {
       segmentLock.sharedUnlock();
@@ -902,7 +898,7 @@ public final class OCASDiskWriteAheadLog {
       qsize = queueSize.get();
 
       if (qsize >= maxCacheSize) {
-        doFlush(false, true);
+        doFlush(false);
       }
     }
 
@@ -942,6 +938,7 @@ public final class OCASDiskWriteAheadLog {
       }
 
       final OWALRecord first = records.peek();
+      assert first != null;
       final OLogSequenceNumber firstLSN = first.getLsn();
 
       if (firstLSN.getPosition() > -1) {
@@ -1014,10 +1011,6 @@ public final class OCASDiskWriteAheadLog {
   public void appendNewSegment() {
     segmentLock.exclusiveLock();
     try {
-      if (ongoingTXs.sum() > 0) {
-        throw new IllegalStateException("There are on going txs, such call can be dangerous and unpredictable");
-      }
-
       //noinspection NonAtomicOperationOnVolatileField
       currentSegment++;
       segmentSize.set(0);
@@ -1035,10 +1028,6 @@ public final class OCASDiskWriteAheadLog {
 
     segmentLock.exclusiveLock();
     try {
-      if (ongoingTXs.sum() > 0) {
-        throw new IllegalStateException("There are on going txs, such call can be dangerous and unpredictable");
-      }
-
       if (segmentIndex <= currentSegment) {
         return;
       }
@@ -1078,6 +1067,7 @@ public final class OCASDiskWriteAheadLog {
 
   public long[] nonActiveSegments() {
     final OWALRecord firstRecord = records.peek();
+    assert firstRecord != null;
     final OLogSequenceNumber firstLSN = firstRecord.getLsn();
 
     long maxSegment = currentSegment;
@@ -1105,6 +1095,7 @@ public final class OCASDiskWriteAheadLog {
 
   public File[] nonActiveSegments(long fromSegment) {
     final OWALRecord firstRecord = records.peek();
+    assert firstRecord != null;
     final OLogSequenceNumber firstLSN = firstRecord.getLsn();
 
     long maxSegment = currentSegment;
@@ -1155,7 +1146,7 @@ public final class OCASDiskWriteAheadLog {
   }
 
   public void flush() {
-    doFlush(true, true);
+    doFlush(true);
   }
 
   public void close() throws IOException {
@@ -1164,7 +1155,7 @@ public final class OCASDiskWriteAheadLog {
 
   public void close(boolean flush) throws IOException {
     if (flush) {
-      doFlush(true, true);
+      doFlush(true);
     }
 
     commitExecutor.shutdown();
@@ -1288,8 +1279,8 @@ public final class OCASDiskWriteAheadLog {
     segmentOverflowListeners.removeAll(itemsToRemove);
   }
 
-  private void doFlush(boolean forceSync, boolean fullWrite) {
-    final Future<?> future = commitExecutor.submit(new RecordsWriter(forceSync, fullWrite));
+  private void doFlush(boolean forceSync) {
+    final Future<?> future = commitExecutor.submit(new RecordsWriter(forceSync, true));
     try {
       future.get();
     } catch (Exception e) {
@@ -1595,39 +1586,39 @@ public final class OCASDiskWriteAheadLog {
 
               assert lsn.getSegment() >= segmentId;
 
-              if (segmentId != lsn.getSegment()) {
-                if (walChannel != null) {
-                  if (pointer > 0) {
-                    writeBuffer(walChannel, buffer, pointer, lastLSN, checkPointLSN);
-                  }
-
-                  pointer = 0;
-                  buffer = null;
-                  page = -1;
-
-                  try {
-                    if (writeFuture != null) {
-                      writeFuture.get();
-                    }
-                  } catch (InterruptedException e) {
-                    //continue
-                  }
-
-                  channelCloseQueueSize.incrementAndGet();
-                  channelCloseQueue.offer(new OPair<>(segmentId, walChannel));
-                }
-
-                segmentId = lsn.getSegment();
-
-                walChannel = FileChannel
-                    .open(walLocation.resolve(getSegmentName(segmentId)), StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW,
-                        StandardOpenOption.APPEND);
-                assert lsn.getPosition() == OCASWALPage.RECORDS_OFFSET;
-              }
-
               if (record instanceof OMilestoneWALRecord || record instanceof OStartWALRecord) {
                 records.poll();
               } else {
+                if (segmentId != lsn.getSegment()) {
+                  if (walChannel != null) {
+                    if (pointer > 0) {
+                      writeBuffer(walChannel, buffer, pointer, lastLSN, checkPointLSN);
+                    }
+
+                    pointer = 0;
+                    buffer = null;
+                    page = -1;
+
+                    try {
+                      if (writeFuture != null) {
+                        writeFuture.get();
+                      }
+                    } catch (InterruptedException e) {
+                      //continue
+                    }
+
+                    channelCloseQueueSize.incrementAndGet();
+                    channelCloseQueue.offer(new OPair<>(segmentId, walChannel));
+                  }
+
+                  segmentId = lsn.getSegment();
+
+                  walChannel = FileChannel
+                      .open(walLocation.resolve(getSegmentName(segmentId)), StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW,
+                          StandardOpenOption.APPEND);
+                  assert lsn.getPosition() == OCASWALPage.RECORDS_OFFSET;
+                }
+
                 final OWriteableWALRecord writeableRecord = (OWriteableWALRecord) record;
                 final byte[] recordContent = writeableRecord.getBinaryContent();
                 assert recordContent != null;

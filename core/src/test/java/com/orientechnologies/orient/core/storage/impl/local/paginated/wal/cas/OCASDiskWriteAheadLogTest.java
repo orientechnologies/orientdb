@@ -1440,7 +1440,8 @@ public class OCASDiskWriteAheadLogTest {
 
       wal.close();
 
-      OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 100, 10 * 1024 * 1024,
+      OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory,
+          100, 10 * 1024 * 1024,
           20, true, Locale.US, 3 * 1024 * 1024 * 1024L, -1, 1000);
 
       System.out.println("Assert WAL content 2");
