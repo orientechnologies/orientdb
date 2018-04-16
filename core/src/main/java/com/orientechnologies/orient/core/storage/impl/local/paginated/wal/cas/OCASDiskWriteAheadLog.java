@@ -142,10 +142,10 @@ public final class OCASDiskWriteAheadLog {
   private final ConcurrentLinkedQueue<OPair<Long, FileChannel>> channelCloseQueue     = new ConcurrentLinkedQueue<>();
   private final AtomicInteger                                   channelCloseQueueSize = new AtomicInteger();
 
-  private final AtomicReference<CountDownLatch> flushLatch        = new AtomicReference<>(new CountDownLatch(0));
-  private       Future<?>                       writeFuture       = null;
+  private final    AtomicReference<CountDownLatch> flushLatch        = new AtomicReference<>(new CountDownLatch(0));
+  private volatile Future<?>                       writeFuture       = null;
   //not volatile because used only inside of write thread.
-  private       OLogSequenceNumber              writtenCheckpoint = null;
+  private          OLogSequenceNumber              writtenCheckpoint = null;
 
   private       long lastFSyncTs = -1;
   private final int  fsyncInterval;
@@ -220,6 +220,8 @@ public final class OCASDiskWriteAheadLog {
 
     this.recordsWriterFuture = commitExecutor
         .scheduleAtFixedRate(new RecordsWriter(false, false), commitDelay, commitDelay, TimeUnit.MILLISECONDS);
+
+    flush();
   }
 
   private void readLastCheckpointInfo() throws IOException {
@@ -495,6 +497,10 @@ public final class OCASDiskWriteAheadLog {
     } finally {
       removeCutTillLimit(lsn);
     }
+  }
+
+  public OLogSequenceNumber lastCheckpoint() {
+    return lastCheckpoint;
   }
 
   long segSize() {
@@ -1147,6 +1153,19 @@ public final class OCASDiskWriteAheadLog {
 
   public void flush() {
     doFlush(true);
+
+    final Future<?> wf = this.writeFuture;
+
+    if (wf != null) {
+      try {
+        wf.get();
+      } catch (InterruptedException e) {
+        //continue
+      } catch (ExecutionException e) {
+        throw OException
+            .wrapException(new OStorageException("Flush of WAL of storage " + storageName + " completed with error"), e);
+      }
+    }
   }
 
   public void close() throws IOException {
@@ -1624,7 +1643,7 @@ public final class OCASDiskWriteAheadLog {
                 assert recordContent != null;
 
                 int written = 0;
-                int bytesToWrite = OIntegerSerializer.INT_SIZE + recordContent.length;
+                final int bytesToWrite = OIntegerSerializer.INT_SIZE + recordContent.length;
 
                 byte[] recordSize = null;
                 int recordSizeWritten = -1;
@@ -1650,22 +1669,20 @@ public final class OCASDiskWriteAheadLog {
                   final int chunkSize = Math.min(bytesToWrite - written, (page + 1) * OCASWALPage.PAGE_SIZE - buffer.position());
 
                   if (!recordSizeIsWritten) {
-                    if (OIntegerSerializer.INT_SIZE <= chunkSize) {
-                      if (recordSizeWritten < 0) {
-                        buffer.putInt(recordContent.length);
-                        written += OIntegerSerializer.INT_SIZE;
+                    if (recordSizeWritten > 0) {
+                      buffer.put(recordSize, recordSizeWritten, OIntegerSerializer.INT_SIZE - recordSizeWritten);
+                      written += OIntegerSerializer.INT_SIZE - recordSizeWritten;
 
-                        recordSizeIsWritten = true;
-                        continue;
-                      } else {
-                        buffer.put(recordSize, recordSizeWritten, OIntegerSerializer.INT_SIZE - recordSizeWritten);
-                        written += OIntegerSerializer.INT_SIZE - recordSizeWritten;
+                      recordSize = null;
+                      recordSizeWritten = -1;
+                      recordSizeIsWritten = true;
+                      continue;
+                    } else if (OIntegerSerializer.INT_SIZE <= chunkSize) {
+                      buffer.putInt(recordContent.length);
+                      written += OIntegerSerializer.INT_SIZE;
 
-                        recordSize = null;
-                        recordSizeWritten = -1;
-                        recordSizeIsWritten = true;
-                        continue;
-                      }
+                      recordSizeIsWritten = true;
+                      continue;
                     } else {
                       recordSize = new byte[OIntegerSerializer.INT_SIZE];
                       OIntegerSerializer.INSTANCE.serializeNative(recordContent.length, recordSize, 0);
@@ -1734,8 +1751,8 @@ public final class OCASDiskWriteAheadLog {
                 }
 
                 walChannel.force(true);
-                flushedLSN = writtenUpTo.get().lsn;
                 updateCheckpoint(writtenCheckpoint);
+                flushedLSN = writtenUpTo.get().lsn;
               } catch (IOException e) {
                 OLogManager.instance().error(this, "Error during FSync of WAL data", e);
                 throw e;
