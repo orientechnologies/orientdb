@@ -20,7 +20,6 @@ public class CloudEndpoint extends Thread {
 
   ObjectMapper objectMapper = new ObjectMapper();
 
-
   private final OEnterpriseCloudManager cloudManager;
   private       boolean                 terminate;
   private       long                    requestInterval;
@@ -67,22 +66,23 @@ public class CloudEndpoint extends Thread {
   }
 
   private void handleRequest() throws IOException, ClassNotFoundException, CloudException {
-    Command request = fetchRequest();
-    if (request == null) {
-      if (requestInterval < 500) {
-        requestInterval = 500;
-      } else {
-        requestInterval = Math.min(MAX_REQUEST_INTERVAL, requestInterval * 2);
-      }
-      return;
-    } else {
-      requestInterval /= 2;
-    }
     try {
+      Command request = fetchRequest();
+      if (request == null) {
+        if (requestInterval < 500) {
+          requestInterval = 500;
+        } else {
+          requestInterval = Math.min(MAX_REQUEST_INTERVAL, requestInterval * 2);
+        }
+        return;
+      } else {
+        requestInterval /= 2;
+      }
+
       CommandResponse response = processRequest(request);
       sendResponse(response);
     } catch (Exception e) {
-      e.printStackTrace();
+      OLogManager.instance().debug(this, "Error fetching request", e);
     }
   }
 

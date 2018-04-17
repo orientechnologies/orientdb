@@ -1,5 +1,6 @@
 package com.orientechnologies.agent;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.agent.cloud.CloudEndpoint;
@@ -14,13 +15,10 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.conn.ssl.AllowAllHostnameVerifier;
-import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ConnectException;
@@ -169,16 +167,22 @@ public class OEnterpriseCloudManager extends Thread {
 
   private void throwError(String path, int statusCode, String err) throws CloudException, IOException {
 
-    JsonNode tree = objectMapper.readTree(err);
-
     String msg = "";
     String errMsg = "";
-    if (tree != null) {
-      JsonNode message = tree.get("message");
-      JsonNode error = tree.get("error");
-      msg = message != null ? message.asText() : msg;
-      errMsg = error != null ? error.asText() : errMsg;
-      msg = msg.isEmpty() ? errMsg : msg;
+
+    try {
+      JsonNode tree = objectMapper.readTree(err);
+
+      if (tree != null) {
+        JsonNode message = tree.get("message");
+        JsonNode error = tree.get("error");
+        msg = message != null ? message.asText() : msg;
+        errMsg = error != null ? error.asText() : errMsg;
+        msg = msg.isEmpty() ? errMsg : msg;
+      }
+    } catch (JsonParseException e) {
+      msg = err;
+      errMsg = err;
     }
 
     throw new CloudException(path, statusCode, msg, errMsg);
@@ -251,6 +255,10 @@ public class OEnterpriseCloudManager extends Thread {
     cloudBaseUrl = OGlobalConfiguration.CLOUD_BASE_URL.getValue();
     projectId = OGlobalConfiguration.CLOUD_PROJECT_ID.getValue();
 
+    if (!cloudBaseUrl.startsWith("http")) {
+      cloudBaseUrl = "https://" + cloudBaseUrl;
+    }
+
   }
 
   public OEnterpriseAgent getAgent() {
@@ -286,31 +294,24 @@ public class OEnterpriseCloudManager extends Thread {
       cloudPushEndpoint.start();
     } else {
       agent.installCommands();
-
-      //      List<String> params = new ArrayList<>();
-      //
-      //      if (cloudBaseUrl == null) {
-      //        params.add(OGlobalConfiguration.CLOUD_BASE_URL.getKey());
-      //      }
-      //      if (projectId == null) {
-      //        params.add(OGlobalConfiguration.CLOUD_PROJECT_ID.getKey());
-      //      }
-      //      if (token == null) {
-      //        params.add(OGlobalConfiguration.CLOUD_PROJECT_TOKEN.getKey());
-      //      }
-      //
-      //      String missing = String.join(" , ", params);
-      //
-      //      OLogManager.instance().info(this, "OrientDB cloud is disabled. Configuration parameters missing : [%s]", missing);
     }
 
   }
 
+  //  private CloseableHttpClient createClient() {
+  //
+  //    try {
+  //      SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, (certificate, authType) -> true).build();
+  //      return HttpClients.custom().setHostnameVerifier(new AllowAllHostnameVerifier()).setSslcontext(sslContext).build();
+  //    } catch (Exception e) {
+  //      e.printStackTrace();
+  //    }
+  //    return null;
+  //  }
 
-
-    private CloseableHttpClient createClient() {
-      return HttpClients.createDefault();
-    }
+  private CloseableHttpClient createClient() {
+    return HttpClients.createDefault();
+  }
 
   public interface ConsumerWithToken<T> {
     T accept(String token) throws IOException, CloudException, ClassNotFoundException;
