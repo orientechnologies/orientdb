@@ -296,7 +296,7 @@ public final class OCASDiskWriteAheadLog {
     final long masterPosition = index * (OIntegerSerializer.INT_SIZE + 2L * OLongSerializer.LONG_SIZE);
 
     if (masterRecordLSNHolder.size() < masterPosition + MASTER_RECORD_SIZE) {
-      OLogManager.instance().debug(this, "Cannot restore %d WAL master record for storage %s", index, storageName);
+      OLogManager.instance().debugNoDb(this, "Cannot restore %d WAL master record for storage %s", null, index, storageName);
       return null;
     }
 
@@ -318,13 +318,14 @@ public final class OCASDiskWriteAheadLog {
 
       if (firstCRC != ((int) crc32.getValue())) {
         OLogManager.instance()
-            .error(this, "Cannot restore %d WAL master record for storage %s crc check is failed", null, index, storageName);
+            .errorNoDb(this, "Cannot restore %d WAL master record for storage %s crc check is failed", null, index, storageName);
         return null;
       }
 
       return new OLogSequenceNumber(segment, position);
     } catch (EOFException eofException) {
-      OLogManager.instance().debug(this, "Cannot restore %d WAL master record for storage %s", eofException, index, storageName);
+      OLogManager.instance()
+          .debugNoDb(this, "Cannot restore %d WAL master record for storage %s", eofException, index, storageName);
       return null;
     }
   }
@@ -480,7 +481,7 @@ public final class OCASDiskWriteAheadLog {
         try {
           flushLatch.get().await();
         } catch (InterruptedException e) {
-          //continue
+          OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
         }
 
         writtenLSN = this.writtenUpTo.get().lsn;
@@ -728,7 +729,7 @@ public final class OCASDiskWriteAheadLog {
         try {
           flushLatch.get().await();
         } catch (InterruptedException e) {
-          //continue
+          OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
         }
 
         writtenLSN = this.writtenUpTo.get().lsn;
@@ -898,7 +899,7 @@ public final class OCASDiskWriteAheadLog {
       try {
         flushLatch.get().await();
       } catch (InterruptedException e) {
-        //continue
+        OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
       }
 
       qsize = queueSize.get();
@@ -1160,8 +1161,9 @@ public final class OCASDiskWriteAheadLog {
       try {
         wf.get();
       } catch (InterruptedException e) {
-        //continue
+        OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
       } catch (ExecutionException e) {
+        OLogManager.instance().errorNoDb(this, "Flush of WAL of storage " + storageName + " completed with error", e);
         throw OException
             .wrapException(new OStorageException("Flush of WAL of storage " + storageName + " completed with error"), e);
       }
@@ -1179,11 +1181,12 @@ public final class OCASDiskWriteAheadLog {
 
     commitExecutor.shutdown();
     try {
-      if (!commitExecutor.awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
+      if (!commitExecutor.awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS)) {
         throw new OStorageException("WAL flush task for '" + storageName + "' storage cannot be stopped");
+      }
 
     } catch (InterruptedException e) {
-      OLogManager.instance().error(this, "Cannot shutdown background WAL commit thread", e);
+      OLogManager.instance().errorNoDb(this, "Cannot shutdown background WAL commit thread", e);
     }
 
     try {
@@ -1191,18 +1194,20 @@ public final class OCASDiskWriteAheadLog {
         writeFuture.get();
       }
     } catch (InterruptedException e) {
-      //continue
+      OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
     } catch (ExecutionException e) {
+      OLogManager.instance().errorNoDb(this, "Error during writint of WAL data", e);
       throw OException.wrapException(new OStorageException("Error during writint of WAL data"), e);
     }
 
     writeExecutor.shutdown();
     try {
-      if (!writeExecutor.awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
+      if (!writeExecutor.awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS)) {
         throw new OStorageException("WAL write task for '" + storageName + "' storage cannot be stopped");
+      }
 
     } catch (InterruptedException e) {
-      OLogManager.instance().error(this, "Cannot shutdown background WAL write thread", e);
+      OLogManager.instance().errorNoDb(this, "Cannot shutdown background WAL write thread", e);
     }
 
     for (OPair<Long, FileChannel> pair : channelCloseQueue) {
@@ -1225,7 +1230,7 @@ public final class OCASDiskWriteAheadLog {
       } catch (CancellationException e) {
         //ignore
       } catch (InterruptedException e) {
-        OLogManager.instance().error(this, "Cannot shutdown background WAL commit thread", e);
+        OLogManager.instance().errorNoDb(this, "Cannot shutdown background WAL commit thread", e);
       } catch (ExecutionException e) {
         throw new OStorageException("WAL flush task for '" + storageName + "' storage cannot be stopped");
       }
@@ -1623,8 +1628,10 @@ public final class OCASDiskWriteAheadLog {
                         writeFuture.get();
                       }
                     } catch (InterruptedException e) {
-                      //continue
+                      OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
                     }
+
+                    assert walChannel.position() % OCASWALPage.PAGE_SIZE == 0;
 
                     channelCloseQueueSize.incrementAndGet();
                     channelCloseQueue.offer(new OPair<>(segmentId, walChannel));
@@ -1667,6 +1674,7 @@ public final class OCASDiskWriteAheadLog {
                   }
 
                   final int chunkSize = Math.min(bytesToWrite - written, (page + 1) * OCASWALPage.PAGE_SIZE - buffer.position());
+                  assert chunkSize <= OCASWALPage.MAX_RECORD_SIZE;
 
                   if (!recordSizeIsWritten) {
                     if (recordSizeWritten > 0) {
@@ -1724,7 +1732,7 @@ public final class OCASDiskWriteAheadLog {
                 writeFuture.get();
               }
             } catch (InterruptedException e) {
-              //continue
+              OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
             }
 
             writeFuture = writeExecutor.submit((Callable<?>) () -> {
@@ -1738,6 +1746,9 @@ public final class OCASDiskWriteAheadLog {
                     if (pair != null) {
                       @SuppressWarnings("resource")
                       final FileChannel channel = pair.value;
+
+                      assert channel.position() % OCASWALPage.PAGE_SIZE == 0;
+
                       channel.force(true);
                       channel.close();
 
@@ -1754,7 +1765,7 @@ public final class OCASDiskWriteAheadLog {
                 updateCheckpoint(writtenCheckpoint);
                 flushedLSN = writtenUpTo.get().lsn;
               } catch (IOException e) {
-                OLogManager.instance().error(this, "Error during FSync of WAL data", e);
+                OLogManager.instance().errorNoDb(this, "Error during FSync of WAL data", e);
                 throw e;
               }
 
@@ -1775,8 +1786,8 @@ public final class OCASDiskWriteAheadLog {
       }
     }
 
-    private void writeBuffer(FileChannel channel, ByteBuffer buffer, long pointer, OLogSequenceNumber lastLSN,
-        OLogSequenceNumber checkpointLSN) {
+    private void writeBuffer(final FileChannel channel, final ByteBuffer buffer, final long pointer,
+        final OLogSequenceNumber lastLSN, final OLogSequenceNumber checkpointLSN) throws IOException {
 
       if (buffer.position() <= OCASWALPage.RECORDS_OFFSET) {
         Native.free(pointer);
@@ -1816,29 +1827,35 @@ public final class OCASDiskWriteAheadLog {
       }
 
       buffer.position(0);
-      buffer.limit(maxPage * OCASWALPage.PAGE_SIZE);
-      assert buffer.limit() <= buffer.capacity();
+      final int limit = maxPage * OCASWALPage.PAGE_SIZE;
+      buffer.limit(limit);
 
       try {
         if (writeFuture != null) {
           writeFuture.get();
         }
       } catch (InterruptedException e) {
-        //continue
+        OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
       } catch (Exception e) {
+        OLogManager.instance().errorNoDb(this, "Error during WAL write", e);
         throw OException.wrapException(new OStorageException("Error during WAL data write"), e);
       }
+
+      assert channel.position() % OCASWALPage.PAGE_SIZE == 0;
 
       writeFuture = writeExecutor.submit((Callable<?>) () -> {
         try {
           assert buffer.position() == 0;
+          assert channel.position() % OCASWALPage.PAGE_SIZE == 0;
+          assert buffer.limit() == limit;
 
           while (buffer.remaining() > 0) {
-            int initialPos = buffer.position();
-            int written = channel.write(buffer);
-
+            final int initialPos = buffer.position();
+            final int written = channel.write(buffer);
             assert buffer.position() == initialPos + written;
           }
+
+          assert channel.position() % OCASWALPage.PAGE_SIZE == 0;
 
           if (lastLSN != null) {
             final WrittenUpTo written = writtenUpTo.get();
@@ -1861,7 +1878,7 @@ public final class OCASDiskWriteAheadLog {
             writtenCheckpoint = checkpointLSN;
           }
         } catch (IOException e) {
-          OLogManager.instance().error(this, "Error during WAL data write", e);
+          OLogManager.instance().errorNoDb(this, "Error during WAL data write", e);
           throw e;
         } finally {
           Native.free(pointer);
