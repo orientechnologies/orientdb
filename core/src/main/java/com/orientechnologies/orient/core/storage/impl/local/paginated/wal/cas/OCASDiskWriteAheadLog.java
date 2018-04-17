@@ -150,6 +150,8 @@ public final class OCASDiskWriteAheadLog {
   private       long lastFSyncTs = -1;
   private final int  fsyncInterval;
 
+  private long currentPosition = 0;
+
   public OCASDiskWriteAheadLog(String storageName, Path storagePath, final Path walPath, int maxPagesCacheSize, int maxSegmentSize,
       int commitDelay, boolean filterWALFiles, Locale locale, long walSizeHardLimit, long freeSpaceLimit, int fsyncInterval)
       throws IOException {
@@ -1631,7 +1633,7 @@ public final class OCASDiskWriteAheadLog {
                       OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
                     }
 
-                    assert walChannel.position() % OCASWALPage.PAGE_SIZE == 0;
+                    assert walChannel.position() == currentPosition;
 
                     channelCloseQueueSize.incrementAndGet();
                     channelCloseQueue.offer(new OPair<>(segmentId, walChannel));
@@ -1643,6 +1645,7 @@ public final class OCASDiskWriteAheadLog {
                       .open(walLocation.resolve(getSegmentName(segmentId)), StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW,
                           StandardOpenOption.APPEND);
                   assert lsn.getPosition() == OCASWALPage.RECORDS_OFFSET;
+                  currentPosition = 0;
                 }
 
                 final OWriteableWALRecord writeableRecord = (OWriteableWALRecord) record;
@@ -1673,8 +1676,11 @@ public final class OCASDiskWriteAheadLog {
                     buffer.position(buffer.position() + OCASWALPage.RECORDS_OFFSET);
                   }
 
+                  assert written != 0 || currentPosition + buffer.position() == lsn.getPosition();
                   final int chunkSize = Math.min(bytesToWrite - written, (page + 1) * OCASWALPage.PAGE_SIZE - buffer.position());
                   assert chunkSize <= OCASWALPage.MAX_RECORD_SIZE;
+                  assert chunkSize + buffer.position() <= (page + 1) * OCASWALPage.PAGE_SIZE;
+                  assert buffer.position() > page * OCASWALPage.PAGE_SIZE;
 
                   if (!recordSizeIsWritten) {
                     if (recordSizeWritten > 0) {
@@ -1841,7 +1847,10 @@ public final class OCASDiskWriteAheadLog {
         throw OException.wrapException(new OStorageException("Error during WAL data write"), e);
       }
 
-      assert channel.position() % OCASWALPage.PAGE_SIZE == 0;
+      assert channel.position() == currentPosition;
+      currentPosition += buffer.limit();
+
+      final long expectedPosition = currentPosition;
 
       writeFuture = writeExecutor.submit((Callable<?>) () -> {
         try {
@@ -1855,7 +1864,7 @@ public final class OCASDiskWriteAheadLog {
             assert buffer.position() == initialPos + written;
           }
 
-          assert channel.position() % OCASWALPage.PAGE_SIZE == 0;
+          assert channel.position() == expectedPosition;
 
           if (lastLSN != null) {
             final WrittenUpTo written = writtenUpTo.get();
