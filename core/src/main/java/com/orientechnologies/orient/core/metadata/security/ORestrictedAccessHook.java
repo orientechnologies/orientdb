@@ -19,11 +19,11 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -33,26 +33,12 @@ import java.util.Set;
 /**
  * Checks the access against restricted resources. Restricted resources are those documents of classes that implement ORestricted
  * abstract class.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class ORestrictedAccessHook extends ODocumentHookAbstract {
+public class ORestrictedAccessHook {
 
-  public ORestrictedAccessHook(ODatabaseDocument database) {
-    super(database);
-  }
-
-  @Override
-  public SCOPE[] getScopes() {
-    return new SCOPE[] { SCOPE.CREATE, SCOPE.READ, SCOPE.UPDATE, SCOPE.DELETE };
-  }
-
-  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.BOTH;
-  }
-
-  @Override
-  public RESULT onRecordBeforeCreate(final ODocument iDocument) {
+  public static boolean onRecordBeforeCreate(final ODocument iDocument, ODatabaseDocumentInternal database) {
     final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (cls != null && cls.isRestricted()) {
       String fieldNames = cls.getCustom(OSecurityShared.ONCREATE_FIELD);
@@ -73,44 +59,22 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
         if (!roles.isEmpty())
           identity = roles.iterator().next().getIdentity();
       } else
-        throw new OConfigurationException("Wrong custom field '" + OSecurityShared.ONCREATE_IDENTITY_TYPE + "' in class '"
-            + cls.getName() + "' with value '" + identityType + "'. Supported ones are: 'user', 'role'");
+        throw new OConfigurationException(
+            "Wrong custom field '" + OSecurityShared.ONCREATE_IDENTITY_TYPE + "' in class '" + cls.getName() + "' with value '"
+                + identityType + "'. Supported ones are: 'user', 'role'");
 
       if (identity != null) {
         for (String f : fields)
           database.getMetadata().getSecurity().allowIdentity(iDocument, f, identity);
-        return RESULT.RECORD_CHANGED;
+        return true;
       }
     }
-    return RESULT.RECORD_NOT_CHANGED;
-  }
-
-  @Override
-  public RESULT onRecordBeforeRead(final ODocument iDocument) {
-    return isAllowed(iDocument, ORestrictedOperation.ALLOW_READ, false) ? RESULT.RECORD_NOT_CHANGED : RESULT.SKIP;
-  }
-
-  @Override
-  public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
-    if (!isAllowed(iDocument, ORestrictedOperation.ALLOW_UPDATE, true))
-      throw new OSecurityException("Cannot update record " + iDocument.getIdentity() + ": the resource has restricted access");
-    return RESULT.RECORD_NOT_CHANGED;
-  }
-
-  @Override
-  public RESULT onRecordBeforeDelete(final ODocument iDocument) {
-    if (!isAllowed(iDocument, ORestrictedOperation.ALLOW_DELETE, true))
-      throw new OSecurityException("Cannot delete record " + iDocument.getIdentity() + ": the resource has restricted access");
-    return RESULT.RECORD_NOT_CHANGED;
+    return false;
   }
 
   @SuppressWarnings("unchecked")
-  protected boolean isAllowed(final ODocument iDocument, final ORestrictedOperation iAllowOperation, final boolean iReadOriginal) {
-    return isAllowed(database,iDocument,iAllowOperation,iReadOriginal);
-  }
-
-  @SuppressWarnings("unchecked")
-  public static boolean isAllowed(ODatabaseDocument database, final ODocument iDocument, final ORestrictedOperation iAllowOperation, final boolean iReadOriginal) {
+  public static boolean isAllowed(ODatabaseDocument database, final ODocument iDocument, final ORestrictedOperation iAllowOperation,
+      final boolean iReadOriginal) {
     final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (cls != null && cls.isRestricted()) {
 
@@ -133,9 +97,7 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
       if (doc == null)
         return false;
 
-      return database
-          .getMetadata()
-          .getSecurity()
+      return database.getMetadata().getSecurity()
           .isAllowed((Set<OIdentifiable>) doc.field(ORestrictedOperation.ALLOW_ALL.getFieldName()),
               (Set<OIdentifiable>) doc.field(iAllowOperation.getFieldName()));
     }

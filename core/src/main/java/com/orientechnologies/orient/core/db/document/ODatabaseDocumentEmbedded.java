@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -486,7 +487,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   protected void installHooksEmbedded() {
     hooks.clear();
-    registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
   }
 
   @Override
@@ -793,11 +793,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isTriggered()) {
           triggerChanged = OClassTrigger.onRecordBeforeCreate(doc, this);
         }
+        if (clazz.isRestricted()) {
+          changed = ORestrictedAccessHook.onRecordBeforeCreate(doc, this);
+        }
       }
     }
 
     ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, id);
-    if (res == ORecordHook.RESULT.RECORD_CHANGED || triggerChanged == ORecordHook.RESULT.RECORD_NOT_CHANGED) {
+    if (changed || res == ORecordHook.RESULT.RECORD_CHANGED || triggerChanged == ORecordHook.RESULT.RECORD_NOT_CHANGED) {
       if (id instanceof ODocument) {
         ((ODocument) id).validate();
       }
@@ -835,6 +838,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isTriggered()) {
           triggerChanged = OClassTrigger.onRecordBeforeUpdate(doc, this);
         }
+        if (clazz.isRestricted()) {
+          if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_UPDATE, true))
+            throw new OSecurityException("Cannot update record " + doc.getIdentity() + ": the resource has restricted access");
+        }
       }
     }
     ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, id);
@@ -866,6 +873,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       if (clazz != null) {
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordBeforeDelete(doc, this);
+        }
+        if (clazz.isRestricted()) {
+          if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_DELETE, true))
+            throw new OSecurityException("Cannot delete record " + doc.getIdentity() + ": the resource has restricted access");
         }
       }
     }
@@ -971,6 +982,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isTriggered()) {
           ORecordHook.RESULT val = OClassTrigger.onRecordBeforeRead(doc, this);
           if (val == ORecordHook.RESULT.SKIP) {
+            return true;
+          }
+        }
+        if (clazz.isRestricted()) {
+          if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_READ, false)) {
             return true;
           }
         }
