@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyEmbedded;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -1343,6 +1344,14 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   private OResultInternal getPropertyAsDocument(final OClass clazz, final OProperty prop) {
     database.activateOnCurrentThread();
     final OType type = prop.getType();
+    String embeddedClass = null;
+    boolean isEmbedded = false;
+    if (prop instanceof OPropertyEmbedded){
+      OPropertyEmbedded embeddedProp = (OPropertyEmbedded)prop;
+      OClass emType = embeddedProp.getLinkedClass();
+      embeddedClass = emType.getName();
+      isEmbedded = true;
+    }
     OResultInternal res = new OResultInternal();
     res.setProperty("TABLE_CAT", database.getName());
     res.setProperty("TABLE_SCHEM", database.getName());
@@ -1362,7 +1371,10 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("CHAR_OCTET_LENGTH", null);
     res.setProperty("ORDINAL_POSITION", prop.getId());
     res.setProperty("IS_NULLABLE", prop.isNotNull() ? "NO" : "YES");
-
+    res.setProperty("IS_EMBEDDED", isEmbedded ? "YES" : "NO");
+    if (embeddedClass != null)
+      res.setProperty("EMBEDDED_TYPE", embeddedClass);
+    
     return res;
   }
 
