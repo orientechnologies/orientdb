@@ -2234,16 +2234,19 @@ public class OCASDiskWriteAheadLogTest {
   }
 
   @Test
-  public void writeBenchmarkTest() throws Exception {
-    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 49_152, 512 * 1024 * 1024, 20,
-        true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000);
+  public void testCutTillLimit() throws Exception {
+    OFileUtils.deleteRecursively(testDirectory.toFile());
 
-    AtomicBoolean walIsFull = new AtomicBoolean();
-    final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
-    wal.addFullCheckpointListener(checkpointRequestListener);
-    ExecutorService executorService = Executors.newCachedThreadPool();
+    final long seed = System.nanoTime();
+    final Random random = new Random(seed);
+
+    final TreeMap<OLogSequenceNumber, TestRecord> records = new TreeMap<>();
+
+    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 10 * 1024 * 1024, 20,
+        true, Locale.US, 10 * 1024 * 1024L, -1, 1000);
 
     AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
+    ExecutorService executorService = Executors.newCachedThreadPool();
 
     final OSegmentOverflowListener listener = (segment) -> {
       Future<Void> oldAppender = segmentAppender.get();
@@ -2266,24 +2269,173 @@ public class OCASDiskWriteAheadLogTest {
 
     wal.addSegmentOverflowListener(listener);
 
-    List<Future<Long>> futures = new ArrayList<>();
+    for (int k = 0; k < 1024; k++) {
+      for (int i = 0; i < 30_000; i++) {
+        final TestRecord walRecord = new TestRecord(random, 4 * OCASWALPage.PAGE_SIZE, 2 * OCASWALPage.PAGE_SIZE);
+        OLogSequenceNumber lsn = wal.log(walRecord);
+        records.put(lsn, walRecord);
+      }
 
-    for (int i = 0; i < 8; i++) {
-      futures.add(executorService.submit(new RawAdder(wal, walIsFull)));
+      final TreeMap<OLogSequenceNumber, Integer> limits = new TreeMap<>();
+
+      OLogSequenceNumber lsn = chooseRandomRecord(random, records);
+      addLimit(limits, lsn);
+      wal.addCutTillLimit(lsn);
+
+      lsn = chooseRandomRecord(random, records);
+      addLimit(limits, lsn);
+      wal.addCutTillLimit(lsn);
+
+      lsn = chooseRandomRecord(random, records);
+      addLimit(limits, lsn);
+      wal.addCutTillLimit(lsn);
+
+      long[] nonActive = wal.nonActiveSegments();
+      wal.cutTill(limits.lastKey());
+
+      long segment = limits.firstKey().getSegment();
+      OLogSequenceNumber begin = wal.begin();
+      checkThatAllNonActiveSegmentsAreRemoved(nonActive, segment, wal);
+
+      Assert.assertTrue(begin.getSegment() <= segment);
+
+      lsn = limits.firstKey();
+      removeLimit(limits, lsn);
+      wal.removeCutTillLimit(lsn);
+
+      nonActive = wal.nonActiveSegments();
+      wal.cutTill(limits.lastKey());
+
+      segment = limits.firstKey().getSegment();
+      begin = wal.begin();
+
+      checkThatAllNonActiveSegmentsAreRemoved(nonActive, segment, wal);
+      checkThatSegmentsBellowAreRemoved(wal);
+
+      Assert.assertTrue(begin.getSegment() <= segment);
+
+      lsn = limits.lastKey();
+      removeLimit(limits, lsn);
+      wal.removeCutTillLimit(lsn);
+
+      nonActive = wal.nonActiveSegments();
+      wal.cutTill(lsn);
+
+      segment = limits.firstKey().getSegment();
+      begin = wal.begin();
+
+      checkThatAllNonActiveSegmentsAreRemoved(nonActive, segment, wal);
+      checkThatSegmentsBellowAreRemoved(wal);
+      Assert.assertTrue(begin.getSegment() <= segment);
+
+      lsn = limits.lastKey();
+      removeLimit(limits, lsn);
+      wal.removeCutTillLimit(lsn);
+
+      nonActive = wal.nonActiveSegments();
+      wal.cutTill(lsn);
+      checkThatAllNonActiveSegmentsAreRemoved(nonActive, lsn.getSegment(), wal);
+      checkThatSegmentsBellowAreRemoved(wal);
+
+      records.headMap(wal.begin(), false).clear();
     }
 
-    long count = 0;
+    wal.close();
+  }
 
-    long start = System.nanoTime();
-    for (Future<Long> future : futures) {
-      long res = future.get();
-      count += res;
+  @Test
+  public void testCutTillMasterRecord() throws Exception {
+    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 10 * 1024 * 1024, 20,
+        true, Locale.US, 10 * 1024 * 1024L, -1, 1000);
+
+    AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
+    ExecutorService executorService = Executors.newCachedThreadPool();
+
+    final OSegmentOverflowListener listener = (segment) -> {
+      Future<Void> oldAppender = segmentAppender.get();
+
+      while (oldAppender == null || oldAppender.isDone()) {
+        if (wal.activeSegment() <= segment) {
+          final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+
+          if (segmentAppender.compareAndSet(oldAppender, appender)) {
+            break;
+          }
+
+          appender.cancel(false);
+          oldAppender = segmentAppender.get();
+        } else {
+          break;
+        }
+      }
+    };
+
+    wal.addSegmentOverflowListener(listener);
+
+    final long seed = System.nanoTime();
+    final Random random = new Random(seed);
+
+    for (int i = 0; i < 10_000; i++) {
+      final TestRecord walRecord = new TestRecord(random, 4 * OCASWALPage.PAGE_SIZE, 2 * OCASWALPage.PAGE_SIZE);
+      wal.log(walRecord);
     }
-    long end = System.nanoTime();
-    final long time = end - start;
 
-    System.out.printf("Records written %d, total time %d sec, speed %d rec/s, %d mb/s \n", count, time / 1_000_000_000,
-        count * 1_000_000_000 / time, 450L * (count * 1_000_000_000 / time) / 1024 / 1024);
+    final TreeMap<OLogSequenceNumber, TestRecord> records = new TreeMap<>();
+
+  }
+
+  private void checkThatSegmentsBellowAreRemoved(OCASDiskWriteAheadLog wal) {
+    final OLogSequenceNumber begin = wal.begin();
+
+    for (int i = 0; i < begin.getSegment(); i++) {
+      final Path segmentPath = testDirectory.resolve(getSegmentName(i));
+      Assert.assertFalse(Files.exists(segmentPath));
+    }
+  }
+
+  private void checkThatAllNonActiveSegmentsAreRemoved(long[] nonActive, long segment, OCASDiskWriteAheadLog wal) {
+    if (nonActive.length == 0) {
+      return;
+    }
+
+    final int index = Arrays.binarySearch(nonActive, segment);
+    final OLogSequenceNumber begin = wal.begin();
+
+    if (index < 0) {
+      Assert.assertTrue(begin.getSegment() > nonActive[nonActive.length - 1]);
+    } else {
+      Assert.assertTrue(begin.getSegment() >= nonActive[index]);
+    }
+  }
+
+  private void addLimit(TreeMap<OLogSequenceNumber, Integer> limits, OLogSequenceNumber lsn) {
+    limits.merge(lsn, 1, (a, b) -> a + b);
+  }
+
+  private void removeLimit(TreeMap<OLogSequenceNumber, Integer> limits, OLogSequenceNumber lsn) {
+    Integer counter = limits.get(lsn);
+    if (counter == 1) {
+      limits.remove(lsn);
+    } else {
+      limits.put(lsn, counter - 1);
+    }
+  }
+
+  private static OLogSequenceNumber chooseRandomRecord(Random random, TreeMap<OLogSequenceNumber, TestRecord> records) {
+    OLogSequenceNumber first = records.firstKey();
+    OLogSequenceNumber last = records.lastKey();
+
+    final int firstSegment = (int) first.getSegment();
+    final int lastSegment = (int) last.getSegment();
+
+    final int segment = random.nextInt(lastSegment - firstSegment) + firstSegment;
+    final OLogSequenceNumber lastLSN = records.floorKey(new OLogSequenceNumber(segment, Integer.MAX_VALUE));
+    final int position = random.nextInt((int) lastLSN.getPosition());
+
+    OLogSequenceNumber lsn = records.ceilingKey(new OLogSequenceNumber(segment, position));
+    Assert.assertNotNull(lsn);
+
+    return lsn;
   }
 
   private void assertMTWALInsertion(OCASDiskWriteAheadLog wal, SortedMap<OLogSequenceNumber, TestRecord> addedRecords)
@@ -2342,32 +2494,6 @@ public class OCASDiskWriteAheadLogTest {
 
   private String getSegmentName(long segment) {
     return "walTest." + segment + ".wal";
-  }
-
-  private static final class RawAdder implements Callable<Long> {
-    private final OCASDiskWriteAheadLog writeAheadLog;
-    private final AtomicBoolean         walIsFull;
-
-    public RawAdder(OCASDiskWriteAheadLog writeAheadLog, AtomicBoolean walIsFull) {
-      this.writeAheadLog = writeAheadLog;
-      this.walIsFull = walIsFull;
-    }
-
-    @Override
-    public Long call() throws Exception {
-      long counter = 0;
-      ThreadLocalRandom random = ThreadLocalRandom.current();
-      final byte[] data = new byte[450];
-      random.nextBytes(data);
-
-      while (!walIsFull.get()) {
-        final TestRecord testRecord = new TestRecord(data);
-        writeAheadLog.log(testRecord);
-        counter++;
-      }
-
-      return counter;
-    }
   }
 
   private static final class SegmentAdder implements Callable<Void> {

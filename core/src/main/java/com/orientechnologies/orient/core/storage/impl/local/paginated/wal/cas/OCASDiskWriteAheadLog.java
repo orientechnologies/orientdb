@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -67,6 +68,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -127,8 +130,10 @@ public final class OCASDiskWriteAheadLog {
 
   private final Path masterRecordPath;
 
-  private volatile OLogSequenceNumber lastCheckpoint;
-  private volatile boolean            useFirstMasterRecord;
+  private volatile OLogSequenceNumber                  lastCheckpoint;
+  private final    AtomicReference<OLogSequenceNumber> lastMasterRecord = new AtomicReference<>();
+
+  private volatile boolean useFirstMasterRecord;
 
   private volatile FileChannel masterRecordLSNHolder;
 
@@ -136,8 +141,8 @@ public final class OCASDiskWriteAheadLog {
 
   private final ScalableRWLock segmentLock = new ScalableRWLock();
 
-  private final ConcurrentSkipListMap<OLogSequenceNumber, Integer> cutTillLimits = new ConcurrentSkipListMap<OLogSequenceNumber, Integer>();
-  private final ScalableRWLock                                     cuttingLock   = new ScalableRWLock();
+  private final TreeMap<OLogSequenceNumber, Integer> cutTillLimits = new TreeMap<>();
+  private final Lock                                 cuttingLock   = new ReentrantLock();
 
   private final ConcurrentLinkedQueue<OPair<Long, FileChannel>> channelCloseQueue     = new ConcurrentLinkedQueue<>();
   private final AtomicInteger                                   channelCloseQueueSize = new AtomicInteger();
@@ -819,26 +824,11 @@ public final class OCASDiskWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    cuttingLock.exclusiveLock();
+    cuttingLock.lock();
     try {
-      while (true) {
-        final Integer oldCounter = cutTillLimits.get(lsn);
-
-        final Integer newCounter;
-
-        if (oldCounter == null) {
-          if (cutTillLimits.putIfAbsent(lsn, 1) == null)
-            break;
-        } else {
-          newCounter = oldCounter + 1;
-
-          if (cutTillLimits.replace(lsn, oldCounter, newCounter)) {
-            break;
-          }
-        }
-      }
+      cutTillLimits.merge(lsn, 1, (a, b) -> a + b);
     } finally {
-      cuttingLock.exclusiveUnlock();
+      cuttingLock.unlock();
     }
   }
 
@@ -846,20 +836,21 @@ public final class OCASDiskWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    while (true) {
+    cuttingLock.lock();
+    try {
       final Integer oldCounter = cutTillLimits.get(lsn);
 
       if (oldCounter == null)
         throw new IllegalArgumentException(String.format("Limit %s is going to be removed but it was not added", lsn));
 
       final Integer newCounter = oldCounter - 1;
-      if (cutTillLimits.replace(lsn, oldCounter, newCounter)) {
-        if (newCounter == 0) {
-          cutTillLimits.remove(lsn, newCounter);
-        }
-
-        break;
+      if (newCounter == 0) {
+        cutTillLimits.remove(lsn);
+      } else {
+        cutTillLimits.put(lsn, newCounter);
       }
+    } finally {
+      cuttingLock.unlock();
     }
   }
 
@@ -940,71 +931,79 @@ public final class OCASDiskWriteAheadLog {
   }
 
   public boolean cutAllSegmentsSmallerThan(long segmentId) throws IOException {
-    cuttingLock.exclusiveLock();
+    cuttingLock.lock();
     try {
-      if (lastCheckpoint != null && segmentId >= lastCheckpoint.getSegment()) {
-        segmentId = lastCheckpoint.getSegment();
-      }
-
-      final OWALRecord first = records.peek();
-      assert first != null;
-      final OLogSequenceNumber firstLSN = first.getLsn();
-
-      if (firstLSN.getPosition() > -1) {
-        if (segmentId > firstLSN.getSegment()) {
-          segmentId = firstLSN.getSegment();
+      segmentLock.sharedLock();
+      try {
+        if (segmentId > currentSegment) {
+          segmentId = currentSegment;
         }
-      }
 
-      final Map.Entry<OLogSequenceNumber, Integer> firsEntry = cutTillLimits.firstEntry();
+        final OLogSequenceNumber masterRecord = lastMasterRecord.get();
 
-      if (firsEntry != null) {
-        if (segmentId > firsEntry.getKey().getSegment()) {
-          segmentId = firsEntry.getKey().getSegment();
+        if (masterRecord != null && segmentId > masterRecord.getSegment()) {
+          segmentId = masterRecord.getSegment();
         }
-      }
 
-      if (segmentId <= segments.first()) {
-        return false;
-      }
+        final OWALRecord first = records.peek();
+        assert first != null;
+        final OLogSequenceNumber firstLSN = first.getLsn();
 
-      OPair<Long, FileChannel> pair = channelCloseQueue.poll();
-      while (pair != null) {
-        final FileChannel channel = pair.value;
-
-        channelCloseQueueSize.decrementAndGet();
-        if (pair.key >= segmentId) {
-          channel.force(true);
-          channel.close();
-
-          break;
-        } else {
-          channel.close();
+        if (firstLSN.getPosition() > -1) {
+          if (segmentId > firstLSN.getSegment()) {
+            segmentId = firstLSN.getSegment();
+          }
         }
-        pair = channelCloseQueue.poll();
-      }
 
-      boolean removed = false;
+        final Map.Entry<OLogSequenceNumber, Integer> firsEntry = cutTillLimits.firstEntry();
 
-      final Iterator<Long> segmentIterator = segments.iterator();
-      while (segmentIterator.hasNext()) {
-        final long segment = segmentIterator.next();
-        if (segment < segmentId) {
-          segmentIterator.remove();
-
-          final String segmentName = getSegmentName(segment);
-          final Path segmentPath = walLocation.resolve(segmentName);
-          Files.deleteIfExists(segmentPath);
-
-          removed = true;
-        } else {
-          break;
+        if (firsEntry != null) {
+          if (segmentId > firsEntry.getKey().getSegment()) {
+            segmentId = firsEntry.getKey().getSegment();
+          }
         }
-      }
 
-      return removed;
+        if (segmentId <= segments.first()) {
+          return false;
+        }
+
+        OPair<Long, FileChannel> pair = channelCloseQueue.poll();
+        while (pair != null) {
+          final FileChannel channel = pair.value;
+
+          channelCloseQueueSize.decrementAndGet();
+          if (pair.key >= segmentId) {
+            channel.force(true);
+            channel.close();
+            break;
+          } else {
+            channel.close();
+          }
+          pair = channelCloseQueue.poll();
+        }
+
+        boolean removed = false;
+
+        final Iterator<Long> segmentIterator = segments.iterator();
+        while (segmentIterator.hasNext()) {
+          final long segment = segmentIterator.next();
+          if (segment < segmentId) {
+            segmentIterator.remove();
+
+            final String segmentName = getSegmentName(segment);
+            final Path segmentPath = walLocation.resolve(segmentName);
+            removed = removed | Files.deleteIfExists(segmentPath);
+          } else {
+            break;
+          }
+        }
+
+        return removed;
+      } finally {
+        segmentLock.sharedUnlock();
+      }
     } finally {
-      cuttingLock.exclusiveUnlock();
+      cuttingLock.unlock();
     }
   }
 
@@ -1149,6 +1148,22 @@ public final class OCASDiskWriteAheadLog {
       }
 
       endLsn = end.get();
+    }
+
+    if (writeableRecord.isUpdateMasterRecord()) {
+      OLogSequenceNumber masterRecord = lastMasterRecord.get();
+
+      while (true) {
+        if (masterRecord.compareTo(recordLSN) >= 0) {
+          break;
+        }
+
+        if (lastMasterRecord.compareAndSet(masterRecord, recordLSN)) {
+          break;
+        }
+
+        masterRecord = lastMasterRecord.get();
+      }
     }
 
     return recordLSN;
@@ -1695,6 +1710,8 @@ public final class OCASDiskWriteAheadLog {
                       buffer.putInt(recordContent.length);
                       written += OIntegerSerializer.INT_SIZE;
 
+                      recordSize = null;
+                      recordSizeWritten = -1;
                       recordSizeIsWritten = true;
                       continue;
                     } else {
@@ -1741,6 +1758,7 @@ public final class OCASDiskWriteAheadLog {
               OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
             }
 
+            assert walChannel.position() == currentPosition;
             writeFuture = writeExecutor.submit((Callable<?>) () -> {
               try {
                 final int cqSize = channelCloseQueueSize.get();
