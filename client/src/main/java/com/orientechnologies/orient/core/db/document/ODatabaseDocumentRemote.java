@@ -791,4 +791,13 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     callbackHooks(ORecordHook.TYPE.AFTER_DELETE, id);
   }
 
+  @Override
+  public boolean beforeReadOperations(OIdentifiable identifiable) {
+    return callbackHooks(ORecordHook.TYPE.BEFORE_READ, identifiable) == ORecordHook.RESULT.SKIP;
+  }
+
+  @Override
+  public void afterReadOperations(OIdentifiable identifiable) {
+    callbackHooks(ORecordHook.TYPE.AFTER_READ, identifiable);
+  }
 }
