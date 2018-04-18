@@ -781,7 +781,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     boolean changed = false;
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         if (clazz.isScheduler()) {
           getSharedContext().getScheduler().initScheduleRecord(doc);
@@ -826,7 +826,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     boolean changed = false;
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         if (clazz.isScheduler()) {
           getSharedContext().getScheduler().handleUpdateSchedule(doc);
@@ -869,7 +869,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordBeforeDelete(doc, this);
@@ -886,7 +886,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public void afterCreateOperations(final OIdentifiable id) {
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         OClassIndexManager.checkIndexesAfterCreate(doc, this);
         if (clazz.isFunction()) {
@@ -912,7 +912,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public void afterUpdateOperations(final OIdentifiable id) {
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         OClassIndexManager.checkIndexesAfterUpdate((ODocument) id, this);
         if (clazz.isFunction()) {
@@ -935,7 +935,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public void afterDeleteOperations(final OIdentifiable id) {
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         OClassIndexManager.checkIndexesAfterDelete(doc, this);
         if (clazz.isFunction()) {
@@ -963,7 +963,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public void afterReadOperations(OIdentifiable identifiable) {
     if (identifiable instanceof ODocument) {
       ODocument doc = (ODocument) identifiable;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterRead(doc, this);
@@ -977,7 +977,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public boolean beforeReadOperations(OIdentifiable identifiable) {
     if (identifiable instanceof ODocument) {
       ODocument doc = (ODocument) identifiable;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         if (clazz.isTriggered()) {
           ORecordHook.RESULT val = OClassTrigger.onRecordBeforeRead(doc, this);

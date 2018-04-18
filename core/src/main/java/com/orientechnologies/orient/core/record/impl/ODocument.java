@@ -67,19 +67,19 @@ public class ODocument extends ORecordAbstract
   public static final    byte     RECORD_TYPE      = 'd';
   protected static final String[] EMPTY_STRINGS    = new String[] {};
   private static final   long     serialVersionUID = 1L;
-  protected int _fieldSize;
+  protected              int      _fieldSize;
 
   protected Map<String, ODocumentEntry> _fields;
 
-  protected           boolean                             _trackingChanges    = true;
-  protected           boolean                             _ordered            = true;
-  protected           boolean                             _lazyLoad           = true;
-  protected           boolean                             _allowChainedAccess = true;
-  protected transient List<WeakReference<ORecordElement>> _owners             = null;
-  protected OImmutableSchema _schema;
-  private   String           _className;
-  private   OImmutableClass  _immutableClazz;
-  private int _immutableSchemaVersion = 1;
+  protected           boolean                             _trackingChanges        = true;
+  protected           boolean                             _ordered                = true;
+  protected           boolean                             _lazyLoad               = true;
+  protected           boolean                             _allowChainedAccess     = true;
+  protected transient List<WeakReference<ORecordElement>> _owners                 = null;
+  protected           OImmutableSchema                    _schema;
+  private             String                              _className;
+  private             OImmutableClass                     _immutableClazz;
+  private             int                                 _immutableSchemaVersion = 1;
 
   /**
    * Internal constructor used on unmarshalling.
@@ -2546,14 +2546,20 @@ public class ODocument extends ORecordAbstract
   }
 
   protected OImmutableClass getImmutableSchemaClass() {
+    return getImmutableSchemaClass(null);
+  }
+
+  protected OImmutableClass getImmutableSchemaClass(ODatabaseDocumentInternal database) {
     if (_immutableClazz == null) {
       if (_className == null)
         fetchClassName();
       if (_className != null) {
-        final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
+        if (database == null) {
+          database = getDatabaseIfDefined();
+        }
 
-        if (databaseRecord != null && !databaseRecord.isClosed()) {
-          final OSchema immutableSchema = ((OMetadataInternal) databaseRecord.getMetadata()).getImmutableSchemaSnapshot();
+        if (database != null && !database.isClosed()) {
+          final OSchema immutableSchema = database.getMetadata().getImmutableSchemaSnapshot();
           if (immutableSchema == null)
             return null;
           _immutableSchemaVersion = immutableSchema.getVersion();

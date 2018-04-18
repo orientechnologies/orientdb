@@ -39,7 +39,7 @@ import java.util.Set;
 public class ORestrictedAccessHook {
 
   public static boolean onRecordBeforeCreate(final ODocument iDocument, ODatabaseDocumentInternal database) {
-    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
+    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(database, iDocument);
     if (cls != null && cls.isRestricted()) {
       String fieldNames = cls.getCustom(OSecurityShared.ONCREATE_FIELD);
       if (fieldNames == null)
@@ -73,9 +73,9 @@ public class ORestrictedAccessHook {
   }
 
   @SuppressWarnings("unchecked")
-  public static boolean isAllowed(ODatabaseDocument database, final ODocument iDocument, final ORestrictedOperation iAllowOperation,
-      final boolean iReadOriginal) {
-    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
+  public static boolean isAllowed(ODatabaseDocumentInternal database, final ODocument iDocument,
+      final ORestrictedOperation iAllowOperation, final boolean iReadOriginal) {
+    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(database, iDocument);
     if (cls != null && cls.isRestricted()) {
 
       if (database.getUser() == null)

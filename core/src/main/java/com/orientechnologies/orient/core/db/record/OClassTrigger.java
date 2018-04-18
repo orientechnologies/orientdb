@@ -153,7 +153,7 @@ public class OClassTrigger {
   }
 
   private static Object checkClzAttribute(final ODocument iDocument, String attr, ODatabaseDocumentInternal database) {
-    final OImmutableClass clz = ODocumentInternal.getImmutableSchemaClass(iDocument);
+    final OImmutableClass clz = ODocumentInternal.getImmutableSchemaClass(database, iDocument);
     if (clz != null && clz.isTriggered()) {
       OFunction func = null;
       String fieldName = clz.getCustom(attr);

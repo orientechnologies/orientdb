@@ -1382,7 +1382,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     // if cluster id is not set yet try to find it out
     if (rid.getClusterId() <= ORID.CLUSTER_ID_INVALID && getStorage().isAssigningClusterIds()) {
       if (record instanceof ODocument) {
-        schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+        schemaClass = ODocumentInternal.getImmutableSchemaClass(this, ((ODocument) record));
         if (schemaClass != null) {
           if (schemaClass.isAbstract())
             throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
@@ -1402,7 +1402,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         }
       }
     } else if (record instanceof ODocument)
-      schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+      schemaClass = ODocumentInternal.getImmutableSchemaClass(this, ((ODocument) record));
     // If the cluster id was set check is validity
     if (rid.getClusterId() > ORID.CLUSTER_ID_INVALID) {
       if (schemaClass != null) {
@@ -1730,10 +1730,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
             throw new IllegalArgumentException("source vertex is invalid (rid=" + inVertex.getIdentity() + ")");
         }
 
-        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+        if (!ODocumentInternal.getImmutableSchemaClass(this, outDocument).isVertexType())
           throw new IllegalArgumentException("source record is not a vertex");
 
-        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+        if (!ODocumentInternal.getImmutableSchemaClass(this, outDocument).isVertexType())
           throw new IllegalArgumentException("destination record is not a vertex");
 
         OVertex to = inVertex;
