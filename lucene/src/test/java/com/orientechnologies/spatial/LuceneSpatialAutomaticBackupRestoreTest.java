@@ -18,6 +18,7 @@
 
 package com.orientechnologies.spatial;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -32,12 +33,16 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
+import com.sun.jna.Platform;
 import org.junit.*;
-import org.junit.rules.TemporaryFolder;
+import org.junit.rules.TestName;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -50,19 +55,30 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class LuceneSpatialAutomaticBackupRestoreTest {
 
-  private final static String          DBNAME     = "OLuceneAutomaticBackupRestoreTest";
-  @Rule
-  public               TemporaryFolder tempFolder = new TemporaryFolder();
+  private final static String DBNAME = "OLuceneAutomaticBackupRestoreTest";
+
+  public  File     tempFolder;
   private OrientDB orientDB;
-  private String URL       = null;
-  private String BACKUPDIR = null;
-  private String BACKUFILE = null;
+  private String   URL       = null;
+  private String   BACKUPDIR = null;
+  private String   BACKUFILE = null;
 
   private OServer                   server;
   private ODatabaseDocumentInternal db;
 
+  @Rule
+  public TestName name = new TestName();
+
   @Before
   public void setUp() throws Exception {
+    Assume.assumeFalse(Platform.isWindows());
+
+    final String buildDirectory = System.getProperty("buildDirectory", "target");
+    final File buildDirectoryFile = new File(buildDirectory);
+
+    tempFolder = new File(buildDirectoryFile, name.getMethodName());
+    OFileUtils.deleteRecursively(tempFolder);
+    Assert.assertTrue(tempFolder.mkdirs());
 
     server = new OServer() {
       @Override
@@ -74,18 +90,19 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
     };
     server.startup();
 
-    System.setProperty("ORIENTDB_HOME", tempFolder.getRoot().getAbsolutePath());
+    System.setProperty("ORIENTDB_HOME", tempFolder.getAbsolutePath());
 
-    String path = tempFolder.getRoot().getAbsolutePath() + File.separator + "databases";
+    String path = tempFolder.getAbsolutePath() + File.separator + "databases";
     orientDB = server.getContext();
 
     URL = "plocal:" + path + File.separator + DBNAME;
 
-    BACKUPDIR = tempFolder.getRoot().getAbsolutePath() + File.separator + "backups";
+    BACKUPDIR = tempFolder.getAbsolutePath() + File.separator + "backups";
 
     BACKUFILE = BACKUPDIR + File.separator + DBNAME;
 
-    tempFolder.newFolder("config");
+    final File config = new File(tempFolder, "config");
+    Assert.assertTrue(config.mkdirs());
 
     dropIfExists();
 
@@ -127,10 +144,11 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
   @After
   public void tearDown() throws Exception {
-    dropIfExists();
+    if (!Platform.isWindows()) {
+      dropIfExists();
 
-    tempFolder.delete();
-
+      tempFolder.delete();
+    }
   }
 
   @Test
@@ -145,15 +163,11 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
     String jsonConfig = OIOUtils.readStreamAsString(getClass().getClassLoader().getResourceAsStream("automatic-backup.json"));
 
-    ODocument doc = new ODocument()
-        .fromJSON(jsonConfig)
-        .field("enabled", true)
-        .field("targetFileName", "${DBNAME}.zip")
-        .field("targetDirectory", BACKUPDIR)
-        .field("dbInclude", new String[] { DBNAME })
+    ODocument doc = new ODocument().fromJSON(jsonConfig).field("enabled", true).field("targetFileName", "${DBNAME}.zip")
+        .field("targetDirectory", BACKUPDIR).field("dbInclude", new String[] { DBNAME })
         .field("firstTime", new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000)));
 
-    OIOUtils.writeFile(new File(tempFolder.getRoot().getAbsolutePath() + "/config/automatic-backup.json"), doc.toJSON());
+    OIOUtils.writeFile(new File(tempFolder.getAbsolutePath() + "/config/automatic-backup.json"), doc.toJSON());
 
     final OAutomaticBackup aBackup = new OAutomaticBackup();
 
@@ -218,15 +232,11 @@ public class LuceneSpatialAutomaticBackupRestoreTest {
 
     String jsonConfig = OIOUtils.readStreamAsString(getClass().getClassLoader().getResourceAsStream("automatic-backup.json"));
 
-    ODocument doc = new ODocument()
-        .fromJSON(jsonConfig)
-        .field("enabled", true)
-        .field("targetFileName", "${DBNAME}.json")
-        .field("targetDirectory", BACKUPDIR).field("mode", "EXPORT")
-        .field("dbInclude", new String[] { DBNAME })
+    ODocument doc = new ODocument().fromJSON(jsonConfig).field("enabled", true).field("targetFileName", "${DBNAME}.json")
+        .field("targetDirectory", BACKUPDIR).field("mode", "EXPORT").field("dbInclude", new String[] { DBNAME })
         .field("firstTime", new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() + 2000)));
 
-    OIOUtils.writeFile(new File(tempFolder.getRoot().getAbsolutePath() + "/config/automatic-backup.json"), doc.toJSON());
+    OIOUtils.writeFile(new File(tempFolder.getAbsolutePath() + "/config/automatic-backup.json"), doc.toJSON());
 
     final OAutomaticBackup aBackup = new OAutomaticBackup();
 
