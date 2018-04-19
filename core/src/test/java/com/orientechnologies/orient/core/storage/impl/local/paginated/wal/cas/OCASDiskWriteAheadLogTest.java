@@ -2915,7 +2915,9 @@ public class OCASDiskWriteAheadLogTest {
             lastMaterRecord = wal.log(record);
             addedRecords.put(lastMaterRecord, record);
           } else {
-            if (limits.isEmpty() || random.nextDouble() <= 0.5) {
+            if (limits.size() > 2) {
+              removeLimit(random);
+            } else if (limits.isEmpty() || random.nextDouble() <= 0.5) {
               if (!addedRecords.isEmpty()) {
                 addLimit(random);
               }
