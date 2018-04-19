@@ -85,13 +85,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @return the cluster map for current deploy
    */
   public Map<String, Set<String>> getActiveClusterMap() {
-    if(getStorageDistributed().getLocalDistributedDatabase().getManager().isOffline()){
+    ODistributedServerManager distributedManager = getStorageDistributed().getDistributedManager();
+    if (distributedManager.isOffline() || !distributedManager.isNodeOnline(distributedManager.getLocalNodeName(), getName())) {
       return super.getActiveClusterMap();
     }
     Map<String, Set<String>> result = new HashMap<>();
     ODistributedConfiguration cfg = getStorageDistributed().getDistributedConfiguration();
 
-    for (String server : getStorageDistributed().getDistributedManager().getActiveServers()) {
+    for (String server : distributedManager.getActiveServers()) {
       if (getClustersOnServer(cfg, server).contains("*")) {
         //TODO check this!!!
         result.put(server, getStorage().getClusterNames());
@@ -415,12 +416,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public ODistributedResponse executeTaskOnNode(ORemoteTask task, String nodeName) {
-    final String dbUrl = getURL();
 
-    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
-    final OServer serverInstance = OServer.getInstanceByPath(path);
-
-    ODistributedServerManager dManager = serverInstance.getDistributedManager();
+    ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new ODistributedException("OrientDB is not started in distributed mode");
 
