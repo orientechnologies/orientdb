@@ -42,21 +42,11 @@ import java.util.zip.ZipOutputStream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OZIPCompressionUtil {
-  public static List<String> compressDirectory(final String sourceFolderName, final OutputStream output,
-      final String[] iSkipFileExtensions, final OCommandOutputListener iOutput, int compressionLevel) throws IOException {
-
+  public static List<String> compressDirectory(final String sourceFolderName, final ZipOutputStream zos,
+      final String[] iSkipFileExtensions, final OCommandOutputListener iOutput) throws IOException {
     final List<String> compressedFiles = new ArrayList<String>();
-
-    final ZipOutputStream zos = new ZipOutputStream(output);
-    zos.setComment("OrientDB Backup executed on " + new Date());
-    try {
-      zos.setLevel(compressionLevel);
-      addFolder(zos, sourceFolderName, sourceFolderName, iSkipFileExtensions, iOutput, compressedFiles);
-
-      return compressedFiles;
-    } finally {
-      zos.close();
-    }
+    addFolder(zos, sourceFolderName, sourceFolderName, iSkipFileExtensions, iOutput, compressedFiles);
+    return compressedFiles;
   }
 
   /***
