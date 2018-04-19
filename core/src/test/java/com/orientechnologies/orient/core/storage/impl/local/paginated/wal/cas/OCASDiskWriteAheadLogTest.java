@@ -2416,8 +2416,7 @@ public class OCASDiskWriteAheadLogTest {
 
   @Test
   public void testCutTillMT() throws Exception {
-    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000,
-        10 * 1024 * 1024, 20,
+    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 10 * 1024 * 1024, 20,
         true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000);
 
     AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -2916,12 +2915,10 @@ public class OCASDiskWriteAheadLogTest {
             lastMaterRecord = wal.log(record);
             addedRecords.put(lastMaterRecord, record);
           } else {
-            if (limits.size() > 1) {
+            if (limits.size() > 2) {
               removeLimit(random);
             } else if (limits.isEmpty() || random.nextDouble() <= 0.5) {
-              if (!addedRecords.isEmpty()) {
-                addLimit(random);
-              }
+              addLimit(random);
             } else {
               removeLimit(random);
             }
@@ -2997,7 +2994,18 @@ public class OCASDiskWriteAheadLogTest {
     }
 
     private void addLimit(ThreadLocalRandom random) {
-      final OLogSequenceNumber lsn = chooseRandomRecord(random, addedRecords);
+      clearRecords();
+
+      if (addedRecords.isEmpty()) {
+        return;
+      }
+
+      final OLogSequenceNumber begin = wal.begin();
+      final OLogSequenceNumber end = wal.end();
+
+      final long segment = (begin.getSegment() + end.getSegment()) / 2;
+
+      final OLogSequenceNumber lsn = chooseRandomRecord(random, addedRecords.tailMap(new OLogSequenceNumber(segment, 0), false));
       wal.addCutTillLimit(lsn);
       OCASDiskWriteAheadLogTest.addLimit(limits, lsn);
     }
