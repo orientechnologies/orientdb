@@ -2909,7 +2909,7 @@ public class OCASDiskWriteAheadLogTest {
 
       int failures = 0;
       while (!walIsFull.get()) {
-        if (random.nextDouble() <= 0.1) {
+        if (random.nextDouble() <= 0.2) {
           if (random.nextDouble() <= 0.5) {
             final OWriteableWALRecord record = new OFullCheckpointStartRecord();
             lastMaterRecord = wal.log(record);
@@ -2926,7 +2926,7 @@ public class OCASDiskWriteAheadLogTest {
 
           calculateLimit();
         } else {
-          final TestRecord record = new TestRecord(random, 4 * OCASWALPage.PAGE_SIZE, 2 * OCASWALPage.PAGE_SIZE);
+          final TestRecord record = new TestRecord(random, 2 * OCASWALPage.PAGE_SIZE, 1);
           final OLogSequenceNumber lsn = wal.log(record);
           addedRecords.put(lsn, record);
         }
