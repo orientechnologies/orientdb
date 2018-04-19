@@ -15,7 +15,9 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -33,10 +35,10 @@ import java.util.*;
  */
 public class OTransactionOptimisticServer extends OTransactionOptimistic {
 
-  private final Map<ORID, ORecordOperation> tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
-  private final Map<ORecordId, ORecord>     createdRecords = new HashMap<ORecordId, ORecord>();
-  private final Map<ORecordId, ORecord>     updatedRecords = new HashMap<ORecordId, ORecord>();
-  private final Set<ORID>                   deletedRecord  = new HashSet<>();
+  private final Map<ORID, ORecordOperation>   tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
+  private final Map<ORecordId, ORecord>       createdRecords = new HashMap<ORecordId, ORecord>();
+  private final Map<ORecordId, ORecord>       updatedRecords = new HashMap<ORecordId, ORecord>();
+  private final Set<ORID>                     deletedRecord  = new HashSet<>();
   private final int                           clientTxId;
   private       List<ORecordOperationRequest> operations;
   private final List<IndexChange>             indexChanges;
@@ -392,8 +394,31 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
             database.afterDeleteOperations(iRecord);
             break;
           }
+        } else {
+          switch (iStatus) {
+          case ORecordOperation.CREATED:
+            if (iRecord instanceof ODocument) {
+              OClassIndexManager.checkIndexesAfterCreate((ODocument) iRecord, getDatabase());
+            }
+            break;
+          case ORecordOperation.LOADED:
+            /**
+             * Read hooks already invoked in
+             * {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord} .
+             */
+            break;
+          case ORecordOperation.UPDATED:
+            if (iRecord instanceof ODocument) {
+              OClassIndexManager.checkIndexesAfterUpdate((ODocument) iRecord, getDatabase());
+            }
+            break;
+          case ORecordOperation.DELETED:
+            if (iRecord instanceof ODocument) {
+              OClassIndexManager.checkIndexesAfterDelete((ODocument) iRecord, getDatabase());
+            }
+            break;
+          }
         }
-
         // RESET TRACKING
         if (iRecord instanceof ODocument && ((ODocument) iRecord).isTrackingChanges()) {
           ODocumentInternal.clearTrackData(((ODocument) iRecord));
@@ -448,4 +473,17 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
     }
   }
 
+  @Override
+  public void addIndexEntry(OIndex<?> delegate, String iIndexName, OTransactionIndexChanges.OPERATION iOperation, Object key,
+      OIdentifiable iValue) {
+    super.addIndexEntry(delegate, iIndexName, iOperation, key, iValue);
+    changed = true;
+  }
+
+  @Override
+  public void addIndexEntry(OIndex<?> delegate, String iIndexName, OTransactionIndexChanges.OPERATION iOperation, Object key,
+      OIdentifiable iValue, boolean clientTrackOnly) {
+    super.addIndexEntry(delegate, iIndexName, iOperation, key, iValue, clientTrackOnly);
+    changed = true;
+  }
 }
