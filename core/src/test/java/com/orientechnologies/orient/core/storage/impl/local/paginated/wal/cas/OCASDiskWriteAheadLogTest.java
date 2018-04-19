@@ -3004,7 +3004,7 @@ public class OCASDiskWriteAheadLogTest {
       final OLogSequenceNumber begin = wal.begin();
       final OLogSequenceNumber end = wal.end();
 
-      final long segment = begin.getSegment() + (end.getSegment() - begin.getSegment()) / 2;
+      final long segment = begin.getSegment() + 3 * (end.getSegment() - begin.getSegment()) / 4;
 
       final OLogSequenceNumber lsn = chooseRandomRecord(random, addedRecords.tailMap(new OLogSequenceNumber(segment, 0), false));
       if (lsn == null) {
