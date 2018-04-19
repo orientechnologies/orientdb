@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.spatial.shape.OShapeFactory;
 import org.locationtech.spatial4j.shape.Shape;
-import org.locationtech.spatial4j.shape.SpatialRelation;
 
 /**
  * Created by Enrico Risa on 25/09/15.
@@ -40,8 +39,8 @@ public class OSTEqualsFunction extends OSQLFunctionAbstract {
 
     Shape shape1 = factory.fromObject(iParams[1]);
 
-    return shape.equals(shape1) || (shape.relate(shape1) == SpatialRelation.CONTAINS
-        && shape1.relate(shape) == SpatialRelation.CONTAINS);
+    return factory.operation().isEquals(shape,shape1);
+
   }
 
   @Override

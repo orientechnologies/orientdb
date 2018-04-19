@@ -24,9 +24,15 @@ import org.locationtech.spatial4j.shape.Shape;
  */
 public interface OShapeOperation {
 
-  public double distance(Shape shapes1, Shape s2);
+  double distance(Shape shapes1, Shape s2);
 
-  public boolean isWithInDistance(Shape s1, Shape s2, Double dist);
+  boolean isWithInDistance(Shape s1, Shape s2, Double dist);
 
-  public boolean intersect(Shape s1, Shape s2);
+  boolean intersect(Shape s1, Shape s2);
+
+  boolean within(Shape shape, Shape shape1);
+
+  boolean contains(Shape shape, Shape shape1);
+
+  boolean isEquals(Shape shape, Shape shape1);
 }
