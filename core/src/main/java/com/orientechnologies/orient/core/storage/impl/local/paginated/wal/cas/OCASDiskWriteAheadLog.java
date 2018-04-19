@@ -130,8 +130,7 @@ public final class OCASDiskWriteAheadLog {
 
   private final Path masterRecordPath;
 
-  private volatile OLogSequenceNumber                  lastCheckpoint;
-  private final    AtomicReference<OLogSequenceNumber> lastMasterRecord = new AtomicReference<>();
+  private volatile OLogSequenceNumber lastCheckpoint;
 
   private volatile boolean useFirstMasterRecord;
 
@@ -939,7 +938,7 @@ public final class OCASDiskWriteAheadLog {
           segmentId = currentSegment;
         }
 
-        final OLogSequenceNumber masterRecord = lastMasterRecord.get();
+        final OLogSequenceNumber masterRecord = lastCheckpoint;
 
         if (masterRecord != null && segmentId > masterRecord.getSegment()) {
           segmentId = masterRecord.getSegment();
@@ -953,9 +952,9 @@ public final class OCASDiskWriteAheadLog {
           }
         }
 
-        final OLogSequenceNumber written = writtenUpTo.get().lsn;
-        if (segmentId > written.getSegment()) {
-          segmentId = written.getSegment();
+        final OLogSequenceNumber flushed = flushedLSN;
+        if (segmentId > flushed.getSegment()) {
+          segmentId = flushed.getSegment();
         }
 
         if (segmentId <= segments.first()) {
@@ -1148,22 +1147,6 @@ public final class OCASDiskWriteAheadLog {
       }
 
       endLsn = end.get();
-    }
-
-    if (writeableRecord.isUpdateMasterRecord()) {
-      OLogSequenceNumber masterRecord = lastMasterRecord.get();
-
-      while (true) {
-        if (masterRecord != null && masterRecord.compareTo(recordLSN) >= 0) {
-          break;
-        }
-
-        if (lastMasterRecord.compareAndSet(masterRecord, recordLSN)) {
-          break;
-        }
-
-        masterRecord = lastMasterRecord.get();
-      }
     }
 
     return recordLSN;
