@@ -2540,6 +2540,9 @@ public class OCASDiskWriteAheadLogTest {
 
   private static OLogSequenceNumber chooseRandomRecord(Random random,
       NavigableMap<OLogSequenceNumber, ? extends OWriteableWALRecord> records) {
+    if (records.isEmpty()) {
+      return null;
+    }
     OLogSequenceNumber first = records.firstKey();
     OLogSequenceNumber last = records.lastKey();
 
@@ -2915,9 +2918,7 @@ public class OCASDiskWriteAheadLogTest {
             lastMaterRecord = wal.log(record);
             addedRecords.put(lastMaterRecord, record);
           } else {
-            if (limits.size() > 2) {
-              removeLimit(random);
-            } else if (limits.isEmpty() || random.nextDouble() <= 0.5) {
+            if (limits.isEmpty() || random.nextDouble() <= 0.5) {
               addLimit(random);
             } else {
               removeLimit(random);
@@ -3000,12 +3001,11 @@ public class OCASDiskWriteAheadLogTest {
         return;
       }
 
-      final OLogSequenceNumber begin = wal.begin();
-      final OLogSequenceNumber end = wal.end();
+      final OLogSequenceNumber lsn = chooseRandomRecord(random, addedRecords);
+      if (lsn == null) {
+        return;
+      }
 
-      final long segment = (begin.getSegment() + end.getSegment()) / 2;
-
-      final OLogSequenceNumber lsn = chooseRandomRecord(random, addedRecords.tailMap(new OLogSequenceNumber(segment, 0), false));
       wal.addCutTillLimit(lsn);
       OCASDiskWriteAheadLogTest.addLimit(limits, lsn);
     }

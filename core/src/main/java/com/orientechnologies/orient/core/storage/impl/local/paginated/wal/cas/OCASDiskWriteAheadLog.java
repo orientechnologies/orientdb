@@ -987,7 +987,12 @@ public final class OCASDiskWriteAheadLog {
 
             final String segmentName = getSegmentName(segment);
             final Path segmentPath = walLocation.resolve(segmentName);
-            removed = removed | Files.deleteIfExists(segmentPath);
+            if (Files.exists(segmentPath)) {
+              final long length = Files.size(segmentPath);
+              Files.delete(segmentPath);
+              logSize.addAndGet(-length);
+              removed = true;
+            }
           } else {
             break;
           }
