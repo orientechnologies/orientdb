@@ -2931,21 +2931,19 @@ public class OCASDiskWriteAheadLogTest {
           addedRecords.put(lsn, record);
         }
 
-        if (random.nextDouble() <= 0.2) {
-          final OLogSequenceNumber begin = wal.begin();
-          final OLogSequenceNumber end = wal.end();
+        final OLogSequenceNumber begin = wal.begin();
+        final OLogSequenceNumber end = wal.end();
 
-          boolean result;
-          if (begin.getSegment() != end.getSegment()) {
-            final int segment = (int) (random.nextInt((int) (end.getSegment() - begin.getSegment())) + begin.getSegment());
-            result = wal.cutAllSegmentsSmallerThan(segment);
-          } else {
-            result = wal.cutAllSegmentsSmallerThan(begin.getSegment());
-          }
+        boolean result;
+        if (begin.getSegment() != end.getSegment()) {
+          final int segment = (int) (random.nextInt((int) (end.getSegment() - begin.getSegment())) + begin.getSegment());
+          result = wal.cutAllSegmentsSmallerThan(segment);
+        } else {
+          result = wal.cutAllSegmentsSmallerThan(begin.getSegment());
+        }
 
-          if (!result) {
-            failures++;
-          }
+        if (!result) {
+          failures++;
         }
 
         if (cutLimit != null) {
