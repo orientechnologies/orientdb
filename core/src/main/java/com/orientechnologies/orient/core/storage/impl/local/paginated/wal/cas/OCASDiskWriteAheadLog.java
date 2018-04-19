@@ -945,22 +945,17 @@ public final class OCASDiskWriteAheadLog {
           segmentId = masterRecord.getSegment();
         }
 
-        final OWALRecord first = records.peek();
-        assert first != null;
-        final OLogSequenceNumber firstLSN = first.getLsn();
-
-        if (firstLSN.getPosition() > -1) {
-          if (segmentId > firstLSN.getSegment()) {
-            segmentId = firstLSN.getSegment();
-          }
-        }
-
         final Map.Entry<OLogSequenceNumber, Integer> firsEntry = cutTillLimits.firstEntry();
 
         if (firsEntry != null) {
           if (segmentId > firsEntry.getKey().getSegment()) {
             segmentId = firsEntry.getKey().getSegment();
           }
+        }
+
+        final OLogSequenceNumber written = writtenUpTo.get().lsn;
+        if (segmentId > written.getSegment()) {
+          segmentId = written.getSegment();
         }
 
         if (segmentId <= segments.first()) {
@@ -1154,7 +1149,7 @@ public final class OCASDiskWriteAheadLog {
       OLogSequenceNumber masterRecord = lastMasterRecord.get();
 
       while (true) {
-        if (masterRecord.compareTo(recordLSN) >= 0) {
+        if (masterRecord != null && masterRecord.compareTo(recordLSN) >= 0) {
           break;
         }
 
@@ -1639,6 +1634,7 @@ public final class OCASDiskWriteAheadLog {
                     pointer = 0;
                     buffer = null;
                     page = -1;
+                    checkPointLSN = null;
 
                     try {
                       if (writeFuture != null) {
@@ -1684,6 +1680,7 @@ public final class OCASDiskWriteAheadLog {
                     pointer = Native.malloc(BUFFER_SIZE);
                     buffer = new Pointer(pointer).getByteBuffer(0, BUFFER_SIZE).order(ByteOrder.nativeOrder());
                     page = -1;
+                    checkPointLSN = null;
                   }
 
                   if ((buffer.position() & (OCASWALPage.PAGE_SIZE - 1)) == 0) {

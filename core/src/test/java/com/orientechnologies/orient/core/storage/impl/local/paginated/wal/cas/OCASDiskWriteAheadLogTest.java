@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
@@ -10,6 +11,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOpera
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -28,8 +30,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.NavigableMap;
 import java.util.Random;
 import java.util.SortedMap;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
@@ -2375,13 +2380,118 @@ public class OCASDiskWriteAheadLogTest {
     final long seed = System.nanoTime();
     final Random random = new Random(seed);
 
-    for (int i = 0; i < 10_000; i++) {
-      final TestRecord walRecord = new TestRecord(random, 4 * OCASWALPage.PAGE_SIZE, 2 * OCASWALPage.PAGE_SIZE);
-      wal.log(walRecord);
-    }
-
     final TreeMap<OLogSequenceNumber, TestRecord> records = new TreeMap<>();
 
+    for (int k = 0; k < 1_500; k++) {
+      for (int i = 0; i < 30_000; i++) {
+        final TestRecord walRecord = new TestRecord(random, 4 * OCASWALPage.PAGE_SIZE, 2 * OCASWALPage.PAGE_SIZE);
+        wal.log(walRecord);
+        records.put(walRecord.getLsn(), walRecord);
+      }
+
+      OLogSequenceNumber masterLSN = wal.log(new OFullCheckpointStartRecord());
+
+      final TreeMap<OLogSequenceNumber, TestRecord> masterRecords = new TreeMap<>();
+
+      for (int i = 0; i < 30_000; i++) {
+        final TestRecord walRecord = new TestRecord(random, 4 * OCASWALPage.PAGE_SIZE, 2 * OCASWALPage.PAGE_SIZE);
+        final OLogSequenceNumber lsn = wal.log(walRecord);
+        masterRecords.put(lsn, walRecord);
+        records.put(lsn, walRecord);
+      }
+
+      OLogSequenceNumber cutLSN = chooseRandomRecord(random, masterRecords);
+
+      long[] nonActive = wal.nonActiveSegments();
+      wal.cutTill(cutLSN);
+      OLogSequenceNumber begin = wal.begin();
+      Assert.assertTrue(begin.compareTo(masterLSN) <= 0);
+      checkThatAllNonActiveSegmentsAreRemoved(nonActive, Math.min(masterLSN.getSegment(), cutLSN.getSegment()), wal);
+      checkThatSegmentsBellowAreRemoved(wal);
+
+      cutLSN = chooseRandomRecord(random, records.headMap(masterRecords.firstKey(), false));
+      wal.cutTill(cutLSN);
+
+      records.headMap(wal.begin(), false).clear();
+    }
+
+    wal.close();
+  }
+
+  @Test
+  public void testCutTillMT() throws Exception {
+    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 10 * 1024 * 1024, 20,
+        true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000);
+
+    AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
+    ExecutorService executorService = Executors.newCachedThreadPool();
+
+    final OSegmentOverflowListener listener = (segment) -> {
+      Future<Void> oldAppender = segmentAppender.get();
+
+      while (oldAppender == null || oldAppender.isDone()) {
+        if (wal.activeSegment() <= segment) {
+          final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+
+          if (segmentAppender.compareAndSet(oldAppender, appender)) {
+            break;
+          }
+
+          appender.cancel(false);
+          oldAppender = segmentAppender.get();
+        } else {
+          break;
+        }
+      }
+    };
+
+    wal.addSegmentOverflowListener(listener);
+
+    AtomicBoolean walIsFull = new AtomicBoolean();
+
+    final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
+    wal.addFullCheckpointListener(checkpointRequestListener);
+
+    final List<Future<OPair<OLogSequenceNumber, TreeMap<OLogSequenceNumber, OWriteableWALRecord>>>> futures = new ArrayList<>();
+
+    for (int i = 0; i < 8; i++) {
+      futures.add(executorService.submit(new CutTillTester(wal, walIsFull)));
+    }
+
+    Timer timer = new Timer();
+    timer.schedule(new TimerTask() {
+      @Override
+      public void run() {
+        walIsFull.set(true);
+      }
+    }, 1000 * 60 * 60 * 10);
+
+    OLogSequenceNumber lastMaster = null;
+    TreeMap<OLogSequenceNumber, OWriteableWALRecord> addedRecords = new TreeMap<>();
+    for (Future<OPair<OLogSequenceNumber, TreeMap<OLogSequenceNumber, OWriteableWALRecord>>> future : futures) {
+      OPair<OLogSequenceNumber, TreeMap<OLogSequenceNumber, OWriteableWALRecord>> result = future.get();
+
+      final OLogSequenceNumber master = result.key;
+      if (lastMaster == null || lastMaster.compareTo(master) < 0) {
+        lastMaster = master;
+      }
+
+      addedRecords.putAll(result.value);
+    }
+
+    while (wal.end().compareTo(wal.getFlushedLSN()) > 0)
+      ;
+
+    if (lastMaster != null) {
+      Assert.assertTrue(wal.begin().compareTo(lastMaster) <= 0);
+    }
+
+    Assert.assertEquals(lastMaster, wal.lastCheckpoint());
+    System.out.println("Check added records");
+    addedRecords.headMap(wal.begin(), false).clear();
+
+    assertMTWALInsertion(wal, addedRecords);
+    wal.close();
   }
 
   private void checkThatSegmentsBellowAreRemoved(OCASDiskWriteAheadLog wal) {
@@ -2408,11 +2518,11 @@ public class OCASDiskWriteAheadLogTest {
     }
   }
 
-  private void addLimit(TreeMap<OLogSequenceNumber, Integer> limits, OLogSequenceNumber lsn) {
+  private static void addLimit(TreeMap<OLogSequenceNumber, Integer> limits, OLogSequenceNumber lsn) {
     limits.merge(lsn, 1, (a, b) -> a + b);
   }
 
-  private void removeLimit(TreeMap<OLogSequenceNumber, Integer> limits, OLogSequenceNumber lsn) {
+  private static void removeLimit(TreeMap<OLogSequenceNumber, Integer> limits, OLogSequenceNumber lsn) {
     Integer counter = limits.get(lsn);
     if (counter == 1) {
       limits.remove(lsn);
@@ -2421,14 +2531,21 @@ public class OCASDiskWriteAheadLogTest {
     }
   }
 
-  private static OLogSequenceNumber chooseRandomRecord(Random random, TreeMap<OLogSequenceNumber, TestRecord> records) {
+  private static OLogSequenceNumber chooseRandomRecord(Random random,
+      NavigableMap<OLogSequenceNumber, ? extends OWriteableWALRecord> records) {
     OLogSequenceNumber first = records.firstKey();
     OLogSequenceNumber last = records.lastKey();
 
     final int firstSegment = (int) first.getSegment();
     final int lastSegment = (int) last.getSegment();
 
-    final int segment = random.nextInt(lastSegment - firstSegment) + firstSegment;
+    final int segment;
+    if (lastSegment > firstSegment) {
+      segment = random.nextInt(lastSegment - firstSegment) + firstSegment;
+    } else {
+      segment = lastSegment;
+    }
+
     final OLogSequenceNumber lastLSN = records.floorKey(new OLogSequenceNumber(segment, Integer.MAX_VALUE));
     final int position = random.nextInt((int) lastLSN.getPosition());
 
@@ -2438,25 +2555,30 @@ public class OCASDiskWriteAheadLogTest {
     return lsn;
   }
 
-  private void assertMTWALInsertion(OCASDiskWriteAheadLog wal, SortedMap<OLogSequenceNumber, TestRecord> addedRecords)
-      throws IOException {
-    final Iterator<TestRecord> recordsIterator = addedRecords.values().iterator();
+  private void assertMTWALInsertion(OCASDiskWriteAheadLog wal,
+      SortedMap<OLogSequenceNumber, ? extends OWriteableWALRecord> addedRecords) throws IOException {
+    final Iterator<? extends OWriteableWALRecord> recordsIterator = addedRecords.values().iterator();
 
-    TestRecord record = recordsIterator.next();
+    OWriteableWALRecord record = recordsIterator.next();
     List<OWriteableWALRecord> records = wal.read(record.getLsn(), 100);
     Iterator<OWriteableWALRecord> readIterator = records.iterator();
-    TestRecord readRecord = (TestRecord) readIterator.next();
+    OWriteableWALRecord readRecord = readIterator.next();
 
     Assert.assertEquals(record.getLsn(), readRecord.getLsn());
-    Assert.assertArrayEquals(record.data, readRecord.data);
+    if (record instanceof TestRecord) {
+      Assert.assertArrayEquals(((TestRecord) record).data, ((TestRecord) readRecord).data);
+    }
 
     OLogSequenceNumber lastLSN = record.getLsn();
     while (readIterator.hasNext()) {
-      readRecord = (TestRecord) readIterator.next();
+      readRecord = readIterator.next();
       record = recordsIterator.next();
 
       Assert.assertEquals(record.getLsn(), readRecord.getLsn());
-      Assert.assertArrayEquals(record.data, readRecord.data);
+
+      if (record instanceof TestRecord) {
+        Assert.assertArrayEquals(((TestRecord) record).data, ((TestRecord) readRecord).data);
+      }
       lastLSN = record.getLsn();
     }
 
@@ -2466,22 +2588,28 @@ public class OCASDiskWriteAheadLogTest {
 
       readIterator = records.iterator();
       while (readIterator.hasNext() && recordsIterator.hasNext()) {
-        readRecord = (TestRecord) readIterator.next();
+        readRecord = readIterator.next();
         record = recordsIterator.next();
 
         Assert.assertEquals(record.getLsn(), readRecord.getLsn());
         try {
-          Assert.assertArrayEquals("Record LSN " + record.getLsn() + ", record data length " + record.data.length, record.data,
-              readRecord.data);
+          if (record instanceof TestRecord) {
+            Assert.assertArrayEquals("Record LSN " + record.getLsn() + ", record data length " + ((TestRecord) record).data.length,
+                ((TestRecord) record).data, ((TestRecord) readRecord).data);
+          }
         } catch (AssertionError e) {
           if (readIterator.hasNext()) {
-            TestRecord r = (TestRecord) readIterator.next();
-            System.out.println("Next read LSN is " + r.getLsn() + " record size is " + r.data.length);
+            OWriteableWALRecord r = readIterator.next();
+            if (r instanceof TestRecord) {
+              System.out.println("Next read LSN is " + r.getLsn() + " record size is " + ((TestRecord) r).data.length);
+            }
           }
 
           if (recordsIterator.hasNext()) {
-            TestRecord r = recordsIterator.next();
-            System.out.println("Next stored LSN is " + r.getLsn() + " record size is " + r.data.length);
+            OWriteableWALRecord r = recordsIterator.next();
+            if (r instanceof TestRecord) {
+              System.out.println("Next stored LSN is " + r.getLsn() + " record size is " + ((TestRecord) r).data.length);
+            }
           }
           throw e;
         }
@@ -2746,6 +2874,140 @@ public class OCASDiskWriteAheadLogTest {
         }
 
       }
+    }
+  }
+
+  private static final class CutTillTester
+      implements Callable<OPair<OLogSequenceNumber, TreeMap<OLogSequenceNumber, OWriteableWALRecord>>> {
+    private final OCASDiskWriteAheadLog wal;
+    private final AtomicBoolean         walIsFull;
+
+    private final TreeMap<OLogSequenceNumber, OWriteableWALRecord> addedRecords = new TreeMap<>();
+    private final TreeMap<OLogSequenceNumber, Integer>             limits       = new TreeMap<>();
+
+    private OLogSequenceNumber lastMaterRecord;
+
+    private OLogSequenceNumber cutLimit;
+
+    public CutTillTester(OCASDiskWriteAheadLog wal, AtomicBoolean walIsFull) {
+      this.wal = wal;
+      this.walIsFull = walIsFull;
+    }
+
+    @Override
+    public OPair<OLogSequenceNumber, TreeMap<OLogSequenceNumber, OWriteableWALRecord>> call() throws Exception {
+      final ThreadLocalRandom random = ThreadLocalRandom.current();
+
+      long lastReport = -1;
+      int failures = 0;
+      while (!walIsFull.get()) {
+        if (random.nextDouble() <= 0.1) {
+          if (random.nextDouble() <= 0.5) {
+            final OWriteableWALRecord record = new OFullCheckpointStartRecord();
+            lastMaterRecord = wal.log(record);
+            addedRecords.put(lastMaterRecord, record);
+          } else {
+            if (limits.isEmpty() || random.nextDouble() <= 0.5) {
+              addLimit(random);
+            } else {
+              removeLimit(random);
+            }
+          }
+
+          calculateLimit();
+        } else {
+          final TestRecord record = new TestRecord(random, 4 * OCASWALPage.PAGE_SIZE, 2 * OCASWALPage.PAGE_SIZE);
+          final OLogSequenceNumber lsn = wal.log(record);
+          addedRecords.put(lsn, record);
+        }
+
+        if (random.nextDouble() <= 0.2) {
+          final OLogSequenceNumber begin = wal.begin();
+          final OLogSequenceNumber end = wal.end();
+
+          boolean result;
+          if (begin.getSegment() != end.getSegment()) {
+            final int segment = (int) (random.nextInt((int) (end.getSegment() - begin.getSegment())) + begin.getSegment());
+            result = wal.cutAllSegmentsSmallerThan(segment);
+          } else {
+            result = wal.cutAllSegmentsSmallerThan(begin.getSegment());
+          }
+
+          if (!result) {
+            failures++;
+          }
+        }
+
+        if (cutLimit != null) {
+          Assert.assertTrue(wal.begin().compareTo(cutLimit) <= 0);
+        }
+
+        clearRecords();
+        final long ts = System.currentTimeMillis();
+        if (lastReport > 0) {
+          if (ts - lastReport > 10_000) {
+            System.out.println("Thread " + Thread.currentThread().getId() + ", cut till limit " + cutLimit);
+            lastReport = ts;
+          }
+        } else {
+          lastReport = ts;
+        }
+      }
+
+      System.out.println("Thread " + Thread.currentThread().getId() + ", failures " + failures);
+      return new OPair<>(lastMaterRecord, addedRecords);
+    }
+
+    private void calculateLimit() {
+      final OLogSequenceNumber begin = wal.begin();
+      OLogSequenceNumber cutLimit = null;
+
+      if (!limits.isEmpty()) {
+        cutLimit = limits.firstKey();
+      }
+
+      if (lastMaterRecord != null) {
+        if (cutLimit == null) {
+          cutLimit = lastMaterRecord;
+        } else {
+          if (cutLimit.compareTo(lastMaterRecord) > 0) {
+            cutLimit = lastMaterRecord;
+          }
+        }
+      }
+
+      if (cutLimit != null) {
+        if (begin.compareTo(cutLimit) > 0) {
+          this.cutLimit = begin;
+        } else {
+          this.cutLimit = cutLimit;
+        }
+      }
+    }
+
+    private void clearRecords() {
+      final OLogSequenceNumber begin = wal.begin();
+      addedRecords.headMap(begin, false).clear();
+    }
+
+    private void addLimit(ThreadLocalRandom random) {
+      final OLogSequenceNumber lsn = chooseRandomRecord(random, addedRecords);
+      wal.addCutTillLimit(lsn);
+      OCASDiskWriteAheadLogTest.addLimit(limits, lsn);
+    }
+
+    private void removeLimit(ThreadLocalRandom random) {
+      final int size = limits.size();
+      final int number = random.nextInt(size);
+      final Iterator<OLogSequenceNumber> limitsIterator = limits.keySet().iterator();
+
+      for (int i = 0; i < number - 1; i++) {
+        limitsIterator.next();
+      }
+
+      final OLogSequenceNumber limit = limitsIterator.next();
+      wal.removeCutTillLimit(limit);
+      OCASDiskWriteAheadLogTest.removeLimit(limits, limit);
     }
   }
 }
