@@ -2471,7 +2471,7 @@ public class OCASDiskWriteAheadLogTest {
           report.set(true);
         }
       }
-    }, 1000 * 30);
+    }, 1000 * 30, 1000 * 30);
 
     OLogSequenceNumber lastMaster = null;
     TreeMap<OLogSequenceNumber, OWriteableWALRecord> addedRecords = new TreeMap<>();
@@ -3001,7 +3001,12 @@ public class OCASDiskWriteAheadLogTest {
         return;
       }
 
-      final OLogSequenceNumber lsn = chooseRandomRecord(random, addedRecords);
+      final OLogSequenceNumber begin = wal.begin();
+      final OLogSequenceNumber end = wal.end();
+
+      final long segment = begin.getSegment() + (end.getSegment() - begin.getSegment()) / 4;
+
+      final OLogSequenceNumber lsn = chooseRandomRecord(random, addedRecords.tailMap(new OLogSequenceNumber(segment, 0), false));
       if (lsn == null) {
         return;
       }
