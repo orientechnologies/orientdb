@@ -53,7 +53,7 @@ public class OLuceneIndexCrashRestoreIT {
     databasePool = new ODatabasePool(orientdb, "testLuceneCrash", "admin", "admin");
 
     //names to be used for person to be indexed
-    names = Arrays.asList("John", "Robert", "Jane", "andrew", "Scott", "luke", "Enriquez", "Luis", "Gabriel", "Sara");
+    names = Arrays.asList("John", "Robert Luis", "Jane", "andrew", "Scott", "luke", "Enriquez", "Luis", "Gabriel", "Sara");
     surnames = Arrays.asList("Smith", "Done", "Doe", "pig", "mole", "Jones", "Candito", "Simmons", "Angel", "Low");
 
   }
@@ -133,12 +133,12 @@ public class OLuceneIndexCrashRestoreIT {
 
         db = databasePool.acquire();
         //wildcard will not work
-        res = db.query("select from Person where name lucene 'Rob*' ");
+        res = db.query("select from Person where name lucene 'Robert' ");
         assertThat(res).hasSize(0);
         res.close();
 
         //plain name fetch docs
-        res = db.query("select from Person where name lucene 'Robert' LIMIT 20");
+        res = db.query("select from Person where name lucene 'Robert Luis' LIMIT 20");
         assertThat(res).hasSize(20);
         res.close();
         db.close();
@@ -191,11 +191,11 @@ public class OLuceneIndexCrashRestoreIT {
     assertThat(index.getMetadata().<String>field("unknownKey")).isEqualTo("unknownValue");
 
     //sometimes it is not null, and all works fine
-    res = db.query("select from Person where name lucene 'Rob*' ");
+    res = db.query("select from Person where name lucene 'Robert' ");
 
     assertThat(res).hasSize(0);
     res.close();
-    res = db.query("select from Person where name lucene 'Robert' LIMIT 20");
+    res = db.query("select from Person where name lucene 'Robert Luis' LIMIT 20");
 
     assertThat(res).hasSize(20);
     res.close();
