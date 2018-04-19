@@ -41,25 +41,15 @@ import java.util.zip.ZipOutputStream;
 
 /**
  * Compression Utility.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OZIPCompressionUtil {
-  public static List<String> compressDirectory(final String sourceFolderName, final OutputStream output,
-      final String[] iSkipFileExtensions, final OCommandOutputListener iOutput, int compressionLevel) throws IOException {
-
+  public static List<String> compressDirectory(final String sourceFolderName, final ZipOutputStream zos,
+      final String[] iSkipFileExtensions, final OCommandOutputListener iOutput) throws IOException {
     final List<String> compressedFiles = new ArrayList<String>();
-
-    final ZipOutputStream zos = new ZipOutputStream(output);
-    zos.setComment("OrientDB Backup executed on " + new Date());
-    try {
-      zos.setLevel(compressionLevel);
-      addFolder(zos, sourceFolderName, sourceFolderName, iSkipFileExtensions, iOutput, compressedFiles);
-
-      return compressedFiles;
-    } finally {
-      zos.close();
-    }
+    addFolder(zos, sourceFolderName, sourceFolderName, iSkipFileExtensions, iOutput, compressedFiles);
+    return compressedFiles;
   }
 
   /***
@@ -200,8 +190,9 @@ public class OZIPCompressionUtil {
     if (iOutput != null) {
       final long ratio = ze.getSize() > 0 ? 100 - (ze.getCompressedSize() * 100 / ze.getSize()) : 0;
 
-      iOutput.onMessage("ok size=" + OFileUtils.getSizeAsString(ze.getSize()) + " compressedSize=" + ze.getCompressedSize()
-          + " ratio=" + ratio + "%% elapsed=" + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin) + "");
+      iOutput.onMessage(
+          "ok size=" + OFileUtils.getSizeAsString(ze.getSize()) + " compressedSize=" + ze.getCompressedSize() + " ratio=" + ratio
+              + "%% elapsed=" + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin) + "");
     }
   }
 }

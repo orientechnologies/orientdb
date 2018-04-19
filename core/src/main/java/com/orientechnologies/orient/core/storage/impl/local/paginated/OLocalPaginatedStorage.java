@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 
 import java.io.*;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -232,8 +233,20 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         try {
           final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
           try {
-            return OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo,
-                new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION }, iOutput, compressionLevel);
+            final ZipOutputStream zos = new ZipOutputStream(bo);
+            try {
+              zos.setComment("OrientDB Backup executed on " + new Date());
+              zos.setLevel(compressionLevel);
+
+              final List<String> names = OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), zos,
+                  new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION }, iOutput);
+              OPaginatedStorageDirtyFlag.addFileToArchive(zos, "dirty.fl");
+              names.add("dirty.fl");
+              return names;
+            } finally {
+              zos.close();
+            }
+
           } finally {
             if (bufferSize > 0) {
               bo.flush();
