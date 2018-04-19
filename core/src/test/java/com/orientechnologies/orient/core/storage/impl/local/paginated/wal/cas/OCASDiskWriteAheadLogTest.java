@@ -2416,7 +2416,8 @@ public class OCASDiskWriteAheadLogTest {
 
   @Test
   public void testCutTillMT() throws Exception {
-    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 10 * 1024 * 1024, 20,
+    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000,
+        10 * 1024 * 1024, 20,
         true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000);
 
     AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
@@ -2915,7 +2916,7 @@ public class OCASDiskWriteAheadLogTest {
             lastMaterRecord = wal.log(record);
             addedRecords.put(lastMaterRecord, record);
           } else {
-            if (limits.size() > 2) {
+            if (limits.size() > 1) {
               removeLimit(random);
             } else if (limits.isEmpty() || random.nextDouble() <= 0.5) {
               if (!addedRecords.isEmpty()) {
