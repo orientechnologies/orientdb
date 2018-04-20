@@ -2344,78 +2344,6 @@ public class OCASDiskWriteAheadLogTest {
   }
 
   @Test
-  public void testCutTillMasterRecord() throws Exception {
-    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 10 * 1024 * 1024, 20,
-        true, Locale.US, 10 * 1024 * 1024L, -1, 1000);
-
-    AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
-    ExecutorService executorService = Executors.newCachedThreadPool();
-
-    final OSegmentOverflowListener listener = (segment) -> {
-      Future<Void> oldAppender = segmentAppender.get();
-
-      while (oldAppender == null || oldAppender.isDone()) {
-        if (wal.activeSegment() <= segment) {
-          final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
-
-          if (segmentAppender.compareAndSet(oldAppender, appender)) {
-            break;
-          }
-
-          appender.cancel(false);
-          oldAppender = segmentAppender.get();
-        } else {
-          break;
-        }
-      }
-    };
-
-    wal.addSegmentOverflowListener(listener);
-
-    final long seed = System.nanoTime();
-    final Random random = new Random(seed);
-
-    final TreeMap<OLogSequenceNumber, TestRecord> records = new TreeMap<>();
-
-    for (int k = 0; k < 1_500; k++) {
-      for (int i = 0; i < 30_000; i++) {
-        final TestRecord walRecord = new TestRecord(random, 4 * OCASWALPage.PAGE_SIZE, 2 * OCASWALPage.PAGE_SIZE);
-        wal.log(walRecord);
-        records.put(walRecord.getLsn(), walRecord);
-      }
-
-      OLogSequenceNumber masterLSN = wal.log(new OFullCheckpointStartRecord());
-
-      final TreeMap<OLogSequenceNumber, TestRecord> masterRecords = new TreeMap<>();
-
-      for (int i = 0; i < 30_000; i++) {
-        final TestRecord walRecord = new TestRecord(random, 4 * OCASWALPage.PAGE_SIZE, 2 * OCASWALPage.PAGE_SIZE);
-        final OLogSequenceNumber lsn = wal.log(walRecord);
-        masterRecords.put(lsn, walRecord);
-        records.put(lsn, walRecord);
-      }
-
-      OLogSequenceNumber cutLSN = chooseRandomRecord(random, masterRecords);
-      Assert.assertNotNull(cutLSN);
-
-      long[] nonActive = wal.nonActiveSegments();
-      wal.cutTill(cutLSN);
-      OLogSequenceNumber begin = wal.begin();
-      Assert.assertTrue(begin.compareTo(masterLSN) <= 0);
-      checkThatAllNonActiveSegmentsAreRemoved(nonActive, Math.min(masterLSN.getSegment(), cutLSN.getSegment()), wal);
-      checkThatSegmentsBellowAreRemoved(wal);
-
-      cutLSN = chooseRandomRecord(random, records.headMap(masterRecords.firstKey(), false));
-      Assert.assertNotNull(cutLSN);
-      wal.cutTill(cutLSN);
-
-      records.headMap(wal.begin(), false).clear();
-    }
-
-    wal.close();
-  }
-
-  @Test
   public void testCutTillMT() throws Exception {
     OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 10 * 1024 * 1024, 20,
         true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000);
@@ -2449,7 +2377,7 @@ public class OCASDiskWriteAheadLogTest {
     final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
     wal.addFullCheckpointListener(checkpointRequestListener);
 
-    final List<Future<OPair<OLogSequenceNumber, TreeMap<OLogSequenceNumber, OWriteableWALRecord>>>> futures = new ArrayList<>();
+    final List<Future<TreeMap<OLogSequenceNumber, OWriteableWALRecord>>> futures = new ArrayList<>();
     final AtomicBoolean[] sendReport = new AtomicBoolean[8];
 
     for (int i = 0; i < 8; i++) {
@@ -2474,28 +2402,12 @@ public class OCASDiskWriteAheadLogTest {
       }
     }, 1000 * 30, 1000 * 30);
 
-    OLogSequenceNumber lastMaster = null;
     TreeMap<OLogSequenceNumber, OWriteableWALRecord> addedRecords = new TreeMap<>();
-    for (Future<OPair<OLogSequenceNumber, TreeMap<OLogSequenceNumber, OWriteableWALRecord>>> future : futures) {
-      OPair<OLogSequenceNumber, TreeMap<OLogSequenceNumber, OWriteableWALRecord>> result = future.get();
-
-      final OLogSequenceNumber master = result.key;
-      if (lastMaster == null || lastMaster.compareTo(master) < 0) {
-        lastMaster = master;
-      }
-
-      addedRecords.putAll(result.value);
+    for (Future<TreeMap<OLogSequenceNumber, OWriteableWALRecord>> future : futures) {
+      TreeMap<OLogSequenceNumber, OWriteableWALRecord> result = future.get();
+      addedRecords.putAll(result);
     }
 
-    //noinspection StatementWithEmptyBody
-    while (wal.end().compareTo(wal.getFlushedLSN()) > 0)
-      ;
-
-    if (lastMaster != null) {
-      Assert.assertTrue(wal.begin().compareTo(lastMaster) <= 0);
-    }
-
-    Assert.assertEquals(lastMaster, wal.lastCheckpoint());
     System.out.println("Check added records");
     addedRecords.headMap(wal.begin(), false).clear();
 
@@ -2689,6 +2601,11 @@ public class OCASDiskWriteAheadLogTest {
         throw e;
       }
     }
+  }
+
+  @Test
+  public void testDelete() {
+
   }
 
   private void checkThatSegmentsBellowAreRemoved(OCASDiskWriteAheadLog wal) {
@@ -3081,16 +2998,13 @@ public class OCASDiskWriteAheadLogTest {
     }
   }
 
-  private static final class CutTillTester
-      implements Callable<OPair<OLogSequenceNumber, TreeMap<OLogSequenceNumber, OWriteableWALRecord>>> {
+  private static final class CutTillTester implements Callable<TreeMap<OLogSequenceNumber, OWriteableWALRecord>> {
     private final OCASDiskWriteAheadLog wal;
     private final AtomicBoolean         walIsFull;
 
     private final TreeMap<OLogSequenceNumber, OWriteableWALRecord> addedRecords = new TreeMap<>();
     private final TreeMap<OLogSequenceNumber, Integer>             limits       = new TreeMap<>();
     private final AtomicBoolean                                    sendReport;
-
-    private OLogSequenceNumber lastMaterRecord;
 
     private OLogSequenceNumber cutLimit;
 
@@ -3101,22 +3015,16 @@ public class OCASDiskWriteAheadLogTest {
     }
 
     @Override
-    public OPair<OLogSequenceNumber, TreeMap<OLogSequenceNumber, OWriteableWALRecord>> call() throws Exception {
+    public TreeMap<OLogSequenceNumber, OWriteableWALRecord> call() throws Exception {
       final ThreadLocalRandom random = ThreadLocalRandom.current();
 
       int failures = 0;
       while (!walIsFull.get()) {
         if (random.nextDouble() <= 0.2) {
-          if (random.nextDouble() <= 0.5) {
-            final OWriteableWALRecord record = new OFullCheckpointStartRecord();
-            lastMaterRecord = wal.log(record);
-            addedRecords.put(lastMaterRecord, record);
+          if (limits.isEmpty() || random.nextDouble() <= 0.5) {
+            addLimit(random);
           } else {
-            if (limits.isEmpty() || random.nextDouble() <= 0.5) {
-              addLimit(random);
-            } else {
-              removeLimit(random);
-            }
+            removeLimit(random);
           }
 
           calculateLimit();
@@ -3153,7 +3061,7 @@ public class OCASDiskWriteAheadLogTest {
       }
 
       System.out.println("Thread " + Thread.currentThread().getId() + ", failures " + failures);
-      return new OPair<>(lastMaterRecord, addedRecords);
+      return addedRecords;
     }
 
     private void calculateLimit() {
@@ -3164,22 +3072,14 @@ public class OCASDiskWriteAheadLogTest {
         cutLimit = limits.firstKey();
       }
 
-      if (lastMaterRecord != null) {
-        if (cutLimit == null) {
-          cutLimit = lastMaterRecord;
-        } else {
-          if (cutLimit.compareTo(lastMaterRecord) > 0) {
-            cutLimit = lastMaterRecord;
-          }
-        }
-      }
-
       if (cutLimit != null) {
         if (begin.compareTo(cutLimit) > 0) {
           this.cutLimit = begin;
         } else {
           this.cutLimit = cutLimit;
         }
+      } else {
+        this.cutLimit = null;
       }
     }
 

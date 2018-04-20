@@ -938,12 +938,6 @@ public final class OCASDiskWriteAheadLog {
           segmentId = currentSegment;
         }
 
-        final OLogSequenceNumber masterRecord = lastCheckpoint;
-
-        if (masterRecord != null && segmentId > masterRecord.getSegment()) {
-          segmentId = masterRecord.getSegment();
-        }
-
         final Map.Entry<OLogSequenceNumber, Integer> firsEntry = cutTillLimits.firstEntry();
 
         if (firsEntry != null) {
@@ -952,9 +946,9 @@ public final class OCASDiskWriteAheadLog {
           }
         }
 
-        final OLogSequenceNumber flushed = flushedLSN;
-        if (segmentId > flushed.getSegment()) {
-          segmentId = flushed.getSegment();
+        final OLogSequenceNumber written = writtenUpTo.get().lsn;
+        if (segmentId > written.getSegment()) {
+          segmentId = written.getSegment();
         }
 
         if (segmentId <= segments.first()) {
