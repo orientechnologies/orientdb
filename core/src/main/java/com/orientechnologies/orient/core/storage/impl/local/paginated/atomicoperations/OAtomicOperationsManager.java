@@ -365,6 +365,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       operation.rollback(exception);
     }
 
+    final int counter = operation.getCounter();
+    assert counter > 0;
+
     if (operation.isRollback() && !rollback) {
       final StringWriter writer = new StringWriter();
       writer.append("Atomic operation was rolled back by internal component");
@@ -376,12 +379,20 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
       atomicOperationsCount.decrement();
 
+      operation.decrementCounter();
+
+      if (counter == 1) {
+        for (String lockObject : operation.lockedObjects()) {
+          lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+        }
+
+        currentOperation.set(null);
+      }
+
+
       final ONestedRollbackException nre = new ONestedRollbackException(writer.toString());
       throw OException.wrapException(nre, exception);
     }
-
-    final int counter = operation.getCounter();
-    assert counter > 0;
 
     final OLogSequenceNumber lsn;
     if (counter == 1) {
@@ -421,6 +432,15 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     }
 
     return lsn;
+  }
+
+  public void ensureThatComponentsUnlocked() {
+    final OAtomicOperation operation = currentOperation.get();
+    if (operation != null) {
+      for (String lockObject : operation.lockedObjects()) {
+        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+      }
+    }
   }
 
   /**

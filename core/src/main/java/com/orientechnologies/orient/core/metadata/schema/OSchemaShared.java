@@ -608,10 +608,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   @Override
   public void close() {
-    classes.clear();
-    clustersToClasses.clear();
-    blobClusters.clear();
-    properties.clear();
   }
 
   @Deprecated

@@ -6,11 +6,15 @@ import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -366,6 +370,19 @@ public class OBaseIdentifier extends SimpleNode {
     }
 
     return true;
+  }
+
+  public boolean isIndexChain(OCommandContext ctx, OClass clazz) {
+    if (suffix.isBaseIdentifier()) {
+      OProperty prop = clazz.getProperty(suffix.identifier.getStringValue());
+      if (prop == null) {
+        return false;
+      }
+      Collection<OIndex<?>> allIndexes = prop.getAllIndexes();
+
+      return allIndexes != null && allIndexes.stream().anyMatch(idx -> idx.getDefinition().getFields().size() == 1);
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

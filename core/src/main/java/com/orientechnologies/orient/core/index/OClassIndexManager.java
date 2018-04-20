@@ -63,7 +63,7 @@ public class OClassIndexManager {
   }
 
   public static void processIndexOnCreate(ODatabaseDocumentInternal database, ODocument document, List<IndexChange> ops) {
-    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(document);
+    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(database, document);
     if (cls != null) {
       final Collection<OIndex<?>> indexes = cls.getRawIndexes();
       addIndexesEntries(database, document, indexes, ops);
@@ -78,7 +78,7 @@ public class OClassIndexManager {
   }
 
   public static void processIndexOnUpdate(ODatabaseDocumentInternal database, ODocument iDocument, List<IndexChange> changes) {
-    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
+    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(database, iDocument);
     if (cls == null) {
       return;
     }
@@ -381,7 +381,7 @@ public class OClassIndexManager {
   }
 
   public static void processIndexOnDelete(ODatabaseDocumentInternal database, ODocument iDocument, List<IndexChange> changes) {
-    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
+    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(database, iDocument);
     if (cls == null)
       return;
 

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -71,7 +72,7 @@ public class OSelectExecutionPlanner {
       throw new OCommandExecutionException("Cannot execute a statement with DISTINCT expand(), please use a subquery");
     }
 
-    optimizeQuery(info);
+    optimizeQuery(info, ctx);
 
     if (handleHardwiredOptimizations(result, ctx, enableProfiling)) {
       return result;
@@ -596,8 +597,9 @@ public class OSelectExecutionPlanner {
     }
   }
 
-  protected static void optimizeQuery(QueryPlanningInfo info) {
+  protected static void optimizeQuery(QueryPlanningInfo info, OCommandContext ctx) {
     splitLet(info);
+    rewriteIndexChainsAsSubqueries(info, ctx);
     extractSubQueries(info);
     if (info.projection != null && info.projection.isExpand()) {
       info.expand = true;
@@ -611,6 +613,18 @@ public class OSelectExecutionPlanner {
 
     splitProjectionsForGroupBy(info);
     addOrderByProjections(info);
+  }
+
+  private static void rewriteIndexChainsAsSubqueries(QueryPlanningInfo info, OCommandContext ctx) {
+    if (ctx == null || ctx.getDatabase() == null) {
+      return;
+    }
+    if (info.whereClause != null && info.target != null && info.target.getItem().getIdentifier() != null) {
+      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(info.target.getItem().getIdentifier().getStringValue());
+      if (clazz != null) {
+        info.whereClause.getBaseExpression().rewriteIndexChainsAsSubqueries(ctx, clazz);
+      }
+    }
   }
 
   /**
@@ -1939,10 +1953,101 @@ public class OSelectExecutionPlanner {
    * @return
    */
   private IndexSearchDescriptor findBestIndexFor(OCommandContext ctx, Set<OIndex<?>> indexes, OAndBlock block, OClass clazz) {
-    return indexes.stream().filter(x -> x.getInternal().canBeUsedInEqualityOperators())
+    //get all valid index descriptors
+    List<IndexSearchDescriptor> descriptors = indexes.stream().filter(x -> x.getInternal().canBeUsedInEqualityOperators())
         .map(index -> buildIndexSearchDescriptor(ctx, index, block, clazz)).filter(Objects::nonNull)
-        .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0)
-        .min(Comparator.comparing(x -> x.cost(ctx))).orElse(null);
+        .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0).collect(Collectors.toList());
+
+    //remove the redundant descriptors (eg. if I have one on [a] and one on [a, b], the first one is redundant, just discard it)
+    descriptors = removePrefixIndexes(descriptors);
+
+    //sort by cost
+    List<OPair<Integer, IndexSearchDescriptor>> sortedDescriptors = descriptors.stream()
+        .map(x -> (OPair<Integer, IndexSearchDescriptor>) new OPair(x.cost(ctx), x)).sorted().collect(Collectors.toList());
+
+    //get only the descriptors with the lowest cost
+    descriptors = sortedDescriptors.isEmpty() ?
+        Collections.emptyList() :
+        sortedDescriptors.stream().filter(x -> x.key.equals(sortedDescriptors.get(0).key)).map(x -> x.value)
+            .collect(Collectors.toList());
+
+    //sort remaining by the number of indexed fields
+    descriptors = descriptors.stream().sorted(Comparator.comparingInt(x -> x.keyCondition.getSubBlocks().size()))
+        .collect(Collectors.toList());
+
+    //get the one that has more indexed fields
+    return descriptors.isEmpty() ? null : descriptors.get(descriptors.size() - 1);
+  }
+
+  private List<IndexSearchDescriptor> removePrefixIndexes(List<IndexSearchDescriptor> descriptors) {
+    List<IndexSearchDescriptor> result = new ArrayList<>();
+    for (IndexSearchDescriptor desc : descriptors) {
+      if (result.isEmpty()) {
+        result.add(desc);
+      } else {
+        List<IndexSearchDescriptor> prefixes = findPrefixes(desc, result);
+        if (prefixes.isEmpty()) {
+          if (!isPrefixOfAny(desc, result)) {
+            result.add(desc);
+          }
+        } else {
+          result.removeAll(prefixes);
+          result.add(desc);
+        }
+      }
+    }
+    return result;
+  }
+
+  private boolean isPrefixOfAny(IndexSearchDescriptor desc, List<IndexSearchDescriptor> result) {
+    for (IndexSearchDescriptor item : result) {
+      if (isPrefixOf(desc, item)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * finds prefix conditions for a given condition, eg. if the condition is on [a,b] and in the list there is another condition on
+   * [a] or on [a,b], then that condition is returned.
+   *
+   * @param desc
+   * @param descriptors
+   *
+   * @return
+   */
+  private List<IndexSearchDescriptor> findPrefixes(IndexSearchDescriptor desc, List<IndexSearchDescriptor> descriptors) {
+    List<IndexSearchDescriptor> result = new ArrayList<>();
+    for (IndexSearchDescriptor item : descriptors) {
+      if (isPrefixOf(item, desc)) {
+        result.add(item);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * returns true if the first argument is a prefix for the second argument, eg. if the first argument is [a] and the second
+   * argument is [a, b]
+   *
+   * @param item
+   * @param desc
+   *
+   * @return
+   */
+  private boolean isPrefixOf(IndexSearchDescriptor item, IndexSearchDescriptor desc) {
+    List<OBooleanExpression> left = item.keyCondition.getSubBlocks();
+    List<OBooleanExpression> right = desc.keyCondition.getSubBlocks();
+    if (left.size() > right.size()) {
+      return false;
+    }
+    for (int i = 0; i < left.size(); i++) {
+      if (!left.get(i).equals(right.get(i))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**

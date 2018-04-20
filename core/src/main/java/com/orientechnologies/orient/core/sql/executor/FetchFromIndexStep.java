@@ -17,6 +17,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by luigidellaquila on 23/07/16.
@@ -67,8 +68,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override
   public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    init(ctx.getDatabase());
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+    init(ctx.getDatabase());
     return new OResultSet() {
       int localCount = 0;
 
@@ -332,7 +333,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     for (int i = 0; i < secondValueCombinations.size(); i++) {
 
       Object secondValue = secondValueCombinations.get(i).execute((OResult) null, ctx);
+      secondValue = unboxOResult(secondValue);
       Object thirdValue = thirdValueCombinations.get(i).execute((OResult) null, ctx);
+      thirdValue = unboxOResult(thirdValue);
 
       OIndexDefinition indexDef = index.getDefinition();
       secondValue = convertToIndexDefinitionTypes(secondValue, indexDef.getTypes());
@@ -353,6 +356,30 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       cursor = nextCursors.remove(0);
       fetchNextEntry();
     }
+  }
+
+  /**
+   * this is for subqueries, when a OResult is found <ul> <li>if it's a projection with a single column, the value is returned</li>
+   * <li>if it's a document, the RID is returned</li> </ul>
+   *
+   * @param value
+   *
+   * @return
+   */
+  private Object unboxOResult(Object value) {
+    if (value instanceof List) {
+      return ((List) value).stream().map(x -> unboxOResult(x)).collect(Collectors.toList());
+    }
+    if (value instanceof OResult) {
+      if (((OResult) value).isElement()) {
+        return ((OResult) value).getIdentity().orElse(null);
+      }
+      Set<String> props = ((OResult) value).getPropertyNames();
+      if (props.size() == 1) {
+        return ((OResult) value).getProperty(props.iterator().next());
+      }
+    }
+    return value;
   }
 
   private List<OCollection> cartesianProduct(OCollection key) {
@@ -436,7 +463,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     OExpression third = ((OBetweenCondition) condition).getThird();
 
     Object secondValue = second.execute((OResult) null, ctx);
+    secondValue = unboxOResult(secondValue);
     Object thirdValue = third.execute((OResult) null, ctx);
+    thirdValue = unboxOResult(thirdValue);
     cursor = index
         .iterateEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true,
             isOrderAsc());
@@ -530,6 +559,11 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         if (((OInCondition) exp).getRightMathExpression() != null) {
           item.setMathExpression(((OInCondition) exp).getRightMathExpression());
           result.add(item);
+        } else if (((OInCondition) exp).getRightParam() != null) {
+          OBaseExpression e = new OBaseExpression(-1);
+          e.setInputParam(((OInCondition) exp).getRightParam().copy());
+          item.setMathExpression(e);
+          result.add(item);
         } else {
           throw new UnsupportedOperationException("Cannot execute index query with " + exp);
         }
@@ -564,6 +598,11 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         OExpression item = new OExpression(-1);
         if (((OInCondition) exp).getRightMathExpression() != null) {
           item.setMathExpression(((OInCondition) exp).getRightMathExpression());
+          result.add(item);
+        } else if (((OInCondition) exp).getRightParam() != null) {
+          OBaseExpression e = new OBaseExpression(-1);
+          e.setInputParam(((OInCondition) exp).getRightParam().copy());
+          item.setMathExpression(e);
           result.add(item);
         } else {
           throw new UnsupportedOperationException("Cannot execute index query with " + exp);

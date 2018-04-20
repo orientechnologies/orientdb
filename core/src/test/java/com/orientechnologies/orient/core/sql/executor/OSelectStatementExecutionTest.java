@@ -3518,7 +3518,6 @@ public class OSelectStatementExecutionTest {
     }
   }
 
-
   @Test
   public void testInWithIndex() {
     String className = "testInWithIndex";
@@ -3549,5 +3548,63 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
     }
+
+    List<String> params = new ArrayList<>();
+    params.add("foo");
+    params.add("bar");
+    try (OResultSet result = db.query("select from " + className + " where tag in (?)", params)) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
   }
+
+  @Test
+  public void testIndexChain() {
+    String className1 = "testIndexChain1";
+    String className2 = "testIndexChain2";
+    String className3 = "testIndexChain3";
+
+    OClass clazz3 = db.createClassIfNotExist(className3);
+    OProperty prop = clazz3.createProperty("name", OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OClass clazz2 = db.createClassIfNotExist(className2);
+    prop = clazz2.createProperty("next", OType.LINK, clazz3);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OClass clazz1 = db.createClassIfNotExist(className1);
+    prop = clazz1.createProperty("next", OType.LINK, clazz2);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OElement elem3 = db.newElement(className3);
+    elem3.setProperty("name", "John");
+    elem3.save();
+
+    OElement elem2 = db.newElement(className2);
+    elem2.setProperty("next", elem3);
+    elem2.save();
+
+    OElement elem1 = db.newElement(className1);
+    elem1.setProperty("next", elem2);
+    elem1.setProperty("name", "right");
+    elem1.save();
+
+    elem1 = db.newElement(className1);
+    elem1.setProperty("name", "wrong");
+    elem1.save();
+
+    try (OResultSet result = db.query("select from " + className1 + " where next.next.name = ?", "John")) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertEquals("right", item.getProperty("name"));
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
+
 }

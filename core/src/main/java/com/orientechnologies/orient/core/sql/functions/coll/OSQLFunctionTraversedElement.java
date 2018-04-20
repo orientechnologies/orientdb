@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -76,9 +75,9 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
     final int beginIndex = (Integer) iParams[0];
     final int items = iParams.length > 1 ? (Integer) iParams[1] : 1;
 
-    ArrayDeque stack = (ArrayDeque) iContext.getVariable("stack");
+    List stack = (List) iContext.getVariable("stack");
     if (stack == null && iThis instanceof OResult) {
-      stack = (ArrayDeque) ((OResult) iThis).getMetadata("$stack");
+      stack = (List) ((OResult) iThis).getMetadata("$stack");
     }
     if (stack == null)
       throw new OCommandExecutionException("Cannot invoke " + getName() + "() against non traverse command");
@@ -126,8 +125,8 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
       }
     } else {
       int i = 0;
-      for (Iterator it = stack.descendingIterator(); it.hasNext(); ) {
-        final Object o = it.next();
+      for (int x = stack.size(); x >= 0; x--) {
+        final Object o = stack.get(x);
         if (o instanceof OTraverseRecordProcess) {
           final OIdentifiable record = ((OTraverseRecordProcess) o).getTarget();
 

@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.tx;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -15,11 +16,13 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.ORemoteImportTest;
@@ -28,6 +31,7 @@ import org.junit.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 
 import static org.junit.Assert.*;
 
@@ -36,10 +40,14 @@ import static org.junit.Assert.*;
  */
 public class RemoteTransactionSupportTest {
 
-  private static final String SERVER_DIRECTORY = "./target/transaction";
-  private OServer           server;
-  private OrientDB          orientDB;
-  private ODatabaseDocument database;
+  private static final String            CLASS_1          = "SomeClass";
+  private static final String            CLASS_2          = "AnotherClass";
+  private static final String            EDGE             = "SomeEdge";
+  private static final String            FIELD_VALUE      = "VALUE";
+  private static final String            SERVER_DIRECTORY = "./target/transaction";
+  private              OServer           server;
+  private              OrientDB          orientDB;
+  private              ODatabaseDocument database;
 
   @Before
   public void before() throws Exception {
@@ -408,6 +416,28 @@ public class RemoteTransactionSupportTest {
     assertTrue(result1.hasNext());
     assertEquals(result1.next().getProperty("rids"), val);
     result1.close();
+
+  }
+
+  @Test
+  public void testProperIndexingOnDoubleInternalBegin() {
+    database.begin(OTransaction.TXTYPE.OPTIMISTIC);
+
+    OElement idx = database.newElement("IndexedTx");
+    idx.setProperty("name", FIELD_VALUE);
+    database.save(idx);
+    OElement someTx = database.newElement("SomeTx");
+    someTx.setProperty("name", "foo");
+    ORecord id = database.save(someTx);
+    try (OResultSet rs = database.query("select from ?", id)) {
+    }
+
+    database.commit();
+
+    // nothing is found (unexpected behaviour)
+    try (OResultSet rs = database.query("select * from IndexedTx where name = ?", FIELD_VALUE)) {
+      assertEquals(rs.stream().count(), 1);
+    }
 
   }
 

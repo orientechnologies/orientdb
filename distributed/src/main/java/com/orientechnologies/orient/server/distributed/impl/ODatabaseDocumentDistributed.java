@@ -6,6 +6,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.db.*;
@@ -49,7 +50,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
 
@@ -85,10 +85,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @return the cluster map for current deploy
    */
   public Map<String, Set<String>> getActiveClusterMap() {
+    ODistributedServerManager distributedManager = getStorageDistributed().getDistributedManager();
+    if (distributedManager.isOffline() || !distributedManager.isNodeOnline(distributedManager.getLocalNodeName(), getName())) {
+      return super.getActiveClusterMap();
+    }
     Map<String, Set<String>> result = new HashMap<>();
     ODistributedConfiguration cfg = getStorageDistributed().getDistributedConfiguration();
 
-    for (String server : getStorageDistributed().getDistributedManager().getActiveServers()) {
+    for (String server : distributedManager.getActiveServers()) {
       if (getClustersOnServer(cfg, server).contains("*")) {
         //TODO check this!!!
         result.put(server, getStorage().getClusterNames());
@@ -412,12 +416,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public ODistributedResponse executeTaskOnNode(ORemoteTask task, String nodeName) {
-    final String dbUrl = getURL();
 
-    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
-    final OServer serverInstance = OServer.getInstanceByPath(path);
-
-    ODistributedServerManager dManager = serverInstance.getDistributedManager();
+    ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new ODistributedException("OrientDB is not started in distributed mode");
 
@@ -536,19 +536,20 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     for (ORID rid : rids) {
       txContext.lock(rid);
     }
-    Set<Object> keys = new TreeSet<>();
+    //using OPair because there could be different types of values here, so falling back to lexicographic sorting
+    Set<OPair<String, Object>> keys = new TreeSet<>();
     for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexOperations().entrySet()) {
       OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
           .equals(index.getType()) || OClass.INDEX_TYPE.DICTIONARY.name().equals(index.getType())
           || OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equals(index.getType())) {
         for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
-          keys.add(changesPerKey.key);
+          keys.add(new OPair<>(String.valueOf(changesPerKey.key), changesPerKey.key));
         }
       }
     }
-    for (Object key : keys) {
-      txContext.lockIndexKey(key);
+    for (OPair key : keys) {
+      txContext.lockIndexKey(key.getValue());
     }
 
   }

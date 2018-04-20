@@ -42,6 +42,9 @@ public class IndexSearchDescriptor {
     }
 
     long val = stats.getIndexStats(indexName, size, range, additionalRangeCondition != null);
+    if (val == -1) {
+      //TODO query the index!
+    }
     if (val >= 0) {
       return val > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) val;
     }

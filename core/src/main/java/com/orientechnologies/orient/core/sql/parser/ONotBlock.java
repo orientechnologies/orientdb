@@ -166,5 +166,14 @@ public class ONotBlock extends OBooleanExpression {
   public boolean isCacheable() {
     return sub.isCacheable();
   }
+
+  @Override
+  public OBooleanExpression rewriteIndexChainsAsSubqueries(OCommandContext ctx, OClass clazz) {
+    if (!negate) {
+      sub = sub.rewriteIndexChainsAsSubqueries(ctx, clazz);
+    }
+    return this;
+  }
+
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

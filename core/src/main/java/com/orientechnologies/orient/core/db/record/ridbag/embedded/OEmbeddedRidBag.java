@@ -53,8 +53,17 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   private List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners;
 
+  @Override
+  public void setSize(int size) {
+    this.size = size;
+  }
+
   private static enum Tombstone {
     TOMBSTONE
+  }
+  
+  public Object[] getEntries(){
+    return entries;
   }
 
   private final class EntriesIterator implements Iterator<OIdentifiable>, OResettable, OSizeable {
@@ -84,8 +93,8 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     @Override
     public OIdentifiable next() {
       currentRemoved = false;
-
-      currentIndex = nextIndex;
+ 
+     currentIndex = nextIndex;
       if (currentIndex == -1)
         throw new NoSuchElementException();
 
@@ -355,12 +364,14 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       return "[size=" + size + "]";
   }
 
+  @Override
   public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
     if (changeListeners == null)
       changeListeners = new LinkedList<OMultiValueChangeListener<OIdentifiable, OIdentifiable>>();
     changeListeners.add(changeListener);
   }
 
+  @Override
   public void removeRecordChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
     if (changeListeners != null)
       changeListeners.remove(changeListener);
@@ -479,6 +490,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     return Collections.unmodifiableList(changeListeners);
   }
 
+  @Override
   public void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
     if (changeListeners != null) {
       for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
@@ -488,7 +500,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     }
   }
 
-  private void addEntry(final OIdentifiable identifiable) {
+  public void addEntry(final OIdentifiable identifiable) {
     if (entries.length == entriesLength) {
       if (entriesLength == 0) {
         final int cfgValue = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();

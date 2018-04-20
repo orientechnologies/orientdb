@@ -21,16 +21,10 @@ package com.orientechnologies.orient.core.query.live;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -38,7 +32,10 @@ import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class OLiveQueryHookV2 {
 
@@ -59,8 +56,11 @@ public class OLiveQueryHookV2 {
   public static class OLiveQueryOps implements OCloseable {
 
     protected Map<ODatabaseDocument, List<OLiveQueryOp>> pendingOps  = new ConcurrentHashMap<ODatabaseDocument, List<OLiveQueryOp>>();
-    private   OLiveQueryQueueThreadV2                    queueThread = new OLiveQueryQueueThreadV2();
+    private   OLiveQueryQueueThreadV2                    queueThread = new OLiveQueryQueueThreadV2(this);
     private   Object                                     threadLock  = new Object();
+
+    private BlockingQueue<OLiveQueryOp>                  queue       = new LinkedBlockingQueue<OLiveQueryOp>();
+    private ConcurrentMap<Integer, OLiveQueryListenerV2> subscribers = new ConcurrentHashMap<Integer, OLiveQueryListenerV2>();
 
     @Override
     public void close() {
@@ -75,6 +75,34 @@ public class OLiveQueryHookV2 {
 
     public OLiveQueryQueueThreadV2 getQueueThread() {
       return queueThread;
+    }
+
+    public Map<Integer, OLiveQueryListenerV2> getSubscribers() {
+      return subscribers;
+    }
+
+    public BlockingQueue<OLiveQueryOp> getQueue() {
+      return queue;
+    }
+
+    public void enqueue(OLiveQueryHookV2.OLiveQueryOp item) {
+      queue.offer(item);
+    }
+
+    public Integer subscribe(Integer id, OLiveQueryListenerV2 iListener) {
+      subscribers.put(id, iListener);
+      return id;
+    }
+
+    public void unsubscribe(Integer id) {
+      OLiveQueryListenerV2 res = subscribers.remove(id);
+      if (res != null) {
+        res.onLiveResultEnd();
+      }
+    }
+
+    public boolean hasListeners() {
+      return !subscribers.isEmpty();
     }
   }
 
@@ -97,7 +125,7 @@ public class OLiveQueryHookV2 {
       }
     }
 
-    return ops.queueThread.subscribe(token, iListener);
+    return ops.subscribe(token, iListener);
   }
 
   public static void unsubscribe(Integer id, ODatabaseInternal db) {
@@ -110,7 +138,7 @@ public class OLiveQueryHookV2 {
     try {
       OLiveQueryOps ops = getOpsReference(db);
       synchronized (ops.threadLock) {
-        ops.queueThread.unsubscribe(id);
+        ops.unsubscribe(id);
       }
     } catch (Exception e) {
       OLogManager.instance().warn(OLiveQueryHookV2.class, "Error on unsubscribing client", e);
@@ -129,7 +157,7 @@ public class OLiveQueryHookV2 {
     if (list != null) {
       for (OLiveQueryOp item : list) {
         item.originalDoc = item.originalDoc.copy();
-        ops.queueThread.enqueue(item);
+        ops.enqueue(item);
       }
     }
   }
@@ -148,7 +176,7 @@ public class OLiveQueryHookV2 {
       return;
     ODatabaseDocument db = database;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) db);
-    if (!ops.queueThread.hasListeners())
+    if (!ops.hasListeners())
       return;
 
     OResult before = iType == ORecordOperation.CREATED ? null : calculateBefore(iDocument);

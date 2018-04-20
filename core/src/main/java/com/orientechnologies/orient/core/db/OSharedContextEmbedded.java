@@ -2,8 +2,12 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
+import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
@@ -113,10 +117,21 @@ public class OSharedContextEmbedded extends OSharedContext {
     security.createClassTrigger();
     scheduler.create(database);
     schema.forceSnapshot();
-    
+
     // CREATE BASE VERTEX AND EDGE CLASSES
     schema.createClass(database, "V");
     schema.createClass(database, "E");
+
+    //create geospatial classes
+    try {
+      OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.SPATIAL.toString(), "LUCENE");
+      if (factory != null && factory instanceof ODatabaseLifecycleListener) {
+        ((ODatabaseLifecycleListener) factory).onCreate(database);
+      }
+    } catch (OIndexException x) {
+      //the index does not exist
+    }
+
     loaded = true;
   }
 

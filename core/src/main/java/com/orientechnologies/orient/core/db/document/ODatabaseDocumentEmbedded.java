@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -486,8 +487,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   protected void installHooksEmbedded() {
     hooks.clear();
-    registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
-    registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
   }
 
   @Override
@@ -778,10 +777,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public OIdentifiable beforeCreateOperations(OIdentifiable id, String iClusterName) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
 
+    ORecordHook.RESULT triggerChanged = null;
     boolean changed = false;
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         if (clazz.isScheduler()) {
           getSharedContext().getScheduler().initScheduleRecord(doc);
@@ -790,16 +790,22 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isOuser()) {
           changed = OUser.encodePassword(doc);
         }
+        if (clazz.isTriggered()) {
+          triggerChanged = OClassTrigger.onRecordBeforeCreate(doc, this);
+        }
+        if (clazz.isRestricted()) {
+          changed = ORestrictedAccessHook.onRecordBeforeCreate(doc, this);
+        }
       }
     }
 
     ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, id);
-    if (res == ORecordHook.RESULT.RECORD_CHANGED) {
+    if (changed || res == ORecordHook.RESULT.RECORD_CHANGED || triggerChanged == ORecordHook.RESULT.RECORD_CHANGED) {
       if (id instanceof ODocument) {
         ((ODocument) id).validate();
       }
       return id;
-    } else if (res == ORecordHook.RESULT.RECORD_REPLACED) {
+    } else if (res == ORecordHook.RESULT.RECORD_REPLACED || triggerChanged == ORecordHook.RESULT.RECORD_REPLACED) {
       ORecord replaced = OHookReplacedRecordThreadLocal.INSTANCE.get();
       if (replaced instanceof ODocument) {
         ((ODocument) replaced).validate();
@@ -816,10 +822,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public OIdentifiable beforeUpdateOperations(OIdentifiable id, String iClusterName) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
 
+    ORecordHook.RESULT triggerChanged = null;
     boolean changed = false;
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         if (clazz.isScheduler()) {
           getSharedContext().getScheduler().handleUpdateSchedule(doc);
@@ -828,15 +835,22 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isOuser()) {
           changed = OUser.encodePassword(doc);
         }
+        if (clazz.isTriggered()) {
+          triggerChanged = OClassTrigger.onRecordBeforeUpdate(doc, this);
+        }
+        if (clazz.isRestricted()) {
+          if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_UPDATE, true))
+            throw new OSecurityException("Cannot update record " + doc.getIdentity() + ": the resource has restricted access");
+        }
       }
     }
     ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, id);
-    if (res == ORecordHook.RESULT.RECORD_CHANGED) {
+    if (res == ORecordHook.RESULT.RECORD_CHANGED || triggerChanged == ORecordHook.RESULT.RECORD_CHANGED) {
       if (id instanceof ODocument) {
         ((ODocument) id).validate();
       }
       return id;
-    } else if (res == ORecordHook.RESULT.RECORD_REPLACED) {
+    } else if (res == ORecordHook.RESULT.RECORD_REPLACED || triggerChanged == ORecordHook.RESULT.RECORD_REPLACED) {
       ORecord replaced = OHookReplacedRecordThreadLocal.INSTANCE.get();
       if (replaced instanceof ODocument) {
         ((ODocument) replaced).validate();
@@ -853,13 +867,26 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   @Override
   public void beforeDeleteOperations(OIdentifiable id, String iClusterName) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordBeforeDelete(doc, this);
+        }
+        if (clazz.isRestricted()) {
+          if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_DELETE, true))
+            throw new OSecurityException("Cannot delete record " + doc.getIdentity() + ": the resource has restricted access");
+        }
+      }
+    }
     callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, id);
   }
 
   public void afterCreateOperations(final OIdentifiable id) {
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         OClassIndexManager.checkIndexesAfterCreate(doc, this);
         if (clazz.isFunction()) {
@@ -872,6 +899,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isScheduler()) {
           getMetadata().getScheduler().scheduleEvent(new OScheduledEvent(doc));
         }
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordAfterCreate(doc, this);
+        }
       }
       OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, this);
@@ -882,7 +912,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public void afterUpdateOperations(final OIdentifiable id) {
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         OClassIndexManager.checkIndexesAfterUpdate((ODocument) id, this);
         if (clazz.isFunction()) {
@@ -891,6 +921,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(this, doc);
+        }
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordAfterUpdate(doc, this);
         }
       }
       OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, this);
@@ -902,7 +935,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   public void afterDeleteOperations(final OIdentifiable id) {
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
-      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
       if (clazz != null) {
         OClassIndexManager.checkIndexesAfterDelete(doc, this);
         if (clazz.isFunction()) {
@@ -914,13 +947,52 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         }
         if (clazz.isScheduler()) {
           final String eventName = doc.field(OScheduledEvent.PROP_NAME);
-          getMetadata().getScheduler().removeEvent(eventName);
+          getSharedContext().getScheduler().removeEventInternal(eventName);
+        }
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordAfterDelete(doc, this);
         }
       }
       OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, this);
     }
     callbackHooks(ORecordHook.TYPE.AFTER_DELETE, id);
+  }
+
+  @Override
+  public void afterReadOperations(OIdentifiable identifiable) {
+    if (identifiable instanceof ODocument) {
+      ODocument doc = (ODocument) identifiable;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordAfterRead(doc, this);
+        }
+      }
+    }
+    callbackHooks(ORecordHook.TYPE.AFTER_READ, identifiable);
+  }
+
+  @Override
+  public boolean beforeReadOperations(OIdentifiable identifiable) {
+    if (identifiable instanceof ODocument) {
+      ODocument doc = (ODocument) identifiable;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        if (clazz.isTriggered()) {
+          ORecordHook.RESULT val = OClassTrigger.onRecordBeforeRead(doc, this);
+          if (val == ORecordHook.RESULT.SKIP) {
+            return true;
+          }
+        }
+        if (clazz.isRestricted()) {
+          if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_READ, false)) {
+            return true;
+          }
+        }
+      }
+    }
+    return callbackHooks(ORecordHook.TYPE.BEFORE_READ, identifiable) == ORecordHook.RESULT.SKIP;
   }
 
   @Override

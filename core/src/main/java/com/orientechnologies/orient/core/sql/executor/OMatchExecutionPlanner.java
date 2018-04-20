@@ -144,7 +144,7 @@ public class OMatchExecutionPlanner {
       info.skip = this.skip;
       info.limit = this.limit;
 
-      OSelectExecutionPlanner.optimizeQuery(info);
+      OSelectExecutionPlanner.optimizeQuery(info, context);
       OSelectExecutionPlanner.handleProjectionsBlock(result, info, context, enableProfiling);
     }
 

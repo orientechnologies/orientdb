@@ -28,8 +28,8 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       }
       ((OResultInternal) item).setMetadata("$depth", 0);
 
-      ArrayDeque stack = new ArrayDeque();
-      item.getIdentity().ifPresent(x -> stack.push(x));
+      List stack = new ArrayList();
+      item.getIdentity().ifPresent(x -> stack.add(x));
       ((OResultInternal) item).setMetadata("$stack", stack);
 
       List<OIdentifiable> path = new ArrayList<>();
@@ -72,29 +72,32 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       for (OTraverseProjectionItem proj : projections) {
         Object nextStep = proj.execute(item, ctx);
         if (this.maxDepth == null || this.maxDepth.getValue().intValue() > item.depth) {
-          addNextEntryPoints(nextStep, item.depth + 1, (List) item.getMetadata("$path"), ctx);
+          addNextEntryPoints(nextStep, item.depth + 1, (List) item.getMetadata("$path"), (List) item.getMetadata("$stack"), ctx);
         }
       }
     }
   }
 
-  private void addNextEntryPoints(Object nextStep, int depth, List<OIdentifiable> path, OCommandContext ctx) {
+  private void addNextEntryPoints(Object nextStep, int depth, List<OIdentifiable> path, List<OIdentifiable> stack,
+      OCommandContext ctx) {
     if (nextStep instanceof OIdentifiable) {
-      addNextEntryPoint(((OIdentifiable) nextStep), depth, path, ctx);
+      addNextEntryPoint(((OIdentifiable) nextStep), depth, path, stack, ctx);
     } else if (nextStep instanceof Iterable) {
-      addNextEntryPoints(((Iterable) nextStep).iterator(), depth, path, ctx);
+      addNextEntryPoints(((Iterable) nextStep).iterator(), depth, path, stack, ctx);
     } else if (nextStep instanceof OResult) {
-      addNextEntryPoint(((OResult) nextStep), depth, path, ctx);
+      addNextEntryPoint(((OResult) nextStep), depth, path, stack, ctx);
     }
   }
 
-  private void addNextEntryPoints(Iterator nextStep, int depth, List<OIdentifiable> path, OCommandContext ctx) {
+  private void addNextEntryPoints(Iterator nextStep, int depth, List<OIdentifiable> path, List<OIdentifiable> stack,
+      OCommandContext ctx) {
     while (nextStep.hasNext()) {
-      addNextEntryPoints(nextStep.next(), depth, path, ctx);
+      addNextEntryPoints(nextStep.next(), depth, path, stack, ctx);
     }
   }
 
-  private void addNextEntryPoint(OIdentifiable nextStep, int depth, List<OIdentifiable> path, OCommandContext ctx) {
+  private void addNextEntryPoint(OIdentifiable nextStep, int depth, List<OIdentifiable> path, List<OIdentifiable> stack,
+      OCommandContext ctx) {
     if (this.traversed.contains(nextStep.getIdentity())) {
       return;
     }
@@ -103,23 +106,23 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     res.depth = depth;
     res.setMetadata("$depth", depth);
 
-    List<OIdentifiable> newPath = new ArrayList<>();
-    newPath.addAll(path);
+    List<OIdentifiable> newPath = new ArrayList<>(path);
     newPath.add(res.getIdentity().get());
     res.setMetadata("$path", newPath);
 
-    List reverseStack = new ArrayList();
-    reverseStack.addAll(newPath);
-    Collections.reverse(reverseStack);
-    ArrayDeque newStack = new ArrayDeque();
-    newStack.addAll(reverseStack);
-
+    List newStack = new ArrayList();
+    newStack.add(res.getIdentity().get());
+    newStack.addAll(stack);
+//    for (int i = 0; i < newPath.size(); i++) {
+//      newStack.offerLast(newPath.get(i));
+//    }
     res.setMetadata("$stack", newStack);
 
     tryAddEntryPoint(res, ctx);
   }
 
-  private void addNextEntryPoint(OResult nextStep, int depth, List<OIdentifiable> path, OCommandContext ctx) {
+  private void addNextEntryPoint(OResult nextStep, int depth, List<OIdentifiable> path, List<OIdentifiable> stack,
+      OCommandContext ctx) {
     if (!nextStep.isElement()) {
       return;
     }
@@ -137,7 +140,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       List reverseStack = new ArrayList();
       reverseStack.addAll(newPath);
       Collections.reverse(reverseStack);
-      ArrayDeque newStack = new ArrayDeque();
+      List newStack = new ArrayList();
       newStack.addAll(reverseStack);
       ((OTraverseResult) nextStep).setMetadata("$stack", newStack);
 
@@ -155,7 +158,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       List reverseStack = new ArrayList();
       reverseStack.addAll(newPath);
       Collections.reverse(reverseStack);
-      ArrayDeque newStack = new ArrayDeque();
+      List newStack = new ArrayList();
       newStack.addAll(reverseStack);
       ((OTraverseResult) nextStep).setMetadata("$stack", newStack);
 

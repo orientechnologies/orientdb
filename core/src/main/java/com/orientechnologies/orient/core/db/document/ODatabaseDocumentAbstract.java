@@ -84,26 +84,26 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected final Map<String, Object> properties = new HashMap<String, Object>();
-  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
-  protected ORecordSerializer    serializer;
-  protected String               url;
-  protected STATUS               status;
-  protected OIntent              currentIntent;
-  protected ODatabaseInternal<?> databaseOwner;
-  protected OMetadataDefault     metadata;
-  protected OImmutableUser       user;
+  protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
+  protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
+  protected       ORecordSerializer                           serializer;
+  protected       String                                      url;
+  protected       STATUS                                      status;
+  protected       OIntent                                     currentIntent;
+  protected       ODatabaseInternal<?>                        databaseOwner;
+  protected       OMetadataDefault                            metadata;
+  protected       OImmutableUser                              user;
   protected final byte                                        recordType    = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
-  protected OLocalRecordCache                localCache;
-  protected OCurrentStorageComponentsFactory componentsFactory;
-  protected boolean initialized = false;
-  protected OTransaction currentTx;
+  protected       OLocalRecordCache                           localCache;
+  protected       OCurrentStorageComponentsFactory            componentsFactory;
+  protected       boolean                                     initialized   = false;
+  protected       OTransaction                                currentTx;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected OSharedContext sharedContext;
+  protected       OSharedContext  sharedContext;
 
   private boolean prefetchRecords;
 
@@ -1289,7 +1289,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         }
 
         OFetchHelper.checkFetchPlanValid(fetchPlan);
-        if (callbackHooks(ORecordHook.TYPE.BEFORE_READ, record) == ORecordHook.RESULT.SKIP)
+        if (beforeReadOperations(record))
           return null;
 
         if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
@@ -1306,7 +1306,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
           record.lock(true);
         }
 
-        callbackHooks(ORecordHook.TYPE.AFTER_READ, record);
+        afterReadOperations(record);
         if (record instanceof ODocument)
           ODocumentInternal.checkClass((ODocument) record, this);
         return (RET) record;
@@ -1342,13 +1342,12 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       if (ORecordVersionHelper.isTombstone(iRecord.getVersion()))
         return (RET) iRecord;
 
-      if (callbackHooks(ORecordHook.TYPE.BEFORE_READ, iRecord) == ORecordHook.RESULT.SKIP)
+      if (beforeReadOperations(iRecord))
         return null;
 
       iRecord.fromStream(recordBuffer.buffer);
 
-      callbackHooks(ORecordHook.TYPE.AFTER_READ, iRecord);
-
+      afterReadOperations(iRecord);
       if (iUpdateCache)
         getLocalCache().updateRecord(iRecord);
 
@@ -1383,7 +1382,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     // if cluster id is not set yet try to find it out
     if (rid.getClusterId() <= ORID.CLUSTER_ID_INVALID && getStorage().isAssigningClusterIds()) {
       if (record instanceof ODocument) {
-        schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+        schemaClass = ODocumentInternal.getImmutableSchemaClass(this, ((ODocument) record));
         if (schemaClass != null) {
           if (schemaClass.isAbstract())
             throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
@@ -1403,7 +1402,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         }
       }
     } else if (record instanceof ODocument)
-      schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+      schemaClass = ODocumentInternal.getImmutableSchemaClass(this, ((ODocument) record));
     // If the cluster id was set check is validity
     if (rid.getClusterId() > ORID.CLUSTER_ID_INVALID) {
       if (schemaClass != null) {
@@ -1731,10 +1730,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
             throw new IllegalArgumentException("source vertex is invalid (rid=" + inVertex.getIdentity() + ")");
         }
 
-        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+        if (!ODocumentInternal.getImmutableSchemaClass(this, outDocument).isVertexType())
           throw new IllegalArgumentException("source record is not a vertex");
 
-        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+        if (!ODocumentInternal.getImmutableSchemaClass(this, outDocument).isVertexType())
           throw new IllegalArgumentException("destination record is not a vertex");
 
         OVertex to = inVertex;
@@ -2687,7 +2686,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return result;
   }
 
-  public void queryStarted(String id, OResultSet rs) {
+  public synchronized void queryStarted(String id, OResultSet rs) {
     if (this.activeQueries.size() > 1 && this.activeQueries.size() % 10 == 0) {
       StringBuilder msg = new StringBuilder();
       msg.append("This database instance has ");
@@ -2702,11 +2701,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     this.activeQueries.put(id, rs);
   }
 
-  public void queryClosed(String id) {
+  public synchronized void queryClosed(String id) {
     this.activeQueries.remove(id);
   }
 
-  protected void closeActiveQueries() {
+  protected synchronized void closeActiveQueries() {
     while (activeQueries.size() > 0) {
       this.activeQueries.values().iterator().next().close();//the query automatically unregisters itself
     }

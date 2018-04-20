@@ -14,22 +14,21 @@ import java.util.Base64;
  * Stateful compression implementation that encrypt the content using AES
  * (https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html). Issue
  * https://github.com/orientechnologies/orientdb/issues/89.
- * 
+ *
  * @author giastfader
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  *
  */
 public class OAESEncryption extends OAbstractEncryption {
   // @see https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html#SunJCEProvider
-  private final String       TRANSFORMATION = "AES/ECB/PKCS5Padding"; // we use ECB because we cannot store the
-  private final String       ALGORITHM_NAME = "AES";
+  private final String TRANSFORMATION = "AES/ECB/PKCS5Padding"; // we use ECB because we cannot store the
+  private final String ALGORITHM_NAME = "AES";
 
-  private SecretKeySpec      theKey;
-  private Cipher             cipher;
+  private SecretKeySpec theKey;
 
-  private boolean            initialized    = false;
+  private boolean initialized = false;
 
-  public static final String NAME           = "aes";
+  public static final String NAME = "aes";
 
   @Override
   public String name() {
@@ -51,7 +50,6 @@ public class OAESEncryption extends OAbstractEncryption {
       final byte[] key = Base64.getDecoder().decode(iOptions);
 
       theKey = new SecretKeySpec(key, ALGORITHM_NAME); // AES
-      cipher = Cipher.getInstance(TRANSFORMATION);
 
     } catch (Exception e) {
       throw OException.wrapException(new OInvalidStorageEncryptionKeyException(
@@ -67,7 +65,7 @@ public class OAESEncryption extends OAbstractEncryption {
   public byte[] encryptOrDecrypt(final int mode, final byte[] input, final int offset, final int length) throws Exception {
     if (!initialized)
       throw new OSecurityException("AES encryption algorithm is not available");
-
+    Cipher cipher = Cipher.getInstance(TRANSFORMATION);
     cipher.init(mode, theKey);
 
     final byte[] content;
