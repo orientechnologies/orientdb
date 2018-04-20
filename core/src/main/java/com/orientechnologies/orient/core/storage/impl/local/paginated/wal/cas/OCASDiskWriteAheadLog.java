@@ -1073,14 +1073,12 @@ public final class OCASDiskWriteAheadLog {
   }
 
   public long[] nonActiveSegments() {
-    final OWALRecord firstRecord = records.peek();
-    assert firstRecord != null;
-    final OLogSequenceNumber firstLSN = firstRecord.getLsn();
+    final OLogSequenceNumber writtenUpTo = this.writtenUpTo.get().lsn;
 
     long maxSegment = currentSegment;
 
-    if (firstLSN.getPosition() > -1 && firstLSN.getSegment() < maxSegment) {
-      maxSegment = firstLSN.getSegment();
+    if (writtenUpTo.getSegment() < maxSegment) {
+      maxSegment = writtenUpTo.getSegment();
     }
 
     final List<Long> result = new ArrayList<>();
@@ -1101,19 +1099,16 @@ public final class OCASDiskWriteAheadLog {
   }
 
   public File[] nonActiveSegments(long fromSegment) {
-    final OWALRecord firstRecord = records.peek();
-    assert firstRecord != null;
-    final OLogSequenceNumber firstLSN = firstRecord.getLsn();
-
+    OLogSequenceNumber writtenUpTo = this.writtenUpTo.get().lsn;
     long maxSegment = currentSegment;
 
-    if (firstLSN.getPosition() > -1 && firstLSN.getSegment() < maxSegment) {
-      maxSegment = firstLSN.getSegment();
+    if (writtenUpTo.getSegment() < maxSegment) {
+      maxSegment = writtenUpTo.getSegment();
     }
 
     final List<File> result = new ArrayList<>();
 
-    for (long segment : segments) {
+    for (long segment : segments.tailSet(fromSegment)) {
       if (segment < maxSegment) {
         final String segmentName = getSegmentName(segment);
         final Path segmentPath = walLocation.resolve(segmentName);
