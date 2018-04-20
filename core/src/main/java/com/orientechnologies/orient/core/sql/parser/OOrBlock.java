@@ -241,5 +241,13 @@ public class OOrBlock extends OBooleanExpression {
     return true;
   }
 
+  @Override
+  public OBooleanExpression rewriteIndexChainsAsSubqueries(OCommandContext ctx, OClass clazz) {
+    for (OBooleanExpression exp : subBlocks) {
+      exp.rewriteIndexChainsAsSubqueries(ctx, clazz);
+    }
+    return this;
+  }
+
 }
 /* JavaCC - OriginalChecksum=98d3077303a598705894dbb7bd4e1573 (do not edit this line) */

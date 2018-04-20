@@ -72,7 +72,7 @@ public class OSelectExecutionPlanner {
       throw new OCommandExecutionException("Cannot execute a statement with DISTINCT expand(), please use a subquery");
     }
 
-    optimizeQuery(info);
+    optimizeQuery(info, ctx);
 
     if (handleHardwiredOptimizations(result, ctx, enableProfiling)) {
       return result;
@@ -597,8 +597,9 @@ public class OSelectExecutionPlanner {
     }
   }
 
-  protected static void optimizeQuery(QueryPlanningInfo info) {
+  protected static void optimizeQuery(QueryPlanningInfo info, OCommandContext ctx) {
     splitLet(info);
+    rewriteIndexChainsAsSubqueries(info, ctx);
     extractSubQueries(info);
     if (info.projection != null && info.projection.isExpand()) {
       info.expand = true;
@@ -612,6 +613,18 @@ public class OSelectExecutionPlanner {
 
     splitProjectionsForGroupBy(info);
     addOrderByProjections(info);
+  }
+
+  private static void rewriteIndexChainsAsSubqueries(QueryPlanningInfo info, OCommandContext ctx) {
+    if (ctx == null || ctx.getDatabase() == null) {
+      return;
+    }
+    if (info.whereClause != null && info.target != null && info.target.getItem().getIdentifier() != null) {
+      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(info.target.getItem().getIdentifier().getStringValue());
+      if (clazz != null) {
+        info.whereClause.getBaseExpression().rewriteIndexChainsAsSubqueries(ctx, clazz);
+      }
+    }
   }
 
   /**

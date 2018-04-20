@@ -251,5 +251,12 @@ public class OAndBlock extends OBooleanExpression {
     return true;
   }
 
+  @Override
+  public OBooleanExpression rewriteIndexChainsAsSubqueries(OCommandContext ctx, OClass clazz) {
+    for (OBooleanExpression exp : subBlocks) {
+      exp.rewriteIndexChainsAsSubqueries(ctx, clazz);
+    }
+    return this;
+  }
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */

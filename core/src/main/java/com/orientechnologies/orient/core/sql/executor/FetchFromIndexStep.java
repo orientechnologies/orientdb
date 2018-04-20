@@ -372,7 +372,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     }
     if (value instanceof OResult) {
       if (((OResult) value).isElement()) {
-        return ((OResult) value).getIdentity();
+        return ((OResult) value).getIdentity().orElse(null);
       }
       Set<String> props = ((OResult) value).getPropertyNames();
       if (props.size() == 1) {
