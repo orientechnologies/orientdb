@@ -778,10 +778,10 @@ public final class OCASDiskWriteAheadLog {
   }
 
   public void delete() throws IOException {
-    close(false);
-
     final List<Long> segmentsToDelete = new ArrayList<>(this.segments.size());
     segmentsToDelete.addAll(segments);
+
+    close(false);
 
     Files.deleteIfExists(masterRecordPath);
 

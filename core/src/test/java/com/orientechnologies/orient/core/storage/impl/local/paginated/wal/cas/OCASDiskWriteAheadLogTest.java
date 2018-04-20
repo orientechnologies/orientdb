@@ -2604,8 +2604,106 @@ public class OCASDiskWriteAheadLogTest {
   }
 
   @Test
-  public void testDelete() {
+  public void testDelete() throws Exception {
+    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 10 * 1024 * 1024, 20,
+        true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000);
 
+    final long seed = System.nanoTime();
+    final Random random = new Random(seed);
+    System.out.println("testDelete seed : " + seed);
+
+    final int recordsCount = 30_000;
+    for (int i = 0; i < recordsCount; i++) {
+      final TestRecord walRecord = new TestRecord(random, 3 * OCASWALPage.PAGE_SIZE, 1);
+
+      OLogSequenceNumber lsn = wal.log(walRecord);
+      Assert.assertEquals(walRecord.getLsn(), lsn);
+
+      Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(wal.end(), lsn);
+
+      if (random.nextDouble() < 0.05) {
+        final int segments = random.nextInt(5) + 1;
+
+        for (int k = 0; k < segments; k++) {
+          wal.appendNewSegment();
+        }
+      }
+    }
+
+    wal.delete();
+
+    Assert.assertTrue(Files.exists(testDirectory));
+    Assert.assertEquals(0, Files.size(testDirectory));
+  }
+
+  @Test
+  public void testAddSmallRecords10MSeg() throws Exception {
+    final long seed = System.nanoTime();
+    final Random random = new Random(seed);
+
+    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000,
+        10 * 1024 * 1024, 20,
+        true, Locale.US, 2 * 1024 * 1024 * 1024L, -1, 1000);
+
+    AtomicBoolean walIsFull = new AtomicBoolean();
+
+    final OCheckpointRequestListener checkpointRequestListener = () -> walIsFull.set(true);
+    wal.addFullCheckpointListener(checkpointRequestListener);
+    ExecutorService executorService = Executors.newCachedThreadPool();
+
+    AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
+
+    final OSegmentOverflowListener listener = (segment) -> {
+      Future<Void> oldAppender = segmentAppender.get();
+
+      while (oldAppender == null || oldAppender.isDone()) {
+        if (wal.activeSegment() <= segment) {
+          final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+
+          if (segmentAppender.compareAndSet(oldAppender, appender)) {
+            break;
+          }
+
+          appender.cancel(false);
+          oldAppender = segmentAppender.get();
+        } else {
+          break;
+        }
+      }
+    };
+
+    wal.addSegmentOverflowListener(listener);
+
+    List<TestRecord> records = new ArrayList<>();
+    while (!walIsFull.get()) {
+      final TestRecord walRecord = new TestRecord(random, 2, 1);
+      records.add(walRecord);
+
+      OLogSequenceNumber lsn = wal.log(walRecord);
+      Assert.assertEquals(walRecord.getLsn(), lsn);
+
+      Assert.assertEquals(wal.begin(), new OLogSequenceNumber(1, OCASWALPage.RECORDS_OFFSET));
+      Assert.assertEquals(wal.end(), lsn);
+    }
+
+    for (int i = 0; i < records.size(); i++) {
+      final List<OWriteableWALRecord> result = wal.read(records.get(i).getLsn(), 10);
+      Assert.assertTrue(!result.isEmpty());
+
+      final Iterator<OWriteableWALRecord> resultIterator = result.iterator();
+      final Iterator<TestRecord> recordIterator = records.subList(i, records.size()).iterator();
+
+      while (resultIterator.hasNext()) {
+        TestRecord record = recordIterator.next();
+        TestRecord resultRecord = (TestRecord) resultIterator.next();
+
+        Assert.assertArrayEquals(record.data, resultRecord.data);
+        Assert.assertEquals(record.getLsn(), resultRecord.getLsn());
+      }
+    }
+
+    wal.close();
   }
 
   private void checkThatSegmentsBellowAreRemoved(OCASDiskWriteAheadLog wal) {
