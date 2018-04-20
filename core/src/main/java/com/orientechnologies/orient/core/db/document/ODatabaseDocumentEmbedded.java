@@ -800,7 +800,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     }
 
     ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, id);
-    if (changed || res == ORecordHook.RESULT.RECORD_CHANGED || triggerChanged == ORecordHook.RESULT.RECORD_NOT_CHANGED) {
+    if (changed || res == ORecordHook.RESULT.RECORD_CHANGED || triggerChanged == ORecordHook.RESULT.RECORD_CHANGED) {
       if (id instanceof ODocument) {
         ((ODocument) id).validate();
       }
@@ -845,7 +845,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       }
     }
     ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, id);
-    if (res == ORecordHook.RESULT.RECORD_CHANGED || triggerChanged == ORecordHook.RESULT.RECORD_NOT_CHANGED) {
+    if (res == ORecordHook.RESULT.RECORD_CHANGED || triggerChanged == ORecordHook.RESULT.RECORD_CHANGED) {
       if (id instanceof ODocument) {
         ((ODocument) id).validate();
       }
