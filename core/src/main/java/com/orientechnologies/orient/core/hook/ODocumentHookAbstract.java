@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.hook;
 
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -319,7 +320,7 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
     if (includeClasses == null && excludeClasses == null)
       return true;
 
-    final OClass clazz = ODocumentInternal.getImmutableSchemaClass(iDocument);
+    final OClass clazz = ODocumentInternal.getImmutableSchemaClass((ODatabaseDocumentInternal) database, iDocument);
     if (clazz == null)
       return false;
 

@@ -121,34 +121,34 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   private static final AsyncResult PARALLEL_END_EXECUTION_THREAD = new AsyncResult(null, null);
 
-  private final OOrderByOptimizer           orderByOptimizer     = new OOrderByOptimizer();
-  private final OMetricRecorder             metricRecorder       = new OMetricRecorder();
-  private final OFilterOptimizer            filterOptimizer      = new OFilterOptimizer();
-  private final OFilterAnalyzer             filterAnalyzer       = new OFilterAnalyzer();
-  private       Map<String, String>         projectionDefinition = null;
+  private final OOrderByOptimizer                         orderByOptimizer     = new OOrderByOptimizer();
+  private final OMetricRecorder                           metricRecorder       = new OMetricRecorder();
+  private final OFilterOptimizer                          filterOptimizer      = new OFilterOptimizer();
+  private final OFilterAnalyzer                           filterAnalyzer       = new OFilterAnalyzer();
+  private       Map<String, String>                       projectionDefinition = null;
   // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT IT'S USED THE PROJECTIONS IN GROUPED-RESULTS
-  private       Map<String, Object>         projections          = null;
-  private       List<OPair<String, String>> orderedFields        = new ArrayList<OPair<String, String>>();
-  private List<String> groupByFields;
-  private ConcurrentHashMap<Object, ORuntimeResult> groupedResult = new ConcurrentHashMap<Object, ORuntimeResult>();
-  private boolean                                   aggregate     = false;
-  private List<String> unwindFields;
-  private Object       expandTarget;
-  private int fetchLimit = -1;
-  private OIdentifiable lastRecord;
-  private String        fetchPlan;
-  private boolean          fullySortedByIndex = false;
-  private LOCKING_STRATEGY lockingStrategy    = LOCKING_STRATEGY.DEFAULT;
+  private       Map<String, Object>                       projections          = null;
+  private       List<OPair<String, String>>               orderedFields        = new ArrayList<OPair<String, String>>();
+  private       List<String>                              groupByFields;
+  private       ConcurrentHashMap<Object, ORuntimeResult> groupedResult        = new ConcurrentHashMap<Object, ORuntimeResult>();
+  private       boolean                                   aggregate            = false;
+  private       List<String>                              unwindFields;
+  private       Object                                    expandTarget;
+  private       int                                       fetchLimit           = -1;
+  private       OIdentifiable                             lastRecord;
+  private       String                                    fetchPlan;
+  private       boolean                                   fullySortedByIndex   = false;
+  private       LOCKING_STRATEGY                          lockingStrategy      = LOCKING_STRATEGY.DEFAULT;
 
-  private          Boolean isAnyFunctionAggregates = null;
-  private volatile boolean parallel                = false;
+  private          Boolean                         isAnyFunctionAggregates = null;
+  private volatile boolean                         parallel                = false;
   private volatile boolean                         parallelRunning;
   private final    ArrayBlockingQueue<AsyncResult> resultQueue;
 
   private ConcurrentHashMap<ORID, ORID> uniqueResult;
-  private boolean noCache = false;
-  private int tipLimitThreshold;
-  private String NULL_VALUE = "null";
+  private boolean                       noCache    = false;
+  private int                           tipLimitThreshold;
+  private String                        NULL_VALUE = "null";
 
   private AtomicLong tmpQueueOffer = new AtomicLong();
   private Object     resultLock    = new Object();
@@ -597,8 +597,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       if (filter(record, iContext)) {
         if (callHooks) {
-          ((ODatabaseDocumentInternal) getDatabase()).callbackHooks(ORecordHook.TYPE.BEFORE_READ, record);
-          ((ODatabaseDocumentInternal) getDatabase()).callbackHooks(ORecordHook.TYPE.AFTER_READ, record);
+          getDatabase().beforeReadOperations(record);
+          getDatabase().afterReadOperations(record);
         }
 
         if (parallel) {
@@ -2761,7 +2761,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private void fetchNullKeyEntries(OIndex<Object> index) {
-    if(index.getDefinition().isNullValuesIgnored()){
+    if (index.getDefinition().isNullValuesIgnored()) {
       return;
     }
     Object values = index.get(null);

@@ -76,26 +76,38 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   void reloadUser();
 
+  void afterReadOperations(final OIdentifiable identifiable);
+
   /**
+   * @param identifiable
    *
+   * @return true if the record should be skipped
+   */
+  boolean beforeReadOperations(final OIdentifiable identifiable);
+
+  /**
    * @param id
    * @param iClusterName
+   *
    * @return null if nothing changed the instance if has been modified or replaced
    */
   OIdentifiable beforeCreateOperations(final OIdentifiable id, String iClusterName);
+
   /**
-   *
    * @param id
    * @param iClusterName
+   *
    * @return null if nothing changed the instance if has been modified or replaced
    */
   OIdentifiable beforeUpdateOperations(final OIdentifiable id, String iClusterName);
+
   void beforeDeleteOperations(final OIdentifiable id, String iClusterName);
 
   void afterUpdateOperations(final OIdentifiable id);
-  void afterCreateOperations(final OIdentifiable id);
-  void afterDeleteOperations(final OIdentifiable id);
 
+  void afterCreateOperations(final OIdentifiable id);
+
+  void afterDeleteOperations(final OIdentifiable id);
 
   ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE type, final OIdentifiable id);
 
