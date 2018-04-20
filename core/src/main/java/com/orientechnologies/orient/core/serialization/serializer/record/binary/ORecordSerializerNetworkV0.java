@@ -31,6 +31,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
@@ -47,6 +48,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -203,9 +205,9 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   @Override
   public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
 
-    final OClass clazz = serializeClass(document, bytes);
+    serializeClass(document, bytes);
     if (iClassOnly) {
-      writeEmptyString(bytes);
+      writeEmptyString(bytes);    
       return;
     }
 
@@ -237,12 +239,12 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
-        pointer = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
+        pointer = serializeValue(bytes, value, type, getLinkedType(document, type, values[i].getKey())).getFirstVal();
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
     }
-
+        
   }
 
   @Override
@@ -510,8 +512,10 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @SuppressWarnings("unchecked")
-  public int serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
+  @Override
+  public HelperClasses.Tuple<Integer, Integer> serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
     int pointer = 0;
+    int startOffset = bytes.offset;
     switch (type) {
     case INTEGER:
     case LONG:
@@ -610,7 +614,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     case ANY:
       break;
     }
-    return pointer;
+    int length = bytes.offset - startOffset;
+    return new HelperClasses.Tuple<>(pointer, length);
   }
 
   private int writeBinary(final BytesContainer bytes, final byte[] valueBytes) {
@@ -675,7 +680,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
           throw new OSerializationException(
               "Impossible serialize value of type " + value.getClass() + " with the ODocument binary serializer");
         }
-        pointer = serializeValue(bytes, value, type, null);
+        pointer = serializeValue(bytes, value, type, null).getFirstVal();
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
@@ -871,6 +876,19 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   @Override
   public boolean isSerializingClassNameForEmbedded() {
     return true;
+  }
+  
+  @Override
+  public HelperClasses.Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes){
+    int valuePos = readInteger(bytes);
+    byte typeId = readByte(bytes);
+    OType type = OType.getById(typeId);
+    return new HelperClasses.Tuple<>(valuePos, type);
+  }
+
+  @Override
+  public void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db, ORecordSerializationDebug debugInfo, OImmutableSchema schema) {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
   
 }

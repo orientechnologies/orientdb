@@ -48,6 +48,7 @@ public class ORecordSerializerBinaryTest {
   
   private static ODatabaseDocumentTx db = null;
   private final ORecordSerializerBinary serializer;
+  private final int serializerVersion;
 
   @Parameterized.Parameters  
   public static Collection<Object[]> generateParams() {
@@ -67,8 +68,21 @@ public class ORecordSerializerBinaryTest {
     db = new ODatabaseDocumentTx("memory:test").create();
     db.createClass("TestClass");
     db.command(new OCommandSQL("create property TestClass.TestEmbedded EMBEDDED")).execute();
+    db.command(new OCommandSQL("create property TestClass.TestPropAny ANY")).execute();
     serializer = new ORecordSerializerBinary(serializerIndex);
+    serializerVersion = serializerIndex;
   }    
+  
+  @Test
+  public void testGetTypedPropertyOfTypeAny(){    
+    ODocument doc = new ODocument("TestClass");
+    Integer setValue = 15;
+    doc.setProperty("TestPropAny", setValue);
+    db.save(doc);
+    byte[] serializedDoc = serializer.toStream(doc, false);
+    Integer value = serializer.deserializeFieldFromRoot(serializedDoc, "TestPropAny");
+    Assert.assertEquals(setValue, value);
+  }
   
   @Test
   public void testGetTypedFiledSimple(){    
@@ -250,6 +264,9 @@ public class ORecordSerializerBinaryTest {
   }
 
   private void decreasePositionsBy(byte[] recordBytes, int stepSize, boolean isNested) {
+    if (serializerVersion > 0)
+      return;
+    
     BytesContainer container = new BytesContainer(recordBytes);
     //for root elements skip serializer version
     if (!isNested)
@@ -263,6 +280,7 @@ public class ORecordSerializerBinaryTest {
       if (len > 0){
         //read field name
         container.offset += len;
+        
         //read data pointer
         int pointer = readInteger(container);
         //shift pointer by start ofset

@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.io.UnsupportedEncodingException;
 import java.util.Calendar;
-import java.util.List;
 import java.util.TimeZone;
 
 /**
@@ -36,7 +35,7 @@ public class HelperClasses {
   protected static final ORecordId    NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
   protected static final long       MILLISEC_PER_DAY = 86400000;
   
-  protected static class Tuple<T1, T2>{
+  public static class Tuple<T1, T2>{
     
     private final T1 firstVal;
     private final T2 secondVal;
@@ -55,22 +54,32 @@ public class HelperClasses {
     }        
   }    
   
-  protected static class Triple<T1, T2, T3> extends Tuple<T1, T2>{
-    
+  public static class Triple<T1, T2, T3>{// extends Tuple<T1, T2>{
+    private final T1 firstVal;
+    private final T2 secondVal;
     private final T3 thirdVal;
     
     public Triple(T1 firstVal, T2 secondVal, T3 thirdVal) {
-      super(firstVal, secondVal);
+      this.firstVal = firstVal;
+      this.secondVal = secondVal;
       this.thirdVal = thirdVal;
     }
 
     public T3 getThirdVal() {
       return thirdVal;
-    }        
+    } 
+    
+    public T1 getFirstVal() {
+      return firstVal;
+    }
+
+    public T2 getSecondVal() {
+      return secondVal;
+    }
   }
   
   protected static class RecordInfo{
-    public List<Integer> fieldRelatedPositions;
+//    public List<Integer> fieldRelatedPositions;
     public int fieldStartOffset;
     public int fieldLength;
     public OType fieldType;

@@ -20,7 +20,9 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -30,7 +32,7 @@ public interface ODocumentSerializer {
   
   void serializeWithClassName(ODocument document, BytesContainer bytes, boolean iClassOnly);
 
-  int serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
+  HelperClasses.Tuple<Integer, Integer> serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
 
   void deserialize(ODocument document, BytesContainer bytes);
   
@@ -58,5 +60,10 @@ public interface ODocumentSerializer {
   boolean isSerializingClassNameForEmbedded();
   
   
-  <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, int serializerVersion);  
+  <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, int serializerVersion);
+  
+  HelperClasses.Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes);
+  
+  void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db,
+          ORecordSerializationDebug debugInfo, OImmutableSchema schema);
 }
