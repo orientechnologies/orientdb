@@ -151,6 +151,6 @@ public class ODefaultRemoteTaskFactoryV2 extends ODefaultRemoteTaskFactoryV1 {
 
   @Override
   public int getProtocolVersion() {
-    return 1;
+    return 2;
   }
 }
