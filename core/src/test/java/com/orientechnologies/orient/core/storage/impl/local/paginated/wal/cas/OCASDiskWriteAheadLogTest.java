@@ -16,9 +16,12 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -2782,7 +2785,7 @@ public class OCASDiskWriteAheadLogTest {
         timer.schedule(new TimerTask() {
           @Override
           public void run() {
-            report[1] = true;
+            report[0] = true;
           }
         }, 1000 * 30, 1000 * 30);
 
@@ -2881,7 +2884,7 @@ public class OCASDiskWriteAheadLogTest {
         timer.schedule(new TimerTask() {
           @Override
           public void run() {
-            report[1] = true;
+            report[0] = true;
           }
         }, 1000 * 30, 1000 * 30);
 
@@ -2980,7 +2983,7 @@ public class OCASDiskWriteAheadLogTest {
         timer.schedule(new TimerTask() {
           @Override
           public void run() {
-            report[1] = true;
+            report[0] = true;
           }
         }, 1000 * 30, 1000 * 30);
 
@@ -3079,7 +3082,7 @@ public class OCASDiskWriteAheadLogTest {
         timer.schedule(new TimerTask() {
           @Override
           public void run() {
-            report[1] = true;
+            report[0] = true;
           }
         }, 1000 * 30, 1000 * 30);
 
@@ -3183,7 +3186,7 @@ public class OCASDiskWriteAheadLogTest {
         timer.schedule(new TimerTask() {
           @Override
           public void run() {
-            report[1] = true;
+            report[0] = true;
           }
         }, 1000 * 30, 1000 * 30);
 
@@ -3250,8 +3253,7 @@ public class OCASDiskWriteAheadLogTest {
 
       try {
         final long walSizeLimit = 10 * 1024 * 1024 * 1024L;
-        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000,
-            10 * 1024 * 1024, 20,
+        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 10 * 1024 * 1024, 20,
             true, Locale.US, walSizeLimit, -1, 1000);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
@@ -3288,7 +3290,7 @@ public class OCASDiskWriteAheadLogTest {
         timer.schedule(new TimerTask() {
           @Override
           public void run() {
-            report[1] = true;
+            report[0] = true;
           }
         }, 1000 * 30, 1000 * 30);
 
@@ -3359,9 +3361,8 @@ public class OCASDiskWriteAheadLogTest {
 
       try {
         final long walSizeLimit = 10 * 1024 * 1024 * 1024L;
-        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000,
-            512 * 1024 * 1024, 20,
-            true, Locale.US, walSizeLimit, -1, 1000);
+        OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 512 * 1024 * 1024,
+            20, true, Locale.US, walSizeLimit, -1, 1000);
 
         AtomicBoolean walIsFull = new AtomicBoolean();
 
@@ -3397,7 +3398,7 @@ public class OCASDiskWriteAheadLogTest {
         timer.schedule(new TimerTask() {
           @Override
           public void run() {
-            report[1] = true;
+            report[0] = true;
           }
         }, 1000 * 30, 1000 * 30);
 
@@ -3458,6 +3459,77 @@ public class OCASDiskWriteAheadLogTest {
       }
     }
   }
+
+  @Test
+  public void testWALCrash() throws Exception {
+    OCASDiskWriteAheadLog wal = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000, 512 * 1024 * 1024, 20,
+        true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000);
+
+    ExecutorService executorService = Executors.newCachedThreadPool();
+
+    AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
+
+    final OSegmentOverflowListener listener = (segment) -> {
+      Future<Void> oldAppender = segmentAppender.get();
+
+      while (oldAppender == null || oldAppender.isDone()) {
+        if (wal.activeSegment() <= segment) {
+          final Future<Void> appender = executorService.submit(new SegmentAdder(segment, wal));
+
+          if (segmentAppender.compareAndSet(oldAppender, appender)) {
+            break;
+          }
+
+          appender.cancel(false);
+          oldAppender = segmentAppender.get();
+        } else {
+          break;
+        }
+      }
+    };
+
+    wal.addSegmentOverflowListener(listener);
+
+    final long seed = System.nanoTime();
+    final Random random = new Random(seed);
+
+    final List<TestRecord> records = new ArrayList<>();
+    final int recordsCount = 100_000;
+    for (int i = 0; i < recordsCount; i++) {
+      final TestRecord walRecord = new TestRecord(random, 3 * OCASWALPage.PAGE_SIZE, 1);
+      wal.log(walRecord);
+      records.add(walRecord);
+    }
+
+    wal.close();
+
+    final int index = random.nextInt(records.size());
+    final OLogSequenceNumber lsn = records.get(index).getLsn();
+    final long segment = lsn.getSegment();
+    final long page = lsn.getPosition() / OCASWALPage.PAGE_SIZE;
+
+    try (final FileChannel channel = FileChannel
+        .open(testDirectory.resolve(getSegmentName(segment)), StandardOpenOption.WRITE, StandardOpenOption.READ)) {
+      channel.position(page * OCASWALPage.PAGE_SIZE);
+
+      final ByteBuffer buffer = ByteBuffer.allocate(OCASWALPage.PAGE_SIZE);
+      channel.read(buffer);
+
+      buffer.put(42, (byte) (buffer.get(42) + 1));
+      buffer.position(0);
+
+      channel.write(buffer);
+    }
+
+    Iterator<TestRecord> recordIterator = records.iterator();
+    List<OWriteableWALRecord> walRecords = wal.read(records.get(0).getLsn(), 100);
+
+    while (recordIterator.hasNext()) {
+
+    }
+
+  }
+
   private void checkThatSegmentsBellowAreRemoved(OCASDiskWriteAheadLog wal) {
     final OLogSequenceNumber begin = wal.begin();
 
