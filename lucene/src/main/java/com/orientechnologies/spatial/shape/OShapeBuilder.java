@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import org.locationtech.spatial4j.context.jts.DatelineRule;
 
 public abstract class OShapeBuilder<T extends Shape> {
 
@@ -54,6 +55,7 @@ public abstract class OShapeBuilder<T extends Shape> {
     JtsSpatialContextFactory factory = new JtsSpatialContextFactory();
     factory.geo = true;
     factory.validationRule = ValidationRule.none;
+    factory.datelineRule = DatelineRule.none;
 
     SPATIAL_CONTEXT = new JtsSpatialContext(factory);
 
