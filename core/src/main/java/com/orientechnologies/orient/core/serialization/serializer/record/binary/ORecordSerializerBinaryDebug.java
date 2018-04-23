@@ -1,11 +1,11 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readByte;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readString;
 
 public class ORecordSerializerBinaryDebug extends ORecordSerializerBinaryV0 {
 
@@ -14,8 +14,8 @@ public class ORecordSerializerBinaryDebug extends ORecordSerializerBinaryV0 {
     OImmutableSchema schema = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot();
     BytesContainer bytes = new BytesContainer(iSource);
     int version = readByte(bytes);
-    
-    if (ORecordSerializerBinary.INSTANCE.getSerializer(version).isSerializingClassNameByDefault()){
+
+    if (ORecordSerializerBinary.INSTANCE.getSerializer(version).isSerializingClassNameByDefault()) {
       try {
         final String className = readString(bytes);
         debugInfo.className = className;
@@ -30,5 +30,5 @@ public class ORecordSerializerBinaryDebug extends ORecordSerializerBinaryV0 {
     ORecordSerializerBinary.INSTANCE.getSerializer(version).deserializeDebug(bytes, db, debugInfo, schema);
     return debugInfo;
   }
-    
+
 }

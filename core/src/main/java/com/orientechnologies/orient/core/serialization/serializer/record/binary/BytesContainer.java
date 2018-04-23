@@ -49,11 +49,11 @@ public class BytesContainer {
       resize();
     return cur;
   }
-  
+
   public int allocExact(final int toAlloc) {
     final int cur = offset;
     offset += toAlloc;
-    if (bytes.length < offset){
+    if (bytes.length < offset) {
       byte[] newArray = new byte[offset];
       System.arraycopy(bytes, 0, newArray, 0, bytes.length);
       bytes = newArray;
@@ -67,7 +67,7 @@ public class BytesContainer {
   }
 
   public byte[] fitBytes() {
-    if (bytes.length ==  offset){
+    if (bytes.length == offset) {
       return bytes;
     }
     final byte[] fitted = new byte[offset];
@@ -83,5 +83,5 @@ public class BytesContainer {
     System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
     bytes = newBytes;
   }
-    
+
 }

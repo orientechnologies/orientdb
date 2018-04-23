@@ -29,41 +29,42 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public interface ODocumentSerializer {
 
   void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
-  
+
   void serializeWithClassName(ODocument document, BytesContainer bytes, boolean iClassOnly);
 
   HelperClasses.Tuple<Integer, Integer> serializeValue(BytesContainer bytes, Object value, OType type, OType linkedType);
 
   void deserialize(ODocument document, BytesContainer bytes);
-  
+
   void deserializeWithClassName(ODocument document, BytesContainer bytes);
 
   void deserializePartial(ODocument document, BytesContainer bytes, String[] iFields);
-  
+
   void deserializePartialWithClassName(ODocument document, BytesContainer bytes, String[] iFields);
 
   Object deserializeValue(BytesContainer bytes, OType type, ODocument ownerDocument);
 
   OBinaryField deserializeField(BytesContainer bytes, OClass iClass, String iFieldName);
-  
+
   OBinaryField deserializeFieldWithClassName(BytesContainer bytes, OClass iClass, String iFieldName);
 
   OBinaryComparator getComparator();
 
   /**
    * Returns the array of field names with no values.
+   *
    * @param reference TODO
    */
   String[] getFieldNames(ODocument reference, BytesContainer iBytes, boolean readClassName);
-  
+
   boolean isSerializingClassNameByDefault();
+
   boolean isSerializingClassNameForEmbedded();
-  
-  
+
   <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, int serializerVersion);
-  
+
   HelperClasses.Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes);
-  
-  void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db,
-          ORecordSerializationDebug debugInfo, OImmutableSchema schema);
+
+  void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db, ORecordSerializationDebug debugInfo,
+      OImmutableSchema schema);
 }

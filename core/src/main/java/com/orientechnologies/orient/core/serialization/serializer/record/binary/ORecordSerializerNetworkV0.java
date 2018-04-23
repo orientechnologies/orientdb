@@ -20,37 +20,20 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -59,6 +42,12 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.util.ODateHelper;
+
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
 
@@ -70,10 +59,10 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public void deserializePartialWithClassName(final ODocument document, final BytesContainer bytes, final String[] iFields){
+  public void deserializePartialWithClassName(final ODocument document, final BytesContainer bytes, final String[] iFields) {
     deserializePartial(document, bytes, iFields);
   }
-  
+
   @Override
   public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields) {
     final String className = readString(bytes);
@@ -145,10 +134,10 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public void deserializeWithClassName(final ODocument document, final BytesContainer bytes){
+  public void deserializeWithClassName(final ODocument document, final BytesContainer bytes) {
     deserialize(document, bytes);
   }
-  
+
   @Override
   public void deserialize(final ODocument document, final BytesContainer bytes) {
     final String className = readString(bytes);
@@ -187,7 +176,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
         bytes.offset = headerCursor;
         document.field(fieldName, value, type);
       } else
-        document.field(fieldName, null, (OType[])null);
+        document.field(fieldName, null, (OType[]) null);
     }
 
     ORecordInternal.clearSource(document);
@@ -197,17 +186,17 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public void serializeWithClassName(final ODocument document, final BytesContainer bytes, final boolean iClassOnly){
+  public void serializeWithClassName(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
     serialize(document, bytes, iClassOnly);
   }
-  
+
   @SuppressWarnings("unchecked")
   @Override
   public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
 
     serializeClass(document, bytes);
     if (iClassOnly) {
-      writeEmptyString(bytes);    
+      writeEmptyString(bytes);
       return;
     }
 
@@ -244,7 +233,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
     }
-        
+
   }
 
   @Override
@@ -513,7 +502,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
 
   @SuppressWarnings("unchecked")
   @Override
-  public HelperClasses.Tuple<Integer, Integer> serializeValue(final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
+  public HelperClasses.Tuple<Integer, Integer> serializeValue(final BytesContainer bytes, Object value, final OType type,
+      final OType linkedType) {
     int pointer = 0;
     int startOffset = bytes.offset;
     switch (type) {
@@ -831,10 +821,10 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public OBinaryField deserializeFieldWithClassName(final BytesContainer bytes, final OClass iClass, final String iFieldName){
+  public OBinaryField deserializeFieldWithClassName(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
     return deserializeField(bytes, iClass, iFieldName);
   }
-  
+
   @Override
   public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
     // TODO: check if integrate the binary disc binary comparator here
@@ -862,11 +852,11 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     toCalendar.set(Calendar.MILLISECOND, 0);
     return toCalendar.getTimeInMillis();
   }
-  
+
   @Override
-    public boolean isSerializingClassNameByDefault() {
-      return true;
-    }
+  public boolean isSerializingClassNameByDefault() {
+    return true;
+  }
 
   @Override
   public <RET> RET deserializeFieldTyped(BytesContainer record, String iFieldName, boolean isEmbedded, int serializerVersion) {
@@ -877,9 +867,9 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   public boolean isSerializingClassNameForEmbedded() {
     return true;
   }
-  
+
   @Override
-  public HelperClasses.Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes){
+  public HelperClasses.Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes) {
     int valuePos = readInteger(bytes);
     byte typeId = readByte(bytes);
     OType type = OType.getById(typeId);
@@ -887,8 +877,9 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   @Override
-  public void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db, ORecordSerializationDebug debugInfo, OImmutableSchema schema) {
+  public void deserializeDebug(BytesContainer bytes, ODatabaseDocumentInternal db, ORecordSerializationDebug debugInfo,
+      OImmutableSchema schema) {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
-  
+
 }
