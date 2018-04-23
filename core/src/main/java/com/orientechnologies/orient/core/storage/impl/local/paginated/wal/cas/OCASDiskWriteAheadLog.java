@@ -183,9 +183,14 @@ public final class OCASDiskWriteAheadLog {
     walSizeLimit = walSizeHardLimit;
 
     this.walLocation = calculateWalPath(storagePath, walPath);
+
     if (!Files.exists(walLocation)) {
       Files.createDirectories(walLocation);
     }
+
+    this.fileStore = Files.getFileStore(walLocation);
+    this.storageName = storageName;
+    this.maxCacheSize = maxPagesCacheSize * OCASWALPage.PAGE_SIZE;
 
     masterRecordPath = walLocation.resolve(storageName + MASTER_RECORD_EXTENSION);
     masterRecordLSNHolder = FileChannel
@@ -193,10 +198,6 @@ public final class OCASDiskWriteAheadLog {
             StandardOpenOption.SYNC);
 
     readLastCheckpointInfo();
-
-    this.fileStore = Files.getFileStore(walLocation);
-    this.storageName = storageName;
-    this.maxCacheSize = maxPagesCacheSize * OCASWALPage.PAGE_SIZE;
 
     logSize.set(initSegmentSet(filterWALFiles, locale));
 
@@ -754,7 +755,6 @@ public final class OCASDiskWriteAheadLog {
         result = readFromDisk(lsn, limit + 1);
       }
 
-      assert result.size() > 1;
       return result.subList(1, result.size());
     } finally {
       removeCutTillLimit(lsn);
