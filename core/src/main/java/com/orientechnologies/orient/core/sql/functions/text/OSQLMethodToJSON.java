@@ -27,7 +27,7 @@ import java.util.Map;
 
 /**
  * Converts a document in JSON string.
- * 
+ *
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -66,8 +66,13 @@ public class OSQLMethodToJSON extends OAbstractSQLMethod {
 
       StringBuilder builder = new StringBuilder();
       builder.append("[");
+      boolean first = true;
       for (Object o : OMultiValue.getMultiValueIterable(iThis, false)) {
+        if (!first) {
+          builder.append(",");
+        }
         builder.append(execute(o, iCurrentRecord, iContext, ioResult, iParams));
+        first = false;
       }
 
       builder.append("]");
