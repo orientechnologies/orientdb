@@ -134,8 +134,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       loadMetadata();
 
       installHooksEmbedded();
-      registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
-      registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
+      if (this.getMetadata().getCommandCache().isEnabled())
+        registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
 
       user = null;
 
@@ -220,8 +220,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     installHooksEmbedded();
     createMetadata();
 
-    registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
-    registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
+    if (this.getMetadata().getCommandCache().isEnabled())
+      registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
   }
 
   public void callOnCreateListeners() {
@@ -893,6 +893,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           this.getSharedContext().getFunctionLibrary().createdFunction(doc);
           Orient.instance().getScriptManager().close(this.getName());
         }
+        if (clazz.isOuser() || clazz.isOrole()) {
+          getMetadata().getSecurity().incrementVersion();
+        }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceCreated(this, doc);
         }
@@ -919,6 +922,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
           this.getSharedContext().getFunctionLibrary().updatedFunction(doc);
           Orient.instance().getScriptManager().close(this.getName());
         }
+        if (clazz.isOuser() || clazz.isOrole()) {
+          getMetadata().getSecurity().incrementVersion();
+        }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(this, doc);
         }
@@ -941,6 +947,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isFunction()) {
           this.getSharedContext().getFunctionLibrary().droppedFunction(doc);
           Orient.instance().getScriptManager().close(this.getName());
+        }
+        if (clazz.isOuser() || clazz.isOrole()) {
+          getMetadata().getSecurity().incrementVersion();
         }
         if (clazz.isSequence()) {
           ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceDropped(this, doc);
