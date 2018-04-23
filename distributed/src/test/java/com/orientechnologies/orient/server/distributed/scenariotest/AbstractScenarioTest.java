@@ -250,7 +250,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
             while (k <= docsToCompare.size() - 2) {
               assertEquals(
                   "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-                  docsToCompare.get(k).field("@version"), docsToCompare.get(k + 1).field("@version"));
+                  (Integer) docsToCompare.get(k).field("@version"), (Integer) docsToCompare.get(k + 1).field("@version"));
               assertEquals(
                   "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
                   docsToCompare.get(k).field("name"), docsToCompare.get(k + 1).field("name"));

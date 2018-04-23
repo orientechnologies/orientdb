@@ -267,11 +267,6 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
                     banner("STARTING BACKUP SERVER " + (2));
 
                     ODatabaseDocument g = getDatabase(2);
-                    if(g.exists()){
-                      g.open("admin", "admin");
-                    }else{
-                      g.create();
-                    }
 
                     backupInProgress = true;
                     File file = null;
