@@ -22,6 +22,7 @@ import com.orientechnologies.orient.server.distributed.OModifiableDistributedCon
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -56,23 +57,24 @@ import static org.junit.Assert.*;
 
 public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest {
 
-  volatile int                    serverStarted     = 0;
-  volatile boolean                backupInProgress  = false;
-  private AtomicBoolean           server3inDeadlock = new AtomicBoolean(false);
-  private HashMap<String, Object> lukeFields        = new HashMap<String, Object>() {
-                                                      {
-                                                        put("firstName", "Luke");
-                                                        put("lastName", "Skywalker");
-                                                      }
-                                                    };
-  private HashMap<String, Object> darthFields       = new HashMap<String, Object>() {
-                                                      {
-                                                        put("firstName", "Darth");
-                                                        put("lastName", "Vader");
-                                                      }
-                                                    };
+  volatile int                     serverStarted     = 0;
+  volatile boolean                 backupInProgress  = false;
+  private  AtomicBoolean           server3inDeadlock = new AtomicBoolean(false);
+  private  HashMap<String, Object> lukeFields        = new HashMap<String, Object>() {
+    {
+      put("firstName", "Luke");
+      put("lastName", "Skywalker");
+    }
+  };
+  private  HashMap<String, Object> darthFields       = new HashMap<String, Object>() {
+    {
+      put("firstName", "Darth");
+      put("lastName", "Vader");
+    }
+  };
 
   @Test
+  @Ignore
   public void test() throws Exception {
 
     maxRetries = 10;
@@ -98,7 +100,7 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
     try {
       // changing configuration: writeQuorum=1, autoDeploy=false
       System.out.print("\nChanging configuration (writeQuorum=1, autoDeploy=false)...");
-  
+
       ODocument cfg = null;
       ServerRun server = serverInstance.get(2);
       OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
@@ -108,30 +110,31 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
       cfg.field("version", (Integer) cfg.field("version") + 1);
       manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration, true);
       System.out.println("\nConfiguration updated.");
-  
+
       // deadlock on server3
       this.server3inDeadlock.set(true);
       Thread.sleep(200); // waiting for deadlock
-  
+
       // inserting record r1 and checking consistency on server1 and server2
       System.out.print("Inserting record r1 and on server1 and checking consistency on both server1 and server2...");
       dbServer1.activateOnCurrentThread();
       ODocument r1onServer1 = new ODocument("Person").fields("id", "R001", "firstName", "Han", "lastName", "Solo");
       r1onServer1.save();
       Thread.sleep(200);
-      r1onServer1 = retrieveRecord(serverInstance.get(0), "R001"); // This was set to get(1), but shouldn't it be get(0) for Server1?
+      r1onServer1 = retrieveRecord(serverInstance.get(0),
+          "R001"); // This was set to get(1), but shouldn't it be get(0) for Server1?
       ODocument r1onServer2 = retrieveRecord(serverInstance.get(1), "R001");
-  
-      assertEquals((Integer)r1onServer1.field("@version"), r1onServer2.field("@version"));
-      assertEquals((String)r1onServer1.field("id"), r1onServer2.field("id"));
-      assertEquals((String)r1onServer1.field("firstName"), r1onServer2.field("firstName"));
-      assertEquals((String)r1onServer1.field("lastName"), r1onServer2.field("lastName"));
-  
+
+      assertEquals((Integer) r1onServer1.field("@version"), r1onServer2.field("@version"));
+      assertEquals((String) r1onServer1.field("id"), r1onServer2.field("id"));
+      assertEquals((String) r1onServer1.field("firstName"), r1onServer2.field("firstName"));
+      assertEquals((String) r1onServer1.field("lastName"), r1onServer2.field("lastName"));
+
       System.out.println("\tDone.");
-  
+
       // initial version of the record r1
       int initialVersion = r1onServer1.field("@version");
-  
+
       // creating and executing two clients c1 and c2 (updating r1)
       System.out.print("Building client c1 and client c2...");
       List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
@@ -141,7 +144,7 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
       ExecutorService executor = Executors.newCachedThreadPool();
       System.out.println("Concurrent update:");
       List<Future<Void>> futures = executor.invokeAll(clients);
-  
+
       try {
         for (Future f : futures) {
           f.get();
@@ -154,7 +157,7 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
       }
       // wait for propagation
       Thread.sleep(500);
-  
+
       // end of deadlock on server3 and sync
       try {
         this.server3inDeadlock.set(false);
@@ -163,55 +166,55 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
         e.printStackTrace();
         fail("Exception was thrown!");
       }
-  
+
       // check consistency
       r1onServer1 = retrieveRecord(serverInstance.get(0), "R001");
       r1onServer2 = retrieveRecord(serverInstance.get(1), "R001");
       ODocument r1onServer3 = retrieveRecord(serverInstance.get(2), "R001");
-  
+
       dbServer1.activateOnCurrentThread();
       r1onServer1.reload();
       dbServer2.activateOnCurrentThread();
       r1onServer2.reload();
       dbServer3.activateOnCurrentThread();
       r1onServer3.reload();
-  
+
       /**
        * Checking records' values - CASE 1 - r1 on server1 has the values set by the client c1 - r1 on server2 has the values set by
        * the client c2 - CASE 2 - r1 and r2 have the same value (case: the "remote-update-message" arrives on the current server
        * before of the "local-update-message", e.g. due to delay in the stack)
        **/
-  
+
       boolean case11 = false;
       boolean case12 = false;
       boolean case2 = false;
-  
+
       // r1 on server1 has the values set by the client c1
       if (r1onServer1.field("firstName").equals("Luke") && r1onServer1.field("lastName").equals("Skywalker")) {
         case11 = true;
         System.out.println("The record on server1 has been updated by the client c1 without exceptions!");
       }
-  
+
       // r1 on server2 has the values set by the client c2
       if (r1onServer2.field("firstName").equals("Darth") && r1onServer2.field("lastName").equals("Vader")) {
         case12 = true;
         System.out.println("The record on server1 has been updated by the client c2 without exceptions!");
       }
-  
+
       // r1 and r2 have the same value (when the remote update message arrives on the current server before of the local update
       // message, e.g. due to delay in the stack)
-      if (r1onServer1.field("firstName").equals(r1onServer2.field("firstName"))
-          && r1onServer1.field("lastName").equals(r1onServer2.field("lastName"))) {
+      if (r1onServer1.field("firstName").equals(r1onServer2.field("firstName")) && r1onServer1.field("lastName")
+          .equals(r1onServer2.field("lastName"))) {
         case2 = true;
         System.out.println("The record on server1 has been updated by the client c2 without exceptions!");
       }
-  
+
       if ((case11 && case12) || case2) {
         assertTrue("Condition for the records' values satisfied", true);
       } else {
         fail("Condition for the records' values NOT satisfied");
       }
-  
+
       // r1 on server3 has the values set by the client c1 or the values set by the client c2, but not the old one
       if ((r1onServer3.field("firstName").equals("Luke") && r1onServer3.field("lastName").equals("Skywalker"))
           || r1onServer3.field("firstName").equals("Darth") && r1onServer3.field("lastName").equals("Vader")) {
@@ -219,23 +222,24 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
       } else {
         fail("The record on server3 has not been updated by any client!");
       }
-  
+
       // r1 has version x+1 on all the servers
       System.out.printf("Checking version consistency among servers...");
-  
+
       int finalVersion = r1onServer1.field("@version");
       assertEquals(finalVersion, initialVersion + 1);
-  
-      assertEquals((Integer)r1onServer1.field("@version"), r1onServer2.field("@version"));
-      assertEquals((Integer)r1onServer2.field("@version"), r1onServer3.field("@version"));
+
+      assertEquals((Integer) r1onServer1.field("@version"), r1onServer2.field("@version"));
+      assertEquals((Integer) r1onServer2.field("@version"), r1onServer3.field("@version"));
       System.out.println("Done.");
     } finally {
+      this.server3inDeadlock.set(false);
       dbServer1.activateOnCurrentThread();
-     	dbServer1.close();
-     	dbServer2.activateOnCurrentThread();
-     	dbServer2.close();
-     	dbServer3.activateOnCurrentThread();
-     	dbServer3.close();
+      dbServer1.close();
+      dbServer2.activateOnCurrentThread();
+      dbServer2.close();
+      dbServer3.activateOnCurrentThread();
+      dbServer3.close();
     }
   }
 
@@ -254,12 +258,12 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
           try {
             // CRASH LAST SERVER try {
             executeWhen(new Callable<Boolean>() {
-              // CONDITION
-              @Override
-              public Boolean call() throws Exception {
-                return server3inDeadlock.get();
-              }
-            }, // ACTION
+                          // CONDITION
+                          @Override
+                          public Boolean call() throws Exception {
+                            return server3inDeadlock.get();
+                          }
+                        }, // ACTION
                 new Callable() {
                   @Override
                   public Object call() throws Exception {
