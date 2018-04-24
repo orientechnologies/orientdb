@@ -15,24 +15,26 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
+import jdk.nashorn.internal.runtime.linker.Bootstrap;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 06.06.13
  */
 public class OOperationUnitId {
-  private static final AtomicLong                      sharedId        = new AtomicLong();
+  private static final AtomicLong sharedId = new AtomicLong();
 
   private static volatile ThreadLocal<OModifiableLong> localId      = new ThreadLocal<>();
   private static volatile ThreadLocal<Long>            sharedIdCopy = new ThreadLocal<>();
 
-  public static final int                              SERIALIZED_SIZE = 2 * OLongSerializer.LONG_SIZE;
+  public static final int SERIALIZED_SIZE = 2 * OLongSerializer.LONG_SIZE;
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -53,8 +55,8 @@ public class OOperationUnitId {
     });
   }
 
-  private long                                         lId;
-  private long                                         sId;
+  private long lId;
+  private long sId;
 
   public OOperationUnitId(long lId, long sId) {
     this.lId = lId;
@@ -94,6 +96,11 @@ public class OOperationUnitId {
     offset += OLongSerializer.LONG_SIZE;
 
     return offset;
+  }
+
+  public void toStream(ByteBuffer buffer) {
+    buffer.putLong(sId);
+    buffer.putLong(lId);
   }
 
   public int fromStream(byte[] content, int offset) {

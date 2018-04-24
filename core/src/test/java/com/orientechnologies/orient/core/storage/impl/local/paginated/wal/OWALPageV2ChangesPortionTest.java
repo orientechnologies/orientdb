@@ -333,6 +333,48 @@ public class OWALPageV2ChangesPortionTest {
   }
 
   @Test
+  public void testSerializationAndRestoreBytBuffer() {
+    Random random = new Random();
+    byte[] originalData = new byte[1024];
+    random.nextBytes(originalData);
+
+    byte[] data = Arrays.copyOf(originalData, originalData.length);
+
+    ByteBuffer pointer = ByteBuffer.wrap(data).order(ByteOrder.nativeOrder());
+
+    OWALPageChangesPortion changesCollector = new OWALPageChangesPortion(1024);
+
+    byte[] changes = new byte[128];
+    random.nextBytes(changes);
+
+    changesCollector.setBinaryValue(pointer, changes, 32);
+
+    Assertions.assertThat(changesCollector.getBinaryValue(pointer, 32, 128)).isEqualTo(changes);
+    changesCollector.applyChanges(pointer);
+
+    ByteBuffer newBuffer = ByteBuffer.wrap(Arrays.copyOf(originalData, originalData.length)).order(ByteOrder.nativeOrder());
+
+    int size = changesCollector.serializedSize();
+
+    ByteBuffer content = ByteBuffer.allocate(size).order(ByteOrder.nativeOrder());
+    changesCollector.toStream(content);
+    Assert.assertEquals(size, content.position());
+
+    OWALPageChangesPortion changesCollectorRestored = new OWALPageChangesPortion(1024);
+    changesCollectorRestored.fromStream(0, content.array());
+    changesCollectorRestored.applyChanges(newBuffer);
+
+    newBuffer.position(0);
+    pointer.position(0);
+    Assert.assertEquals(pointer.compareTo(newBuffer), 0);
+
+    changesCollectorRestored.applyOriginalValues(newBuffer);
+
+    newBuffer.position(0);
+    Assert.assertEquals(newBuffer.compareTo(ByteBuffer.wrap(originalData)), 0);
+  }
+
+  @Test
   public void testEmptyChanges() {
     OWALPageChangesPortion changesCollector = new OWALPageChangesPortion(1024);
     int size = changesCollector.serializedSize();
@@ -342,7 +384,19 @@ public class OWALPageV2ChangesPortionTest {
     changesCollectorRestored.fromStream(0, bytes);
 
     Assert.assertEquals(size, changesCollectorRestored.serializedSize());
+  }
 
+  @Test
+  public void testEmptyChangesBuffer() {
+    OWALPageChangesPortion changesCollector = new OWALPageChangesPortion(1024);
+    int size = changesCollector.serializedSize();
+
+    ByteBuffer bytes = ByteBuffer.allocate(size).order(ByteOrder.nativeOrder());
+    changesCollector.toStream(bytes);
+    OWALPageChangesPortion changesCollectorRestored = new OWALPageChangesPortion(1024);
+    changesCollectorRestored.fromStream(0, bytes.array());
+
+    Assert.assertEquals(size, changesCollectorRestored.serializedSize());
   }
 
   @Test

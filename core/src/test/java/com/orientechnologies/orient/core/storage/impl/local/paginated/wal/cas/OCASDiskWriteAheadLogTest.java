@@ -3867,6 +3867,12 @@ public class OCASDiskWriteAheadLogTest {
     }
 
     @Override
+    public void toStream(ByteBuffer buffer) {
+      buffer.putInt(data.length);
+      buffer.put(data);
+    }
+
+    @Override
     public int fromStream(byte[] content, int offset) {
       int len = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
       offset += OIntegerSerializer.INT_SIZE;

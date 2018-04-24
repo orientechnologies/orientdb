@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
+import java.nio.ByteBuffer;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 29.04.13
@@ -50,6 +52,14 @@ public abstract class OAbstractPageWALRecord extends OOperationUnitBodyRecord {
     offset += OLongSerializer.LONG_SIZE;
 
     return offset;
+  }
+
+  @Override
+  public void toStream(ByteBuffer buffer) {
+    super.toStream(buffer);
+
+    buffer.putLong(pageIndex);
+    buffer.putLong(fileId);
   }
 
   @Override
@@ -93,7 +103,7 @@ public abstract class OAbstractPageWALRecord extends OOperationUnitBodyRecord {
       return false;
     if (pageIndex != that.pageIndex)
       return false;
-    if (lsn != null ? !lsn.equals(that.lsn) : that.lsn != null)
+    if (lsn.get() != null ? !lsn.get().equals(that.lsn.get()) : that.lsn.get() != null)
       return false;
 
     return true;

@@ -11,6 +11,7 @@ import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -244,6 +245,12 @@ public class OWriteAheadLogCutTillTest {
       offset += data.length;
 
       return offset;
+    }
+
+    @Override
+    public void toStream(ByteBuffer buffer) {
+      buffer.putInt(data.length);
+      buffer.put(data);
     }
 
     @Override

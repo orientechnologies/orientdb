@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
+import java.nio.ByteBuffer;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 26.04.13
@@ -61,7 +63,6 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
 
   /**
    * Previous value of LSN for current page.
-   *
    * This value is used when we want to rollback changes of not completed transactions at the end of restore procedure which was
    * triggered at server start after its abnormal crash.
    */
@@ -81,6 +82,15 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     offset += OLongSerializer.LONG_SIZE;
 
     return offset;
+  }
+
+  @Override
+  public void toStream(ByteBuffer buffer) {
+    super.toStream(buffer);
+
+    changes.toStream(buffer);
+    buffer.putLong(prevLsn.getSegment());
+    buffer.putLong(prevLsn.getPosition());
   }
 
   @Override
@@ -117,16 +127,16 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
 
     final OUpdatePageRecord that = (OUpdatePageRecord) o;
 
-    if (lsn == null && that.lsn == null)
+    if (lsn.get() == null && that.lsn.get() == null)
       return true;
 
-    if (lsn == null)
+    if (lsn.get() == null)
       return false;
 
-    if (that.lsn == null)
+    if (that.lsn.get() == null)
       return false;
 
-    if (!lsn.equals(that.lsn))
+    if (!lsn.get().equals(that.lsn.get()))
       return false;
 
     return true;

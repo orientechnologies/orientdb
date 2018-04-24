@@ -418,6 +418,11 @@ public class OWALChangesTree implements OWALChanges {
     return offset;
   }
 
+  @Override
+  public void toStream(ByteBuffer buffer) {
+    throw new UnsupportedOperationException();
+  }
+
   private int toStream(Node node, int offset, byte[] stream) {
     if (node.left != null)
       offset = toStream(node.left, offset, stream);

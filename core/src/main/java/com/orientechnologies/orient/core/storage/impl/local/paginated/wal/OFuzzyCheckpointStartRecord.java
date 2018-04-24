@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
+import java.nio.ByteBuffer;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 30.04.13
@@ -50,6 +52,14 @@ public class OFuzzyCheckpointStartRecord extends OAbstractCheckPointStartRecord 
     offset += OLongSerializer.LONG_SIZE;
 
     return offset;
+  }
+
+  @Override
+  public void toStream(ByteBuffer buffer) {
+    super.toStream(buffer);
+
+    buffer.putLong(flushedLsn.getSegment());
+    buffer.putLong(flushedLsn.getPosition());
   }
 
   @Override

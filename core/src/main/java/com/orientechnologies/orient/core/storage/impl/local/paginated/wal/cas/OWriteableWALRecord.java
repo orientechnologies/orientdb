@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 
+import java.nio.ByteBuffer;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 25.04.13
@@ -32,6 +34,8 @@ public interface OWriteableWALRecord extends OWALRecord {
   int getBinaryContentSize();
 
   int toStream(byte[] content, int offset);
+
+  void toStream(ByteBuffer buffer);
 
   int fromStream(byte[] content, int offset);
 

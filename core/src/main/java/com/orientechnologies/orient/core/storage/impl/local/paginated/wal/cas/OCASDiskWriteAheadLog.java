@@ -1637,13 +1637,12 @@ public final class OCASDiskWriteAheadLog {
                 }
 
                 final OWriteableWALRecord writeableRecord = (OWriteableWALRecord) record;
-                final byte[] recordContent = OWALRecordsFactory.INSTANCE
-                    .toStream(writeableRecord, writeableRecord.getBinaryContentSize());
-                assert recordContent != null;
 
                 int written = 0;
-                final int bytesToWrite = OIntegerSerializer.INT_SIZE + recordContent.length;
+                final int recordContentBinarySize = writeableRecord.getBinaryContentSize();
+                final int bytesToWrite = OIntegerSerializer.INT_SIZE + recordContentBinarySize;
 
+                byte[] recordContent = null;
                 byte[] recordSize = null;
                 int recordSizeWritten = -1;
 
@@ -1672,6 +1671,10 @@ public final class OCASDiskWriteAheadLog {
                   assert chunkSize + buffer.position() <= (page + 1) * OCASWALPage.PAGE_SIZE;
                   assert buffer.position() > page * OCASWALPage.PAGE_SIZE;
 
+                  if (written == 0 && chunkSize < bytesToWrite) {
+                    recordContent = OWALRecordsFactory.INSTANCE.toStream(writeableRecord, writeableRecord.getBinaryContentSize());
+                  }
+
                   if (!recordSizeIsWritten) {
                     if (recordSizeWritten > 0) {
                       buffer.put(recordSize, recordSizeWritten, OIntegerSerializer.INT_SIZE - recordSizeWritten);
@@ -1682,7 +1685,7 @@ public final class OCASDiskWriteAheadLog {
                       recordSizeIsWritten = true;
                       continue;
                     } else if (OIntegerSerializer.INT_SIZE <= chunkSize) {
-                      buffer.putInt(recordContent.length);
+                      buffer.putInt(recordContentBinarySize);
                       written += OIntegerSerializer.INT_SIZE;
 
                       recordSize = null;
@@ -1691,7 +1694,7 @@ public final class OCASDiskWriteAheadLog {
                       continue;
                     } else {
                       recordSize = new byte[OIntegerSerializer.INT_SIZE];
-                      OIntegerSerializer.INSTANCE.serializeNative(recordContent.length, recordSize, 0);
+                      OIntegerSerializer.INSTANCE.serializeNative(recordContentBinarySize, recordSize, 0);
 
                       recordSizeWritten = (page + 1) * OCASWALPage.PAGE_SIZE - buffer.position();
                       written += recordSizeWritten;
@@ -1701,7 +1704,12 @@ public final class OCASDiskWriteAheadLog {
                     }
                   }
 
-                  buffer.put(recordContent, written - OIntegerSerializer.INT_SIZE, chunkSize);
+                  if (recordContent != null) {
+                    buffer.put(recordContent, written - OIntegerSerializer.INT_SIZE, chunkSize);
+                  } else {
+                    OWALRecordsFactory.INSTANCE.toStream(writeableRecord, buffer);
+                  }
+
                   written += chunkSize;
                 }
 

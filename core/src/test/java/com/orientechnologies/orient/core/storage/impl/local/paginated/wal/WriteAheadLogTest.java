@@ -14,6 +14,7 @@ import org.junit.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -25,10 +26,10 @@ import static org.mockito.Mockito.when;
  * @since 29.04.13
  */
 public class WriteAheadLogTest {
-  private static final int ONE_KB       = 1024;
-  private static final int SEGMENT_SIZE = OWALPage.PAGE_SIZE * 4;
-  private        ODiskWriteAheadLog writeAheadLog;
-  private static File               testDir;
+  private static final int                ONE_KB       = 1024;
+  private static final int                SEGMENT_SIZE = OWALPage.PAGE_SIZE * 4;
+  private              ODiskWriteAheadLog writeAheadLog;
+  private static       File               testDir;
 
   @BeforeClass
   public static void beforeClass() {
@@ -2587,6 +2588,13 @@ public class WriteAheadLogTest {
       offset += data.length;
 
       return offset;
+    }
+
+    @Override
+    public void toStream(ByteBuffer buffer) {
+      buffer.put(updateMasterRecord ? (byte) 1 : 0);
+      buffer.putInt(data.length);
+      buffer.put(data);
     }
 
     @Override

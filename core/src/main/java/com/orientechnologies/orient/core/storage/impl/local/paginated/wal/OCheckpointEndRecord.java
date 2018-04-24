@@ -19,6 +19,8 @@
   */
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import java.nio.ByteBuffer;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/2/13
@@ -30,6 +32,10 @@ public class OCheckpointEndRecord extends OAbstractWALRecord {
   @Override
   public int toStream(final byte[] content, final int offset) {
     return offset;
+  }
+
+  @Override
+  public void toStream(ByteBuffer buffer) {
   }
 
   @Override

@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -38,7 +39,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
  * @since 24.05.13
  */
 public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
-  private boolean                                  rollback;
+  private boolean rollback;
 
   private Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap = new LinkedHashMap<>();
 
@@ -96,6 +97,34 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
     }
 
     return offset;
+  }
+
+  @Override
+  public void toStream(ByteBuffer buffer) {
+    super.toStream(buffer);
+
+    buffer.put(rollback ? (byte) 1 : 0);
+
+    if (atomicOperationMetadataMap.size() > 0) {
+      for (Map.Entry<String, OAtomicOperationMetadata<?>> entry : atomicOperationMetadataMap.entrySet()) {
+        if (entry.getKey().equals(ORecordOperationMetadata.RID_METADATA_KEY)) {
+          buffer.put((byte) 1);
+
+          final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) entry.getValue();
+          final Set<ORID> rids = recordOperationMetadata.getValue();
+          buffer.putInt(rids.size());
+
+          for (ORID rid : rids) {
+            buffer.putLong(rid.getClusterPosition());
+            buffer.putInt(rid.getClusterId());
+          }
+        } else {
+          throw new IllegalStateException("Invalid metadata key " + ORecordOperationMetadata.RID_METADATA_KEY);
+        }
+      }
+    } else {
+      buffer.put((byte) 0);
+    }
   }
 
   @Override

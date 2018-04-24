@@ -221,6 +221,35 @@ public class OWALPageChangesPortion implements OWALChanges {
   }
 
   @Override
+  public void toStream(ByteBuffer buffer) {
+    if (pageChunks == null) {
+      buffer.putShort((short) 0);
+      return;
+    }
+
+    int countPos = buffer.position();
+    int count = 0;
+    buffer.position(countPos + OShortSerializer.SHORT_SIZE);
+
+    for (int i = 0; i < pageChunks.length; i++) {
+      if (pageChunks[i] != null) {
+        for (int j = 0; j < PORTION_SIZE; j++) {
+          if (pageChunks[i][j] != null) {
+            buffer.put((byte) i);
+            buffer.put((byte) j);
+
+            buffer.put(pageChunks[i][j]);
+            buffer.put(originalChunks[i][j]);
+            count++;
+          }
+        }
+      }
+    }
+
+    buffer.putShort(countPos, (short) count);
+  }
+
+  @Override
   public int fromStream(int offset, byte[] stream) {
     int chunkLength = OShortSerializer.INSTANCE.deserializeNative(stream, offset);
 

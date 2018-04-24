@@ -23,6 +23,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 
+import java.nio.ByteBuffer;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/21/14
@@ -59,6 +61,14 @@ public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
     offset += OLongSerializer.LONG_SIZE;
 
     return offset;
+  }
+
+  @Override
+  public void toStream(ByteBuffer buffer) {
+    super.toStream(buffer);
+
+    OStringSerializer.INSTANCE.serializeInByteBufferObject(fileName, buffer);
+    buffer.putLong(fileId);
   }
 
   @Override

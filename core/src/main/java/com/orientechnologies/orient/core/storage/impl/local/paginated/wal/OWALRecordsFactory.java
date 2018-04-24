@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -71,6 +72,40 @@ public class OWALRecordsFactory {
     walRecord.toStream(content, 1);
 
     return content;
+  }
+
+  public void toStream(OWriteableWALRecord walRecord, ByteBuffer buffer) {
+
+    if (walRecord instanceof OUpdatePageRecord)
+      buffer.put((byte) 0);
+    else if (walRecord instanceof OFuzzyCheckpointStartRecord)
+      buffer.put((byte) 1);
+    else if (walRecord instanceof OFuzzyCheckpointEndRecord)
+      buffer.put((byte) 2);
+    else if (walRecord instanceof OFullCheckpointStartRecord)
+      buffer.put((byte) 4);
+    else if (walRecord instanceof OCheckpointEndRecord)
+      buffer.put((byte) 5);
+    else if (walRecord instanceof OAtomicUnitStartRecord)
+      buffer.put((byte) 8);
+    else if (walRecord instanceof OAtomicUnitEndRecord)
+      buffer.put((byte) 9);
+    else if (walRecord instanceof OFileCreatedWALRecord)
+      buffer.put((byte) 10);
+    else if (walRecord instanceof ONonTxOperationPerformedWALRecord)
+      buffer.put((byte) 11);
+    else if (walRecord instanceof OFileDeletedWALRecord)
+      buffer.put((byte) 12);
+    else if (walRecord instanceof OFileTruncatedWALRecord)
+      buffer.put((byte) 13);
+    else if (walRecord instanceof OEmptyWALRecord)
+      buffer.put((byte) 14);
+    else if (typeToIdMap.containsKey(walRecord.getClass())) {
+      buffer.put(typeToIdMap.get(walRecord.getClass()));
+    } else
+      throw new IllegalArgumentException(walRecord.getClass().getName() + " class cannot be serialized.");
+
+    walRecord.toStream(buffer);
   }
 
   public OWriteableWALRecord fromStream(byte[] content) {

@@ -9,6 +9,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
+import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -24,8 +25,8 @@ import static org.mockito.Mockito.when;
  * @since 24/12/14
  */
 public class WALSegmentCreationTest {
-  private ODiskWriteAheadLog writeAheadLog;
-  private volatile boolean stop = false;
+  private          ODiskWriteAheadLog writeAheadLog;
+  private volatile boolean            stop = false;
 
   private ExecutorService        writerExecutor;
   private OLocalPaginatedStorage localPaginatedStorage;
@@ -47,7 +48,8 @@ public class WALSegmentCreationTest {
     when(localPaginatedStorage.getStoragePath()).thenReturn(Paths.get(testDir.getAbsolutePath()));
     when(localPaginatedStorage.getName()).thenReturn("WALSegmentCreationTest");
 
-    writeAheadLog = new ODiskWriteAheadLog(400, 500, 64 * 1024L * 1024L, null, false, localPaginatedStorage, 16 * OWALPage.PAGE_SIZE, 120);
+    writeAheadLog = new ODiskWriteAheadLog(400, 500, 64 * 1024L * 1024L, null, false, localPaginatedStorage,
+        16 * OWALPage.PAGE_SIZE, 120);
 
     writerExecutor = Executors.newCachedThreadPool();
   }
@@ -130,6 +132,14 @@ public class WALSegmentCreationTest {
     }
 
     @Override
+    public void toStream(ByteBuffer buffer) {
+      super.toStream(buffer);
+
+      buffer.putInt(data.length);
+      buffer.put(data);
+    }
+
+    @Override
     public int fromStream(byte[] content, int offset) {
       offset = super.fromStream(content, offset);
       int size = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
@@ -199,6 +209,12 @@ public class WALSegmentCreationTest {
       offset += data.length;
 
       return offset;
+    }
+
+    @Override
+    public void toStream(ByteBuffer buffer) {
+      buffer.putInt(data.length);
+      buffer.put(data);
     }
 
     @Override

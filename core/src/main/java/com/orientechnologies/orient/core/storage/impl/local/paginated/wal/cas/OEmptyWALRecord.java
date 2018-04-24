@@ -2,6 +2,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
 
+import java.nio.ByteBuffer;
+
 public final class OEmptyWALRecord extends OAbstractWALRecord {
   public OEmptyWALRecord() {
   }
@@ -9,6 +11,10 @@ public final class OEmptyWALRecord extends OAbstractWALRecord {
   @Override
   public int toStream(byte[] content, int offset) {
     return offset;
+  }
+
+  @Override
+  public void toStream(ByteBuffer buffer) {
   }
 
   @Override
