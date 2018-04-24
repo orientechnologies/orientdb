@@ -27,9 +27,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRe
  * @since 25.04.13
  */
 public interface OWriteableWALRecord extends OWALRecord {
-  void setBinaryContent(byte[] content);
+  void setBinaryContentSize(int size);
 
-  byte[] getBinaryContent();
+  int getBinaryContentSize();
 
   int toStream(byte[] content, int offset);
 

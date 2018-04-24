@@ -34,7 +34,7 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
   private int distance = 0;
   private int diskSize = 0;
 
-  private byte[] binaryContent;
+  private int binaryContentSize = 0;
 
   protected final AtomicReference<OLogSequenceNumber> lsn = new AtomicReference<>();
 
@@ -71,13 +71,17 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
   }
 
   @Override
-  public void setBinaryContent(byte[] content) {
-    this.binaryContent = content;
+  public void setBinaryContentSize(int size) {
+    this.binaryContentSize = size;
   }
 
   @Override
-  public byte[] getBinaryContent() {
-    return binaryContent;
+  public int getBinaryContentSize() {
+    if (binaryContentSize <= 0) {
+      throw new IllegalStateException("Binary content size is not set");
+    }
+
+    return binaryContentSize;
   }
 
   @Override

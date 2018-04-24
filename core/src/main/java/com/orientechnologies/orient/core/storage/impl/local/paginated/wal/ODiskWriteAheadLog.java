@@ -478,7 +478,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       statistic.startWALLogRecordTimer();
     try {
       OAtomicUnitStartRecord record = new OAtomicUnitStartRecord(isRollbackSupported, unitId);
-      byte[] content = OWALRecordsFactory.INSTANCE.toStream(record);
+      byte[] content = OWALRecordsFactory.INSTANCE.toStream(record, OWALRecordsFactory.INSTANCE.serializedSize(record));
       syncObject.lock();
       try {
         checkForClose();
@@ -504,7 +504,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       statistic.startWALLogRecordTimer();
     try {
       OAtomicUnitEndRecord record = new OAtomicUnitEndRecord(operationUnitId, rollback, atomicOperationMetadata);
-      byte[] content = OWALRecordsFactory.INSTANCE.toStream(record);
+      byte[] content = OWALRecordsFactory.INSTANCE.toStream(record, OWALRecordsFactory.INSTANCE.serializedSize(record));
       syncObject.lock();
       try {
         checkForClose();
@@ -528,7 +528,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     if (statistic != null)
       statistic.startWALLogRecordTimer();
     try {
-      return internalLog(record, OWALRecordsFactory.INSTANCE.toStream(record));
+      return internalLog(record, OWALRecordsFactory.INSTANCE.toStream(record, OWALRecordsFactory.INSTANCE.serializedSize(record)));
     } finally {
       if (statistic != null)
         statistic.stopWALRecordTimer(false, false);

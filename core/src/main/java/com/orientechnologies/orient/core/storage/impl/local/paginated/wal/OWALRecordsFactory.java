@@ -36,8 +36,7 @@ public class OWALRecordsFactory {
 
   public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
 
-  public byte[] toStream(OWriteableWALRecord walRecord) {
-    int contentSize = walRecord.serializedSize() + 1;
+  public byte[] toStream(OWriteableWALRecord walRecord, int contentSize) {
     byte[] content = new byte[contentSize];
 
     if (walRecord instanceof OUpdatePageRecord)
@@ -127,6 +126,10 @@ public class OWALRecordsFactory {
     walRecord.fromStream(content, 1);
 
     return walRecord;
+  }
+
+  public int serializedSize(OWriteableWALRecord walRecord) {
+    return walRecord.serializedSize() + 1;
   }
 
   public void registerNewRecord(byte id, Class<? extends OWriteableWALRecord> type) {
