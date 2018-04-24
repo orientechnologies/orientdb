@@ -1182,7 +1182,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
       int size = OVarIntSerializer.readAsInteger(bytes);
       ridbag.getDelegate().setSize(size);
       for (int i = 0; i < size; i++) {
-        OIdentifiable record = readLinkOptimizedEmbedded(bytes);        
+        OIdentifiable record = readLinkOptimizedEmbedded(bytes);
         ((OEmbeddedRidBag) ridbag.getDelegate()).addEntry(record);
       }
     } else {
