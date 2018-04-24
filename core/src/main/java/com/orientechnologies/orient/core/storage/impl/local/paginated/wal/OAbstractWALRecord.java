@@ -36,6 +36,8 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
 
   private int binaryContentSize = 0;
 
+  private boolean written;
+
   protected final AtomicReference<OLogSequenceNumber> lsn = new AtomicReference<>();
 
   protected OAbstractWALRecord() {
@@ -115,6 +117,16 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
     }
 
     return diskSize;
+  }
+
+  @Override
+  public void written() {
+    written = true;
+  }
+
+  @Override
+  public boolean isWritten() {
+    return written;
   }
 
   @Override

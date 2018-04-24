@@ -43,4 +43,7 @@ public interface OWriteableWALRecord extends OWALRecord {
 
   boolean isUpdateMasterRecord();
 
+  void written();
+
+  boolean isWritten();
 }
