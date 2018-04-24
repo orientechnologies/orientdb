@@ -1182,15 +1182,8 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
       int size = OVarIntSerializer.readAsInteger(bytes);
       ridbag.getDelegate().setSize(size);
       for (int i = 0; i < size; i++) {
-        OIdentifiable record = readLinkOptimizedEmbedded(bytes);
-        if (record == null) {
-          //should never happen
-          String errorMessage = "Deserialized null object during ridbag deserialization";
-          OSerializationException exc = new OSerializationException("");
-          OLogManager.instance().error(ORecordSerializerBinaryV1.class, errorMessage, null);
-          throw exc;
-        } else
-          ((OEmbeddedRidBag) ridbag.getDelegate()).addEntry(record);
+        OIdentifiable record = readLinkOptimizedEmbedded(bytes);        
+        ((OEmbeddedRidBag) ridbag.getDelegate()).addEntry(record);
       }
     } else {
       long fileId = OVarIntSerializer.readAsLong(bytes);
