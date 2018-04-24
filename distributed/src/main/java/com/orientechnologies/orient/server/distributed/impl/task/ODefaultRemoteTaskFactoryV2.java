@@ -129,6 +129,6 @@ public class ODefaultRemoteTaskFactoryV2 implements ORemoteTaskFactory {
 
   @Override
   public int getProtocolVersion() {
-    return 1;
+    return 2;
   }
 }
