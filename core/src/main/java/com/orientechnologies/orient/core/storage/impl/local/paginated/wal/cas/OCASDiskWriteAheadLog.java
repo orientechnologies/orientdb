@@ -1811,6 +1811,8 @@ public final class OCASDiskWriteAheadLog {
                 walChannel.force(true);
                 updateCheckpoint(writtenCheckpoint);
                 flushedLSN = writtenUpTo.get().lsn;
+
+                fireEventsFor(flushedLSN);
               } catch (IOException e) {
                 OLogManager.instance().errorNoDb(this, "Error during FSync of WAL data", e);
                 throw e;
