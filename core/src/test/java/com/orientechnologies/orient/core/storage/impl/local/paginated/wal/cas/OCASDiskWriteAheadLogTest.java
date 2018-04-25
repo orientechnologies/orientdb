@@ -104,15 +104,13 @@ public class OCASDiskWriteAheadLogTest {
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         records = wal.read(lsn, 10);
-        Assert.assertTrue(records.size() >= 1);
+        Assert.assertEquals(2, records.size());
         readRecord = (TestRecord) records.get(0);
 
         Assert.assertArrayEquals(walRecord.data, readRecord.data);
         Assert.assertEquals(lsn, readRecord.getLsn());
 
-        if (records.size() > 1) {
-          Assert.assertTrue(records.get(1) instanceof OEmptyWALRecord);
-        }
+        Assert.assertTrue(records.get(1) instanceof OEmptyWALRecord);
 
         wal.close();
 
@@ -170,16 +168,14 @@ public class OCASDiskWriteAheadLogTest {
         Assert.assertEquals(wal.end(), new OLogSequenceNumber(2, OCASWALPage.RECORDS_OFFSET));
 
         records = wal.read(lsn, 10);
-        Assert.assertTrue(records.size() >= 1);
+        Assert.assertEquals(2, records.size());
         Assert.assertEquals(lsn, records.get(0).getLsn());
         readRecord = (TestRecord) records.get(0);
 
         Assert.assertArrayEquals(walRecord.data, readRecord.data);
         Assert.assertEquals(lsn, readRecord.getLsn());
 
-        if (records.size() > 1) {
-          Assert.assertTrue(records.get(1) instanceof OEmptyWALRecord);
-        }
+        Assert.assertTrue(records.get(1) instanceof OEmptyWALRecord);
 
         wal.close();
 

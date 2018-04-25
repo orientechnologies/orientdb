@@ -1573,7 +1573,8 @@ public final class OCASDiskWriteAheadLog {
         final boolean makeFSync = forceSync || ts - lastFSyncTs > fsyncInterval * 1_000_000;
         final long qSize = queueSize.get();
 
-        if (qSize > 0) {
+        //even if queue is empty we need to write buffer content to the disk if needed
+        if (qSize > 0 || fullWrite || makeFSync) {
           final CountDownLatch fl = new CountDownLatch(1);
           flushLatch.lazySet(fl);
           try {
