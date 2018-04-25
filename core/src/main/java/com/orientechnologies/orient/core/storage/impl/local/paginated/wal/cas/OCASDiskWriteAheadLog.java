@@ -1583,7 +1583,7 @@ public final class OCASDiskWriteAheadLog {
             //in case of "full cache" mode we chose last record in the queue, iterate till this record and write it if needed
             //but do not remove this record from the queue, so we will always have queue with record with valid LSN
             //if we write last record, we mark it as written, so we do not repeat that again
-            final OWALRecord lastRecord;
+            OWALRecord lastRecord = null;
 
             //we jump to new page if we need to make fsync or we need to be sure that records are written in file system
             if (makeFSync || fullWrite) {
@@ -1596,11 +1596,14 @@ public final class OCASDiskWriteAheadLog {
 
               lastRecord = null;
             } else {
-              final Cursor<OWALRecord> cursor = records.peekLast();
-              assert cursor != null;
+              //wait till LSN of last record will be calculated
+              while (lastRecord == null || lastRecord.getLsn().getPosition() == -1) {
+                final Cursor<OWALRecord> cursor = records.peekLast();
+                assert cursor != null;
 
-              lastRecord = cursor.getItem();
-              assert lastRecord != null;
+                lastRecord = cursor.getItem();
+                assert lastRecord != null;
+              }
 
               milestoneRecord = null;
             }
