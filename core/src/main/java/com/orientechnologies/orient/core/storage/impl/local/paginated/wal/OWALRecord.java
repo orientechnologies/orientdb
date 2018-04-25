@@ -5,8 +5,6 @@ public interface OWALRecord {
 
   void setLsn(OLogSequenceNumber lsn);
 
-  boolean casLSN(OLogSequenceNumber currentLSN, OLogSequenceNumber newLSN);
-
   void setDistance(int distance);
 
   void setDiskSize(int diskSize);

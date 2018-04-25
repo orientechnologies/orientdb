@@ -29,7 +29,7 @@ import java.nio.ByteBuffer;
  * @since 30.04.13
  */
 public class OFuzzyCheckpointStartRecord extends OAbstractCheckPointStartRecord {
-  private OLogSequenceNumber lsn;
+  private volatile OLogSequenceNumber lsn;
   private OLogSequenceNumber flushedLsn;
 
   public OFuzzyCheckpointStartRecord() {

@@ -9,21 +9,16 @@ public final class OMilestoneWALRecord implements OWALRecord {
   private int distance = -1;
   private int diskSize = -1;
 
-  private final AtomicReference<OLogSequenceNumber> lsn = new AtomicReference<>();
+  private volatile OLogSequenceNumber lsn;
 
   @Override
   public OLogSequenceNumber getLsn() {
-    return lsn.get();
+    return lsn;
   }
 
   @Override
   public void setLsn(OLogSequenceNumber lsn) {
-    this.lsn.set(lsn);
-  }
-
-  @Override
-  public boolean casLSN(OLogSequenceNumber currentLSN, OLogSequenceNumber newLSN) {
-    return this.lsn.compareAndSet(currentLSN, newLSN);
+    this.lsn = lsn;
   }
 
   @Override

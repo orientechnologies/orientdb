@@ -1362,7 +1362,7 @@ public final class OCASDiskWriteAheadLog {
           final OLogSequenceNumber newLSN = new OLogSequenceNumber(lsn.getSegment(), position);
 
           if (record.getLsn().getPosition() < 0) {
-            record.casLSN(lsn, newLSN);
+            record.setLsn(newLSN);
           }
         }
 

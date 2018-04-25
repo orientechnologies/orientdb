@@ -38,23 +38,23 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
 
   private boolean written;
 
-  protected final AtomicReference<OLogSequenceNumber> lsn = new AtomicReference<>();
+  protected volatile OLogSequenceNumber lsn;
 
   protected OAbstractWALRecord() {
   }
 
   protected OAbstractWALRecord(final OLogSequenceNumber previousCheckpoint) {
-    this.lsn.set(previousCheckpoint);
+    this.lsn = previousCheckpoint;
   }
 
   @Override
   public OLogSequenceNumber getLsn() {
-    return lsn.get();
+    return lsn;
   }
 
   @Override
   public void setLsn(final OLogSequenceNumber lsn) {
-    this.lsn.set(lsn);
+    this.lsn = lsn;
   }
 
   @Override
@@ -86,10 +86,6 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
     return binaryContentSize;
   }
 
-  @Override
-  public boolean casLSN(OLogSequenceNumber currentLSN, OLogSequenceNumber newLSN) {
-    return lsn.compareAndSet(currentLSN, newLSN);
-  }
 
   @Override
   public void setDistance(int distance) {

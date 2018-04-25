@@ -553,10 +553,6 @@ public class MPSCFAAArrayDequeueTest {
       this.lsn = lsn;
     }
 
-    @Override
-    public boolean casLSN(OLogSequenceNumber currentLSN, OLogSequenceNumber newLSN) {
-      return false;
-    }
 
     @Override
     public void setDistance(int distance) {

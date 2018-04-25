@@ -19,11 +19,6 @@ public final class OStartWALRecord implements OWALRecord {
   }
 
   @Override
-  public boolean casLSN(OLogSequenceNumber currentLSN, OLogSequenceNumber newLSN) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void setDistance(int distance) {
   }
 
