@@ -44,11 +44,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -608,6 +604,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return this;
   }
 
+  @Override
   public OUser getUser(final String iUserName) {
     List<ODocument> result = getDatabase().<OCommandRequest>command(
         new OSQLSynchQuery<ODocument>("select from OUser where name = ? limit 1").setFetchPlan("roles:1")).execute(iUserName);
