@@ -171,6 +171,7 @@ public class OCASDiskWriteAheadLogTest {
 
         records = wal.read(lsn, 10);
         Assert.assertTrue(records.size() >= 1);
+        Assert.assertEquals(lsn, records.get(0).getLsn());
         readRecord = (TestRecord) records.get(0);
 
         Assert.assertArrayEquals(walRecord.data, readRecord.data);
