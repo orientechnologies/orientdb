@@ -1981,7 +1981,7 @@ public class WriteAheadLogTest {
         nextStart = walRecord.nextStart;
         currentSize += walRecord.distance;
 
-        Assert.assertEquals(walRecord.lsn.get().getSegment(), pagesPerSegment.size());
+        Assert.assertEquals(walRecord.lsn.getSegment(), pagesPerSegment.size());
 
         //we count not only full but also partially written pages
         pagesWrittenInCurrentSegment = (currentSize + OWALPage.PAGE_SIZE - 1) / OWALPage.PAGE_SIZE;
@@ -2066,8 +2066,8 @@ public class WriteAheadLogTest {
         while (recordIterator.hasPrevious()) {
           final TestRecord record = recordIterator.previous();
 
-          final long recordSegment = record.lsn.get().getSegment();
-          final long recordPosition = record.lsn.get().getPosition();
+          final long recordSegment = record.lsn.getSegment();
+          final long recordPosition = record.lsn.getPosition();
 
           final int recordPageStart = (int) (recordPosition / OWALPage.PAGE_SIZE);
           final int recordPageEnd = (int) (record.nextStart - 1) / OWALPage.PAGE_SIZE;
@@ -2097,7 +2097,7 @@ public class WriteAheadLogTest {
 
         final TestRecord lastRecord = writtenRecords.get(writtenRecords.size() - 1);
 
-        if (lastRecord.lsn.get().getSegment() == pagesPerSegment.size())
+        if (lastRecord.lsn.getSegment() == pagesPerSegment.size())
           nextStart = lastRecord.nextStart;
         else
           nextStart = 0;
@@ -2127,7 +2127,7 @@ public class WriteAheadLogTest {
       currentSize = 0;
 
       for (TestRecord record : writtenRecords) {
-        final int recordSegment = (int) record.lsn.get().getSegment();
+        final int recordSegment = (int) record.lsn.getSegment();
 
         final int recordIndexEnd = (int) ((record.nextStart - 1) / OWALPage.PAGE_SIZE);
         if (recordSegment == newPagesPerSegment.size()) {
@@ -2397,7 +2397,7 @@ public class WriteAheadLogTest {
     writeAheadLog.log(walRecord);
 
     Assert.assertEquals(writeAheadLog.end(), walRecord.getLsn());
-    Assert.assertEquals(end.getSegment() + 1, walRecord.lsn.get().getSegment());
+    Assert.assertEquals(end.getSegment() + 1, walRecord.lsn.getSegment());
   }
 
   private void assertLogContent(ODiskWriteAheadLog writeAheadLog, List<? extends OWriteableWALRecord> writtenRecords)

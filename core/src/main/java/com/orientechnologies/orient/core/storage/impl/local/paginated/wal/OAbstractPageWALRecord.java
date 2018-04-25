@@ -103,7 +103,7 @@ public abstract class OAbstractPageWALRecord extends OOperationUnitBodyRecord {
       return false;
     if (pageIndex != that.pageIndex)
       return false;
-    if (lsn.get() != null ? !lsn.get().equals(that.lsn.get()) : that.lsn.get() != null)
+    if (lsn != null ? !lsn.equals(that.lsn) : that.lsn != null)
       return false;
 
     return true;
