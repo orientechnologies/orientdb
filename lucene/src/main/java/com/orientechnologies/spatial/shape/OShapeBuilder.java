@@ -36,9 +36,7 @@ import org.locationtech.spatial4j.shape.jts.JtsShapeFactory;
 
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.spatial4j.context.jts.DatelineRule;
