@@ -36,9 +36,13 @@ import org.locationtech.spatial4j.shape.jts.JtsShapeFactory;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.spatial4j.context.jts.DatelineRule;
+import org.locationtech.spatial4j.shape.ShapeCollection;
 
 public abstract class OShapeBuilder<T extends Shape> {
 
@@ -96,7 +100,22 @@ public abstract class OShapeBuilder<T extends Shape> {
   public byte[] asBinary(T shape) {
     WKBWriter writer = new WKBWriter();
 
-    Geometry geom = SHAPE_FACTORY.getGeometryFrom(shape);
+    Geometry geom = null;
+    //this is workaround, because SHAPE_FACTORY (spatial4j) can't make Geometry directly from ShapeCollection
+    if (shape instanceof ShapeCollection){
+      //TODO decompose and compose again
+      ShapeCollection collection = (ShapeCollection)shape;
+      Geometry[] geometriesCoolection = new Geometry[collection.size()];
+      for (int i = 0; i < collection.size(); i++){
+        Shape shapeElement = collection.get(i);
+        Geometry geomElement = SHAPE_FACTORY.getGeometryFrom(shapeElement);
+        geometriesCoolection[i] = geomElement;
+      }      
+      geom = new GeometryCollection(geometriesCoolection, GEOMETRY_FACTORY);
+    }
+    else{
+      geom = SHAPE_FACTORY.getGeometryFrom(shape);
+    }
     return writer.write(geom);
   }
 
