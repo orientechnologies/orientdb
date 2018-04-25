@@ -1691,7 +1691,9 @@ public final class OCASDiskWriteAheadLog {
                       writeBuffer.position(writeBuffer.position() + OCASWALPage.RECORDS_OFFSET);
                     }
 
-                    assert written != 0 || currentPosition + writeBuffer.position() == lsn.getPosition();
+                    assert
+                        written != 0 || currentPosition + writeBuffer.position() == lsn.getPosition() :
+                        (currentPosition + writeBuffer.position()) + " vs " + lsn.getPosition();
                     final int chunkSize = Math
                         .min(bytesToWrite - written, (writeBufferPageIndex + 1) * OCASWALPage.PAGE_SIZE - writeBuffer.position());
                     assert chunkSize <= OCASWALPage.MAX_RECORD_SIZE;
