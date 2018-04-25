@@ -1596,15 +1596,16 @@ public final class OCASDiskWriteAheadLog {
 
               lastRecord = null;
             } else {
-              //wait till LSN of last record will be calculated
-              while (lastRecord == null || lastRecord.getLsn().getPosition() == -1) {
-                final Cursor<OWALRecord> cursor = records.peekLast();
-                assert cursor != null;
 
-                lastRecord = cursor.getItem();
-                assert lastRecord != null;
-              }
+              final Cursor<OWALRecord> cursor = records.peekLast();
+              assert cursor != null;
 
+              lastRecord = cursor.getItem();
+              assert lastRecord != null;
+
+              //noinspection StatementWithEmptyBody
+              while (lastRecord.getLsn().getPosition() == -1)
+                ;
               milestoneRecord = null;
             }
 
