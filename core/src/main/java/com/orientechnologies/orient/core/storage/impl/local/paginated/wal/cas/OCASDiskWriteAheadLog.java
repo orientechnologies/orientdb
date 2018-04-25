@@ -1603,9 +1603,11 @@ public final class OCASDiskWriteAheadLog {
               lastRecord = cursor.getItem();
               assert lastRecord != null;
 
-              //noinspection StatementWithEmptyBody
-              while (lastRecord.getLsn().getPosition() == -1)
-                ;
+              if (lastRecord.getLsn().getPosition() == -1) {
+                calculateRecordsLSNs();
+              }
+
+              assert lastRecord.getLsn().getPosition() >= 0;
               milestoneRecord = null;
             }
 
