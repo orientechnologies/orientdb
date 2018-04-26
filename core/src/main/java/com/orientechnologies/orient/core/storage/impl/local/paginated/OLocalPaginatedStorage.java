@@ -211,7 +211,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
               zos.setLevel(compressionLevel);
 
               final List<String> names = OZIPCompressionUtil.compressDirectory(getStoragePath().toString(), zos,
-                  new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION }, iOutput);
+                  new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION , ".lock"}, iOutput);
               OPaginatedStorageDirtyFlag.addFileToArchive(zos, "dirty.fl");
               names.add("dirty.fl");
               return names;
