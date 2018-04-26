@@ -43,5 +43,26 @@ public class OCreateIndexStatementExecutionTest {
   }
 
 
+  @Test public void testIfNotExists() {
+    String className = "testIfNotExists";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+
+    Assert.assertNull(db.getMetadata().getIndexManager().getIndex(className + ".name"));
+    OResultSet result = db.command("create index " + className + ".name IF NOT EXISTS on " + className + " (name) notunique");
+    Assert.assertTrue(result.hasNext());
+    OResult next = result.next();
+    Assert.assertFalse(result.hasNext());
+    Assert.assertNotNull(next);
+    result.close();
+    OIndex<?> idx = db.getMetadata().getIndexManager().getIndex(className + ".name");
+    Assert.assertNotNull(idx);
+    Assert.assertFalse(idx.isUnique());
+
+    result = db.command("create index " + className + ".name IF NOT EXISTS on " + className + " (name) notunique");
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
 
 }

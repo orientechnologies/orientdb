@@ -23,6 +23,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -74,6 +75,8 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
       final Locale locale = getServerLocale();
       return preProcessBeforeReturn(getDatabase(), indexes.get(iName));
+    } catch (OCommandExecutionException x) {
+      throw new OIndexException(x.getMessage());
     } finally {
       releaseExclusiveLock();
     }
