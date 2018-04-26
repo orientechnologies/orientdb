@@ -75,19 +75,13 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       fromKey = enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
       toKey = enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
 
-      if (toInclusive)
-        firstKey = indexChanges.getCeilingKey(fromKey);
-      else
-        firstKey = indexChanges.getHigherKey(fromKey);
-
-      if (fromInclusive)
-        lastKey = indexChanges.getFloorKey(toKey);
-      else
-        lastKey = indexChanges.getLowerKey(toKey);
-
-      if (firstKey != null && ODefaultComparator.INSTANCE.compare(firstKey, toKey) > 0) {
+      final Object[] keys = indexChanges.firstAndLastKeys(fromKey, fromInclusive, toKey, toInclusive);
+      if (keys.length == 0) {
         nextKey = null;
       } else {
+        firstKey = keys[0];
+        lastKey = keys[1];
+
         nextKey = firstKey;
       }
     }
@@ -126,19 +120,13 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       fromKey = enhanceFromCompositeKeyBetweenDesc(fromKey, fromInclusive);
       toKey = enhanceToCompositeKeyBetweenDesc(toKey, toInclusive);
 
-      if (toInclusive)
-        firstKey = indexChanges.getCeilingKey(fromKey);
-      else
-        firstKey = indexChanges.getHigherKey(fromKey);
-
-      if (fromInclusive)
-        lastKey = indexChanges.getFloorKey(toKey);
-      else
-        lastKey = indexChanges.getLowerKey(toKey);
-
-      if (firstKey != null && ODefaultComparator.INSTANCE.compare(firstKey, fromKey) < 0) {
+      final Object[] keys = indexChanges.firstAndLastKeys(fromKey, fromInclusive, toKey, toInclusive);
+      if (keys.length == 0) {
         nextKey = null;
       } else {
+        firstKey = keys[0];
+        lastKey = keys[1];
+
         nextKey = lastKey;
       }
     }
