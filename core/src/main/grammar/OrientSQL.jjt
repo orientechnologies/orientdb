@@ -4325,9 +4325,11 @@ OCreateIndexStatement CreateIndexStatement():
 	<CREATE> <INDEX>
 
 	jjtThis.name = IndexName()
+
     (
-        LOOKAHEAD(3)
+        LOOKAHEAD(4)
         (
+            [ <IF> <NOT> <EXISTS> {jjtThis.ifNotExists = true;} ]
             <ON>
             jjtThis.className = Identifier()
             <LPAREN>
@@ -4390,7 +4392,12 @@ OCreateIndexStatement CreateIndexStatement():
             jjtThis.type = Identifier()
         )
         |
-        jjtThis.type = Identifier()
+        (
+           LOOKAHEAD(3)
+           ( <IF> <NOT> <EXISTS> {jjtThis.ifNotExists = true;} jjtThis.type = Identifier() )
+           |
+           jjtThis.type = Identifier()
+        )
     )
 
     (

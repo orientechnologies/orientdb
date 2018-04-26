@@ -29,6 +29,7 @@ public class OCreateIndexStatement extends ODDLStatement {
   protected OIdentifier engine;
   protected List<OIdentifier> keyTypes = new ArrayList<OIdentifier>();
   protected OJson metadata;
+  protected boolean ifNotExists = false;
 
   public OCreateIndexStatement(int id) {
     super(id);
@@ -40,17 +41,28 @@ public class OCreateIndexStatement extends ODDLStatement {
 
   @Override
   public OResultSet executeDDL(OCommandContext ctx) {
-    execute(ctx);
+    Object execResult = execute(ctx);
     OInternalResultSet rs = new OInternalResultSet();
-    OResultInternal result = new OResultInternal();
-    result.setProperty("operation", "create index");
-    result.setProperty("name", name.getValue());
-    rs.add(result);
+    if (execResult != null) {
+      OResultInternal result = new OResultInternal();
+      result.setProperty("operation", "create index");
+      result.setProperty("name", name.getValue());
+      rs.add(result);
+    }
     return rs;
   }
 
   Object execute(OCommandContext ctx) {
     final ODatabase database = ctx.getDatabase();
+
+    if (database.getMetadata().getIndexManager().existsIndex(name.getValue())) {
+      if (ifNotExists) {
+        return null;
+      } else {
+        throw new OCommandExecutionException("Index " + name + " already exists");
+      }
+    }
+
     final OIndex<?> idx;
     List<OCollate> collatesList = calculateCollates(ctx);
     String engine = this.engine == null ? null : this.engine.getStringValue().toUpperCase(Locale.ENGLISH);
@@ -72,7 +84,8 @@ public class OCreateIndexStatement extends ODDLStatement {
             .createIndex(name.getValue(), type.getStringValue(), keyDef, null, null, metadataDoc, engine);
 
       } else {
-        throw new ODatabaseException("Impossible to create an index without specify the key type or the associated property: "+toString());
+        throw new ODatabaseException(
+            "Impossible to create an index without specify the key type or the associated property: " + toString());
       }
     } else {
       String[] fields = calculateProperties(ctx);
@@ -173,7 +186,7 @@ public class OCreateIndexStatement extends ODDLStatement {
         result.add(null);
       }
     }
-    if(!found){
+    if (!found) {
       return null;
     }
     return result;
