@@ -39,7 +39,7 @@ public abstract class AbstractComparatorTest {
 
   protected OBinaryField field(final OType type, final Object value, OCollate collate) {
     BytesContainer bytes = new BytesContainer();
-    bytes.offset = serializer.serializeValue(bytes, value, type, null);
+    bytes.offset = serializer.serializeValue(bytes, value, type, null).getFirstVal();
     return new OBinaryField(null, type, bytes, collate);
   }
 }
