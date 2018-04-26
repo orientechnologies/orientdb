@@ -40,6 +40,9 @@ public class OServerMain {
 
   public static void main(final String[] args) throws Exception {
     // STARTS ORIENTDB IN A NON DAEMON THREAD TO PREVENT EXIT
+    
+    System.in.read();
+    
     final Thread t = new Thread() {
       @Override
       public void run() {

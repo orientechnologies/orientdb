@@ -2661,10 +2661,13 @@ public class ODocument extends ORecordAbstract
     }
     try {
       if (value instanceof ODocument) {
+        OClass shapeClass = _schema.getClass("OShape");
+        OClass geometryClass = _schema.getClass("OGeometry");
         OClass docClass = ((ODocument) value).getSchemaClass();
         if (docClass == null) {
           ((ODocument) value).setClass(linkedClass);
-        } else if (!docClass.isSubClassOf(linkedClass)) {
+        } else if (!docClass.isSubClassOf(linkedClass) && 
+                !(docClass.isSuperClassOf(shapeClass) && linkedClass.isSuperClassOf(geometryClass))) {
           throw new OValidationException(
               "impossible to convert value of field \"" + prop.getName() + "\", incompatible with " + linkedClass);
         }

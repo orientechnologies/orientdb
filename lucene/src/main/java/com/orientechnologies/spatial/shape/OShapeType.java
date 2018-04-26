@@ -25,7 +25,8 @@ public enum OShapeType {
    * Enumeration that lists all {@link OShapeType}s that can be handled
    */
   POINT("point"), MULTIPOINT("multipoint"), LINESTRING("linestring"), MULTILINESTRING("multilinestring"), POLYGON(
-      "polygon"), MULTIPOLYGON("multipolygon"), GEOMETRYCOLLECTION("geometrycollection"), RECTANGLE("rectangle"), CIRCLE("circle");
+      "polygon"), MULTIPOLYGON("multipolygon"), GEOMETRYCOLLECTION("geometrycollection"), RECTANGLE("rectangle"), CIRCLE("circle"),
+      GEOMETRY("geometry");
 
   protected final String shapeName;
 

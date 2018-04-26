@@ -50,6 +50,7 @@ public class OShapeFactory extends OComplexShapeBuilder {
     registerFactory(new OPolygonShapeBuilder());
     registerFactory(new OMultiPolygonShapeBuilder());
     registerFactory(new OGeometryCollectionShapeBuilder(this));
+    registerFactory(new OGeometryGenericShapeBuilder(this));
   }
 
   @Override
