@@ -70,7 +70,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     private Object nextKey;
 
     private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<OIdentifiable>();
-    private Object key;
+    private Object                  key;
 
     public PureTxBetweenIndexForwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
         OTransactionIndexChanges indexChanges) {
@@ -79,17 +79,15 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
       fromKey = enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
       toKey = enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
 
-      if (fromInclusive)
-        firstKey = indexChanges.getCeilingKey(fromKey);
-      else
-        firstKey = indexChanges.getHigherKey(fromKey);
+      final Object[] keys = indexChanges.firstAndLastKeys(fromKey, fromInclusive, toKey, toInclusive);
+      if (keys.length == 0) {
+        nextKey = null;
+      } else {
+        firstKey = keys[0];
+        lastKey = keys[1];
 
-      if (toInclusive)
-        lastKey = indexChanges.getFloorKey(toKey);
-      else
-        lastKey = indexChanges.getLowerKey(toKey);
-
-      nextKey = firstKey;
+        nextKey = firstKey;
+      }
     }
 
     @Override
@@ -147,7 +145,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     private Object nextKey;
 
     private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<OIdentifiable>();
-    private Object key;
+    private Object                  key;
 
     public PureTxBetweenIndexBackwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
         OTransactionIndexChanges indexChanges) {
@@ -156,17 +154,15 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
       fromKey = enhanceFromCompositeKeyBetweenDesc(fromKey, fromInclusive);
       toKey = enhanceToCompositeKeyBetweenDesc(toKey, toInclusive);
 
-      if (fromInclusive)
-        firstKey = indexChanges.getCeilingKey(fromKey);
-      else
-        firstKey = indexChanges.getHigherKey(fromKey);
+      final Object[] keys = indexChanges.firstAndLastKeys(fromKey, fromInclusive, toKey, toInclusive);
+      if (keys.length == 0) {
+        nextKey = null;
+      } else {
+        firstKey = keys[0];
+        lastKey = keys[1];
 
-      if (toInclusive)
-        lastKey = indexChanges.getFloorKey(toKey);
-      else
-        lastKey = indexChanges.getLowerKey(toKey);
-
-      nextKey = lastKey;
+        nextKey = lastKey;
+      }
     }
 
     @Override
