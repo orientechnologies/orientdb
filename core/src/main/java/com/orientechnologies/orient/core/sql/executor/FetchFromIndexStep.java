@@ -446,6 +446,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         if (((OBinaryCondition) exp).getOperator() instanceof OEqualsCompareOperator) {
           return true;
         }
+      } else if (exp instanceof OInCondition) {
+        //OK
       } else {
         return false;
       }
