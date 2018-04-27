@@ -42,7 +42,7 @@ public class LuceneSpatialWithinTest extends BaseSpatialLuceneTest {
         .execute();
     ODocument next = execute.iterator().next();
 
-    Assert.assertEquals(next.field("smallinsmall"), false);
+    Assert.assertEquals(next.field("smallinsmall"), true);
     Assert.assertEquals(next.field("smallinbig"), true);
     Assert.assertEquals(next.field("biginsmall"), false);
 

@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 
 public class OInOperator extends SimpleNode implements OBinaryCompareOperator {
   public OInOperator(int id) {
@@ -14,7 +15,9 @@ public class OInOperator extends SimpleNode implements OBinaryCompareOperator {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -70,19 +73,27 @@ public class OInOperator extends SimpleNode implements OBinaryCompareOperator {
     return false;
   }
 
-  @Override public boolean supportsBasicCalculation() {
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("IN");
+  }
+
+  @Override
+  public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override public OInOperator copy() {
+  @Override
+  public OInOperator copy() {
     return this;
   }
 
-  @Override public boolean equals(Object obj) {
+  @Override
+  public boolean equals(Object obj) {
     return obj != null && obj.getClass().equals(this.getClass());
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return getClass().hashCode();
   }
 }

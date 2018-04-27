@@ -167,8 +167,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final List<OCluster>        clusters   = new ArrayList<>();
 
   private volatile ThreadLocal<OStorageTransaction> transaction;
-  private final AtomicBoolean checkpointInProgress = new AtomicBoolean();
-  private final AtomicBoolean walVacuumInProgress  = new AtomicBoolean();
+  private final    AtomicBoolean                    checkpointInProgress = new AtomicBoolean();
+  private final    AtomicBoolean                    walVacuumInProgress  = new AtomicBoolean();
 
   /**
    * Error which happened inside of storage or during data processing related to this storage.
@@ -191,16 +191,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private volatile ORecordConflictStrategy recordConflictStrategy = Orient.instance().getRecordConflictStrategy()
       .getDefaultImplementation();
 
-  private volatile int defaultClusterId = -1;
+  private volatile   int                      defaultClusterId                           = -1;
   @SuppressWarnings("WeakerAccess")
   protected volatile OAtomicOperationsManager atomicOperationsManager;
-  private volatile boolean                  wereNonTxOperationsPerformedInPreviousOpen = false;
-  private volatile OLowDiskSpaceInformation lowDiskSpace                               = null;
-  private volatile boolean                  pessimisticLock                            = false;
+  private volatile   boolean                  wereNonTxOperationsPerformedInPreviousOpen = false;
+  private volatile   OLowDiskSpaceInformation lowDiskSpace                               = null;
+  private volatile   boolean                  pessimisticLock                            = false;
   /**
    * Set of pages which were detected as broken and need to be repaired.
    */
-  private final    Set<OPair<String, Long>> brokenPages                                = Collections
+  private final      Set<OPair<String, Long>> brokenPages                                = Collections
       .newSetFromMap(new ConcurrentHashMap<>());
 
   protected volatile OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
@@ -2067,6 +2067,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             this.transaction.set(null);
           }
         } finally {
+          atomicOperationsManager.ensureThatComponentsUnlocked();
           database.getMetadata().clearThreadLocalSchemaSnapshot();
         }
       } finally {

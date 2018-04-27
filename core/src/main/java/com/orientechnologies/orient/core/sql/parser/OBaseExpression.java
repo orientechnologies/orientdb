@@ -6,6 +6,8 @@ import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
@@ -472,6 +474,21 @@ public class OBaseExpression extends OMathExpression {
   public void setInputParam(OInputParameter inputParam) {
     this.inputParam = inputParam;
   }
+
+  public boolean isIndexChain(OCommandContext ctx, OClass clazz) {
+    if (modifier == null) {
+      return false;
+    }
+    if (identifier.isIndexChain(ctx, clazz)) {
+      OProperty prop = clazz.getProperty(identifier.getSuffix().identifier.getStringValue());
+      OClass linkedClass = prop.getLinkedClass();
+      if (linkedClass != null) {
+        return modifier.isIndexChain(ctx, linkedClass);
+      }
+    }
+    return false;
+  }
+
 }
 
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

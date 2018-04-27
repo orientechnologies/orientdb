@@ -238,4 +238,6 @@ public class OShapeFactory extends OComplexShapeBuilder {
   public void registerFactory(OShapeBuilder factory) {
     factories.put(factory.getName(), factory);
   }
+
+
 }

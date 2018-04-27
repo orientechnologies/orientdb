@@ -190,7 +190,6 @@ public abstract class OShapeBuilder<T extends Shape> {
     if (params != null) {
       bindParameters(parameters, params);
     }
-
     BufferOp ops = new BufferOp(geometry, parameters);
     return toShape(ops.getResultGeometry(distance));
   }
@@ -247,5 +246,6 @@ public abstract class OShapeBuilder<T extends Shape> {
   public SpatialContext context() {
     return SPATIAL_CONTEXT;
   }
+
 
 }

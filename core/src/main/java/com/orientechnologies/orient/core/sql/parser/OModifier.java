@@ -6,6 +6,8 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
@@ -436,6 +438,20 @@ public class OModifier extends SimpleNode {
 
     return true;
 
+  }
+
+  public boolean isIndexChain(OCommandContext ctx, OClass clazz) {
+    if (suffix != null && suffix.isBaseIdentifier()) {
+      OProperty prop = clazz.getProperty(suffix.identifier.getStringValue());
+      if (prop.getAllIndexes().stream().anyMatch(idx -> idx.getDefinition().getFields().size() == 1)) {
+        if (next != null) {
+          OClass linkedClazz = prop.getLinkedClass();
+          return next.isIndexChain(ctx, linkedClazz);
+        }
+        return true;
+      }
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=39c21495d02f9b5007b4a2d6915496e1 (do not edit this line) */

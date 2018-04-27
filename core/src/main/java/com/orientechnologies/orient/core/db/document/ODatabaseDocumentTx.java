@@ -74,23 +74,23 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   protected static ConcurrentMap<String, OrientDBInternal> embedded = new ConcurrentHashMap<>();
   protected static ConcurrentMap<String, OrientDBInternal> remote   = new ConcurrentHashMap<>();
 
-  protected     ODatabaseDocumentInternal internal;
-  private final String                    url;
-  private       OrientDBInternal          factory;
-  private final String                    type;
-  private final String                    dbName;
-  private final String                    baseUrl;
-  private final Map<String, Object>     preopenProperties = new HashMap<>();
-  private final Map<ATTRIBUTES, Object> preopenAttributes = new HashMap<>();
+  protected       ODatabaseDocumentInternal internal;
+  private final   String                    url;
+  private         OrientDBInternal          factory;
+  private final   String                    type;
+  private final   String                    dbName;
+  private final   String                    baseUrl;
+  private final   Map<String, Object>       preopenProperties = new HashMap<>();
+  private final   Map<ATTRIBUTES, Object>   preopenAttributes = new HashMap<>();
   // TODO review for the case of browseListener before open.
-  private final Set<ODatabaseListener>  preopenListener   = new HashSet<>();
-  private ODatabaseInternal<?>    databaseOwner;
-  private OIntent                 intent;
-  private OStorage                delegateStorage;
-  private ORecordConflictStrategy conflictStrategy;
-  private ORecordSerializer       serializer;
-  protected final AtomicReference<Thread> owner = new AtomicReference<Thread>();
-  private final boolean ownerProtection;
+  private final   Set<ODatabaseListener>    preopenListener   = new HashSet<>();
+  private         ODatabaseInternal<?>      databaseOwner;
+  private         OIntent                   intent;
+  private         OStorage                  delegateStorage;
+  private         ORecordConflictStrategy   conflictStrategy;
+  private         ORecordSerializer         serializer;
+  protected final AtomicReference<Thread>   owner             = new AtomicReference<Thread>();
+  private final   boolean                   ownerProtection;
 
   private static OShutdownHandler shutdownHandler = new OShutdownHandler() {
     @Override
@@ -1523,4 +1523,15 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public void afterUpdateOperations(OIdentifiable id) {
     internal.afterUpdateOperations(id);
   }
+
+  @Override
+  public void afterReadOperations(OIdentifiable identifiable) {
+    internal.afterReadOperations(identifiable);
+  }
+
+  @Override
+  public boolean beforeReadOperations(OIdentifiable identifiable) {
+    return internal.beforeReadOperations(identifiable);
+  }
+
 }

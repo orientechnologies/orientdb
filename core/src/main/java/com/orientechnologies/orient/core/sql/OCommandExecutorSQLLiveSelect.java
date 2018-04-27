@@ -156,7 +156,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     } catch (OSecurityException ignore) {
       return false;
     }
-    return ORestrictedAccessHook.isAllowed(execDb, (ODocument) value.getRecord(), ORestrictedOperation.ALLOW_READ, false);
+    return ORestrictedAccessHook.isAllowed((ODatabaseDocumentInternal) execDb, (ODocument) value.getRecord(), ORestrictedOperation.ALLOW_READ, false);
   }
 
   private boolean matchesFilters(OIdentifiable value) {

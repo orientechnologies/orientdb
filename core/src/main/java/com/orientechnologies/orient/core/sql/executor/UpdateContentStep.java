@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
@@ -80,7 +81,8 @@ public class UpdateContentStep extends AbstractExecutionStep {
       }
     }
 
-    OClass recordClass = ODocumentInternal.getImmutableSchemaClass(record.getRecord());
+    OClass recordClass = ODocumentInternal
+        .getImmutableSchemaClass((ODatabaseDocumentInternal) ctx.getDatabase(), record.getRecord());
     if (recordClass != null && recordClass.isSubClassOf("V")) {
       for (String fieldName : record.getPropertyNames()) {
         if (fieldName.startsWith("in_") || fieldName.startsWith("out_")) {

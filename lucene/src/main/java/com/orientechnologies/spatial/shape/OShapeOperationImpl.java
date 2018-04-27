@@ -19,6 +19,8 @@ package com.orientechnologies.spatial.shape;
 
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.spatial4j.shape.Shape;
+import org.locationtech.spatial4j.shape.ShapeCollection;
+import org.locationtech.spatial4j.shape.SpatialRelation;
 
 /**
  * Created by Enrico Risa on 29/09/15.
@@ -50,5 +52,34 @@ public class OShapeOperationImpl implements OShapeOperation {
     Geometry geometry = factory.toGeometry(s1);
     Geometry geometry1 = factory.toGeometry(s2);
     return geometry.intersects(geometry1);
+  }
+
+  @Override
+  public boolean contains(Shape shape, Shape shape1) {
+
+    if(shape instanceof ShapeCollection || shape1 instanceof ShapeCollection){
+      return shape.relate(shape1).equals(SpatialRelation.CONTAINS);
+    }
+    Geometry geometry = factory.toGeometry(shape);
+    Geometry geometry1 = factory.toGeometry(shape1);
+
+    return geometry.contains(geometry1);
+
+  }
+
+  @Override
+  public boolean within(Shape shape, Shape shape1) {
+
+    if(shape instanceof ShapeCollection || shape1 instanceof ShapeCollection){
+      return shape.relate(shape1).equals(SpatialRelation.WITHIN);
+    }
+    Geometry geometry = factory.toGeometry(shape);
+    Geometry geometry1 = factory.toGeometry(shape1);
+    return geometry.within(geometry1);
+  }
+
+  @Override
+  public boolean isEquals(Shape shape, Shape shape1) {
+    return within(shape, shape1) && within(shape1, shape);
   }
 }

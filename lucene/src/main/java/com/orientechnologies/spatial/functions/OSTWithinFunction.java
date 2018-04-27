@@ -22,10 +22,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
-import com.orientechnologies.spatial.index.OLuceneSpatialIndex;
 import com.orientechnologies.spatial.strategy.SpatialQueryBuilderWithin;
 import org.locationtech.spatial4j.shape.Shape;
-import org.locationtech.spatial4j.shape.SpatialRelation;
 
 /**
  * Created by Enrico Risa on 12/08/15.
@@ -49,7 +47,8 @@ public class OSTWithinFunction extends OSpatialFunctionAbstractIndexable {
 
     Shape shape1 = factory.fromObject(iParams[1]);
 
-    return shape.relate(shape1) == SpatialRelation.WITHIN;
+    return factory.operation().within(shape,shape1);
+
   }
 
   @Override

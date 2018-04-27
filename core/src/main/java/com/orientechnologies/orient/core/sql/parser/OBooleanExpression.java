@@ -237,8 +237,8 @@ public abstract class OBooleanExpression extends SimpleNode {
   /**
    * returns the equivalent of current condition as an UPDATE expression with the same syntax, if possible.
    * <p>
-   * Eg. name = 3 can be considered a condition or an assignment. This method transforms the condition in an assignment.
-   * This is used mainly for UPSERT operations.
+   * Eg. name = 3 can be considered a condition or an assignment. This method transforms the condition in an assignment. This is
+   * used mainly for UPSERT operations.
    *
    * @return the equivalent of current condition as an UPDATE expression with the same syntax, if possible.
    */
@@ -274,4 +274,8 @@ public abstract class OBooleanExpression extends SimpleNode {
   }
 
   public abstract boolean isCacheable();
+
+  public OBooleanExpression rewriteIndexChainsAsSubqueries(OCommandContext ctx, OClass clazz) {
+    return this;
+  }
 }

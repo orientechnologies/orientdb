@@ -46,6 +46,36 @@ public class LuceneSpatialMiscFunctionsTest extends BaseSpatialLuceneTest {
     Assert.assertEquals(next.field("ST_Equals"), true);
   }
 
+  @Test
+  public void testStEqualsPoint(){
+
+
+    List<ODocument> execute = db.command(new OCommandSQL(
+        "select ST_Equals(ST_GeomFromText('POINT (55.78639 37.58378)'), ST_GeomFromText('POINT (55.78639 37.58378)'))")).execute();
+    ODocument next = execute.iterator().next();
+    Assert.assertEquals(next.field("ST_Equals"), true);
+  }
+
+  @Test
+  public void testStWithinPoint(){
+
+
+    List<ODocument> execute = db.command(new OCommandSQL(
+        "select ST_Within(ST_GeomFromText('POINT (55.78639 37.58378)'), ST_GeomFromText('POINT (55.78639 37.58378)'))")).execute();
+    ODocument next = execute.iterator().next();
+    Assert.assertEquals( true,next.field("ST_Within"));
+  }
+  @Test
+  public void testStContainsPoint(){
+
+
+    List<ODocument> execute = db.command(new OCommandSQL(
+        "select ST_Contains(ST_GeomFromText('POINT (55.78639 37.58378)'), ST_GeomFromText('POINT (55.78639 37.58378)'))")).execute();
+    ODocument next = execute.iterator().next();
+    Assert.assertEquals( true,next.field("ST_Contains"));
+  }
+
+
   // TODO reanable and check byte[]
   @Test
   @Ignore

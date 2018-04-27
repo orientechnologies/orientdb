@@ -25,9 +25,6 @@ import com.orientechnologies.orient.core.sql.parser.OFromClause;
 import com.orientechnologies.spatial.shape.OShapeFactory;
 import com.orientechnologies.spatial.strategy.SpatialQueryBuilderContains;
 import org.locationtech.spatial4j.shape.Shape;
-import org.locationtech.spatial4j.shape.SpatialRelation;
-
-import java.util.Collection;
 
 /**
  * Created by Enrico Risa on 12/08/15.
@@ -54,7 +51,8 @@ public class OSTContainsFunction extends OSpatialFunctionAbstractIndexable {
 
     Shape shape1 = factory.fromObject(iParams[1]);
 
-    return shape.relate(shape1) == SpatialRelation.CONTAINS;
+    return factory.operation().contains(shape, shape1);
+
   }
 
   @Override

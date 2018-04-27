@@ -81,6 +81,17 @@ public class OTransactionIndexChanges {
     return changesPerKey.ceilingKey(key);
   }
 
+  public Object[] firstAndLastKeys(Object from, boolean fromInclusive, Object to, boolean toInclusive) {
+    final NavigableMap<Object, OTransactionIndexChangesPerKey> interval = changesPerKey
+        .subMap(from, fromInclusive, to, toInclusive);
+
+    if (interval.isEmpty()) {
+      return new Object[0];
+    } else {
+      return new Object[] {interval.firstKey(), interval.lastKey()};
+    }
+  }
+
   public Object getFloorKey(Object key) {
     return changesPerKey.floorKey(key);
   }

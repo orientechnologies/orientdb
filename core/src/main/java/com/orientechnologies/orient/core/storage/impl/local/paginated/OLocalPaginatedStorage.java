@@ -53,6 +53,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -205,9 +206,16 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         try {
           final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
           try {
-            return OZIPCompressionUtil
-                .compressDirectory(getStoragePath().toString(), bo, new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION },
-                    iOutput, compressionLevel);
+            try (ZipOutputStream zos = new ZipOutputStream(bo)) {
+              zos.setComment("OrientDB Backup executed on " + new Date());
+              zos.setLevel(compressionLevel);
+
+              final List<String> names = OZIPCompressionUtil.compressDirectory(getStoragePath().toString(), zos,
+                  new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION , ".lock"}, iOutput);
+              OPaginatedStorageDirtyFlag.addFileToArchive(zos, "dirty.fl");
+              names.add("dirty.fl");
+              return names;
+            }
           } finally {
             if (bufferSize > 0) {
               bo.flush();
