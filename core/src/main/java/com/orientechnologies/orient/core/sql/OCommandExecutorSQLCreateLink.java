@@ -186,8 +186,10 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
     Object value;
 
     String cmd = "select from ";
+    boolean prepared = false;
     if (!ODocumentHelper.ATTRIBUTE_RID.equals(destField)) {
       cmd = "select from " + destClassName + " where " + destField + " = ?";
+      prepared = true;
     }
 
     List<ODocument> result;
@@ -227,7 +229,11 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
             // SEARCH THE DESTINATION RECORD
             target = null;
 
-            result = database.<OCommandRequest>command(new OSQLSynchQuery<ODocument>(cmd)).execute(value);
+            if (prepared) {
+              result = database.<OCommandRequest>command(new OSQLSynchQuery<ODocument>(cmd)).execute(value);
+            } else {
+              result = database.<OCommandRequest>command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
+            }
 
             if (result == null || result.size() == 0)
               value = null;
