@@ -100,19 +100,19 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected static final String PAR_DEF_DISTRIB_DB_CONFIG = "configuration.db.default";
   protected static final String NODE_NAME_ENV             = "ORIENTDB_NODE_NAME";
 
-  protected OServer serverInstance;
-  protected String  nodeUuid;
-  protected String nodeName = null;
-  protected int    nodeId   = -1;
-  protected File defaultDatabaseConfigFile;
-  protected final    ConcurrentMap<String, ODistributedStorage> storages = new ConcurrentHashMap<String, ODistributedStorage>();
-  protected volatile NODE_STATUS                                status   = NODE_STATUS.OFFLINE;
-  protected long lastClusterChangeOn;
-  protected       List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
-  protected final ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
-  protected       TimerTask                                      publishLocalNodeConfigurationTask = null;
-  protected       TimerTask                                      haStatsTask                       = null;
-  protected       OClusterHealthChecker                          healthCheckerTask                 = null;
+  protected          OServer                                        serverInstance;
+  protected          String                                         nodeUuid;
+  protected          String                                         nodeName                          = null;
+  protected          int                                            nodeId                            = -1;
+  protected          File                                           defaultDatabaseConfigFile;
+  protected final    ConcurrentMap<String, ODistributedStorage>     storages                          = new ConcurrentHashMap<String, ODistributedStorage>();
+  protected volatile NODE_STATUS                                    status                            = NODE_STATUS.OFFLINE;
+  protected          long                                           lastClusterChangeOn;
+  protected          List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
+  protected final    ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
+  protected          TimerTask                                      publishLocalNodeConfigurationTask = null;
+  protected          TimerTask                                      haStatsTask                       = null;
+  protected          OClusterHealthChecker                          healthCheckerTask                 = null;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -127,16 +127,16 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected              ConcurrentMap<String, Long>    autoRemovalOfServers   = new ConcurrentHashMap<String, Long>();
   protected              Set<String>                    installingDatabases    = Collections
       .newSetFromMap(new ConcurrentHashMap<String, Boolean>());
-  protected volatile ODistributedMessageServiceImpl messageService;
-  protected Date                      startedOn              = new Date();
-  protected ODistributedStrategy      responseManagerFactory = new ODefaultDistributedStrategy();
-  protected ORemoteTaskFactoryManager taskFactoryManager     = new ORemoteTaskFactoryManagerImpl(this);
+  protected volatile     ODistributedMessageServiceImpl messageService;
+  protected              Date                           startedOn              = new Date();
+  protected              ODistributedStrategy           responseManagerFactory = new ODefaultDistributedStrategy();
+  protected              ORemoteTaskFactoryManager      taskFactoryManager     = new ORemoteTaskFactoryManagerImpl(this);
 
   private volatile String                              lastServerDump          = "";
   protected        CountDownLatch                      serverStarted           = new CountDownLatch(1);
   private          ODistributedConflictResolverFactory conflictResolverFactory = new ODistributedConflictResolverFactory();
   private final    ODistributedLockManagerRequester    lockManagerRequester    = new ODistributedLockManagerRequester(this);
-  private ODistributedLockManagerExecutor lockManagerExecutor;
+  private          ODistributedLockManagerExecutor     lockManagerExecutor;
 
   protected ODistributedAbstractPlugin() {
   }
@@ -558,7 +558,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODistributedRequest req = new ODistributedRequest(this, nodeId, reqId, iDatabaseName, iTask);
 
     final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (currentDatabase != null && currentDatabase.getUser() != null)
+    if (currentDatabase != null && currentDatabase.getUser() != null && currentDatabase.getUser().getIdentity().getIdentity()
+        .isValid())
       // SET CURRENT DATABASE NAME
       req.setUserRID((ORecordId) currentDatabase.getUser().getIdentity().getIdentity());
 

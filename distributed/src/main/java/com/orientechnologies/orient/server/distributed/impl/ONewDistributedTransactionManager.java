@@ -187,7 +187,7 @@ public class ONewDistributedTransactionManager {
               ((OTxConcurrentModification) result).getRecordId().toString(), ((OTxConcurrentModification) result).getVersion()));
           break;
         case OTxException.ID:
-          messages.add(String.format("exception: '$s'", ((OTxException) result).getException().getMessage()));
+          messages.add(String.format("exception: '%s'", ((OTxException) result).getException().getMessage()));
           break;
         case OTxUniqueIndex.ID:
           messages.add(String
