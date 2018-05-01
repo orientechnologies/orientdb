@@ -20,6 +20,9 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.log.OLogFormatter;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
@@ -173,6 +176,7 @@ public class ONewDistributedTransactionManager {
     } else {
       List<OTransactionResultPayload> results = responseManager.getAllResponses();
       //If quorum is not reached is enough on a Lock timeout to trigger a deadlock retry.
+      List<Exception> exceptions = new ArrayList<>();
       List<String> messages = new ArrayList<>();
       for (OTransactionResultPayload result : results) {
         switch (result.getResponseType()) {
@@ -187,6 +191,8 @@ public class ONewDistributedTransactionManager {
               ((OTxConcurrentModification) result).getRecordId().toString(), ((OTxConcurrentModification) result).getVersion()));
           break;
         case OTxException.ID:
+          exceptions.add(((OTxException) result).getException());
+          OLogManager.instance().debug(this, "distributed exception", ((OTxException) result).getException());
           messages.add(String.format("exception: '%s'", ((OTxException) result).getException().getMessage()));
           break;
         case OTxUniqueIndex.ID:
@@ -199,7 +205,13 @@ public class ONewDistributedTransactionManager {
       }
       localKo(requestId, database);
       sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
-      throw new ODistributedOperationException(String.format("quorum not reached, responses: [%s]", String.join(",", messages)));
+
+      ODistributedOperationException ex = new ODistributedOperationException(
+          String.format("quorum not reached, responses: [%s]", String.join(",", messages)));
+      for (Exception e : exceptions) {
+        ex.addSuppressed(e);
+      }
+      throw ex;
     }
 
   }
