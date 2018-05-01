@@ -57,6 +57,7 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
     OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
     try {
       for (Map.Entry<OIdentifiable, Change> entry : changedValues.entrySet()) {
+        assert entry.getKey().getIdentity().isPersistent();
         Integer storedCounter = tree.get(entry.getKey());
 
         storedCounter = entry.getValue().applyTo(storedCounter);
