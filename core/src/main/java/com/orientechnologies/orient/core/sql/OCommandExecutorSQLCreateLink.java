@@ -20,17 +20,16 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -39,12 +38,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * SQL CREATE LINK command: Transform a JOIN relationship to a physical LINK
@@ -176,8 +170,8 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
 
     final ODatabaseDocumentInternal database = getDatabase();
     if (!(database.getDatabaseOwner() instanceof ODatabaseDocument))
-      throw new OCommandSQLParsingException("This command supports only the database type ODatabaseDocumentTx and type '"
-          + database.getClass() + "' was found");
+      throw new OCommandSQLParsingException(
+          "This command supports only the database type ODatabaseDocumentTx and type '" + database.getClass() + "' was found");
 
     final ODatabaseDocument db = (ODatabaseDocument) database.getDatabaseOwner();
 
@@ -192,8 +186,10 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
     Object value;
 
     String cmd = "select from ";
+    boolean prepared = false;
     if (!ODocumentHelper.ATTRIBUTE_RID.equals(destField)) {
-      cmd = "select from " + destClassName + " where " + destField + " = ";
+      cmd = "select from " + destClassName + " where " + destField + " = ?";
+      prepared = true;
     }
 
     List<ODocument> result;
@@ -218,8 +214,8 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
     if (progressListener != null)
       progressListener.onBegin(this, totRecords, false);
 
-    database.declareIntent(new OIntentMassiveInsert());
     try {
+      database.begin();
       // BROWSE ALL THE RECORDS OF THE SOURCE CLASS
       for (ODocument doc : db.browseClass(sourceClass.getName())) {
         value = doc.field(sourceField);
@@ -233,19 +229,18 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
             // SEARCH THE DESTINATION RECORD
             target = null;
 
-            if (!ODocumentHelper.ATTRIBUTE_RID.equals(destField) && value instanceof String)
-              if (((String) value).length() == 0)
-                value = null;
-              else
-                value = "'" + value + "'";
-
-            result = database.<OCommandRequest>command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
+            if (prepared) {
+              result = database.<OCommandRequest>command(new OSQLSynchQuery<ODocument>(cmd)).execute(value);
+            } else {
+              result = database.<OCommandRequest>command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
+            }
 
             if (result == null || result.size() == 0)
               value = null;
             else if (result.size() > 1)
-              throw new OCommandExecutionException("Cannot create link because multiple records was found in class '"
-                  + destClass.getName() + "' with value " + value + " in field '" + destField + "'");
+              throw new OCommandExecutionException(
+                  "Cannot create link because multiple records was found in class '" + destClass.getName() + "' with value " + value
+                      + " in field '" + destField + "'");
             else {
               target = result.get(0);
               value = target;
@@ -296,14 +291,21 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
             }
 
             total++;
+            if (total % 100 == 0) {
+              database.commit();
+              database.begin();
+            }
           }
         }
 
         if (progressListener != null)
           progressListener.onProgress(this, currRecord, currRecord * 100f / totRecords);
+
       }
 
+      database.commit();
       if (total > 0) {
+
         if (inverse) {
           // REMOVE THE OLD PROPERTY IF ANY
           OProperty prop = destClass.getProperty(linkName);
@@ -338,10 +340,14 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
       throw OException.wrapException(new OCommandExecutionException("Error on creation of links"), e);
 
     } finally {
-      database.declareIntent(null);
+
     }
 
     return total;
+  }
+
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
   @Override
