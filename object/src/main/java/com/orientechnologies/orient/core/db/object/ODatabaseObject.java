@@ -30,6 +30,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.metadata.OMetadataObject;
 
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -176,6 +178,10 @@ public interface ODatabaseObject extends ODatabase<Object>, OUserObject2RecordHa
 
   @Override
   OMetadataObject getMetadata();
+
+  <RET extends List<?>> RET objectQuery(String iCommand, Object... iArgs);
+
+  <RET extends List<?>> RET objectQuery(String iCommand, Map<String, Object> iArgs);
 
   @Override
   default <T> T executeWithRetry(int nRetries, Function<ODatabaseSession, T> function)
