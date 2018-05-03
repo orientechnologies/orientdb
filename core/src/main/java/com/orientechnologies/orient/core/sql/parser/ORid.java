@@ -39,7 +39,7 @@ public class ORid extends SimpleNode {
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    if (legacy) {
+    if (legacy || (expression == null && cluster != null && position != null)) {
       builder.append("#" + cluster.getValue() + ":" + position.getValue());
     } else {
       builder.append("{\"@rid\":");
@@ -49,7 +49,7 @@ public class ORid extends SimpleNode {
   }
 
   public ORecordId toRecordId(OResult target, OCommandContext ctx) {
-    if (legacy) {
+    if (legacy || (expression == null && cluster != null && position != null)) {
       return new ORecordId(cluster.value.intValue(), position.value.longValue());
     } else {
       Object result = expression.execute(target, ctx);
@@ -67,7 +67,7 @@ public class ORid extends SimpleNode {
   }
 
   public ORecordId toRecordId(OIdentifiable target, OCommandContext ctx) {
-    if (legacy) {
+    if (legacy || (expression == null && cluster != null && position != null)) {
       return new ORecordId(cluster.value.intValue(), position.value.longValue());
     } else {
       Object result = expression.execute(target, ctx);
@@ -160,13 +160,13 @@ public class ORid extends SimpleNode {
 
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
-    if(cluster!=null){
+    if (cluster != null) {
       result.setProperty("cluster", cluster.serialize());
     }
-    if(position!=null){
+    if (position != null) {
       result.setProperty("position", position.serialize());
     }
-    if(expression!=null){
+    if (expression != null) {
       result.setProperty("expression", expression.serialize());
     }
     result.setProperty("legacy", legacy);
@@ -174,15 +174,15 @@ public class ORid extends SimpleNode {
   }
 
   public void deserialize(OResult fromResult) {
-    if(fromResult.getProperty("cluster")!=null){
+    if (fromResult.getProperty("cluster") != null) {
       cluster = new OInteger(-1);
       cluster.deserialize(fromResult.getProperty("cluster"));
     }
-    if(fromResult.getProperty("position")!=null){
+    if (fromResult.getProperty("position") != null) {
       position = new OInteger(-1);
       position.deserialize(fromResult.getProperty("position"));
     }
-    if(fromResult.getProperty("expression")!=null){
+    if (fromResult.getProperty("expression") != null) {
       expression = new OExpression(-1);
       expression.deserialize(fromResult.getProperty("expression"));
     }
