@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
@@ -78,11 +79,11 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
   private MODE   mode             = MODE.FULL_BACKUP;
   private String exportOptions;
 
-  private String targetDirectory = "backup";
-  private String targetFileName;
+  private String      targetDirectory  = "backup";
+  private String      targetFileName;
   private Set<String> includeDatabases = new HashSet<String>();
   private Set<String> excludeDatabases = new HashSet<String>();
-  private OServer serverInstance;
+  private OServer     serverInstance;
 
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
@@ -128,7 +129,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
     // LOAD CFG FROM JSON FILE. THIS FILE, IF SPECIFIED, OVERWRITE DEFAULT AND XML SETTINGS
     configure();
 
-    if(enabled) {
+    if (enabled) {
       if (delay <= 0)
         throw new OConfigurationException("Cannot find mandatory parameter 'delay'");
       if (!targetDirectory.endsWith("/"))
@@ -143,8 +144,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
         filePath.mkdirs();
 
       OLogManager.instance()
-          .info(this, "Automatic Backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s", delay, firstTime,
-              targetDirectory);
+          .info(this, "Automatic Backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s", delay,
+              firstTime, targetDirectory);
 
       final TimerTask timerTask = new TimerTask() {
         @Override
@@ -214,7 +215,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
 
               } catch (Exception e) {
 
-                OLogManager.instance().error(this, "Error on backup of database '" + dbURL + "' to directory: " + targetDirectory, e);
+                OLogManager.instance()
+                    .error(this, "Error on backup of database '" + dbURL + "' to directory: " + targetDirectory, e);
                 errors++;
 
               } finally {
@@ -232,9 +234,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
       else
         Orient.instance().scheduleTask(timerTask, firstTime, delay);
 
-    }else {
-      OLogManager.instance()
-          .info(this, "Automatic Backup plugin is disabled");
+    } else {
+      OLogManager.instance().info(this, "Automatic Backup plugin is disabled");
     }
   }
 
@@ -348,17 +349,29 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
   protected void fullBackupDatabase(final String dbURL, final String iPath, final ODatabaseDocumentInternal db) throws IOException {
     OLogManager.instance().info(this, "AutomaticBackup: executing full backup of database '%s' to %s", dbURL, iPath);
 
-    final FileOutputStream fileOutputStream = new FileOutputStream(iPath);
+    final File backupFile = new File(iPath);
     try {
-      db.backup(fileOutputStream, null, null, new OCommandOutputListener() {
-        @Override
-        public void onMessage(String iText) {
-          OLogManager.instance().info(this, iText);
-        }
-      }, compressionLevel, bufferSize);
-    } finally {
-      fileOutputStream.close();
+      final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
+      try {
+        db.backup(fileOutputStream, null, null, new OCommandOutputListener() {
+          @Override
+          public void onMessage(String iText) {
+            OLogManager.instance().info(this, iText);
+          }
+        }, compressionLevel, bufferSize);
+      } finally {
+        fileOutputStream.close();
+      }
+    } catch (IOException e) {
+      OLogManager.instance().errorNoDb(this, "Error during backup, backup file %s will be deleted", e, backupFile);
+      backupFile.delete();
+      throw e;
+    } catch (RuntimeException e) {
+      OLogManager.instance().errorNoDb(this, "Error during backup, backup file %s will be deleted", e, backupFile);
+      backupFile.delete();
+      throw e;
     }
+
   }
 
   protected void exportDatabase(final String dbURL, final String iPath, final ODatabaseDocumentInternal db) throws IOException {

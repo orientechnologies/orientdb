@@ -106,7 +106,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   private   int                 lastPercentStep;
   private   String              currentDatabaseUserName;
   private   String              currentDatabaseUserPassword;
-  private int maxMultiValueEntries = 10;
+  private   int                 maxMultiValueEntries = 10;
 
   public OConsoleDatabaseApp(final String[] args) {
     super(args);
@@ -2291,6 +2291,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           fos.close();
           message("\nBackup executed in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
         } catch (RuntimeException e) {
+          fos.close();
+          File f = new File(fileName);
+          if (f.exists())
+            f.delete();
+          throw e;
+        } catch (IOException e) {
           fos.close();
           File f = new File(fileName);
           if (f.exists())

@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 import java.io.*;
+import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;

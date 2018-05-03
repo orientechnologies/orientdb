@@ -99,7 +99,8 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
             backupFile.getParentFile().mkdirs();
           backupFile.createNewFile();
 
-          final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
+          final File resultedBackup = backupFile;
+          final FileOutputStream fileOutputStream = new FileOutputStream(resultedBackup);
 
           final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
           if (completedFile.exists())
@@ -142,6 +143,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
               } catch (Exception e) {
                 OLogManager.instance().error(this, "Cannot execute backup of database '%s' for deploy database", e, databaseName);
+                resultedBackup.delete();
               } finally {
                 try {
                   fileOutputStream.close();
