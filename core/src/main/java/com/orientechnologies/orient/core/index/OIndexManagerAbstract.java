@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -66,7 +67,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   protected       String                                      defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
   protected       String                                      manualClusterName  = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
 
-  protected ReadWriteLock lock = new ReentrantReadWriteLock();
+  private   AtomicInteger writeLockNesting = new AtomicInteger();
+  protected ReadWriteLock lock             = new ReentrantReadWriteLock();
 
   public OIndexManagerAbstract() {
     super(new ODocument().setTrackingChanges(false));
@@ -140,11 +142,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         }
       }
     });
-
-    ODatabaseDocumentInternal database = getDatabase();
-    for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
-      listener.onIndexManagerUpdate(database.getName(), this);
-    }
 
     return (RET) this;
   }
@@ -422,6 +419,11 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   protected void acquireExclusiveLock() {
+    internalAcquireExclusiveLock();
+    writeLockNesting.incrementAndGet();
+  }
+
+  protected void internalAcquireExclusiveLock() {
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
     if (databaseRecord != null && !databaseRecord.isClosed()) {
       final OMetadataInternal metadata = (OMetadataInternal) databaseRecord.getMetadata();
@@ -433,6 +435,17 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   protected void releaseExclusiveLock() {
+    int val = writeLockNesting.decrementAndGet();
+    internalReleaseExclusiveLock();
+    if (val == 0) {
+      ODatabaseDocumentInternal database = getDatabase();
+      for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
+        listener.onIndexManagerUpdate(database.getName(), this);
+      }
+    }
+  }
+
+  protected void internalReleaseExclusiveLock() {
     lock.writeLock().unlock();
 
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
