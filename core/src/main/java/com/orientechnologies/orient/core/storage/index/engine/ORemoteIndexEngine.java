@@ -104,6 +104,11 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public void update(Object key, OIndexKeyUpdater<Object> updater) {
+
+  }
+
+  @Override
   public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
     return false;
   }

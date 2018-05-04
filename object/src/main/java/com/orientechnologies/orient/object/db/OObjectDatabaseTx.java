@@ -19,19 +19,14 @@
  */
 package com.orientechnologies.orient.object.db;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
@@ -42,6 +37,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.entity.OEntityManager;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -52,9 +48,14 @@ import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -69,9 +70,11 @@ import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.object.metadata.OMetadataObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
-
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
+
+import java.util.*;
+import java.util.function.Function;
 
 /**
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx that handles conversion between ODocument instances and
@@ -434,8 +437,8 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   /**
    * Saves an object to the databasein synchronous mode . First checks if the object is new or not. In case it's new a new ODocument
    * is created and bound to the object, otherwise the ODocument is retrieved and updated. The object is introspected using the Java
-   * Reflection to extract the field values. <br>
-   * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
+   * Reflection to extract the field values. <br> If a multi value (array, collection or map of objects) is passed, then each single
+   * object is stored separately.
    */
   public <RET> RET save(final Object iContent) {
     return (RET) save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
@@ -444,8 +447,8 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   /**
    * Saves an object to the database specifying the mode. First checks if the object is new or not. In case it's new a new ODocument
    * is created and bound to the object, otherwise the ODocument is retrieved and updated. The object is introspected using the Java
-   * Reflection to extract the field values. <br>
-   * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
+   * Reflection to extract the field values. <br> If a multi value (array, collection or map of objects) is passed, then each single
+   * object is stored separately.
    */
   public <RET> RET save(final Object iContent, OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
@@ -455,8 +458,8 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   /**
    * Saves an object in synchronous mode to the database forcing a record cluster where to store it. First checks if the object is
    * new or not. In case it's new a new ODocument is created and bound to the object, otherwise the ODocument is retrieved and
-   * updated. The object is introspected using the Java Reflection to extract the field values. <br>
-   * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
+   * updated. The object is introspected using the Java Reflection to extract the field values. <br> If a multi value (array,
+   * collection or map of objects) is passed, then each single object is stored separately.
    * <p>
    * Before to use the specified cluster a check is made to know if is allowed and figures in the configured and the record is valid
    * following the constraints declared in the schema.
@@ -470,8 +473,8 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   /**
    * Saves an object to the database forcing a record cluster where to store it. First checks if the object is new or not. In case
    * it's new a new ODocument is created and bound to the object, otherwise the ODocument is retrieved and updated. The object is
-   * introspected using the Java Reflection to extract the field values. <br>
-   * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
+   * introspected using the Java Reflection to extract the field values. <br> If a multi value (array, collection or map of objects)
+   * is passed, then each single object is stored separately.
    * <p>
    * Before to use the specified cluster a check is made to know if is allowed and figures in the configured and the record is valid
    * following the constraints declared in the schema.
@@ -1131,5 +1134,117 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   @Override
   public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args) {
     return underlying.live(query, listener, args);
+  }
+
+  @Override
+  public OResultSet query(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException {
+    return underlying.query(query, args);
+  }
+
+  @Override
+  public OResultSet query(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
+    return underlying.query(query, args);
+  }
+
+  @Override
+  public OResultSet command(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException {
+    return underlying.command(query, args);
+  }
+
+  public <RET extends List<?>> RET objectQuery(String iCommand, Object... iArgs) {
+    checkOpenness();
+
+    convertParameters(iArgs);
+
+    final OResultSet result = underlying.query(iCommand, iArgs);
+
+    if (result == null)
+      return null;
+
+    try {
+
+      final List<Object> resultPojo = new ArrayList<Object>();
+      Object obj;
+      while (result.hasNext()) {
+        OResult doc = result.next();
+        if (doc.isElement()) {
+          // GET THE ASSOCIATED DOCUMENT
+          OElement elem = doc.getElement().get();
+          if (elem.getSchemaType().isPresent())
+            obj = getUserObjectByRecord(elem, null, true);
+          else
+            obj = elem;
+
+          resultPojo.add(obj);
+        } else {
+          resultPojo.add(doc);
+        }
+
+      }
+
+      return (RET) resultPojo;
+    } finally {
+      result.close();
+    }
+  }
+
+  public <RET extends List<?>> RET objectQuery(String iCommand, Map<String, Object> iArgs) {
+    checkOpenness();
+
+    convertParameters(iArgs);
+
+    final OResultSet result = underlying.query(iCommand, iArgs);
+
+    if (result == null)
+      return null;
+
+    try {
+
+      final List<Object> resultPojo = new ArrayList<Object>();
+      Object obj;
+      while (result.hasNext()) {
+        OResult doc = result.next();
+        if (doc.isElement()) {
+          // GET THE ASSOCIATED DOCUMENT
+          OElement elem = doc.getElement().get();
+          if (elem.getSchemaType().isPresent())
+            obj = getUserObjectByRecord(elem, null, true);
+          else
+            obj = elem;
+
+          resultPojo.add(obj);
+        } else {
+          resultPojo.add(doc);
+        }
+
+      }
+
+      return (RET) resultPojo;
+    } finally {
+      result.close();
+    }
+  }
+
+  @Override
+  public OResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
+    return underlying.command(query, args);
+  }
+
+  @Override
+  public OResultSet execute(String language, String script, Object... args)
+      throws OCommandExecutionException, OCommandScriptException {
+    return underlying.execute(language, script, args);
+  }
+
+  @Override
+  public OResultSet execute(String language, String script, Map<String, ?> args)
+      throws OCommandExecutionException, OCommandScriptException {
+    return underlying.execute(language, script, args);
+  }
+
+  @Override
+  public <T> T executeWithRetry(int nRetries, Function<ODatabaseSession, T> function)
+      throws IllegalStateException, IllegalArgumentException, ONeedRetryException, UnsupportedOperationException {
+    return underlying.executeWithRetry(nRetries, function);
   }
 }

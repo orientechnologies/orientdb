@@ -30,8 +30,12 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
         do {
           c = map.get(key);
           if (c != null) {
-            if (!c.await(timeout, TimeUnit.MILLISECONDS)) {
-              throw new OLockException(String.format("Time out acquire lock for resource: '%s' ", key));
+            if (timeout == 0) {
+              c.await();
+            } else {
+              if (!c.await(timeout, TimeUnit.MILLISECONDS)) {
+                throw new OLockException(String.format("Time out acquire lock for resource: '%s' ", key));
+              }
             }
           }
         } while (c != null);

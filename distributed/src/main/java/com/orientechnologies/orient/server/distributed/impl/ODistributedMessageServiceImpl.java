@@ -304,6 +304,8 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
         resp.timeout();
         it.remove();
+      } else if (resp.isFinished()) {
+        it.remove();
       }
     }
   }

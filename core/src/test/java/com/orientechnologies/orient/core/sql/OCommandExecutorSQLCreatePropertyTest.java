@@ -366,7 +366,7 @@ public class OCommandExecutorSQLCreatePropertyTest {
 
     db.create();
 
-    db.getStorage().getConfiguration().setProperty(OStatement.CUSTOM_STRICT_SQL, "false");
+    db.getStorage().setProperty(OStatement.CUSTOM_STRICT_SQL, "false");
 
     db.command(new OCommandSQL("CREATE CLASS company")).execute();
     db.command(new OCommandSQL(

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
 public class ORecordInternal {
 
@@ -146,5 +147,9 @@ public class ORecordInternal {
 
   public static void unTrack(final ORecord pointer, final OIdentifiable pointed) {
     ((ORecordAbstract) pointer).unTrack(pointed);
+  }
+
+  public static ORecordSerializer getRecordSerializer(ORecord iRecord) {
+    return ((ORecordAbstract) iRecord)._recordFormat;
   }
 }

@@ -256,12 +256,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
     ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
     if (serializer.toString().equals("ORecordDocument2csv"))
       throw new ODatabaseException("Impossible to create the database with ORecordDocument2csv serializer");
-    storage.getConfiguration().setRecordSerializer(serializer.toString());
-    storage.getConfiguration().setRecordSerializerVersion(serializer.getCurrentVersion());
+    storage.setRecordSerializer(serializer.toString(), serializer.getCurrentVersion());
     // since 2.1 newly created databases use strict SQL validation by default
-    storage.getConfiguration().setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
-
-    storage.getConfiguration().update();
+    storage.setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
 
     // No need to close
     final ODatabaseDocumentEmbedded embedded = factory.newInstance(storage);

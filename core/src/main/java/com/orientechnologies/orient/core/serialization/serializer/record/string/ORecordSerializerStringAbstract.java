@@ -674,10 +674,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   @Override
-  public String[] getFieldNames(ODocument reference, byte[] iSource) {
+  public String[] getFieldNamesRoot(ODocument reference, byte[] iSource) {
     return null;
   }
 
+  @Override
   public ORecord fromStream(final byte[] iSource, final ORecord iRecord, final String[] iFields) {
     final long timer = PROFILER.startChrono();
 

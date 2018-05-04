@@ -7,6 +7,8 @@ import com.orientechnologies.orient.core.sql.parser.OSimpleExecStatement;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
@@ -17,6 +19,7 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
   OCommandContext ctx;
 
   boolean executed = false;
+  private OResultSet result;
 
   public OSingleOpExecutionPlan(OCommandContext ctx, OSimpleExecStatement stm) {
     this.ctx = ctx;
@@ -30,7 +33,48 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
 
   @Override
   public OResultSet fetchNext(int n) {
-    return null;
+    if (executed && result == null) {
+      throw new OCommandExecutionException("Trying to execute a result-set twice. Please use reset()");
+    }
+    if (!executed) {
+      executed = true;
+      result = statement.executeSimple(this.ctx);
+      if (result instanceof OInternalResultSet) {
+        ((OInternalResultSet) result).plan = this;
+      }
+    }
+    return new OResultSet() {
+      int fetched = 0;
+
+      @Override
+      public boolean hasNext() {
+        return fetched < n && result.hasNext();
+      }
+
+      @Override
+      public OResult next() {
+        if (fetched >= n) {
+          throw new IllegalStateException();
+        }
+        fetched++;
+        return result.next();
+      }
+
+      @Override
+      public void close() {
+        result.close();
+      }
+
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
+        return null;
+      }
+
+      @Override
+      public Map<String, Long> getQueryStats() {
+        return null;
+      }
+    };
   }
 
   public void reset(OCommandContext ctx) {

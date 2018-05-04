@@ -21,6 +21,8 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
   OExecutionStepInternal lastStep = null;
 
+  private String statement;
+
   public OSelectExecutionPlan(OCommandContext ctx) {
     this.ctx = ctx;
   }
@@ -132,7 +134,8 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
       copy.getSteps().add(newStep);
     }
     copy.lastStep = copy.steps.get(copy.steps.size() - 1);
-    copy.location = location;
+    copy.location = this.location;
+    copy.statement = this.statement;
     return copy;
   }
 
@@ -144,6 +147,16 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
       }
     }
     return true;
+  }
+
+  @Override
+  public String getStatement() {
+    return statement;
+  }
+
+  @Override
+  public void setStatement(String statement) {
+    this.statement = statement;
   }
 }
 

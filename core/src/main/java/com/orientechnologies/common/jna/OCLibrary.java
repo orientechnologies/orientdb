@@ -4,6 +4,8 @@ import com.sun.jna.Library;
 import com.sun.jna.Structure;
 import com.sun.jna.platform.unix.Resource;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public interface OCLibrary extends Library {
@@ -33,6 +35,15 @@ public interface OCLibrary extends Library {
     @Override
     protected List<String> getFieldOrder() {
       return FIELDS;
+    }
+
+    /**
+     * @param fields The structure field names in correct order
+     *
+     * @return An <U>un-modifiable</U> list of the fields
+     */
+    public static List<String> createFieldsOrder(String... fields) {
+      return Collections.unmodifiableList(Arrays.asList(fields));
     }
   }
 

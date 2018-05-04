@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -260,8 +261,10 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
     return equals(iLeft, iRight);
   }
 
-  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, OCommandContext iContext) {
-    return ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator().isEqual(iFirstField, iSecondField);
+  @Override
+  public boolean evaluate(final OBinaryField iFirstField, final OBinaryField iSecondField, 
+          OCommandContext iContext, final ODocumentSerializer serializer) {
+    return serializer.getComparator().isEqual(iFirstField, iSecondField);
   }
 
   @Override

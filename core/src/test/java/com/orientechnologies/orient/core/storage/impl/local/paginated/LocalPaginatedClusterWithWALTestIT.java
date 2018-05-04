@@ -105,7 +105,7 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
 
   private void createPaginatedCluster() throws IOException {
     paginatedCluster = new OPaginatedCluster("actualPaginatedClusterWithWALTest", storage);
-    paginatedCluster.configure(storage, 6, "actualPaginatedClusterWithWALTest", buildDirectory, -1);
+    paginatedCluster.configure(storage, 42, "actualPaginatedClusterWithWALTest", buildDirectory, -1);
     paginatedCluster.create(-1);
   }
 
@@ -407,8 +407,9 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
 
         atomicUnit.clear();
       } else {
-        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
-            || walRecord instanceof ONonTxOperationPerformedWALRecord);
+        Assert.assertTrue("Unexpected type of the WAL record " + walRecord.getClass().getName(),
+            walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
+                || walRecord instanceof ONonTxOperationPerformedWALRecord);
       }
 
       lsn = log.next(lsn);

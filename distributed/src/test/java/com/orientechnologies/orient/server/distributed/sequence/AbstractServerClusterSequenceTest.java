@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed.sequence;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
@@ -29,7 +28,6 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
 
   private AtomicLong failures = new AtomicLong();
 
-  private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
 
   @Override
   public String getDatabaseName() {
@@ -44,7 +42,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     Assert.assertTrue("Test must run with at least 2 dbs", THREAD_COUNT >= 2);
     final ODatabaseDocument[] dbs = new ODatabaseDocument[THREAD_COUNT];
     for (int i = 0; i < THREAD_COUNT; ++i) {
-      dbs[i] = poolFactory.get(getDatabaseURL(serverInstance.get(i)), "admin", "admin").acquire();
+      dbs[i] = serverInstance.get(i).getServerInstance().getContext().open(getDatabaseName(), "admin", "admin");
     }
 
     executeOrderedSequenceTest(dbs, "seq0");
@@ -58,6 +56,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
 
     OSequence seq1 = dbs[0].getMetadata().getSequenceLibrary()
         .createSequence(sequenceName, SEQUENCE_TYPE.CACHED, new OSequence.CreateParams().setDefaults().setCacheSize(CACHE_SIZE));
+    dbs[1].activateOnCurrentThread();
     OSequence seq2 = dbs[1].getMetadata().getSequenceLibrary().getSequence(sequenceName);
 
     Assert.assertEquals(seq1.getName(), seq2.getName());
@@ -83,6 +82,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     seq1.createSequence(sequenceName, SEQUENCE_TYPE.ORDERED, null);
     Assert.assertEquals(SEQUENCE_TYPE.ORDERED, seq1.getSequence(sequenceName).getSequenceType());
 
+    dbs[1].activateOnCurrentThread();
     Assert.assertNotNull("The sequence has not be propagated to the 2nd server", seq2.getSequence(sequenceName));
 
     dbs[0].activateOnCurrentThread();

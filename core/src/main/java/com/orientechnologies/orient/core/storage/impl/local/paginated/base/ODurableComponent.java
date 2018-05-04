@@ -131,7 +131,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     if (atomicOperation == null)
       return readCache.loadForWrite(fileId, pageIndex, checkPinnedPages, writeCache, 1, true);
 
-    return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages, 1);
+    return atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1);
   }
 
   protected OCacheEntry loadPageForRead(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
@@ -144,7 +144,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     if (atomicOperation == null)
       return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
 
-    return atomicOperation.loadPage(fileId, pageIndex, checkPinnedPages, pageCount);
+    return atomicOperation.loadPageForRead(fileId, pageIndex, checkPinnedPages, pageCount);
   }
 
   protected void pinPage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) {
@@ -165,14 +165,14 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     if (atomicOperation == null)
       readCache.releaseFromWrite(cacheEntry, writeCache);
     else
-      atomicOperation.releasePage(cacheEntry);
+      atomicOperation.releasePageFromWrite(cacheEntry);
   }
 
   protected void releasePageFromRead(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) {
     if (atomicOperation == null)
       readCache.releaseFromRead(cacheEntry, writeCache);
     else
-      atomicOperation.releasePage(cacheEntry);
+      atomicOperation.releasePageFromRead(cacheEntry);
   }
 
   protected long addFile(OAtomicOperation atomicOperation, String fileName) throws IOException {

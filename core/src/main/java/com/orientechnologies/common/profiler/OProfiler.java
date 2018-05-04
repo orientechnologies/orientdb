@@ -22,6 +22,7 @@ package com.orientechnologies.common.profiler;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OService;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import javax.annotation.CheckReturnValue;
 import javax.annotation.meta.When;
@@ -120,5 +121,11 @@ public interface OProfiler extends OService {
 
   String getStatsAsJson();
 
-  boolean isEnterpriseEdition();
+  default boolean isEnterpriseEdition() {
+    return false;
+  }
+
+  default ODocument getContext() {
+    return new ODocument().field("enterprise", false);
+  }
 }

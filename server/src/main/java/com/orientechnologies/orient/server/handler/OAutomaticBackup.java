@@ -41,6 +41,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginConfigurable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
@@ -57,7 +58,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class OAutomaticBackup extends OServerPluginAbstract implements OServerPluginConfigurable {
 
-  private ODocument                     configuration;
+  private ODocument configuration;
 
   private Set<OAutomaticBackupListener> listeners = Collections
       .newSetFromMap(new ConcurrentHashMap<OAutomaticBackupListener, Boolean>());
@@ -70,13 +71,13 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
     FULL_BACKUP, INCREMENTAL_BACKUP, EXPORT
   }
 
-  private String      configFile       = "${ORIENTDB_HOME}/config/automatic-backup.json";
-  private Date        firstTime        = null;
-  private long        delay            = -1;
-  private int         bufferSize       = 1048576;
-  private int         compressionLevel = 9;
-  private MODE        mode             = MODE.FULL_BACKUP;
-  private String      exportOptions;
+  private String configFile       = "${ORIENTDB_HOME}/config/automatic-backup.json";
+  private Date   firstTime        = null;
+  private long   delay            = -1;
+  private int    bufferSize       = 1048576;
+  private int    compressionLevel = 9;
+  private MODE   mode             = MODE.FULL_BACKUP;
+  private String exportOptions;
 
   private String      targetDirectory  = "backup";
   private String      targetFileName;
@@ -128,7 +129,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
     // LOAD CFG FROM JSON FILE. THIS FILE, IF SPECIFIED, OVERWRITE DEFAULT AND XML SETTINGS
     configure();
 
-    if(enabled) {
+    if (enabled) {
       if (delay <= 0)
         throw new OConfigurationException("Cannot find mandatory parameter 'delay'");
       if (!targetDirectory.endsWith("/"))
@@ -143,7 +144,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
         filePath.mkdirs();
 
       OLogManager.instance()
-          .info(this, "Automatic Backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s", delay, firstTime, targetDirectory);
+          .info(this, "Automatic Backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s", delay,
+              firstTime, targetDirectory);
 
       final TimerTask timerTask = new TimerTask() {
         @Override
@@ -210,7 +212,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
 
               } catch (Exception e) {
 
-                OLogManager.instance().error(this, "Error on backup of database '" + dbURL + "' to directory: " + targetDirectory, e);
+                OLogManager.instance()
+                    .error(this, "Error on backup of database '" + dbURL + "' to directory: " + targetDirectory, e);
 
                 try {
                   for (OAutomaticBackupListener listener : listeners) {
@@ -234,9 +237,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
         Orient.instance().scheduleTask(timerTask, delay, delay);
       else
         Orient.instance().scheduleTask(timerTask, firstTime, delay);
-    }else {
-      OLogManager.instance()
-          .info(this, "Automatic Backup plugin is disabled");
+    } else {
+      OLogManager.instance().info(this, "Automatic Backup plugin is disabled");
     }
   }
 
@@ -356,16 +358,22 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
     final Path tempFilePath = Paths.get(tempFileName);
     OFileUtils.prepareForFileCreationOrReplacement(tempFilePath, this, "backing up");
 
-    try (FileOutputStream fileOutputStream = new FileOutputStream(tempFileName)) {
-      db.backup(fileOutputStream, null, null, new OCommandOutputListener() {
-        @Override
-        public void onMessage(String iText) {
-          OLogManager.instance().info(this, iText);
-        }
-      }, compressionLevel, bufferSize);
-    }
+    try {
+      try (FileOutputStream fileOutputStream = new FileOutputStream(tempFileName)) {
+        db.backup(fileOutputStream, null, null, new OCommandOutputListener() {
+          @Override
+          public void onMessage(String iText) {
+            OLogManager.instance().info(this, iText);
+          }
+        }, compressionLevel, bufferSize);
+      }
 
-    OFileUtils.atomicMoveWithFallback(tempFilePath, filePath, this);
+      OFileUtils.atomicMoveWithFallback(tempFilePath, filePath, this);
+    } catch (Exception e) {
+      OLogManager.instance().errorNoDb(this, "Error during backup processing, file %s will be deleted\n", e, tempFileName);
+      Files.deleteIfExists(tempFilePath);
+      throw e;
+    }
   }
 
   protected void exportDatabase(final String dbURL, final String iPath, final ODatabaseDocumentInternal db) throws IOException {
@@ -386,20 +394,21 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
   }
 
   protected String getFileName(final Entry<String, String> dbName) {
-    return (String) OVariableParser.resolveVariables(targetFileName, OSystemVariableResolver.VAR_BEGIN,
-        OSystemVariableResolver.VAR_END, new OVariableParserListener() {
-          @Override
-          public String resolve(final String iVariable) {
-            if (iVariable.equalsIgnoreCase(VARIABLES.DBNAME.toString()))
-              return dbName.getKey();
-            else if (iVariable.startsWith(VARIABLES.DATE.toString())) {
-              return new SimpleDateFormat(iVariable.substring(VARIABLES.DATE.toString().length() + 1)).format(new Date());
-            }
+    return (String) OVariableParser
+        .resolveVariables(targetFileName, OSystemVariableResolver.VAR_BEGIN, OSystemVariableResolver.VAR_END,
+            new OVariableParserListener() {
+              @Override
+              public String resolve(final String iVariable) {
+                if (iVariable.equalsIgnoreCase(VARIABLES.DBNAME.toString()))
+                  return dbName.getKey();
+                else if (iVariable.startsWith(VARIABLES.DATE.toString())) {
+                  return new SimpleDateFormat(iVariable.substring(VARIABLES.DATE.toString().length() + 1)).format(new Date());
+                }
 
-            // NOT FOUND
-            throw new IllegalArgumentException("Variable '" + iVariable + "' was not found");
-          }
-        });
+                // NOT FOUND
+                throw new IllegalArgumentException("Variable '" + iVariable + "' was not found");
+              }
+            });
   }
 
   @Override

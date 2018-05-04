@@ -154,7 +154,6 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
   protected abstract AtomicInteger getTip(String iMessage);
 
-  public abstract boolean isEnterpriseEdition();
 
   public static String dumpEnvironment(final String dumpType) {
     final StringBuilder buffer = new StringBuilder();

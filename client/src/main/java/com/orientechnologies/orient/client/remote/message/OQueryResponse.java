@@ -53,6 +53,8 @@ public class OQueryResponse implements OBinaryResponse {
     channel.writeString(queryId);
     channel.writeBoolean(txChanges);
     writeExecutionPlan(executionPlan, channel, serializer);
+    //THIS IS A PREFETCHED COLLECTION NOT YET HERE
+    channel.writeInt(0);
     channel.writeInt(result.size());
     for (OResult res : result) {
       OMessageHelper.writeResult(res, channel, serializer);
@@ -67,6 +69,8 @@ public class OQueryResponse implements OBinaryResponse {
     queryId = network.readString();
     txChanges = network.readBoolean();
     executionPlan = readExecutionPlan(network);
+    //THIS IS A PREFETCHED COLLECTION NOT YET HERE
+    int prefetched = network.readInt();
     int size = network.readInt();
     this.result = new ArrayList<>(size);
     while (size-- > 0) {

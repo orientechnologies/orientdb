@@ -1250,6 +1250,8 @@ public class O2QCache implements OReadCache {
     final long pageIndex = dataPointer.getPageIndex();
 
     if (pinnedPages.containsKey(new PinnedPage(fileId, pageIndex))) {
+      dataPointer.decrementReadersReferrer();
+
       return removeColdPages;
     }
 

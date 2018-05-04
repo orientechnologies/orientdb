@@ -225,6 +225,8 @@ public enum OGlobalConfiguration {
       + "on the given TCP/IP port. Used for internal testing purposes only. Never touch it if you don't know what you doing.",
       Integer.class, null),
 
+  STORAGE_PESSIMISTIC_LOCKING("storage.pessimisticLock", "Enable/Disable pessimistic locking feature", Boolean.class, false),
+
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
   WAL_SYNC_ON_PAGE_FLUSH("storage.wal.syncOnPageFlush", "Indicates whether a force sync should be performed during WAL page flush",
@@ -703,6 +705,8 @@ public enum OGlobalConfiguration {
   // SERVER
   SERVER_OPEN_ALL_DATABASES_AT_STARTUP("server.openAllDatabasesAtStartup",
       "If true, the server opens all the available databases at startup. Available since 2.2", Boolean.class, false),
+
+  SERVER_DATABASE_PATH("server.database.path", "The path where are located the databases of a server", String.class, null),
 
   SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,
       5000),

@@ -76,14 +76,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   public static final String EXPORT_IMPORT_MAP_NAME          = "___exportImportRIDMap";
   public static final int    IMPORT_RECORD_DUMP_LAP_EVERY_MS = 5000;
 
-  private Map<OPropertyImpl, String> linkedClasses = new HashMap<OPropertyImpl, String>();
-  private Map<OClass, List<String>>  superClasses  = new HashMap<OClass, List<String>>();
-  private OJSONReader jsonReader;
-  private ORecord     record;
-  private boolean schemaImported  = false;
-  private int     exporterVersion = -1;
-  private ORID schemaRecordId;
-  private ORID indexMgrRecordId;
+  private Map<OPropertyImpl, String> linkedClasses   = new HashMap<OPropertyImpl, String>();
+  private Map<OClass, List<String>>  superClasses    = new HashMap<OClass, List<String>>();
+  private OJSONReader                jsonReader;
+  private ORecord                    record;
+  private boolean                    schemaImported  = false;
+  private int                        exporterVersion = -1;
+  private ORID                       schemaRecordId;
+  private ORID                       indexMgrRecordId;
 
   private boolean deleteRIDMapping = true;
 
@@ -1003,8 +1003,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       ODocument indexDocument = new ODocument();
       indexDocument.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
 
-      database.getStorage().getConfiguration().setIndexMgrRecordId(indexDocument.getIdentity().toString());
-      database.getStorage().getConfiguration().update();
+      database.getStorage().setIndexMgrRecordId(indexDocument.getIdentity().toString());
     }
 
     return total;
@@ -1188,7 +1187,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         record.setDirty();
         ORecordInternal.setIdentity(record, new ORecordId());
 
-        if (!preserveRids && record instanceof ODocument && ODocumentInternal.getImmutableSchemaClass(((ODocument) record)) != null)
+        if (!preserveRids && record instanceof ODocument
+            && ODocumentInternal.getImmutableSchemaClass(database, ((ODocument) record)) != null)
           record.save();
         else
           record.save(database.getClusterNameById(clusterId));
@@ -1305,7 +1305,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         if (indexDefinition == null) {
           indexDefinition = new OSimpleKeyIndexDefinition(0, OType.STRING);
         }
-        
+
         boolean oldValue = OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.getValueAsBoolean();
         OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(indexDefinition.isNullValuesIgnored());
         final OIndex index = indexManager

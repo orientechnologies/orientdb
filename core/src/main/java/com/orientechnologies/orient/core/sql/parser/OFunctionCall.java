@@ -246,7 +246,7 @@ public class OFunctionCall extends SimpleNode {
   }
 
   public boolean isExpand() {
-    return name.getStringValue().equals("expand");
+    return name.getStringValue().equalsIgnoreCase("expand");
   }
 
   public boolean needsAliases(Set<String> aliases) {
@@ -448,7 +448,42 @@ public class OFunctionCall extends SimpleNode {
   }
 
   public boolean isCacheable() {
+    if (isGraphFunction()) {
+      return true;
+    }
     return false;//TODO
+  }
+
+  private boolean isGraphFunction() {
+    String string = name.getStringValue();
+    if (string.equalsIgnoreCase("out")) {
+      return true;
+    }
+    if (string.equalsIgnoreCase("outE")) {
+      return true;
+    }
+    if (string.equalsIgnoreCase("outV")) {
+      return true;
+    }
+    if (string.equalsIgnoreCase("in")) {
+      return true;
+    }
+    if (string.equalsIgnoreCase("inE")) {
+      return true;
+    }
+    if (string.equalsIgnoreCase("inV")) {
+      return true;
+    }
+    if (string.equalsIgnoreCase("both")) {
+      return true;
+    }
+    if (string.equalsIgnoreCase("bothE")) {
+      return true;
+    }
+    if (string.equalsIgnoreCase("bothV")) {
+      return true;
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=290d4e1a3f663299452e05f8db718419 (do not edit this line) */

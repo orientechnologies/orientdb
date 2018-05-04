@@ -109,14 +109,25 @@ public class OInCondition extends OBooleanExpression {
       for (final Object o : OMultiValue.getMultiValueIterable(iRight, false)) {
         if (OQueryOperatorEquals.equals(iLeft, o))
           return true;
+        if (OMultiValue.isMultiValue(iLeft) && OMultiValue.getSize(iLeft) == 1) {
+
+          Object item = OMultiValue.getFirstValue(iLeft);
+          if (item instanceof OResult && ((OResult) item).getPropertyNames().size() == 1) {
+            Object propValue = ((OResult) item).getProperty(((OResult) item).getPropertyNames().iterator().next());
+            if (OQueryOperatorEquals.equals(propValue, o))
+              return true;
+          }
+        }
+
       }
     } else if (iRight.getClass().isArray()) {
-
       for (final Object o : (Object[]) iRight) {
         if (OQueryOperatorEquals.equals(iLeft, o))
           return true;
       }
-    } else if (iRight instanceof OResultSet) {
+    } else if (iRight instanceof OResultSet)
+
+    {
       OResultSet rsRight = (OResultSet) iRight;
       rsRight.reset();
       while (((OResultSet) iRight).hasNext()) {
@@ -326,6 +337,26 @@ public class OInCondition extends OBooleanExpression {
 
   public void setLeft(OExpression left) {
     this.left = left;
+  }
+
+  public OSelectStatement getRightStatement() {
+    return rightStatement;
+  }
+
+  public OInputParameter getRightParam() {
+    return rightParam;
+  }
+
+  public OMathExpression getRightMathExpression() {
+    return rightMathExpression;
+  }
+
+  public void setRightParam(OInputParameter rightParam) {
+    this.rightParam = rightParam;
+  }
+
+  public void setRightMathExpression(OMathExpression rightMathExpression) {
+    this.rightMathExpression = rightMathExpression;
   }
 }
 /* JavaCC - OriginalChecksum=00df7cb1877c0a12d24205c1700653c7 (do not edit this line) */

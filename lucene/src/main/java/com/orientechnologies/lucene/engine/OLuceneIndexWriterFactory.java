@@ -36,8 +36,11 @@ public class OLuceneIndexWriterFactory {
     if (metadata.containsField("max_buffered_docs"))
       config.setMaxBufferedDocs(Integer.valueOf(metadata.<String>field("max_buffered_docs")));
 
-    if (metadata.containsField("max_buffered_delete_terms"))
-      config.setMaxBufferedDeleteTerms(Integer.valueOf(metadata.<String>field("max_buffered_delete_terms")));
+
+    // TODO REMOVED
+
+//    if (metadata.containsField("max_buffered_delete_terms"))
+//      config.setMaxBufferedDeleteTerms(Integer.valueOf(metadata.<String>field("max_buffered_delete_terms")));
 
     if (metadata.containsField("ram_per_thread_MB"))
       config.setRAMPerThreadHardLimitMB(Integer.valueOf(metadata.<String>field("ram_per_thread_MB")));

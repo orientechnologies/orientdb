@@ -29,12 +29,11 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -86,16 +85,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedStorage implements OStorage, OFreezableStorageComponent, OAutoshardedStorage {
-  private final String                    name;
-  private final OServer                   serverInstance;
-  private final ODistributedServerManager dManager;
-  private       OAbstractPaginatedStorage wrapped;
+  private final    String                    name;
+  private final    OServer                   serverInstance;
+  private final    ODistributedServerManager dManager;
+  private volatile OAbstractPaginatedStorage wrapped;
 
   private BlockingQueue<OAsynchDistributedOperation> asynchronousOperationsQueue;
   private Thread                                     asynchWorker;
   private ODistributedServerManager.DB_STATUS        prevStatus;
   private ODistributedDatabase                       localDistributedDatabase;
-  private ODistributedTransactionManager             txManager;
   private ODistributedStorageEventListener           eventListener;
 
   private volatile ODistributedConfiguration distributedConfiguration;
@@ -121,7 +119,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     this.wrapped = wrapped;
     this.wrapped.underDistributedStorage();
     this.localDistributedDatabase = dManager.getMessageService().getDatabase(getName());
-    this.txManager = new ODistributedTransactionManager(this, dManager, localDistributedDatabase);
 
     ODistributedServerLog
         .debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.NONE,
@@ -244,6 +241,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate ?
         ((OCommandExecutorSQLDelegate) executor).getDelegate() :
         executor;
+
+    if (!exec.isIdempotent()) {
+      resetLastValidBackup();
+    }
 
     if (exec.isIdempotent() && !dManager.isNodeAvailable(dManager.getLocalNodeName(), getName())) {
       // SPECIAL CASE: NODE IS OFFLINE AND THE COMMAND IS IDEMPOTENT, EXECUTE IT LOCALLY ONLY
@@ -1108,112 +1109,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   @Override
   public List<ORecordOperation> commit(final OTransactionInternal iTx) {
-    resetLastValidBackup();
-
-    if (isLocalEnv()) {
-      // ALREADY DISTRIBUTED
-      try {
-        return wrapped.commit(iTx);
-      } catch (ORecordDuplicatedException e) {
-        // CHECK THE RECORD HAS THE SAME KEY IS STILL UNDER DISTRIBUTED TX
-        final ODistributedDatabase dDatabase = dManager.getMessageService().getDatabase(getName());
-        if (dDatabase.getRecordIfLocked(e.getRid()) != null) {
-          throw new OPossibleDuplicatedRecordException(e);
-        }
-        throw e;
-      }
-    }
-
-    final ODistributedConfiguration dbCfg = distributedConfiguration;
-
-    final String localNodeName = dManager.getLocalNodeName();
-
-    checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
-
-    try {
-      if (!dbCfg.isReplicationActive(null, localNodeName)) {
-        // DON'T REPLICATE
-        OScenarioThreadLocal.executeAsDistributed(new Callable() {
-          @Override
-          public Object call() throws Exception {
-            return wrapped.commit(iTx);
-          }
-        });
-      } else {
-        // EXECUTE DISTRIBUTED TX
-        int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
-        if (maxAutoRetry <= 0)
-          maxAutoRetry = 1;
-
-        int autoRetryDelay = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
-        if (autoRetryDelay <= 0)
-          autoRetryDelay = 1;
-
-        Throwable lastException = null;
-        for (int retry = 1; retry <= maxAutoRetry; ++retry) {
-
-          try {
-
-            final List<ORecordOperation> result = txManager.commit(ODatabaseRecordThreadLocal.instance().get(), iTx, eventListener);
-
-            if (result != null) {
-              for (ORecordOperation r : result) {
-                // UPDATE LOCAL CONTENT IN LOCKS TO ASSURE READ MY WRITES IF THE REQUEST IS STILL RUNNING
-                localDistributedDatabase.replaceRecordContentIfLocked(r.getRID(), r.getRecord().toStream());
-              }
-            }
-
-            return result;
-
-          } catch (Exception e) {
-            lastException = e;
-
-            if (retry >= maxAutoRetry) {
-              // REACHED MAX RETRIES
-              ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                  "Distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
-              break;
-            }
-
-            // SKIP RETRY IN CASE OF OConcurrentModificationException BECAUSE IT NEEDS A RETRY AT APPLICATION LEVEL
-            if (!(e instanceof OConcurrentModificationException) && (e instanceof ONeedRetryException
-                || e instanceof ORecordNotFoundException) && !(e instanceof ODistributedRedirectException)) {
-              // RETRY
-              final long wait = autoRetryDelay / 2 + new Random().nextInt(autoRetryDelay);
-
-              ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                  "Distributed transaction cannot be completed, wait %dms and retry again (%d/%d)", wait, retry, maxAutoRetry);
-
-              Thread.sleep(wait);
-
-              Orient.instance().getProfiler().updateCounter("db." + getName() + ".distributedTxRetries",
-                  "Number of retries executed in distributed transaction", +1, "db.*.distributedTxRetries");
-
-            } else
-              // SKIP RETRY LOOP
-              break;
-          }
-        }
-
-        if (lastException instanceof RuntimeException)
-          throw (RuntimeException) lastException;
-        else
-          throw OException.wrapException(new ODistributedException("Error on executing distributed transaction"), lastException);
-      }
-
-    } catch (OValidationException e) {
-      throw e;
-    } catch (HazelcastInstanceNotActiveException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } catch (HazelcastException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } catch (Exception e) {
-      handleDistributedException("Cannot route TX operation against distributed node", e);
-    }
-
-    return null;
+    return wrapped.commit(iTx);
   }
 
   protected ODistributedRequestId acquireRecordLock(final ORecordId rid) {
@@ -1256,7 +1152,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public OStorageConfigurationImpl getConfiguration() {
+  public OStorageConfiguration getConfiguration() {
     return wrapped.getConfiguration();
   }
 
@@ -1354,15 +1250,113 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   @Override
   public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
-    return wrapped.addCluster(iClusterName, iRequestedId, iParameters);
+    resetLastValidBackup();
+    for (int retry = 0; retry < 10; ++retry) {
+      final AtomicInteger clId = new AtomicInteger();
+
+      if (!isLocalEnv()) {
+
+        final StringBuilder cmd = new StringBuilder("create cluster `");
+        cmd.append(iClusterName);
+        cmd.append("`");
+        cmd.append(" ID ");
+        cmd.append(iRequestedId);
+
+        // EXECUTE THIS OUTSIDE LOCK TO AVOID DEADLOCKS
+        Object result = null;
+        try {
+          result = dManager
+              .executeInDistributedDatabaseLock(getName(), 20000, dManager.getDatabaseConfiguration(getName()).modify(),
+                  new OCallable<Object, OModifiableDistributedConfiguration>() {
+                    @Override
+                    public Object call(OModifiableDistributedConfiguration iArgument) {
+                      clId.set(wrapped.addCluster(iClusterName, iRequestedId, iParameters));
+
+                      final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
+                      commandSQL.addExcludedNode(getNodeId());
+                      return command(commandSQL);
+                    }
+                  });
+        } catch (Exception e) {
+          // RETRY
+          wrapped.dropCluster(iClusterName, false);
+
+          try {
+            Thread.sleep(300);
+          } catch (InterruptedException e2) {
+          }
+
+          continue;
+        }
+
+        if (result != null && ((Integer) result).intValue() != clId.get()) {
+          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+              "Error on creating cluster '%s' on distributed nodes: ids are different (local=%d and remote=%d). Local clusters %s. Retrying %d/%d...",
+              iClusterName, clId.get(), ((Integer) result).intValue(), getClusterNames(), retry, 10);
+
+          wrapped.dropCluster(clId.get(), false);
+
+          // REMOVE ON REMOTE NODES TOO
+          cmd.setLength(0);
+          cmd.append("drop cluster ");
+          cmd.append(iClusterName);
+
+          final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
+          commandSQL.addExcludedNode(getNodeId());
+          command(commandSQL);
+
+          try {
+            Thread.sleep(300);
+          } catch (InterruptedException e) {
+          }
+
+          wrapped.reload(); // TODO: RELOAD DOESN'T DO ANYTHING WHILE HERE IT'S NEEDED A WAY TO CLOSE/OPEN THE DB
+          continue;
+        }
+      } else
+        clId.set(wrapped.addCluster(iClusterName, iRequestedId, iParameters));
+      return clId.get();
+    }
+
+    throw new ODistributedException(
+        "Error on creating cluster '" + iClusterName + "' on distributed nodes: local and remote ids assigned are different");
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
-    return wrapped.dropCluster(iClusterName, iTruncate);
+    resetLastValidBackup();
+    final AtomicBoolean clId = new AtomicBoolean();
+
+    if (!isLocalEnv()) {
+
+      final StringBuilder cmd = new StringBuilder();
+      if (iTruncate) {
+        cmd.append("truncate cluster `");
+      } else {
+        cmd.append("create cluster `");
+      }
+      cmd.append(iClusterName);
+      cmd.append("`");
+
+      // EXECUTE THIS OUTSIDE LOCK TO AVOID DEADLOCKS
+      dManager.executeInDistributedDatabaseLock(getName(), 20000, dManager.getDatabaseConfiguration(getName()).modify(),
+          new OCallable<Object, OModifiableDistributedConfiguration>() {
+            @Override
+            public Object call(OModifiableDistributedConfiguration iArgument) {
+              clId.set(wrapped.dropCluster(iClusterName, iTruncate));
+
+              final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
+              commandSQL.addExcludedNode(getNodeId());
+              return command(commandSQL);
+            }
+          });
+      return clId.get();
+    } else
+      return wrapped.dropCluster(iClusterName, iTruncate);
   }
 
   @Override
   public boolean dropCluster(final int iId, final boolean iTruncate) {
+    resetLastValidBackup();
     return wrapped.dropCluster(iId, iTruncate);
   }
 
@@ -1730,9 +1724,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new UnsupportedOperationException("Storage engine " + wrapped.getType() + " does not support freeze operation");
   }
 
-  private void resetLastValidBackup() {
-    if (lastValidBackup != null) {
-      lastValidBackup = null;
+  public void resetLastValidBackup() {
+    File backupFile = lastValidBackup;
+    lastValidBackup = null;
+    if (backupFile != null) {
+      if (backupFile.exists()) {
+        backupFile.delete();
+      }
     }
   }
 
@@ -1937,11 +1935,82 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     return new File(serverInstance.getDatabaseDirectory() + getName() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
   }
 
-  public ODistributedTransactionManager getTxManager() {
-    return txManager;
-  }
-
   public ODistributedDatabase getLocalDistributedDatabase() {
     return localDistributedDatabase;
+  }
+
+  @Override
+  public void setSchemaRecordId(String schemaRecordId) {
+    wrapped.setSchemaRecordId(schemaRecordId);
+  }
+
+  @Override
+  public void setDateFormat(String dateFormat) {
+    wrapped.setDateFormat(dateFormat);
+  }
+
+  @Override
+  public void setTimeZone(TimeZone timeZoneValue) {
+    wrapped.setTimeZone(timeZoneValue);
+  }
+
+  @Override
+  public void setLocaleLanguage(String locale) {
+    wrapped.setLocaleLanguage(locale);
+  }
+
+  @Override
+  public void setCharset(String charset) {
+    wrapped.setCharset(charset);
+  }
+
+  @Override
+  public void setIndexMgrRecordId(String indexMgrRecordId) {
+    wrapped.setIndexMgrRecordId(indexMgrRecordId);
+  }
+
+  @Override
+  public void setDateTimeFormat(String dateTimeFormat) {
+    wrapped.setDateTimeFormat(dateTimeFormat);
+  }
+
+  @Override
+  public void setLocaleCountry(String localeCountry) {
+    wrapped.setLocaleCountry(localeCountry);
+  }
+
+  @Override
+  public void setClusterSelection(String clusterSelection) {
+    wrapped.setClusterSelection(clusterSelection);
+  }
+
+  @Override
+  public void setMinimumClusters(int minimumClusters) {
+    wrapped.setMinimumClusters(minimumClusters);
+  }
+
+  @Override
+  public void setValidation(boolean validation) {
+    wrapped.setValidation(validation);
+  }
+
+  @Override
+  public void removeProperty(String property) {
+    wrapped.removeProperty(property);
+  }
+
+  @Override
+  public void setProperty(String property, String value) {
+    wrapped.setProperty(property, value);
+  }
+
+  @Override
+  public void setRecordSerializer(String recordSerializer, int version) {
+    wrapped.setRecordSerializer(recordSerializer, version);
+  }
+
+  @Override
+  public void clearProperties() {
+    wrapped.clearProperties();
   }
 }

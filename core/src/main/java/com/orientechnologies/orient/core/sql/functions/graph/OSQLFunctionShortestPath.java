@@ -78,7 +78,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     source = OSQLHelper.getValue(source, record, iContext);
     if (source instanceof OIdentifiable) {
       OElement elem = ((OIdentifiable) source).getRecord();
-      if (!elem.isVertex()) {
+      if (elem == null || !elem.isVertex()) {
         throw new IllegalArgumentException("The sourceVertex must be a vertex record");
       }
       ctx.sourceVertex = elem.asVertex().get();
@@ -98,7 +98,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
     dest = OSQLHelper.getValue(dest, record, iContext);
     if (dest instanceof OIdentifiable) {
       OElement elem = ((OIdentifiable) dest).getRecord();
-      if (!elem.isVertex()) {
+      if (elem == null || !elem.isVertex()) {
         throw new IllegalArgumentException("The destinationVertex must be a vertex record");
       }
       ctx.destinationVertex = elem.asVertex().get();

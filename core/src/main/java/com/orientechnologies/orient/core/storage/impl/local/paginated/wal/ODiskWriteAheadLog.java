@@ -592,8 +592,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         }
       }
 
-      if (walSizeHardLimit < 0 && freeSpace > -1) {
-        walSizeLimit += (logSize + freeSpace) / 2;
+      if (walSizeHardLimit < 0 && freeSpace > freeSpaceLimit) {
+        walSizeLimit = logSize + freeSpace / 2;
       }
 
       if (walSizeLimit > -1 && logSize > walSizeLimit && logSegments.size() > 1) {
@@ -915,7 +915,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       for (int i = 0; i < logSegments.size() - 1; i++) {
         final OLogSegment logSegment = logSegments.get(i);
 
-        if (logSegment.end().compareTo(lsn) < 0)
+        OLogSequenceNumber end = logSegment.end();
+        if (end != null && end.compareTo(lsn) < 0)
           lastTruncateIndex = i;
         else
           break;
@@ -981,21 +982,13 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    while (true) {
-      final Integer oldCounter = cutTillLimits.get(lsn);
+    syncObject.lock();
+    try {
 
-      final Integer newCounter;
+      cutTillLimits.merge(lsn, 1, (a, b) -> a + b);
 
-      if (oldCounter == null) {
-        if (cutTillLimits.putIfAbsent(lsn, 1) == null)
-          break;
-      } else {
-        newCounter = oldCounter + 1;
-
-        if (cutTillLimits.replace(lsn, oldCounter, newCounter)) {
-          break;
-        }
-      }
+    } finally {
+      syncObject.unlock();
     }
   }
 
@@ -1004,23 +997,23 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     if (lsn == null)
       throw new NullPointerException();
 
-    while (true) {
+    syncObject.lock();
+    try {
       final Integer oldCounter = cutTillLimits.get(lsn);
-
       if (oldCounter == null)
         throw new IllegalArgumentException(String.format("Limit %s is going to be removed but it was not added", lsn));
 
       final Integer newCounter = oldCounter - 1;
-      if (cutTillLimits.replace(lsn, oldCounter, newCounter)) {
-        if (newCounter == 0) {
-          cutTillLimits.remove(lsn, newCounter);
-        }
 
-        break;
+      if (newCounter == 0) {
+        cutTillLimits.remove(lsn);
+      } else {
+        cutTillLimits.put(lsn, newCounter);
       }
+    } finally {
+      syncObject.unlock();
     }
   }
-
   private OLogSegment removeHeadSegmentFromList() {
     if (logSegments.size() < 2)
       return null;

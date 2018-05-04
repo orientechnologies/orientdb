@@ -66,8 +66,8 @@ public class LuceneContextTest extends BaseLuceneTest {
     Assert.assertEquals(docs.size(), 1);
 
     ODocument doc = docs.iterator().next();
-    Assert.assertEquals(14, doc.<Object>field("$totalHits"));
-    Assert.assertEquals(14, doc.<Object>field("$Song_title_totalHits"));
+    Assert.assertEquals(new Long(14), doc.<Long>field("$totalHits"));
+    Assert.assertEquals(new Long(14), doc.<Long>field("$Song_title_totalHits"));
 
   }
 

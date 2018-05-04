@@ -39,7 +39,9 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
 
+import static com.orientechnologies.orient.client.remote.OStorageRemote.ADDRESS_SEPARATOR;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_LOCK_TIMEOUT;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_SOCKET_RETRY;
 
 /**
  * Created by tglman on 08/04/16.
@@ -63,7 +65,7 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   private String buildUrl(String name) {
-    return String.join(",", hosts) + "/" + name;
+    return String.join(ADDRESS_SEPARATOR, hosts) + "/" + name;
   }
 
   public ODatabaseDocumentInternal open(String name, String user, String password) {
@@ -171,16 +173,25 @@ public class OrientDBRemote implements OrientDBInternal {
   private <T> T connectEndExecute(String name, String user, String password, Operation<T> operation) {
     checkOpen();
     OServerAdmin admin = null;
-    try {
-      admin = new OServerAdmin(buildUrl(name));
-      admin.connect(user, password);
-      return operation.execute(admin);
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error createing remote database "), e);
-    } finally {
-      if (admin != null)
-        admin.close();
+    int retry = configurations.getConfigurations().getValueAsInteger(NETWORK_SOCKET_RETRY);
+    while (retry > 0) {
+      try {
+        admin = new OServerAdmin(this, buildUrl(name));
+        admin.connect(user, password);
+        return operation.execute(admin);
+      } catch (IOException e) {
+        retry--;
+        if (retry == 0)
+          throw OException
+              .wrapException(new ODatabaseException("Reached maximum retry limit on admin operations, the server may be offline"),
+                  e);
+      } finally {
+        if (admin != null)
+          admin.close();
+      }
     }
+    // SHOULD NEVER REACH THIS POINT
+    throw new ODatabaseException("Reached maximum retry limit on admin operations, the server may be offline");
   }
 
   @Override
@@ -233,17 +244,23 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   @Override
-  public synchronized void close() {
+  public void close() {
     if (!open)
       return;
     removeShutdownHook();
     internalClose();
   }
 
-  public synchronized void internalClose() {
+  public void internalClose() {
     if (!open)
       return;
-    final List<OStorageRemote> storagesCopy = new ArrayList<>(storages.values());
+    final List<OStorageRemote> storagesCopy;
+    synchronized (this) {
+      // SHUTDOWN ENGINES AVOID OTHER OPENS
+      open = false;
+      storagesCopy = new ArrayList<>(storages.values());
+    }
+
     for (OStorageRemote stg : storagesCopy) {
       try {
         ODatabaseDocumentRemote.deInit(stg);
@@ -256,12 +273,11 @@ public class OrientDBRemote implements OrientDBInternal {
         throw e;
       }
     }
-    storages.clear();
+    synchronized (this) {
+      storages.clear();
 
-    connectionManager.close();
-
-    // SHUTDOWN ENGINES
-    open = false;
+      connectionManager.close();
+    }
   }
 
   private OrientDBConfig solveConfig(OrientDBConfig config) {

@@ -385,5 +385,50 @@ public class OBinaryCondition extends OBooleanExpression {
     return left.isCacheable() && right.isCacheable();
   }
 
+  @Override
+  public OBooleanExpression rewriteIndexChainsAsSubqueries(OCommandContext ctx, OClass clazz) {
+    if (operator instanceof OEqualsCompareOperator && right.isEarlyCalculated() && left.isIndexChain(ctx, clazz)) {
+      OInCondition result = new OInCondition(-1);
+
+      result.left = new OExpression(-1);
+      OBaseExpression base = new OBaseExpression(-1);
+      base.identifier = new OBaseIdentifier(-1);
+      base.identifier.suffix = new OSuffixIdentifier(-1);
+      base.identifier.suffix.identifier = ((OBaseExpression) left.mathExpression).identifier.suffix.identifier;
+      result.left.mathExpression = base;
+
+      result.operator = new OInOperator(-1);
+
+      OClass nextClazz = clazz.getProperty(base.identifier.suffix.identifier.getStringValue()).getLinkedClass();
+      result.rightStatement = indexChainToStatement(((OBaseExpression) left.mathExpression).modifier, nextClazz, right, ctx);
+      return result;
+    }
+    return this;
+  }
+
+  private OSelectStatement indexChainToStatement(OModifier modifier, OClass clazz, OExpression right, OCommandContext ctx) {
+    OClass queryClass = clazz;
+
+    OSelectStatement result = new OSelectStatement(-1);
+    result.target = new OFromClause(-1);
+    result.target.setItem(new OFromItem(-1));
+    result.target.getItem().identifier = new OIdentifier(queryClass.getName());
+
+    result.whereClause = new OWhereClause(-1);
+    OBinaryCondition base = new OBinaryCondition(-1);
+    result.whereClause.baseExpression = new ONotBlock(-1);
+    ((ONotBlock) result.whereClause.baseExpression).sub = base;
+    ((ONotBlock) result.whereClause.baseExpression).negate = false;
+
+    base.left = new OExpression(-1);
+    base.left.mathExpression = new OBaseExpression(-1);
+    ((OBaseExpression) base.left.mathExpression).identifier = new OBaseIdentifier(modifier.suffix.identifier);
+    ((OBaseExpression) base.left.mathExpression).modifier = modifier.next == null ? null : modifier.next.copy();
+
+    base.operator = new OEqualsCompareOperator(-1);
+    base.right = right.copy();
+
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

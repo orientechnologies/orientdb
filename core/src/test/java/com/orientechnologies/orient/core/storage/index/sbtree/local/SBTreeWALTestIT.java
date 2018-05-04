@@ -323,9 +323,10 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
         }
         atomicUnit.clear();
       } else {
-        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof ONonTxOperationPerformedWALRecord
-            || walRecord instanceof OFileCreatedWALRecord || walRecord instanceof OFuzzyCheckpointStartRecord
-            || walRecord instanceof OFuzzyCheckpointEndRecord);
+        Assert.assertTrue("WAL record type is " + walRecord.getClass().getName(),
+            walRecord instanceof OUpdatePageRecord || walRecord instanceof ONonTxOperationPerformedWALRecord
+                || walRecord instanceof OFileCreatedWALRecord || walRecord instanceof OFuzzyCheckpointStartRecord
+                || walRecord instanceof OFuzzyCheckpointEndRecord);
       }
 
       lsn = log.next(lsn);

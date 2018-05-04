@@ -21,16 +21,10 @@ package com.orientechnologies.orient.core.query.live;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -38,9 +32,12 @@ import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
-public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabaseListener {
+public class OLiveQueryHookV2 {
 
   public static class OLiveQueryOp {
     public    OResult   before;
@@ -59,8 +56,11 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
   public static class OLiveQueryOps implements OCloseable {
 
     protected Map<ODatabaseDocument, List<OLiveQueryOp>> pendingOps  = new ConcurrentHashMap<ODatabaseDocument, List<OLiveQueryOp>>();
-    private   OLiveQueryQueueThreadV2                    queueThread = new OLiveQueryQueueThreadV2();
+    private   OLiveQueryQueueThreadV2                    queueThread = new OLiveQueryQueueThreadV2(this);
     private   Object                                     threadLock  = new Object();
+
+    private BlockingQueue<OLiveQueryOp>                  queue       = new LinkedBlockingQueue<OLiveQueryOp>();
+    private ConcurrentMap<Integer, OLiveQueryListenerV2> subscribers = new ConcurrentHashMap<Integer, OLiveQueryListenerV2>();
 
     @Override
     public void close() {
@@ -76,11 +76,34 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     public OLiveQueryQueueThreadV2 getQueueThread() {
       return queueThread;
     }
-  }
 
-  public OLiveQueryHookV2(ODatabaseDocumentInternal db) {
-    super(db);
-    db.registerListener(this);
+    public Map<Integer, OLiveQueryListenerV2> getSubscribers() {
+      return subscribers;
+    }
+
+    public BlockingQueue<OLiveQueryOp> getQueue() {
+      return queue;
+    }
+
+    public void enqueue(OLiveQueryHookV2.OLiveQueryOp item) {
+      queue.offer(item);
+    }
+
+    public Integer subscribe(Integer id, OLiveQueryListenerV2 iListener) {
+      subscribers.put(id, iListener);
+      return id;
+    }
+
+    public void unsubscribe(Integer id) {
+      OLiveQueryListenerV2 res = subscribers.remove(id);
+      if (res != null) {
+        res.onLiveResultEnd();
+      }
+    }
+
+    public boolean hasListeners() {
+      return !subscribers.isEmpty();
+    }
   }
 
   public static OLiveQueryOps getOpsReference(ODatabaseInternal db) {
@@ -102,7 +125,7 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
       }
     }
 
-    return ops.queueThread.subscribe(token, iListener);
+    return ops.subscribe(token, iListener);
   }
 
   public static void unsubscribe(Integer id, ODatabaseInternal db) {
@@ -115,129 +138,47 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     try {
       OLiveQueryOps ops = getOpsReference(db);
       synchronized (ops.threadLock) {
-        ops.queueThread.unsubscribe(id);
+        ops.unsubscribe(id);
       }
     } catch (Exception e) {
       OLogManager.instance().warn(OLiveQueryHookV2.class, "Error on unsubscribing client", e);
     }
   }
 
-  @Override
-  public void onCreate(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onDelete(ODatabase iDatabase) {
+  public static void notifyForTxChanges(ODatabaseDocument database) {
     if (Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
       return;
-    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
-    synchronized (ops.pendingOps) {
-      ops.pendingOps.remove(iDatabase);
-    }
-  }
-
-  @Override
-  public void onOpen(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onBeforeTxBegin(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onBeforeTxRollback(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onAfterTxRollback(ODatabase iDatabase) {
-    if (Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
-      return;
-    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
-    synchronized (ops.pendingOps) {
-      ops.pendingOps.remove(iDatabase);
-    }
-  }
-
-  @Override
-  public void onBeforeTxCommit(ODatabase iDatabase) {
-
-  }
-
-  @Override
-  public void onAfterTxCommit(ODatabase iDatabase) {
-    if (Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
-      return;
-    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
+    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) database);
     List<OLiveQueryOp> list;
     synchronized (ops.pendingOps) {
-      list = ops.pendingOps.remove(iDatabase);
+      list = ops.pendingOps.remove(database);
     }
     // TODO sync
     if (list != null) {
       for (OLiveQueryOp item : list) {
         item.originalDoc = item.originalDoc.copy();
-        ops.queueThread.enqueue(item);
+        ops.enqueue(item);
       }
     }
   }
 
-  @Override
-  public void onClose(ODatabase iDatabase) {
+  public static void removePendingDatabaseOps(ODatabaseDocument database) {
     if (Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
       return;
-    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
+    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) database);
     synchronized (ops.pendingOps) {
-      ops.pendingOps.remove(iDatabase);
+      ops.pendingOps.remove(database);
     }
   }
 
-  @Override
-  public void onBeforeCommand(OCommandRequestText iCommand, OCommandExecutor executor) {
-
-  }
-
-  @Override
-  public void onAfterCommand(OCommandRequestText iCommand, OCommandExecutor executor, Object result) {
-
-  }
-
-  @Override
-  public void onRecordAfterCreate(ODocument iDocument) {
-    addOp(iDocument, ORecordOperation.CREATED);
-  }
-
-  @Override
-  public void onRecordAfterUpdate(ODocument iDocument) {
-    addOp(iDocument, ORecordOperation.UPDATED);
-  }
-
-  @Override
-  public RESULT onRecordBeforeDelete(ODocument iDocument) {
-    addOp(iDocument, ORecordOperation.DELETED);
-    return RESULT.RECORD_NOT_CHANGED;
-  }
-
-  protected void addOp(ODocument iDocument, byte iType) {
+  public static void addOp(ODocument iDocument, byte iType, ODatabaseDocument database) {
     if (Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
       return;
     ODatabaseDocument db = database;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) db);
-    if (!ops.queueThread.hasListeners())
+    if (!ops.hasListeners())
       return;
-    if (db.getTransaction() == null || !db.getTransaction().isActive()) {
 
-      // TODO synchronize
-      OResult before = iType == ORecordOperation.CREATED ? null : calculateBefore(iDocument);
-      OResult after = iType == ORecordOperation.DELETED ? null : calculateAfter(iDocument);
-      OLiveQueryOp op = new OLiveQueryOp(iDocument.copy(), before, after, iType);
-
-      ops.queueThread.enqueue(op);
-      return;
-    }
     OResult before = iType == ORecordOperation.CREATED ? null : calculateBefore(iDocument);
     OResult after = iType == ORecordOperation.DELETED ? null : calculateAfter(iDocument);
 
@@ -261,7 +202,7 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     }
   }
 
-  private OLiveQueryOp prevousUpdate(List<OLiveQueryOp> list, ODocument doc) {
+  private static OLiveQueryOp prevousUpdate(List<OLiveQueryOp> list, ODocument doc) {
     for (OLiveQueryOp oLiveQueryOp : list) {
       if (oLiveQueryOp.originalDoc == doc) {
         return oLiveQueryOp;
@@ -270,7 +211,7 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     return null;
   }
 
-  private OResultInternal calculateBefore(ODocument iDocument) {
+  private static OResultInternal calculateBefore(ODocument iDocument) {
     OResultInternal result = new OResultInternal();
     for (String prop : iDocument.getPropertyNames()) {
       result.setProperty(prop, iDocument.getProperty(prop));
@@ -284,7 +225,7 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     return result;
   }
 
-  private OResultInternal calculateAfter(ODocument iDocument) {
+  private static OResultInternal calculateAfter(ODocument iDocument) {
     OResultInternal result = new OResultInternal();
     for (String prop : iDocument.getPropertyNames()) {
       result.setProperty(prop, iDocument.getProperty(prop));
@@ -293,10 +234,5 @@ public class OLiveQueryHookV2 extends ODocumentHookAbstract implements ODatabase
     result.setProperty("@class", iDocument.getClassName());
     result.setProperty("@version", iDocument.getVersion() + 1);
     return result;
-  }
-
-  @Override
-  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.BOTH;
   }
 }

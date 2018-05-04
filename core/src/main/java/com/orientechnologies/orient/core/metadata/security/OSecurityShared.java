@@ -38,16 +38,13 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser.STATUSES;
+import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -397,9 +394,10 @@ public class OSecurityShared implements OSecurity, OCloseable {
     readerRole.save();
 
     // This will return the global value if a local storage context configuration value does not exist.
-    boolean createDefUsers = getDatabase().getStorage().getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
+    boolean createDefUsers = getDatabase().getStorage().getConfiguration().getContextConfiguration()
+        .getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
 
-    if(createDefUsers)
+    if (createDefUsers)
       createUser("reader", "reader", new String[] { readerRole.getName() });
 
     final ORole writerRole = createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
@@ -415,11 +413,14 @@ public class OSecurityShared implements OSecurity, OCloseable {
     writerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
     writerRole.addRule(ORule.ResourceGeneric.RECORD_HOOK, null, ORole.PERMISSION_ALL);
     writerRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.CLASS, OSequence.CLASS_NAME, ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.CLASS, "OTriggered", ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.CLASS, "OSchedule", ORole.PERMISSION_READ);
     writerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
     writerRole.save();
 
-    if(createDefUsers)
-	   createUser("writer", "writer", new String[] { writerRole.getName() });
+    if (createDefUsers)
+      createUser("writer", "writer", new String[] { writerRole.getName() });
 
     return adminUser;
   }
@@ -452,9 +453,10 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
     if (adminUser == null) {
       // This will return the global value if a local storage context configuration value does not exist.
-      boolean createDefUsers = getDatabase().getStorage().getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
+      boolean createDefUsers = getDatabase().getStorage().getConfiguration().getContextConfiguration()
+          .getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
 
-      if(createDefUsers) {
+      if (createDefUsers) {
         adminUser = createUser(OUser.ADMIN, OUser.ADMIN, adminRole);
       }
     }
@@ -602,6 +604,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return this;
   }
 
+  @Override
   public OUser getUser(final String iUserName) {
     List<ODocument> result = getDatabase().<OCommandRequest>command(
         new OSQLSynchQuery<ODocument>("select from OUser where name = ? limit 1").setFetchPlan("roles:1")).execute(iUserName);

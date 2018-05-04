@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializer;
 import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorDivide;
@@ -72,7 +73,7 @@ public abstract class OQueryOperator {
    * PERFORMANCE (MOST USED BEFORE)
    */
   protected static final Class<?>[] DEFAULT_OPERATORS_ORDER = { OQueryOperatorEquals.class, OQueryOperatorAnd.class,
-      OQueryOperatorOr.class, OQueryOperatorNotEquals.class, OQueryOperatorNot.class, OQueryOperatorMinorEquals.class,
+      OQueryOperatorOr.class, OQueryOperatorNotEquals.class, OQueryOperatorNotEquals2.class, OQueryOperatorNot.class, OQueryOperatorMinorEquals.class,
       OQueryOperatorMinor.class, OQueryOperatorMajorEquals.class, OQueryOperatorContainsAll.class, OQueryOperatorMajor.class,
       OQueryOperatorLike.class, OQueryOperatorMatches.class, OQueryOperatorInstanceof.class, OQueryOperatorIs.class,
       OQueryOperatorIn.class, OQueryOperatorContainsKey.class, OQueryOperatorContainsValue.class, OQueryOperatorContainsText.class,
@@ -103,7 +104,8 @@ public abstract class OQueryOperator {
   }
 
   public abstract Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult,
-      final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight, OCommandContext iContext);
+      final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight, 
+      OCommandContext iContext, final ODocumentSerializer serializer);
 
   /**
    * Returns hint how index can be used to calculate result of operator execution.

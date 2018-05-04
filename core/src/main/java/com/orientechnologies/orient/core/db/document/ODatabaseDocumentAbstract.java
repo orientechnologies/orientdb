@@ -84,26 +84,26 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected final Map<String, Object> properties = new HashMap<String, Object>();
-  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
-  protected ORecordSerializer    serializer;
-  protected String               url;
-  protected STATUS               status;
-  protected OIntent              currentIntent;
-  protected ODatabaseInternal<?> databaseOwner;
-  protected OMetadataDefault     metadata;
-  protected OImmutableUser       user;
+  protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
+  protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
+  protected       ORecordSerializer                           serializer;
+  protected       String                                      url;
+  protected       STATUS                                      status;
+  protected       OIntent                                     currentIntent;
+  protected       ODatabaseInternal<?>                        databaseOwner;
+  protected       OMetadataDefault                            metadata;
+  protected       OImmutableUser                              user;
   protected final byte                                        recordType    = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
-  protected OLocalRecordCache                localCache;
-  protected OCurrentStorageComponentsFactory componentsFactory;
-  protected boolean initialized = false;
-  protected OTransaction currentTx;
+  protected       OLocalRecordCache                           localCache;
+  protected       OCurrentStorageComponentsFactory            componentsFactory;
+  protected       boolean                                     initialized   = false;
+  protected       OTransaction                                currentTx;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected OSharedContext sharedContext;
+  protected       OSharedContext  sharedContext;
 
   private boolean prefetchRecords;
 
@@ -565,19 +565,20 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public void reloadUser() {
     if (user != null) {
       activateOnCurrentThread();
+      if (user.checkIfAllowed(ORule.ResourceGeneric.CLASS, OUser.CLASS_NAME, ORole.PERMISSION_READ) != null) {
+        OMetadata metadata = getMetadata();
 
-      OMetadata metadata = getMetadata();
+        if (metadata != null) {
+          final OSecurity security = metadata.getSecurity();
+          OUser secGetUser = security.getUser(user.getName());
 
-      if (metadata != null) {
-        final OSecurity security = metadata.getSecurity();
-        OUser secGetUser = security.getUser(user.getName());
-
-        if (secGetUser != null)
-          user = new OImmutableUser(security.getVersion(), secGetUser);
-        else
+          if (secGetUser != null)
+            user = new OImmutableUser(security.getVersion(), secGetUser);
+          else
+            user = new OImmutableUser(-1, new OUser());
+        } else
           user = new OImmutableUser(-1, new OUser());
-      } else
-        user = new OImmutableUser(-1, new OUser());
+      }
     }
   }
 
@@ -1288,7 +1289,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         }
 
         OFetchHelper.checkFetchPlanValid(fetchPlan);
-        if (callbackHooks(ORecordHook.TYPE.BEFORE_READ, record) == ORecordHook.RESULT.SKIP)
+        if (beforeReadOperations(record))
           return null;
 
         if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
@@ -1305,7 +1306,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
           record.lock(true);
         }
 
-        callbackHooks(ORecordHook.TYPE.AFTER_READ, record);
+        afterReadOperations(record);
         if (record instanceof ODocument)
           ODocumentInternal.checkClass((ODocument) record, this);
         return (RET) record;
@@ -1341,13 +1342,12 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       if (ORecordVersionHelper.isTombstone(iRecord.getVersion()))
         return (RET) iRecord;
 
-      if (callbackHooks(ORecordHook.TYPE.BEFORE_READ, iRecord) == ORecordHook.RESULT.SKIP)
+      if (beforeReadOperations(iRecord))
         return null;
 
       iRecord.fromStream(recordBuffer.buffer);
 
-      callbackHooks(ORecordHook.TYPE.AFTER_READ, iRecord);
-
+      afterReadOperations(iRecord);
       if (iUpdateCache)
         getLocalCache().updateRecord(iRecord);
 
@@ -1382,7 +1382,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     // if cluster id is not set yet try to find it out
     if (rid.getClusterId() <= ORID.CLUSTER_ID_INVALID && getStorage().isAssigningClusterIds()) {
       if (record instanceof ODocument) {
-        schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+        schemaClass = ODocumentInternal.getImmutableSchemaClass(this, ((ODocument) record));
         if (schemaClass != null) {
           if (schemaClass.isAbstract())
             throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
@@ -1402,7 +1402,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         }
       }
     } else if (record instanceof ODocument)
-      schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+      schemaClass = ODocumentInternal.getImmutableSchemaClass(this, ((ODocument) record));
     // If the cluster id was set check is validity
     if (rid.getClusterId() > ORID.CLUSTER_ID_INVALID) {
       if (schemaClass != null) {
@@ -1682,7 +1682,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public OEdge newEdge(OVertex from, OVertex to, String type) {
     OClass cl = getClass(type);
-    if (!cl.isEdgeType()) {
+    if (cl == null || !cl.isEdgeType()) {
       throw new IllegalArgumentException("" + type + " is not an edge class");
     }
     ODocument doc = new OEdgeDocument(cl);
@@ -1730,10 +1730,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
             throw new IllegalArgumentException("source vertex is invalid (rid=" + inVertex.getIdentity() + ")");
         }
 
-        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+        if (!ODocumentInternal.getImmutableSchemaClass(this, outDocument).isVertexType())
           throw new IllegalArgumentException("source record is not a vertex");
 
-        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+        if (!ODocumentInternal.getImmutableSchemaClass(this, outDocument).isVertexType())
           throw new IllegalArgumentException("destination record is not a vertex");
 
         OVertex to = inVertex;
@@ -2187,30 +2187,23 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       return this;
 
     if (!force && currentTx.amountOfNestedTxs() > 1) {
+      //This just do count down no real commit here
       currentTx.commit();
       return this;
     }
 
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : browseListeners())
+
+    try {
+      beforeCommitOperations();
+    } catch (OException e) {
       try {
-        listener.onBeforeTxCommit(this);
-      } catch (Exception e) {
-        OLogManager.instance()
-            .error(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit() `%08X`", e,
-                listener.getClass().getName(), System.identityHashCode(e));
-
-        try {
-          rollback(force);
-        } catch (Exception re) {
-          OLogManager.instance().error(this, "Exception during rollback `%08X`", re, System.identityHashCode(re));
-        }
-
-        throw OException.wrapException(new OTransactionException(
-            "Cannot commit the transaction: caught exception on execution of " + listener.getClass().getName()
-                + "#onBeforeTxCommit()"), e);
+        rollback(force);
+      } catch (Exception re) {
+        OLogManager.instance().error(this, "Exception during rollback `%08X`", re, System.identityHashCode(re));
       }
-
+      throw e;
+    }
     try {
       currentTx.commit(force);
     } catch (RuntimeException e) {
@@ -2221,12 +2214,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         OLogManager.instance().error(this, "Error on transaction commit `%08X`", e, System.identityHashCode(e));
 
       // WAKE UP ROLLBACK LISTENERS
-      for (ODatabaseListener listener : browseListeners())
-        try {
-          listener.onBeforeTxRollback(this);
-        } catch (Exception t) {
-          OLogManager.instance().error(this, "Error before transaction rollback `%08X`", t, System.identityHashCode(t));
-        }
+      beforeRollbackOperations();
 
       try {
         // ROLLBACK TX AT DB LEVEL
@@ -2238,16 +2226,31 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       getLocalCache().clear();
 
       // WAKE UP ROLLBACK LISTENERS
-      for (ODatabaseListener listener : browseListeners())
-        try {
-          listener.onAfterTxRollback(this);
-        } catch (Exception t) {
-          OLogManager.instance().error(this, "Error after transaction rollback `%08X`", t, System.identityHashCode(t));
-        }
+      afterRollbackOperations();
       throw e;
     }
 
     // WAKE UP LISTENERS
+    afterCommitOperations();
+
+    return this;
+  }
+
+  protected void beforeCommitOperations() {
+    for (ODatabaseListener listener : browseListeners())
+      try {
+        listener.onBeforeTxCommit(this);
+      } catch (Exception e) {
+        OLogManager.instance()
+            .error(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit() `%08X`", e,
+                listener.getClass().getName(), System.identityHashCode(e));
+        throw OException.wrapException(new OTransactionException(
+            "Cannot commit the transaction: caught exception on execution of " + listener.getClass().getName()
+                + "#onBeforeTxCommit()"), e);
+      }
+  }
+
+  protected void afterCommitOperations() {
     for (ODatabaseListener listener : browseListeners())
       try {
         listener.onAfterTxCommit(this);
@@ -2261,8 +2264,24 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         throw OException.wrapException(new OTransactionBlockedException(message), e);
 
       }
+  }
 
-    return this;
+  protected void beforeRollbackOperations() {
+    for (ODatabaseListener listener : browseListeners())
+      try {
+        listener.onBeforeTxRollback(this);
+      } catch (Exception t) {
+        OLogManager.instance().error(this, "Error before transaction rollback `%08X`", t, System.identityHashCode(t));
+      }
+  }
+
+  protected void afterRollbackOperations() {
+    for (ODatabaseListener listener : browseListeners())
+      try {
+        listener.onAfterTxRollback(this);
+      } catch (Exception t) {
+        OLogManager.instance().error(this, "Error after transaction rollback `%08X`", t, System.identityHashCode(t));
+      }
   }
 
   /**
@@ -2279,27 +2298,16 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (currentTx.isActive()) {
 
       if (!force && currentTx.amountOfNestedTxs() > 1) {
+        //This just decrement the counter no real rollback here
         currentTx.rollback();
         return this;
       }
 
       // WAKE UP LISTENERS
-      for (ODatabaseListener listener : browseListeners())
-        try {
-          listener.onBeforeTxRollback(this);
-        } catch (Exception t) {
-          OLogManager.instance().error(this, "Error before transactional rollback", t);
-        }
-
+      beforeRollbackOperations();
       currentTx.rollback(force, -1);
-
       // WAKE UP LISTENERS
-      for (ODatabaseListener listener : browseListeners())
-        try {
-          listener.onAfterTxRollback(this);
-        } catch (Exception t) {
-          OLogManager.instance().error(this, "Error after transaction rollback", t);
-        }
+      afterRollbackOperations();
     }
 
     getLocalCache().clear();
@@ -2678,7 +2686,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return result;
   }
 
-  public void queryStarted(String id, OResultSet rs) {
+  public synchronized void queryStarted(String id, OResultSet rs) {
     if (this.activeQueries.size() > 1 && this.activeQueries.size() % 10 == 0) {
       StringBuilder msg = new StringBuilder();
       msg.append("This database instance has ");
@@ -2693,11 +2701,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     this.activeQueries.put(id, rs);
   }
 
-  public void queryClosed(String id) {
+  public synchronized void queryClosed(String id) {
     this.activeQueries.remove(id);
   }
 
-  protected void closeActiveQueries() {
+  protected synchronized void closeActiveQueries() {
     while (activeQueries.size() > 0) {
       this.activeQueries.values().iterator().next().close();//the query automatically unregisters itself
     }

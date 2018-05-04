@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -661,6 +662,13 @@ public class OExpression extends SimpleNode {
     }
 
     return true;
+  }
+
+  public boolean isIndexChain(OCommandContext ctx, OClass clazz) {
+    if(mathExpression!=null){
+      return mathExpression.isIndexChain(ctx, clazz);
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

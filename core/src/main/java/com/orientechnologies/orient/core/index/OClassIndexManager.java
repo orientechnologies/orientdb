@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -39,11 +38,7 @@ import java.util.*;
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com), Artem Orobets
  */
-public class OClassIndexManager extends ODocumentHookAbstract {
-
-  public OClassIndexManager(ODatabaseDocument database) {
-    super(database);
-  }
+public class OClassIndexManager {
 
   public static class IndexChange {
     public final OIndex                             index;
@@ -59,42 +54,31 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     }
   }
 
-  @Override
-  public SCOPE[] getScopes() {
-    return new SCOPE[] { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
-  }
-
-  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.BOTH;
-  }
-
-  @Override
-  public void onRecordAfterCreate(ODocument document) {
+  public static void checkIndexesAfterCreate(ODocument document, ODatabaseDocumentInternal database) {
     document = checkForLoading(document);
     List<IndexChange> ops = new ArrayList<>();
 
-    processIndexOnCreate((ODatabaseDocumentInternal) database, document, ops);
+    processIndexOnCreate(database, document, ops);
     applyChanges(ops);
   }
 
   public static void processIndexOnCreate(ODatabaseDocumentInternal database, ODocument document, List<IndexChange> ops) {
-    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(document);
+    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(database, document);
     if (cls != null) {
       final Collection<OIndex<?>> indexes = cls.getRawIndexes();
       addIndexesEntries(database, document, indexes, ops);
     }
   }
 
-  @Override
-  public void onRecordAfterUpdate(ODocument iDocument) {
+  public static void checkIndexesAfterUpdate(ODocument iDocument, ODatabaseDocumentInternal database) {
     iDocument = checkForLoading(iDocument);
     List<IndexChange> changes = new ArrayList<>();
-    processIndexOnUpdate((ODatabaseDocumentInternal) database, iDocument, changes);
+    processIndexOnUpdate(database, iDocument, changes);
     applyChanges(changes);
   }
 
   public static void processIndexOnUpdate(ODatabaseDocumentInternal database, ODocument iDocument, List<IndexChange> changes) {
-    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
+    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(database, iDocument);
     if (cls == null) {
       return;
     }
@@ -113,10 +97,9 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     return ((OIndexManagerProxy) database.getMetadata().getIndexManager()).preProcessBeforeReturn(database, index);
   }
 
-  @Override
-  public void onRecordAfterDelete(final ODocument iDocument) {
+  public static void checkIndexesAfterDelete(ODocument iDocument, ODatabaseDocumentInternal database) {
     List<IndexChange> changes = new ArrayList<>();
-    processIndexOnDelete((ODatabaseDocumentInternal) database, iDocument, changes);
+    processIndexOnDelete(database, iDocument, changes);
     applyChanges(changes);
   }
 
@@ -398,7 +381,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   public static void processIndexOnDelete(ODatabaseDocumentInternal database, ODocument iDocument, List<IndexChange> changes) {
-    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
+    final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(database, iDocument);
     if (cls == null)
       return;
 

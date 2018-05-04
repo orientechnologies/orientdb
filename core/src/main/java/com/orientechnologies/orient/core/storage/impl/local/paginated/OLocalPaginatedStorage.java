@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
@@ -54,6 +53,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -197,18 +197,37 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           } catch (Exception e) {
             OLogManager.instance().error(this, "Error on callback invocation during backup", e);
           }
+        OLogSequenceNumber freezeLSN = null;
+        if (writeAheadLog != null) {
+          freezeLSN = writeAheadLog.begin();
+          writeAheadLog.addCutTillLimit(freezeLSN);
+        }
 
-        final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
         try {
-          return OZIPCompressionUtil
-              .compressDirectory(getStoragePath().toString(), bo, new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION },
-                  iOutput, compressionLevel);
+          final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
+          try {
+            try (ZipOutputStream zos = new ZipOutputStream(bo)) {
+              zos.setComment("OrientDB Backup executed on " + new Date());
+              zos.setLevel(compressionLevel);
+
+              final List<String> names = OZIPCompressionUtil.compressDirectory(getStoragePath().toString(), zos,
+                  new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION , ".lock"}, iOutput);
+              OPaginatedStorageDirtyFlag.addFileToArchive(zos, "dirty.fl");
+              names.add("dirty.fl");
+              return names;
+            }
+          } finally {
+            if (bufferSize > 0) {
+              bo.flush();
+              bo.close();
+            }
+          }
         } finally {
-          if (bufferSize > 0) {
-            bo.flush();
-            bo.close();
+          if (freezeLSN != null) {
+            writeAheadLog.removeCutTillLimit(freezeLSN);
           }
         }
+
       } finally {
         release();
       }
@@ -227,53 +246,53 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     try {
       if (!isClosed())
         close(true, false);
+      try {
+        stateLock.acquireWriteLock();
+        File dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
+        final File[] storageFiles = dbDir.listFiles();
+        if (storageFiles != null) {
+          // TRY TO DELETE ALL THE FILES
+          for (File f : storageFiles) {
+            // DELETE ONLY THE SUPPORTED FILES
+            for (String ext : ALL_FILE_EXTENSIONS)
+              if (f.getPath().endsWith(ext)) {
+                f.delete();
+                break;
+              }
+          }
+        }
 
-      OZIPCompressionUtil.uncompressDirectory(in, getStoragePath().toString(), iListener);
+        OZIPCompressionUtil.uncompressDirectory(in, getStoragePath().toString(), iListener);
 
-      final Path cacheStateFile = getStoragePath().resolve(O2QCache.CACHE_STATE_FILE);
-      if (Files.exists(cacheStateFile)) {
-        String message = "the cache state file (" + O2QCache.CACHE_STATE_FILE + ") is found in the backup, deleting the file";
-        OLogManager.instance().warn(this, message);
-        if (iListener != null)
-          iListener.onMessage('\n' + message);
-
-        try {
-          Files.deleteIfExists(cacheStateFile); // delete it, if it still exists
-        } catch (IOException e) {
-          message =
-              "unable to delete the backed up cache state file (" + O2QCache.CACHE_STATE_FILE + "), please delete it manually";
-          OLogManager.instance().warn(this, message, e);
+        final Path cacheStateFile = getStoragePath().resolve(O2QCache.CACHE_STATE_FILE);
+        if (Files.exists(cacheStateFile)) {
+          String message = "the cache state file (" + O2QCache.CACHE_STATE_FILE + ") is found in the backup, deleting the file";
+          OLogManager.instance().warn(this, message);
           if (iListener != null)
             iListener.onMessage('\n' + message);
-        }
-      }
 
-      if (callable != null)
-        try {
-          callable.call();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on calling callback on database restore", e);
+          try {
+            Files.deleteIfExists(cacheStateFile); // delete it, if it still exists
+          } catch (IOException e) {
+            message =
+                "unable to delete the backed up cache state file (" + O2QCache.CACHE_STATE_FILE + "), please delete it manually";
+            OLogManager.instance().warn(this, message, e);
+            if (iListener != null)
+              iListener.onMessage('\n' + message);
+          }
         }
+
+        if (callable != null)
+          try {
+            callable.call();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error on calling callback on database restore", e);
+          }
+      } finally {
+        stateLock.releaseWriteLock();
+      }
 
       open(null, null, new OContextConfiguration());
-    } catch (RuntimeException e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Error e) {
-      throw logAndPrepareForRethrow(e);
-    } catch (Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    }
-  }
-
-  @Override
-  public OStorageConfigurationImpl getConfiguration() {
-    try {
-      stateLock.acquireReadLock();
-      try {
-        return super.getConfiguration();
-      } finally {
-        stateLock.releaseReadLock();
-      }
     } catch (RuntimeException e) {
       throw logAndPrepareForRethrow(e);
     } catch (Error e) {
@@ -374,7 +393,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void preOpenSteps() throws IOException {
-    if (getConfiguration().binaryFormatVersion >= 11) {
+    if (configuration.getBinaryFormatVersion() >= 11) {
       if (dirtyFlag.exists())
         dirtyFlag.open();
       else {

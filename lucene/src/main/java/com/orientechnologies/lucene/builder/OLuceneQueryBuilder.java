@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.builder;
@@ -43,19 +43,20 @@ public class OLuceneQueryBuilder {
 
   private final boolean                allowLeadingWildcard;
   private final boolean                lowercaseExpandedTerms;
+  private final boolean                splitOnWhitespace;
   private final OLuceneAnalyzerFactory analyzerFactory;
 
   public OLuceneQueryBuilder(ODocument metadata) {
-    this(Optional.ofNullable(metadata.<Boolean>field("allowLeadingWildcard"))
-            .orElse(false),
-        Optional.ofNullable(metadata.<Boolean>field("lowercaseExpandedTerms"))
-            .orElse(true));
+    this(Optional.ofNullable(metadata.<Boolean>field("allowLeadingWildcard")).orElse(false),
+        Optional.ofNullable(metadata.<Boolean>field("lowercaseExpandedTerms")).orElse(true),
+        Optional.ofNullable(metadata.<Boolean>field("splitOnWhitespace")).orElse(true));
+
   }
 
-  public OLuceneQueryBuilder(boolean allowLeadingWildcard, boolean lowercaseExpandedTerms) {
+  public OLuceneQueryBuilder(boolean allowLeadingWildcard, boolean lowercaseExpandedTerms, boolean splitOnWhitespace) {
     this.allowLeadingWildcard = allowLeadingWildcard;
     this.lowercaseExpandedTerms = lowercaseExpandedTerms;
-
+    this.splitOnWhitespace = splitOnWhitespace;
     analyzerFactory = new OLuceneAnalyzerFactory();
   }
 
@@ -104,23 +105,22 @@ public class OLuceneQueryBuilder {
   private Query getQuery(OIndexDefinition index, String query, ODocument metadata, Analyzer queryAnalyzer, String[] fields,
       Map<String, OType> types) throws ParseException {
 
-    Map<String, Float> boost = Optional.ofNullable(metadata.<Map<String, Float>>getProperty("boost"))
-        .orElse(new HashMap<>());
+    Map<String, Float> boost = Optional.ofNullable(metadata.<Map<String, Float>>getProperty("boost")).orElse(new HashMap<>());
 
-    Analyzer analyzer = Optional.ofNullable(metadata.<Boolean>getProperty("customAnalysis"))
-        .filter(b -> b == true)
-        .map(b -> analyzerFactory.createAnalyzer(index, OLuceneAnalyzerFactory.AnalyzerKind.QUERY, metadata))
-        .orElse(queryAnalyzer);
+    Analyzer analyzer = Optional.ofNullable(metadata.<Boolean>getProperty("customAnalysis")).filter(b -> b == true)
+        .map(b -> analyzerFactory.createAnalyzer(index, OLuceneAnalyzerFactory.AnalyzerKind.QUERY, metadata)).orElse(queryAnalyzer);
 
     final OLuceneMultiFieldQueryParser queryParser = new OLuceneMultiFieldQueryParser(types, fields, analyzer, boost);
 
     queryParser.setAllowLeadingWildcard(
-        Optional.ofNullable(metadata.<Boolean>getProperty("allowLeadingWildcard"))
-            .orElse(allowLeadingWildcard));
+        Optional.ofNullable(metadata.<Boolean>getProperty("allowLeadingWildcard")).orElse(allowLeadingWildcard));
 
-    queryParser.setLowercaseExpandedTerms(
-        Optional.ofNullable(metadata.<Boolean>getProperty("lowercaseExpandedTerms"))
-            .orElse(lowercaseExpandedTerms));
+    queryParser.setSplitOnWhitespace(
+        Optional.ofNullable(metadata.<Boolean>getProperty("splitOnWhitespace")).orElse(splitOnWhitespace));
+    //  TODO   REMOVED
+    //    queryParser.setLowercaseExpandedTerms(
+    //        Optional.ofNullable(metadata.<Boolean>getProperty("lowercaseExpandedTerms"))
+    //            .orElse(lowercaseExpandedTerms));
 
     try {
       return queryParser.parse(query);

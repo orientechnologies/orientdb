@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 
 import java.io.IOException;
 
@@ -275,5 +276,10 @@ public class OOfflineCluster implements OCluster {
   @Override
   public void acquireAtomicExclusiveLock() {
     // do nothing, anyway there is no real data behind to lock it
+  }
+
+  @Override
+  public OClusterBrowsePage nextPage(long lastPosition) {
+    return null;
   }
 }

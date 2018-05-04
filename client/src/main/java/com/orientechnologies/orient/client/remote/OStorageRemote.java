@@ -91,7 +91,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private static final String        DEFAULT_HOST      = "localhost";
   private static final int           DEFAULT_PORT      = 2424;
   private static final int           DEFAULT_SSL_PORT  = 2434;
-  private static final String        ADDRESS_SEPARATOR = ";";
+  public static final  String        ADDRESS_SEPARATOR = ";";
   public static final  String        DRIVER_NAME       = "OrientDB Java";
   private static final String        LOCAL_IP          = "127.0.0.1";
   private static final String        LOCALHOST         = "localhost";
@@ -251,7 +251,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     String serverUrl = null;
     do {
-      session.commandExecuting = true;
       OChannelBinaryAsynchClient network = null;
 
       if (serverUrl == null)
@@ -273,6 +272,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       } while (network == null);
 
       try {
+        session.commandExecuting = true;
+
         // In case i do not have a token or i'm switching between server i've to execute a open operation.
         OStorageRemoteNodeSession nodeSession = session.getServerSession(network.getServerURL());
         if (nodeSession == null || !nodeSession.isValid()) {
@@ -297,6 +298,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       } catch (OTokenException | OTokenSecurityException e) {
         connectionManager.release(network);
         if (session.isStickToSession()) {
+          session.removeServerSession(network.getServerURL());
           throw OException.wrapException(new OStorageException(errorMessage), e);
         } else {
           session.removeServerSession(network.getServerURL());
@@ -396,6 +398,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         openRemoteDatabase();
 
         reload();
+        initPush(session);
 
         componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
@@ -488,6 +491,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public void shutdown() {
+    if (status == STATUS.CLOSED || status == STATUS.CLOSING)
+      return;
+
     stateLock.acquireWriteLock();
     try {
       if (status == STATUS.CLOSED)
@@ -851,7 +857,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public ORemoteQueryResult query(ODatabaseDocumentRemote db, String query, Object[] args) {
-    stickToSession();
     int recordsPerPage = OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
@@ -860,11 +865,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
+    stickToSession();
     return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
   public ORemoteQueryResult query(ODatabaseDocumentRemote db, String query, Map args) {
-    stickToSession();
     int recordsPerPage = OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
@@ -874,6 +879,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
+    stickToSession();
     return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
@@ -1044,11 +1050,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void removeClusterFromConfiguration(int iClusterId) {
     stateLock.acquireWriteLock();
     try {
-      // REMOVE THE CLUSTER LOCALLY
-      final OCluster cluster = clusters[iClusterId];
-      clusters[iClusterId] = null;
-      clusterMap.remove(cluster.getName());
-      configuration.dropCluster(iClusterId); // endResponse must be called before this line, which call updateRecord
+      // If this is false the clusters may be already update by a push
+      if (clusters.length > iClusterId && clusters[iClusterId] != null) {
+        // Remove cluster locally waiting for the push
+        final OCluster cluster = clusters[iClusterId];
+        clusters[iClusterId] = null;
+        clusterMap.remove(cluster.getName());
+        configuration.dropCluster(iClusterId); // endResponse must be called before this line, which call updateRecord
+      }
     } finally {
       stateLock.releaseWriteLock();
     }
@@ -1101,7 +1110,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         iClusterId = defaultClusterId;
 
       if (iClusterId >= clusters.length) {
+        stateLock.releaseReadLock();
         reload();
+        stateLock.acquireReadLock();
       }
 
       return clusters[iClusterId];
@@ -1393,9 +1404,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
 
-//    OCluster[] cl = response.getClusterIds();
-//    updateStorageInformations(cl);
-
     // READ CLUSTER CONFIGURATION
 //    updateClusterConfiguration(network.getServerURL(), response.getDistributedConfiguration());
 
@@ -1407,7 +1415,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       stateLock.releaseWriteLock();
     }
 
-    initPush(session);
   }
 
   private void initPush(OStorageRemoteSession session) {
@@ -1415,7 +1422,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       stateLock.acquireWriteLock();
       try {
         if (pushThread == null) {
-          pushThread = new OStorageRemotePushThread(this, getCurrentServerURL(), connectionRetryDelay);
+          pushThread = new OStorageRemotePushThread(this, getCurrentServerURL(), connectionRetryDelay,
+              configuration.getContextConfiguration().getValueAsLong(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT));
           pushThread.start();
           subscribeStorageConfiguration(session);
           subscribeDistributedConfiguration(session);
@@ -1784,24 +1792,29 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public void updateStorageConfiguration(OStorageConfiguration storageConfiguration) {
+    if (status != STATUS.OPEN)
+      return;
     stateLock.acquireWriteLock();
-    this.configuration = storageConfiguration;
-    OCluster[] clusters = new OCluster[storageConfiguration.getClusters().size()];
-    for (OStorageClusterConfiguration clusterConfig : storageConfiguration.getClusters()) {
-      if (clusterConfig != null) {
-        final OClusterRemote cluster = new OClusterRemote();
-        String clusterName = clusterConfig.getName();
-        final int clusterId = clusterConfig.getId();
-        if (clusterName != null) {
-          clusterName = clusterName.toLowerCase(Locale.ENGLISH);
-          cluster.configure(null, clusterId, clusterName);
-          if (clusterId >= clusters.length)
-            clusters = Arrays.copyOf(clusters, clusterId + 1);
-          clusters[clusterId] = cluster;
+    try {
+      if (status != STATUS.OPEN)
+        return;
+      this.configuration = storageConfiguration;
+      OCluster[] clusters = new OCluster[storageConfiguration.getClusters().size()];
+      for (OStorageClusterConfiguration clusterConfig : storageConfiguration.getClusters()) {
+        if (clusterConfig != null) {
+          final OClusterRemote cluster = new OClusterRemote();
+          String clusterName = clusterConfig.getName();
+          final int clusterId = clusterConfig.getId();
+          if (clusterName != null) {
+            clusterName = clusterName.toLowerCase(Locale.ENGLISH);
+            cluster.configure(null, clusterId, clusterName);
+            if (clusterId >= clusters.length)
+              clusters = Arrays.copyOf(clusters, clusterId + 1);
+            clusters[clusterId] = cluster;
+          }
         }
       }
-    }
-    try {
+
       this.clusters = clusters;
       clusterMap.clear();
       for (int i = 0; i < clusters.length; ++i) {
@@ -1884,26 +1897,30 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void addNewClusterToConfiguration(int clusterId, String iClusterName) {
     stateLock.acquireWriteLock();
     try {
-      final OClusterRemote cluster = new OClusterRemote();
-      cluster.configure(this, clusterId, iClusterName.toLowerCase(Locale.ENGLISH));
+      //If this if is false maybe the content was already update by the push
+      if (clusters.length <= clusterId || clusters[clusterId] == null) {
+        //Adding the cluster waiting for the push
+        final OClusterRemote cluster = new OClusterRemote();
+        cluster.configure(this, clusterId, iClusterName.toLowerCase(Locale.ENGLISH));
 
-      if (clusters.length <= clusterId)
-        clusters = Arrays.copyOf(clusters, clusterId + 1);
-      clusters[cluster.getId()] = cluster;
-      clusterMap.put(cluster.getName().toLowerCase(Locale.ENGLISH), cluster);
+        if (clusters.length <= clusterId)
+          clusters = Arrays.copyOf(clusters, clusterId + 1);
+        clusters[cluster.getId()] = cluster;
+        clusterMap.put(cluster.getName().toLowerCase(Locale.ENGLISH), cluster);
+      }
     } finally {
       stateLock.releaseWriteLock();
     }
   }
 
   public void beginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
-    stickToSession();
     OBeginTransactionRequest request = new OBeginTransactionRequest(transaction.getId(), true, transaction.isUsingLog(),
         transaction.getRecordOperations(), transaction.getIndexOperations());
     OBeginTransactionResponse response = networkOperationNoRetry(request, "Error on remote treansaction begin");
     for (Map.Entry<ORID, ORID> entry : response.getUpdatedIds().entrySet()) {
       transaction.updateIdentityAfterCommit(entry.getKey(), entry.getValue());
     }
+    stickToSession();
   }
 
   public void reBeginTransaction(ODatabaseDocumentRemote database, OTransactionOptimistic transaction) {
@@ -2083,5 +2100,80 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   @Override
   public void returnSocket(OChannelBinary network) {
     this.connectionManager.remove((OChannelBinaryAsynchClient) network);
+  }
+
+  @Override
+  public void setSchemaRecordId(String schemaRecordId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setDateFormat(String dateFormat) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setTimeZone(TimeZone timeZoneValue) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setLocaleLanguage(String locale) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setCharset(String charset) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setIndexMgrRecordId(String indexMgrRecordId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setDateTimeFormat(String dateTimeFormat) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setLocaleCountry(String localeCountry) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setClusterSelection(String clusterSelection) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setMinimumClusters(int minimumClusters) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setValidation(boolean validation) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void removeProperty(String property) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setProperty(String property, String value) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setRecordSerializer(String recordSerializer, int version) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void clearProperties() {
+    throw new UnsupportedOperationException();
   }
 }

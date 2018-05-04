@@ -68,7 +68,7 @@ node("master") {
                 }
 
                 stage("Downstream projects") {
-                    build job: "orientdb-spatial-multibranch/${env.BRANCH_NAME}", wait: false
+//                    build job: "orientdb-spatial-multibranch/${env.BRANCH_NAME}", wait: false
                     //excluded: too long
                     //build job: "orientdb-enterprise-multibranch/${env.BRANCH_NAME}", wait: false
                     build job: "orientdb-security-multibranch/${env.BRANCH_NAME}", wait: false

@@ -281,7 +281,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     rwSpinLock.acquireWriteLock();
     try {
       reload(null);
-      snapshot = new OImmutableSchema(this);
+      forceSnapshot();
       return (RET) this;
     } finally {
       rwSpinLock.releaseWriteLock();
@@ -589,8 +589,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       ((ORecordId) document.getIdentity()).fromString(database.getStorage().getConfiguration().getSchemaRecordId());
       reload("*:-1 index:0");
 
-      snapshot = new OImmutableSchema(this);
-
       return this;
     } finally {
       rwSpinLock.releaseWriteLock();
@@ -601,8 +599,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     rwSpinLock.acquireWriteLock();
     try {
       super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
-      database.getStorage().getConfiguration().setSchemaRecordId(document.getIdentity().toString());
-      database.getStorage().getConfiguration().update();
+      database.getStorage().setSchemaRecordId(document.getIdentity().toString());
       snapshot = new OImmutableSchema(this);
     } finally {
       rwSpinLock.releaseWriteLock();
@@ -611,10 +608,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   @Override
   public void close() {
-    classes.clear();
-    clustersToClasses.clear();
-    blobClusters.clear();
-    properties.clear();
   }
 
   @Deprecated
@@ -720,7 +713,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       }
     });
 
-    snapshot = new OImmutableSchema(this);
+    forceSnapshot();
     for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
       listener.onSchemaUpdate(database.getName(), this);
     }

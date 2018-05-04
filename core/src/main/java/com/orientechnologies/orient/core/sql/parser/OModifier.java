@@ -6,6 +6,8 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
@@ -356,7 +358,6 @@ public class OModifier extends SimpleNode {
 
   }
 
-
   public OResult serialize() {
     OResultInternal result = new OResultInternal();
     result.setProperty("squareBrackets", squareBrackets);
@@ -419,7 +420,38 @@ public class OModifier extends SimpleNode {
   }
 
   public boolean isCacheable() {
-    return false;//TODO enhance this!
+    if (arrayRange != null || arraySingleValues != null || rightBinaryCondition != null) {
+      return false;//TODO enhance a bit
+    }
+    if (condition != null && !condition.isCacheable()) {
+      return false;
+    }
+    if (methodCall != null && !methodCall.isCacheable()) {
+      return false;
+    }
+    if (suffix != null && !suffix.isCacheable()) {
+      return false;
+    }
+    if (next != null && !next.isCacheable()) {
+      return false;
+    }
+
+    return true;
+
+  }
+
+  public boolean isIndexChain(OCommandContext ctx, OClass clazz) {
+    if (suffix != null && suffix.isBaseIdentifier()) {
+      OProperty prop = clazz.getProperty(suffix.identifier.getStringValue());
+      if (prop.getAllIndexes().stream().anyMatch(idx -> idx.getDefinition().getFields().size() == 1)) {
+        if (next != null) {
+          OClass linkedClazz = prop.getLinkedClass();
+          return next.isIndexChain(ctx, linkedClazz);
+        }
+        return true;
+      }
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=39c21495d02f9b5007b4a2d6915496e1 (do not edit this line) */

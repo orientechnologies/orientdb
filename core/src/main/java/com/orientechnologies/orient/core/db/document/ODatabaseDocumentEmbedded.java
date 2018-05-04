@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheHook;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -32,21 +33,27 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.security.*;
-import com.orientechnologies.orient.core.metadata.sequence.OSequenceTrigger;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryMonitorEmbedded;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.schedule.OScheduledEvent;
+import com.orientechnologies.orient.core.schedule.OScheduler;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.*;
@@ -127,8 +134,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       loadMetadata();
 
       installHooksEmbedded();
-      registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
-      registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
+      if (this.getMetadata().getCommandCache().isEnabled())
+        registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
 
       user = null;
 
@@ -203,8 +210,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   /**
    * {@inheritDoc}
-   *
-   * @param config
    */
   public void internalCreate(OrientDBConfig config) {
     this.status = STATUS.OPEN;
@@ -215,8 +220,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     installHooksEmbedded();
     createMetadata();
 
-    registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
-    registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
+    if (this.getMetadata().getCommandCache().isEnabled())
+      registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
   }
 
   public void callOnCreateListeners() {
@@ -302,8 +307,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       // CHECK FORMAT
       new SimpleDateFormat(stringValue).format(new Date());
 
-      storage.getConfiguration().setDateFormat(stringValue);
-      storage.getConfiguration().update();
+      storage.setDateFormat(stringValue);
       break;
 
     case DATETIMEFORMAT:
@@ -313,8 +317,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       // CHECK FORMAT
       new SimpleDateFormat(stringValue).format(new Date());
 
-      storage.getConfiguration().setDateTimeFormat(stringValue);
-      storage.getConfiguration().update();
+      storage.setDateTimeFormat(stringValue);
       break;
 
     case TIMEZONE:
@@ -327,23 +330,19 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         timeZoneValue = TimeZone.getTimeZone(stringValue);
       }
 
-      storage.getConfiguration().setTimeZone(timeZoneValue);
-      storage.getConfiguration().update();
+      storage.setTimeZone(timeZoneValue);
       break;
 
     case LOCALECOUNTRY:
-      storage.getConfiguration().setLocaleCountry(stringValue);
-      storage.getConfiguration().update();
+      storage.setLocaleCountry(stringValue);
       break;
 
     case LOCALELANGUAGE:
-      storage.getConfiguration().setLocaleLanguage(stringValue);
-      storage.getConfiguration().update();
+      storage.setLocaleLanguage(stringValue);
       break;
 
     case CHARSET:
-      storage.getConfiguration().setCharset(stringValue);
-      storage.getConfiguration().update();
+      storage.setCharset(stringValue);
       break;
 
     case CUSTOM:
@@ -364,32 +363,27 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       break;
 
     case CLUSTERSELECTION:
-      storage.getConfiguration().setClusterSelection(stringValue);
-      storage.getConfiguration().update();
+      storage.setClusterSelection(stringValue);
       break;
 
     case MINIMUMCLUSTERS:
       if (iValue != null) {
         if (iValue instanceof Number)
-          storage.getConfiguration().setMinimumClusters(((Number) iValue).intValue());
+          storage.setMinimumClusters(((Number) iValue).intValue());
         else
-          storage.getConfiguration().setMinimumClusters(Integer.parseInt(stringValue));
+          storage.setMinimumClusters(Integer.parseInt(stringValue));
       } else
         // DEFAULT = 1
-        storage.getConfiguration().setMinimumClusters(1);
+        storage.setMinimumClusters(1);
 
-      storage.getConfiguration().update();
       break;
 
     case CONFLICTSTRATEGY:
       storage.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(stringValue));
-      storage.getConfiguration().setConflictStrategy(stringValue);
-      storage.getConfiguration().update();
       break;
 
     case VALIDATION:
-      storage.getConfiguration().setValidation(Boolean.parseBoolean(stringValue));
-      storage.getConfiguration().update();
+      storage.setValidation(Boolean.parseBoolean(stringValue));
       break;
 
     default:
@@ -401,7 +395,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   }
 
   private void clearCustomInternal() {
-    getStorage().getConfiguration().clearProperties();
+    getStorage().clearProperties();
   }
 
   private void removeCustomInternal(final String iName) {
@@ -412,12 +406,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     final OStorage storage = getStorage();
     if (iValue == null || "null".equalsIgnoreCase(iValue))
       // REMOVE
-      storage.getConfiguration().removeProperty(iName);
+      storage.removeProperty(iName);
     else
       // SET
-      storage.getConfiguration().setProperty(iName, iValue);
-
-    storage.getConfiguration().update();
+      storage.setProperty(iName, iValue);
   }
 
   public <DB extends ODatabase> DB setCustom(final String name, final Object iValue) {
@@ -495,15 +487,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   protected void installHooksEmbedded() {
     hooks.clear();
-    registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
-    registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
-    registerHook(new OUserTrigger(this), ORecordHook.HOOK_POSITION.EARLY);
-    registerHook(new OFunctionTrigger(this), ORecordHook.HOOK_POSITION.REGULAR);
-    registerHook(new OSequenceTrigger(this), ORecordHook.HOOK_POSITION.REGULAR);
-    registerHook(new OClassIndexManager(this), ORecordHook.HOOK_POSITION.LAST);
-    registerHook(new OSchedulerTrigger(this), ORecordHook.HOOK_POSITION.LAST);
-    registerHook(new OLiveQueryHook(this), ORecordHook.HOOK_POSITION.LAST);
-    registerHook(new OLiveQueryHookV2(this), ORecordHook.HOOK_POSITION.LAST);
   }
 
   @Override
@@ -518,6 +501,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OResultSet query(String query, Object[] args) {
+    checkOpenness();
+    checkIfActive();
+
     OStatement statement = OSQLEngine.parse(query, this);
     if (!statement.isIdempotent()) {
       throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
@@ -531,6 +517,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OResultSet query(String query, Map args) {
+    checkOpenness();
+    checkIfActive();
+
     OStatement statement = OSQLEngine.parse(query, this);
     if (!statement.isIdempotent()) {
       throw new OCommandExecutionException("Cannot execute query on non idempotent statement: " + query);
@@ -544,6 +533,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OResultSet command(String query, Object[] args) {
+    checkOpenness();
+    checkIfActive();
+
     OStatement statement = OSQLEngine.parse(query, this);
     OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result;
@@ -565,6 +557,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OResultSet command(String query, Map args) {
+    checkOpenness();
+    checkIfActive();
+
     OStatement statement = OSQLEngine.parse(query, this);
     OResultSet original = statement.execute(this, args);
     OLocalResultSetLifecycleDecorator result;
@@ -585,6 +580,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OResultSet execute(String language, String script, Object... args) {
+    checkOpenness();
+    checkIfActive();
+
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
     OResultSet original = executor.execute(this, script, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
@@ -595,6 +593,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OResultSet execute(String language, String script, Map<String, ?> args) {
+    checkOpenness();
+    checkIfActive();
+
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
     OResultSet original = executor.execute(this, script, args);
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
@@ -604,6 +605,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   }
 
   public OLocalResultSetLifecycleDecorator query(OExecutionPlan plan, Map<Object, Object> params) {
+    checkOpenness();
+    checkIfActive();
+
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(this);
     ctx.setInputParameters(params);
@@ -622,6 +626,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Object... args) {
+    checkOpenness();
+    checkIfActive();
+
     OLiveQueryListenerV2 queryListener = new LiveQueryListenerImpl(listener, query, this, args);
     ODatabaseDocumentInternal dbCopy = this.copy();
     this.activateOnCurrentThread();
@@ -631,6 +638,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OLiveQueryMonitor live(String query, OLiveQueryResultListener listener, Map<String, ?> args) {
+    checkOpenness();
+    checkIfActive();
+
     OLiveQueryListenerV2 queryListener = new LiveQueryListenerImpl(listener, query, this, (Map) args);
     ODatabaseDocumentInternal dbCopy = this.copy();
     this.activateOnCurrentThread();
@@ -744,16 +754,267 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       if (success)
         try {
           microTransaction.commit();
+          OLiveQueryHook.notifyForTxChanges(this);
+          OLiveQueryHookV2.notifyForTxChanges(this);
         } catch (Exception e) {
           microTransaction.rollbackAfterFailedCommit();
+          OLiveQueryHook.removePendingDatabaseOps(this);
+          OLiveQueryHookV2.removePendingDatabaseOps(this);
           throw e;
         }
-      else
+      else {
         microTransaction.rollback();
+        OLiveQueryHook.removePendingDatabaseOps(this);
+        OLiveQueryHookV2.removePendingDatabaseOps(this);
+      }
     } finally {
       if (!microTransaction.isActive())
         microTransaction = null;
     }
   }
 
+  @Override
+  public OIdentifiable beforeCreateOperations(OIdentifiable id, String iClusterName) {
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
+
+    ORecordHook.RESULT triggerChanged = null;
+    boolean changed = false;
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        if (clazz.isScheduler()) {
+          getSharedContext().getScheduler().initScheduleRecord(doc);
+          changed = true;
+        }
+        if (clazz.isOuser()) {
+          changed = OUser.encodePassword(doc);
+        }
+        if (clazz.isTriggered()) {
+          triggerChanged = OClassTrigger.onRecordBeforeCreate(doc, this);
+        }
+        if (clazz.isRestricted()) {
+          changed = ORestrictedAccessHook.onRecordBeforeCreate(doc, this);
+        }
+      }
+    }
+
+    ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_CREATE, id);
+    if (changed || res == ORecordHook.RESULT.RECORD_CHANGED || triggerChanged == ORecordHook.RESULT.RECORD_CHANGED) {
+      if (id instanceof ODocument) {
+        ((ODocument) id).validate();
+      }
+      return id;
+    } else if (res == ORecordHook.RESULT.RECORD_REPLACED || triggerChanged == ORecordHook.RESULT.RECORD_REPLACED) {
+      ORecord replaced = OHookReplacedRecordThreadLocal.INSTANCE.get();
+      if (replaced instanceof ODocument) {
+        ((ODocument) replaced).validate();
+      }
+      return replaced;
+    }
+    if (changed) {
+      return id;
+    }
+    return null;
+  }
+
+  @Override
+  public OIdentifiable beforeUpdateOperations(OIdentifiable id, String iClusterName) {
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
+
+    ORecordHook.RESULT triggerChanged = null;
+    boolean changed = false;
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        if (clazz.isScheduler()) {
+          getSharedContext().getScheduler().handleUpdateSchedule(doc);
+          changed = true;
+        }
+        if (clazz.isOuser()) {
+          changed = OUser.encodePassword(doc);
+        }
+        if (clazz.isTriggered()) {
+          triggerChanged = OClassTrigger.onRecordBeforeUpdate(doc, this);
+        }
+        if (clazz.isRestricted()) {
+          if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_UPDATE, true))
+            throw new OSecurityException("Cannot update record " + doc.getIdentity() + ": the resource has restricted access");
+        }
+      }
+    }
+    ORecordHook.RESULT res = callbackHooks(ORecordHook.TYPE.BEFORE_UPDATE, id);
+    if (res == ORecordHook.RESULT.RECORD_CHANGED || triggerChanged == ORecordHook.RESULT.RECORD_CHANGED) {
+      if (id instanceof ODocument) {
+        ((ODocument) id).validate();
+      }
+      return id;
+    } else if (res == ORecordHook.RESULT.RECORD_REPLACED || triggerChanged == ORecordHook.RESULT.RECORD_REPLACED) {
+      ORecord replaced = OHookReplacedRecordThreadLocal.INSTANCE.get();
+      if (replaced instanceof ODocument) {
+        ((ODocument) replaced).validate();
+      }
+      return replaced;
+    }
+
+    if (changed) {
+      return id;
+    }
+    return null;
+  }
+
+  @Override
+  public void beforeDeleteOperations(OIdentifiable id, String iClusterName) {
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordBeforeDelete(doc, this);
+        }
+        if (clazz.isRestricted()) {
+          if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_DELETE, true))
+            throw new OSecurityException("Cannot delete record " + doc.getIdentity() + ": the resource has restricted access");
+        }
+      }
+    }
+    callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, id);
+  }
+
+  public void afterCreateOperations(final OIdentifiable id) {
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        OClassIndexManager.checkIndexesAfterCreate(doc, this);
+        if (clazz.isFunction()) {
+          this.getSharedContext().getFunctionLibrary().createdFunction(doc);
+          Orient.instance().getScriptManager().close(this.getName());
+        }
+        if (clazz.isOuser() || clazz.isOrole()) {
+          getMetadata().getSecurity().incrementVersion();
+        }
+        if (clazz.isSequence()) {
+          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceCreated(this, doc);
+        }
+        if (clazz.isScheduler()) {
+          getMetadata().getScheduler().scheduleEvent(new OScheduledEvent(doc));
+        }
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordAfterCreate(doc, this);
+        }
+      }
+      OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, this);
+      OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, this);
+    }
+    callbackHooks(ORecordHook.TYPE.AFTER_CREATE, id);
+  }
+
+  public void afterUpdateOperations(final OIdentifiable id) {
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        OClassIndexManager.checkIndexesAfterUpdate((ODocument) id, this);
+        if (clazz.isFunction()) {
+          this.getSharedContext().getFunctionLibrary().updatedFunction(doc);
+          Orient.instance().getScriptManager().close(this.getName());
+        }
+        if (clazz.isOuser() || clazz.isOrole()) {
+          getMetadata().getSecurity().incrementVersion();
+        }
+        if (clazz.isSequence()) {
+          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(this, doc);
+        }
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordAfterUpdate(doc, this);
+        }
+      }
+      OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, this);
+      OLiveQueryHookV2.addOp(doc, ORecordOperation.UPDATED, this);
+    }
+    callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
+  }
+
+  public void afterDeleteOperations(final OIdentifiable id) {
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        OClassIndexManager.checkIndexesAfterDelete(doc, this);
+        if (clazz.isFunction()) {
+          this.getSharedContext().getFunctionLibrary().droppedFunction(doc);
+          Orient.instance().getScriptManager().close(this.getName());
+        }
+        if (clazz.isOuser() || clazz.isOrole()) {
+          getMetadata().getSecurity().incrementVersion();
+        }
+        if (clazz.isSequence()) {
+          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceDropped(this, doc);
+        }
+        if (clazz.isScheduler()) {
+          final String eventName = doc.field(OScheduledEvent.PROP_NAME);
+          getSharedContext().getScheduler().removeEventInternal(eventName);
+        }
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordAfterDelete(doc, this);
+        }
+      }
+      OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, this);
+      OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, this);
+    }
+    callbackHooks(ORecordHook.TYPE.AFTER_DELETE, id);
+  }
+
+  @Override
+  public void afterReadOperations(OIdentifiable identifiable) {
+    if (identifiable instanceof ODocument) {
+      ODocument doc = (ODocument) identifiable;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordAfterRead(doc, this);
+        }
+      }
+    }
+    callbackHooks(ORecordHook.TYPE.AFTER_READ, identifiable);
+  }
+
+  @Override
+  public boolean beforeReadOperations(OIdentifiable identifiable) {
+    if (identifiable instanceof ODocument) {
+      ODocument doc = (ODocument) identifiable;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        if (clazz.isTriggered()) {
+          ORecordHook.RESULT val = OClassTrigger.onRecordBeforeRead(doc, this);
+          if (val == ORecordHook.RESULT.SKIP) {
+            return true;
+          }
+        }
+        if (clazz.isRestricted()) {
+          if (!ORestrictedAccessHook.isAllowed(this, doc, ORestrictedOperation.ALLOW_READ, false)) {
+            return true;
+          }
+        }
+      }
+    }
+    return callbackHooks(ORecordHook.TYPE.BEFORE_READ, identifiable) == ORecordHook.RESULT.SKIP;
+  }
+
+  @Override
+  protected void afterCommitOperations() {
+    super.afterCommitOperations();
+    OLiveQueryHook.notifyForTxChanges(this);
+    OLiveQueryHookV2.notifyForTxChanges(this);
+  }
+
+  @Override
+  protected void afterRollbackOperations() {
+    super.afterRollbackOperations();
+    OLiveQueryHook.removePendingDatabaseOps(this);
+    OLiveQueryHookV2.removePendingDatabaseOps(this);
+  }
 }

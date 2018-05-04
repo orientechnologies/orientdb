@@ -6,6 +6,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.db.*;
@@ -20,6 +21,8 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
+import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
@@ -47,7 +50,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
 
@@ -83,10 +85,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @return the cluster map for current deploy
    */
   public Map<String, Set<String>> getActiveClusterMap() {
+    ODistributedServerManager distributedManager = getStorageDistributed().getDistributedManager();
+    if (distributedManager.isOffline() || !distributedManager.isNodeOnline(distributedManager.getLocalNodeName(), getName())) {
+      return super.getActiveClusterMap();
+    }
     Map<String, Set<String>> result = new HashMap<>();
     ODistributedConfiguration cfg = getStorageDistributed().getDistributedConfiguration();
 
-    for (String server : getStorageDistributed().getDistributedManager().getActiveServers()) {
+    for (String server : distributedManager.getActiveServers()) {
       if (getClustersOnServer(cfg, server).contains("*")) {
         //TODO check this!!!
         result.put(server, getStorage().getClusterNames());
@@ -410,12 +416,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public ODistributedResponse executeTaskOnNode(ORemoteTask task, String nodeName) {
-    final String dbUrl = getURL();
 
-    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
-    final OServer serverInstance = OServer.getInstanceByPath(path);
-
-    ODistributedServerManager dManager = serverInstance.getDistributedManager();
+    ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new ODistributedException("OrientDB is not started in distributed mode");
 
@@ -534,19 +536,20 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     for (ORID rid : rids) {
       txContext.lock(rid);
     }
-    Set<Object> keys = new TreeSet<>();
+    //using OPair because there could be different types of values here, so falling back to lexicographic sorting
+    Set<OPair<String, Object>> keys = new TreeSet<>();
     for (Map.Entry<String, OTransactionIndexChanges> change : tx.getIndexOperations().entrySet()) {
       OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
           .equals(index.getType()) || OClass.INDEX_TYPE.DICTIONARY.name().equals(index.getType())
           || OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equals(index.getType())) {
         for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
-          keys.add(changesPerKey.key);
+          keys.add(new OPair<>(String.valueOf(changesPerKey.key), changesPerKey.key));
         }
       }
     }
-    for (Object key : keys) {
-      txContext.lockIndexKey(key);
+    for (OPair key : keys) {
+      txContext.lockIndexKey(key.getValue());
     }
 
   }
@@ -586,11 +589,19 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public boolean commit2pc(ODistributedRequestId transactionId) {
+    getStorageDistributed().resetLastValidBackup();
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.getTxContext(transactionId);
     if (txContext != null) {
-      txContext.commit(this);
-      localDistributedDatabase.popTxContext(transactionId);
+      try {
+        txContext.commit(this);
+        localDistributedDatabase.popTxContext(transactionId);
+        OLiveQueryHook.notifyForTxChanges(this);
+        OLiveQueryHookV2.notifyForTxChanges(this);
+      } finally {
+        OLiveQueryHook.removePendingDatabaseOps(this);
+        OLiveQueryHookV2.removePendingDatabaseOps(this);
+      }
       return true;
     }
     return false;
@@ -603,6 +614,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       synchronized (txContext) {
         txContext.destroy();
       }
+      OLiveQueryHook.removePendingDatabaseOps(this);
+      OLiveQueryHookV2.removePendingDatabaseOps(this);
     }
   }
 
@@ -617,6 +630,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean local) {
+    getStorageDistributed().resetLastValidBackup();
     acquireLocksForTx(txContext.getTransaction(), txContext);
 
     for (Map.Entry<String, OTransactionIndexChanges> change : txContext.getTransaction().getIndexOperations().entrySet()) {
@@ -629,7 +643,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           if (old != null && !old.equals(newValue)) {
             throw new ORecordDuplicatedException(String
                 .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                    newValue, changesPerKey.key, getName(), old.getIdentity()), getName(), old.getIdentity());
+                    newValue, changesPerKey.key, getName(), old.getIdentity()), getName(), old.getIdentity(), changesPerKey.key);
           }
         }
       }

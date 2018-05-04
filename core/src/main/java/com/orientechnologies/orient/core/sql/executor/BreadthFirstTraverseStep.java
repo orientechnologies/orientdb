@@ -26,8 +26,8 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
       while (nextN.hasNext()) {
         OResult item = toTraverseResult(nextN.next());
         if(item != null){
-          ArrayDeque<ORID> stack = new ArrayDeque<ORID>();
-          item.getIdentity().ifPresent(x -> stack.push(x));
+          List<ORID> stack = new ArrayList<>();
+          item.getIdentity().ifPresent(x -> stack.add(x));
           ((OResultInternal) item).setMetadata("$stack", stack);
 
 
@@ -108,7 +108,7 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
     List reverseStack = new ArrayList();
     reverseStack.addAll(newPath);
     Collections.reverse(reverseStack);
-    ArrayDeque newStack = new ArrayDeque();
+    List newStack = new ArrayList();
     newStack.addAll(reverseStack);
     res.setMetadata("$stack", newStack);
 
@@ -135,7 +135,7 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
       List reverseStack = new ArrayList();
       reverseStack.addAll(newPath);
       Collections.reverse(reverseStack);
-      ArrayDeque newStack = new ArrayDeque();
+      List newStack = new ArrayList();
       newStack.addAll(reverseStack);
       ((OTraverseResult) nextStep).setMetadata("$stack", newStack);
 

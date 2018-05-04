@@ -146,7 +146,7 @@ public class OSQLFilterCondition {
 
     Object result;
     try {
-      result = operator.evaluateRecord(iCurrentRecord, iCurrentResult, this, l, r, iContext);
+      result = operator.evaluateRecord(iCurrentRecord, iCurrentResult, this, l, r, iContext, ORecordSerializerBinary.INSTANCE.getCurrentSerializer());
     } catch (OCommandExecutionException e) {
       throw e;
     } catch (Exception e) {

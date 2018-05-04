@@ -15,12 +15,12 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>OrientDB</name>
     <description>OrientDB NoSQL document graph dbms</description>
-    <url>http://www.orientechnologies.com</url>
+    <url>http://www.orientdb.com</url>
     <inceptionYear>2009</inceptionYear>
     <organization>
         <name>OrientDB</name>
@@ -37,9 +37,9 @@
         <developer>
             <id>l.garulli</id>
             <name>Luca Garulli</name>
-            <email>l.garulli@orientechnologies.com</email>
+            <email>l.garulli@orientdb.com</email>
             <organization>Orientechnologies</organization>
-            <organizationUrl>http://www.orientechnologies.com</organizationUrl>
+            <organizationUrl>http://www.orientdb.com</organizationUrl>
             <roles>
                 <role>architect</role>
                 <role>developer</role>
@@ -50,9 +50,9 @@
         <developer>
             <id>lomakin.andrey</id>
             <name>Andrey Lomakin</name>
-            <organization>Orientechnologies</organization>
-            <email>a.lomakin@orientechnologies.com</email>
-            <organizationUrl>http://www.orientechnologies.com</organizationUrl>
+            <organization>OrientDB</organization>
+            <email>a.lomakin@orientdb.com</email>
+            <organizationUrl>http://www.orientdb.com</organizationUrl>
             <roles>
                 <role>architect</role>
                 <role>developer</role>
@@ -62,8 +62,8 @@
         <developer>
             <id>e.risa</id>
             <name>Enrico Risa</name>
-            <email>e.risa@orientechnologies.com</email>
-            <organizationUrl>http://www.orientechnologies.com</organizationUrl>
+            <email>e.risa@orientdb.com</email>
+            <organizationUrl>http://www.orientdb.com</organizationUrl>
             <roles>
                 <role>architect</role>
                 <role>developer</role>
@@ -73,8 +73,8 @@
         <developer>
             <id>l.aquila</id>
             <name>Luigi Dell'Aquila</name>
-            <email>l.dellaquila@orientechnologies.com</email>
-            <organizationUrl>http://www.orientechnologies.com</organizationUrl>
+            <email>l.dellaquila@orientdb.com</email>
+            <organizationUrl>http://www.orientdb.com</organizationUrl>
             <roles>
                 <role>architect</role>
                 <role>developer</role>
@@ -84,8 +84,8 @@
         <developer>
             <id>e.tagliaferri</id>
             <name>Emanuale Tagliaferri</name>
-            <email>l.tagliaferri@orientechnologies.com</email>
-            <organizationUrl>http://www.orientechnologies.com</organizationUrl>
+            <email>l.tagliaferri@orientdb.com</email>
+            <organizationUrl>http://www.orientdb.com</organizationUrl>
             <roles>
                 <role>architect</role>
                 <role>developer</role>
@@ -162,11 +162,6 @@
             <name>Java.net repository</name>
             <url>http://download.java.net/maven/2</url>
         </repository>
-        <repository>
-            <id>osgeo</id>
-            <name>Open Source Geospatial Foundation Repository</name>
-            <url>http://download.osgeo.org/webdav/geotools/</url>
-        </repository>
     </repositories>
 
     <properties>
@@ -185,7 +180,7 @@
         <osgi.dynamicImport/>
         <osgi.private/>
         <!-- | shared build/report plugins version -->
-        <surefire.version>2.20.1</surefire.version>
+        <surefire.version>2.21.0</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
 

@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -24,8 +23,6 @@ import org.junit.Assert;
  */
 public abstract class AbstractServerClusterMergeUpdateTest  extends AbstractServerClusterTest {
   private static final String FIELD_NAME = "number";
-
-  private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
 
   protected abstract String getDatabaseURL(ServerRun server);
 

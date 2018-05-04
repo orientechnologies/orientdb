@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
@@ -35,6 +36,8 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabase
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -64,7 +67,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
       final String databaseName = database.getName();
 
-      final ODistributedDatabase dDatabase = checkIfCurrentDatabaseIsNotOlder(iManager, databaseName);
+      final ODistributedDatabase dDatabase = checkIfCurrentDatabaseIsNotOlder(iManager, databaseName, database);
 
       try {
         final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYDB + databaseName);
@@ -98,7 +101,8 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
             backupFile.getParentFile().mkdirs();
           backupFile.createNewFile();
 
-          final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
+          final File resultedBackupFile = backupFile;
+          final FileOutputStream fileOutputStream = new FileOutputStream(resultedBackupFile);
 
           final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
           if (completedFile.exists())
@@ -114,45 +118,57 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
               Thread.currentThread().setName("OrientDB SyncDatabase node=" + iManager.getLocalNodeName() + " db=" + databaseName);
 
               try {
-                database.activateOnCurrentThread();
-
-                ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                    "Compressing database '%s' %d clusters %s...", databaseName, database.getClusterNames().size(),
-                    database.getClusterNames());
-
-                database.backup(fileOutputStream, null, new Callable<Object>() {
-                  @Override
-                  public Object call() throws Exception {
-                    momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
-                    return null;
-                  }
-                }, ODistributedServerLog.isDebugEnabled() ? new OCommandOutputListener() {
-                  @Override
-                  public void onMessage(String iText) {
-                    if (iText.startsWith("\n"))
-                      iText = iText.substring(1);
-
-                    OLogManager.instance().debug(this, iText);
-                  }
-                } : null, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
-
-                ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                    "Backup of database '%s' completed. lastOperationId=%s...", databaseName, requestId);
-
-              } catch (Exception e) {
-                OLogManager.instance().error(this, "Cannot execute backup of database '%s' for deploy database", e, databaseName);
-              } finally {
                 try {
-                  fileOutputStream.close();
-                } catch (IOException e) {
+                  database.activateOnCurrentThread();
+
+                  ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                      "Compressing database '%s' %d clusters %s...", databaseName, database.getClusterNames().size(),
+                      database.getClusterNames());
+
+                  database.backup(fileOutputStream, null, new Callable<Object>() {
+                    @Override
+                    public Object call() throws Exception {
+                      momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
+                      return null;
+                    }
+                  }, ODistributedServerLog.isDebugEnabled() ? new OCommandOutputListener() {
+                    @Override
+                    public void onMessage(String iText) {
+                      if (iText.startsWith("\n"))
+                        iText = iText.substring(1);
+
+                      OLogManager.instance().debug(this, iText);
+                    }
+                  } : null, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+
+                  ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                      "Backup of database '%s' completed. lastOperationId=%s...", databaseName, requestId);
+
+                } catch (Exception e) {
+                  OLogManager.instance().error(this, "Cannot execute backup of database '%s' for deploy database", e, databaseName);
+                  throw e;
+                } finally {
+                  try {
+                    fileOutputStream.close();
+                  } catch (IOException e) {
+                  }
+
+                  try {
+                    completedFile.createNewFile();
+                  } catch (IOException e) {
+                    OLogManager.instance().error(this, "Cannot create file of backup completed: %s", e, completedFile);
+                  }
                 }
-
+              } catch (Exception e) {
+                OLogManager.instance()
+                    .errorNoDb(this, "Error during backup processing, file %s will be deleted\n", e, resultedBackupFile);
                 try {
-                  completedFile.createNewFile();
-                } catch (IOException e) {
-                  OLogManager.instance().error(this, "Cannot create file of backup completed: %s", e, completedFile);
+                  Files.deleteIfExists(Paths.get(resultedBackupFile.getAbsolutePath()));
+                } catch (IOException ioe) {
+                  OLogManager.instance().errorNoDb(this, "Can not delete file %s\n", ioe, resultedBackupFile);
                 }
               }
+
             }
           });
           t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
@@ -198,20 +214,19 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
   }
 
   protected ODistributedDatabase checkIfCurrentDatabaseIsNotOlder(final ODistributedServerManager iManager,
-      final String databaseName) {
+      final String databaseName, ODatabaseDocumentInternal database) {
     final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
 
     if (lastLSN != null) {
-      final OLogSequenceNumber currentLSN = dDatabase.getSyncConfiguration().getLastLSN(getNodeSource());
+      final OLogSequenceNumber currentLSN = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN();
       if (currentLSN != null) {
         // LOCAL AND REMOTE LSN PRESENT
         if (lastLSN.compareTo(currentLSN) <= 0)
           // REQUESTED LSN IS <= LOCAL LSN
           return dDatabase;
-        else
-          databaseIsOld(iManager, databaseName, dDatabase);
       }
-    } else if (lastOperationTimestamp > -1) {
+    }
+    if (lastOperationTimestamp > -1) {
       if (lastOperationTimestamp <= dDatabase.getSyncConfiguration().getLastOperationTimestamp())
         // NO LSN, BUT LOCAL DATABASE HAS BEEN WRITTEN AFTER THE REQUESTER, STILL OK
         return dDatabase;

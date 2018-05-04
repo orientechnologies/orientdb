@@ -3,9 +3,14 @@ package com.orientechnologies.orient.server.distributed.impl.metadata;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
@@ -49,8 +54,10 @@ public class OSharedContextDistributed extends OSharedContext {
       try {
         if (!loaded) {
           schema.load(database);
-          security.load();
           indexManager.load(database);
+          //The Immutable snapshot should be after index and schema that require and before everything else that use it
+          schema.forceSnapshot();
+          security.load();
           functionLibrary.load(database);
           scheduler.load(database);
           sequenceLibrary.load(database);
@@ -85,6 +92,8 @@ public class OSharedContextDistributed extends OSharedContext {
     OScenarioThreadLocal.executeAsDistributed(() -> {
       schema.reload();
       indexManager.reload();
+      //The Immutable snapshot should be after index and schema that require and before everything else that use it
+      schema.forceSnapshot();
       security.load();
       functionLibrary.load(database);
       sequenceLibrary.load(database);
@@ -107,6 +116,18 @@ public class OSharedContextDistributed extends OSharedContext {
       // CREATE BASE VERTEX AND EDGE CLASSES
       schema.createClass(database, "V");
       schema.createClass(database, "E");
+
+      //create geospatial classes
+      try {
+        OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.SPATIAL.toString(), "LUCENE");
+        if (factory != null && factory instanceof ODatabaseLifecycleListener) {
+          ((ODatabaseLifecycleListener) factory).onCreate(database);
+        }
+      } catch (OIndexException x) {
+        //the index does not exist
+      }
+
+      schema.forceSnapshot();
       loaded = true;
       return null;
     });

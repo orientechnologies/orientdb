@@ -53,6 +53,13 @@ public class ODocumentInternal {
     return oDocument.rawContainsField(iFiledName);
   }
 
+  public static OImmutableClass getImmutableSchemaClass(final ODatabaseDocumentInternal database, final ODocument oDocument) {
+    if (oDocument == null) {
+      return null;
+    }
+    return oDocument.getImmutableSchemaClass(database);
+  }
+
   public static OImmutableClass getImmutableSchemaClass(final ODocument oDocument) {
     if (oDocument == null) {
       return null;

@@ -444,6 +444,79 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
+  public OClusterPositionEntry[] higherPositionsEntries(final long clusterPosition) throws IOException {
+    long realPosition = clusterPosition + 1;
+    startOperation();
+    try {
+      atomicOperationsManager.acquireReadLock(this);
+      try {
+        acquireSharedLock();
+        try {
+          if (clusterPosition == Long.MAX_VALUE)
+            return new OClusterPositionEntry[] {};
+
+          if (realPosition < 0)
+            realPosition = 0;
+
+          long pageIndex = realPosition / OClusterPositionMapBucket.MAX_ENTRIES;
+          int index = (int) (realPosition % OClusterPositionMapBucket.MAX_ENTRIES);
+
+          OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+          final long filledUpTo = getFilledUpTo(atomicOperation, fileId);
+
+          if (pageIndex >= filledUpTo)
+            return new OClusterPositionEntry[] {};
+
+          OClusterPositionEntry[] result = null;
+          do {
+            OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, 1);
+
+            OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
+            int resultSize = bucket.getSize() - index;
+
+            if (resultSize <= 0) {
+              releasePageFromRead(atomicOperation, cacheEntry);
+              pageIndex++;
+              index = 0;
+            } else {
+              int entriesCount = 0;
+              long startIndex = cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES + index;
+
+              result = new OClusterPositionEntry[resultSize];
+              for (int i = 0; i < resultSize; i++) {
+                if (bucket.exists(i + index)) {
+                  OClusterPositionMapBucket.PositionEntry val = bucket.get(i + index);
+                  result[entriesCount] = new OClusterPositionEntry(startIndex + i, val.getPageIndex(), val.getRecordPosition());
+                  entriesCount++;
+                }
+              }
+
+              if (entriesCount == 0) {
+                result = null;
+                pageIndex++;
+                index = 0;
+              } else
+                result = Arrays.copyOf(result, entriesCount);
+
+              releasePageFromRead(atomicOperation, cacheEntry);
+            }
+          } while (result == null && pageIndex < filledUpTo);
+
+          if (result == null)
+            result = new OClusterPositionEntry[] {};
+
+          return result;
+        } finally {
+          releaseSharedLock();
+        }
+      } finally {
+        atomicOperationsManager.releaseReadLock(this);
+      }
+    } finally {
+      completeOperation();
+    }
+  }
+
   public long[] ceilingPositions(long clusterPosition) throws IOException {
     startOperation();
     try {
@@ -754,5 +827,29 @@ public class OClusterPositionMap extends ODurableComponent {
 
   public void replaceFileId(long newFileId) {
     this.fileId = newFileId;
+  }
+
+  public static class OClusterPositionEntry {
+    private long position;
+    private long page;
+    private int  offset;
+
+    public OClusterPositionEntry(long position, long page, int offset) {
+      this.position = position;
+      this.page = page;
+      this.offset = offset;
+    }
+
+    public long getPosition() {
+      return position;
+    }
+
+    public long getPage() {
+      return page;
+    }
+
+    public int getOffset() {
+      return offset;
+    }
   }
 }

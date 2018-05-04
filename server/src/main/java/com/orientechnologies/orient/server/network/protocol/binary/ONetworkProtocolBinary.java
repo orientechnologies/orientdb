@@ -161,6 +161,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     okSent = false;
     try {
       requestType = channel.readByte();
+
+      if (server.rejectRequests()) {
+        // MAKE SURE THAT IF THE SERVER IS GOING DOWN THE CONNECTIONS ARE TERMINATED BEFORE HANDLE ANY OPERATIONS
+        this.softShutdown();
+        return;
+      }
+
       if (requestType == OChannelBinaryProtocol.REQUEST_HANDSHAKE) {
         handleHandshake();
         return;

@@ -20,6 +20,9 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.log.OLogFormatter;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
@@ -52,8 +55,8 @@ public class ONewDistributedTransactionManager {
   private final ODistributedStorage       storage;
   private final ODistributedDatabase      localDistributedDatabase;
 
-  private static final boolean SYNC_TX_COMPLETED = false;
-  private ONewDistributedResponseManager responseManager;
+  private static final boolean                        SYNC_TX_COMPLETED = false;
+  private              ONewDistributedResponseManager responseManager;
 
   public ONewDistributedTransactionManager(final ODistributedStorage storage, final ODistributedServerManager manager,
       final ODistributedDatabase iDDatabase) {
@@ -154,9 +157,8 @@ public class ONewDistributedTransactionManager {
         ORID id = ((OTxUniqueIndex) resultPayload).getRecordId();
         String index = ((OTxUniqueIndex) resultPayload).getIndex();
         Object key = ((OTxUniqueIndex) resultPayload).getKey();
-        //TODO include all paramenter in response
         throw new ORecordDuplicatedException(
-            String.format("Cannot index record %s: found duplicated key '%s' in index '%s' ", id, key, index), index, id);
+            String.format("Cannot index record %s: found duplicated key '%s' in index '%s' ", id, key, index), index, id, key);
       }
       case OTxConcurrentModification.ID: {
         //Concurrent modification exception quorum send ko and throw cuncurrent modification exception
@@ -174,16 +176,42 @@ public class ONewDistributedTransactionManager {
     } else {
       List<OTransactionResultPayload> results = responseManager.getAllResponses();
       //If quorum is not reached is enough on a Lock timeout to trigger a deadlock retry.
+      List<Exception> exceptions = new ArrayList<>();
+      List<String> messages = new ArrayList<>();
       for (OTransactionResultPayload result : results) {
         switch (result.getResponseType()) {
         case OTxLockTimeout.ID:
           sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
           throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId, 0);
+        case OTxSuccess.ID:
+          messages.add("success");
+          break;
+        case OTxConcurrentModification.ID:
+          messages.add(String.format("concurrent modification record: %s database version: %i",
+              ((OTxConcurrentModification) result).getRecordId().toString(), ((OTxConcurrentModification) result).getVersion()));
+          break;
+        case OTxException.ID:
+          exceptions.add(((OTxException) result).getException());
+          OLogManager.instance().debug(this, "distributed exception", ((OTxException) result).getException());
+          messages.add(String.format("exception: '%s'", ((OTxException) result).getException().getMessage()));
+          break;
+        case OTxUniqueIndex.ID:
+          messages.add(String
+              .format("unique index violation on index:'$s' with key:'%s' and rid:'%s'", ((OTxUniqueIndex) result).getIndex(),
+                  ((OTxUniqueIndex) result).getKey(), ((OTxUniqueIndex) result).getRecordId()));
+          break;
+
         }
       }
       localKo(requestId, database);
       sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
-      throw new ODistributedOperationException("quorum not reached");
+
+      ODistributedOperationException ex = new ODistributedOperationException(
+          String.format("quorum not reached, responses: [%s]", String.join(",", messages)));
+      for (Exception e : exceptions) {
+        ex.addSuppressed(e);
+      }
+      throw ex;
     }
 
   }

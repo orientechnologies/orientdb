@@ -5,8 +5,10 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Created by luigidellaquila on 16/03/17.
@@ -160,6 +162,13 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
     String result = spaces + "+ EXTRACT VALUE FROM INDEX ENTRY";
     if (profilingEnabled) {
       result += " (" + getCostFormatted() + ")";
+    }
+    if (filterClusterIds != null) {
+      result += "\n";
+      result += spaces;
+      result += "  filtering clusters [";
+      result += Arrays.stream(filterClusterIds).boxed().map(x -> "" + x).collect(Collectors.joining(","));
+      result += "]";
     }
     return result;
   }

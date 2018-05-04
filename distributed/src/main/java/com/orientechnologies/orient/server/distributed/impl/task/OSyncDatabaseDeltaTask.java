@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
@@ -95,7 +96,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
 
     iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
 
-    final ODistributedDatabase dDatabase = checkIfCurrentDatabaseIsNotOlder(iManager, databaseName);
+    final ODistributedDatabase dDatabase = checkIfCurrentDatabaseIsNotOlder(iManager, databaseName, database);
 
     iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
@@ -134,8 +135,8 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
 
     try {
       final AtomicLong counter = new AtomicLong(0);
-      endLSN.set(((OAbstractPaginatedStorage) storage)
-          .recordsChangedAfterLSN(lastLSN, fileOutputStream, new OCommandOutputListener() {
+      endLSN.set(
+          ((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(lastLSN, fileOutputStream, new OCommandOutputListener() {
             @Override
             public void onMessage(final String iText) {
               if (iText.startsWith("read")) {
@@ -202,6 +203,31 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
       iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
 
     return chunk;
+  }
+
+  protected ODistributedDatabase checkIfCurrentDatabaseIsNotOlder(final ODistributedServerManager iManager,
+      final String databaseName, ODatabaseDocumentInternal database) {
+    final ODistributedDatabase dDatabase = iManager.getMessageService().getDatabase(databaseName);
+
+    if (lastLSN != null) {
+      final OLogSequenceNumber currentLSN = ((OLocalPaginatedStorage) database.getStorage().getUnderlying()).getLSN();
+      if (currentLSN != null) {
+        // LOCAL AND REMOTE LSN PRESENT
+        if (lastLSN.compareTo(currentLSN) <= 0)
+          // REQUESTED LSN IS <= LOCAL LSN
+          return dDatabase;
+        else
+          throw new ODistributedDatabaseDeltaSyncException(lastLSN);
+      }
+    } else if (lastOperationTimestamp > -1) {
+      if (lastOperationTimestamp <= dDatabase.getSyncConfiguration().getLastOperationTimestamp())
+        // NO LSN, BUT LOCAL DATABASE HAS BEEN WRITTEN AFTER THE REQUESTER, STILL OK
+        return dDatabase;
+    } else
+      // NO LSN, NO TIMESTAMP, C'MON, CAN'T BE NEWER THAN THIS
+      return dDatabase;
+
+    return databaseIsOld(iManager, databaseName, dDatabase);
   }
 
   @Override

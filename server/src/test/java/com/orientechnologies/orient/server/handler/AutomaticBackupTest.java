@@ -43,6 +43,7 @@ import java.util.Map;
 public class AutomaticBackupTest {
   private final static String DBNAME  = "testautobackup";
   private final static String DBNAME2 = DBNAME + "2";
+  private final static String DBNAME3 = DBNAME + "3";
   private static String BACKUPDIR;
 
   private static String            URL;
@@ -308,11 +309,11 @@ public class AutomaticBackupTest {
 
     aBackup.sendShutdown();
 
-    if (server.existsDatabase(DBNAME2))
-      server.dropDatabase(DBNAME2);
-    server.createDatabase(DBNAME2, ODatabaseType.PLOCAL, null);
+    if (server.existsDatabase(DBNAME3))
+      server.dropDatabase(DBNAME3);
+    server.createDatabase(DBNAME3, ODatabaseType.PLOCAL, null);
 
-    ODatabaseDocumentInternal database2 = server.openDatabase(DBNAME2, null, null, null, true);
+    ODatabaseDocumentInternal database2 = server.openDatabase(DBNAME3, null, null, null, true);
 
     new ODatabaseImport(database2, BACKUPDIR + "/fullExport.json.gz", null).importDatabase();
 

@@ -43,7 +43,7 @@ public class OIndexUnique extends OIndexOneValue {
           if (mergeSameKey == null || !mergeSameKey)
             throw new ORecordDuplicatedException(String
                 .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                    newValue.getIdentity(), key, getName(), oldValue.getIdentity()), getName(), oldValue.getIdentity());
+                    newValue.getIdentity(), key, getName(), oldValue.getIdentity()), getName(), oldValue.getIdentity(), key);
         } else
           return OIndexEngine.Validator.IGNORE;
       }

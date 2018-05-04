@@ -41,10 +41,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class OTransactionAbstract implements OTransaction {
-  protected final ODatabaseDocumentInternal database;
-  protected TXSTATUS                            status         = TXSTATUS.INVALID;
-  protected ISOLATION_LEVEL                     isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
-  protected HashMap<ORID, LockedRecordMetadata> locks          = new HashMap<ORID, LockedRecordMetadata>();
+  protected final ODatabaseDocumentInternal           database;
+  protected       TXSTATUS                            status         = TXSTATUS.INVALID;
+  protected       ISOLATION_LEVEL                     isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
+  protected       HashMap<ORID, LockedRecordMetadata> locks          = new HashMap<ORID, LockedRecordMetadata>();
 
   private static final class LockedRecordMetadata {
     private final OStorage.LOCKING_STRATEGY strategy;
@@ -59,8 +59,8 @@ public abstract class OTransactionAbstract implements OTransaction {
     database = iDatabase;
   }
 
-  public static void updateCacheFromEntries(final ODatabaseDocumentInternal database, final Iterable<? extends ORecordOperation> entries,
-      final boolean updateStrategy) {
+  public static void updateCacheFromEntries(final ODatabaseDocumentInternal database,
+      final Iterable<? extends ORecordOperation> entries, final boolean updateStrategy) {
     final OLocalRecordCache dbCache = database.getLocalCache();
 
     for (ORecordOperation txEntry : entries) {
@@ -234,7 +234,7 @@ public abstract class OTransactionAbstract implements OTransaction {
       // COMPUTE THE CLUSTER ID
       OClass schemaClass = null;
       if (record instanceof ODocument)
-        schemaClass = ODocumentInternal.getImmutableSchemaClass((ODocument) record);
+        schemaClass = ODocumentInternal.getImmutableSchemaClass(getDatabase(), (ODocument) record);
       if (schemaClass != null) {
         // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
         if (schemaClass.isAbstract())

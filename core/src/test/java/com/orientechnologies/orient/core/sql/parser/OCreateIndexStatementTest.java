@@ -28,6 +28,9 @@ public class OCreateIndexStatementTest extends OParserTestAbstract {
     checkRightSyntax("create index OUser.name UNIQUE engine SBTREE STRING");
 
 
+    checkRightSyntax("CREATE INDEX Foo.bar IF NOT EXISTS on Foo (bar) UNIQUE");
+
+    checkWrongSyntax("CREATE INDEX Foo.bar IF EXISTS on Foo (bar) UNIQUE");
   }
 
 }

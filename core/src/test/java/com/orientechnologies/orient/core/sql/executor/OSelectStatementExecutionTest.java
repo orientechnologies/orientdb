@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
@@ -1710,7 +1711,7 @@ public class OSelectStatementExecutionTest {
     printExecutionPlan(result);
     Assert.assertFalse(result.hasNext());
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step->step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
     result.close();
   }
 
@@ -1740,7 +1741,7 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step->step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
     result.close();
   }
 
@@ -2445,8 +2446,8 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step->step instanceof FetchFromIndexStep).count());
-    Assert.assertEquals(0, plan.getSteps().stream().filter(step->step instanceof OrderByStep).count());
+    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
   }
 
@@ -2483,8 +2484,8 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step->step instanceof FetchFromIndexStep).count());
-    Assert.assertEquals(0, plan.getSteps().stream().filter(step->step instanceof OrderByStep).count());
+    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
   }
 
@@ -2521,8 +2522,8 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step->step instanceof FetchFromIndexStep).count());
-    Assert.assertEquals(0, plan.getSteps().stream().filter(step->step instanceof OrderByStep).count());
+    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
   }
 
@@ -2560,8 +2561,8 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step->step instanceof FetchFromIndexStep).count());
-    Assert.assertEquals(0, plan.getSteps().stream().filter(step->step instanceof OrderByStep).count());
+    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
   }
 
@@ -2599,8 +2600,8 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step->step instanceof FetchFromIndexStep).count());
-    Assert.assertEquals(0, plan.getSteps().stream().filter(step->step instanceof OrderByStep).count());
+    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
   }
 
@@ -2638,8 +2639,8 @@ public class OSelectStatementExecutionTest {
     }
     Assert.assertFalse(result.hasNext());
     OExecutionPlan plan = result.getExecutionPlan().get();
-    Assert.assertEquals(1, plan.getSteps().stream().filter(step->step instanceof FetchFromIndexStep).count());
-    Assert.assertEquals(0, plan.getSteps().stream().filter(step->step instanceof OrderByStep).count());
+    Assert.assertEquals(1, plan.getSteps().stream().filter(step -> step instanceof FetchFromIndexStep).count());
+    Assert.assertEquals(0, plan.getSteps().stream().filter(step -> step instanceof OrderByStep).count());
     result.close();
   }
 
@@ -3386,4 +3387,224 @@ public class OSelectStatementExecutionTest {
     result.close();
     Assert.assertEquals(clusterIds.length - 1, count);
   }
+
+  @Test
+  public void testContainsWithSubquery() {
+    String className = "testContainsWithSubquery";
+    OClass clazz1 = db.createClassIfNotExist(className + 1);
+    OClass clazz2 = db.createClassIfNotExist(className + 2);
+    clazz2.createProperty("tags", OType.EMBEDDEDLIST);
+
+    db.command("insert into " + className + 1 + "  set name = 'foo'");
+
+    db.command("insert into " + className + 2 + "  set tags = ['foo', 'bar']");
+    db.command("insert into " + className + 2 + "  set tags = ['baz', 'bar']");
+    db.command("insert into " + className + 2 + "  set tags = ['foo']");
+
+    try (OResultSet result = db
+        .query("select from " + className + 2 + " where tags contains (select from " + className + 1 + " where name = 'foo')")) {
+
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+  }
+
+  @Test
+  public void testInWithSubquery() {
+    String className = "testInWithSubquery";
+    OClass clazz1 = db.createClassIfNotExist(className + 1);
+    OClass clazz2 = db.createClassIfNotExist(className + 2);
+    clazz2.createProperty("tags", OType.EMBEDDEDLIST);
+
+    db.command("insert into " + className + 1 + "  set name = 'foo'");
+
+    db.command("insert into " + className + 2 + "  set tags = ['foo', 'bar']");
+    db.command("insert into " + className + 2 + "  set tags = ['baz', 'bar']");
+    db.command("insert into " + className + 2 + "  set tags = ['foo']");
+
+    try (OResultSet result = db
+        .query("select from " + className + 2 + " where (select from " + className + 1 + " where name = 'foo') in tags")) {
+
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+  }
+
+  @Test
+  public void testContainsAny() {
+    String className = "testContainsAny";
+    OClass clazz = db.createClassIfNotExist(className);
+    clazz.createProperty("tags", OType.EMBEDDEDLIST, OType.STRING);
+
+    db.command("insert into " + className + "  set tags = ['foo', 'bar']");
+    db.command("insert into " + className + "  set tags = ['bbb', 'FFF']");
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','baz']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','bar']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','bbb']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['xx','baz']")) {
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany []")) {
+      Assert.assertFalse(result.hasNext());
+    }
+  }
+
+  @Test
+  public void testContainsAnyWithIndex() {
+    String className = "testContainsAnyWithIndex";
+    OClass clazz = db.createClassIfNotExist(className);
+    OProperty prop = clazz.createProperty("tags", OType.EMBEDDEDLIST, OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    db.command("insert into " + className + "  set tags = ['foo', 'bar']");
+    db.command("insert into " + className + "  set tags = ['bbb', 'FFF']");
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','baz']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','bar']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['foo','bbb']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany ['xx','baz']")) {
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tags containsany []")) {
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
+
+  @Test
+  public void testInWithIndex() {
+    String className = "testInWithIndex";
+    OClass clazz = db.createClassIfNotExist(className);
+    OProperty prop = clazz.createProperty("tag", OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    db.command("insert into " + className + "  set tag = 'foo'");
+    db.command("insert into " + className + "  set tag = 'bar'");
+
+    try (OResultSet result = db.query("select from " + className + " where tag in ['foo','baz']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tag in ['foo','bar']")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where tag in []")) {
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
+    List<String> params = new ArrayList<>();
+    params.add("foo");
+    params.add("bar");
+    try (OResultSet result = db.query("select from " + className + " where tag in (?)", params)) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+
+  }
+
+  @Test
+  public void testIndexChain() {
+    String className1 = "testIndexChain1";
+    String className2 = "testIndexChain2";
+    String className3 = "testIndexChain3";
+
+    OClass clazz3 = db.createClassIfNotExist(className3);
+    OProperty prop = clazz3.createProperty("name", OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OClass clazz2 = db.createClassIfNotExist(className2);
+    prop = clazz2.createProperty("next", OType.LINK, clazz3);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OClass clazz1 = db.createClassIfNotExist(className1);
+    prop = clazz1.createProperty("next", OType.LINK, clazz2);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    OElement elem3 = db.newElement(className3);
+    elem3.setProperty("name", "John");
+    elem3.save();
+
+    OElement elem2 = db.newElement(className2);
+    elem2.setProperty("next", elem3);
+    elem2.save();
+
+    OElement elem1 = db.newElement(className1);
+    elem1.setProperty("next", elem2);
+    elem1.setProperty("name", "right");
+    elem1.save();
+
+    elem1 = db.newElement(className1);
+    elem1.setProperty("name", "wrong");
+    elem1.save();
+
+    try (OResultSet result = db.query("select from " + className1 + " where next.next.name = ?", "John")) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertEquals("right", item.getProperty("name"));
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
+
 }

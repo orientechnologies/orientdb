@@ -23,7 +23,9 @@ public class OUpdateEdgeStatement extends OUpdateStatement {
 
   @Override public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OUpdateExecutionPlanner planner = new OUpdateExecutionPlanner(this);
-    return planner.createExecutionPlan(ctx, enableProfiling);
+    OUpdateExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
+    result.setStatement(originalStatement);
+    return result;
   }
 
   /**
