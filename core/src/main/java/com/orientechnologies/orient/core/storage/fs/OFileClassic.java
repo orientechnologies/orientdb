@@ -87,10 +87,12 @@ public class OFileClassic implements OFile, OClosableItem {
   }
 
   @Override
-  public long allocateSpace(long size) throws IOException {
+  public long allocateSpace(int size) throws IOException {
     acquireWriteLock();
     try {
       final long currentSize = this.size;
+      assert channel.size() == currentSize + HEADER_SIZE;
+
       //noinspection NonAtomicOperationOnVolatileField
       this.size += size;
 
@@ -98,7 +100,8 @@ public class OFileClassic implements OFile, OClosableItem {
 
       setSize(this.size);
       //noinspection resource
-      channel.truncate(this.size + HEADER_SIZE);
+      final ByteBuffer buffer = ByteBuffer.allocate(size);
+      OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
 
       return currentSize;
     } finally {

@@ -83,7 +83,7 @@ public interface OFile {
    */
   void replaceContentWith(Path newContentFile) throws IOException;
 
-  long allocateSpace(final long iSize) throws IOException;
+  long allocateSpace(final int size) throws IOException;
 
   long getFileSize();
 

@@ -48,8 +48,6 @@ public class OCachePointer {
   private final ByteBuffer      buffer;
   private final OByteBufferPool bufferPool;
 
-  private volatile boolean notFlushed;
-
   private long version;
 
   private final long fileId;
@@ -186,14 +184,6 @@ public class OCachePointer {
 
     if (rf < 0)
       throw new IllegalStateException("Invalid direct memory state, number of referrers cannot be negative " + rf);
-  }
-
-  public void setNotFlushed(boolean notFlushed) {
-    this.notFlushed = notFlushed;
-  }
-
-  public boolean isNotFlushed() {
-    return notFlushed;
   }
 
   public ByteBuffer getBuffer() {
