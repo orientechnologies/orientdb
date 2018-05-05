@@ -27,6 +27,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -60,10 +62,10 @@ public class OFileClassic implements OFile, OClosableItem {
 
   private volatile Path osFile;
 
-  private FileChannel channel;
-  private volatile boolean dirty       = false;
-  private volatile boolean headerDirty = false;
-  private int version;
+  private          FileChannel channel;
+  private volatile boolean     dirty       = false;
+  private volatile boolean     headerDirty = false;
+  private          int         version;
 
   private volatile long size;                                                                                // PART OF
 
@@ -99,9 +101,14 @@ public class OFileClassic implements OFile, OClosableItem {
       assert this.size >= size;
 
       setSize(this.size);
-      //noinspection resource
-      final ByteBuffer buffer = ByteBuffer.allocate(size);
-      OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
+      final long ptr = Native.malloc(size);
+      try {
+        final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, size);
+        buffer.position(0);
+        OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
+      } finally {
+        Native.free(ptr);
+      }
 
       return currentSize;
     } finally {
