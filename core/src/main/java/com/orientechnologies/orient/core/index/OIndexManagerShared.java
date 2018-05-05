@@ -268,7 +268,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
    */
   @Override
   public ODocument toStream() {
-    acquireExclusiveLock();
+    internalAcquireExclusiveLock();
     try {
       document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
@@ -287,7 +287,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
       return document;
     } finally {
-      releaseExclusiveLock();
+      internalReleaseExclusiveLock();
     }
   }
 
@@ -358,7 +358,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
   @Override
   protected void fromStream() {
-    acquireExclusiveLock();
+    internalAcquireExclusiveLock();
     try {
       final Map<String, OIndex<?>> oldIndexes = new HashMap<>(indexes);
 
@@ -430,7 +430,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
       }
     } finally {
-      releaseExclusiveLock();
+      internalReleaseExclusiveLock();
     }
   }
 
