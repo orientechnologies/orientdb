@@ -68,6 +68,7 @@ import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -227,6 +228,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
    */
   private final Path storagePath;
 
+  private final FileStore fileStore;
+
   /**
    * Container of all files are managed by write cache. That is special type of container which ensures that only limited amount of
    * files is open at the same time and opens closed files upon request
@@ -281,16 +284,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
    * @see #localDirtyPages for details
    */
   private final TreeMap<OLogSequenceNumber, Set<PageKey>> localDirtyPagesByLSN = new TreeMap<>();
-
-  /**
-   * Amount of pages which were booked in file but were not flushed yet.
-   * In file systems like ext3 for example it is not enough to set size of the file to guarantee that subsequent write inside of
-   * already allocated file range will not cause "not enough free space" exception. Such strange files are called sparse files.
-   * When you change size of the sparse file amount of available free space on disk is not changed and can be occupied by subsequent
-   * writes to other files. So to calculate free space which is really consumed by system we calculate amount of pages which were
-   * booked but not written yet on disk.
-   */
-  private final AtomicLong countOfNotFlushedPages = new AtomicLong();
 
   /**
    * This counter is need for "free space" check implementation. Once amount of added pages is reached some threshold, amount of
@@ -453,6 +446,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       this.storageLocal = storageLocal;
 
       this.storagePath = storageLocal.getStoragePath();
+      try {
+        this.fileStore = Files.getFileStore(storagePath);
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Error during retrieving of file store"), e);
+      }
+
       this.performanceStatisticManager = storageLocal.getPerformanceStatisticManager();
 
       final OBinarySerializerFactory binarySerializerFactory = storageLocal.getComponentsFactory().binarySerializerFactory;
@@ -611,10 +610,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       //usable space may be less than free space
       final long freeSpace = Files.getFileStore(storagePath).getUsableSpace();
 
-      //take in account amount pages which were not written to the disk yet
-      final long notFlushedSpace = countOfNotFlushedPages.get() * pageSize;
-
-      if (freeSpace - notFlushedSpace < freeSpaceLimit)
+      if (freeSpace < freeSpaceLimit)
         callLowSpaceListeners(new OLowDiskSpaceInformation(freeSpace, freeSpaceLimit));
 
       lastDiskSpaceCheck.lazySet(newPagesAdded);
@@ -890,10 +886,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   @Override
   public boolean checkLowDiskSpace() throws IOException {
-    final long freeSpace = Files.getFileStore(storagePath).getUsableSpace();
-    final long notFlushedSpace = countOfNotFlushedPages.get() * pageSize;
-
-    return freeSpace - notFlushedSpace < freeSpaceLimit;
+    final long freeSpace = fileStore.getUsableSpace();
+    return freeSpace < freeSpaceLimit;
   }
 
   @Override
@@ -1152,7 +1146,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           Lock[] locks = lockManager.acquireExclusiveLocksInBatch(allocationPageKeys);
           try {
             final long fileSize = fileClassic.getFileSize();
-            final long spaceToAllocate = ((stopAllocationIndex + 1) * pageSize - fileSize);
+            final int spaceToAllocate = (int) ((stopAllocationIndex + 1) * pageSize - fileSize);
 
             OCachePointer resultPointer = null;
 
@@ -1165,10 +1159,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
                 buffer.putLong(MAGIC_NUMBER_OFFSET, MAGIC_NUMBER_WITHOUT_CHECKSUM);
 
                 final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, fileId, index);
-                cachePointer.setNotFlushed(true);
-
-                countOfNotFlushedPages.incrementAndGet();
-
                 //item only in write cache till we will not return
                 //it to read cache so we increment exclusive size by one
                 //otherwise call of write listener inside pointer may set exclusive size to negative value
@@ -2820,12 +2810,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         } finally {
           pointer.releaseSharedLock();
         }
-
-        if (pointer.isNotFlushed()) {
-          pointer.setNotFlushed(false);
-
-          countOfNotFlushedPages.decrementAndGet();
-        }
       } finally {
         lock.unlock();
       }
@@ -2984,12 +2968,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           groupLock.unlock();
         }
 
-        if (pagePointer.isNotFlushed()) {
-          pagePointer.setNotFlushed(false);
-
-          countOfNotFlushedPages.decrementAndGet();
-        }
-
         writeCacheSize.decrement();
       }
 
@@ -3041,12 +3019,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           entryIterator.remove();
         } finally {
           groupLock.unlock();
-        }
-
-        if (pagePointer.isNotFlushed()) {
-          pagePointer.setNotFlushed(false);
-
-          countOfNotFlushedPages.decrementAndGet();
         }
       }
 
