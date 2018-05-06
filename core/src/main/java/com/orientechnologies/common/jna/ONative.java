@@ -21,6 +21,7 @@ package com.orientechnologies.common.jna;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMemory;
+import com.sun.jna.LastErrorException;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 
@@ -45,7 +46,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ONative {
   private static volatile OCLibrary C_LIBRARY;
-  private static final String DEFAULT_MEMORY_CGROUP_PATH = "/sys/fs/memory";
+  private static final    String    DEFAULT_MEMORY_CGROUP_PATH = "/sys/fs/memory";
 
   private static volatile ONative instance = null;
   private static final    Lock    initLock = new ReentrantLock();
@@ -163,6 +164,18 @@ public class ONative {
       return null;
 
     return new MemoryLimitResult(memoryLimit, insideContainer);
+  }
+
+  public int open(String path) throws LastErrorException {
+    return C_LIBRARY.open(path, 0x0002);
+  }
+
+  public int fallocate(int fd, long offset, long len) throws LastErrorException {
+    return C_LIBRARY.fallocate(fd, 0, offset, len);
+  }
+
+  public int close(int fd) throws LastErrorException {
+    return C_LIBRARY.close(fd);
   }
 
   private long updateMemoryLimit(long memoryLimit, final long newMemoryLimit) {
