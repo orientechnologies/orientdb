@@ -24,22 +24,19 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,9 +49,8 @@ public class OFileClassic implements OFile, OClosableItem {
   public final static  String NAME            = "classic";
   private static final int    CURRENT_VERSION = 2;
 
-  public static final  int HEADER_SIZE    = 1024;
-  public static final  int VERSION_OFFSET = 48;
-  private static final int SIZE_OFFSET    = 52;
+  public static final int HEADER_SIZE    = 1024;
+  public static final int VERSION_OFFSET = 48;
 
   private static final int OPEN_RETRY_MAX = 10;
 
@@ -62,12 +58,13 @@ public class OFileClassic implements OFile, OClosableItem {
 
   private volatile Path osFile;
 
-  private          FileChannel channel;
-  private volatile boolean     dirty       = false;
-  private volatile boolean     headerDirty = false;
-  private          int         version;
+  private          FileChannel      channel;
+  private          RandomAccessFile frnd;
+  private volatile boolean          dirty       = false;
+  private volatile boolean          headerDirty = false;
+  private          int              version;
 
-  private volatile long size;                                                                                // PART OF
+  private volatile long size;
 
   /**
    * Map which calculates which files are opened and how many users they have
@@ -99,19 +96,13 @@ public class OFileClassic implements OFile, OClosableItem {
       this.size += size;
 
       assert this.size >= size;
+      frnd.setLength(this.size + HEADER_SIZE);
 
-      setSize(this.size);
-      final long ptr = Native.malloc(size);
-      try {
-        final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, size);
-        buffer.position(0);
-        OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
-      } finally {
-        Native.free(ptr);
-      }
-
+      assert channel.size() == this.size + HEADER_SIZE;
       return currentSize;
-    } finally {
+    } finally
+
+    {
       releaseWriteLock();
     }
   }
@@ -127,7 +118,6 @@ public class OFileClassic implements OFile, OClosableItem {
           //noinspection resource
           channel.truncate(HEADER_SIZE + size);
           this.size = size;
-          setSize(this.size);
 
           assert this.size >= 0;
           break;
@@ -499,6 +489,7 @@ public class OFileClassic implements OFile, OClosableItem {
 
       setVersion(OFileClassic.CURRENT_VERSION);
       version = OFileClassic.CURRENT_VERSION;
+
     } finally {
       releaseWriteLock();
     }
@@ -534,6 +525,7 @@ public class OFileClassic implements OFile, OClosableItem {
     writeByteBuffer(buffer, channel, offset);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private void setVersion(int version) throws IOException {
     acquireWriteLock();
     try {
@@ -544,23 +536,6 @@ public class OFileClassic implements OFile, OClosableItem {
     } finally {
       releaseWriteLock();
     }
-  }
-
-  private void setSize(long size) throws IOException {
-    final ByteBuffer buffer = ByteBuffer.allocate(OLongSerializer.LONG_SIZE);
-    buffer.putLong(size);
-    writeBuffer(buffer, SIZE_OFFSET);
-    setHeaderDirty();
-  }
-
-  private long getSize() throws IOException {
-    if (channel.size() == 0)
-      return 0;
-
-    final ByteBuffer buffer = ByteBuffer.allocate(OLongSerializer.LONG_SIZE);
-
-    readByteBuffer(buffer, channel, SIZE_OFFSET, true);
-    return buffer.getLong(0);
   }
 
   /*
@@ -586,6 +561,7 @@ public class OFileClassic implements OFile, OClosableItem {
         setVersion(CURRENT_VERSION);
         version = CURRENT_VERSION;
       }
+
     } catch (IOException e) {
       throw OException.wrapException(new OIOException("Error during file open"), e);
     } finally {
@@ -673,6 +649,11 @@ public class OFileClassic implements OFile, OClosableItem {
             channel.close();
             channel = null;
           }
+
+          if (frnd != null) {
+            frnd.close();
+            frnd = null;
+          }
         } finally {
           releaseWriteLock();
           attempts++;
@@ -729,7 +710,8 @@ public class OFileClassic implements OFile, OClosableItem {
     try {
       for (int i = 0; i < OPEN_RETRY_MAX; ++i)
         try {
-          channel = FileChannel.open(osFile, StandardOpenOption.CREATE, StandardOpenOption.READ, StandardOpenOption.WRITE);
+          frnd = new RandomAccessFile(osFile.toFile(), "rw");
+          channel = frnd.getChannel();
           break;
         } catch (FileNotFoundException e) {
           if (i == OPEN_RETRY_MAX - 1)
@@ -754,10 +736,7 @@ public class OFileClassic implements OFile, OClosableItem {
   }
 
   private void init() throws IOException {
-    size = getSize();
-    if (size == 0) {
-      size = channel.size() - HEADER_SIZE;
-    }
+    size = channel.size() - HEADER_SIZE;
     assert size >= 0;
 
     final ByteBuffer buffer = ByteBuffer.allocate(1);
@@ -907,7 +886,6 @@ public class OFileClassic implements OFile, OClosableItem {
     }
     builder.append(", stored=");
     builder.append(getFileSize());
-    builder.append("");
     return builder.toString();
   }
 
@@ -924,6 +902,14 @@ public class OFileClassic implements OFile, OClosableItem {
             .error(this, "Error during channel close for file '" + osFile + "', during IO exception handling", ioe);
       }
 
+      try {
+        frnd.close();
+      } catch (IOException ioe) {
+        OLogManager.instance()
+            .error(this, "Error during channel close for file '" + osFile + "', during IO exception handling", ioe);
+      }
+
+      frnd = null;
       channel = null;
 
       openChannel();
@@ -966,6 +952,5 @@ public class OFileClassic implements OFile, OClosableItem {
     }
 
   }
-
 }
 
