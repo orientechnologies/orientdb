@@ -2678,7 +2678,7 @@ public class OCASDiskWriteAheadLogTest {
         timer.schedule(new TimerTask() {
           @Override
           public void run() {
-            report[1] = true;
+            report[0] = true;
           }
         }, 1000 * 30, 1000 * 30);
 
