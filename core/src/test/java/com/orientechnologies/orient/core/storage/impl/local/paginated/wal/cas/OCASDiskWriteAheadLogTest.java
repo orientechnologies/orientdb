@@ -2629,7 +2629,7 @@ public class OCASDiskWriteAheadLogTest {
     wal.delete();
 
     Assert.assertTrue(Files.exists(testDirectory));
-    Assert.assertEquals(0, Files.size(testDirectory));
+    Assert.assertEquals(0, testDirectory.toFile().listFiles().length);
   }
 
   @Test
