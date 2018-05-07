@@ -94,6 +94,9 @@ public class OSQLHelper {
 
     Object fieldValue = VALUE_NOT_PARSED;
 
+    if (iValue.length() == 0) {
+      return iValue;
+    }
     if (iValue.startsWith("'") && iValue.endsWith("'") || iValue.startsWith("\"") && iValue.endsWith("\""))
       // STRING
       fieldValue = OIOUtils.getStringContent(iValue);
@@ -221,7 +224,9 @@ public class OSQLHelper {
   public static Object parseValue(final OBaseParser iCommand, final String iWord, final OCommandContext iContext) {
     return parseValue(iCommand, iWord, iContext, false);
   }
-  public static Object parseValue(final OBaseParser iCommand, final String iWord, final OCommandContext iContext, boolean resolveContextVariables) {
+
+  public static Object parseValue(final OBaseParser iCommand, final String iWord, final OCommandContext iContext,
+      boolean resolveContextVariables) {
     if (iWord.equals("*"))
       return "*";
 
