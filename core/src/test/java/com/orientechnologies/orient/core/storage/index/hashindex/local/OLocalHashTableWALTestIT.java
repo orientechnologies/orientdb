@@ -310,7 +310,7 @@ public class OLocalHashTableWALTestIT extends OLocalHashTableBase {
 
             try {
               ODurablePage durablePage = new ODurablePage(cacheEntry);
-              durablePage.restoreChanges(updatePageRecord.getChanges());
+              //TODO:durablePage.restoreChanges(updatePageRecord.getChanges());
               durablePage.setLsn(new OLogSequenceNumber(0, 0));
             } finally {
               expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);

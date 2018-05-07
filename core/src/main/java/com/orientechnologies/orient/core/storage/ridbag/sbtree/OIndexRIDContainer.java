@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -49,9 +48,11 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private final long               fileId;
   private       Set<OIdentifiable> underlying;
   private       boolean            isEmbedded;
-  private int topThreshold    = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
-  private int bottomThreshold = OGlobalConfiguration.INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
-  private final boolean durableNonTxMode;
+  private       int                topThreshold    = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
+      .getValueAsInteger();
+  private       int                bottomThreshold = OGlobalConfiguration.INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD
+      .getValueAsInteger();
+  private final boolean            durableNonTxMode;
 
   /**
    * Should be called inside of lock to ensure uniqueness of entity on disk !!!
@@ -80,16 +81,11 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     this.topThreshold = topThreshold;
   }
 
-  public void setBottomThreshold(int bottomThreshold) {
-    this.bottomThreshold = bottomThreshold;
-  }
-
   private long resolveFileIdByName(String fileName) {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage()
         .getUnderlying();
-    final OAtomicOperation atomicOperation;
     try {
-      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
+      storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }
@@ -98,22 +94,11 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
       final OReadCache readCache = storage.getReadCache();
       final OWriteCache writeCache = storage.getWriteCache();
 
-      if (atomicOperation == null) {
-        if (writeCache.exists(fileName))
-          return writeCache.fileIdByName(fileName);
+      if (writeCache.exists(fileName))
+        return writeCache.fileIdByName(fileName);
 
-        return readCache.addFile(fileName, writeCache);
-      } else {
-        long fileId;
+      return readCache.addFile(fileName, writeCache);
 
-        if (atomicOperation.isFileExists(fileName))
-          fileId = atomicOperation.loadFile(fileName);
-        else
-          fileId = atomicOperation.addFile(fileName);
-
-        storage.getAtomicOperationsManager().endAtomicOperation(false, null);
-        return fileId;
-      }
     } catch (IOException e) {
       try {
         storage.getAtomicOperationsManager().endAtomicOperation(true, e);
@@ -240,14 +225,6 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     tree.delete();
     underlying = set;
     isEmbedded = true;
-  }
-
-  /**
-   * If set is embedded convert it not embedded representation.
-   */
-  public void checkNotEmbedded() {
-    if (isEmbedded)
-      convertToSbTree();
   }
 
   private void convertToSbTree() {

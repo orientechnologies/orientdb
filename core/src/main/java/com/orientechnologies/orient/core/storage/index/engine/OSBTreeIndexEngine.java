@@ -81,7 +81,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public void deleteWithoutLoad(String indexName) {
-    sbTree.deleteWithoutLoad(indexName);
+    sbTree.deleteWithoutLoad();
   }
 
   @Override

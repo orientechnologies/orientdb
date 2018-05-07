@@ -316,7 +316,7 @@ public class OSBTreeBonsaiWALTestIT extends OSBTreeBonsaiLocalTestIT {
 
             try {
               ODurablePage durablePage = new ODurablePage(cacheEntry);
-              durablePage.restoreChanges(updatePageRecord.getChanges());
+              //TODO: durablePage.restoreChanges(updatePageRecord.getChanges());
               durablePage.setLsn(new OLogSequenceNumber(0, 0));
 
               cacheEntry.markDirty();
