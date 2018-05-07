@@ -1,10 +1,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.binary.impl.index;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 public class OSimpleKeySerializerTest {
   private static final int    FIELD_SIZE = 9;
@@ -17,10 +14,12 @@ public class OSimpleKeySerializerTest {
     simpleKeySerializer = new OSimpleKeySerializer<Double>();
   }
 
+  @Test
   public void testFieldSize() {
     Assert.assertEquals(simpleKeySerializer.getObjectSize(OBJECT), FIELD_SIZE);
   }
 
+  @Test
   public void testSerializeInByteBuffer() {
     final int serializationOffset = 5;
 
@@ -40,19 +39,4 @@ public class OSimpleKeySerializerTest {
 
     Assert.assertEquals(buffer.position() - serializationOffset, FIELD_SIZE);
   }
-
-  public void testSerializeWALChanges() {
-    final int serializationOffset = 5;
-
-    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
-    final byte[] data = new byte[FIELD_SIZE];
-    simpleKeySerializer.serializeNativeObject(OBJECT, data, 0);
-
-    final OWALChanges walChanges = new OWALChangesTree();
-    walChanges.setBinaryValue(buffer, data, serializationOffset);
-
-    Assert.assertEquals(simpleKeySerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
-    Assert.assertEquals(simpleKeySerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT);
-  }
-
 }

@@ -16,8 +16,6 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -37,20 +35,24 @@ public class IntegerSerializerTest {
     integerSerializer = new OIntegerSerializer();
   }
 
+  @Test
   public void testFieldSize() {
     Assert.assertEquals(integerSerializer.getObjectSize(null), FIELD_SIZE);
   }
 
+  @Test
   public void testSerialize() {
     integerSerializer.serialize(OBJECT, stream, 0);
     Assert.assertEquals(integerSerializer.deserialize(stream, 0), OBJECT);
   }
 
+  @Test
   public void testSerializeNative() {
     integerSerializer.serializeNative(OBJECT, stream, 0);
     Assert.assertEquals(integerSerializer.deserializeNativeObject(stream, 0), OBJECT);
   }
 
+  @Test
   public void testNativeDirectMemoryCompatibility() {
     integerSerializer.serializeNative(OBJECT, stream, 0);
 
@@ -61,6 +63,7 @@ public class IntegerSerializerTest {
     Assert.assertEquals(integerSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
   }
 
+  @Test
   public void testSerializeInByteBuffer() {
     final int serializationOffset = 5;
     final ByteBuffer buffer = ByteBuffer.allocate(FIELD_SIZE + serializationOffset);
@@ -78,18 +81,5 @@ public class IntegerSerializerTest {
     Assert.assertEquals(integerSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
 
     Assert.assertEquals(buffer.position() - serializationOffset, FIELD_SIZE);
-  }
-
-  public void testSerializeWALChanges() {
-    final int serializationOffset = 5;
-    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
-    final byte[] data = new byte[FIELD_SIZE];
-    integerSerializer.serializeNative(OBJECT, data, 0);
-
-    OWALChanges walChanges = new OWALChangesTree();
-    walChanges.setBinaryValue(buffer, data, serializationOffset);
-
-    Assert.assertEquals(integerSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
-    Assert.assertEquals(integerSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT);
   }
 }

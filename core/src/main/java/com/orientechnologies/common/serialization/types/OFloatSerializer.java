@@ -22,7 +22,6 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -120,20 +119,5 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return FLOAT_SIZE;
   }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Float deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return Float.intBitsToFloat(walChanges.getIntValue(buffer, offset));
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return FLOAT_SIZE;
-  }
 }
+

@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
@@ -232,48 +231,6 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OBinarySerializ
     buffer.position();
     if (buffer.get(offset + EMBEDDED_OFFSET) > 0) {
       return embeddedObjectSerializedSize(buffer.getInt(offset + EMBEDDED_SIZE_OFFSET));
-    } else {
-      return SBTREE_CONTAINER_SIZE;
-    }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public OIndexRIDContainer deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    final long fileId = walChanges.getLongValue(buffer, offset + FILE_ID_OFFSET);
-    final boolean durable = walChanges.getByteValue(buffer, offset + DURABLE_OFFSET) > 0;
-
-    if (walChanges.getByteValue(buffer, offset + EMBEDDED_OFFSET) > 0) {
-      final int size = walChanges.getIntValue(buffer, offset + EMBEDDED_SIZE_OFFSET);
-      final Set<OIdentifiable> underlying = new HashSet<OIdentifiable>(Math.max((int) (size / .75f) + 1, 16));
-
-      int p = offset + EMBEDDED_VALUES_OFFSET;
-      for (int i = 0; i < size; i++) {
-        underlying.add(LINK_SERIALIZER.deserializeFromByteBufferObject(buffer, walChanges, p));
-        p += RID_SIZE;
-      }
-
-      return new OIndexRIDContainer(fileId, underlying, durable);
-    } else {
-      final long pageIndex = walChanges.getLongValue(buffer, offset + SBTREE_ROOTINDEX_OFFSET);
-      final int pageOffset = walChanges.getIntValue(buffer, offset + SBTREE_ROOTOFFSET_OFFSET);
-      final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer, durable,
-          (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
-      return new OIndexRIDContainer(fileId, underlying, durable);
-    }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    if (walChanges.getByteValue(buffer, offset + EMBEDDED_OFFSET) > 0) {
-      return embeddedObjectSerializedSize(walChanges.getIntValue(buffer, offset + EMBEDDED_SIZE_OFFSET));
     } else {
       return SBTREE_CONTAINER_SIZE;
     }

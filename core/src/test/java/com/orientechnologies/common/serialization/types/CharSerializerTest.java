@@ -16,8 +16,6 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,7 +56,6 @@ public class CharSerializerTest {
     Assert.assertEquals(charSerializer.deserializeNativeObject(stream, 0), OBJECT);
   }
 
-
   @Test
   public void testNativeDirectMemoryCompatibility() {
     charSerializer.serializeNative(OBJECT, stream, 0);
@@ -71,6 +68,7 @@ public class CharSerializerTest {
     Assert.assertEquals(charSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
   }
 
+  @Test
   public void testSerializeInByteBuffer() {
     final int serializationOffset = 5;
 
@@ -86,20 +84,5 @@ public class CharSerializerTest {
 
     buffer.position(serializationOffset);
     Assert.assertEquals(charSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
-  }
-
-  @Test
-  public void testSerializeInWALChanges() {
-    final int serializationOffset = 5;
-    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
-
-    final byte[] data = new byte[FIELD_SIZE];
-    charSerializer.serializeNative(OBJECT, data, 0);
-
-    OWALChanges walChanges = new OWALChangesTree();
-    walChanges.setBinaryValue(buffer, data, serializationOffset);
-
-    Assert.assertEquals(charSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
-    Assert.assertEquals(charSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT);
   }
 }

@@ -1,10 +1,7 @@
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import org.junit.Assert;import org.junit.Before; import org.junit.Test;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.UUID;
 
 public class OUUIDSerializerTest {
@@ -17,10 +14,12 @@ public class OUUIDSerializerTest {
     uuidSerializer = new OUUIDSerializer();
   }
 
+  @Test
   public void testFieldSize() {
     Assert.assertEquals(uuidSerializer.getObjectSize(OBJECT), FIELD_SIZE);
   }
 
+  @Test
   public void testSerializationInByteBuffer() {
     final int serializationOffset = 5;
     final ByteBuffer buffer = ByteBuffer.allocate(FIELD_SIZE + serializationOffset);
@@ -39,20 +38,4 @@ public class OUUIDSerializerTest {
 
     Assert.assertEquals(buffer.position() - serializationOffset, FIELD_SIZE);
   }
-
-  public void testsSerializationWALChanges() {
-    final int serializationOffset = 5;
-
-    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
-    final byte[] data = new byte[FIELD_SIZE];
-
-    uuidSerializer.serializeNativeObject(OBJECT, data, 0);
-
-    OWALChanges walChanges = new OWALChangesTree();
-    walChanges.setBinaryValue(buffer, data, serializationOffset);
-
-    Assert.assertEquals(uuidSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
-    Assert.assertEquals(uuidSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT);
-  }
-
 }

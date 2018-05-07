@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
 import java.nio.ByteBuffer;
@@ -29,7 +30,7 @@ import java.nio.ByteBuffer;
  * @since 26.04.13
  */
 public class OUpdatePageRecord extends OAbstractPageWALRecord {
-  private OWALChanges        changes;
+  private byte[]             compressedPage;
   /**
    * Previous value of LSN for current page.
    * This value is used when we want to rollback changes of not completed transactions after restore.
@@ -40,21 +41,21 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   public OUpdatePageRecord() {
   }
 
-  public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId,
-      final OWALChanges changes, final OLogSequenceNumber prevLsn) {
+  public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId, byte[] compressedPage,
+      final OLogSequenceNumber prevLsn) {
     super(pageIndex, fileId, operationUnitId);
-    this.changes = changes;
+    this.compressedPage = compressedPage;
     this.prevLsn = prevLsn;
   }
 
-  public OWALChanges getChanges() {
-    return changes;
+  public byte[] getCompressedPage() {
+    return compressedPage;
   }
 
   @Override
   public int serializedSize() {
     int serializedSize = super.serializedSize();
-    serializedSize += changes.serializedSize();
+    serializedSize += compressedPage.length + OIntegerSerializer.INT_SIZE;
 
     serializedSize += 2 * OLongSerializer.LONG_SIZE;
 
@@ -73,7 +74,11 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   @Override
   public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
-    offset = changes.toStream(offset, content);
+    OIntegerSerializer.INSTANCE.serializeNative(compressedPage.length, content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    System.arraycopy(compressedPage, 0, content, offset, compressedPage.length);
+    offset += compressedPage.length;
 
     OLongSerializer.INSTANCE.serializeNative(prevLsn.getSegment(), content, offset);
     offset += OLongSerializer.LONG_SIZE;
@@ -88,7 +93,9 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   public void toStream(ByteBuffer buffer) {
     super.toStream(buffer);
 
-    changes.toStream(buffer);
+    buffer.putInt(compressedPage.length);
+    buffer.put(compressedPage);
+
     buffer.putLong(prevLsn.getSegment());
     buffer.putLong(prevLsn.getPosition());
   }
@@ -97,8 +104,11 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
-    changes = new OWALPageChangesPortion();
-    offset = changes.fromStream(offset, content);
+    final int pageLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    compressedPage = new byte[pageLen];
+    System.arraycopy(content, offset, compressedPage, 0, pageLen);
 
     final long segment = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;

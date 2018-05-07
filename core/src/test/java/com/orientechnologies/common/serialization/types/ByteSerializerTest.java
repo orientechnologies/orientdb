@@ -16,12 +16,10 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import org.junit.Before;
-import org.junit.Assert;import org.junit.Before;
+import org.junit.Assert;
 import org.junit.Test;
-import org.junit.Test;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -51,11 +49,13 @@ public class ByteSerializerTest {
     Assert.assertEquals(byteSerializer.deserialize(stream, 0), OBJECT);
   }
 
+  @Test
   public void testSerializeNative() {
     byteSerializer.serializeNative(OBJECT, stream, 0);
     Assert.assertEquals(byteSerializer.deserializeNativeObject(stream, 0), OBJECT);
   }
 
+  @Test
   public void testNativeDirectMemoryCompatibility() {
     byteSerializer.serializeNative(OBJECT, stream, 0);
 
@@ -67,6 +67,7 @@ public class ByteSerializerTest {
     Assert.assertEquals(byteSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
   }
 
+  @Test
   public void testSerializeInByteBuffer() {
     final int serializationOffset = 5;
 
@@ -84,18 +85,5 @@ public class ByteSerializerTest {
     final Byte result = byteSerializer.deserializeFromByteBufferObject(buffer);
 
     Assert.assertEquals(result, OBJECT);
-  }
-
-  public void testSerializationInWALChanges() {
-    final int serializationOffset = 5;
-    final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());
-
-    final OWALChanges walChanges = new OWALChangesTree();
-    final byte[] data = new byte[FIELD_SIZE];
-    byteSerializer.serializeNative(OBJECT, data, 0);
-    walChanges.setBinaryValue(buffer, data, serializationOffset);
-
-    Assert.assertEquals(byteSerializer.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), FIELD_SIZE);
-    Assert.assertEquals(byteSerializer.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset), OBJECT);
   }
 }

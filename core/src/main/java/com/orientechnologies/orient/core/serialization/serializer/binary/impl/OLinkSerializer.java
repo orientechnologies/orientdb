@@ -26,7 +26,6 @@ import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.nio.ByteBuffer;
 
@@ -138,31 +137,6 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
    */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
-    return RID_SIZE;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public OIdentifiable deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    final int clusterId = walChanges.getShortValue(buffer, offset);
-
-    // Wrong implementation but needed for binary compatibility
-    final long clusterPosition = OLongSerializer.INSTANCE
-        .deserialize(walChanges.getBinaryValue(buffer, offset + OShortSerializer.SHORT_SIZE, OLongSerializer.LONG_SIZE), 0);
-
-    // final long clusterPosition = OLongSerializer.INSTANCE
-    // .deserializeFromDirectMemory(pointer, offset + OShortSerializer.SHORT_SIZE);
-
-    return new ORecordId(clusterId, clusterPosition);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return RID_SIZE;
   }
 }

@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.cache;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 7/23/13
@@ -64,7 +62,4 @@ public interface OCacheEntry {
   boolean isLockAcquiredByCurrentThread();
 
   void decrementUsages();
-
-  OWALChanges getChanges();
-
 }

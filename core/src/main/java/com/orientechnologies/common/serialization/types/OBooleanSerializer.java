@@ -20,8 +20,6 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -122,22 +120,6 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
    */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
-    return BOOLEAN_SIZE;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Boolean deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return walChanges.getByteValue(buffer, offset) > 0;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return BOOLEAN_SIZE;
   }
 }

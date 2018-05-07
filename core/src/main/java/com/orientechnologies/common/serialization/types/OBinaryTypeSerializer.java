@@ -22,7 +22,6 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -123,23 +122,5 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return buffer.getInt() + OIntegerSerializer.INT_SIZE;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public byte[] deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    final int len = walChanges.getIntValue(buffer, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-    return walChanges.getBinaryValue(buffer, offset, len);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return walChanges.getIntValue(buffer, offset) + OIntegerSerializer.INT_SIZE;
   }
 }

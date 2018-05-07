@@ -20,8 +20,6 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.nio.ByteBuffer;
 
 /**
@@ -195,44 +193,4 @@ public interface OBinarySerializer<T> {
    * @return Size of serialized object.
    */
   int getObjectSizeInByteBuffer(ByteBuffer buffer);
-
-  /**
-   * Converts binary presentation of object to object instance taking in account changes which are done inside of atomic operation
-   * {@link com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation}.
-   * <p>
-   * Binary format of method is expected to be the same as binary format of method {@link #serializeNativeObject(Object, byte[], int, Object...)}.
-   * <p>
-   * So if we call:
-   * <code>
-   * byte[] stream = new byte[serializedSize];
-   * binarySerializer.serializeNativeObject(object, stream, 0);
-   * walChanges.setBinaryValue(buffer, stream, 10);
-   * </code>
-   * <p>
-   * Then following assert should pass
-   * <p>
-   * <code>
-   * assert object.equals(binarySerializer.deserializeFromByteBufferObject(buffer, walChanges, 10));
-   * </code>
-   *
-   * @param buffer     Buffer which will contain serialized changes.
-   * @param walChanges Changes are done during atomic operation.
-   * @param offset     Offset of binary presentation of object inside of byte buffer/atomic operations changes.
-   * @return Instance of object serialized in buffer.
-   */
-  T deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset);
-
-  /**
-   * Returns amount of bytes which is consumed by object which is already serialized in buffer taking in account
-   * changes which are done inside of atomic operation
-   * {@link com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation}.
-   * <p>
-   * Result of call should be the same as result of call of {@link #getObjectSize(Object, Object...)} on deserialized object.
-   *
-   * @param buffer     Buffer which will contain serialized changes.
-   * @param walChanges Changes are done during atomic operation.
-   * @param offset     Offset of binary presentation of object inside of byte buffer/atomic operations changes.
-   * @return Size of serialized object.
-   */
-  int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset);
 }

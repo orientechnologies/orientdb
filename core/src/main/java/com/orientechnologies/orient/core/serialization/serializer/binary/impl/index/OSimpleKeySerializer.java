@@ -24,7 +24,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.nio.ByteBuffer;
 
@@ -172,25 +171,5 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
     final byte serializerId = buffer.get();
     init(serializerId);
     return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE + binarySerializer.getObjectSizeInByteBuffer(buffer);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public T deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    final byte typeId = walChanges.getByteValue(buffer, offset++);
-
-    init(typeId);
-    return (T) binarySerializer.deserializeFromByteBufferObject(buffer, walChanges, offset);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE + binarySerializer
-        .getObjectSizeInByteBuffer(buffer, walChanges, OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE + offset);
   }
 }

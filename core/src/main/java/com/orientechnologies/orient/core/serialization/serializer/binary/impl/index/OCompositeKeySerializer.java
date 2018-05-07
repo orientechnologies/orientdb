@@ -27,7 +27,6 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -327,40 +326,5 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
     return buffer.getInt();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public OCompositeKey deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    final OCompositeKey compositeKey = new OCompositeKey();
-
-    offset += OIntegerSerializer.INT_SIZE;
-
-    final int keysSize = walChanges.getIntValue(buffer, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    final OBinarySerializerFactory factory = OBinarySerializerFactory.getInstance();
-    for (int i = 0; i < keysSize; i++) {
-      final byte serializerId = walChanges.getByteValue(buffer, offset);
-      offset += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
-
-      OBinarySerializer<Object> binarySerializer = (OBinarySerializer<Object>) factory.getObjectSerializer(serializerId);
-      final Object key = binarySerializer.deserializeFromByteBufferObject(buffer, walChanges, offset);
-      compositeKey.addKey(key);
-
-      offset += binarySerializer.getObjectSize(key);
-    }
-
-    return compositeKey;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return walChanges.getIntValue(buffer, offset);
   }
 }

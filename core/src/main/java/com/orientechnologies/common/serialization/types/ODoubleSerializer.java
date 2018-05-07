@@ -22,7 +22,6 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -118,22 +117,6 @@ public class ODoubleSerializer implements OBinarySerializer<Double> {
    */
   @Override
   public int getObjectSizeInByteBuffer(ByteBuffer buffer) {
-    return DOUBLE_SIZE;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Double deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset) {
-    return Double.longBitsToDouble(walChanges.getLongValue(buffer, offset));
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset) {
     return DOUBLE_SIZE;
   }
 }

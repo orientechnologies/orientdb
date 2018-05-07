@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.core.storage.cache;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -106,11 +104,6 @@ public class OCacheEntryImpl implements OCacheEntry {
   @Override
   public void decrementUsages() {
     usagesCount.decrementAndGet();
-  }
-
-  @Override
-  public OWALChanges getChanges() {
-    return null;
   }
 
   @Override

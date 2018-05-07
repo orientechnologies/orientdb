@@ -2,12 +2,9 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 import static org.junit.Assert.*;
 
@@ -289,25 +286,5 @@ public class OCompositeKeyTest {
     assertEquals(buffer.position() - serializationOffset, len);
   }
 
-  @Test
-  public void testWALChangesBinarySerializationCompositeKeyNull() {
-    final int serializationOffset = 5;
 
-    final OCompositeKey compositeKey = new OCompositeKey();
-    compositeKey.addKey(1);
-    compositeKey.addKey(null);
-    compositeKey.addKey(2);
-
-    final int len = OCompositeKeySerializer.INSTANCE.getObjectSize(compositeKey);
-    final ByteBuffer buffer = ByteBuffer.allocateDirect(len + serializationOffset).order(ByteOrder.nativeOrder());
-    final byte[] data = new byte[len];
-
-    OCompositeKeySerializer.INSTANCE.serializeNativeObject(compositeKey, data, 0);
-    final OWALChanges walChanges = new OWALChangesTree();
-    walChanges.setBinaryValue(buffer, data, serializationOffset);
-
-    assertEquals(OCompositeKeySerializer.INSTANCE.getObjectSizeInByteBuffer(buffer, walChanges, serializationOffset), len);
-    assertEquals(OCompositeKeySerializer.INSTANCE.deserializeFromByteBufferObject(buffer, walChanges, serializationOffset),
-        compositeKey);
-  }
 }

@@ -63,24 +63,24 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
-  protected static final String CONFIG_MAP_RID  = "mapRid";
-  protected static final String CONFIG_CLUSTERS = "clusters";
-  protected final String                    type;
-  protected final ODocument                 metadata;
-  protected final OAbstractPaginatedStorage storage;
-  private final   String                    databaseName;
-  private final   String                    name;
-  private final OReadersWriterSpinLock rwLock         = new OReadersWriterSpinLock();
-  private final AtomicLong             rebuildVersion = new AtomicLong();
-  private final      int                version;
-  protected volatile IndexConfiguration configuration;
-  protected          String             valueContainerAlgorithm;
-  protected int         indexId         = -1;
-  protected Set<String> clustersToIndex = new HashSet<String>();
-  private          String           algorithm;
-  private volatile OIndexDefinition indexDefinition;
-  private volatile boolean             rebuilding       = false;
-  private          Map<String, String> engineProperties = new HashMap<String, String>();
+  protected static final String                    CONFIG_MAP_RID   = "mapRid";
+  protected static final String                    CONFIG_CLUSTERS  = "clusters";
+  protected final        String                    type;
+  protected final        ODocument                 metadata;
+  protected final        OAbstractPaginatedStorage storage;
+  private final          String                    databaseName;
+  private final          String                    name;
+  private final          OReadersWriterSpinLock    rwLock           = new OReadersWriterSpinLock();
+  private final          AtomicLong                rebuildVersion   = new AtomicLong();
+  private final          int                       version;
+  protected volatile     IndexConfiguration        configuration;
+  protected              String                    valueContainerAlgorithm;
+  protected              int                       indexId          = -1;
+  protected              Set<String>               clustersToIndex  = new HashSet<String>();
+  private                String                    algorithm;
+  private volatile       OIndexDefinition          indexDefinition;
+  private volatile       boolean                   rebuilding       = false;
+  private                Map<String, String>       engineProperties = new HashMap<String, String>();
 
   public OIndexAbstract(String name, final String type, final String algorithm, final String valueContainerAlgorithm,
       final ODocument metadata, final int version, final OStorage storage) {
@@ -184,10 +184,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
    * Creates the index.
    *
    * @param clusterIndexName Cluster name where to place the TreeMap
-   * @param clustersToIndex
-   * @param rebuild
-   * @param progressListener
-   * @param valueSerializer
    */
   public OIndexInternal<?> create(final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener,
@@ -976,34 +972,18 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   private void removeValuesContainer() {
     if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
-
-      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
-
       final OReadCache readCache = storage.getReadCache();
       final OWriteCache writeCache = storage.getWriteCache();
 
-      if (atomicOperation == null) {
-        try {
-          final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
-          if (writeCache.exists(fileName)) {
-            final long fileId = writeCache.loadFile(fileName);
-            readCache.deleteFile(fileId, writeCache);
-          }
-        } catch (IOException e) {
-          OLogManager.instance().error(this, "Cannot delete file for value containers", e);
+      try {
+        final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+        if (writeCache.exists(fileName)) {
+          final long fileId = writeCache.loadFile(fileName);
+          readCache.deleteFile(fileId, writeCache);
         }
-      } else {
-        try {
-          final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
-          if (atomicOperation.isFileExists(fileName)) {
-            final long fileId = atomicOperation.loadFile(fileName);
-            atomicOperation.deleteFile(fileId);
-          }
-        } catch (IOException e) {
-          OLogManager.instance().error(this, "Cannot delete file for value containers", e);
-        }
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Cannot delete file for value containers", e);
       }
-
     }
   }
 

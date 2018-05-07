@@ -184,7 +184,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final OOperationUnitId unitId = OOperationUnitId.generateId();
     final OLogSequenceNumber lsn = useWal ? writeAheadLog.logAtomicOperationStartRecord(true, unitId) : null;
 
-    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId(), performanceStatisticManager);
+    operation = new OAtomicOperation(lsn, unitId);
     currentOperation.set(operation);
 
     if (trackAtomicOperations) {
@@ -399,8 +399,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       try {
         final boolean useWal = useWal();
 
-        if (!operation.isRollback())
-          operation.commitChanges(useWal ? writeAheadLog : null);
+        //TODO:rollback !!!
 
         if (useWal)
           lsn = writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(),
