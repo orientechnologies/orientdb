@@ -20,10 +20,15 @@ import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListene
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OCheckpointEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.Cursor;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.deque.MPSCFAAArrayDequeue;
 import com.sun.jna.Native;
@@ -49,6 +54,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -74,12 +80,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
-public final class OCASDiskWriteAheadLog {
+public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private final static XXHashFactory xxHashFactory = XXHashFactory.fastestInstance();
   private static final int           XX_SEED       = 0x9747b28c;
-
-  public static final String MASTER_RECORD_EXTENSION = ".wmr";
-  public static final String WAL_SEGMENT_EXTENSION   = ".wal";
 
   private static final int BUFFER_SIZE = 64 * 1024 * 1024;
 
@@ -546,7 +549,11 @@ public final class OCASDiskWriteAheadLog {
 
     int pagesRead = 0;
 
-    Iterator<Long> segmentsIterator = segments.tailSet(segment).iterator();
+    final NavigableSet<Long> segs = segments.tailSet(segment);
+    if (segs.isEmpty() || segs.first() > segment) {
+      return Collections.emptyList();
+    }
+    Iterator<Long> segmentsIterator = segs.iterator();
 
     while (pagesRead < BATCH_READ_SIZE) {
       if (segmentsIterator.hasNext()) {
@@ -885,6 +892,35 @@ public final class OCASDiskWriteAheadLog {
     return log(record);
   }
 
+  @Override
+  public OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn) throws IOException {
+    final OFuzzyCheckpointStartRecord record = new OFuzzyCheckpointStartRecord(lastCheckpoint, flushedLsn);
+    log(record);
+    return record.getLsn();
+  }
+
+  @Override
+  public OLogSequenceNumber logFuzzyCheckPointEnd() throws IOException {
+    OFuzzyCheckpointEndRecord record = new OFuzzyCheckpointEndRecord();
+    log(record);
+    return record.getLsn();
+  }
+
+  @Override
+  public OLogSequenceNumber logFullCheckpointStart() throws IOException {
+    return log(new OFullCheckpointStartRecord(lastCheckpoint));
+  }
+
+  @Override
+  public OLogSequenceNumber logFullCheckpointEnd() throws IOException {
+    return log(new OCheckpointEndRecord());
+  }
+
+  @Override
+  public OLogSequenceNumber getLastCheckpoint() {
+    return lastCheckpoint;
+  }
+
   public OLogSequenceNumber log(OWriteableWALRecord writeableRecord) {
     final long segSize;
     final long size;
@@ -1030,7 +1066,7 @@ public final class OCASDiskWriteAheadLog {
     return currentSegment;
   }
 
-  public void appendNewSegment() {
+  public boolean appendNewSegment() {
     segmentLock.exclusiveLock();
     try {
       //noinspection NonAtomicOperationOnVolatileField
@@ -1041,6 +1077,8 @@ public final class OCASDiskWriteAheadLog {
     } finally {
       segmentLock.exclusiveUnlock();
     }
+
+    return true;
   }
 
   public void appendSegment(long segmentIndex) {
@@ -1316,7 +1354,7 @@ public final class OCASDiskWriteAheadLog {
     }
   }
 
-  public OLogSequenceNumber getFlushedLSN() {
+  public OLogSequenceNumber getFlushedLsn() {
     return flushedLSN;
   }
 

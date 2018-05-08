@@ -14,10 +14,7 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
 import org.junit.*;
 
 import java.io.File;
@@ -38,11 +35,10 @@ public class WOWCacheTestIT {
   private static OLocalPaginatedStorage storageLocal;
   private static String                 fileName;
 
-  private static ODiskWriteAheadLog writeAheadLog;
   private static final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
 
-  private static OWOWCache wowCache;
-  private OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<>(1024);
+  private static OWOWCache                                    wowCache;
+  private        OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<>(1024);
 
   @BeforeClass
   public static void beforeClass() throws IOException {
@@ -55,8 +51,6 @@ public class WOWCacheTestIT {
     storageLocal.create(new OContextConfiguration());
 
     fileName = "wowCacheTest.tst";
-
-    OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, WriteAheadLogTest.TestRecord.class);
   }
 
   @Before
@@ -75,11 +69,6 @@ public class WOWCacheTestIT {
 
       wowCache.close();
       wowCache = null;
-    }
-
-    if (writeAheadLog != null) {
-      writeAheadLog.delete();
-      writeAheadLog = null;
     }
 
     storageLocal.delete();
@@ -116,8 +105,7 @@ public class WOWCacheTestIT {
   }
 
   private void initBuffer() throws IOException, InterruptedException {
-    wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, 10, 100, storageLocal, false, files, 1,
-        OChecksumMode.StoreAndVerify);
+    wowCache = new OWOWCache(pageSize, bufferPool, null, 10, 100, storageLocal, false, files, 1, OChecksumMode.StoreAndVerify);
     wowCache.loadRegisteredFiles();
   }
 

@@ -3,14 +3,12 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -2030,10 +2028,10 @@ public class OCASDiskWriteAheadLogTest {
       }
 
       //noinspection StatementWithEmptyBody
-      while (wal.getFlushedLSN() == null || wal.end().compareTo(wal.getFlushedLSN()) > 0)
+      while (wal.getFlushedLsn() == null || wal.end().compareTo(wal.getFlushedLsn()) > 0)
         ;
 
-      Assert.assertEquals(wal.end(), wal.getFlushedLSN());
+      Assert.assertEquals(wal.end(), wal.getFlushedLsn());
       Assert.assertEquals(masterRecords.last(), wal.lastCheckpoint());
 
       wal.close();
@@ -2077,7 +2075,7 @@ public class OCASDiskWriteAheadLogTest {
 
         wal.flush();
 
-        Assert.assertEquals(lastLSN, wal.getFlushedLSN());
+        Assert.assertEquals(lastLSN, wal.getFlushedLsn());
       }
 
       wal.close();
@@ -2085,8 +2083,8 @@ public class OCASDiskWriteAheadLogTest {
       OCASDiskWriteAheadLog loadedWAL = new OCASDiskWriteAheadLog("walTest", testDirectory, testDirectory, 48_000,
           256 * 1024 * 1024, 20, true, Locale.US, 10 * 1024 * 1024 * 1024L, -1, 1000);
 
-      Assert.assertNotNull(loadedWAL.getFlushedLSN());
-      Assert.assertEquals(loadedWAL.end(), loadedWAL.getFlushedLSN());
+      Assert.assertNotNull(loadedWAL.getFlushedLsn());
+      Assert.assertEquals(loadedWAL.end(), loadedWAL.getFlushedLsn());
 
       loadedWAL.close();
 

@@ -233,8 +233,8 @@ public enum OGlobalConfiguration {
       Boolean.class, true),
 
   WAL_CACHE_SIZE("storage.wal.cacheSize",
-      "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) If set to 0, caching will be disabled", Integer.class,
-      3000),
+      "Maximum size of WAL cache (in amount of WAL pages, each page is 4k) If set to 0, caching will be disabled", Integer.class,
+      30_000),
 
   WAL_FILE_AUTOCLOSE_INTERVAL("storage.wal.fileAutoCloseInterval",
       "Interval in seconds after which WAL file will be closed if there is no "
@@ -243,7 +243,7 @@ public enum OGlobalConfiguration {
   WAL_SEGMENT_BUFFER_SIZE("storage.wal.segmentBufferSize",
       "Size of the buffer which contains WAL records in serialized format " + "in megabytes", Integer.class, 32),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, 256),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, 512),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk (in megabytes)", Integer.class, -1),
 
@@ -265,7 +265,10 @@ public enum OGlobalConfiguration {
   @Deprecated WAL_READ_CACHE_SIZE("storage.wal.readCacheSize", "Size of WAL read cache in amount of pages", Integer.class, 1000),
 
   WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",
-      "The amount of time the DB should wait until it shuts down (in seconds)", Integer.class, 60 * 10),
+      "The amount of time the DB should wait until fuzzy checkpoint thread shuts down (in seconds)", Integer.class, 60 * 10),
+
+  SEGMENT_ADDER_SHUTDOWN_TIMEOUT("storage.wal.segmentAdderShutdownWait",
+      "The amount of time the DB should wait until segment adder thread shuts down (in seconds)", Integer.class, 60 * 10),
 
   WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fullCheckpointShutdownTimeout",
       "The amount of time the DB will wait, until a checkpoint is finished, during a DB shutdown (in seconds)", Integer.class,

@@ -31,8 +31,6 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 import javax.management.*;
 import java.lang.management.ManagementFactory;
@@ -48,33 +46,26 @@ import static com.orientechnologies.orient.core.storage.impl.local.statistic.OSe
 /**
  * Aggregator of performance statistic for whole storage.
  * Allows to gather performance statistic for single thread or for all threads in storage.
- * <p>
  * In case of gathering statistics for single thread statistic for all period is gathered and average values are provided.
  * If you gather statistic for whole system time series of measurements are provided.
- * <p>
  * You can not measure statistic for whole system and for chosen threads at the same time.
- * <p>
  * To gather statistic for single thread use following workflow:
  * <ol>
  * <li>Call {@link #startThreadMonitoring()}</li>
  * <li>Execute database commands</li>
  * <li>Call {@link #stopThreadMonitoring()}</li>
  * </ol>
- * <p>
  * Instance of {@link OSessionStoragePerformanceStatistic} returned as result of call of last method will contain all
  * performance data are gathered during storage monitoring.
- * <p>
  * To gather statistic for whole system use following workflow:
  * <ol>
  * <li>Call {@link #startMonitoring()}</li>
  * <li>During monitoring of storage use getXXX methods to get information about performance numbers</li>
  * <li>At the end of monitoring call {@link #stopMonitoring()}</li>
  * </ol>
- * <p>
  * You may access performance data both after you stopped gathering statistic and during gathering of statistic.
  * You may manipulate by manager directly from Java or from JMX from bean with name which consist of prefix {@link #MBEAN_PREFIX}
  * and storage name.
- * <p>
  * If {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent} participates in
  * performance monitoring it has to register itself using method {@link #registerComponent(String)}
  */
@@ -239,18 +230,6 @@ public class OPerformanceStatisticManager {
   private volatile O2QCache readCache;
 
   /**
-   * Flags which indicates whether {@link #writeAheadLog} field is initialized on demand.
-   * We use separate flag because <code>null</code> can be valid value.
-   */
-  private volatile boolean            writeAheadLogInitialized;
-  /**
-   * Instance of write ahead log which belongs to current storage, may be <code>null</code> if it is not
-   * disk based storage.
-   * Initialized on demand.
-   */
-  private volatile ODiskWriteAheadLog writeAheadLog;
-
-  /**
    * @param intervalBetweenSnapshots Interval between snapshots of performance data for each thread statistic.
    * @param cleanUpInterval          Interval between time series of performance data.
    *
@@ -300,25 +279,6 @@ public class OPerformanceStatisticManager {
   }
 
   /**
-   * @return Returns current instance of write ahead log and initializes local reference if such one is not initialized yet.
-   */
-  private ODiskWriteAheadLog getWriteAheadLog() {
-    if (writeAheadLogInitialized)
-      return writeAheadLog;
-
-    final OWriteAheadLog writeAheadLog = storage.getWALInstance();
-
-    if (writeAheadLog instanceof ODiskWriteAheadLog)
-      this.writeAheadLog = (ODiskWriteAheadLog) writeAheadLog;
-    else
-      this.writeAheadLog = null;
-
-    writeAheadLogInitialized = true;
-
-    return this.writeAheadLog;
-  }
-
-  /**
    * Starts performance monitoring only for single thread.
    * After call of this method you can not start system wide monitoring till call of {@link #stopThreadMonitoring()} is performed.
    */
@@ -352,7 +312,6 @@ public class OPerformanceStatisticManager {
 
   /**
    * Starts performance monitoring only for whole system.
-   * <p>
    * After call of this method you can not start monitoring on thread level till call of {@link #stopMonitoring()} is performed.
    */
   public void startMonitoring() {
@@ -509,7 +468,6 @@ public class OPerformanceStatisticManager {
 
   /**
    * Average amount of pages which were read from cache for component with given name during single data operation.
-   * <p>
    * If null value is passed or data for component with passed in name does not exist then <code>-1</code> will be returned.
    *
    * @param componentName Name of component data of which should be returned. Name is case sensitive.
@@ -999,48 +957,6 @@ public class OPerformanceStatisticManager {
         return writeCacheOverflowCount;
       } else {
         return writeCacheOverflowCount;
-      }
-    } finally {
-      switchLock.releaseReadLock();
-    }
-  }
-
-  /**
-   * @return Size of WAL in bytes or <code>-1</code> if value is undefined
-   */
-  public long getWALSize() {
-    switchLock.acquireReadLock();
-    try {
-      if (enabled) {
-        final ODiskWriteAheadLog wal = getWriteAheadLog();
-        if (wal != null) {
-          walSize = wal.size();
-        }
-
-        return walSize;
-      } else {
-        return walSize;
-      }
-    } finally {
-      switchLock.releaseReadLock();
-    }
-  }
-
-  /**
-   * @return Amount of times when WAL cache is completely filled in and force flush is needed or <code>-1</code>
-   * if value is undefined
-   */
-  public long getWALCacheOverflowCount() {
-    switchLock.acquireReadLock();
-    try {
-      if (enabled) {
-        final ODiskWriteAheadLog wal = getWriteAheadLog();
-        if (wal != null)
-          walCacheOverflowCount = wal.getCacheOverflowCount();
-
-        return walCacheOverflowCount;
-      } else {
-        return walCacheOverflowCount;
       }
     } finally {
       switchLock.releaseReadLock();
