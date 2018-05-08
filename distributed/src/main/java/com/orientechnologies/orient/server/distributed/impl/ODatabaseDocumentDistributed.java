@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
@@ -497,8 +498,21 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       servers.add(dManager.getLockManagerServer());
       ODistributedResponse response = dManager.sendRequest(getName(), null, servers, message, dManager.getNextMessageIdCounter(),
           ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-      for (Map.Entry<ORID, ORID> entry : ((OToLeaderTransactionTaskResponse) response.getPayload()).getNewIds().entrySet()) {
-        iTx.updateIdentityAfterCommit(entry.getValue(), entry.getKey());
+      for (OToLeaderTransactionTaskResponse.OCreatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
+          .getPayload()).getCreated()) {
+        iTx.updateIdentityAfterCommit(entry.getCurrentRid(), entry.getCreatedRid());
+        ORecordInternal.setVersion(iTx.getRecordEntry(entry.getCurrentRid()).getRecord(), entry.getVersion());
+      }
+      for (OToLeaderTransactionTaskResponse.OUpdatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
+          .getPayload()).getUpdated()) {
+        ORecordInternal.setVersion(iTx.getRecordEntry(entry.getRid()).getRecord(), entry.getVersion());
+      }
+      for (OToLeaderTransactionTaskResponse.ODeletedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
+          .getPayload()).getDeleted()) {
+        this.getLocalCache().deleteRecord(entry.getRid());
+      }for (OToLeaderTransactionTaskResponse.OUpdatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
+          .getPayload()).getUpdated()) {
+        ORecordInternal.setVersion(iTx.getRecordEntry(entry.getRid()).getRecord(), entry.getVersion());
       }
     }
   }

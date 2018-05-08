@@ -5,21 +5,25 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
+  private final Map<ORID, ORecord> createdRecords = new HashMap<>();
+  private final Map<ORID, ORecord> updatedRecords = new HashMap<>();
+  private final Set<ORID>          deletedRecord  = new HashSet<>();
+
   public OTransactionOptimisticDistributed(ODatabaseDocumentInternal database, List<ORecordOperation> changes) {
     super(database);
     for (ORecordOperation change : changes) {
@@ -34,7 +38,6 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
       List<OClassIndexManager.IndexChange> changes = new ArrayList<>();
       switch (change.getType()) {
       case ORecordOperation.CREATED:
-
         if (change.getRecord() instanceof ODocument) {
           ODocument doc = (ODocument) change.getRecord();
           OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, database);
@@ -54,6 +57,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
             }
           }
         }
+        createdRecords.put(change.getRID().copy(), change.getRecord());
         break;
       case ORecordOperation.UPDATED:
         if (change.getRecord() instanceof ODocument) {
@@ -77,6 +81,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
             }
           }
         }
+        updatedRecords.put(change.getRID(), change.getRecord());
         break;
       case ORecordOperation.DELETED:
         if (change.getRecord() instanceof ODocument) {
@@ -99,6 +104,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
           OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, database);
           OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, database);
         }
+        deletedRecord.add(change.getRID());
         break;
       case ORecordOperation.LOADED:
         break;
@@ -115,5 +121,17 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
   @Override
   public Map<ORID, ORID> getUpdatedRids() {
     return super.getUpdatedRids();
+  }
+
+  public Map<ORID, ORecord> getCreatedRecords() {
+    return createdRecords;
+  }
+
+  public Map<ORID, ORecord> getUpdatedRecords() {
+    return updatedRecords;
+  }
+
+  public Set<ORID> getDeletedRecord() {
+    return deletedRecord;
   }
 }
