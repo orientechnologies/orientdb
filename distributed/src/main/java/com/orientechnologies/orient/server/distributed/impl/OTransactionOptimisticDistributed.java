@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
@@ -16,6 +17,7 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
   public OTransactionOptimisticDistributed(ODatabaseDocumentInternal database, List<ORecordOperation> changes) {
@@ -108,5 +110,10 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
       }
 
     }
+  }
+
+  @Override
+  public Map<ORID, ORID> getUpdatedRids() {
+    return super.getUpdatedRids();
   }
 }
