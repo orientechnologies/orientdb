@@ -478,8 +478,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       }
     }
 
-//     In backward compatible code the context is missing check if is there.
-    if (context != null) {
+    //In backward compatible code the context is missing check if is there.
+    //we need to check the status closing here for avoid deadlocks (in future flow refactor this may be removed)
+    if (context != null && status != STATUS.CLOSING) {
       context.closeStorage(this);
     }
 
