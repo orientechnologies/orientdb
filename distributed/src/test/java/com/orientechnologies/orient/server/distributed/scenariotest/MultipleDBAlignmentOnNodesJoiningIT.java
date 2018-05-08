@@ -258,16 +258,16 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
               (Integer) docsToCompare.get(k).field("@version"), (Integer) docsToCompare.get(k + 1).field("@version"));
           assertEquals(
               "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-              docsToCompare.get(k).field("name"), docsToCompare.get(k + 1).field("name"));
+              (String) docsToCompare.get(k).field("name"), (String) docsToCompare.get(k + 1).field("name"));
           assertEquals(
               "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-              docsToCompare.get(k).field("surname"), docsToCompare.get(k + 1).field("surname"));
+              (String) docsToCompare.get(k).field("surname"), (String) docsToCompare.get(k + 1).field("surname"));
           assertEquals(
               "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-              docsToCompare.get(k).field("birthday"), docsToCompare.get(k + 1).field("birthday"));
+              (Date) docsToCompare.get(k).field("birthday"), (Date) docsToCompare.get(k + 1).field("birthday"));
           assertEquals(
               "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
-              docsToCompare.get(k).field("children"), docsToCompare.get(k + 1).field("children"));
+              (String) docsToCompare.get(k).field("children"), (String) docsToCompare.get(k + 1).field("children"));
           k++;
         }
         docsToCompare.clear();

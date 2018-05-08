@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 
 package com.orientechnologies.orient.server.distributed;
@@ -103,7 +103,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
             graph.close();
           }
         }
-      }finally {
+      } finally {
         pool.close();
       }
 
@@ -157,7 +157,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
   protected OEdge createEdge(ODatabaseDocument graph, OVertex v1, OVertex v2) {
     final Iterable<OEdge> result = graph
         .command(new OCommandSQL("create edge knows from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
-    return ((OElement)result.iterator().next()).asEdge().get();
+    return result.iterator().next().asEdge().get();
   }
 
   protected void updateVertex(ODatabaseDocument graph, OVertex v) {
@@ -168,9 +168,9 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
     final Iterable<OVertex> result = graph.command(new OCommandSQL("select from " + v.getIdentity())).execute();
     Assert.assertTrue(result.iterator().hasNext());
 
-    final OVertex vertex = ((OElement)result.iterator().next()).asVertex().get();
+    final OVertex vertex = result.iterator().next().asVertex().get();
     vertex.reload();
 
-    Assert.assertTrue((Boolean) vertex.getProperty("updated"));
+    Assert.assertTrue(Boolean.TRUE.equals(vertex.getProperty("updated")));
   }
 }

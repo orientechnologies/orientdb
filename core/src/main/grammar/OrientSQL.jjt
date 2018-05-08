@@ -1902,6 +1902,7 @@ OCreateEdgeStatement CreateEdgeStatement():
 	<CREATE>
 	<EDGE>
 	[ jjtThis.targetClass = Identifier() [<CLUSTER> jjtThis.targetClusterName = Identifier()]]
+	[ <UPSERT> { jjtThis.upsert = true; } ]
 	<FROM>
 	(
 	    jjtThis.leftExpression = Expression()
