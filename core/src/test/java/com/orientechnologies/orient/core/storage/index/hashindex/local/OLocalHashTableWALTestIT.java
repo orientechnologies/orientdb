@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPa
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import org.junit.After;
 import org.junit.Assert;
@@ -83,7 +84,7 @@ public class OLocalHashTableWALTestIT extends OLocalHashTableBase {
     expectedWriteCache = (OWOWCache) ((OLocalPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
 
     OLocalPaginatedStorage actualStorage = (OLocalPaginatedStorage) databaseDocumentTx.getStorage();
-    ODiskWriteAheadLog diskWriteAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
+    OCASDiskWriteAheadLog diskWriteAheadLog = (OCASDiskWriteAheadLog) actualStorage.getWALInstance();
 
     actualStorage.synch();
     diskWriteAheadLog.addCutTillLimit(diskWriteAheadLog.getFlushedLsn());
@@ -252,16 +253,18 @@ public class OLocalHashTableWALTestIT extends OLocalHashTableBase {
     List<OWriteableWALRecord> batch = new ArrayList<OWriteableWALRecord>();
 
     boolean atomicChangeIsProcessed = false;
-    while (lsn != null) {
-      OWriteableWALRecord walRecord = log.read(lsn);
-      batch.add(walRecord);
+    List<OWriteableWALRecord> walRecords = log.read(lsn, 100);
+    while (!walRecords.isEmpty()) {
+      for (OWriteableWALRecord walRecord : walRecords) {
+        batch.add(walRecord);
 
-      if (batch.size() >= 1000) {
-        atomicChangeIsProcessed = restoreDataFromBatch(atomicChangeIsProcessed, atomicUnit, batch);
-        batch = new ArrayList<OWriteableWALRecord>();
+        if (batch.size() >= 1000) {
+          atomicChangeIsProcessed = restoreDataFromBatch(atomicChangeIsProcessed, atomicUnit, batch);
+          batch = new ArrayList<>();
+        }
       }
 
-      lsn = log.next(lsn);
+      walRecords = log.next(walRecords.get(walRecords.size() - 1).getLsn(), 100);
     }
 
     if (batch.size() > 0) {
@@ -275,8 +278,8 @@ public class OLocalHashTableWALTestIT extends OLocalHashTableBase {
     writeCache.flush();
   }
 
-  private boolean restoreDataFromBatch(boolean atomicChangeIsProcessed, List<OWriteableWALRecord> atomicUnit, List<OWriteableWALRecord> records)
-      throws IOException {
+  private boolean restoreDataFromBatch(boolean atomicChangeIsProcessed, List<OWriteableWALRecord> atomicUnit,
+      List<OWriteableWALRecord> records) throws IOException {
 
     final OReadCache expectedReadCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getReadCache();
     final OWriteCache expectedWriteCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
@@ -363,8 +366,9 @@ public class OLocalHashTableWALTestIT extends OLocalHashTableBase {
     while (bytesRead >= 0) {
       fileTwo.readFully(actualContent, 0, bytesRead);
 
-      Assert.assertArrayEquals(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES),
-          Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES));
+      Assert
+          .assertArrayEquals(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES),
+              Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES));
 
       expectedContent = new byte[OClusterPage.PAGE_SIZE];
       actualContent = new byte[OClusterPage.PAGE_SIZE];

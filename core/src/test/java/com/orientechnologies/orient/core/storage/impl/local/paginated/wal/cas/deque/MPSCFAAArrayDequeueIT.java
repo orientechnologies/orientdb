@@ -18,7 +18,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class MPSCFAAArrayDequeueTest {
+public class MPSCFAAArrayDequeueIT {
   @Test
   public void testSingleItem() {
     MPSCFAAArrayDequeue<EmptyRecord> dequeue = new MPSCFAAArrayDequeue<>();

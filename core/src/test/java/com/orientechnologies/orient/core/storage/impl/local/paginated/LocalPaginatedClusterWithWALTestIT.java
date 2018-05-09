@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import org.junit.*;
 
@@ -95,7 +96,7 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
     storage = (OLocalPaginatedStorage) databaseDocumentTx.getStorage();
 
     storage.synch();
-    ODiskWriteAheadLog writeAheadLog = (ODiskWriteAheadLog) storage.getWALInstance();
+    OCASDiskWriteAheadLog writeAheadLog = (OCASDiskWriteAheadLog) storage.getWALInstance();
     writeAheadLog.addCutTillLimit(writeAheadLog.getFlushedLsn());
     writeCache = storage.getWriteCache();
     readCache = storage.getReadCache();
@@ -349,70 +350,73 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
   }
 
   private void restoreClusterFromWAL() throws IOException {
-    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, true, storage, 32 * 1024 * 1024,
-        120);
+    OCASDiskWriteAheadLog log = new OCASDiskWriteAheadLog(storage.getName(), storage.getStoragePath(), null, 4, Integer.MAX_VALUE,
+        25, true, storage.getConfiguration().getLocaleInstance(), -1, -1, 1000);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWriteableWALRecord> atomicUnit = new ArrayList<OWriteableWALRecord>();
 
     boolean atomicChangeIsProcessed = false;
-    while (lsn != null) {
-      OWriteableWALRecord walRecord = log.read(lsn);
-      if (walRecord instanceof OOperationUnitRecord)
-        atomicUnit.add(walRecord);
+    List<OWriteableWALRecord> walRecords = log.read(lsn, 100);
+    while (!walRecords.isEmpty()) {
+      for (OWriteableWALRecord walRecord : walRecords) {
+        if (walRecord instanceof OOperationUnitRecord)
+          atomicUnit.add(walRecord);
 
-      if (!atomicChangeIsProcessed) {
-        if (walRecord instanceof OAtomicUnitStartRecord)
-          atomicChangeIsProcessed = true;
-      } else if (walRecord instanceof OAtomicUnitEndRecord) {
-        atomicChangeIsProcessed = false;
+        if (!atomicChangeIsProcessed) {
+          if (walRecord instanceof OAtomicUnitStartRecord)
+            atomicChangeIsProcessed = true;
+        } else if (walRecord instanceof OAtomicUnitEndRecord) {
+          atomicChangeIsProcessed = false;
 
-        for (OWriteableWALRecord restoreRecord : atomicUnit) {
-          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord
-              || restoreRecord instanceof ONonTxOperationPerformedWALRecord)
-            continue;
+          for (OWriteableWALRecord restoreRecord : atomicUnit) {
+            if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord
+                || restoreRecord instanceof ONonTxOperationPerformedWALRecord)
+              continue;
 
-          if (restoreRecord instanceof OFileCreatedWALRecord) {
-            final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
-            final String fileName = fileCreatedCreatedRecord.getFileName()
-                .replace("actualPaginatedClusterWithWALTest", "expectedPaginatedClusterWithWALTest");
-            if (!expectedWriteCache.exists(fileName))
-              expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
-          } else {
-            final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
+            if (restoreRecord instanceof OFileCreatedWALRecord) {
+              final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
+              final String fileName = fileCreatedCreatedRecord.getFileName()
+                  .replace("actualPaginatedClusterWithWALTest", "expectedPaginatedClusterWithWALTest");
+              if (!expectedWriteCache.exists(fileName))
+                expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
+            } else {
+              final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
 
-            final long fileId = updatePageRecord.getFileId();
-            final long pageIndex = updatePageRecord.getPageIndex();
+              final long fileId = updatePageRecord.getFileId();
+              final long pageIndex = updatePageRecord.getPageIndex();
 
-            OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1, false);
-            if (cacheEntry == null) {
-              do {
-                if (cacheEntry != null)
-                  readCache.releaseFromWrite(cacheEntry, expectedWriteCache);
+              OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1, false);
+              if (cacheEntry == null) {
+                do {
+                  if (cacheEntry != null)
+                    readCache.releaseFromWrite(cacheEntry, expectedWriteCache);
 
-                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, false);
-              } while (cacheEntry.getPageIndex() != pageIndex);
-            }
-            try {
-              ODurablePage durablePage = new ODurablePage(cacheEntry);
-              //TODO:durablePage.restoreChanges(updatePageRecord.getChanges());
-              durablePage.setLsn(new OLogSequenceNumber(0, 0));
+                  cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, false);
+                } while (cacheEntry.getPageIndex() != pageIndex);
+              }
+              try {
+                ODurablePage durablePage = new ODurablePage(cacheEntry);
+                //TODO:durablePage.restoreChanges(updatePageRecord.getChanges());
+                durablePage.setLsn(new OLogSequenceNumber(0, 0));
 
-              cacheEntry.markDirty();
-            } finally {
-              expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
+                cacheEntry.markDirty();
+              } finally {
+                expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
+              }
             }
           }
+
+          atomicUnit.clear();
+        } else {
+          Assert.assertTrue("Unexpected type of the WAL record " + walRecord.getClass().getName(),
+              walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
+                  || walRecord instanceof ONonTxOperationPerformedWALRecord);
         }
 
-        atomicUnit.clear();
-      } else {
-        Assert.assertTrue("Unexpected type of the WAL record " + walRecord.getClass().getName(),
-            walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
-                || walRecord instanceof ONonTxOperationPerformedWALRecord);
       }
 
-      lsn = log.next(lsn);
+      walRecords = log.next(walRecords.get(walRecords.size() - 1).getLsn(), 100);
     }
 
     Assert.assertTrue(atomicUnit.isEmpty());
