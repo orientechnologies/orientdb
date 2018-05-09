@@ -1,0 +1,49 @@
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster;
+
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
+
+import java.nio.ByteBuffer;
+
+public class OClusterOperation extends OComponentOperation {
+  private int clusterId;
+
+  OClusterOperation() {
+  }
+
+  OClusterOperation(OOperationUnitId operationUnitId, int clusterId) {
+    super(operationUnitId);
+    this.clusterId = clusterId;
+  }
+
+  @Override
+  public int toStream(byte[] content, int offset) {
+    offset = super.toStream(content, offset);
+    OIntegerSerializer.INSTANCE.serializeNative(clusterId, content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    return offset;
+  }
+
+  @Override
+  public int fromStream(byte[] content, int offset) {
+    offset = super.fromStream(content, offset);
+    clusterId = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    return offset;
+  }
+
+  @Override
+  public void toStream(ByteBuffer buffer) {
+    super.toStream(buffer);
+
+    buffer.putInt(clusterId);
+  }
+
+  @Override
+  public int serializedSize() {
+    return super.serializedSize() + OIntegerSerializer.INT_SIZE;
+  }
+}
