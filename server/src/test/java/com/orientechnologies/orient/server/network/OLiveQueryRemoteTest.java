@@ -42,8 +42,8 @@ public class OLiveQueryRemoteTest {
         getClass().getClassLoader().getResourceAsStream("com/orientechnologies/orient/server/network/orientdb-server-config.xml"));
     server.activate();
     orientDB = new OrientDB("remote:localhost:", "root", "root", OrientDBConfig.defaultConfig());
-    orientDB.create("OLiveQueryV2Test", ODatabaseType.MEMORY);
-    database = orientDB.open("OLiveQueryV2Test", "admin", "admin");
+    orientDB.create(OLiveQueryRemoteTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    database = orientDB.open(OLiveQueryRemoteTest.class.getSimpleName(), "admin", "admin");
   }
 
   @After
@@ -152,7 +152,7 @@ public class OLiveQueryRemoteTest {
     Future<Integer> future = executorService.submit(new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        ODatabaseDocument db = orientDB.open("OLiveQueryV2Test", "reader", "reader");
+        ODatabaseDocument db = orientDB.open(OLiveQueryRemoteTest.class.getSimpleName(), "reader", "reader");
 
         final AtomicInteger integer = new AtomicInteger(0);
         db.live("live select from test", new OLiveQueryResultListener() {

@@ -15,6 +15,8 @@ public interface OCLibrary extends Library {
    */
   int RLIMIT_AS = 9;
 
+  int RLIMIT_NOFILE = 7;
+
   /**
    * Denotes no limit on a resource.
    */

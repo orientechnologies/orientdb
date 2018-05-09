@@ -81,6 +81,53 @@ public class ONative {
   }
 
   /**
+   * Detects limit of limit of open files.
+   *
+   * @param recommended recommended value of limit of open files.
+   * @param defLimit    default value for limit of open files.
+   *
+   * @return limit of open files, available for the system.
+   */
+  public int getOpenFilesLimit(boolean verbose, int recommended, int defLimit) {
+    if (Platform.isLinux()) {
+      final OCLibrary.Rlimit rlimit = new OCLibrary.Rlimit();
+      final int result = C_LIBRARY.getrlimit(OCLibrary.RLIMIT_NOFILE, rlimit);
+
+      if (result == 0 && rlimit.rlim_cur > 0) {
+        if (verbose) {
+          OLogManager.instance().infoNoDb(this, "Detected limit of amount of simultaneously open files is %d, "
+              + " limit of open files for disk cache will be set to ", rlimit.rlim_cur, rlimit.rlim_cur - 512);
+        }
+
+        if (rlimit.rlim_cur < recommended) {
+          OLogManager.instance()
+              .warnNoDb(this, "Value of limit of simultaneously open files is too small, recommended value is %d",
+                  recommended);
+        }
+
+        return (int) rlimit.rlim_cur - 512;
+      } else {
+        if (verbose) {
+          OLogManager.instance().infoNoDb(this, "Can not detect value of limit of open files.");
+        }
+      }
+    } else if (Platform.isWindows()) {
+      if (verbose) {
+        OLogManager.instance()
+            .infoNoDb(this, "Windows OS is detected, %d limit of open files will be set for the disk cache.", recommended);
+      }
+
+      return recommended;
+    }
+
+    if (verbose) {
+      OLogManager.instance().infoNoDb(this, "Default limit of open files (%d) will be used.", defLimit);
+    }
+
+    return defLimit;
+  }
+
+  /**
    * @param printSteps Print all steps of discovering of memory limit in the log with {@code INFO} level.
    *
    * @return Amount of memory which are allowed to be consumed by application, and detects whether OrientDB instance is running

@@ -51,9 +51,9 @@ import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProvide
  */
 public final class OIndexes {
 
-  private static Set<OIndexFactory>       FACTORIES         = null;
+  private static       Set<OIndexFactory> FACTORIES         = null;
   private static final Set<OIndexFactory> DYNAMIC_FACTORIES = Collections.synchronizedSet(new HashSet<OIndexFactory>());
-  private static ClassLoader              orientClassLoader = OIndexes.class.getClassLoader();
+  private static       ClassLoader        orientClassLoader = OIndexes.class.getClassLoader();
 
   private OIndexes() {
   }
@@ -130,40 +130,40 @@ public final class OIndexes {
   }
 
   /**
-   * @param storage TODO
-   * @param name
-   * @param indexType
-   *          index type
-   * @param algorithm
-   * @param valueContainerAlgorithm
+   * @param storage   TODO
+   * @param indexType index type
+   *
    * @return OIndexInternal
-   * @throws OConfigurationException
-   *           if index creation failed
-   * @throws OIndexException
-   *           if index type does not exist
+   *
+   * @throws OConfigurationException if index creation failed
+   * @throws OIndexException         if index type does not exist
    */
   public static OIndexInternal<?> createIndex(OStorage storage, String name, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException, OIndexException {
-    if (indexType.equalsIgnoreCase(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name())
-        || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name())
-        || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name()))
-      algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
+    if (indexType.equalsIgnoreCase(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()) || indexType
+        .equalsIgnoreCase(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name()) || indexType
+        .equalsIgnoreCase(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name())) {
+      if (!algorithm.equalsIgnoreCase("autosharding")) {
+        algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
+      }
+    }
 
-    return findFactoryByAlgorithmAndType(algorithm, indexType).createIndex(name, storage, indexType, algorithm,
-        valueContainerAlgorithm, metadata, version);
+    return findFactoryByAlgorithmAndType(algorithm, indexType)
+        .createIndex(name, storage, indexType, algorithm, valueContainerAlgorithm, metadata, version);
 
   }
 
   public static OIndexFactory findFactoryByAlgorithmAndType(String algorithm, String indexType) {
 
     for (OIndexFactory factory : getFactories()) {
-      if (indexType == null || indexType.isEmpty()
-          || (factory.getTypes().contains(indexType)) && factory.getAlgorithms().contains(algorithm)) {
+      if (indexType == null || indexType.isEmpty() || (factory.getTypes().contains(indexType)) && factory.getAlgorithms()
+          .contains(algorithm)) {
         return factory;
       }
     }
     throw new OIndexException(
-        "Index type " + indexType + " with engine " + algorithm + " is not supported. Types are " + OCollections.toString(getIndexTypes()));
+        "Index type " + indexType + " with engine " + algorithm + " is not supported. Types are " + OCollections
+            .toString(getIndexTypes()));
   }
 
   public static OIndexEngine createIndexEngine(final String name, final String algorithm, final String type,
@@ -181,8 +181,8 @@ public final class OIndexes {
     if (OClass.INDEX_TYPE.DICTIONARY.name().equalsIgnoreCase(type) || OClass.INDEX_TYPE.FULLTEXT.name().equalsIgnoreCase(type)
         || OClass.INDEX_TYPE.NOTUNIQUE.name().equalsIgnoreCase(type) || OClass.INDEX_TYPE.UNIQUE.name().equalsIgnoreCase(type)) {
       algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
-    } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equalsIgnoreCase(type)
-        || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name().equalsIgnoreCase(type) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name().equalsIgnoreCase(type)
+    } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equalsIgnoreCase(type) || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name()
+        .equalsIgnoreCase(type) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name().equalsIgnoreCase(type)
         || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name().equalsIgnoreCase(type)) {
       algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
     }
@@ -203,8 +203,6 @@ public final class OIndexes {
 
   /**
    * Register at runtime custom factories
-   *
-   * @param factory
    */
   public static void registerFactory(OIndexFactory factory) {
     DYNAMIC_FACTORIES.add(factory);
@@ -213,8 +211,6 @@ public final class OIndexes {
 
   /**
    * Unregister custom factories
-   *
-   * @param factory
    */
   public static void unregisterFactory(OIndexFactory factory) {
     DYNAMIC_FACTORIES.remove(factory);
