@@ -515,8 +515,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(),
           OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(), TimeUnit.SECONDS);
 
-      final OCASDiskWriteAheadLog diskWriteAheadLog = new OCASDiskWriteAheadLog(name, storagePath,
-          Paths.get(getConfiguration().getContextConfiguration().getValueAsString(OGlobalConfiguration.WAL_LOCATION)),
+      final String configWalPath = getConfiguration().getContextConfiguration().getValueAsString(OGlobalConfiguration.WAL_LOCATION);
+      Path walPath;
+      if (configWalPath == null) {
+        walPath = null;
+      } else {
+        walPath = Paths.get(configWalPath);
+      }
+      final OCASDiskWriteAheadLog diskWriteAheadLog = new OCASDiskWriteAheadLog(name, storagePath, walPath,
           getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
           getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * 1024 * 1024,
           25, true, getConfiguration().getLocaleInstance(), OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
@@ -588,7 +594,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           throw new OStorageException("Can not able to terminate segment addeder executor");
         }
       } catch (InterruptedException e) {
-        throw OException.wrapException(new OInterruptedException("Thread was interrupted during termination of segment adder thread"), e);
+        throw OException
+            .wrapException(new OInterruptedException("Thread was interrupted during termination of segment adder thread"), e);
       }
     }
   }

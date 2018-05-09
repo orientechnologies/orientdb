@@ -624,25 +624,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireWriteLock();
       try {
-        try {
-          // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
-          close(true, true);
-
-          if (writeAheadLog != null)
-            writeAheadLog.delete();
-
-          if (writeCache != null) {
-            if (readCache != null)
-              readCache.deleteStorage(writeCache);
-            else
-              writeCache.delete();
-          }
-
-          postDeleteSteps();
-
-        } catch (IOException e) {
-          throw OException.wrapException(new OStorageException("Cannot delete database '" + name + "'"), e);
-        }
+        // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
+        close(true, true);
+        postDeleteSteps();
       } finally {
         stateLock.releaseWriteLock();
         //noinspection ResultOfMethodCallIgnored
@@ -3986,8 +3970,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         writeAheadLog.flush();
 
-        //so we will be able to cut almost all the log
-        writeAheadLog.appendNewSegment();
+        final long freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
+        try {
+          //so we will be able to cut almost all the log
+          writeAheadLog.appendNewSegment();
+        } finally {
+          atomicOperationsManager.releaseAtomicOperations(freezeId);
+        }
 
         final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
         writeCache.flush();
@@ -4657,9 +4646,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             readCache.deleteStorage(writeCache);
 
         if (writeAheadLog != null) {
-          writeAheadLog.close();
-          if (onDelete)
+          if (onDelete) {
             writeAheadLog.delete();
+          } else {
+            writeAheadLog.close();
+          }
         }
 
         try {

@@ -279,18 +279,6 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
       else
         throwComponentsAreNotSupported(WAL_CACHE_OVERFLOW_COUNT);
       break;
-    case WAL_SIZE:
-      if (componentName == null)
-        return manager.getWALSize();
-      else
-        throwComponentsAreNotSupported(WAL_SIZE);
-      break;
-    case WAL_CACHE_OVERFLOW_COUNT:
-      if (componentName == null)
-        return manager.getWALCacheOverflowCount();
-      else
-        throwComponentsAreNotSupported(WAL_CACHE_OVERFLOW_COUNT);
-      break;
     case WAL_LOG_TIME:
       if (componentName == null)
         return manager.getWALLogRecordTime();
