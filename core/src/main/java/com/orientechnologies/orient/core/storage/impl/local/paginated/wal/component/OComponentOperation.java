@@ -15,4 +15,5 @@ public abstract class OComponentOperation extends OOperationUnitBodyRecord {
   public boolean isUpdateMasterRecord() {
     return false;
   }
+
 }

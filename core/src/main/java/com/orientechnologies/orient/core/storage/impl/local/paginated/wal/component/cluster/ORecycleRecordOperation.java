@@ -6,18 +6,19 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Objects;
 
-public class ODeleteRecordOperation extends OClusterOperation {
-  private long clusterPosition;
-
+public class ORecycleRecordOperation extends OClusterOperation {
+  private long   clusterPosition;
   private byte[] record;
   private int    recordVersion;
   private byte   recordType;
 
-  public ODeleteRecordOperation() {
+  public ORecycleRecordOperation() {
   }
 
-  public ODeleteRecordOperation(OOperationUnitId operationUnitId, int clusterId, long clusterPosition, byte[] record,
+  public ORecycleRecordOperation(OOperationUnitId operationUnitId, int clusterId, long clusterPosition, byte[] record,
       int recordVersion, byte recordType) {
     super(operationUnitId, clusterId);
     this.clusterPosition = clusterPosition;
@@ -55,7 +56,7 @@ public class ODeleteRecordOperation extends OClusterOperation {
     clusterPosition = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    final int recordLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    int recordLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     record = new byte[recordLen];
@@ -94,5 +95,25 @@ public class ODeleteRecordOperation extends OClusterOperation {
 
     return size;
   }
-}
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    if (!super.equals(o))
+      return false;
+    ORecycleRecordOperation that = (ORecycleRecordOperation) o;
+    return clusterPosition == that.clusterPosition && recordVersion == that.recordVersion && recordType == that.recordType && Arrays
+        .equals(record, that.record);
+  }
+
+  @Override
+  public int hashCode() {
+
+    int result = Objects.hash(super.hashCode(), clusterPosition, recordVersion, recordType);
+    result = 31 * result + Arrays.hashCode(record);
+    return result;
+  }
+}

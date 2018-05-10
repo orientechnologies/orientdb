@@ -26,7 +26,9 @@ import com.orientechnologies.orient.core.exception.OClusterPositionMapException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OAllocatePositionOperation;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -112,8 +114,7 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public long add(long pageIndex, int recordPosition) throws IOException {
-    startAtomicOperation(true);
+  public long add(long pageIndex, int recordPosition, OAtomicOperation atomicOperation) throws IOException {
     acquireExclusiveLock();
     try {
       long lastPage = getFilledUpTo(fileId) - 1;
@@ -123,11 +124,10 @@ public class OClusterPositionMap extends ODurableComponent {
       else
         cacheEntry = loadPageForWrite(fileId, lastPage, false);
 
-      Exception exception = null;
       try {
         OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
         if (bucket.isFull()) {
-          releasePageFromWrite(cacheEntry);
+          releasePageFromWrite(cacheEntry, atomicOperation);
 
           cacheEntry = addPage(fileId);
 
@@ -137,24 +137,18 @@ public class OClusterPositionMap extends ODurableComponent {
         final long index = bucket.add(pageIndex, recordPosition);
         return index + cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES;
       } catch (Exception e) {
-        exception = e;
         throw OException.wrapException(
             new OClusterPositionMapException("Error during creation of mapping between logical and physical record position", this),
             e);
       } finally {
-        try {
-          releasePageFromWrite(cacheEntry);
-        } finally {
-          endAtomicOperation(exception != null, exception);
-        }
+        releasePageFromWrite(cacheEntry, atomicOperation);
       }
     } finally {
       releaseExclusiveLock();
     }
   }
 
-  public long allocate() throws IOException {
-    startAtomicOperation(true);
+  public long allocate(int clusterId, byte recordType, OAtomicOperation atomicOperation) throws IOException {
     acquireExclusiveLock();
     try {
       long lastPage = getFilledUpTo(fileId) - 1;
@@ -164,39 +158,33 @@ public class OClusterPositionMap extends ODurableComponent {
       else
         cacheEntry = loadPageForWrite(fileId, lastPage, false);
 
-      Exception exception = null;
       try {
-
         OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
         if (bucket.isFull()) {
-          releasePageFromWrite(cacheEntry);
-
+          releasePageFromWrite(cacheEntry, atomicOperation);
           cacheEntry = addPage(fileId);
-
           bucket = new OClusterPositionMapBucket(cacheEntry);
         }
+
+        logComponentOperation(atomicOperation,
+            new OAllocatePositionOperation(atomicOperation.getOperationUnitId(), clusterId, bucket.nextPosition(), recordType));
 
         final long index = bucket.allocate();
         return index + cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES;
       } catch (Exception e) {
-        exception = e;
         throw OException.wrapException(
             new OClusterPositionMapException("Error during creation of mapping between logical and physical record position", this),
             e);
       } finally {
-        try {
-          releasePageFromWrite(cacheEntry);
-        } finally {
-          endAtomicOperation(exception != null, exception);
-        }
+        releasePageFromWrite(cacheEntry, atomicOperation);
       }
     } finally {
       releaseExclusiveLock();
     }
   }
 
-  public void update(final long clusterPosition, final OClusterPositionMapBucket.PositionEntry entry) throws IOException {
-    startAtomicOperation(true);
+  public void update(final long clusterPosition, final OClusterPositionMapBucket.PositionEntry entry,
+      OAtomicOperation atomicOperation) {
     acquireExclusiveLock();
     try {
       final long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
@@ -211,12 +199,10 @@ public class OClusterPositionMap extends ODurableComponent {
         final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
         bucket.set(index, entry);
       } finally {
-        releasePageFromWrite(cacheEntry);
+        releasePageFromWrite(cacheEntry, atomicOperation);
       }
 
-      endAtomicOperation(false, null);
     } catch (IOException | RuntimeException e) {
-      endAtomicOperation(true, e);
       throw OException.wrapException(
           new OClusterPositionMapException("Error of update of mapping between logical adn physical record position", this), e);
     } finally {
@@ -224,8 +210,8 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  void resurrect(final long clusterPosition, final OClusterPositionMapBucket.PositionEntry entry) throws IOException {
-    startAtomicOperation(true);
+  void resurrect(final long clusterPosition, final OClusterPositionMapBucket.PositionEntry entry,
+      OAtomicOperation atomicOperation) {
     acquireExclusiveLock();
     try {
       final long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
@@ -240,12 +226,10 @@ public class OClusterPositionMap extends ODurableComponent {
         final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
         bucket.resurrect(index, entry);
       } finally {
-        releasePageFromWrite(cacheEntry);
+        releasePageFromWrite(cacheEntry, atomicOperation);
       }
 
-      endAtomicOperation(false, null);
     } catch (IOException | RuntimeException e) {
-      endAtomicOperation(true, e);
       throw OException.wrapException(
           new OClusterPositionMapException("Error of resurrecting mapping between logical adn physical record position", this), e);
     } finally {
@@ -279,30 +263,22 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public void remove(final long clusterPosition) throws IOException {
-    startAtomicOperation(true);
+  public void remove(final long clusterPosition, OAtomicOperation atomicOperation) throws IOException {
     acquireExclusiveLock();
     try {
       long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
       int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
-      Exception exception = null;
       final OCacheEntry cacheEntry = loadPageForWrite(fileId, pageIndex, false);
       try {
         final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
-
         bucket.remove(index);
       } catch (Exception e) {
-        exception = e;
         throw OException.wrapException(
             new OClusterPositionMapException("Error during removal of mapping between logical and physical record position", this),
             e);
       } finally {
-        try {
-          releasePageFromWrite(cacheEntry);
-        } finally {
-          endAtomicOperation(exception != null, exception);
-        }
+        releasePageFromWrite(cacheEntry, atomicOperation);
       }
     } finally {
       releaseExclusiveLock();

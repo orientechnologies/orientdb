@@ -227,8 +227,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   OCurrentStorageComponentsFactory getComponentsFactory();
 
-  OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback);
-
   OCluster getClusterByName(String clusterName);
 
   ORecordConflictStrategy getConflictStrategy();

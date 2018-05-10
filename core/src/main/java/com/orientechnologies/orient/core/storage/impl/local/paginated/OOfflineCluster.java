@@ -22,7 +22,11 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 
@@ -261,11 +265,6 @@ public class OOfflineCluster implements OCluster {
   @Override
   public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
     return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
-  }
-
-  @Override
-  public boolean hideRecord(long position) throws IOException {
-    return false;
   }
 
   @Override

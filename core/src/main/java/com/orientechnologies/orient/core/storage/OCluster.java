@@ -147,19 +147,6 @@ public interface OCluster {
 
   OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException;
 
-  /**
-   * Hides records content by putting tombstone on the records position but does not delete record itself.
-   *
-   * <p>This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method.
-   *
-   * @param position Position of record in cluster
-   *
-   * @return false if record does not exist.
-   *
-   * @throws java.lang.UnsupportedOperationException In case current version of cluster does not support given operation.
-   */
-  boolean hideRecord(long position) throws IOException;
-
   ORecordConflictStrategy getRecordConflictStrategy();
 
   /**

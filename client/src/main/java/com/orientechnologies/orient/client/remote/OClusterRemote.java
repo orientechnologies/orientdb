@@ -19,13 +19,17 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
+
+import java.io.IOException;
 
 /**
  * Remote cluster implementation
@@ -238,11 +242,6 @@ public class OClusterRemote implements OCluster {
   @Override
   public String compression() {
     throw new UnsupportedOperationException("compression()");
-  }
-
-  @Override
-  public boolean hideRecord(long position) {
-    throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
   }
 
   @Override

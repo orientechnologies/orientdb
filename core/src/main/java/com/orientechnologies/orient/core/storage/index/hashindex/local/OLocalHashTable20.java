@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
@@ -171,7 +170,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
           createFileMetadata(0, page, atomicOperation);
           hashStateEntryIndex = hashStateEntry.getPageIndex();
         } finally {
-          releasePageFromWrite(hashStateEntry);
+          releasePageFromWrite(hashStateEntry, atomicOperation);
         }
 
         setKeySerializer(keySerializer);
@@ -225,7 +224,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
         metadataPage.setKeySerializerId(keySerializer.getId());
       } finally {
-        releasePageFromWrite(hashStateEntry);
+        releasePageFromWrite(hashStateEntry, atomicOperation);
       }
 
       endAtomicOperation(false, null);
@@ -278,7 +277,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
         metadataPage.setValueSerializerId(valueSerializer.getId());
       } finally {
-        releasePageFromWrite(hashStateEntry);
+        releasePageFromWrite(hashStateEntry, atomicOperation);
       }
 
       endAtomicOperation(false, null);
@@ -423,7 +422,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
           } else
             removed = null;
         } finally {
-          releasePageFromWrite(cacheEntry);
+          releasePageFromWrite(cacheEntry, atomicOperation);
         }
 
         if (found) {
@@ -462,7 +461,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
             sizeDiff--;
           }
         } finally {
-          releasePageFromWrite(cacheEntry);
+          releasePageFromWrite(cacheEntry, atomicOperation);
         }
 
         changeSize(sizeDiff, atomicOperation);
@@ -489,7 +488,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
         page.setRecordsCount(page.getRecordsCount() + sizeDiff);
       } finally {
-        releasePageFromWrite(hashStateEntry);
+        releasePageFromWrite(hashStateEntry, atomicOperation);
       }
     }
   }
@@ -517,7 +516,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
           }
         }
       } finally {
-        releasePageFromWrite(hashStateEntry);
+        releasePageFromWrite(hashStateEntry, atomicOperation);
       }
 
       if (nullKeyIsSupported)
@@ -1404,7 +1403,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
             newBuddyBucket.addEntry(entry.hashCode, entry.key, entry.value);
 
         } finally {
-          releasePageFromWrite(newBuddyCacheEntry);
+          releasePageFromWrite(newBuddyCacheEntry, atomicOperation);
         }
 
         final long bucketPointer = directory.getNodePointer(nodePath.nodeIndex, nodePath.itemIndex + nodePath.hashMapOffset);
@@ -1431,10 +1430,10 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
           metadataPage.setTombstoneIndex(buddyLevel, -1);
 
       } finally {
-        releasePageFromWrite(hashStateEntry);
+        releasePageFromWrite(hashStateEntry, atomicOperation);
       }
     } finally {
-      releasePageFromWrite(buddyCacheEntry);
+      releasePageFromWrite(buddyCacheEntry, atomicOperation);
     }
   }
 
@@ -1534,7 +1533,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
         nullBucket.setValue(value);
         sizeDiff++;
       } finally {
-        releasePageFromWrite(cacheEntry);
+        releasePageFromWrite(cacheEntry, atomicOperation);
       }
 
       changeSize(sizeDiff, atomicOperation);
@@ -1643,7 +1642,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
           }
         }
       } finally {
-        releasePageFromWrite(cacheEntry);
+        releasePageFromWrite(cacheEntry, atomicOperation);
       }
 
       changeSize(sizeDiff, atomicOperation);
@@ -2011,13 +2010,13 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
 
           return new BucketSplitResult(updatedBucketPointer, newBucketPointer, newBucketDepth);
         } finally {
-          releasePageFromWrite(newBucketCacheEntry);
+          releasePageFromWrite(newBucketCacheEntry, atomicOperation);
         }
       } finally {
-        releasePageFromWrite(updatedBucketCacheEntry);
+        releasePageFromWrite(updatedBucketCacheEntry, atomicOperation);
       }
     } finally {
-      releasePageFromWrite(hashStateEntry);
+      releasePageFromWrite(hashStateEntry, atomicOperation);
     }
   }
 
@@ -2063,7 +2062,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
         final OHashIndexBucket<K, V> emptyBucket = new OHashIndexBucket<K, V>(MAX_LEVEL_DEPTH, cacheEntry, keySerializer,
             valueSerializer, keyTypes);
       } finally {
-        releasePageFromWrite(cacheEntry);
+        releasePageFromWrite(cacheEntry, atomicOperation);
       }
     }
 
@@ -2080,7 +2079,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
       metadataPage.setBucketsCount(0, MAX_LEVEL_SIZE);
       metadataPage.setRecordsCount(0);
     } finally {
-      releasePageFromWrite(hashStateEntry);
+      releasePageFromWrite(hashStateEntry, atomicOperation);
     }
   }
 

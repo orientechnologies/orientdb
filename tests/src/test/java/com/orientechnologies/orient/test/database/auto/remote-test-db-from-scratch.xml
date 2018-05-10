@@ -164,7 +164,6 @@
             <class name="com.orientechnologies.orient.test.database.auto.CollateTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.OEmbeddedRidBagTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.OSBTreeRidBagTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.HideRecordTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.PoolTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.RemoteProtocolCommandsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.RecordReloadTest"/>

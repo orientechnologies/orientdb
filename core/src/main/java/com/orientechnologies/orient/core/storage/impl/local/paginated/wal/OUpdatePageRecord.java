@@ -24,28 +24,22 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 26.04.13
  */
 public class OUpdatePageRecord extends OAbstractPageWALRecord {
-  private byte[]             compressedPage;
-  /**
-   * Previous value of LSN for current page.
-   * This value is used when we want to rollback changes of not completed transactions after restore.
-   */
-  private OLogSequenceNumber prevLsn;
+  private byte[] compressedPage;
 
   @SuppressWarnings("WeakerAccess")
   public OUpdatePageRecord() {
   }
 
-  public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId, byte[] compressedPage,
-      final OLogSequenceNumber prevLsn) {
+  public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId, byte[] compressedPage) {
     super(pageIndex, fileId, operationUnitId);
     this.compressedPage = compressedPage;
-    this.prevLsn = prevLsn;
   }
 
   public byte[] getCompressedPage() {
@@ -62,15 +56,6 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     return serializedSize;
   }
 
-  /**
-   * Previous value of LSN for current page.
-   * This value is used when we want to rollback changes of not completed transactions at the end of restore procedure which was
-   * triggered at server start after its abnormal crash.
-   */
-  public OLogSequenceNumber getPrevLsn() {
-    return prevLsn;
-  }
-
   @Override
   public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
@@ -79,12 +64,6 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
 
     System.arraycopy(compressedPage, 0, content, offset, compressedPage.length);
     offset += compressedPage.length;
-
-    OLongSerializer.INSTANCE.serializeNative(prevLsn.getSegment(), content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    OLongSerializer.INSTANCE.serializeNative(prevLsn.getPosition(), content, offset);
-    offset += OLongSerializer.LONG_SIZE;
 
     return offset;
   }
@@ -95,9 +74,6 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
 
     buffer.putInt(compressedPage.length);
     buffer.put(compressedPage);
-
-    buffer.putLong(prevLsn.getSegment());
-    buffer.putLong(prevLsn.getPosition());
   }
 
   @Override
@@ -110,14 +86,6 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     compressedPage = new byte[pageLen];
     System.arraycopy(content, offset, compressedPage, 0, pageLen);
 
-    final long segment = OLongSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    final long position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    prevLsn = new OLogSequenceNumber(segment, position);
-
     return offset;
   }
 
@@ -127,35 +95,22 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
     if (!super.equals(o))
       return false;
-
-    final OUpdatePageRecord that = (OUpdatePageRecord) o;
-
-    if (lsn == null && that.lsn == null)
-      return true;
-
-    if (lsn == null)
-      return false;
-
-    if (that.lsn == null)
-      return false;
-
-    if (!lsn.equals(that.lsn))
-      return false;
-
-    return true;
+    OUpdatePageRecord that = (OUpdatePageRecord) o;
+    return Arrays.equals(compressedPage, that.compressedPage);
   }
 
   @Override
   public int hashCode() {
+
     int result = super.hashCode();
-    result = 31 * result + lsn.hashCode();
+    result = 31 * result + Arrays.hashCode(compressedPage);
     return result;
   }
 }

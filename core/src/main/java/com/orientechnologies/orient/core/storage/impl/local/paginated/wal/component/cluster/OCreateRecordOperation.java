@@ -3,26 +3,26 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compo
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OShortSerializer;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Objects;
 
 public class OCreateRecordOperation extends OClusterOperation {
-  private ORecordId rid;
-  private byte[]    record;
-  private int       recordVersion;
-  private byte      recordType;
+  private long   position;
+  private byte[] record;
+  private int    recordVersion;
+  private byte   recordType;
 
   public OCreateRecordOperation() {
   }
 
-  public OCreateRecordOperation(int clusterId, OOperationUnitId operationUnitId, ORecordId rid, byte[] record, int recordVersion,
+  public OCreateRecordOperation(int clusterId, OOperationUnitId operationUnitId, long position, byte[] record, int recordVersion,
       byte recordType) {
     super(operationUnitId, clusterId);
 
-    this.rid = rid;
+    this.position = position;
     this.record = record;
     this.recordVersion = recordVersion;
     this.recordType = recordType;
@@ -32,10 +32,7 @@ public class OCreateRecordOperation extends OClusterOperation {
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
-    OShortSerializer.INSTANCE.serializeNative((short) rid.getClusterId(), content, offset);
-    offset += OShortSerializer.SHORT_SIZE;
-
-    OLongSerializer.INSTANCE.serializeNative(rid.getClusterPosition(), content, offset);
+    OLongSerializer.INSTANCE.serializeNative(position, content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
     OIntegerSerializer.INSTANCE.serializeNative(record.length, content, offset);
@@ -57,13 +54,8 @@ public class OCreateRecordOperation extends OClusterOperation {
   public int fromStream(byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
-    final int clusterId = OShortSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OShortSerializer.SHORT_SIZE;
-
-    final long position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
-
-    rid = new ORecordId(clusterId, position);
 
     int recordLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
@@ -84,9 +76,7 @@ public class OCreateRecordOperation extends OClusterOperation {
   @Override
   public void toStream(ByteBuffer buffer) {
     super.toStream(buffer);
-
-    buffer.putShort((short) rid.getClusterId());
-    buffer.putLong(rid.getClusterPosition());
+    buffer.putLong(position);
     buffer.putInt(record.length);
     buffer.put(record);
     buffer.putInt(recordVersion);
@@ -96,7 +86,6 @@ public class OCreateRecordOperation extends OClusterOperation {
   @Override
   public int serializedSize() {
     int size = super.serializedSize();
-    size += OShortSerializer.SHORT_SIZE;
     size += OLongSerializer.LONG_SIZE;
     size += OIntegerSerializer.INT_SIZE;
     size += record.length;
@@ -104,5 +93,25 @@ public class OCreateRecordOperation extends OClusterOperation {
     size += OByteSerializer.BYTE_SIZE;
 
     return size;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    if (!super.equals(o))
+      return false;
+    OCreateRecordOperation that = (OCreateRecordOperation) o;
+    return recordVersion == that.recordVersion && recordType == that.recordType && Arrays.equals(record, that.record);
+  }
+
+  @Override
+  public int hashCode() {
+
+    int result = Objects.hash(super.hashCode(), recordVersion, recordType);
+    result = 31 * result + Arrays.hashCode(record);
+    return result;
   }
 }

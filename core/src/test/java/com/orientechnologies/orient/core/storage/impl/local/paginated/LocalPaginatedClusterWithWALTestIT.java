@@ -9,10 +9,22 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -253,34 +265,6 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
   @Override
   public void testRemoveHalfRecordsAndAddAnotherHalfAgain() throws IOException {
     super.testRemoveHalfRecordsAndAddAnotherHalfAgain();
-
-    assertFileRestoreFromWAL();
-  }
-
-  @Override
-  public void testHideHalfSmallRecords() throws IOException {
-    super.testHideHalfSmallRecords();
-
-    assertFileRestoreFromWAL();
-  }
-
-  @Override
-  public void testHideHalfBigRecords() throws IOException {
-    super.testHideHalfBigRecords();
-
-    assertFileRestoreFromWAL();
-  }
-
-  @Override
-  public void testHideHalfRecords() throws IOException {
-    super.testHideHalfRecords();
-
-    assertFileRestoreFromWAL();
-  }
-
-  @Override
-  public void testHideHalfRecordsAndAddAnotherHalfAgain() throws IOException {
-    super.testHideHalfRecordsAndAddAnotherHalfAgain();
 
     assertFileRestoreFromWAL();
   }

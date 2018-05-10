@@ -21,41 +21,28 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
-/**
- * Base class for all durable data structures, that is data structures state of which can be consistently restored after system
- * crash but results of last operations in small interval before crash may be lost.
- * This class contains methods which are used to support such concepts as:
- * <ol>
- * <li>"atomic operation" - set of operations which should be either applied together or not. It includes not only changes on
- * current data structure but on all durable data structures which are used by current one during implementation of specific
- * operation.</li>
- * <li>write ahead log - log of all changes which were done with page content after loading it from cache.</li>
- * </ol>
- * To support of "atomic operation" concept following should be done:
- * <ol>
- * <li>Call {@link #startAtomicOperation(boolean)} method.</li>
- * <li>Call {@link #endAtomicOperation(boolean, Exception)} method when atomic operation completes, passed in parameter should be
- * <code>false</code> if atomic operation completes with success and <code>true</code> if there were some exceptions and it is
- * needed to rollback given operation.</li>
- * </ol>
- *
- * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
- * @since 8/27/13
- */
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
-  protected final OAtomicOperationsManager     atomicOperationsManager;
-  protected final OAbstractPaginatedStorage    storage;
-  protected final OReadCache                   readCache;
-  protected final OWriteCache                  writeCache;
+  protected final OAtomicOperationsManager  atomicOperationsManager;
+  protected final OAbstractPaginatedStorage storage;
+  protected final OReadCache                readCache;
+  protected final OWriteCache               writeCache;
+  protected final OWriteAheadLog            writeAheadLog;
 
   private volatile String name;
   private volatile String fullName;
@@ -75,6 +62,8 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
+    this.writeAheadLog = storage.getWALInstance();
+
     this.lockName = lockName;
   }
 
@@ -119,11 +108,13 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return readCache.loadForWrite(fileId, pageIndex, checkPinnedPages, writeCache, 1, true);
   }
 
-  protected OCacheEntry loadPageForRead(final long fileId, final long pageIndex, final boolean checkPinnedPages) throws IOException {
+  protected OCacheEntry loadPageForRead(final long fileId, final long pageIndex, final boolean checkPinnedPages)
+      throws IOException {
     return loadPageForRead(fileId, pageIndex, checkPinnedPages, 1);
   }
 
-  protected OCacheEntry loadPageForRead(long fileId, long pageIndex, boolean checkPinnedPages, final int pageCount) throws IOException {
+  protected OCacheEntry loadPageForRead(long fileId, long pageIndex, boolean checkPinnedPages, final int pageCount)
+      throws IOException {
     return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
   }
 
@@ -135,8 +126,47 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return readCache.allocateNewPage(fileId, writeCache, true);
   }
 
-  protected void releasePageFromWrite(OCacheEntry cacheEntry) {
+  protected void releasePageFromWrite(OCacheEntry cacheEntry, OAtomicOperation atomicOperation) {
+    if (cacheEntry.isDirty()) {
+      final OLogSequenceNumber end = writeAheadLog.end();
+      final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
+      final OLogSequenceNumber pageLsn = ODurablePage.getLogSequenceNumberFromPage(buffer);
+
+      if (pageLsn.getSegment() < end.getSegment()) {
+        final byte[] page = new byte[buffer.limit()];
+
+        buffer.position(0);
+        buffer.get(page);
+
+        final OLogSequenceNumber recordLSN;
+        try {
+          final OUpdatePageRecord updatePageRecord = new OUpdatePageRecord(cacheEntry.getPageIndex(), cacheEntry.getFileId(),
+              atomicOperation.getOperationUnitId(), page);
+          recordLSN = writeAheadLog.log(updatePageRecord);
+        } catch (IOException e) {
+          throw OException.wrapException(new OStorageException(
+              "Error during loging of changes of page " + cacheEntry.getFileId() + ":" + cacheEntry.getPageIndex() + " in storage "
+                  + storage.getName()), e);
+        }
+
+        //TODO: change LSN according new format
+        ODurablePage.setLogSequenceNumber(buffer, recordLSN);
+      } else {
+        assert pageLsn.getSegment() == end.getSegment();
+        //TODO:update lsn by using modification counter
+      }
+    }
+
     readCache.releaseFromWrite(cacheEntry, writeCache);
+  }
+
+  protected void logComponentOperation(OAtomicOperation atomicOperation, OComponentOperation componentOperation) {
+    try {
+      writeAheadLog.log(componentOperation);
+    } catch (IOException e) {
+      throw OException
+          .wrapException(new OStorageException("Error during logging of component operation in storage " + storage.getName()), e);
+    }
   }
 
   protected void releasePageFromRead(OCacheEntry cacheEntry) {

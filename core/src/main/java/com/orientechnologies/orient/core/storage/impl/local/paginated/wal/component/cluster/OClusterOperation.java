@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOpera
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 public class OClusterOperation extends OComponentOperation {
   private int clusterId;
@@ -45,5 +46,23 @@ public class OClusterOperation extends OComponentOperation {
   @Override
   public int serializedSize() {
     return super.serializedSize() + OIntegerSerializer.INT_SIZE;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    if (!super.equals(o))
+      return false;
+    OClusterOperation that = (OClusterOperation) o;
+    return clusterId == that.clusterId;
+  }
+
+  @Override
+  public int hashCode() {
+
+    return Objects.hash(super.hashCode(), clusterId);
   }
 }
