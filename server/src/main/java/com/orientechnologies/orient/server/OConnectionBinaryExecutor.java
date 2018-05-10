@@ -21,10 +21,7 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -1183,24 +1180,14 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
 
     boolean hasNext = rs.hasNext();
-    try {
-      boolean txChanges = false;
-      if (database.getTransaction().isActive()) {
-        txChanges = ((OTransactionOptimistic) database.getTransaction()).isChanged();
-      }
-      database.getSharedContext().unregisterListener(metadataListener);
-
-      return new OQueryResponse(((OLocalResultSetLifecycleDecorator) rs).getQueryId(), txChanges, rsCopy, rs.getExecutionPlan(),
-          hasNext, rs.getQueryStats(), metadataListener.isUpdated());
-    } finally {
-      if (!hasNext) {
-        // LAST PAGE: CLOSE THE QUERY RIGHT NOW
-        OResultSet query = database.getActiveQuery(((OLocalResultSetLifecycleDecorator) rs).getQueryId());
-        if (query != null) {
-          query.close();
-        }
-      }
+    boolean txChanges = false;
+    if (database.getTransaction().isActive()) {
+      txChanges = ((OTransactionOptimistic) database.getTransaction()).isChanged();
     }
+    database.getSharedContext().unregisterListener(metadataListener);
+
+    return new OQueryResponse(((OLocalResultSetLifecycleDecorator) rs).getQueryId(), txChanges, rsCopy, rs.getExecutionPlan(),
+        hasNext, rs.getQueryStats(), metadataListener.isUpdated());
   }
 
   @Override
@@ -1232,18 +1219,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       i++;
     }
     boolean hasNext = rs.hasNext();
-    try {
-      return new OQueryResponse(rs.getQueryId(), false, rsCopy, rs.getExecutionPlan(), hasNext, rs.getQueryStats(), false);
-    } finally {
-      if (!hasNext) {
-        // LAST PAGE: CLOSE THE QUERY RIGHT NOW
-        ODatabaseDocumentInternal db = connection.getDatabase();
-        OResultSet query = db.getActiveQuery(((OLocalResultSetLifecycleDecorator) rs).getQueryId());
-        if (query != null) {
-          query.close();
-        }
-      }
-    }
+    return new OQueryResponse(rs.getQueryId(), false, rsCopy, rs.getExecutionPlan(), hasNext, rs.getQueryStats(), false);
   }
 
   @Override

@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -68,9 +69,7 @@ public class ORemoteResultSet implements OResultSet {
 
   @Override
   public void close() {
-    if (hasNextPage)
-      // CLOSES THE QUERY SERVER SIDE ONLY IF THERE IS ANOTHER PAGE. THE SERVER ALREADY AUTOMATICALLY CLOSES THE QUERY AFTER SENDING THE LAST PAGE
-      db.closeQuery(queryId);
+    db.closeQuery(queryId);
   }
 
   @Override
