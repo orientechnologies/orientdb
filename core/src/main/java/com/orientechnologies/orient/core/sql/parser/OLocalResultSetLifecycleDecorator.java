@@ -46,7 +46,11 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
 
   @Override
   public OResult next() {
-    return entity.next();
+    OResult result = entity.next();
+    if (!hasNext()) {
+      close();
+    }
+    return result;
   }
 
   @Override
@@ -78,7 +82,7 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
     this.hasNextPage = b;
   }
 
-  public boolean isDetached(){
+  public boolean isDetached() {
     return entity instanceof OInternalResultSet;
   }
 }
