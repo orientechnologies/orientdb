@@ -850,12 +850,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public void stickToSession() {
     OStorageRemoteSession session = getCurrentSession();
-    session.setStickToSession(true);
+    session.stickToSession();
   }
 
   public void unstickToSession() {
     OStorageRemoteSession session = getCurrentSession();
-    session.setStickToSession(false);
+    session.unStickToSession();
   }
 
   public ORemoteQueryResult query(ODatabaseDocumentRemote db, String query, Object[] args) {
