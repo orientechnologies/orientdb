@@ -868,6 +868,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
     stickToSession();
+    if (!response.isHasNextPage()) {
+      unstickToSession();
+    }
     return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
@@ -882,6 +885,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
     stickToSession();
+    if (!response.isHasNextPage()) {
+      unstickToSession();
+    }
     return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
@@ -1838,7 +1844,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     ODatabaseDocumentRemote remote = (ODatabaseDocumentRemote) ODatabaseDocumentTxInternal.getInternal(db);
     if (remote == null)
       return null;
-    OStorageRemoteSession session = (OStorageRemoteSession) remote.getSessionMetadata();
+    OStorageRemoteSession session = remote.getSessionMetadata();
     if (session == null) {
       session = new OStorageRemoteSession(sessionSerialId.decrementAndGet());
       sessions.add(session);
