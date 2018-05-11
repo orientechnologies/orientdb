@@ -546,6 +546,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
           keys.add(new OPair<>(String.valueOf(changesPerKey.key), changesPerKey.key));
         }
+        if (!change.getValue().nullKeyChanges.entries.isEmpty()) {
+          keys.add(new OPair<>(String.valueOf(null), null));
+        }
       }
     }
     for (OPair key : keys) {
@@ -637,13 +640,25 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
           .equals(index.getType())) {
-        for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
-          OIdentifiable old = (OIdentifiable) index.get(changesPerKey.key);
-          Object newValue = changesPerKey.entries.get(changesPerKey.entries.size() - 1).value;
+        if (!change.getValue().nullKeyChanges.entries.isEmpty()) {
+          OIdentifiable old = (OIdentifiable) index.get(null);
+          Object newValue = change.getValue().nullKeyChanges.entries.get(change.getValue().nullKeyChanges.entries.size() - 1).value;
           if (old != null && !old.equals(newValue)) {
             throw new ORecordDuplicatedException(String
                 .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                    newValue, changesPerKey.key, getName(), old.getIdentity()), getName(), old.getIdentity(), changesPerKey.key);
+                    newValue, null, getName(), old.getIdentity()), getName(), old.getIdentity(), null);
+          }
+        }
+
+        for (OTransactionIndexChangesPerKey changesPerKey : change.getValue().changesPerKey.values()) {
+          OIdentifiable old = (OIdentifiable) index.get(changesPerKey.key);
+          if (!changesPerKey.entries.isEmpty()) {
+            Object newValue = changesPerKey.entries.get(changesPerKey.entries.size() - 1).value;
+            if (old != null && !old.equals(newValue)) {
+              throw new ORecordDuplicatedException(String
+                  .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                      newValue, changesPerKey.key, getName(), old.getIdentity()), getName(), old.getIdentity(), changesPerKey.key);
+            }
           }
         }
       }
