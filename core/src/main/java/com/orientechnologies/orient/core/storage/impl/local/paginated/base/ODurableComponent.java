@@ -165,7 +165,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     readCache.releaseFromWrite(cacheEntry, writeCache);
   }
 
-  protected void logComponentOperation(OAtomicOperation atomicOperation, OComponentOperation componentOperation) {
+  public void logComponentOperation(OAtomicOperation atomicOperation, OComponentOperation componentOperation) {
     try {
       writeAheadLog.log(componentOperation);
     } catch (IOException e) {

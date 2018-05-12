@@ -33,6 +33,8 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OPutOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.ORemoveOperation;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -69,7 +71,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       .getValueAsFloat();
   private static final OBonsaiBucketPointer SYS_BUCKET            = new OBonsaiBucketPointer(0, 0);
 
-  private OBonsaiBucketPointer rootBucketPointer;
+  private volatile OBonsaiBucketPointer rootBucketPointer;
 
   private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
@@ -139,12 +141,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   @Override
   public OBonsaiBucketPointer getRootBucketPointer() {
-    final Lock lock = FILE_LOCK_MANAGER.acquireSharedLock(fileId);
-    try {
-      return rootBucketPointer;
-    } finally {
-      lock.unlock();
-    }
+    return rootBucketPointer;
   }
 
   @Override
@@ -214,15 +211,25 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       final boolean itemFound = bucketSearchResult.itemIndex >= 0;
       boolean result = true;
       if (itemFound) {
-        final int updateResult = keyBucket.updateValue(bucketSearchResult.itemIndex, value);
+        final int updateResult = keyBucket.updateValue(bucketSearchResult.itemIndex, value, atomicOperation);
         assert updateResult == 0 || updateResult == 1;
 
         result = updateResult != 0;
       } else {
+        final int keyLength = keySerializer.getObjectSize(key);
+        final byte[] rawKey = new byte[keyLength];
+        keySerializer.serializeNativeObject(key, rawKey, 0);
+
+        final int valueLength = valueSerializer.getFixedLength();
+        final byte[] rawValue = new byte[valueLength];
+        valueSerializer.serializeNativeObject(value, rawValue, 0);
+
+        logComponentOperation(atomicOperation,
+            new OPutOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, rawKey, rawValue, null));
+
         int insertionIndex = -bucketSearchResult.itemIndex - 1;
 
-        while (!keyBucket.addEntry(insertionIndex,
-            new OSBTreeBonsaiBucket.SBTreeEntry<>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key, value), true)) {
+        while (!keyBucket.addLeafEntry(insertionIndex, rawKey, rawValue)) {
           releasePageFromWrite(keyBucketCacheEntry, atomicOperation);
 
           bucketSearchResult = splitBucket(bucketSearchResult.path, insertionIndex, key, atomicOperation);
@@ -513,7 +520,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<>(keyBucketCacheEntry, bucketPointer.getPageOffset(),
             keySerializer, valueSerializer, this);
 
-        removed = keyBucket.getEntry(bucketSearchResult.itemIndex).value;
+        final byte[][] rawEntry = keyBucket.getRawLeafEntry(bucketSearchResult.itemIndex);
+        removed = valueSerializer.deserializeNativeObject(rawEntry[1], 0);
+
+        logComponentOperation(atomicOperation,
+            new ORemoveOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, rawEntry[0], rawEntry[1]));
 
         keyBucket.remove(bucketSearchResult.itemIndex);
       } finally {

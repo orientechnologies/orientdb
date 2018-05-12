@@ -19,11 +19,6 @@ public class OSBTreeOperation extends OComponentOperation {
   }
 
   @Override
-  public boolean isUpdateMasterRecord() {
-    return false;
-  }
-
-  @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
