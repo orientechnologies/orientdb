@@ -123,7 +123,12 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected OCacheEntry addPage(long fileId) throws IOException {
-    return readCache.allocateNewPage(fileId, writeCache, true);
+    final OCacheEntry cacheEntry = readCache.allocateNewPage(fileId, writeCache, true);
+    final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
+    //TODO: change LSN according new format and add modification counter
+    ODurablePage.setLogSequenceNumber(buffer, writeAheadLog.end());
+
+    return cacheEntry;
   }
 
   protected void releasePageFromWrite(OCacheEntry cacheEntry, OAtomicOperation atomicOperation) {

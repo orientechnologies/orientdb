@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree;
 
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
