@@ -63,6 +63,13 @@ public final class ONullBucket<V> extends ODurablePage {
     }
   }
 
+  public void setRawValue(byte[] rawValue) {
+    setByteValue(NEXT_FREE_POSITION, (byte) 1);
+
+    setByteValue(NEXT_FREE_POSITION + 1, (byte) 1);
+    setBinaryValue(NEXT_FREE_POSITION + 2, rawValue);
+  }
+
   public OSBTreeValue<V> getValue() {
     if (getByteValue(NEXT_FREE_POSITION) == 0)
       return null;

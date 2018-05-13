@@ -166,6 +166,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   public void logComponentOperation(OAtomicOperation atomicOperation, OComponentOperation componentOperation) {
+    assert componentOperation != null;
     try {
       writeAheadLog.log(componentOperation);
     } catch (IOException e) {

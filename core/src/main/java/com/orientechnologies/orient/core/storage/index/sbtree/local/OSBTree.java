@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OPutOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.ORemoveOperation;
 
@@ -249,6 +250,7 @@ public final class OSBTree<K, V> extends ODurableComponent {
 
     acquireExclusiveLock();
     try {
+      OComponentOperation componentOperation = null;
       checkNullSupport(key);
 
       if (key != null) {
@@ -309,9 +311,6 @@ public final class OSBTree<K, V> extends ODurableComponent {
           final byte[] serializedKey = new byte[keySize];
           keySerializer.serializeNativeObject(key, serializedKey, 0, (Object[]) keyTypes);
 
-          logComponentOperation(atomicOperation,
-              new OPutOperation(atomicOperation.getOperationUnitId(), getName(), serializedKey, serializeValue, oldRawValue));
-
           final boolean createLinkToTheValue = valueSize > MAX_EMBEDDED_VALUE_SIZE;
           assert !createLinkToTheValue;
 
@@ -319,10 +318,13 @@ public final class OSBTree<K, V> extends ODurableComponent {
           int sizeDiff;
           if (bucketSearchResult.itemIndex >= 0) {
             assert oldRawValue != null;
+
             if (oldRawValue.length == serializeValue.length) {
               keyBucket.updateValue(bucketSearchResult.itemIndex, serializeValue);
               releasePageFromWrite(keyBucketCacheEntry, atomicOperation);
 
+              logComponentOperation(atomicOperation,
+                  new OPutOperation(atomicOperation.getOperationUnitId(), getName(), serializedKey, serializeValue, oldRawValue));
               endAtomicOperation(false, null);
               return true;
             } else {
@@ -335,6 +337,8 @@ public final class OSBTree<K, V> extends ODurableComponent {
             sizeDiff = 1;
           }
 
+          componentOperation = new OPutOperation(atomicOperation.getOperationUnitId(), getName(), serializedKey, serializeValue,
+              oldRawValue);
           while (!keyBucket.addLeafEntry(insertionIndex, serializedKey, serializeValue)) {
             releasePageFromWrite(keyBucketCacheEntry, atomicOperation);
 
@@ -356,10 +360,9 @@ public final class OSBTree<K, V> extends ODurableComponent {
           final byte[] serializedKey = new byte[keySize];
           keySerializer.serializeNativeObject(key, serializedKey, 0, (Object[]) keyTypes);
 
-          logComponentOperation(atomicOperation,
-              new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), serializedKey, oldRawValue));
+          componentOperation = new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), serializedKey, oldRawValue);
 
-          removeKey(bucketSearchResult, atomicOperation, false);
+          removeKey(bucketSearchResult, atomicOperation);
           releasePageFromWrite(keyBucketCacheEntry, atomicOperation);
         } else if (updatedValue.isNothing()) {
           releasePageFromWrite(keyBucketCacheEntry, atomicOperation);
@@ -391,7 +394,6 @@ public final class OSBTree<K, V> extends ODurableComponent {
             final OIndexUpdateAction<V> updatedValue = updater.update(oldValue, bonsayFileId);
             if (updatedValue.isChange()) {
               V value = updatedValue.getValue();
-              final OSBTreeValue<V> treeValue = new OSBTreeValue<>(false, -1, value);
               if (validator != null) {
                 final Object result = validator.validate(null, oldValue, value);
                 if (result == OIndexEngine.Validator.IGNORE) {
@@ -399,6 +401,7 @@ public final class OSBTree<K, V> extends ODurableComponent {
                   return false;
                 }
 
+                value = (V) result;
               }
 
               if (oldValue != null) {
@@ -409,14 +412,12 @@ public final class OSBTree<K, V> extends ODurableComponent {
               final byte[] rawValue = new byte[valueSize];
               valueSerializer.serializeNativeObject(value, rawValue, 0);
 
-              logComponentOperation(atomicOperation,
-                  new OPutOperation(atomicOperation.getOperationUnitId(), getName(), null, rawValue, oldRawValue));
+              componentOperation = new OPutOperation(atomicOperation.getOperationUnitId(), getName(), null, rawValue, oldRawValue);
 
-              nullBucket.setValue(treeValue);
+              nullBucket.setRawValue(rawValue);
             } else if (updatedValue.isRemove()) {
-              logComponentOperation(atomicOperation,
-                  new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), null, oldRawValue));
-              removeNullBucket(atomicOperation, false);
+              componentOperation = new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), null, oldRawValue);
+              removeNullBucket(atomicOperation);
             } else if (updatedValue.isNothing()) {
               //Do Nothing
             }
@@ -428,7 +429,6 @@ public final class OSBTree<K, V> extends ODurableComponent {
             final OIndexUpdateAction<V> updatedValue = updater.update(null, bonsayFileId);
             if (updatedValue.isChange()) {
               V value = updatedValue.getValue();
-              final OSBTreeValue<V> treeValue = new OSBTreeValue<>(false, -1, value);
               if (validator != null) {
                 final Object result = validator.validate(null, null, value);
                 if (result == OIndexEngine.Validator.IGNORE) {
@@ -436,20 +436,19 @@ public final class OSBTree<K, V> extends ODurableComponent {
                   return false;
                 }
 
+                value = (V) result;
               }
 
               final int valueSize = valueSerializer.getObjectSize(value);
               final byte[] rawValue = new byte[valueSize];
               valueSerializer.serializeNativeObject(value, rawValue, 0);
 
-              logComponentOperation(atomicOperation,
-                  new OPutOperation(atomicOperation.getOperationUnitId(), getName(), null, rawValue, null));
+              componentOperation = new OPutOperation(atomicOperation.getOperationUnitId(), getName(), null, rawValue, null);
 
-              nullBucket.setValue(treeValue);
+              nullBucket.setRawValue(rawValue);
             } else if (updatedValue.isRemove()) {
-              logComponentOperation(atomicOperation,
-                  new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), null, null));
-              removeNullBucket(atomicOperation, false);
+              componentOperation = new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), null, null);
+              removeNullBucket(atomicOperation);
             } else if (updatedValue.isNothing()) {
               //Do Nothing
             }
@@ -458,12 +457,17 @@ public final class OSBTree<K, V> extends ODurableComponent {
           assert cacheEntry != null;
 
           releasePageFromWrite(cacheEntry, atomicOperation);
-          if (ignored)
+          if (ignored) {
             endAtomicOperation(false, null);
+          }
         }
 
         sizeDiff++;
         updateSize(sizeDiff, atomicOperation);
+      }
+
+      if (componentOperation != null) {
+        logComponentOperation(atomicOperation, componentOperation);
       }
 
       endAtomicOperation(false, null);
@@ -646,7 +650,7 @@ public final class OSBTree<K, V> extends ODurableComponent {
 
     acquireExclusiveLock();
     try {
-      V removedValue;
+      byte[] removedValue;
 
       if (key != null) {
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
@@ -657,18 +661,28 @@ public final class OSBTree<K, V> extends ODurableComponent {
           return null;
         }
 
-        removedValue = removeKey(bucketSearchResult, atomicOperation, true);
+        removedValue = removeKey(bucketSearchResult, atomicOperation);
       } else {
         if (getFilledUpTo(nullBucketFileId) == 0) {
           endAtomicOperation(false, null);
           return null;
         }
 
-        removedValue = removeNullBucket(atomicOperation, true);
+        removedValue = removeNullBucket(atomicOperation);
+      }
+
+      if (removedValue != null) {
+        final int keyLen = keySerializer.getObjectSize(key, (Object[]) keyTypes);
+        final byte[] rawKey = new byte[keyLen];
+        keySerializer.serializeNativeObject(key, rawKey, 0, (Object[]) keyTypes);
+
+        logComponentOperation(atomicOperation,
+            new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, removedValue));
       }
 
       endAtomicOperation(false, null);
-      return removedValue;
+
+      return valueSerializer.deserializeNativeObject(removedValue, 0);
     } catch (IOException e) {
       rollback(e);
 
@@ -682,63 +696,37 @@ public final class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
-  private V removeNullBucket(OAtomicOperation atomicOperation, boolean log) throws IOException {
-    V removedValue;
+  private byte[] removeNullBucket(OAtomicOperation atomicOperation) throws IOException {
+    byte[] removedValue;
     OCacheEntry nullCacheEntry = loadPageForWrite(nullBucketFileId, 0, false);
     try {
       ONullBucket<V> nullBucket = new ONullBucket<>(nullCacheEntry, valueSerializer, false);
-      if (!log) {
-        OSBTreeValue<V> treeValue = nullBucket.getValue();
+      removedValue = nullBucket.getRawValue();
 
-        if (treeValue != null) {
-          removedValue = readValue(treeValue);
-          nullBucket.removeValue();
-        } else {
-          removedValue = null;
-        }
-      } else {
-        final byte[] rawValue = nullBucket.getRawValue();
-        if (rawValue != null) {
-          removedValue = valueSerializer.deserializeNativeObject(rawValue, 0);
-
-          logComponentOperation(atomicOperation,
-              new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), null, rawValue));
-          nullBucket.removeValue();
-        } else {
-          removedValue = null;
-        }
+      if (removedValue != null) {
+        nullBucket.removeValue();
       }
+
     } finally {
       releasePageFromWrite(nullCacheEntry, atomicOperation);
     }
 
-    if (removedValue != null)
+    if (removedValue != null) {
       updateSize(-1, atomicOperation);
+    }
+
     return removedValue;
   }
 
-  private V removeKey(BucketSearchResult bucketSearchResult, OAtomicOperation atomicOperation, boolean log) throws IOException {
-    V removedValue;
+  private byte[] removeKey(BucketSearchResult bucketSearchResult, OAtomicOperation atomicOperation) throws IOException {
+    byte[] removedValue;
     OCacheEntry keyBucketCacheEntry = loadPageForWrite(fileId, bucketSearchResult.getLastPathItem(), false);
     try {
       OSBTreeBucket<K, V> keyBucket = new OSBTreeBucket<>(keyBucketCacheEntry, keySerializer, keyTypes, valueSerializer);
 
-      final V value;
-      if (!log) {
-        final OSBTreeValue<V> removed = keyBucket.getEntry(bucketSearchResult.itemIndex).value;
-        value = readValue(removed);
-
-        keyBucket.remove(bucketSearchResult.itemIndex);
-      } else {
-        final byte[][] leafEntry = keyBucket.getRawLeafEntry(bucketSearchResult.itemIndex);
-
-        value = valueSerializer.deserializeNativeObject(leafEntry[1], 0);
-        logComponentOperation(atomicOperation,
-            new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), leafEntry[0], leafEntry[1]));
-      }
+      removedValue = keyBucket.getRawValue(bucketSearchResult.itemIndex);
+      keyBucket.remove(bucketSearchResult.itemIndex);
       updateSize(-1, atomicOperation);
-
-      removedValue = value;
     } finally {
       releasePageFromWrite(keyBucketCacheEntry, atomicOperation);
     }
