@@ -11,10 +11,11 @@ import java.util.Objects;
 public abstract class OSBTreeBonsaiModificationOperation extends OSBTreeBonsaiOperation {
   private OBonsaiBucketPointer pointer;
 
+  @SuppressWarnings("WeakerAccess")
   public OSBTreeBonsaiModificationOperation() {
   }
 
-  public OSBTreeBonsaiModificationOperation(OOperationUnitId operationUnitId, long fileId, OBonsaiBucketPointer pointer) {
+  OSBTreeBonsaiModificationOperation(OOperationUnitId operationUnitId, long fileId, OBonsaiBucketPointer pointer) {
     super(operationUnitId, fileId);
     this.pointer = pointer;
   }

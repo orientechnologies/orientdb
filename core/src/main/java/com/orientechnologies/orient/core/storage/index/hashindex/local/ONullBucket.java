@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -33,7 +31,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 public class ONullBucket<V> extends ODurablePage {
   private final OBinarySerializer<V> valueSerializer;
 
-  public ONullBucket(OCacheEntry cacheEntry, OBinarySerializer<V> valueSerializer, boolean isNew) {
+  ONullBucket(OCacheEntry cacheEntry, OBinarySerializer<V> valueSerializer, boolean isNew) {
     super(cacheEntry);
     this.valueSerializer = valueSerializer;
 
@@ -41,15 +39,9 @@ public class ONullBucket<V> extends ODurablePage {
       setByteValue(NEXT_FREE_POSITION, (byte) 0);
   }
 
-  public void setValue(V value) throws IOException {
+  public void setValue(byte[] value) {
     setByteValue(NEXT_FREE_POSITION, (byte) 1);
-
-    final int valueSize = valueSerializer.getObjectSize(value);
-
-    final byte[] serializedValue = new byte[valueSize];
-    valueSerializer.serializeNativeObject(value, serializedValue, 0);
-
-    setBinaryValue(NEXT_FREE_POSITION + 1, serializedValue);
+    setBinaryValue(NEXT_FREE_POSITION + 1, value);
   }
 
   public V getValue() {
@@ -59,7 +51,15 @@ public class ONullBucket<V> extends ODurablePage {
     return deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 1);
   }
 
-  public void removeValue() {
+  byte[] getRawValue() {
+    if (getByteValue(NEXT_FREE_POSITION) == 0)
+      return null;
+
+    final int valueLen = getObjectSizeInDirectMemory(valueSerializer, NEXT_FREE_POSITION + 1);
+    return getBinaryValue(NEXT_FREE_POSITION + 1, valueLen);
+  }
+
+  void removeValue() {
     setByteValue(NEXT_FREE_POSITION, (byte) 0);
   }
 }

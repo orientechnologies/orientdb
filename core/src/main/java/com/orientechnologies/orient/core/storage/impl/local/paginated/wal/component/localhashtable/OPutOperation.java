@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -7,12 +7,12 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOpera
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class OPutOperation extends OSBTreeOperation {
+public class OPutOperation extends OLocalHashTableOperation {
   private byte[] key;
   private byte[] value;
   private byte[] oldValue;
 
-  @SuppressWarnings("WeakerAccess")
+  @SuppressWarnings("unused")
   public OPutOperation() {
   }
 

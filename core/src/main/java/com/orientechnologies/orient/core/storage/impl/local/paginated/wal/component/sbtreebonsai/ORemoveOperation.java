@@ -11,6 +11,7 @@ public class ORemoveOperation extends OSBTreeBonsaiModificationOperation {
   private byte[] key;
   private byte[] value;
 
+  @SuppressWarnings("unused")
   public ORemoveOperation() {
   }
 

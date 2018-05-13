@@ -10,10 +10,11 @@ import java.util.Objects;
 public abstract class OSBTreeBonsaiOperation extends OComponentOperation {
   private long fileId;
 
+  @SuppressWarnings("WeakerAccess")
   public OSBTreeBonsaiOperation() {
   }
 
-  public OSBTreeBonsaiOperation(OOperationUnitId operationUnitId, long fileId) {
+  OSBTreeBonsaiOperation(OOperationUnitId operationUnitId, long fileId) {
     super(operationUnitId);
     this.fileId = fileId;
   }

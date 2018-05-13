@@ -78,7 +78,7 @@ import static com.orientechnologies.orient.core.index.OIndexUpdateAction.changed
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/7/13
  */
-public class OSBTree<K, V> extends ODurableComponent {
+public final class OSBTree<K, V> extends ODurableComponent {
   private static final int               MAX_KEY_SIZE            = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
   private static final int               MAX_EMBEDDED_VALUE_SIZE = OGlobalConfiguration.SBTREE_MAX_EMBEDDED_VALUE_SIZE
       .getValueAsInteger();
@@ -320,7 +320,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           if (bucketSearchResult.itemIndex >= 0) {
             assert oldRawValue != null;
             if (oldRawValue.length == serializeValue.length) {
-              keyBucket.updateValue(bucketSearchResult.itemIndex, serializeValue, oldRawValue);
+              keyBucket.updateValue(bucketSearchResult.itemIndex, serializeValue);
               releasePageFromWrite(keyBucketCacheEntry, atomicOperation);
 
               endAtomicOperation(false, null);
@@ -1170,12 +1170,13 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       int indexToSplit = bucketSize >>> 1;
       final K separationKey = bucketToSplit.getKey(indexToSplit);
-      final List<OSBTreeBucket.SBTreeEntry<K, V>> rightEntries = new ArrayList<>(indexToSplit);
+      final List<byte[]> rightEntries = new ArrayList<>(indexToSplit);
 
       final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
 
-      for (int i = startRightIndex; i < bucketSize; i++)
-        rightEntries.add(bucketToSplit.getEntry(i));
+      for (int i = startRightIndex; i < bucketSize; i++) {
+        rightEntries.add(bucketToSplit.getRawEntry(i));
+      }
 
       if (pageIndex != ROOT_INDEX) {
         return splitNonRootBucket(path, keyIndex, keyToInsert, pageIndex, bucketToSplit, splitLeaf, indexToSplit, separationKey,
@@ -1190,8 +1191,8 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private BucketSearchResult splitNonRootBucket(List<Long> path, int keyIndex, K keyToInsert, long pageIndex,
-      OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey,
-      List<OSBTreeBucket.SBTreeEntry<K, V>> rightEntries, OAtomicOperation atomicOperation) throws IOException {
+      OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey, List<byte[]> rightEntries,
+      OAtomicOperation atomicOperation) throws IOException {
     OCacheEntry rightBucketEntry = addPage(fileId);
 
     try {
@@ -1271,15 +1272,15 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private BucketSearchResult splitRootBucket(List<Long> path, int keyIndex, K keyToInsert, OCacheEntry bucketEntry,
-      OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey,
-      List<OSBTreeBucket.SBTreeEntry<K, V>> rightEntries, OAtomicOperation atomicOperation) throws IOException {
+      OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey, List<byte[]> rightEntries,
+      OAtomicOperation atomicOperation) throws IOException {
     final long freeListPage = bucketToSplit.getValuesFreeListFirstIndex();
     final long treeSize = bucketToSplit.getTreeSize();
 
-    final List<OSBTreeBucket.SBTreeEntry<K, V>> leftEntries = new ArrayList<>(indexToSplit);
+    final List<byte[]> leftEntries = new ArrayList<>(indexToSplit);
 
     for (int i = 0; i < indexToSplit; i++)
-      leftEntries.add(bucketToSplit.getEntry(i));
+      leftEntries.add(bucketToSplit.getRawEntry(i));
 
     OCacheEntry leftBucketEntry = addPage(fileId);
 

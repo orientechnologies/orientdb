@@ -77,7 +77,7 @@ public class ODurablePage {
     return new OLogSequenceNumber(segment, position);
   }
 
-  public static void setLogSequenceNumber(ByteBuffer buffer, OLogSequenceNumber lsn) {
+  static void setLogSequenceNumber(ByteBuffer buffer, OLogSequenceNumber lsn) {
     buffer.position(WAL_SEGMENT_OFFSET);
     buffer.putLong(lsn.getSegment());
     buffer.putLong(lsn.getPosition());
@@ -223,17 +223,6 @@ public class ODurablePage {
 
     buffer.position(to);
     buffer.put(rb);
-
-    cacheEntry.markDirty();
-  }
-
-  public void restorePage(byte[] page) {
-    assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
-
-    final ByteBuffer buffer = cacheEntry.getCachePointer().getBuffer();
-
-    buffer.position(0);
-    buffer.put(page);
 
     cacheEntry.markDirty();
   }

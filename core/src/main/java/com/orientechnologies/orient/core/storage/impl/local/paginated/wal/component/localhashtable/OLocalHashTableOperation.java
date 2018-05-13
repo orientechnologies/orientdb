@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable;
 
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
@@ -7,14 +7,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compon
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-public class OSBTreeOperation extends OComponentOperation {
+public class OLocalHashTableOperation extends OComponentOperation {
   private String name;
 
   @SuppressWarnings("WeakerAccess")
-  public OSBTreeOperation() {
+  public OLocalHashTableOperation() {
   }
 
-  OSBTreeOperation(OOperationUnitId operationUnitId, String name) {
+  OLocalHashTableOperation(OOperationUnitId operationUnitId, String name) {
     super(operationUnitId);
     this.name = name;
   }
@@ -58,7 +58,7 @@ public class OSBTreeOperation extends OComponentOperation {
       return false;
     if (!super.equals(o))
       return false;
-    OSBTreeOperation that = (OSBTreeOperation) o;
+    OLocalHashTableOperation that = (OLocalHashTableOperation) o;
     return Objects.equals(name, that.name);
   }
 

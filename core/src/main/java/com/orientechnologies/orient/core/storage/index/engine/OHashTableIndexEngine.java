@@ -23,12 +23,22 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.*;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.OIndexUpdateAction;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexBucket;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -50,7 +60,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   private final OHashTable<Object, Object>       hashTable;
   private final OMurmurHash3HashFunction<Object> hashFunction;
-  private final AtomicLong bonsayFileId = new AtomicLong(0);
+  private final AtomicLong                       bonsayFileId = new AtomicLong(0);
 
   private int version;
 
@@ -67,10 +77,9 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       durableInNonTx = durableInNonTxMode;
 
     this.version = version;
-    if (version < 2)
-      hashTable = new OLocalHashTable20<Object, Object>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
-          NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx, storage);
-    else
+    if (version < 2) {
+      throw new OStorageException("Not supported version of index " + version);
+    } else
       hashTable = new OLocalHashTable<Object, Object>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, hashFunction, storage);
 

@@ -136,7 +136,7 @@ public class SBTreeLeafBucketTest {
       final byte[] oldRawValue = treeBucket.getRawValue(i);
 
       OLinkSerializer.INSTANCE.serializeNativeObject(new ORecordId(i + 5, i + 5), rawValue, 0);
-      treeBucket.updateValue(i, rawValue, oldRawValue);
+      treeBucket.updateValue(i, rawValue);
     }
 
 

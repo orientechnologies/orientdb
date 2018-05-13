@@ -24,5 +24,7 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local;
  * @since 12.03.13
  */
 public interface OHashFunction<V> {
-  public long hashCode(V value);
+  long hashCode(V value);
+
+  long hashCode(byte[] value);
 }

@@ -3,8 +3,15 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import org.assertj.core.api.Assertions;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.IOException;
 
@@ -16,6 +23,8 @@ public class OHashTableDirectoryTest {
   private static ODatabaseDocumentTx databaseDocumentTx;
 
   private static OHashTableDirectory directory;
+
+  private OAtomicOperation atomicOperation;
 
   @BeforeClass
   public static void beforeClass() throws IOException {
@@ -31,12 +40,24 @@ public class OHashTableDirectoryTest {
 
     databaseDocumentTx.create();
 
-    OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
+    OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
-    directory = new OHashTableDirectory(".tsc", "hashTableDirectoryTest", "hashTableDirectoryTest", (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+    directory = new OHashTableDirectory(".tsc", "hashTableDirectoryTest", "hashTableDirectoryTest",
+        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
-    directory.create();
+    final OAtomicOperation atomicOperation = startAtomicOperation(directory);
+    directory.create(atomicOperation);
+    endAtomicOperation();
+  }
+
+  private static OAtomicOperation startAtomicOperation(ODurableComponent component) throws IOException {
+    return ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager()
+        .startAtomicOperation(component, true);
+  }
+
+  private static void endAtomicOperation() throws IOException {
+    ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getAtomicOperationsManager().endAtomicOperation(false, null);
   }
 
   @AfterClass
@@ -46,12 +67,14 @@ public class OHashTableDirectoryTest {
   }
 
   @Before
-  public void beforeMethod() {
+  public void beforeMethod() throws Exception {
+    atomicOperation = startAtomicOperation(directory);
   }
 
   @After
   public void afterMethod() throws IOException {
-    directory.clear();
+    directory.clear(atomicOperation);
+    endAtomicOperation();
   }
 
   @Test
@@ -60,7 +83,7 @@ public class OHashTableDirectoryTest {
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
-    int index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level);
+    int index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
 
     Assert.assertEquals(index, 0);
     Assert.assertEquals(directory.getMaxLeftChildDepth(0), 2);
@@ -79,14 +102,14 @@ public class OHashTableDirectoryTest {
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
-    directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level);
+    directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
 
     for (int i = 0; i < level.length; i++)
-      directory.setNodePointer(0, i, i + 100);
+      directory.setNodePointer(0, i, i + 100, atomicOperation);
 
-    directory.setMaxLeftChildDepth(0, (byte) 100);
-    directory.setMaxRightChildDepth(0, (byte) 101);
-    directory.setNodeLocalDepth(0, (byte) 102);
+    directory.setMaxLeftChildDepth(0, (byte) 100, atomicOperation);
+    directory.setMaxRightChildDepth(0, (byte) 101, atomicOperation);
+    directory.setNodeLocalDepth(0, (byte) 102, atomicOperation);
 
     for (int i = 0; i < level.length; i++)
       Assert.assertEquals(directory.getNodePointer(0, i), i + 100);
@@ -102,27 +125,27 @@ public class OHashTableDirectoryTest {
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
-    int index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level);
+    int index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 0);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 100;
 
-    index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level);
+    index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 1);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 200;
 
-    index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level);
+    index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 2);
 
-    directory.deleteNode(1);
+    directory.deleteNode(1, atomicOperation);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 300;
 
-    index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level);
+    index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
     Assert.assertEquals(index, 1);
 
     for (int i = 0; i < level.length; i++)
@@ -139,52 +162,52 @@ public class OHashTableDirectoryTest {
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
-    int index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level);
+    int index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 0);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 100;
 
-    index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level);
+    index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 1);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 200;
 
-    index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level);
+    index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 2);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 300;
 
-    index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level);
+    index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 3);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 400;
 
-    index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level);
+    index = directory.addNewNode((byte) 2, (byte) 3, (byte) 4, level, atomicOperation);
     Assert.assertEquals(index, 4);
 
-    directory.deleteNode(1);
-    directory.deleteNode(3);
+    directory.deleteNode(1, atomicOperation);
+    directory.deleteNode(3, atomicOperation);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 500;
 
-    index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level);
+    index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
     Assert.assertEquals(index, 3);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 600;
 
-    index = directory.addNewNode((byte) 8, (byte) 9, (byte) 10, level);
+    index = directory.addNewNode((byte) 8, (byte) 9, (byte) 10, level, atomicOperation);
     Assert.assertEquals(index, 1);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 700;
 
-    index = directory.addNewNode((byte) 11, (byte) 12, (byte) 13, level);
+    index = directory.addNewNode((byte) 11, (byte) 12, (byte) 13, level, atomicOperation);
     Assert.assertEquals(index, 5);
 
     for (int i = 0; i < level.length; i++)
@@ -221,7 +244,7 @@ public class OHashTableDirectoryTest {
       for (int i = 0; i < level.length; i++)
         level[i] = i + n * 100;
 
-      int index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level);
+      int index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
       if (firsIndex < 0)
         firsIndex = index;
     }
@@ -230,7 +253,7 @@ public class OHashTableDirectoryTest {
       for (int i = 0; i < level.length; i++)
         level[i] = i + n * 100;
 
-      int index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level);
+      int index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
       if (secondIndex < 0)
         secondIndex = index;
     }
@@ -239,7 +262,7 @@ public class OHashTableDirectoryTest {
       for (int i = 0; i < level.length; i++)
         level[i] = i + n * 100;
 
-      int index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level);
+      int index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
       if (thirdIndex < 0)
         thirdIndex = index;
     }
@@ -248,32 +271,32 @@ public class OHashTableDirectoryTest {
     Assert.assertEquals(secondIndex, ODirectoryFirstPage.NODES_PER_PAGE);
     Assert.assertEquals(thirdIndex, ODirectoryFirstPage.NODES_PER_PAGE + ODirectoryPage.NODES_PER_PAGE);
 
-    directory.deleteNode(secondIndex);
-    directory.deleteNode(firsIndex);
-    directory.deleteNode(thirdIndex);
+    directory.deleteNode(secondIndex, atomicOperation);
+    directory.deleteNode(firsIndex, atomicOperation);
+    directory.deleteNode(thirdIndex, atomicOperation);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 1000;
 
-    int index = directory.addNewNode((byte) 8, (byte) 9, (byte) 10, level);
+    int index = directory.addNewNode((byte) 8, (byte) 9, (byte) 10, level, atomicOperation);
     Assert.assertEquals(index, thirdIndex);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 2000;
 
-    index = directory.addNewNode((byte) 11, (byte) 12, (byte) 13, level);
+    index = directory.addNewNode((byte) 11, (byte) 12, (byte) 13, level, atomicOperation);
     Assert.assertEquals(index, firsIndex);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 3000;
 
-    index = directory.addNewNode((byte) 14, (byte) 15, (byte) 16, level);
+    index = directory.addNewNode((byte) 14, (byte) 15, (byte) 16, level, atomicOperation);
     Assert.assertEquals(index, secondIndex);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 4000;
 
-    index = directory.addNewNode((byte) 17, (byte) 18, (byte) 19, level);
+    index = directory.addNewNode((byte) 17, (byte) 18, (byte) 19, level, atomicOperation);
     Assert.assertEquals(index, ODirectoryFirstPage.NODES_PER_PAGE + 2 * ODirectoryPage.NODES_PER_PAGE);
 
     Assert.assertEquals(directory.getMaxLeftChildDepth(thirdIndex), 8);
@@ -315,44 +338,44 @@ public class OHashTableDirectoryTest {
       for (int i = 0; i < level.length; i++)
         level[i] = i + n * 100;
 
-      directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level);
+      directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
     }
 
     for (int n = 0; n < ODirectoryPage.NODES_PER_PAGE; n++) {
       for (int i = 0; i < level.length; i++)
         level[i] = i + n * 100;
 
-      directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level);
+      directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
     }
 
     for (int n = 0; n < ODirectoryPage.NODES_PER_PAGE; n++) {
       for (int i = 0; i < level.length; i++)
         level[i] = i + n * 100;
 
-      directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level);
+      directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
     }
 
-    directory.deleteNode(ODirectoryFirstPage.NODES_PER_PAGE + ODirectoryPage.NODES_PER_PAGE - 1);
+    directory.deleteNode(ODirectoryFirstPage.NODES_PER_PAGE + ODirectoryPage.NODES_PER_PAGE - 1, atomicOperation);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 1000;
 
-    int index = directory.addNewNode((byte) 8, (byte) 9, (byte) 10, level);
+    int index = directory.addNewNode((byte) 8, (byte) 9, (byte) 10, level, atomicOperation);
     Assert.assertEquals(index, ODirectoryFirstPage.NODES_PER_PAGE + ODirectoryPage.NODES_PER_PAGE - 1);
 
-    directory.setMaxLeftChildDepth(index - 1, (byte) 10);
-    directory.setMaxRightChildDepth(index - 1, (byte) 11);
-    directory.setNodeLocalDepth(index - 1, (byte) 12);
+    directory.setMaxLeftChildDepth(index - 1, (byte) 10, atomicOperation);
+    directory.setMaxRightChildDepth(index - 1, (byte) 11, atomicOperation);
+    directory.setNodeLocalDepth(index - 1, (byte) 12, atomicOperation);
 
     for (int i = 0; i < level.length; i++)
-      directory.setNodePointer(index - 1, i, i + 2000);
+      directory.setNodePointer(index - 1, i, i + 2000, atomicOperation);
 
-    directory.setMaxLeftChildDepth(index + 1, (byte) 13);
-    directory.setMaxRightChildDepth(index + 1, (byte) 14);
-    directory.setNodeLocalDepth(index + 1, (byte) 15);
+    directory.setMaxLeftChildDepth(index + 1, (byte) 13, atomicOperation);
+    directory.setMaxRightChildDepth(index + 1, (byte) 14, atomicOperation);
+    directory.setNodeLocalDepth(index + 1, (byte) 15, atomicOperation);
 
     for (int i = 0; i < level.length; i++)
-      directory.setNodePointer(index + 1, i, i + 3000);
+      directory.setNodePointer(index + 1, i, i + 3000, atomicOperation);
 
     Assert.assertEquals(directory.getMaxLeftChildDepth(index - 1), 10);
     Assert.assertEquals(directory.getMaxRightChildDepth(index - 1), 11);

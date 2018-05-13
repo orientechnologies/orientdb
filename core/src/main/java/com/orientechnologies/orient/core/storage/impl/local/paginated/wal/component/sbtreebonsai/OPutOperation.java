@@ -13,6 +13,7 @@ public class OPutOperation extends OSBTreeBonsaiModificationOperation {
   private byte[] value;
   private byte[] oldValue;
 
+  @SuppressWarnings("unused")
   public OPutOperation() {
   }
 
@@ -114,9 +115,11 @@ public class OPutOperation extends OSBTreeBonsaiModificationOperation {
   public int serializedSize() {
     int size = super.serializedSize();
     size += OIntegerSerializer.INT_SIZE;
-    size = key.length;
+    size += key.length;
+
     size += OIntegerSerializer.INT_SIZE;
     size += value.length;
+
     size += OByteSerializer.BYTE_SIZE;
 
     if (oldValue != null) {

@@ -62,7 +62,7 @@ import java.util.concurrent.locks.Lock;
  * @see OSBTree
  * @since 1.6.0
  */
-public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTreeBonsai<K, V> {
+public final class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTreeBonsai<K, V> {
   private static final OLockManager<Long> FILE_LOCK_MANAGER = new OPartitionedLockManager<>();
 
   private static final int                  PAGE_SIZE             =
@@ -361,7 +361,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         addChildrenToQueue(subTreesToDelete, bucket);
 
         bucket.setFreeListPointer(head);
-        bucket.setDelted(true);
+        bucket.setDeleted();
         head = bucketPointer;
       } finally {
         releasePageFromWrite(cacheEntry, atomicOperation);
@@ -957,12 +957,13 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
       int indexToSplit = bucketSize >>> 1;
       final K separationKey = bucketToSplit.getKey(indexToSplit);
-      final List<OSBTreeBonsaiBucket.SBTreeEntry<K, V>> rightEntries = new ArrayList<>(indexToSplit);
+      final List<byte[]> rightEntries = new ArrayList<>(indexToSplit);
 
       final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
 
-      for (int i = startRightIndex; i < bucketSize; i++)
-        rightEntries.add(bucketToSplit.getEntry(i));
+      for (int i = startRightIndex; i < bucketSize; i++) {
+        rightEntries.add(bucketToSplit.getRawEntry(i));
+      }
 
       if (!bucketPointer.equals(rootBucketPointer)) {
         final AllocationResult allocationResult = allocateBucketForWrite(atomicOperation);
@@ -1049,10 +1050,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       } else {
         long treeSize = bucketToSplit.getTreeSize();
 
-        final List<OSBTreeBonsaiBucket.SBTreeEntry<K, V>> leftEntries = new ArrayList<>(indexToSplit);
+        final List<byte[]> leftEntries = new ArrayList<>(indexToSplit);
 
-        for (int i = 0; i < indexToSplit; i++)
-          leftEntries.add(bucketToSplit.getEntry(i));
+        for (int i = 0; i < indexToSplit; i++) {
+          leftEntries.add(bucketToSplit.getRawEntry(i));
+        }
 
         final AllocationResult leftAllocationResult = allocateBucketForWrite(atomicOperation);
         OCacheEntry leftBucketEntry = leftAllocationResult.getCacheEntry();
@@ -1066,8 +1068,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
               splitLeaf, keySerializer, valueSerializer, this);
           newLeftBucket.addAll(leftEntries);
 
-          if (splitLeaf)
+          if (splitLeaf) {
             newLeftBucket.setRightSibling(rightBucketPointer);
+          }
         } finally {
           releasePageFromWrite(leftBucketEntry, atomicOperation);
         }
