@@ -37,16 +37,16 @@ public class OClusterPositionMapBucket extends ODurablePage {
   private static final int POSITIONS_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
   // NEVER USED ON DISK
-  public static final byte NOT_EXISTENT = 0;
+  static final        byte NOT_EXISTENT = 0;
   public static final byte REMOVED      = 1;
-  public static final byte FILLED       = 2;
-  public static final byte ALLOCATED    = 4;
+  static final        byte FILLED       = 2;
+  static final        byte ALLOCATED    = 4;
 
   private static final int ENTRY_SIZE = OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE;
 
-  public static final int MAX_ENTRIES = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / ENTRY_SIZE;
+  static final int MAX_ENTRIES = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / ENTRY_SIZE;
 
-  public OClusterPositionMapBucket(OCacheEntry cacheEntry) {
+  OClusterPositionMapBucket(OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
@@ -78,10 +78,6 @@ public class OClusterPositionMapBucket extends ODurablePage {
     return size;
   }
 
-  public int nextPosition() {
-    return getIntValue(SIZE_OFFSET);
-  }
-
   public PositionEntry get(int index) {
     int size = getIntValue(SIZE_OFFSET);
 
@@ -111,7 +107,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
     updateEntry(position, entry);
   }
 
-  public void resurrect(final int index, final PositionEntry entry) {
+  void resurrect(final int index, final PositionEntry entry) {
     final int size = getIntValue(SIZE_OFFSET);
 
     if (index >= size)
@@ -197,7 +193,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
     private final long pageIndex;
     private final int  recordPosition;
 
-    public PositionEntry(final long pageIndex, final int recordPosition) {
+    PositionEntry(final long pageIndex, final int recordPosition) {
       this.pageIndex = pageIndex;
       this.recordPosition = recordPosition;
     }
@@ -206,7 +202,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
       return pageIndex;
     }
 
-    public int getRecordPosition() {
+    int getRecordPosition() {
       return recordPosition;
     }
 

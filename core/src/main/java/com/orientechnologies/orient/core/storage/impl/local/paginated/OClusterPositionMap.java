@@ -166,10 +166,10 @@ public class OClusterPositionMap extends ODurableComponent {
           bucket = new OClusterPositionMapBucket(cacheEntry);
         }
 
-        logComponentOperation(atomicOperation,
-            new OAllocatePositionOperation(atomicOperation.getOperationUnitId(), clusterId, bucket.nextPosition(), recordType));
-
         final long index = bucket.allocate();
+        logComponentOperation(atomicOperation,
+            new OAllocatePositionOperation(atomicOperation.getOperationUnitId(), clusterId, index, recordType));
+
         return index + cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES;
       } catch (Exception e) {
         throw OException.wrapException(
