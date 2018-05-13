@@ -391,6 +391,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         final V removed;
         final boolean found;
 
+        final ORemoveOperation removeOperation;
         final OCacheEntry cacheEntry = loadPageForWrite(fileId, pageIndex, false);
         try {
           final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
@@ -400,14 +401,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           if (found) {
             final byte[] oldRawValue = bucket.getRawValue(positionIndex);
 
-            logComponentOperation(atomicOperation,
-                new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, oldRawValue));
+            removeOperation = new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, oldRawValue);
             bucket.deleteEntry(positionIndex);
 
             sizeDiff--;
             removed = valueSerializer.deserializeNativeObject(oldRawValue, 0);
           } else {
             removed = null;
+            removeOperation = null;
           }
         } finally {
           releasePageFromWrite(cacheEntry, atomicOperation);
@@ -426,6 +427,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           changeSize(sizeDiff, atomicOperation);
         }
 
+        if (removeOperation != null) {
+          logComponentOperation(atomicOperation, removeOperation);
+        }
         endAtomicOperation(false, null);
         return removed;
       } else {
@@ -436,27 +440,31 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
         V removed;
 
+        final ORemoveOperation removeOperation;
         OCacheEntry cacheEntry = loadPageForWrite(nullBucketFileId, 0, false);
         try {
           final ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, false);
 
           final byte[] oldRawValue = nullBucket.getRawValue();
           if (oldRawValue != null) {
-            logComponentOperation(atomicOperation,
-                new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), null, oldRawValue));
-
             removed = valueSerializer.deserializeNativeObject(oldRawValue, 0);
-
             nullBucket.removeValue();
+
+            removeOperation = new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), null, oldRawValue);
             sizeDiff--;
           } else {
             removed = null;
+            removeOperation = null;
           }
         } finally {
           releasePageFromWrite(cacheEntry, atomicOperation);
         }
 
         changeSize(sizeDiff, atomicOperation);
+
+        if (removeOperation != null) {
+          logComponentOperation(atomicOperation, removeOperation);
+        }
 
         endAtomicOperation(false, null);
         return removed;
@@ -1269,6 +1277,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     int sizeDiff = 0;
 
     if (key == null) {
+      final OPutOperation putOperation;
       boolean needsNew = getFilledUpTo(nullBucketFileId) == 0;
       OCacheEntry cacheEntry = null;
       try {
@@ -1300,10 +1309,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           final byte[] rawValue = new byte[valueLen];
           valueSerializer.serializeNativeObject(value, rawValue, 0);
 
-          logComponentOperation(atomicOperation,
-              new OPutOperation(atomicOperation.getOperationUnitId(), getName(), null, rawValue, oldRawValue));
-
           nullBucket.setValue(rawValue);
+
+          putOperation = new OPutOperation(atomicOperation.getOperationUnitId(), getName(), null, rawValue, oldRawValue);
           sizeDiff++;
         } else {
           cacheEntry = addPage(nullBucketFileId);
@@ -1321,10 +1329,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           final byte[] rawValue = new byte[valueLen];
           valueSerializer.serializeNativeObject(value, rawValue, 0);
 
-          logComponentOperation(atomicOperation,
-              new OPutOperation(atomicOperation.getOperationUnitId(), getName(), null, rawValue, null));
-
           nullBucket.setValue(rawValue);
+
+          putOperation = new OPutOperation(atomicOperation.getOperationUnitId(), getName(), null, rawValue, null);
           sizeDiff++;
         }
       } finally {
@@ -1333,6 +1340,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       }
 
       changeSize(sizeDiff, atomicOperation);
+
+      logComponentOperation(atomicOperation, putOperation);
       return true;
     } else {
       final int keyLen = keySerializer.getObjectSize(key, (Object[]) keyTypes);
@@ -1378,12 +1387,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
         if (index > -1) {
           if (oldRawValue != null && oldRawValue.length == rawValue.length) {
-            logComponentOperation(atomicOperation,
-                new OPutOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, rawValue, oldRawValue));
-
             bucket.updateEntry(index, rawValue);
 
             changeSize(sizeDiff, atomicOperation);
+
+            logComponentOperation(atomicOperation,
+                new OPutOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, rawValue, oldRawValue));
             return true;
           }
 
@@ -1393,13 +1402,13 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
         final int insertionIndex = bucket.entryInsertionIndex(hashCode, key, rawKey.length, rawValue.length);
         if (insertionIndex >= 0) {
-          logComponentOperation(atomicOperation,
-              new OPutOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, rawValue, oldRawValue));
-
           bucket.insertEntry(hashCode, rawKey, rawValue, insertionIndex);
           sizeDiff++;
 
           changeSize(sizeDiff, atomicOperation);
+
+          logComponentOperation(atomicOperation,
+              new OPutOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, rawValue, oldRawValue));
           return true;
         }
 
