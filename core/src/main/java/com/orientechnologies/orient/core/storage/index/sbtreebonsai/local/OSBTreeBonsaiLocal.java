@@ -209,23 +209,24 @@ public final class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements
           keySerializer, valueSerializer, this);
 
       final boolean itemFound = bucketSearchResult.itemIndex >= 0;
-      boolean result = true;
+
+      final int valueLength = valueSerializer.getFixedLength();
+      final byte[] rawValue = new byte[valueLength];
+      valueSerializer.serializeNativeObject(value, rawValue, 0);
+
+      final int keyLength = keySerializer.getObjectSize(key);
+      final byte[] rawKey = new byte[keyLength];
+      keySerializer.serializeNativeObject(key, rawKey, 0);
+
+      final OPutOperation putOperation;
       if (itemFound) {
-        final int updateResult = keyBucket.updateValue(bucketSearchResult.itemIndex, value, atomicOperation);
-        assert updateResult == 0 || updateResult == 1;
+        final byte[] prevRawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex, keyLength);
+        keyBucket.updateRawValue(bucketSearchResult.itemIndex, keyLength, rawValue);
 
-        result = updateResult != 0;
+        putOperation = new OPutOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, rawKey, rawValue,
+            prevRawValue);
       } else {
-        final int keyLength = keySerializer.getObjectSize(key);
-        final byte[] rawKey = new byte[keyLength];
-        keySerializer.serializeNativeObject(key, rawKey, 0);
-
-        final int valueLength = valueSerializer.getFixedLength();
-        final byte[] rawValue = new byte[valueLength];
-        valueSerializer.serializeNativeObject(value, rawValue, 0);
-
-        logComponentOperation(atomicOperation,
-            new OPutOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, rawKey, rawValue, null));
+        putOperation = new OPutOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, rawKey, rawValue, null);
 
         int insertionIndex = -bucketSearchResult.itemIndex - 1;
 
@@ -250,8 +251,10 @@ public final class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements
         updateSize(1, atomicOperation);
       }
 
+      logComponentOperation(atomicOperation, putOperation);
       endAtomicOperation(false, null);
-      return result;
+
+      return true;
     } catch (IOException e) {
       rollback(e);
       throw OException
@@ -516,21 +519,22 @@ public final class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements
       OCacheEntry keyBucketCacheEntry = loadPageForWrite(fileId, bucketPointer.getPageIndex(), false);
       final V removed;
 
+      final byte[][] rawEntry;
       try {
         OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<>(keyBucketCacheEntry, bucketPointer.getPageOffset(),
             keySerializer, valueSerializer, this);
 
-        final byte[][] rawEntry = keyBucket.getRawLeafEntry(bucketSearchResult.itemIndex);
+        rawEntry = keyBucket.getRawLeafEntry(bucketSearchResult.itemIndex);
         removed = valueSerializer.deserializeNativeObject(rawEntry[1], 0);
-
-        logComponentOperation(atomicOperation,
-            new ORemoveOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, rawEntry[0], rawEntry[1]));
 
         keyBucket.remove(bucketSearchResult.itemIndex);
       } finally {
         releasePageFromWrite(keyBucketCacheEntry, atomicOperation);
       }
       updateSize(-1, atomicOperation);
+
+      logComponentOperation(atomicOperation,
+          new ORemoveOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, rawEntry[0], rawEntry[1]));
 
       endAtomicOperation(false, null);
       return removed;

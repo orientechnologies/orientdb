@@ -28,8 +28,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSBTreeBonsaiLocalException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OPutOperation;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -277,7 +275,7 @@ public final class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     }
   }
 
-  public byte[] getRawEntry(int entryIndex) {
+  byte[] getRawEntry(int entryIndex) {
     int entryPosition = getIntValue(offset + entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     final int startEntryPosition = entryPosition;
 
@@ -309,6 +307,18 @@ public final class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     final byte[] rawValue = getBinaryValue(offset + entryPosition, valueLen);
 
     return new byte[][] { rawKey, rawValue };
+  }
+
+  byte[] getRawValue(int entryIndex, int keyLen) {
+    int entryPosition = getIntValue(offset + entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    assert isLeaf;
+
+    entryPosition += keyLen;
+
+    final int valueLen = getObjectSizeInDirectMemory(valueSerializer, offset + entryPosition);
+    final byte[] rawValue = getBinaryValue(offset + entryPosition, valueLen);
+
+    return rawValue;
   }
 
   public K getKey(int index) {
@@ -485,13 +495,18 @@ public final class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     return true;
   }
 
-  int updateValue(int index, V value, OAtomicOperation atomicOperation) {
+  void updateRawValue(int index, int keySize, byte[] rawValue) {
+    int entryPosition = getIntValue(offset + index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+    entryPosition += keySize;
+
+    setBinaryValue(offset + entryPosition, rawValue);
+  }
+
+  void updateValue(int index, V value) {
     assert valueSerializer.isFixedLength();
 
     int entryPosition = getIntValue(offset + index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     final int keySize = getObjectSizeInDirectMemory(keySerializer, offset + entryPosition);
-    final int keyPosition = offset + entryPosition;
-
     entryPosition += keySize;
 
     final int size = valueSerializer.getFixedLength();
@@ -502,19 +517,9 @@ public final class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     byte[] oldSerializedValue = getBinaryValue(offset + entryPosition, size);
 
     if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, serializedValue) == 0)
-      return 0;
-
-    final byte[] serializedKey = getBinaryValue(keyPosition, keySize);
-
-    if (tree != null) {
-      tree.logComponentOperation(atomicOperation,
-          new OPutOperation(atomicOperation.getOperationUnitId(), tree.getFileId(), tree.getRootBucketPointer(), serializedKey,
-              serializedValue, oldSerializedValue));
-    }
+      return;
 
     setBinaryValue(offset + entryPosition, serializedValue);
-
-    return 1;
   }
 
   OBonsaiBucketPointer getFreeListPointer() {

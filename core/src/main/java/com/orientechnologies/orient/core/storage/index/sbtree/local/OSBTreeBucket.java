@@ -237,25 +237,6 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     }
   }
 
-  byte[][] getRawLeafEntry(int entryIndex) {
-    int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
-
-    assert isLeaf;
-
-    final int keyLen = getObjectSizeInDirectMemory(keySerializer, entryPosition);
-    final byte[] rawKey = getBinaryValue(entryPosition, keyLen);
-    entryPosition += keyLen;
-
-    assert getByteValue(entryPosition) == 0;
-
-    final int valueLen = getObjectSizeInDirectMemory(valueSerializer, entryPosition + OByteSerializer.BYTE_SIZE);
-    final byte[] rawValue = getBinaryValue(entryPosition + OByteSerializer.BYTE_SIZE, valueLen);
-
-    final byte[][] leafEntry = new byte[][] { rawKey, rawValue };
-
-    return leafEntry;
-  }
-
   /**
    * Obtains the value stored under the given entry index in this bucket.
    *
