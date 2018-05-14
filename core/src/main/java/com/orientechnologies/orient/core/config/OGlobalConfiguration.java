@@ -278,7 +278,7 @@ public enum OGlobalConfiguration {
       + " it is highly recommended to use a separate disk to store log operations", String.class, null),
 
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer (in kilobytes). !!! NEVER CHANGE THIS VALUE !!!",
-      Integer.class, 64),
+      Integer.class, 8),
 
   DISK_CACHE_WAL_SIZE_TO_START_FLUSH("storage.diskCache.walSizeToStartFlush",
       "WAL size after which pages in write cache will be started to flush", Long.class, 6 * 1024L * 1024 * 1024),
@@ -301,7 +301,7 @@ public enum OGlobalConfiguration {
       8 * WAL_MAX_SEGMENT_SIZE.getValueAsLong()),
 
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound",
-      "The least amount of free space (in kb) in a page, which is tracked in paginated storage", Integer.class, 16),
+      "The least amount of free space (in kb) in a page, which is tracked in paginated storage", Integer.class, 1),
 
   STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum amount of time (in ms) to lock the storage", Integer.class, 0),
 
@@ -404,7 +404,7 @@ public enum OGlobalConfiguration {
       Integer.class, 64),
 
   SBTREE_MAX_KEY_SIZE("sbtree.maxKeySize", "Maximum size of a key, which can be put in the SBTree in bytes (10240 by default)",
-      Integer.class, 10240),
+      Integer.class, 2048),
 
   SBTREE_MAX_EMBEDDED_VALUE_SIZE("sbtree.maxEmbeddedValueSize",
       "Maximum size of value which can be put in an SBTree without creation link to a standalone page in bytes (40960 by default)",

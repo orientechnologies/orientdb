@@ -22,6 +22,17 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OAllocatePositionOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OCreateRecordOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.ODeleteRecordOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.ORecycleRecordOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OUpdateRecordOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OHashTablePutOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OHashTableRemoveOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OSBTreePutOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OSBTreeRemoveOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OSBTreeBonsaiPutOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OSBTreeBonsaiRemoveOperation;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -64,6 +75,28 @@ public class OWALRecordsFactory {
       content[0] = 13;
     else if (walRecord instanceof OEmptyWALRecord)
       content[0] = 14;
+    else if (walRecord instanceof OAllocatePositionOperation)
+      content[0] = 15;
+    else if (walRecord instanceof OCreateRecordOperation)
+      content[0] = 16;
+    else if (walRecord instanceof ODeleteRecordOperation)
+      content[0] = 17;
+    else if (walRecord instanceof ORecycleRecordOperation)
+      content[0] = 18;
+    else if (walRecord instanceof OUpdateRecordOperation)
+      content[0] = 19;
+    else if (walRecord instanceof OHashTablePutOperation)
+      content[0] = 20;
+    else if (walRecord instanceof OHashTableRemoveOperation)
+      content[0] = 21;
+    else if (walRecord instanceof OSBTreePutOperation)
+      content[0] = 22;
+    else if (walRecord instanceof OSBTreeRemoveOperation)
+      content[0] = 23;
+    else if (walRecord instanceof OSBTreeBonsaiPutOperation)
+      content[0] = 24;
+    else if (walRecord instanceof OSBTreeBonsaiRemoveOperation)
+      content[0] = 25;
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       content[0] = typeToIdMap.get(walRecord.getClass());
     } else
@@ -100,6 +133,28 @@ public class OWALRecordsFactory {
       buffer.put((byte) 13);
     else if (walRecord instanceof OEmptyWALRecord)
       buffer.put((byte) 14);
+    else if (walRecord instanceof OAllocatePositionOperation)
+      buffer.put((byte) 15);
+    else if (walRecord instanceof OCreateRecordOperation)
+      buffer.put((byte) 16);
+    else if (walRecord instanceof ODeleteRecordOperation)
+      buffer.put((byte) 17);
+    else if (walRecord instanceof ORecycleRecordOperation)
+      buffer.put((byte) 18);
+    else if (walRecord instanceof OUpdateRecordOperation)
+      buffer.put((byte) 19);
+    else if (walRecord instanceof OHashTablePutOperation)
+      buffer.put((byte) 20);
+    else if (walRecord instanceof OHashTableRemoveOperation)
+      buffer.put((byte) 21);
+    else if (walRecord instanceof OSBTreePutOperation)
+      buffer.put((byte) 22);
+    else if (walRecord instanceof OSBTreeRemoveOperation)
+      buffer.put((byte) 23);
+    else if (walRecord instanceof OSBTreeBonsaiPutOperation)
+      buffer.put((byte) 24);
+    else if (walRecord instanceof OSBTreeBonsaiRemoveOperation)
+      buffer.put((byte) 25);
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       buffer.put(typeToIdMap.get(walRecord.getClass()));
     } else
@@ -146,6 +201,39 @@ public class OWALRecordsFactory {
       break;
     case 14:
       walRecord = new OEmptyWALRecord();
+      break;
+    case 15:
+      walRecord = new OAllocatePositionOperation();
+      break;
+    case 16:
+      walRecord = new OCreateRecordOperation();
+      break;
+    case 17:
+      walRecord = new ODeleteRecordOperation();
+      break;
+    case 18:
+      walRecord = new ORecycleRecordOperation();
+      break;
+    case 19:
+      walRecord = new OUpdateRecordOperation();
+      break;
+    case 20:
+      walRecord = new OHashTablePutOperation();
+      break;
+    case 21:
+      walRecord = new OHashTableRemoveOperation();
+      break;
+    case 22:
+      walRecord = new OSBTreePutOperation();
+      break;
+    case 23:
+      walRecord = new OSBTreeRemoveOperation();
+      break;
+    case 24:
+      walRecord = new OSBTreeBonsaiPutOperation();
+      break;
+    case 25:
+      walRecord = new OSBTreeBonsaiRemoveOperation();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

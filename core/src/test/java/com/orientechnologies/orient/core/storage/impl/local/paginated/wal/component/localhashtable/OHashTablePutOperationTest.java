@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import org.junit.Assert;
@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Random;
 
-public class OPutOperationTest {
+public class OHashTablePutOperationTest {
   @Test
   public void testSerializationArray() {
     OOperationUnitId unitId = OOperationUnitId.generateId();
@@ -23,13 +23,13 @@ public class OPutOperationTest {
     random.nextBytes(value);
     random.nextBytes(oldValue);
 
-    final OPutOperation putOperation = new OPutOperation(unitId, name, key, value, oldValue);
+    final OHashTablePutOperation putOperation = new OHashTablePutOperation(unitId, name, key, value, oldValue);
     final int serializedSize = putOperation.serializedSize();
     final byte[] content = new byte[serializedSize + 1];
     int offset = putOperation.toStream(content, 1);
     Assert.assertEquals(content.length, offset);
 
-    final OPutOperation restoredPutOperation = new OPutOperation();
+    final OHashTablePutOperation restoredPutOperation = new OHashTablePutOperation();
     offset = restoredPutOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
     Assert.assertEquals(putOperation, restoredPutOperation);
@@ -47,13 +47,13 @@ public class OPutOperationTest {
     random.nextBytes(value);
     random.nextBytes(oldValue);
 
-    final OPutOperation putOperation = new OPutOperation(unitId, name, null, value, oldValue);
+    final OHashTablePutOperation putOperation = new OHashTablePutOperation(unitId, name, null, value, oldValue);
     final int serializedSize = putOperation.serializedSize();
     final byte[] content = new byte[serializedSize + 1];
     int offset = putOperation.toStream(content, 1);
     Assert.assertEquals(content.length, offset);
 
-    final OPutOperation restoredPutOperation = new OPutOperation();
+    final OHashTablePutOperation restoredPutOperation = new OHashTablePutOperation();
     offset = restoredPutOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
     Assert.assertEquals(putOperation, restoredPutOperation);
@@ -71,13 +71,13 @@ public class OPutOperationTest {
     random.nextBytes(key);
     random.nextBytes(value);
 
-    final OPutOperation putOperation = new OPutOperation(unitId, name, key, value, null);
+    final OHashTablePutOperation putOperation = new OHashTablePutOperation(unitId, name, key, value, null);
     final int serializedSize = putOperation.serializedSize();
     final byte[] content = new byte[serializedSize + 1];
     int offset = putOperation.toStream(content, 1);
     Assert.assertEquals(content.length, offset);
 
-    final OPutOperation restoredPutOperation = new OPutOperation();
+    final OHashTablePutOperation restoredPutOperation = new OHashTablePutOperation();
     offset = restoredPutOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
     Assert.assertEquals(putOperation, restoredPutOperation);
@@ -97,7 +97,7 @@ public class OPutOperationTest {
     random.nextBytes(value);
     random.nextBytes(oldValue);
 
-    final OPutOperation putOperation = new OPutOperation(unitId, name, key, value, oldValue);
+    final OHashTablePutOperation putOperation = new OHashTablePutOperation(unitId, name, key, value, oldValue);
     final int serializedSize = putOperation.serializedSize();
 
     final ByteBuffer buffer = ByteBuffer.allocate(serializedSize + 1).order(ByteOrder.nativeOrder());
@@ -105,7 +105,7 @@ public class OPutOperationTest {
     putOperation.toStream(buffer);
     Assert.assertEquals(serializedSize + 1, buffer.position());
 
-    final OPutOperation restoredPutOperation = new OPutOperation();
+    final OHashTablePutOperation restoredPutOperation = new OHashTablePutOperation();
     final int offset = restoredPutOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
     Assert.assertEquals(putOperation, restoredPutOperation);
@@ -123,7 +123,7 @@ public class OPutOperationTest {
     random.nextBytes(key);
     random.nextBytes(value);
 
-    final OPutOperation putOperation = new OPutOperation(unitId, name, key, value, null);
+    final OHashTablePutOperation putOperation = new OHashTablePutOperation(unitId, name, key, value, null);
     final int serializedSize = putOperation.serializedSize();
 
     final ByteBuffer buffer = ByteBuffer.allocate(serializedSize + 1).order(ByteOrder.nativeOrder());
@@ -131,7 +131,7 @@ public class OPutOperationTest {
     putOperation.toStream(buffer);
     Assert.assertEquals(serializedSize + 1, buffer.position());
 
-    final OPutOperation restoredPutOperation = new OPutOperation();
+    final OHashTablePutOperation restoredPutOperation = new OHashTablePutOperation();
     final int offset = restoredPutOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
     Assert.assertEquals(putOperation, restoredPutOperation);
@@ -149,7 +149,7 @@ public class OPutOperationTest {
     random.nextBytes(value);
     random.nextBytes(oldValue);
 
-    final OPutOperation putOperation = new OPutOperation(unitId, name, null, value, oldValue);
+    final OHashTablePutOperation putOperation = new OHashTablePutOperation(unitId, name, null, value, oldValue);
     final int serializedSize = putOperation.serializedSize();
 
     final ByteBuffer buffer = ByteBuffer.allocate(serializedSize + 1).order(ByteOrder.nativeOrder());
@@ -157,7 +157,7 @@ public class OPutOperationTest {
     putOperation.toStream(buffer);
     Assert.assertEquals(serializedSize + 1, buffer.position());
 
-    final OPutOperation restoredPutOperation = new OPutOperation();
+    final OHashTablePutOperation restoredPutOperation = new OHashTablePutOperation();
     final int offset = restoredPutOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
     Assert.assertEquals(putOperation, restoredPutOperation);

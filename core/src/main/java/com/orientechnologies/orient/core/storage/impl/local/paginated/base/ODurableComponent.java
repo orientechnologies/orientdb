@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -124,15 +125,17 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected OCacheEntry addPage(long fileId) throws IOException {
     final OCacheEntry cacheEntry = readCache.allocateNewPage(fileId, writeCache, true);
-    final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
-    //TODO: change LSN according new format and add modification counter
-    ODurablePage.setLogSequenceNumber(buffer, writeAheadLog.end());
+    if (storage instanceof OLocalPaginatedStorage) {
+      final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
+      //TODO: change LSN according new format and add modification counter
+      ODurablePage.setLogSequenceNumber(buffer, writeAheadLog.end());
+    }
 
     return cacheEntry;
   }
 
   protected void releasePageFromWrite(OCacheEntry cacheEntry, OAtomicOperation atomicOperation) {
-    if (cacheEntry.isDirty()) {
+    if (cacheEntry.isDirty() && storage instanceof OLocalPaginatedStorage) {
       final OLogSequenceNumber end = writeAheadLog.end();
       final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
       final OLogSequenceNumber pageLsn = ODurablePage.getLogSequenceNumberFromPage(buffer);

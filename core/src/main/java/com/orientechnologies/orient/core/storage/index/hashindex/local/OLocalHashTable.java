@@ -15,8 +15,8 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OPutOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.ORemoveOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OHashTablePutOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OHashTableRemoveOperation;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
@@ -391,7 +391,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         final V removed;
         final boolean found;
 
-        final ORemoveOperation removeOperation;
+        final OHashTableRemoveOperation removeOperation;
         final OCacheEntry cacheEntry = loadPageForWrite(fileId, pageIndex, false);
         try {
           final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
@@ -401,7 +401,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           if (found) {
             final byte[] oldRawValue = bucket.getRawValue(positionIndex);
 
-            removeOperation = new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, oldRawValue);
+            removeOperation = new OHashTableRemoveOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, oldRawValue);
             bucket.deleteEntry(positionIndex);
 
             sizeDiff--;
@@ -440,7 +440,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
         V removed;
 
-        final ORemoveOperation removeOperation;
+        final OHashTableRemoveOperation removeOperation;
         OCacheEntry cacheEntry = loadPageForWrite(nullBucketFileId, 0, false);
         try {
           final ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, false);
@@ -450,7 +450,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
             removed = valueSerializer.deserializeNativeObject(oldRawValue, 0);
             nullBucket.removeValue();
 
-            removeOperation = new ORemoveOperation(atomicOperation.getOperationUnitId(), getName(), null, oldRawValue);
+            removeOperation = new OHashTableRemoveOperation(atomicOperation.getOperationUnitId(), getName(), null, oldRawValue);
             sizeDiff--;
           } else {
             removed = null;
@@ -1277,7 +1277,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     int sizeDiff = 0;
 
     if (key == null) {
-      final OPutOperation putOperation;
+      final OHashTablePutOperation putOperation;
       boolean needsNew = getFilledUpTo(nullBucketFileId) == 0;
       OCacheEntry cacheEntry = null;
       try {
@@ -1311,7 +1311,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           nullBucket.setValue(rawValue);
 
-          putOperation = new OPutOperation(atomicOperation.getOperationUnitId(), getName(), null, rawValue, oldRawValue);
+          putOperation = new OHashTablePutOperation(atomicOperation.getOperationUnitId(), getName(), null, rawValue, oldRawValue);
           sizeDiff++;
         } else {
           cacheEntry = addPage(nullBucketFileId);
@@ -1331,7 +1331,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           nullBucket.setValue(rawValue);
 
-          putOperation = new OPutOperation(atomicOperation.getOperationUnitId(), getName(), null, rawValue, null);
+          putOperation = new OHashTablePutOperation(atomicOperation.getOperationUnitId(), getName(), null, rawValue, null);
           sizeDiff++;
         }
       } finally {
@@ -1392,7 +1392,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
             changeSize(sizeDiff, atomicOperation);
 
             logComponentOperation(atomicOperation,
-                new OPutOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, rawValue, oldRawValue));
+                new OHashTablePutOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, rawValue, oldRawValue));
             return true;
           }
 
@@ -1408,7 +1408,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           changeSize(sizeDiff, atomicOperation);
 
           logComponentOperation(atomicOperation,
-              new OPutOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, rawValue, oldRawValue));
+              new OHashTablePutOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, rawValue, oldRawValue));
           return true;
         }
 
