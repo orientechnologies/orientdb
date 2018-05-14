@@ -301,20 +301,21 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
   }
 
   public void shrink(int newSize) {
-    List<SBTreeEntry<K, V>> treeEntries = new ArrayList<>(newSize);
+    List<byte[]> rawEntries = new ArrayList<>(newSize);
 
     for (int i = 0; i < newSize; i++) {
-      treeEntries.add(getEntry(i));
+      rawEntries.add(getRawEntry(i));
     }
 
     setIntValue(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
-    setIntValue(SIZE_OFFSET, 0);
 
     int index = 0;
-    for (SBTreeEntry<K, V> entry : treeEntries) {
-      addEntry(index, entry, false);
+    for (byte[] entry : rawEntries) {
+      appendRawEntry(index, entry);
       index++;
     }
+
+    setIntValue(SIZE_OFFSET, newSize);
   }
 
   boolean addLeafEntry(int index, byte[] serializedKey, byte[] serializedValue) {

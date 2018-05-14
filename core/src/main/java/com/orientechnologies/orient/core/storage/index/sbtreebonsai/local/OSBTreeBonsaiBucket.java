@@ -342,21 +342,22 @@ public final class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     setIntValue(offset + SIZE_OFFSET, entries.size());
   }
 
-  public void shrink(int newSize) throws IOException {
-    List<SBTreeEntry<K, V>> treeEntries = new ArrayList<>(newSize);
+  public void shrink(int newSize) {
+    List<byte[]> rawEntries = new ArrayList<>(newSize);
 
     for (int i = 0; i < newSize; i++) {
-      treeEntries.add(getEntry(i));
+      rawEntries.add(getRawEntry(i));
     }
 
     setIntValue(offset + FREE_POINTER_OFFSET, MAX_BUCKET_SIZE_BYTES);
-    setIntValue(offset + SIZE_OFFSET, 0);
 
     int index = 0;
-    for (SBTreeEntry<K, V> entry : treeEntries) {
-      addEntry(index, entry, false);
+    for (byte[] entry : rawEntries) {
+      appendRawEntry(index, entry);
       index++;
     }
+
+    setIntValue(offset + SIZE_OFFSET, newSize);
   }
 
   public boolean addEntry(int index, SBTreeEntry<K, V> treeEntry, boolean updateNeighbors) throws IOException {
