@@ -59,6 +59,15 @@ public class OHashTableDirectory extends ODurableComponent {
     }
   }
 
+  long getFileId() {
+    acquireSharedLock();
+    try {
+      return fileId;
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
   private void init(OAtomicOperation atomicOperation) throws IOException {
     OCacheEntry firstEntry = loadPageForWrite(fileId, firstEntryIndex, true);
 

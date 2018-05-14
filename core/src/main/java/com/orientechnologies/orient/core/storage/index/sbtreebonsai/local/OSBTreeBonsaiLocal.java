@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OCreateSBTreeBonsaiOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OSBTreeBonsaiPutOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OSBTreeBonsaiRemoveOperation;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
@@ -104,6 +105,8 @@ public final class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements
 
       initAfterCreate(atomicOperation);
 
+      logComponentOperation(atomicOperation,
+          new OCreateSBTreeBonsaiOperation(atomicOperation.getOperationUnitId(), fileId, getName()));
       endAtomicOperation(false, null);
     } catch (Exception e) {
       rollback(e);
@@ -224,8 +227,7 @@ public final class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements
         keyBucket.updateRawValue(bucketSearchResult.itemIndex, keyLength, rawValue);
 
         putOperation = new OSBTreeBonsaiPutOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, rawKey,
-            rawValue,
-            prevRawValue);
+            rawValue, prevRawValue);
       } else {
         putOperation = new OSBTreeBonsaiPutOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, rawKey,
             rawValue, null);

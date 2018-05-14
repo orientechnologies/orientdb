@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowseEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OCreateClusterOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OCreateRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.ODeleteRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.ORecycleRecordOperation;
@@ -185,6 +186,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
       clusterPositionMap.create();
 
+      logComponentOperation(atomicOperation,
+          new OCreateClusterOperation(atomicOperation.getOperationUnitId(), id, getName(), clusterPositionMap.getFileId()));
       endAtomicOperation(false, null);
     } catch (Exception e) {
       endAtomicOperation(true, e);

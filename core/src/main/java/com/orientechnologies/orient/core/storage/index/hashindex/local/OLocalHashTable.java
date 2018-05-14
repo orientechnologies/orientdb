@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OCreateHashTableOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OHashTablePutOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OHashTableRemoveOperation;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -169,9 +170,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
         initHashTreeState(atomicOperation);
 
-        if (nullKeyIsSupported)
+        if (nullKeyIsSupported) {
           nullBucketFileId = addFile(getName() + nullBucketFileExtension);
+        }
 
+        logComponentOperation(atomicOperation,
+            new OCreateHashTableOperation(atomicOperation.getOperationUnitId(), getName(), fileId, directory.getFileId()));
         endAtomicOperation(false, null);
       } catch (IOException e) {
         endAtomicOperation(true, e);

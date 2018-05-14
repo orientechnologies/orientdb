@@ -23,14 +23,18 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OAllocatePositionOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OCreateClusterOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OCreateRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.ODeleteRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.ORecycleRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OUpdateRecordOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OCreateHashTableOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OHashTablePutOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OHashTableRemoveOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OCreateSBTreeOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OSBTreePutOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OSBTreeRemoveOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OCreateSBTreeBonsaiOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OSBTreeBonsaiPutOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OSBTreeBonsaiRemoveOperation;
 
@@ -97,6 +101,14 @@ public class OWALRecordsFactory {
       content[0] = 24;
     else if (walRecord instanceof OSBTreeBonsaiRemoveOperation)
       content[0] = 25;
+    else if (walRecord instanceof OCreateClusterOperation)
+      content[0] = 26;
+    else if (walRecord instanceof OCreateHashTableOperation)
+      content[0] = 27;
+    else if (walRecord instanceof OCreateSBTreeOperation)
+      content[0] = 28;
+    else if (walRecord instanceof OCreateSBTreeBonsaiOperation)
+      content[0] = 29;
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       content[0] = typeToIdMap.get(walRecord.getClass());
     } else
@@ -155,6 +167,14 @@ public class OWALRecordsFactory {
       buffer.put((byte) 24);
     else if (walRecord instanceof OSBTreeBonsaiRemoveOperation)
       buffer.put((byte) 25);
+    else if (walRecord instanceof OCreateClusterOperation)
+      buffer.put((byte) 26);
+    else if (walRecord instanceof OCreateHashTableOperation)
+      buffer.put((byte) 27);
+    else if (walRecord instanceof OCreateSBTreeOperation)
+      buffer.put((byte) 28);
+    else if (walRecord instanceof OCreateSBTreeBonsaiOperation)
+      buffer.put((byte) 29);
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       buffer.put(typeToIdMap.get(walRecord.getClass()));
     } else
@@ -235,6 +255,19 @@ public class OWALRecordsFactory {
     case 25:
       walRecord = new OSBTreeBonsaiRemoveOperation();
       break;
+    case 26:
+      walRecord = new OCreateClusterOperation();
+      break;
+    case 27:
+      walRecord = new OCreateHashTableOperation();
+      break;
+    case 28:
+      walRecord = new OCreateSBTreeOperation();
+      break;
+    case 29:
+      walRecord = new OCreateSBTreeBonsaiOperation();
+      break;
+
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {

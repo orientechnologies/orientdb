@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OCreateSBTreeOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OSBTreePutOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OSBTreeRemoveOperation;
 
@@ -149,6 +150,7 @@ public final class OSBTree<K, V> extends ODurableComponent {
         releasePageFromWrite(rootCacheEntry, atomicOperation);
       }
 
+      logComponentOperation(atomicOperation, new OCreateSBTreeOperation(atomicOperation.getOperationUnitId(), getName(), fileId));
       endAtomicOperation(false, null);
     } catch (IOException e) {
       try {
