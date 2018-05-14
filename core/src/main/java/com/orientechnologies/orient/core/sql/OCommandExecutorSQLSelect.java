@@ -1522,6 +1522,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public void initContext() {
     if (context == null) {
       context = new OBasicCommandContext();
+    }
+    if (context.getDatabase() == null) {
       ((OBasicCommandContext) context).setDatabase(getDatabase());
     }
 
