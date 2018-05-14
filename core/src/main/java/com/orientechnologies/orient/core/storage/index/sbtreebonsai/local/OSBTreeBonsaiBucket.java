@@ -285,12 +285,12 @@ public final class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
       final int valueSize = getObjectSizeInDirectMemory(valueSerializer, offset + entryPosition);
 
-      return getBinaryValue(startEntryPosition, keySize + valueSize);
+      return getBinaryValue(startEntryPosition + offset, keySize + valueSize);
     } else {
       entryPosition += 2 * OBonsaiBucketPointer.SIZE;
       final int keyLen = getObjectSizeInDirectMemory(keySerializer, offset + entryPosition);
 
-      return getBinaryValue(startEntryPosition, keyLen + 2 * OBonsaiBucketPointer.SIZE);
+      return getBinaryValue(startEntryPosition + offset, keyLen + 2 * OBonsaiBucketPointer.SIZE);
     }
   }
 

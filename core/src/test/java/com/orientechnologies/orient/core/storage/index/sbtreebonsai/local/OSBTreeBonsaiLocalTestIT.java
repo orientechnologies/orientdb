@@ -78,7 +78,6 @@ public class OSBTreeBonsaiLocalTestIT {
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      //      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i), i + " key is absent");
       Assertions.assertThat(sbTree.get(i)).isEqualTo(new ORecordId(i % 32000, i));
     }
 
