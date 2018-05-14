@@ -22,6 +22,10 @@ public class OCreateSBTreeBonsaiOperationTest {
     offset = restoredSBTreeBonsaiOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
     Assert.assertEquals(createSBTreeBonsaiOperation, restoredSBTreeBonsaiOperation);
+
+    Assert.assertEquals(unitId, restoredSBTreeBonsaiOperation.getOperationUnitId());
+    Assert.assertEquals(42, restoredSBTreeBonsaiOperation.getFileId());
+    Assert.assertEquals("caprica", restoredSBTreeBonsaiOperation.getName());
   }
 
   @Test
@@ -39,5 +43,9 @@ public class OCreateSBTreeBonsaiOperationTest {
     final int offset = restoredSBTreeBonsaiOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
     Assert.assertEquals(createSBTreeBonsaiOperation, restoredSBTreeBonsaiOperation);
+
+    Assert.assertEquals(unitId, restoredSBTreeBonsaiOperation.getOperationUnitId());
+    Assert.assertEquals(42, restoredSBTreeBonsaiOperation.getFileId());
+    Assert.assertEquals("caprica", restoredSBTreeBonsaiOperation.getName());
   }
 }

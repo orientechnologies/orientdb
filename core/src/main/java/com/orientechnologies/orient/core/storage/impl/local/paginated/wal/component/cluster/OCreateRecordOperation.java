@@ -28,6 +28,22 @@ public class OCreateRecordOperation extends OClusterOperation {
     this.recordType = recordType;
   }
 
+  public long getPosition() {
+    return position;
+  }
+
+  public byte[] getRecord() {
+    return record;
+  }
+
+  public int getRecordVersion() {
+    return recordVersion;
+  }
+
+  public byte getRecordType() {
+    return recordType;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);

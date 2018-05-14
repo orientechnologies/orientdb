@@ -21,6 +21,11 @@ public class OCreateClusterOperationTest {
     offset = restoredCreateClusterOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
     Assert.assertEquals(createClusterOperation, restoredCreateClusterOperation);
+
+    Assert.assertEquals(unitId, restoredCreateClusterOperation.getOperationUnitId());
+    Assert.assertEquals(42, restoredCreateClusterOperation.getClusterId());
+    Assert.assertEquals("caprica", restoredCreateClusterOperation.getName());
+    Assert.assertEquals(24, restoredCreateClusterOperation.getMapFileId());
   }
 
   @Test
@@ -38,5 +43,10 @@ public class OCreateClusterOperationTest {
     final int offset = restoredCreateClusterOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
     Assert.assertEquals(createClusterOperation, restoredCreateClusterOperation);
+
+    Assert.assertEquals(unitId, restoredCreateClusterOperation.getOperationUnitId());
+    Assert.assertEquals(42, restoredCreateClusterOperation.getClusterId());
+    Assert.assertEquals("caprica", restoredCreateClusterOperation.getName());
+    Assert.assertEquals(24, restoredCreateClusterOperation.getMapFileId());
   }
 }

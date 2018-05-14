@@ -22,6 +22,14 @@ public class OSBTreeBonsaiRemoveOperation extends OSBTreeBonsaiModificationOpera
     this.value = value;
   }
 
+  public byte[] getKey() {
+    return key;
+  }
+
+  public byte[] getValue() {
+    return value;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);

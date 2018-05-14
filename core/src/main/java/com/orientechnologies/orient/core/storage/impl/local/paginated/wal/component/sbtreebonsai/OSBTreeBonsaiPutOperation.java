@@ -18,12 +18,23 @@ public class OSBTreeBonsaiPutOperation extends OSBTreeBonsaiModificationOperatio
   }
 
   public OSBTreeBonsaiPutOperation(OOperationUnitId operationUnitId, long fileId, OBonsaiBucketPointer pointer, byte[] key,
-      byte[] value,
-      byte[] oldValue) {
+      byte[] value, byte[] oldValue) {
     super(operationUnitId, fileId, pointer);
     this.key = key;
     this.value = value;
     this.oldValue = oldValue;
+  }
+
+  public byte[] getKey() {
+    return key;
+  }
+
+  public byte[] getValue() {
+    return value;
+  }
+
+  public byte[] getOldValue() {
+    return oldValue;
   }
 
   @Override

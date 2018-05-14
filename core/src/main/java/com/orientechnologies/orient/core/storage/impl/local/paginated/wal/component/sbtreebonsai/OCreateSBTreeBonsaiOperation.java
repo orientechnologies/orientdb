@@ -17,6 +17,10 @@ public class OCreateSBTreeBonsaiOperation extends OSBTreeBonsaiOperation {
     this.name = name;
   }
 
+  public String getName() {
+    return name;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);

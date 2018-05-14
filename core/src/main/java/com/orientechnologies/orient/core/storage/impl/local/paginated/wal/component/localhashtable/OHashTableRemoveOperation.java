@@ -21,6 +21,14 @@ public class OHashTableRemoveOperation extends OLocalHashTableOperation {
     this.oldValue = oldValue;
   }
 
+  public byte[] getKey() {
+    return key;
+  }
+
+  public byte[] getOldValue() {
+    return oldValue;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);

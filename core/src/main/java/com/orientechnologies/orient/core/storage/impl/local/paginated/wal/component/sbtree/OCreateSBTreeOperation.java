@@ -17,6 +17,10 @@ public class OCreateSBTreeOperation extends OSBTreeOperation {
     this.fileId = fileId;
   }
 
+  public long getFileId() {
+    return fileId;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);

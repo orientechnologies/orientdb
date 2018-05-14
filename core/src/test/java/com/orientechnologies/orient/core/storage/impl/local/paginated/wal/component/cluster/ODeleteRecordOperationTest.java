@@ -26,6 +26,13 @@ public class ODeleteRecordOperationTest {
     offset = restoredDeleteRecordOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
     Assert.assertEquals(deleteRecordOperation, restoredDeleteRecordOperation);
+
+    Assert.assertEquals(unitId, restoredDeleteRecordOperation.getOperationUnitId());
+    Assert.assertEquals(42, restoredDeleteRecordOperation.getClusterId());
+    Assert.assertEquals(45, restoredDeleteRecordOperation.getClusterPosition());
+    Assert.assertArrayEquals(record, restoredDeleteRecordOperation.getRecord());
+    Assert.assertEquals(12, restoredDeleteRecordOperation.getRecordVersion());
+    Assert.assertEquals(2, restoredDeleteRecordOperation.getRecordType());
   }
 
   @Test
@@ -42,9 +49,16 @@ public class ODeleteRecordOperationTest {
     deleteRecordOperation.toStream(buffer);
     Assert.assertEquals(serializedSize + 1, buffer.position());
 
-    final ODeleteRecordOperation restoredCreateRecordOperation = new ODeleteRecordOperation();
-    final int offset = restoredCreateRecordOperation.fromStream(buffer.array(), 1);
+    final ODeleteRecordOperation restoredDeleteRecordOperation = new ODeleteRecordOperation();
+    final int offset = restoredDeleteRecordOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
-    Assert.assertEquals(deleteRecordOperation, restoredCreateRecordOperation);
+    Assert.assertEquals(deleteRecordOperation, restoredDeleteRecordOperation);
+
+    Assert.assertEquals(unitId, restoredDeleteRecordOperation.getOperationUnitId());
+    Assert.assertEquals(42, restoredDeleteRecordOperation.getClusterId());
+    Assert.assertEquals(45, restoredDeleteRecordOperation.getClusterPosition());
+    Assert.assertArrayEquals(record, restoredDeleteRecordOperation.getRecord());
+    Assert.assertEquals(12, restoredDeleteRecordOperation.getRecordVersion());
+    Assert.assertEquals(2, restoredDeleteRecordOperation.getRecordType());
   }
 }

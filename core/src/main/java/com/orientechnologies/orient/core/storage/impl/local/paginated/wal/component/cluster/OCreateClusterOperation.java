@@ -20,6 +20,14 @@ public class OCreateClusterOperation extends OClusterOperation {
     this.mapFileId = mapFileId;
   }
 
+  public String getName() {
+    return name;
+  }
+
+  public long getMapFileId() {
+    return mapFileId;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);

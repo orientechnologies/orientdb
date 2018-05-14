@@ -36,6 +36,34 @@ public class OUpdateRecordOperation extends OClusterOperation {
     this.prevRecordType = prevRecordType;
   }
 
+  public long getClusterPosition() {
+    return clusterPosition;
+  }
+
+  public byte[] getRecord() {
+    return record;
+  }
+
+  public int getRecordVersion() {
+    return recordVersion;
+  }
+
+  public byte getRecordType() {
+    return recordType;
+  }
+
+  public byte[] getPrevRecord() {
+    return prevRecord;
+  }
+
+  public int getPrevRecordVersion() {
+    return prevRecordVersion;
+  }
+
+  public byte getPrevRecordType() {
+    return prevRecordType;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);

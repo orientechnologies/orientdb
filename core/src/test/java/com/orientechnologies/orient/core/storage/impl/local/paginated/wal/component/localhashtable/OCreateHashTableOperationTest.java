@@ -21,6 +21,11 @@ public class OCreateHashTableOperationTest {
     offset = restoredCreateHashTableOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
     Assert.assertEquals(createHashTableOperation, restoredCreateHashTableOperation);
+
+    Assert.assertEquals(unitId, restoredCreateHashTableOperation.getOperationUnitId());
+    Assert.assertEquals("caprica", restoredCreateHashTableOperation.getName());
+    Assert.assertEquals(42, restoredCreateHashTableOperation.getFileId());
+    Assert.assertEquals(24, restoredCreateHashTableOperation.getDirectoryFileId());
   }
 
   @Test
@@ -38,5 +43,10 @@ public class OCreateHashTableOperationTest {
     final int offset = restoredCreateHashTableOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
     Assert.assertEquals(createHashTableOperation, restoredCreateHashTableOperation);
+
+    Assert.assertEquals(unitId, restoredCreateHashTableOperation.getOperationUnitId());
+    Assert.assertEquals("caprica", restoredCreateHashTableOperation.getName());
+    Assert.assertEquals(42, restoredCreateHashTableOperation.getFileId());
+    Assert.assertEquals(24, restoredCreateHashTableOperation.getDirectoryFileId());
   }
 }

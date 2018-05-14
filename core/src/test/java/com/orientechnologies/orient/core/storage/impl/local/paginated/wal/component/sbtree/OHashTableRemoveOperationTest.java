@@ -31,6 +31,11 @@ public class OHashTableRemoveOperationTest {
     offset = restoredRemoveOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
     Assert.assertEquals(removeOperation, restoredRemoveOperation);
+
+    Assert.assertEquals(unitId, restoredRemoveOperation.getOperationUnitId());
+    Assert.assertEquals(name, restoredRemoveOperation.getName());
+    Assert.assertArrayEquals(key, restoredRemoveOperation.getKey());
+    Assert.assertArrayEquals(value, restoredRemoveOperation.getOldValue());
   }
 
   @Test
@@ -53,6 +58,11 @@ public class OHashTableRemoveOperationTest {
     offset = restoredRemoveOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
     Assert.assertEquals(removeOperation, restoredRemoveOperation);
+
+    Assert.assertEquals(unitId, restoredRemoveOperation.getOperationUnitId());
+    Assert.assertEquals(name, restoredRemoveOperation.getName());
+    Assert.assertArrayEquals(null, restoredRemoveOperation.getKey());
+    Assert.assertArrayEquals(value, restoredRemoveOperation.getOldValue());
   }
 
   @Test
@@ -79,6 +89,11 @@ public class OHashTableRemoveOperationTest {
     final int offset = restoredRemoveOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
     Assert.assertEquals(removeOperation, restoredRemoveOperation);
+
+    Assert.assertEquals(unitId, restoredRemoveOperation.getOperationUnitId());
+    Assert.assertEquals(name, restoredRemoveOperation.getName());
+    Assert.assertArrayEquals(key, restoredRemoveOperation.getKey());
+    Assert.assertArrayEquals(value, restoredRemoveOperation.getOldValue());
   }
 
   @Test
@@ -103,5 +118,10 @@ public class OHashTableRemoveOperationTest {
     final int offset = restoredRemoveOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
     Assert.assertEquals(removeOperation, restoredRemoveOperation);
+
+    Assert.assertEquals(unitId, restoredRemoveOperation.getOperationUnitId());
+    Assert.assertEquals(name, restoredRemoveOperation.getName());
+    Assert.assertArrayEquals(null, restoredRemoveOperation.getKey());
+    Assert.assertArrayEquals(value, restoredRemoveOperation.getOldValue());
   }
 }

@@ -27,6 +27,22 @@ public class ORecycleRecordOperation extends OClusterOperation {
     this.recordType = recordType;
   }
 
+  public long getClusterPosition() {
+    return clusterPosition;
+  }
+
+  public byte[] getRecord() {
+    return record;
+  }
+
+  public int getRecordVersion() {
+    return recordVersion;
+  }
+
+  public byte getRecordType() {
+    return recordType;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);

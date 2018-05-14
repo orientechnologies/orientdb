@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Random;
 
-public class OHashTableRemoveOperationTest {
+public class OSBTreeBonsaiRemoveOperationTest {
   @Test
   public void testSerializationArray() {
     OOperationUnitId unitId = OOperationUnitId.generateId();
@@ -34,6 +34,12 @@ public class OHashTableRemoveOperationTest {
     offset = restoredRemoveOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
     Assert.assertEquals(removeOperation, restoredRemoveOperation);
+
+    Assert.assertEquals(unitId, restoredRemoveOperation.getOperationUnitId());
+    Assert.assertEquals(fileId, restoredRemoveOperation.getFileId());
+    Assert.assertEquals(pointer, restoredRemoveOperation.getPointer());
+    Assert.assertArrayEquals(key, restoredRemoveOperation.getKey());
+    Assert.assertArrayEquals(value, restoredRemoveOperation.getValue());
   }
 
   @Test
@@ -62,5 +68,11 @@ public class OHashTableRemoveOperationTest {
     final int offset = restoredRemoveOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
     Assert.assertEquals(removeOperation, restoredRemoveOperation);
+
+    Assert.assertEquals(unitId, restoredRemoveOperation.getOperationUnitId());
+    Assert.assertEquals(fileId, restoredRemoveOperation.getFileId());
+    Assert.assertEquals(pointer, restoredRemoveOperation.getPointer());
+    Assert.assertArrayEquals(key, restoredRemoveOperation.getKey());
+    Assert.assertArrayEquals(value, restoredRemoveOperation.getValue());
   }
 }

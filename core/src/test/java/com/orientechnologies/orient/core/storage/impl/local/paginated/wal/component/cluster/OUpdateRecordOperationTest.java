@@ -30,6 +30,13 @@ public class OUpdateRecordOperationTest {
     offset = restoredUpdateRecordOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
     Assert.assertEquals(updateRecordOperation, restoredUpdateRecordOperation);
+
+    Assert.assertEquals(unitId, restoredUpdateRecordOperation.getOperationUnitId());
+    Assert.assertEquals(42, restoredUpdateRecordOperation.getClusterId());
+    Assert.assertEquals(128, restoredUpdateRecordOperation.getClusterPosition());
+    Assert.assertArrayEquals(record, restoredUpdateRecordOperation.getRecord());
+    Assert.assertEquals(73, restoredUpdateRecordOperation.getRecordVersion());
+    Assert.assertEquals(2, restoredUpdateRecordOperation.getRecordType());
   }
 
   @Test
@@ -54,5 +61,12 @@ public class OUpdateRecordOperationTest {
     final int offset = restoredUpdateRecordOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
     Assert.assertEquals(updateRecordOperation, restoredUpdateRecordOperation);
+
+    Assert.assertEquals(unitId, restoredUpdateRecordOperation.getOperationUnitId());
+    Assert.assertEquals(42, restoredUpdateRecordOperation.getClusterId());
+    Assert.assertEquals(128, restoredUpdateRecordOperation.getClusterPosition());
+    Assert.assertArrayEquals(record, restoredUpdateRecordOperation.getRecord());
+    Assert.assertEquals(73, restoredUpdateRecordOperation.getRecordVersion());
+    Assert.assertEquals(2, restoredUpdateRecordOperation.getRecordType());
   }
 }

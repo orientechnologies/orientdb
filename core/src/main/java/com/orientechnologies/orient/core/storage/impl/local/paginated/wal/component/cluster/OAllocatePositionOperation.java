@@ -21,6 +21,14 @@ public class OAllocatePositionOperation extends OClusterOperation {
     this.position = position;
   }
 
+  public byte getRecordType() {
+    return recordType;
+  }
+
+  public long getPosition() {
+    return position;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);

@@ -20,6 +20,10 @@ public abstract class OSBTreeBonsaiModificationOperation extends OSBTreeBonsaiOp
     this.pointer = pointer;
   }
 
+  public OBonsaiBucketPointer getPointer() {
+    return pointer;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);

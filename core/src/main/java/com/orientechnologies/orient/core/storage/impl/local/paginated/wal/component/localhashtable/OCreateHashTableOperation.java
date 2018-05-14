@@ -19,6 +19,14 @@ public class OCreateHashTableOperation extends OLocalHashTableOperation {
     this.directoryFileId = directoryFileId;
   }
 
+  public long getFileId() {
+    return fileId;
+  }
+
+  public long getDirectoryFileId() {
+    return directoryFileId;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);

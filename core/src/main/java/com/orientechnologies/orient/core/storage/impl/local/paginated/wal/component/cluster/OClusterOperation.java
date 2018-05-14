@@ -18,6 +18,10 @@ public class OClusterOperation extends OComponentOperation {
     this.clusterId = clusterId;
   }
 
+  public int getClusterId() {
+    return clusterId;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);

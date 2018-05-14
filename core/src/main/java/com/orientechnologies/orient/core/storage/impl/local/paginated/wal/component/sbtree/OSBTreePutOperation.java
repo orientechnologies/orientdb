@@ -24,6 +24,18 @@ public class OSBTreePutOperation extends OSBTreeOperation {
     this.oldValue = oldValue;
   }
 
+  public byte[] getKey() {
+    return key;
+  }
+
+  public byte[] getValue() {
+    return value;
+  }
+
+  public byte[] getOldValue() {
+    return oldValue;
+  }
+
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);

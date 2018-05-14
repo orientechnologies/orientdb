@@ -26,6 +26,13 @@ public class ORecycleRecordOperationTest {
     offset = restoredRecycleRecordOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
     Assert.assertEquals(recycleRecordOperation, restoredRecycleRecordOperation);
+
+    Assert.assertEquals(unitId, restoredRecycleRecordOperation.getOperationUnitId());
+    Assert.assertEquals(42, restoredRecycleRecordOperation.getClusterId());
+    Assert.assertEquals(45, restoredRecycleRecordOperation.getClusterPosition());
+    Assert.assertArrayEquals(record, restoredRecycleRecordOperation.getRecord());
+    Assert.assertEquals(12, restoredRecycleRecordOperation.getRecordVersion());
+    Assert.assertEquals(2, restoredRecycleRecordOperation.getRecordType());
   }
 
   @Test
@@ -46,6 +53,13 @@ public class ORecycleRecordOperationTest {
     final int offset = restoredRecycleRecordOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
     Assert.assertEquals(recycleRecordOperation, restoredRecycleRecordOperation);
+
+    Assert.assertEquals(unitId, restoredRecycleRecordOperation.getOperationUnitId());
+    Assert.assertEquals(42, restoredRecycleRecordOperation.getClusterId());
+    Assert.assertEquals(45, restoredRecycleRecordOperation.getClusterPosition());
+    Assert.assertArrayEquals(record, restoredRecycleRecordOperation.getRecord());
+    Assert.assertEquals(12, restoredRecycleRecordOperation.getRecordVersion());
+    Assert.assertEquals(2, restoredRecycleRecordOperation.getRecordType());
   }
 
 }

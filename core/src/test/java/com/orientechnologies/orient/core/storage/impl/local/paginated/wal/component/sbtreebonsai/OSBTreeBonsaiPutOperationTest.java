@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Random;
 
-public class OHashTablePutOperationTest {
+public class OSBTreeBonsaiPutOperationTest {
   @Test
   public void testSerializationArray() {
     OOperationUnitId unitId = OOperationUnitId.generateId();
@@ -36,6 +36,13 @@ public class OHashTablePutOperationTest {
     offset = restoredPutOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
     Assert.assertEquals(putOperation, restoredPutOperation);
+
+    Assert.assertEquals(unitId, putOperation.getOperationUnitId());
+    Assert.assertEquals(fileId, putOperation.getFileId());
+    Assert.assertEquals(pointer, putOperation.getPointer());
+    Assert.assertArrayEquals(key, putOperation.getKey());
+    Assert.assertArrayEquals(value, putOperation.getValue());
+    Assert.assertArrayEquals(oldValue, putOperation.getOldValue());
   }
 
   @Test
@@ -61,6 +68,13 @@ public class OHashTablePutOperationTest {
     offset = restoredPutOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
     Assert.assertEquals(putOperation, restoredPutOperation);
+
+    Assert.assertEquals(unitId, putOperation.getOperationUnitId());
+    Assert.assertEquals(fileId, putOperation.getFileId());
+    Assert.assertEquals(pointer, putOperation.getPointer());
+    Assert.assertArrayEquals(key, putOperation.getKey());
+    Assert.assertArrayEquals(value, putOperation.getValue());
+    Assert.assertArrayEquals(null, putOperation.getOldValue());
   }
 
   @Test
@@ -91,6 +105,13 @@ public class OHashTablePutOperationTest {
     final int offset = restoredPutOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
     Assert.assertEquals(putOperation, restoredPutOperation);
+
+    Assert.assertEquals(unitId, putOperation.getOperationUnitId());
+    Assert.assertEquals(fileId, putOperation.getFileId());
+    Assert.assertEquals(pointer, putOperation.getPointer());
+    Assert.assertArrayEquals(key, putOperation.getKey());
+    Assert.assertArrayEquals(value, putOperation.getValue());
+    Assert.assertArrayEquals(oldValue, putOperation.getOldValue());
   }
 
   @Test
@@ -119,5 +140,12 @@ public class OHashTablePutOperationTest {
     final int offset = restoredPutOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
     Assert.assertEquals(putOperation, restoredPutOperation);
+
+    Assert.assertEquals(unitId, putOperation.getOperationUnitId());
+    Assert.assertEquals(fileId, putOperation.getFileId());
+    Assert.assertEquals(pointer, putOperation.getPointer());
+    Assert.assertArrayEquals(key, putOperation.getKey());
+    Assert.assertArrayEquals(value, putOperation.getValue());
+    Assert.assertArrayEquals(null, putOperation.getOldValue());
   }
 }
