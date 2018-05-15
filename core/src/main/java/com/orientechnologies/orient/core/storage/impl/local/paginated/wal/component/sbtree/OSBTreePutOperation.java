@@ -2,7 +2,9 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compo
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -34,6 +36,15 @@ public class OSBTreePutOperation extends OSBTreeOperation {
 
   public byte[] getOldValue() {
     return oldValue;
+  }
+
+  @Override
+  public void rollbackOperation(OSBTree tree, OAtomicOperation atomicOperation) {
+    if (oldValue != null) {
+      tree.rawPut(key, oldValue, atomicOperation);
+    } else {
+      tree.rawRemove(key, atomicOperation);
+    }
   }
 
   @Override

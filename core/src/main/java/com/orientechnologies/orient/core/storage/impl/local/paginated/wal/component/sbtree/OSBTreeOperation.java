@@ -1,13 +1,16 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree;
 
 import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-public class OSBTreeOperation extends OComponentOperation {
+public abstract class OSBTreeOperation extends OComponentOperation {
   private String name;
 
   @SuppressWarnings("WeakerAccess")
@@ -22,6 +25,13 @@ public class OSBTreeOperation extends OComponentOperation {
   public String getName() {
     return name;
   }
+
+  @Override
+  public void rollback(OAbstractPaginatedStorage storage, OAtomicOperation atomicOperation) {
+    storage.rollbackSBTreeOperation(this, atomicOperation);
+  }
+
+  public abstract void rollbackOperation(OSBTree tree, OAtomicOperation atomicOperation);
 
   @Override
   public int toStream(byte[] content, int offset) {

@@ -117,6 +117,8 @@ public interface OIndexEngine {
 
   String getIndexNameByKey(Object key);
 
+  <I> I getComponent();
+
   interface ValuesTransformer {
     Collection<OIdentifiable> transformFromValue(Object value);
   }

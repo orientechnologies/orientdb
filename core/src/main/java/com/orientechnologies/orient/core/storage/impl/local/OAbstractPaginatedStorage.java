@@ -142,10 +142,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPa
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OCreateSBTreeOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OSBTreeOperation;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerAbstract;
@@ -2191,6 +2194,33 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private TreeMap<String, OTransactionIndexChanges> getSortedIndexOperations(OTransactionInternal clientTx) {
     return new TreeMap<>(clientTx.getIndexOperations());
+  }
+
+  //internal method
+  public void rollbackSBTreeOperation(OSBTreeOperation operation, OAtomicOperation atomicOperation) {
+    try {
+      final OIndexEngine engine = indexEngineNameMap.get(name);
+      final OSBTree sbTree = engine.getComponent();
+      operation.rollbackOperation(sbTree, ); makeStorageDirty();
+
+      if (operation instanceof OCreateSBTreeOperation) {
+        final int indexId = indexEngines.indexOf(engine);
+        assert indexId >= 0;
+
+        indexEngines.set(indexId, null);
+
+        final String engineName = engine.getName();
+        indexEngineNameMap.remove(engineName);
+        ((OStorageConfigurationImpl) configuration).deleteIndexEngine(engineName);
+      }
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+
   }
 
   public int loadIndexEngine(String name) {
