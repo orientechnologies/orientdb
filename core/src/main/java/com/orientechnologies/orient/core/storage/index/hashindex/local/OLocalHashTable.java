@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -165,8 +164,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         final String fileName = getFullName();
         fileId = addFile(fileName);
 
-        setKeySerializer(keySerializer);
-        setValueSerializer(valueSerializer);
+        this.keySerializer = keySerializer;
+        this.valueSerializer = valueSerializer;
 
         initHashTreeState(atomicOperation);
 
@@ -191,99 +190,11 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     }
   }
 
-  @Override
-  public OBinarySerializer<K> getKeySerializer() {
-    acquireSharedLock();
-    try {
-      return keySerializer;
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
-  public void setKeySerializer(OBinarySerializer<K> keySerializer) {
-    final OAtomicOperation atomicOperation;
-    try {
-      atomicOperation = startAtomicOperation(true);
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during hash set serializer for index keys"), e);
-    }
-
-    acquireExclusiveLock();
-    try {
-      this.keySerializer = keySerializer;
-      OCacheEntry hashStateEntry = loadPageForWrite(fileStateId, hashStateEntryIndex, true);
-      try {
-        OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
-
-        metadataPage.setKeySerializerId(keySerializer.getId());
-      } finally {
-        releasePageFromWrite(hashStateEntry, atomicOperation);
-      }
-
-      endAtomicOperation(false, null);
-    } catch (IOException e) {
-      rollback(e);
-
-      throw OException.wrapException(new OIndexException("Cannot set serializer for index keys"), e);
-    } catch (Exception e) {
-      rollback(e);
-      throw OException.wrapException(new OStorageException("Cannot set serializer for index keys"), e);
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
   private void rollback(Exception e) {
     try {
       endAtomicOperation(true, e);
     } catch (IOException ioe) {
       throw OException.wrapException(new OIndexException("Error during operation rollback"), ioe);
-    }
-  }
-
-  @Override
-  public OBinarySerializer<V> getValueSerializer() {
-    acquireSharedLock();
-    try {
-      return valueSerializer;
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
-  public void setValueSerializer(OBinarySerializer<V> valueSerializer) {
-    final OAtomicOperation atomicOperation;
-    try {
-      atomicOperation = startAtomicOperation(true);
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during hash table set serializer for index values"), e);
-    }
-
-    acquireExclusiveLock();
-    try {
-      this.valueSerializer = valueSerializer;
-
-      final OCacheEntry hashStateEntry = loadPageForWrite(fileStateId, hashStateEntryIndex, true);
-      try {
-        OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
-
-        metadataPage.setValueSerializerId(valueSerializer.getId());
-      } finally {
-        releasePageFromWrite(hashStateEntry, atomicOperation);
-      }
-
-      endAtomicOperation(false, null);
-    } catch (IOException e) {
-      rollback(e);
-      throw OException.wrapException(new OIndexException("Cannot set serializer for index values"), e);
-    } catch (Exception e) {
-      rollback(e);
-      throw OException.wrapException(new OStorageException("Cannot set serializer for index values"), e);
-    } finally {
-      releaseExclusiveLock();
     }
   }
 
@@ -591,7 +502,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void load(String name, OType[] keyTypes, boolean nullKeyIsSupported) {
+  public void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OBinarySerializer<K> keySerializer,
+      OBinarySerializer<V> valueSerializer) {
     acquireExclusiveLock();
     try {
       if (keyTypes != null)
@@ -609,16 +521,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
       pinPage(hashStateEntry);
       try {
-        OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
-
-        OBinarySerializerFactory serializerFactory = OBinarySerializerFactory
-            .create(storage.getConfiguration().getBinaryFormatVersion());
-
         //noinspection unchecked
-        keySerializer = (OBinarySerializer<K>) serializerFactory.getObjectSerializer(page.getKeySerializerId());
+        this.keySerializer = keySerializer;
         //noinspection unchecked
-        valueSerializer = (OBinarySerializer<V>) serializerFactory.getObjectSerializer(page.getValueSerializerId());
-
+        this.valueSerializer = valueSerializer;
       } finally {
         releasePageFromRead(hashStateEntry);
       }

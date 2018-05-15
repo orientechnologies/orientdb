@@ -126,8 +126,8 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   @Override
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
       OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties) {
-    hashTable.load(indexName, keyTypes, nullPointerSupport);
-    hashFunction.setValueSerializer(hashTable.getKeySerializer());
+    hashTable.load(indexName, keyTypes, nullPointerSupport, keySerializer, valueSerializer);
+    hashFunction.setValueSerializer(keySerializer);
   }
 
   @Override

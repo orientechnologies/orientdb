@@ -34,14 +34,6 @@ public interface OHashTable<K, V> {
   void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
       boolean nullKeyIsSupported);
 
-  OBinarySerializer<K> getKeySerializer();
-
-  void setKeySerializer(OBinarySerializer<K> keySerializer);
-
-  OBinarySerializer<V> getValueSerializer();
-
-  void setValueSerializer(OBinarySerializer<V> valueSerializer);
-
   V get(K key);
 
   /**
@@ -67,7 +59,8 @@ public interface OHashTable<K, V> {
 
   OHashIndexBucket.Entry<K, V>[] higherEntries(K key, int limit);
 
-  void load(String name, OType[] keyTypes, boolean nullKeyIsSupported);
+  void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OBinarySerializer<K> keySerializer,
+      OBinarySerializer<V> valueSerializer);
 
   void deleteWithoutLoad(String name);
 
