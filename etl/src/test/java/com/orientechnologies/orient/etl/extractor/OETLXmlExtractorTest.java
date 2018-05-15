@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.extractor;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -36,9 +37,17 @@ import static org.junit.Assert.assertNotNull;
  */
 public class OETLXmlExtractorTest extends OETLBaseTest {
 
+  private String baseDir;
+
+  @Before
+  public void setUp() throws Exception {
+    baseDir = System.getProperty("baseDir", ".");
+  }
+
   @Test
   public void testSimpleXml() {
-    configure("{source: { file: { path: 'src/test/resources/simple.xml' } }, extractor : { xml: {} }, loader: { test: {} } }");
+    configure("{source: { file: { path: '" + baseDir
+        + "/src/test/resources/simple.xml' } }, extractor : { xml: {} }, loader: { test: {} } }");
     proc.execute();
 
     assertEquals(1, getResult().size());
@@ -70,15 +79,14 @@ public class OETLXmlExtractorTest extends OETLBaseTest {
 
   @Test
   public void testCollectionXml() {
-    configure(
-        "{source: { file: { path: 'src/test/resources/music.xml' } }, extractor : { xml: { rootNode: 'CATALOG.CD', tagsAsAttribute: ['CATALOG.CD'] } }, loader: { test: {} } }");
+    configure("{source: { file: { path: '" + baseDir
+        + "/src/test/resources/music.xml' } }, extractor : { xml: { rootNode: 'CATALOG.CD', tagsAsAttribute: ['CATALOG.CD'] } }, loader: { test: {} } }");
     proc.execute();
 
     assertEquals(3, getResult().size());
 
     final List<ODocument> cds = getResult();
     final Iterator<ODocument> it = cds.iterator();
-
 
     final ODocument doc1 = it.next();
     assertNotNull(doc1);
