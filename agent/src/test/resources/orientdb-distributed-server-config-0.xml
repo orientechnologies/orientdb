@@ -63,16 +63,7 @@
             </parameters>
         </handler>
 
-        <handler
-                class="com.orientechnologies.security.syslog.ODefaultSyslog">
-            <parameters>
-                <parameter name="enabled" value="true"/>
-                <parameter name="hostname" value="localhost"/>
-                <parameter name="port" value="514"/>
-                <parameter name="appName" value="OrientDB"/>
-            </parameters>
 
-        </handler>
 
         <handler
                 class="com.orientechnologies.agent.OEnterpriseAgent">
