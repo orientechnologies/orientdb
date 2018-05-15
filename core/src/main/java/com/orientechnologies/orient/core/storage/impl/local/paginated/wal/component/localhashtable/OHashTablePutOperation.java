@@ -2,7 +2,9 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compo
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -34,6 +36,15 @@ public class OHashTablePutOperation extends OLocalHashTableOperation {
 
   public byte[] getOldValue() {
     return oldValue;
+  }
+
+  @Override
+  public void rollbackOperation(OLocalHashTable hashTable, OAtomicOperation atomicOperation) {
+    if (oldValue != null) {
+      hashTable.rawPut(key, oldValue, atomicOperation);
+    } else {
+      hashTable.rawRemove(key, atomicOperation);
+    }
   }
 
   @Override
