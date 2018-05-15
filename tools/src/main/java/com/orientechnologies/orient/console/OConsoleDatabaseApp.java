@@ -2568,7 +2568,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
    */
   protected void checkForDatabase() {
     if (currentDatabase == null)
-      throw new OSystemException("Database not selected. Use 'connect <database-name>' to connect to a database.");
+      throw new OSystemException("Database not selected. Use 'connect <url> <user> <password>' to connect to a database.");
     if (currentDatabase.isClosed())
       throw new ODatabaseException("Database '" + currentDatabaseName + "' is closed");
   }
