@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OCreateSBTreeBonsaiOperation;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -84,8 +86,9 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private long resolveFileIdByName(String fileName) {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage()
         .getUnderlying();
+    final OAtomicOperation atomicOperation;
     try {
-      storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
+      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }
@@ -97,8 +100,11 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
       if (writeCache.exists(fileName))
         return writeCache.fileIdByName(fileName);
 
-      return readCache.addFile(fileName, writeCache);
+      final long fileId = readCache.addFile(fileName, writeCache);
+      storage.getWALInstance().log(new OCreateSBTreeBonsaiOperation(atomicOperation.getOperationUnitId(), fileId, fileName));
+      storage.getAtomicOperationsManager().endAtomicOperation(false, null);
 
+      return fileId;
     } catch (IOException e) {
       try {
         storage.getAtomicOperationsManager().endAtomicOperation(true, e);

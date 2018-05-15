@@ -8,13 +8,22 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Test(groups = { "index" })
 public class ClassIndexManagerTest extends DocumentDBBaseTest {
@@ -88,9 +97,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
   @AfterMethod
   public void afterMethod() throws Exception {
-    database.command(new OCommandSQL("delete from classIndexManagerTestClass")).execute();
-    database.command(new OCommandSQL("delete from classIndexManagerTestClassTwo")).execute();
-    database.command(new OCommandSQL("delete from classIndexManagerTestSuperClass")).execute();
+    database.command("delete from classIndexManagerTestClass").close();
+    database.command("delete from classIndexManagerTestClassTwo").close();
+    database.command("delete from classIndexManagerTestSuperClass").close();
 
     Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("classIndexManagerTestClass.prop1").getSize(), 0);
     Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("classIndexManagerTestClass.prop2").getSize(), 0);

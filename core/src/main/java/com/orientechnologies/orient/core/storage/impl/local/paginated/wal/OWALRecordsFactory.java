@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compon
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OSBTreePutOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OSBTreeRemoveOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OCreateSBTreeBonsaiOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OCreateSBTreeBonsaiRawOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OSBTreeBonsaiPutOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OSBTreeBonsaiRemoveOperation;
 
@@ -109,6 +110,8 @@ public class OWALRecordsFactory {
       content[0] = 28;
     else if (walRecord instanceof OCreateSBTreeBonsaiOperation)
       content[0] = 29;
+    else if (walRecord instanceof OCreateSBTreeBonsaiRawOperation)
+      content[0] = 30;
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       content[0] = typeToIdMap.get(walRecord.getClass());
     } else
@@ -175,6 +178,8 @@ public class OWALRecordsFactory {
       buffer.put((byte) 28);
     else if (walRecord instanceof OCreateSBTreeBonsaiOperation)
       buffer.put((byte) 29);
+    else if (walRecord instanceof OCreateSBTreeBonsaiRawOperation)
+      buffer.put((byte) 30);
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       buffer.put(typeToIdMap.get(walRecord.getClass()));
     } else
@@ -267,7 +272,9 @@ public class OWALRecordsFactory {
     case 29:
       walRecord = new OCreateSBTreeBonsaiOperation();
       break;
-
+    case 30:
+      walRecord = new OCreateSBTreeBonsaiRawOperation();
+      break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
