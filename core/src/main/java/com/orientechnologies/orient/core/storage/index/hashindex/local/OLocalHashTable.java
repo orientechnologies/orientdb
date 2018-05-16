@@ -395,7 +395,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     }
   }
 
-  public void rawRemove(byte[] rawKey, OAtomicOperation atomicOperation) {
+  public void removeRollback(byte[] rawKey, OAtomicOperation atomicOperation) {
     final K key;
 
     if (rawKey != null) {
@@ -1177,7 +1177,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     }
   }
 
-  public void delete(@SuppressWarnings("unused") OAtomicOperation atomicOperation) {
+  public void deleteRollback(@SuppressWarnings("unused") OAtomicOperation atomicOperation) {
     acquireExclusiveLock();
     try {
       directory.delete();
@@ -1238,7 +1238,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     atomicOperationsManager.acquireExclusiveLockTillOperationComplete(this);
   }
 
-  public void rawPut(byte[] rawKey, byte[] rawValue, OAtomicOperation atomicOperation) {
+  public void putRollback(byte[] rawKey, byte[] rawValue, OAtomicOperation atomicOperation) {
     acquireExclusiveLock();
     try {
       K key;

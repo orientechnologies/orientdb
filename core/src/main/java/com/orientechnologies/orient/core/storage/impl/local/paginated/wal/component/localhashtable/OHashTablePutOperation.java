@@ -41,9 +41,9 @@ public class OHashTablePutOperation extends OLocalHashTableOperation {
   @Override
   public void rollbackOperation(OLocalHashTable hashTable, OAtomicOperation atomicOperation) {
     if (oldValue != null) {
-      hashTable.rawPut(key, oldValue, atomicOperation);
+      hashTable.putRollback(key, oldValue, atomicOperation);
     } else {
-      hashTable.rawRemove(key, atomicOperation);
+      hashTable.removeRollback(key, atomicOperation);
     }
   }
 

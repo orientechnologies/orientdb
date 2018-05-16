@@ -1,24 +1,33 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai;
 
 import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-public class OCreateSBTreeBonsaiOperation extends OSBTreeBonsaiOperation {
+public class OCreateSBTreeBonsaiOperation extends OSBTreeBonsaiModificationOperation {
   private String name;
 
   public OCreateSBTreeBonsaiOperation() {
   }
 
-  public OCreateSBTreeBonsaiOperation(OOperationUnitId operationUnitId, long fileId, String name) {
-    super(operationUnitId, fileId);
+  public OCreateSBTreeBonsaiOperation(OOperationUnitId operationUnitId, long fileId, OBonsaiBucketPointer pointer, String name) {
+    super(operationUnitId, fileId, pointer);
     this.name = name;
   }
 
+
   public String getName() {
     return name;
+  }
+
+  @Override
+  public void rollbackOperation(OSBTreeBonsaiLocal tree, OAtomicOperation atomicOperation) {
+    tree.rollbackDelete(atomicOperation);
   }
 
   @Override

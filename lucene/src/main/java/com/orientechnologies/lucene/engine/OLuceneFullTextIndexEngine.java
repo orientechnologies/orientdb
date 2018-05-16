@@ -30,7 +30,11 @@ import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
+import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -56,9 +60,9 @@ import static com.orientechnologies.lucene.builder.OLuceneQueryBuilder.EMPTY_MET
 
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
-  private OLuceneDocumentBuilder builder;
-  private OLuceneQueryBuilder    queryBuilder;
-  private final AtomicLong bonsayFileId = new AtomicLong(0);
+  private       OLuceneDocumentBuilder builder;
+  private       OLuceneQueryBuilder    queryBuilder;
+  private final AtomicLong             bonsayFileId = new AtomicLong(0);
 
   public OLuceneFullTextIndexEngine(OStorage storage, String idxName) {
     super(storage, idxName);
@@ -80,6 +84,11 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
     OLogManager.instance().debug(this, "Creating Lucene index in '%s'...", directory);
 
     return fc.createIndexWriter(directory, metadata, indexAnalyzer());
+  }
+
+  @Override
+  public <I> I getComponent(String name) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

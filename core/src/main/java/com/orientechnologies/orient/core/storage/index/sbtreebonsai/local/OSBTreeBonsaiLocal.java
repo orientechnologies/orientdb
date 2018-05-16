@@ -106,7 +106,7 @@ public final class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements
       initAfterCreate(atomicOperation);
 
       logComponentOperation(atomicOperation,
-          new OCreateSBTreeBonsaiOperation(atomicOperation.getOperationUnitId(), fileId, getName()));
+          new OCreateSBTreeBonsaiOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, getName()));
       endAtomicOperation(false, null);
     } catch (Exception e) {
       rollback(e);
@@ -264,6 +264,61 @@ public final class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements
       throw OException
           .wrapException(new OSBTreeBonsaiLocalException("Error during index update with key " + key + " and value " + value, this),
               e);
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  public void rollbackPut(byte[] rawKey, byte[] rawValue, OAtomicOperation atomicOperation) {
+    K key = keySerializer.deserializeNativeObject(rawKey, 0);
+    final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
+    try {
+      BucketSearchResult bucketSearchResult = findBucket(key);
+      OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
+
+      OCacheEntry keyBucketCacheEntry = loadPageForWrite(fileId, bucketPointer.getPageIndex(), false);
+      OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<>(keyBucketCacheEntry, bucketPointer.getPageOffset(),
+          keySerializer, valueSerializer, this);
+
+      final boolean itemFound = bucketSearchResult.itemIndex >= 0;
+
+      final OSBTreeBonsaiPutOperation putOperation;
+      if (itemFound) {
+        final byte[] prevRawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex, rawKey.length);
+        keyBucket.updateRawValue(bucketSearchResult.itemIndex, rawKey.length, rawValue);
+
+        putOperation = new OSBTreeBonsaiPutOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, rawKey,
+            rawValue, prevRawValue);
+      } else {
+        putOperation = new OSBTreeBonsaiPutOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, rawKey,
+            rawValue, null);
+
+        int insertionIndex = -bucketSearchResult.itemIndex - 1;
+
+        while (!keyBucket.addLeafEntry(insertionIndex, rawKey, rawValue)) {
+          releasePageFromWrite(keyBucketCacheEntry, atomicOperation);
+
+          bucketSearchResult = splitBucket(bucketSearchResult.path, insertionIndex, key, atomicOperation);
+          bucketPointer = bucketSearchResult.getLastPathItem();
+
+          insertionIndex = bucketSearchResult.itemIndex;
+
+          keyBucketCacheEntry = loadPageForWrite(fileId, bucketSearchResult.getLastPathItem().getPageIndex(), false);
+
+          keyBucket = new OSBTreeBonsaiBucket<>(keyBucketCacheEntry, bucketPointer.getPageOffset(), keySerializer, valueSerializer,
+              this);
+        }
+      }
+
+      releasePageFromWrite(keyBucketCacheEntry, atomicOperation);
+
+      if (!itemFound) {
+        updateSize(1, atomicOperation);
+      }
+
+      logComponentOperation(atomicOperation, putOperation);
+    } catch (IOException e) {
+      throw OException.wrapException(new OSBTreeBonsaiLocalException("Error during index update with key " + key, this), e);
     } finally {
       lock.unlock();
     }
@@ -434,6 +489,20 @@ public final class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements
     }
   }
 
+  public void rollbackDelete(OAtomicOperation atomicOperation) {
+    final Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
+    try {
+      final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<>();
+      subTreesToDelete.add(rootBucketPointer);
+      recycleSubTrees(subTreesToDelete, atomicOperation);
+    } catch (IOException e) {
+      throw OException
+          .wrapException(new OSBTreeBonsaiLocalException("Error during delete of sbtree with name " + getName(), this), e);
+    } finally {
+      lock.unlock();
+    }
+  }
+
   public boolean load(OBonsaiBucketPointer rootBucketPointer) {
     Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
     try {
@@ -553,6 +622,40 @@ public final class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements
       rollback(e);
 
       throw e;
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  public void rollbackRemove(byte[] rawKey, OAtomicOperation atomicOperation) {
+    K key = keySerializer.deserializeNativeObject(rawKey, 0);
+    Lock lock = FILE_LOCK_MANAGER.acquireExclusiveLock(fileId);
+    try {
+      BucketSearchResult bucketSearchResult = findBucket(key);
+      OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
+
+      OCacheEntry keyBucketCacheEntry = loadPageForWrite(fileId, bucketPointer.getPageIndex(), false);
+
+      final byte[][] rawEntry;
+      try {
+        OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<>(keyBucketCacheEntry, bucketPointer.getPageOffset(),
+            keySerializer, valueSerializer, this);
+
+        rawEntry = keyBucket.getRawLeafEntry(bucketSearchResult.itemIndex);
+
+        keyBucket.remove(bucketSearchResult.itemIndex);
+      } finally {
+        releasePageFromWrite(keyBucketCacheEntry, atomicOperation);
+      }
+      updateSize(-1, atomicOperation);
+
+      logComponentOperation(atomicOperation,
+          new OSBTreeBonsaiRemoveOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, rawEntry[0],
+              rawEntry[1]));
+    } catch (IOException e) {
+      throw OException
+          .wrapException(new OSBTreeBonsaiLocalException("Error during removing key " + key + " from sbtree " + getName(), this),
+              e);
     } finally {
       lock.unlock();
     }

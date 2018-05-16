@@ -161,6 +161,12 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public <I> I getComponent(String name) {
+    //noinspection unchecked
+    return (I) hashTable;
+  }
+
+  @Override
   public void update(Object key, OIndexKeyUpdater<Object> updater) {
     Object value = get(key);
     OIndexUpdateAction<Object> updated = updater.update(value, bonsayFileId);

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -11,7 +12,9 @@ public class OCreateSBTreeBonsaiOperationTest {
   @Test
   public void testSerializationArray() {
     OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OCreateSBTreeBonsaiOperation createSBTreeBonsaiOperation = new OCreateSBTreeBonsaiOperation(unitId, 42, "caprica");
+    OBonsaiBucketPointer pointer = new OBonsaiBucketPointer(13, 15);
+    final OCreateSBTreeBonsaiOperation createSBTreeBonsaiOperation = new OCreateSBTreeBonsaiOperation(unitId, 42, pointer,
+        "caprica");
 
     final int serializedSize = createSBTreeBonsaiOperation.serializedSize();
     final byte[] content = new byte[serializedSize + 1];
@@ -26,12 +29,15 @@ public class OCreateSBTreeBonsaiOperationTest {
     Assert.assertEquals(unitId, restoredSBTreeBonsaiOperation.getOperationUnitId());
     Assert.assertEquals(42, restoredSBTreeBonsaiOperation.getFileId());
     Assert.assertEquals("caprica", restoredSBTreeBonsaiOperation.getName());
+    Assert.assertEquals(pointer, restoredSBTreeBonsaiOperation.getPointer());
   }
 
   @Test
   public void testSerializationBuffer() {
     OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OCreateSBTreeBonsaiOperation createSBTreeBonsaiOperation = new OCreateSBTreeBonsaiOperation(unitId, 42, "caprica");
+    OBonsaiBucketPointer pointer = new OBonsaiBucketPointer(13, 15);
+    final OCreateSBTreeBonsaiOperation createSBTreeBonsaiOperation = new OCreateSBTreeBonsaiOperation(unitId, 42, pointer,
+        "caprica");
     final int serializedSize = createSBTreeBonsaiOperation.serializedSize();
 
     final ByteBuffer buffer = ByteBuffer.allocate(serializedSize + 1).order(ByteOrder.nativeOrder());
@@ -47,5 +53,6 @@ public class OCreateSBTreeBonsaiOperationTest {
     Assert.assertEquals(unitId, restoredSBTreeBonsaiOperation.getOperationUnitId());
     Assert.assertEquals(42, restoredSBTreeBonsaiOperation.getFileId());
     Assert.assertEquals("caprica", restoredSBTreeBonsaiOperation.getName());
+    Assert.assertEquals(pointer, restoredSBTreeBonsaiOperation.getPointer());
   }
 }

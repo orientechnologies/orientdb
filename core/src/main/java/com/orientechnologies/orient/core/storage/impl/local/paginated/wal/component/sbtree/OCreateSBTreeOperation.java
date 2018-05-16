@@ -25,7 +25,7 @@ public class OCreateSBTreeOperation extends OSBTreeOperation {
 
   @Override
   public void rollbackOperation(OSBTree tree, OAtomicOperation atomicOperation) {
-    tree.delete(atomicOperation);
+    tree.deleteRollback(atomicOperation);
   }
 
   @Override

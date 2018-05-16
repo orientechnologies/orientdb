@@ -37,6 +37,9 @@ public class OUpdateRecordOperationTest {
     Assert.assertArrayEquals(record, restoredUpdateRecordOperation.getRecord());
     Assert.assertEquals(73, restoredUpdateRecordOperation.getRecordVersion());
     Assert.assertEquals(2, restoredUpdateRecordOperation.getRecordType());
+    Assert.assertArrayEquals(prevRecord, restoredUpdateRecordOperation.getPrevRecord());
+    Assert.assertEquals(85, restoredUpdateRecordOperation.getPrevRecordVersion());
+    Assert.assertEquals(3, restoredUpdateRecordOperation.getPrevRecordType());
   }
 
   @Test
@@ -68,5 +71,8 @@ public class OUpdateRecordOperationTest {
     Assert.assertArrayEquals(record, restoredUpdateRecordOperation.getRecord());
     Assert.assertEquals(73, restoredUpdateRecordOperation.getRecordVersion());
     Assert.assertEquals(2, restoredUpdateRecordOperation.getRecordType());
+    Assert.assertArrayEquals(prevRecord, restoredUpdateRecordOperation.getPrevRecord());
+    Assert.assertEquals(85, restoredUpdateRecordOperation.getPrevRecordVersion());
+    Assert.assertEquals(3, restoredUpdateRecordOperation.getPrevRecordType());
   }
 }

@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compo
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 
 import java.nio.ByteBuffer;
@@ -42,6 +44,11 @@ public class OCreateRecordOperation extends OClusterOperation {
 
   public byte getRecordType() {
     return recordType;
+  }
+
+  @Override
+  public void rollbackOperation(OPaginatedCluster cluster, OAtomicOperation atomicOperation) {
+    cluster.deleteRecordRollback(position, atomicOperation);
   }
 
   @Override

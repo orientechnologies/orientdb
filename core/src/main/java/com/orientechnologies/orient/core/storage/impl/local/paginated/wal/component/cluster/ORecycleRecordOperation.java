@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compo
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 
 import java.nio.ByteBuffer;
@@ -41,6 +43,11 @@ public class ORecycleRecordOperation extends OClusterOperation {
 
   public byte getRecordType() {
     return recordType;
+  }
+
+  @Override
+  public void rollbackOperation(OPaginatedCluster cluster, OAtomicOperation atomicOperation) {
+    throw new UnsupportedOperationException("Recycle operations are not inteded to be rolled back");
   }
 
   @Override

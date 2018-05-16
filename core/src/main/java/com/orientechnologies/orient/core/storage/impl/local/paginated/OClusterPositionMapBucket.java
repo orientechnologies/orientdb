@@ -123,6 +123,20 @@ public class OClusterPositionMapBucket extends ODurablePage {
     updateEntry(position, entry);
   }
 
+  void makeAvailable(final int index) {
+    final int size = getIntValue(SIZE_OFFSET);
+
+    if (index >= size)
+      throw new OStorageException("Cannot make available index " + index + ", it is out of range");
+
+    final int position = entryPosition(index);
+    final byte flag = getByteValue(position);
+    if (flag == REMOVED)
+      setByteValue(position, NOT_EXISTENT);
+    else
+      throw new OStorageException("Cannot make available index " + index + ", it points to a non removed entry");
+  }
+
   private int entryPosition(int index) {
     return index * ENTRY_SIZE + POSITIONS_OFFSET;
   }

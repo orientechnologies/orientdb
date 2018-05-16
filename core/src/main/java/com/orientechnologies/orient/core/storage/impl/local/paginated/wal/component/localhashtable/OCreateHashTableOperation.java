@@ -31,7 +31,7 @@ public class OCreateHashTableOperation extends OLocalHashTableOperation {
 
   @Override
   public void rollbackOperation(OLocalHashTable hashTable, OAtomicOperation atomicOperation) {
-    hashTable.delete(atomicOperation);
+    hashTable.deleteRollback(atomicOperation);
   }
 
   @Override

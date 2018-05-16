@@ -41,9 +41,9 @@ public class OSBTreePutOperation extends OSBTreeOperation {
   @Override
   public void rollbackOperation(OSBTree tree, OAtomicOperation atomicOperation) {
     if (oldValue != null) {
-      tree.rawPut(key, oldValue, atomicOperation);
+      tree.putRollback(key, oldValue, atomicOperation);
     } else {
-      tree.rawRemove(key, atomicOperation);
+      tree.removeRollback(key, atomicOperation);
     }
   }
 

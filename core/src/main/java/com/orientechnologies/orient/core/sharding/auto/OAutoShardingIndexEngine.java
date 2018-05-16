@@ -66,7 +66,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   private       int                              version;
   private final String                           name;
   private       int                              partitionSize;
-  private final AtomicLong bonsayFileId = new AtomicLong(0);
+  private final AtomicLong                       bonsayFileId = new AtomicLong(0);
 
   public OAutoShardingIndexEngine(final String iName, final Boolean iDurableInNonTxMode, final OAbstractPaginatedStorage iStorage,
       final int iVersion) {
@@ -134,6 +134,17 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     }
 
     hashFunction.setValueSerializer(keySerializer);
+  }
+
+  @Override
+  public <I> I getComponent(String name) {
+    for (OHashTable<Object, Object> partition : partitions) {
+      if (partition.getName().equals(name)) {
+        return (I) partition;
+      }
+    }
+
+    throw new IllegalStateException("Component with name " + name + " was not found");
   }
 
   @Override

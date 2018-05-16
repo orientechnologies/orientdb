@@ -25,7 +25,7 @@ public class OSBTreeRemoveOperation extends OSBTreeOperation {
 
   @Override
   public void rollbackOperation(OSBTree tree, OAtomicOperation atomicOperation) {
-    tree.rawPut(key, oldValue, atomicOperation);
+    tree.putRollback(key, oldValue, atomicOperation);
   }
 
   public byte[] getKey() {

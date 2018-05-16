@@ -183,6 +183,28 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
+  void makePositionAvailable(final long clusterPosition, OAtomicOperation atomicOperation) {
+    acquireExclusiveLock();
+    try {
+      final long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
+      final int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
+
+      final OCacheEntry cacheEntry = loadPageForWrite(fileId, pageIndex, false);
+      try {
+        final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
+        bucket.makeAvailable(index);
+      } finally {
+        releasePageFromWrite(cacheEntry, atomicOperation);
+      }
+
+    } catch (IOException e) {
+      throw OException.wrapException(
+          new OClusterPositionMapException("Error during making position " + clusterPosition + " available again.", this), e);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
   public void update(final long clusterPosition, final OClusterPositionMapBucket.PositionEntry entry,
       OAtomicOperation atomicOperation) {
     acquireExclusiveLock();

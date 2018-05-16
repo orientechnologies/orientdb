@@ -1,13 +1,16 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-public class OClusterOperation extends OComponentOperation {
+public abstract class OClusterOperation extends OComponentOperation {
   private int clusterId;
 
   OClusterOperation() {
@@ -21,6 +24,13 @@ public class OClusterOperation extends OComponentOperation {
   public int getClusterId() {
     return clusterId;
   }
+
+  @Override
+  public void rollback(OAbstractPaginatedStorage storage, OAtomicOperation atomicOperation) {
+    storage.rollbackClusterOperation(this, atomicOperation);
+  }
+
+  public abstract void rollbackOperation(OPaginatedCluster cluster, OAtomicOperation atomicOperation);
 
   @Override
   public int toStream(byte[] content, int offset) {

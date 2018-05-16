@@ -142,16 +142,22 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPa
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OClusterOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OCreateClusterOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OCreateHashTableOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OLocalHashTableOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OCreateSBTreeOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtree.OSBTreeOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OSBTreeBonsaiModificationOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OSBTreeBonsaiOperation;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerAbstract;
@@ -843,7 +849,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public boolean dropCluster(final int clusterId, final boolean iTruncate) {
+  public boolean dropCluster(final int clusterId, final boolean truncate) {
     try {
       checkOpenness();
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
@@ -861,16 +867,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (cluster == null)
           return false;
 
-        if (iTruncate)
-          cluster.truncate();
-        cluster.delete();
-
         makeStorageDirty();
-        clusterMap.remove(cluster.getName().toLowerCase(configuration.getLocaleInstance()));
-        clusters.set(clusterId, null);
 
-        // UPDATE CONFIGURATION
-        getConfiguration().dropCluster(clusterId);
+        deleteClusterMetadata(clusterId, cluster.getName());
+
+        if (truncate) {
+          cluster.truncate();
+        }
+
+        cluster.delete();
 
         return true;
       } catch (Exception e) {
@@ -2202,15 +2207,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   //internal method
   public void rollbackSBTreeOperation(OSBTreeOperation operation, OAtomicOperation atomicOperation) {
     try {
+      final String name = operation.getName();
       final OIndexEngine engine = indexEngineNameMap.get(name);
-      final OSBTree sbTree = engine.getComponent();
+      final OSBTree sbTree = engine.getComponent(name);
       makeStorageDirty();
 
-      operation.rollbackOperation(sbTree, atomicOperation);
-
       if (operation instanceof OCreateSBTreeOperation) {
-        deleteEngineMetadata(engine);
+        deleteIndexEngineMetadata(engine);
       }
+
+      operation.rollbackOperation(sbTree, atomicOperation);
     } catch (RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (Error ee) {
@@ -2223,14 +2229,38 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   //internal method
   public void rollbackHashTableOperation(OLocalHashTableOperation operation, OAtomicOperation atomicOperation) {
     try {
+      final String name = operation.getName();
       final OIndexEngine engine = indexEngineNameMap.get(name);
-      final OLocalHashTable hashTable = engine.getComponent();
+      final OLocalHashTable hashTable = engine.getComponent(name);
       makeStorageDirty();
 
-      operation.rollbackOperation(hashTable, atomicOperation);
-
       if (operation instanceof OCreateHashTableOperation) {
-        deleteEngineMetadata(engine);
+        deleteIndexEngineMetadata(engine);
+      }
+
+      operation.rollbackOperation(hashTable, atomicOperation);
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  public void rollbackSBTreeBonsaiOperation(OSBTreeBonsaiOperation operation, OAtomicOperation atomicOperation) {
+    try {
+      if (operation instanceof OSBTreeBonsaiModificationOperation) {
+        final OSBTreeBonsaiModificationOperation modificationOperation = (OSBTreeBonsaiModificationOperation) operation;
+        final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(modificationOperation.getFileId(),
+            modificationOperation.getPointer());
+
+        final OSBTreeBonsaiLocal sbTreeBonsaiLocal = (OSBTreeBonsaiLocal) sbTreeCollectionManager.loadSBTree(collectionPointer);
+        try {
+          modificationOperation.rollbackOperation(sbTreeBonsaiLocal, atomicOperation);
+        } finally {
+          sbTreeCollectionManager.releaseSBTree(collectionPointer);
+        }
       }
     } catch (RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -2241,7 +2271,34 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private void deleteEngineMetadata(OIndexEngine engine) {
+  public void rollbackClusterOperation(OClusterOperation operation, OAtomicOperation atomicOperation) {
+    try {
+      final int clusterId = operation.getClusterId();
+      OPaginatedCluster cluster = (OPaginatedCluster) clusters.get(operation.getClusterId());
+      makeStorageDirty();
+
+      if (operation instanceof OCreateClusterOperation) {
+        deleteClusterMetadata(clusterId, cluster.getName());
+      }
+
+      operation.rollbackOperation(cluster, atomicOperation);
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  private void deleteClusterMetadata(int clusterId, String name) {
+    clusterMap.remove(name.toLowerCase(configuration.getLocaleInstance()));
+    clusters.set(clusterId, null);
+
+    getConfiguration().dropCluster(clusterId);
+  }
+
+  private void deleteIndexEngineMetadata(OIndexEngine engine) {
     final int indexId = indexEngines.indexOf(engine);
     assert indexId >= 0;
 
@@ -2443,17 +2500,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkLowDiskSpaceRequestsAndReadOnlyConditions();
 
         checkIndexId(indexId);
-
         makeStorageDirty();
+
         final OIndexEngine engine = indexEngines.get(indexId);
 
-        indexEngines.set(indexId, null);
+        deleteIndexEngineMetadata(engine);
 
         engine.delete();
-
-        final String engineName = engine.getName();
-        indexEngineNameMap.remove(engineName);
-        ((OStorageConfigurationImpl) configuration).deleteIndexEngine(engineName);
       } catch (IOException e) {
         throw OException.wrapException(new OStorageException("Error on index deletion"), e);
       } finally {

@@ -229,7 +229,7 @@ public final class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
-  public void rawPut(byte[] rawKey, byte[] rawValue, OAtomicOperation atomicOperation) {
+  public void putRollback(byte[] rawKey, byte[] rawValue, OAtomicOperation atomicOperation) {
     final K key;
     if (rawKey == null) {
       key = null;
@@ -684,7 +684,7 @@ public final class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
-  public void delete(@SuppressWarnings("unused") OAtomicOperation atomicOperation) {
+  public void deleteRollback(@SuppressWarnings("unused") OAtomicOperation atomicOperation) {
     acquireExclusiveLock();
     try {
       deleteFile(fileId);
@@ -840,7 +840,7 @@ public final class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
-  public void rawRemove(byte[] rawKey, OAtomicOperation atomicOperation) {
+  public void removeRollback(byte[] rawKey, OAtomicOperation atomicOperation) {
     K key;
 
     if (rawKey != null) {

@@ -1,8 +1,11 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -22,6 +25,13 @@ public abstract class OSBTreeBonsaiOperation extends OComponentOperation {
   public long getFileId() {
     return fileId;
   }
+
+  @Override
+  public void rollback(OAbstractPaginatedStorage storage, OAtomicOperation atomicOperation) {
+    storage.rollbackSBTreeBonsaiOperation(this, atomicOperation);
+  }
+
+  public abstract void rollbackOperation(OSBTreeBonsaiLocal tree, OAtomicOperation atomicOperation);
 
   @Override
   public int toStream(byte[] content, int offset) {

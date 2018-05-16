@@ -22,12 +22,17 @@ package com.orientechnologies.orient.core.storage.index.engine;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
+import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -37,7 +42,7 @@ import java.util.Set;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/30/13
  */
-public class OSBTreeIndexEngine implements OIndexEngine {
+public final class OSBTreeIndexEngine implements OIndexEngine {
   public static final int VERSION = 1;
 
   public static final String DATA_FILE_EXTENSION        = ".sbt";
@@ -235,6 +240,12 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   public boolean acquireAtomicExclusiveLock(Object key) {
     sbTree.acquireAtomicExclusiveLock();
     return true;
+  }
+
+  @Override
+  public <I> I getComponent(String name) {
+    //noinspection unchecked
+    return (I) sbTree;
   }
 
   @Override

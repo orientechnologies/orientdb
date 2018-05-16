@@ -33,7 +33,7 @@ public class OHashTableRemoveOperation extends OLocalHashTableOperation {
 
   @Override
   public void rollbackOperation(OLocalHashTable hashTable, OAtomicOperation atomicOperation) {
-    hashTable.rawPut(key, oldValue, atomicOperation);
+    hashTable.putRollback(key, oldValue, atomicOperation);
   }
 
   @Override

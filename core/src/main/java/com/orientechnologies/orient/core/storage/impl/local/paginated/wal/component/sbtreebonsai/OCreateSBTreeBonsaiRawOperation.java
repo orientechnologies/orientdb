@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai;
 
 import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -19,6 +21,11 @@ public class OCreateSBTreeBonsaiRawOperation extends OSBTreeBonsaiOperation {
 
   public String getName() {
     return name;
+  }
+
+  @Override
+  public void rollbackOperation(OSBTreeBonsaiLocal tree, OAtomicOperation atomicOperation) {
+    throw new UnsupportedOperationException("SBTreeBonsai files can not be deleted");
   }
 
   @Override

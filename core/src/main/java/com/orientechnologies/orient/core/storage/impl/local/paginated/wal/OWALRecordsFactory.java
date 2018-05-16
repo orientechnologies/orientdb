@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compon
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OCreateClusterOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OCreateRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.ODeleteRecordOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OMakePositionAvailableOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.ORecycleRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OUpdateRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OCreateHashTableOperation;
@@ -112,6 +113,8 @@ public class OWALRecordsFactory {
       content[0] = 29;
     else if (walRecord instanceof OCreateSBTreeBonsaiRawOperation)
       content[0] = 30;
+    else if (walRecord instanceof OMakePositionAvailableOperation)
+      content[0] = 31;
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       content[0] = typeToIdMap.get(walRecord.getClass());
     } else
@@ -180,6 +183,8 @@ public class OWALRecordsFactory {
       buffer.put((byte) 29);
     else if (walRecord instanceof OCreateSBTreeBonsaiRawOperation)
       buffer.put((byte) 30);
+    else if (walRecord instanceof OMakePositionAvailableOperation)
+      buffer.put((byte) 31);
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       buffer.put(typeToIdMap.get(walRecord.getClass()));
     } else
@@ -274,6 +279,9 @@ public class OWALRecordsFactory {
       break;
     case 30:
       walRecord = new OCreateSBTreeBonsaiRawOperation();
+      break;
+    case 31:
+      walRecord = new OMakePositionAvailableOperation();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

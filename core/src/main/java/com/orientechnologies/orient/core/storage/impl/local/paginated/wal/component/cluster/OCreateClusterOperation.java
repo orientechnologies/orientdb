@@ -2,6 +2,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compo
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 
 import java.nio.ByteBuffer;
@@ -26,6 +28,11 @@ public class OCreateClusterOperation extends OClusterOperation {
 
   public long getMapFileId() {
     return mapFileId;
+  }
+
+  @Override
+  public void rollbackOperation(OPaginatedCluster cluster, OAtomicOperation atomicOperation) {
+    cluster.deleteRollback(atomicOperation);
   }
 
   @Override

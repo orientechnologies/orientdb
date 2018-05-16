@@ -1,8 +1,10 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -28,6 +30,11 @@ public class OSBTreeBonsaiRemoveOperation extends OSBTreeBonsaiModificationOpera
 
   public byte[] getValue() {
     return value;
+  }
+
+  @Override
+  public void rollbackOperation(OSBTreeBonsaiLocal tree, OAtomicOperation atomicOperation) {
+    tree.rollbackPut(key, value, atomicOperation);
   }
 
   @Override
