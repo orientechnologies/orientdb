@@ -2,12 +2,20 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compo
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class OAllocatePositionOperationTest {
+  public static String buildDirectory;
+
+  @BeforeClass
+  public static void beforeClass() {
+    buildDirectory = System.getProperty("buildDirectory", "./target");
+  }
+
   @Test
   public void testSerializationArray() {
     OOperationUnitId unitId = OOperationUnitId.generateId();

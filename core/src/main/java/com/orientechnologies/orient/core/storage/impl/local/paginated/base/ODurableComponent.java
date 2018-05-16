@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
+import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -172,6 +173,13 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     assert componentOperation != null;
     try {
       writeAheadLog.log(componentOperation);
+
+      if (storage instanceof ODirectMemoryStorage) {
+        atomicOperation.addComponentOperation(componentOperation, true);
+      } else {
+        atomicOperation.addComponentOperation(componentOperation, false);
+      }
+
     } catch (IOException e) {
       throw OException
           .wrapException(new OStorageException("Error during logging of component operation in storage " + storage.getName()), e);

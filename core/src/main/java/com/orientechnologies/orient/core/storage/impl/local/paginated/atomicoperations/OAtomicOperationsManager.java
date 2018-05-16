@@ -38,7 +38,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
+import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -54,7 +57,11 @@ import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -409,15 +416,60 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final OLogSequenceNumber lsn;
     if (counter == 1) {
       try {
-        final boolean useWal = useWal();
+        if (operation.isRollback()) {
+          if (storage instanceof ODirectMemoryStorage) {
+            final List<OComponentOperation> componentOperations = operation.getComponentRecords();
+            final ListIterator<OComponentOperation> iterator = componentOperations.listIterator(componentOperations.size());
 
-        //TODO:rollback !!!
+            while (iterator.hasPrevious()) {
+              final OComponentOperation componentOperation = iterator.previous();
+              componentOperation.rollback(storage, operation);
+            }
+          } else {
+            final List<OLogSequenceNumber> componentLSNs = operation.getComponentLSNs();
 
-        if (useWal)
-          lsn = writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(),
-              operation.getMetadata());
-        else
-          lsn = null;
+            if (!componentLSNs.isEmpty()) {
+              int recordsToFetch = componentLSNs.size();
+
+              List<OWriteableWALRecord> records = writeAheadLog.read(componentLSNs.get(0), recordsToFetch);
+              Iterator<OWriteableWALRecord> recordsIterator = records.iterator();
+
+              List<OComponentOperation> componentOperations = new ArrayList<>();
+
+              OLogSequenceNumber lastWALLsn = null;
+              for (OLogSequenceNumber componentLSN : componentLSNs) {
+                while (true) {
+                  if (!recordsIterator.hasNext()) {
+                    records = writeAheadLog.next(lastWALLsn, recordsToFetch);
+                    recordsIterator = records.iterator();
+                  }
+
+                  final OWriteableWALRecord walRecord = recordsIterator.next();
+                  final OLogSequenceNumber walLSN = walRecord.getLsn();
+                  lastWALLsn = walLSN;
+
+                  if (walLSN.equals(componentLSN)) {
+                    final OComponentOperation componentOperation = (OComponentOperation) walRecord;
+                    componentOperations.add(componentOperation);
+                    recordsToFetch--;
+                    break;
+                  }
+                }
+              }
+
+              final ListIterator<OComponentOperation> componentIterator = componentOperations
+                  .listIterator(componentOperations.size());
+
+              while (componentIterator.hasPrevious()) {
+                final OComponentOperation componentOperation = componentIterator.previous();
+                componentOperation.rollback(storage, operation);
+              }
+            }
+          }
+        }
+
+        lsn = writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(),
+            operation.getMetadata());
 
         // We have to decrement the counter after the disk operations, otherwise, if they
         // fail, we will be unable to rollback the atomic operation later.

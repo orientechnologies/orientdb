@@ -131,10 +131,14 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
     final int position = entryPosition(index);
     final byte flag = getByteValue(position);
-    if (flag == REMOVED)
+    if (flag != NOT_EXISTENT)
       setByteValue(position, NOT_EXISTENT);
     else
       throw new OStorageException("Cannot make available index " + index + ", it points to a non removed entry");
+
+    if (index == size - 1) {
+      setIntValue(SIZE_OFFSET, size - 1);
+    }
   }
 
   private int entryPosition(int index) {

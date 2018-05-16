@@ -19,16 +19,17 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.*;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Note: all atomic operations methods are designed in context that all operations on single files will be wrapped in shared lock.
@@ -44,9 +45,11 @@ public class OAtomicOperation {
   private boolean   rollback;
   private Exception rollbackException;
 
-  private final Set<String> lockedObjects = new HashSet<>();
+  private final Set<String>                              lockedObjects = new HashSet<>();
+  private final Map<String, OAtomicOperationMetadata<?>> metadata      = new LinkedHashMap<>();
 
-  private final Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<>();
+  private final List<OLogSequenceNumber>  componentLSNs    = new ArrayList<>();
+  private final List<OComponentOperation> componentRecords = new ArrayList<>();
 
   public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId) {
     this.startLSN = startLSN;
@@ -60,6 +63,22 @@ public class OAtomicOperation {
 
   public OOperationUnitId getOperationUnitId() {
     return operationUnitId;
+  }
+
+  public void addComponentOperation(OComponentOperation operation, boolean isMemory) {
+    if (isMemory) {
+      componentRecords.add(operation);
+    } else {
+      componentLSNs.add(operation.getLsn());
+    }
+  }
+
+  public List<OLogSequenceNumber> getComponentLSNs() {
+    return componentLSNs;
+  }
+
+  public List<OComponentOperation> getComponentRecords() {
+    return componentRecords;
   }
 
   /**

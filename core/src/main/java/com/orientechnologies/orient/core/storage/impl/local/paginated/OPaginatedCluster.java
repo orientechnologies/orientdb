@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowseEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OAllocatePositionOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OCreateClusterOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OCreateRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.ODeleteRecordOperation;
@@ -421,9 +422,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     final OAtomicOperation atomicOperation = startAtomicOperation(true);
     acquireExclusiveLock();
     try {
-      final OPhysicalPosition pos = createPhysicalPosition(recordType, clusterPositionMap.allocate(id, recordType, atomicOperation),
-          -1);
+      final OPhysicalPosition pos = createPhysicalPosition(recordType, clusterPositionMap.allocate(atomicOperation), -1);
       addAtomicOperationMetadata(new ORecordId(id, pos.clusterPosition), atomicOperation);
+      logComponentOperation(atomicOperation,
+          new OAllocatePositionOperation(atomicOperation.getOperationUnitId(), getId(), pos.clusterPosition, recordType));
       endAtomicOperation(false, null);
       return pos;
     } catch (IOException | RuntimeException e) {
@@ -753,6 +755,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             prevRecordVersion = localPage.getRecordVersion(recordPosition);
           }
 
+          prevRecordChunks.add(content);
+
           int initialFreeSpace = localPage.getFreeSpace();
           localPage.deleteRecord(recordPosition);
 
@@ -792,7 +796,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           new ODeleteRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, prevRecordContent,
               prevRecordVersion, prevRecordType));
 
-      endAtomicOperation(false, null);
     } catch (IOException e) {
       throw OException.wrapException(new OPaginatedClusterException("Error during record deletion", this), e);
     } finally {
@@ -835,6 +838,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           if (prevRecordChunks.isEmpty()) {
             prevRecordVersion = localPage.getRecordVersion(recordPosition);
           }
+
+          prevRecordChunks.add(content);
 
           int initialFreeSpace = localPage.getFreeSpace();
           localPage.deleteRecord(recordPosition);

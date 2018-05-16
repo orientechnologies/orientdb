@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OAllocatePositionOperation;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -103,7 +102,7 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public long allocate(int clusterId, byte recordType, OAtomicOperation atomicOperation) throws IOException {
+  public long allocate(OAtomicOperation atomicOperation) throws IOException {
     long lastPage = getFilledUpTo(fileId) - 1;
     OCacheEntry cacheEntry;
     if (lastPage < 0)
@@ -120,8 +119,6 @@ public class OClusterPositionMap extends ODurableComponent {
       }
 
       final long index = bucket.allocate();
-      logComponentOperation(atomicOperation,
-          new OAllocatePositionOperation(atomicOperation.getOperationUnitId(), clusterId, index, recordType));
 
       return index + cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES;
     } catch (Exception e) {
