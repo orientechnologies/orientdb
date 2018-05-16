@@ -46,6 +46,8 @@ public class ODeleteVertexStatement extends OStatement {
     }
   }
 
-
+  public OFromClause getFromClause() {
+    return fromClause;
+  }
 }
 /* JavaCC - OriginalChecksum=b62d3046f4bd1b9c1f78ed4f125b06d3 (do not edit this line) */

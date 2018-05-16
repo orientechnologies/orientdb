@@ -72,5 +72,13 @@ public class OBaseIdentifier extends SimpleNode {
   public boolean isBaseIdentifier() {
     return suffix!=null && suffix.isBaseIdentifier();
   }
+
+  public OLevelZeroIdentifier getLevelZero() {
+    return levelZero;
+  }
+
+  public OSuffixIdentifier getSuffix() {
+    return suffix;
+  }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

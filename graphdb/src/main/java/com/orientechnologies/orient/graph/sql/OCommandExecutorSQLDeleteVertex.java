@@ -21,13 +21,7 @@ package com.orientechnologies.orient.graph.sql;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.types.OModifiableBoolean;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -41,17 +35,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.parser.ODeleteVertexStatement;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -61,18 +52,18 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     implements OCommandDistributedReplicateRequest, OCommandResultListener {
-  public static final String               NAME          = "DELETE VERTEX";
-  private static final String              KEYWORD_BATCH = "BATCH";
-  private ORecordId                        rid;
-  private int                              removed       = 0;
-  private ODatabaseDocument                database;
-  private OCommandRequest                  query;
-  private String                           returning     = "COUNT";
-  private List<ORecord>                    allDeletedRecords;
-  private AtomicReference<OrientBaseGraph> currentGraph  = new AtomicReference<OrientBaseGraph>();
-  private OModifiableBoolean               shutdownFlag  = new OModifiableBoolean();
-  private boolean                          txAlreadyBegun;
-  private int                              batch         = 100;
+  public static final  String NAME          = "DELETE VERTEX";
+  private static final String KEYWORD_BATCH = "BATCH";
+  private ORecordId rid;
+  private int removed = 0;
+  private ODatabaseDocument database;
+  private OCommandRequest   query;
+  private String returning = "COUNT";
+  private List<ORecord> allDeletedRecords;
+  private AtomicReference<OrientBaseGraph> currentGraph = new AtomicReference<OrientBaseGraph>();
+  private OModifiableBoolean               shutdownFlag = new OModifiableBoolean();
+  private boolean txAlreadyBegun;
+  private int batch = 100;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteVertex parse(final OCommandRequest iRequest) {
@@ -136,6 +127,11 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
         } else if (word.length() > 0) {
           // GET/CHECK CLASS NAME
+          if (this.preParsedStatement != null && ((ODeleteVertexStatement) this.preParsedStatement).getFromClause() != null) {
+            word = ((ODeleteVertexStatement) this.preParsedStatement).getFromClause().getItem().getIdentifier().getSuffix()
+                .getIdentifier().getStringValue();
+          }
+
           clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(word);
           if (clazz == null)
             throw new OCommandSQLParsingException("Class '" + word + "' was not found");
@@ -296,8 +292,9 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     final String returning = parserNextWord(true);
 
     if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE"))
-      throwParsingException("Invalid " + KEYWORD_RETURN + " value set to '" + returning
-          + "' but it should be COUNT (default), BEFORE. Example: " + KEYWORD_RETURN + " BEFORE");
+      throwParsingException(
+          "Invalid " + KEYWORD_RETURN + " value set to '" + returning + "' but it should be COUNT (default), BEFORE. Example: "
+              + KEYWORD_RETURN + " BEFORE");
 
     return returning;
   }
@@ -308,8 +305,9 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   }
 
   public DISTRIBUTED_RESULT_MGMT getDistributedResultManagement() {
-    return getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL ? DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS
-        : DISTRIBUTED_RESULT_MGMT.MERGE;
+    return getDistributedExecutionMode() == DISTRIBUTED_EXECUTION_MODE.LOCAL ?
+        DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS :
+        DISTRIBUTED_RESULT_MGMT.MERGE;
   }
 
   @Override
