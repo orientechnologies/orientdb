@@ -90,6 +90,11 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   }
 
   @Override
+  public <I> I getComponent(String name) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void delete() {
     if (delegate != null)
       delegate.delete();

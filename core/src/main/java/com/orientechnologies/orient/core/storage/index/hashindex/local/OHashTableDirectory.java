@@ -50,22 +50,12 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public void create(OAtomicOperation atomicOperation) throws IOException {
-    acquireExclusiveLock();
-    try {
-      fileId = addFile(getFullName());
-      init(atomicOperation);
-    } finally {
-      releaseExclusiveLock();
-    }
+    fileId = addFile(getFullName());
+    init(atomicOperation);
   }
 
   long getFileId() {
-    acquireSharedLock();
-    try {
-      return fileId;
-    } finally {
-      releaseSharedLock();
-    }
+    return fileId;
   }
 
   private void init(OAtomicOperation atomicOperation) throws IOException {
@@ -90,354 +80,231 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public void open() throws IOException {
-    acquireExclusiveLock();
-    try {
-      fileId = openFile(getFullName());
-      final int filledUpTo = (int) getFilledUpTo(fileId);
+    fileId = openFile(getFullName());
+    final int filledUpTo = (int) getFilledUpTo(fileId);
 
-      for (int i = 0; i < filledUpTo; i++) {
-        final OCacheEntry entry = loadPageForRead(fileId, i, true);
-        assert entry != null;
+    for (int i = 0; i < filledUpTo; i++) {
+      final OCacheEntry entry = loadPageForRead(fileId, i, true);
+      assert entry != null;
 
-        pinPage(entry);
-        releasePageFromRead(entry);
-      }
-    } finally {
-      releaseExclusiveLock();
+      pinPage(entry);
+      releasePageFromRead(entry);
     }
   }
 
   public void close() throws IOException {
-    acquireExclusiveLock();
-    try {
-      readCache.closeFile(fileId, true, writeCache);
-    } finally {
-      releaseExclusiveLock();
-    }
+    readCache.closeFile(fileId, true, writeCache);
   }
 
   public void delete() throws IOException {
-    acquireExclusiveLock();
-    try {
-      deleteFile(fileId);
-    } finally {
-      releaseExclusiveLock();
-    }
+    deleteFile(fileId);
   }
 
   void deleteWithoutOpen() throws IOException {
-    acquireExclusiveLock();
-    try {
-      if (isFileExists(getFullName())) {
-        fileId = openFile(getFullName());
-        deleteFile(fileId);
-      }
-    } finally {
-      releaseExclusiveLock();
+    if (isFileExists(getFullName())) {
+      fileId = openFile(getFullName());
+      deleteFile(fileId);
     }
   }
 
   int addNewNode(byte maxLeftChildDepth, byte maxRightChildDepth, byte nodeLocalDepth, long[] newNode,
       OAtomicOperation atomicOperation) throws IOException {
     int nodeIndex;
-    acquireExclusiveLock();
+    OCacheEntry firstEntry = loadPageForWrite(fileId, firstEntryIndex, true);
     try {
-      OCacheEntry firstEntry = loadPageForWrite(fileId, firstEntryIndex, true);
-      try {
-        ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
+      ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
 
-        final int tombstone = firstPage.getTombstone();
+      final int tombstone = firstPage.getTombstone();
+
+      if (tombstone >= 0)
+        nodeIndex = tombstone;
+      else {
+        nodeIndex = firstPage.getTreeSize();
+        firstPage.setTreeSize(nodeIndex + 1);
+      }
+
+      if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
+        final int localNodeIndex = nodeIndex;
+
+        firstPage.setMaxLeftChildDepth(localNodeIndex, maxLeftChildDepth);
+        firstPage.setMaxRightChildDepth(localNodeIndex, maxRightChildDepth);
+        firstPage.setNodeLocalDepth(localNodeIndex, nodeLocalDepth);
 
         if (tombstone >= 0)
-          nodeIndex = tombstone;
-        else {
-          nodeIndex = firstPage.getTreeSize();
-          firstPage.setTreeSize(nodeIndex + 1);
+          firstPage.setTombstone((int) firstPage.getPointer(nodeIndex, 0));
+
+        for (int i = 0; i < newNode.length; i++)
+          firstPage.setPointer(localNodeIndex, i, newNode[i]);
+
+      } else {
+        final int pageIndex = nodeIndex / ODirectoryPage.NODES_PER_PAGE;
+        final int localLevel = nodeIndex % ODirectoryPage.NODES_PER_PAGE;
+
+        OCacheEntry cacheEntry = loadPageForWrite(fileId, pageIndex, true);
+        while (cacheEntry == null || cacheEntry.getPageIndex() < pageIndex) {
+          if (cacheEntry != null)
+            releasePageFromWrite(cacheEntry, atomicOperation);
+
+          cacheEntry = addPage(fileId);
         }
 
-        if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
-          final int localNodeIndex = nodeIndex;
+        try {
+          ODirectoryPage page = new ODirectoryPage(cacheEntry, cacheEntry);
 
-          firstPage.setMaxLeftChildDepth(localNodeIndex, maxLeftChildDepth);
-          firstPage.setMaxRightChildDepth(localNodeIndex, maxRightChildDepth);
-          firstPage.setNodeLocalDepth(localNodeIndex, nodeLocalDepth);
+          page.setMaxLeftChildDepth(localLevel, maxLeftChildDepth);
+          page.setMaxRightChildDepth(localLevel, maxRightChildDepth);
+          page.setNodeLocalDepth(localLevel, nodeLocalDepth);
 
           if (tombstone >= 0)
-            firstPage.setTombstone((int) firstPage.getPointer(nodeIndex, 0));
+            firstPage.setTombstone((int) page.getPointer(localLevel, 0));
 
           for (int i = 0; i < newNode.length; i++)
-            firstPage.setPointer(localNodeIndex, i, newNode[i]);
+            page.setPointer(localLevel, i, newNode[i]);
 
-        } else {
-          final int pageIndex = nodeIndex / ODirectoryPage.NODES_PER_PAGE;
-          final int localLevel = nodeIndex % ODirectoryPage.NODES_PER_PAGE;
-
-          OCacheEntry cacheEntry = loadPageForWrite(fileId, pageIndex, true);
-          while (cacheEntry == null || cacheEntry.getPageIndex() < pageIndex) {
-            if (cacheEntry != null)
-              releasePageFromWrite(cacheEntry, atomicOperation);
-
-            cacheEntry = addPage(fileId);
-          }
-
-          try {
-            ODirectoryPage page = new ODirectoryPage(cacheEntry, cacheEntry);
-
-            page.setMaxLeftChildDepth(localLevel, maxLeftChildDepth);
-            page.setMaxRightChildDepth(localLevel, maxRightChildDepth);
-            page.setNodeLocalDepth(localLevel, nodeLocalDepth);
-
-            if (tombstone >= 0)
-              firstPage.setTombstone((int) page.getPointer(localLevel, 0));
-
-            for (int i = 0; i < newNode.length; i++)
-              page.setPointer(localLevel, i, newNode[i]);
-
-          } finally {
-            releasePageFromWrite(cacheEntry, atomicOperation);
-          }
+        } finally {
+          releasePageFromWrite(cacheEntry, atomicOperation);
         }
-
-      } finally {
-        releasePageFromWrite(firstEntry, atomicOperation);
       }
+
     } finally {
-      releaseExclusiveLock();
+      releasePageFromWrite(firstEntry, atomicOperation);
     }
 
     return nodeIndex;
   }
 
   void deleteNode(int nodeIndex, OAtomicOperation atomicOperation) throws IOException {
-    acquireExclusiveLock();
+    OCacheEntry firstEntry = loadPageForWrite(fileId, firstEntryIndex, true);
     try {
-      OCacheEntry firstEntry = loadPageForWrite(fileId, firstEntryIndex, true);
-      try {
-        ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
-        if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
-          firstPage.setPointer(nodeIndex, 0, firstPage.getTombstone());
+      ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
+      if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
+        firstPage.setPointer(nodeIndex, 0, firstPage.getTombstone());
+        firstPage.setTombstone(nodeIndex);
+      } else {
+        final int pageIndex = nodeIndex / ODirectoryPage.NODES_PER_PAGE;
+        final int localNodeIndex = nodeIndex % ODirectoryPage.NODES_PER_PAGE;
+
+        final OCacheEntry cacheEntry = loadPageForWrite(fileId, pageIndex, true);
+        try {
+          ODirectoryPage page = new ODirectoryPage(cacheEntry, cacheEntry);
+
+          page.setPointer(localNodeIndex, 0, firstPage.getTombstone());
           firstPage.setTombstone(nodeIndex);
-        } else {
-          final int pageIndex = nodeIndex / ODirectoryPage.NODES_PER_PAGE;
-          final int localNodeIndex = nodeIndex % ODirectoryPage.NODES_PER_PAGE;
 
-          final OCacheEntry cacheEntry = loadPageForWrite(fileId, pageIndex, true);
-          try {
-            ODirectoryPage page = new ODirectoryPage(cacheEntry, cacheEntry);
-
-            page.setPointer(localNodeIndex, 0, firstPage.getTombstone());
-            firstPage.setTombstone(nodeIndex);
-
-          } finally {
-            releasePageFromWrite(cacheEntry, atomicOperation);
-          }
+        } finally {
+          releasePageFromWrite(cacheEntry, atomicOperation);
         }
-      } finally {
-        releasePageFromWrite(firstEntry, atomicOperation);
       }
     } finally {
-      releaseExclusiveLock();
+      releasePageFromWrite(firstEntry, atomicOperation);
     }
   }
 
   byte getMaxLeftChildDepth(int nodeIndex) throws IOException {
-    atomicOperationsManager.acquireReadLock(this);
+    final ODirectoryPage page = loadPage(nodeIndex, false);
     try {
-      acquireSharedLock();
-      try {
-        final ODirectoryPage page = loadPage(nodeIndex, false);
-        try {
-          return page.getMaxLeftChildDepth(getLocalNodeIndex(nodeIndex));
-        } finally {
-          releasePage(page, false, null);
-        }
-      } finally {
-        releaseSharedLock();
-      }
+      return page.getMaxLeftChildDepth(getLocalNodeIndex(nodeIndex));
     } finally {
-      atomicOperationsManager.releaseReadLock(this);
+      releasePage(page, false, null);
     }
   }
 
   void setMaxLeftChildDepth(int nodeIndex, byte maxLeftChildDepth, OAtomicOperation atomicOperation) throws IOException {
-    acquireExclusiveLock();
+    final ODirectoryPage page = loadPage(nodeIndex, true);
     try {
-
-      final ODirectoryPage page = loadPage(nodeIndex, true);
-      try {
-        page.setMaxLeftChildDepth(getLocalNodeIndex(nodeIndex), maxLeftChildDepth);
-      } finally {
-        releasePage(page, true, atomicOperation);
-      }
+      page.setMaxLeftChildDepth(getLocalNodeIndex(nodeIndex), maxLeftChildDepth);
     } finally {
-      releaseExclusiveLock();
+      releasePage(page, true, atomicOperation);
     }
   }
 
   byte getMaxRightChildDepth(int nodeIndex) throws IOException {
-    atomicOperationsManager.acquireReadLock(this);
+    final ODirectoryPage page = loadPage(nodeIndex, false);
     try {
-      acquireSharedLock();
-      try {
-        final ODirectoryPage page = loadPage(nodeIndex, false);
-        try {
-          return page.getMaxRightChildDepth(getLocalNodeIndex(nodeIndex));
-        } finally {
-          releasePage(page, false, null);
-        }
-      } finally {
-        releaseSharedLock();
-      }
+      return page.getMaxRightChildDepth(getLocalNodeIndex(nodeIndex));
     } finally {
-      atomicOperationsManager.releaseReadLock(this);
+      releasePage(page, false, null);
     }
   }
 
   void setMaxRightChildDepth(int nodeIndex, byte maxRightChildDepth, OAtomicOperation atomicOperation) throws IOException {
-    acquireExclusiveLock();
+    final ODirectoryPage page = loadPage(nodeIndex, true);
     try {
-      final ODirectoryPage page = loadPage(nodeIndex, true);
-      try {
-        page.setMaxRightChildDepth(getLocalNodeIndex(nodeIndex), maxRightChildDepth);
-      } finally {
-        releasePage(page, true, atomicOperation);
-      }
+      page.setMaxRightChildDepth(getLocalNodeIndex(nodeIndex), maxRightChildDepth);
     } finally {
-      releaseExclusiveLock();
+      releasePage(page, true, atomicOperation);
     }
   }
 
   byte getNodeLocalDepth(int nodeIndex) throws IOException {
-    atomicOperationsManager.acquireReadLock(this);
+    final ODirectoryPage page = loadPage(nodeIndex, false);
     try {
-      acquireSharedLock();
-      try {
-        final ODirectoryPage page = loadPage(nodeIndex, false);
-        try {
-          return page.getNodeLocalDepth(getLocalNodeIndex(nodeIndex));
-        } finally {
-          releasePage(page, false, null);
-        }
-      } finally {
-        releaseSharedLock();
-      }
+      return page.getNodeLocalDepth(getLocalNodeIndex(nodeIndex));
     } finally {
-      atomicOperationsManager.releaseReadLock(this);
+      releasePage(page, false, null);
     }
   }
 
   void setNodeLocalDepth(int nodeIndex, byte localNodeDepth, OAtomicOperation atomicOperation) throws IOException {
-    acquireExclusiveLock();
+    final ODirectoryPage page = loadPage(nodeIndex, true);
     try {
-      final ODirectoryPage page = loadPage(nodeIndex, true);
-      try {
-        page.setNodeLocalDepth(getLocalNodeIndex(nodeIndex), localNodeDepth);
-      } finally {
-        releasePage(page, true, atomicOperation);
-      }
-
+      page.setNodeLocalDepth(getLocalNodeIndex(nodeIndex), localNodeDepth);
     } finally {
-      releaseExclusiveLock();
+      releasePage(page, true, atomicOperation);
     }
   }
 
   long[] getNode(int nodeIndex) throws IOException {
     final long[] node = new long[LEVEL_SIZE];
 
-    atomicOperationsManager.acquireReadLock(this);
+    final ODirectoryPage page = loadPage(nodeIndex, false);
     try {
-      acquireSharedLock();
-      try {
-        final ODirectoryPage page = loadPage(nodeIndex, false);
-        try {
-          final int localNodeIndex = getLocalNodeIndex(nodeIndex);
-          for (int i = 0; i < LEVEL_SIZE; i++)
-            node[i] = page.getPointer(localNodeIndex, i);
-        } finally {
-          releasePage(page, false, null);
-        }
-      } finally {
-        releaseSharedLock();
-      }
+      final int localNodeIndex = getLocalNodeIndex(nodeIndex);
+      for (int i = 0; i < LEVEL_SIZE; i++)
+        node[i] = page.getPointer(localNodeIndex, i);
     } finally {
-      atomicOperationsManager.releaseReadLock(this);
+      releasePage(page, false, null);
     }
 
     return node;
   }
 
   void setNode(int nodeIndex, long[] node, OAtomicOperation atomicOperation) throws IOException {
-    acquireExclusiveLock();
+    final ODirectoryPage page = loadPage(nodeIndex, true);
     try {
-
-      final ODirectoryPage page = loadPage(nodeIndex, true);
-      try {
-        final int localNodeIndex = getLocalNodeIndex(nodeIndex);
-        for (int i = 0; i < LEVEL_SIZE; i++)
-          page.setPointer(localNodeIndex, i, node[i]);
-      } finally {
-        releasePage(page, true, atomicOperation);
-      }
+      final int localNodeIndex = getLocalNodeIndex(nodeIndex);
+      for (int i = 0; i < LEVEL_SIZE; i++)
+        page.setPointer(localNodeIndex, i, node[i]);
     } finally {
-      releaseExclusiveLock();
+      releasePage(page, true, atomicOperation);
     }
   }
 
   long getNodePointer(int nodeIndex, int index) throws IOException {
-    atomicOperationsManager.acquireReadLock(this);
+    final ODirectoryPage page = loadPage(nodeIndex, false);
     try {
-      acquireSharedLock();
-      try {
-        final ODirectoryPage page = loadPage(nodeIndex, false);
-        try {
-          return page.getPointer(getLocalNodeIndex(nodeIndex), index);
-        } finally {
-          releasePage(page, false, null);
-        }
-      } finally {
-        releaseSharedLock();
-      }
+      return page.getPointer(getLocalNodeIndex(nodeIndex), index);
     } finally {
-      atomicOperationsManager.releaseReadLock(this);
+      releasePage(page, false, null);
     }
   }
 
   void setNodePointer(int nodeIndex, int index, long pointer, OAtomicOperation atomicOperation) throws IOException {
-    acquireExclusiveLock();
+    final ODirectoryPage page = loadPage(nodeIndex, true);
     try {
-      final ODirectoryPage page = loadPage(nodeIndex, true);
-      try {
-        page.setPointer(getLocalNodeIndex(nodeIndex), index, pointer);
-      } finally {
-        releasePage(page, true, atomicOperation);
-      }
+      page.setPointer(getLocalNodeIndex(nodeIndex), index, pointer);
     } finally {
-      releaseExclusiveLock();
+      releasePage(page, true, atomicOperation);
     }
   }
 
   public void clear(OAtomicOperation atomicOperation) throws IOException {
-    acquireExclusiveLock();
-    try {
-      truncateFile(fileId);
-      init(atomicOperation);
-    } finally {
-      releaseExclusiveLock();
-    }
+    truncateFile(fileId);
+    init(atomicOperation);
   }
 
   public void flush() {
-    atomicOperationsManager.acquireReadLock(this);
-    try {
-      acquireSharedLock();
-      try {
-        writeCache.flush(fileId);
-      } finally {
-        releaseSharedLock();
-      }
-    } finally {
-      atomicOperationsManager.releaseReadLock(this);
-    }
+    writeCache.flush(fileId);
   }
 
   private ODirectoryPage loadPage(int nodeIndex, boolean exclusiveLock) throws IOException {
