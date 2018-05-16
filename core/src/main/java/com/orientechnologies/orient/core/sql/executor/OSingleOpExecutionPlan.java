@@ -15,7 +15,7 @@ import java.util.Optional;
  */
 public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
 
-  private final OSimpleExecStatement statement;
+  protected final OSimpleExecStatement statement;
   OCommandContext ctx;
 
   boolean executed = false;
@@ -34,7 +34,7 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
   @Override
   public OResultSet fetchNext(int n) {
     if (executed && result == null) {
-      throw new OCommandExecutionException("Trying to execute a result-set twice. Please use reset()");
+      return new OInternalResultSet();
     }
     if (!executed) {
       executed = true;
@@ -96,7 +96,7 @@ public class OSingleOpExecutionPlan implements OInternalExecutionPlan {
       throw new OCommandExecutionException("Trying to execute a result-set twice. Please use reset()");
     }
     executed = true;
-    OResultSet result = statement.executeSimple(this.ctx);
+    result = statement.executeSimple(this.ctx);
     if (result instanceof OInternalResultSet) {
       ((OInternalResultSet) result).plan = this;
     }

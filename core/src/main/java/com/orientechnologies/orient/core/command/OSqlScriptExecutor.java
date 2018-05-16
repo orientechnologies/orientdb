@@ -4,8 +4,11 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OScriptExecutionPlan;
+import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 
 import java.util.HashMap;
@@ -27,6 +30,7 @@ public class OSqlScriptExecutor implements OScriptExecutor {
     List<OStatement> statements = OSQLEngine.parseScript(script, database);
     OResultSet rs = null;
     OCommandContext scriptContext = new OBasicCommandContext();
+    ((OBasicCommandContext) scriptContext).setDatabase(database);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
       for (int i = 0; i < args.length; i++) {
@@ -34,6 +38,9 @@ public class OSqlScriptExecutor implements OScriptExecutor {
       }
     }
     scriptContext.setInputParameters(params);
+
+    OScriptExecutionPlan plan = new OScriptExecutionPlan(scriptContext);
+
     for (OStatement stm : statements) {
       if (rs != null) {
         rs.close();
@@ -41,12 +48,10 @@ public class OSqlScriptExecutor implements OScriptExecutor {
       if (stm.getOriginalStatement() == null) {
         stm.setOriginalStatement(stm.toString());
       }
-      rs = stm.execute(database, (Map) null, scriptContext);
+      OInternalExecutionPlan sub = stm.createExecutionPlan(scriptContext);
+      plan.chain(sub, false);
     }
-    if (rs == null) {
-      rs = new OInternalResultSet();
-    }
-    return rs;
+    return new OLocalResultSet(plan);
   }
 
   @Override

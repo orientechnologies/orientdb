@@ -46,4 +46,8 @@ public class OInternalResultSet implements OResultSet {
   public void reset() {
     this.next = 0;
   }
+
+  public int size() {
+    return content.size();
+  }
 }
