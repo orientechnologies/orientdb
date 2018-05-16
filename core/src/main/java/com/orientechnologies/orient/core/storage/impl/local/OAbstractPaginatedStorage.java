@@ -621,9 +621,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           clearStorageDirty();
         }
 
-        if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE))
-          makeFullCheckpoint();
-
         postCreateSteps();
 
       } catch (InterruptedException e) {

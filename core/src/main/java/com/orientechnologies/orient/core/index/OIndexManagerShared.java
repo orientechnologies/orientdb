@@ -42,7 +42,16 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.nio.channels.UnsupportedAddressTypeException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -173,9 +182,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     }
 
     notifyInvolvedClasses(clusterIdsToIndex);
-
-    if (database.getConfiguration().getValueAsBoolean(OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE))
-      storage.synch();
 
     return preProcessBeforeReturn(database, index);
   }
