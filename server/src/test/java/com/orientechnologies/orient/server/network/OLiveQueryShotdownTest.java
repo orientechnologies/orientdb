@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.server.OServer;
 
-@Ignore
 public class OLiveQueryShotdownTest {
 
   private OServer             server;

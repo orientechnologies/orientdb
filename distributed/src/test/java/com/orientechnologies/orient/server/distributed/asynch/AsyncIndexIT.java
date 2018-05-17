@@ -55,7 +55,7 @@ public class AsyncIndexIT extends BareBoneBase2ServerTest {
     }
 
     // CHECK ON THE OTHER NODE
-    OrientDB orientDB2 = servers[2].getServer().getContext();
+    OrientDB orientDB2 = servers[1].getServer().getContext();
     orientDB2.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
     ODatabaseDocument graph2 = orientDB.open(getDatabaseName(), "admin", "admin");
     try {
