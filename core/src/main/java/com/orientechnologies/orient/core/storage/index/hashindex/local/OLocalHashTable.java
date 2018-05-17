@@ -1326,6 +1326,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
             logComponentOperation(atomicOperation,
                 new OHashTablePutOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, rawValue, oldRawValue));
+            return;
           }
 
           bucket.deleteEntry(index);
@@ -1341,6 +1342,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           logComponentOperation(atomicOperation,
               new OHashTablePutOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, rawValue, oldRawValue));
+          return;
         }
 
         final OHashTable.BucketSplitResult splitResult = splitBucket(bucket, pageIndex, atomicOperation);
