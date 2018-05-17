@@ -86,7 +86,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    */
   public Map<String, Set<String>> getActiveClusterMap() {
     ODistributedServerManager distributedManager = getStorageDistributed().getDistributedManager();
-    if (distributedManager.isOffline() || !distributedManager.isNodeOnline(distributedManager.getLocalNodeName(), getName())) {
+    if (distributedManager.isOffline() || !distributedManager.isNodeOnline(distributedManager.getLocalNodeName(), getName())
+        || OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
       return super.getActiveClusterMap();
     }
     Map<String, Set<String>> result = new HashMap<>();
