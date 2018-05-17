@@ -1436,26 +1436,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return rid.getClusterId();
   }
 
-  public <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName) {
-    ORecordId rid = (ORecordId) record.getIdentity();
-    assert rid.isNew();
-
-    ORecordInternal.onBeforeIdentityChanged(record);
-    int id = assignAndCheckCluster(record, clusterName);
-    clusterName = getClusterNameById(id);
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, clusterName);
-
-    byte[] content = getSerializer().writeClassOnly(record);
-
-    final OStorageOperationResult<OPhysicalPosition> ppos = getStorage()
-        .createRecord(rid, content, record.getVersion(), recordType, OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
-
-    ORecordInternal.setVersion(record, ppos.getResult().recordVersion);
-    ((ORecordId) record.getIdentity()).copyFrom(rid);
-    ORecordInternal.onAfterIdentityChanged(record);
-
-    return (RET) record;
-  }
+  public abstract <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName);
 
   public abstract <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
       final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
