@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.sql.parser.OReturnStatement;
  * This step represents the execution plan of an instruciton instide a batch script
  */
 public class ScriptLineStep extends AbstractExecutionStep {
-  private final OInternalExecutionPlan plan;
+  protected final OInternalExecutionPlan plan;
 
   boolean executed = false;
 
@@ -63,12 +63,20 @@ public class ScriptLineStep extends AbstractExecutionStep {
     }
     if (plan instanceof OSingleOpExecutionPlan) {
       if (((OSingleOpExecutionPlan) plan).statement instanceof OReturnStatement) {
-        return new ReturnStep(((OSingleOpExecutionPlan) plan).statement, ctx, false);
+        return new ReturnStep(((OSingleOpExecutionPlan) plan).statement, ctx, profilingEnabled);
       }
     }
     if (plan instanceof OIfExecutionPlan) {
       return ((OIfExecutionPlan) plan).executeUntilReturn();
     }
     throw new IllegalStateException();
+  }
+
+  @Override
+  public String prettyPrint(int depth, int indent) {
+    if (plan == null) {
+      return "Script Line";
+    }
+    return plan.prettyPrint(depth, indent);
   }
 }

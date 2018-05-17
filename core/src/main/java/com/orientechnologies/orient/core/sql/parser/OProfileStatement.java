@@ -89,7 +89,7 @@ public class OProfileStatement extends OStatement {
 
   @Override
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean profile) {
-    return statement.createExecutionPlan(ctx, profile);
+    return statement.createExecutionPlan(ctx, true);
   }
 
   @Override

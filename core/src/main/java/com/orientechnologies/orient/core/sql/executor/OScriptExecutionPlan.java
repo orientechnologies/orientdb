@@ -70,7 +70,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
 
       @Override
       public Optional<OExecutionPlan> getExecutionPlan() {
-        return null;
+        return finalResult == null ? Optional.empty() : finalResult.getExecutionPlan();
       }
 
       @Override
@@ -92,6 +92,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
         }
         partial = lastStep.syncPull(ctx, n);
       }
+      ((OInternalResultSet) finalResult).setPlan(((ScriptLineStep) lastStep).plan);
     }
   }
 

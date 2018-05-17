@@ -338,8 +338,13 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       thirdValue = unboxOResult(thirdValue);
 
       OIndexDefinition indexDef = index.getDefinition();
-      secondValue = convertToIndexDefinitionTypes(secondValue, indexDef.getTypes());
-      thirdValue = convertToIndexDefinitionTypes(thirdValue, indexDef.getTypes());
+      try {
+        secondValue = convertToIndexDefinitionTypes(secondValue, indexDef.getTypes());
+        thirdValue = convertToIndexDefinitionTypes(thirdValue, indexDef.getTypes());
+      } catch (Exception e) {
+        //some problems in key conversion, so the params do not match the key types
+        continue;
+      }
       OIndexCursor cursor;
       if (index.supportsOrderedIterations()) {
         cursor = index.iterateEntriesBetween(toBetweenIndexKey(indexDef, secondValue), fromKeyIncluded,
