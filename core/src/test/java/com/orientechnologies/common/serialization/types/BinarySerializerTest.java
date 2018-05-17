@@ -50,13 +50,13 @@ public class BinarySerializerTest {
   @Test
   public void testSerialize() {
     binarySerializer.serialize(OBJECT, stream, 0);
-    Assert.assertEquals(binarySerializer.deserialize(stream, 0), OBJECT);
+    Assert.assertArrayEquals(binarySerializer.deserialize(stream, 0), OBJECT);
   }
 
   @Test
   public void testSerializeNative() {
     binarySerializer.serializeNativeObject(OBJECT, stream, 0);
-    Assert.assertEquals(binarySerializer.deserializeNativeObject(stream, 0), OBJECT);
+    Assert.assertArrayEquals(binarySerializer.deserializeNativeObject(stream, 0), OBJECT);
 
   }
 
@@ -69,7 +69,7 @@ public class BinarySerializerTest {
     buffer.put(stream);
 
     buffer.position(0);
-    Assert.assertEquals(binarySerializer.deserializeFromByteBufferObject(buffer), OBJECT);
+    Assert.assertArrayEquals(binarySerializer.deserializeFromByteBufferObject(buffer), OBJECT);
   }
 
   @Test
@@ -90,6 +90,6 @@ public class BinarySerializerTest {
     buffer.position(serializationOffset);
     final byte[] result = binarySerializer.deserializeFromByteBufferObject(buffer);
 
-    Assert.assertEquals(result, OBJECT);
+    Assert.assertArrayEquals(result, OBJECT);
   }
 }

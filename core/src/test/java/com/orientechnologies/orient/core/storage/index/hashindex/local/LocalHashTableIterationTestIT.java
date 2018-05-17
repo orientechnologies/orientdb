@@ -45,7 +45,7 @@ public class LocalHashTableIterationTestIT {
 
     OHashFunction<Integer> hashFunction = new OHashFunction<Integer>() {
       @Override
-      public long hashCode(Integer value) {
+      public long hashCode(Integer value, Object[] keyTypes) {
         return Long.MAX_VALUE / 2 + value;
       }
 

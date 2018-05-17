@@ -868,8 +868,6 @@ public final class OSBTree<K, V> extends ODurableComponent {
       logComponentOperation(atomicOperation,
           new OSBTreeRemoveOperation(atomicOperation.getOperationUnitId(), getName(), rawKey, removedValue));
 
-      endAtomicOperation(false, null);
-
     } catch (IOException e) {
       throw OException
           .wrapException(new OSBTreeException("Error during removing key " + key + " from sbtree " + getName(), this), e);

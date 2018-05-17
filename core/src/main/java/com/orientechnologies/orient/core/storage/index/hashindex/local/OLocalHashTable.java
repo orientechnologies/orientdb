@@ -118,7 +118,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     this.keyHashFunction = keyHashFunction;
     this.nullBucketFileExtension = nullBucketFileExtension;
 
-    this.comparator = new OHashTable.KeyHashCodeComparator<>(this.keyHashFunction);
+    this.comparator = new OHashTable.KeyHashCodeComparator<>(this.keyHashFunction, keyTypes);
   }
 
   @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
@@ -221,7 +221,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         } else {
           key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-          final long hashCode = keyHashFunction.hashCode(key);
+          final long hashCode = keyHashFunction.hashCode(key, (Object[]) keyTypes);
 
           OHashTable.BucketPath bucketPath = getBucket(hashCode);
           final long bucketPointer = directory
@@ -522,7 +522,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       try {
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-        final long hashCode = keyHashFunction.hashCode(key);
+        final long hashCode = keyHashFunction.hashCode(key, (Object[]) keyTypes);
         OHashTable.BucketPath bucketPath = getBucket(hashCode);
         long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
 
@@ -768,7 +768,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       try {
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-        final long hashCode = keyHashFunction.hashCode(key);
+        final long hashCode = keyHashFunction.hashCode(key, keyTypes);
         OHashTable.BucketPath bucketPath = getBucket(hashCode);
 
         long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
@@ -914,7 +914,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       try {
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-        final long hashCode = keyHashFunction.hashCode(key);
+        final long hashCode = keyHashFunction.hashCode(key, keyTypes);
         OHashTable.BucketPath bucketPath = getBucket(hashCode);
 
         long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
@@ -973,7 +973,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       try {
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-        final long hashCode = keyHashFunction.hashCode(key);
+        final long hashCode = keyHashFunction.hashCode(key, keyTypes);
         OHashTable.BucketPath bucketPath = getBucket(hashCode);
 
         long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
@@ -1987,9 +1987,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
     final Iterator<OHashIndexBucket.Entry<K, V>> positionIterator = bucket.iterator();
 
-    long firstValue = keyHashFunction.hashCode(positionIterator.next().key) >>> (HASH_CODE_SIZE - bucketDepth);
+    long firstValue = positionIterator.next().hashCode >>> (HASH_CODE_SIZE - bucketDepth);
     while (positionIterator.hasNext()) {
-      final long value = keyHashFunction.hashCode(positionIterator.next().key) >>> (HASH_CODE_SIZE - bucketDepth);
+      final long value = positionIterator.next().hashCode >>> (HASH_CODE_SIZE - bucketDepth);
       if (value != firstValue)
         return false;
     }

@@ -38,7 +38,7 @@ public final class OAutoShardingMurmurStrategy implements OAutoShardingStrategy 
   }
 
   public int getPartitionsId(final Object iKey, final int partitionSize) {
-    long hash = hashFunction.hashCode(iKey);
+    long hash = hashFunction.hashCode(iKey, null);
     hash = hash == Long.MIN_VALUE ? 0 : abs(hash);
     return (int) (hash % partitionSize);
   }

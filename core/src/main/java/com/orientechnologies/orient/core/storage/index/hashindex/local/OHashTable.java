@@ -139,15 +139,17 @@ public interface OHashTable<K, V> {
     private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
     private final OHashFunction<K> keyHashFunction;
+    private final Object[]         keyTypes;
 
-    public KeyHashCodeComparator(OHashFunction<K> keyHashFunction) {
+    public KeyHashCodeComparator(OHashFunction<K> keyHashFunction, Object[] keyTypes) {
       this.keyHashFunction = keyHashFunction;
+      this.keyTypes = keyTypes;
     }
 
     @Override
     public int compare(K keyOne, K keyTwo) {
-      final long hashCodeOne = keyHashFunction.hashCode(keyOne);
-      final long hashCodeTwo = keyHashFunction.hashCode(keyTwo);
+      final long hashCodeOne = keyHashFunction.hashCode(keyOne, keyTypes);
+      final long hashCodeTwo = keyHashFunction.hashCode(keyTwo, keyTypes);
 
       if (greaterThanUnsigned(hashCodeOne, hashCodeTwo))
         return 1;

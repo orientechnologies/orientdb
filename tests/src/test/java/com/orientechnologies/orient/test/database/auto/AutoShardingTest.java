@@ -15,22 +15,21 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingClusterSelectionStrategy;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 /**
  * Tests Auto-Sharding indexes (Since v2.2.0).
@@ -75,7 +74,7 @@ public class AutoShardingTest extends DocumentDBBaseTest {
   public void testQuery() {
     create();
     for (int i = 0; i < ITERATIONS; ++i) {
-      final int selectedClusterId = clusterIds[((int) (Math.abs(hashFunction.hashCode(i)) % clusterIds.length))];
+      final int selectedClusterId = clusterIds[((int) (Math.abs(hashFunction.hashCode(i, null)) % clusterIds.length))];
 
       Iterable<ODocument> resultSet = database.command(new OCommandSQL("select from AutoShardingTest where id = ?")).execute(i);
       Assert.assertTrue(resultSet.iterator().hasNext());
@@ -141,7 +140,7 @@ public class AutoShardingTest extends DocumentDBBaseTest {
 
   private void create() {
     for (int i = 0; i < ITERATIONS; ++i) {
-      final int selectedClusterId = clusterIds[((int) (Math.abs(hashFunction.hashCode(i)) % clusterIds.length))];
+      final int selectedClusterId = clusterIds[((int) (Math.abs(hashFunction.hashCode(i, null)) % clusterIds.length))];
 
       ODocument sqlRecord = database.command(new OCommandSQL("insert into AutoShardingTest (id) values (" + i + ")")).execute();
       Assert.assertEquals(sqlRecord.getIdentity().getClusterId(), selectedClusterId);
