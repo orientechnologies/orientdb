@@ -1329,7 +1329,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           // COLLECT ALL THE MODIFIED RECORDS
           for (OLogSequenceNumber lsn : lastTx) {
             walRecords = writeAheadLog.read(lsn, 1);
-            OWriteableWALRecord walRecord = walRecords.get(1);
+            OWriteableWALRecord walRecord = walRecords.get(0);
 
             final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
 
