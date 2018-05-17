@@ -200,9 +200,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
     assert freezeRequests.get() >= 0;
 
-    final boolean useWal = useWal();
     final OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OLogSequenceNumber lsn = useWal ? writeAheadLog.logAtomicOperationStartRecord(true, unitId) : null;
+    final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
     operation = new OAtomicOperation(lsn, unitId);
     currentOperation.set(operation);
@@ -212,7 +211,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       activeAtomicOperations.put(unitId, new OPair<>(thread.getName(), thread.getStackTrace()));
     }
 
-    if (useWal && trackNonTxOperations && storage.getStorageTransaction() == null)
+    if (trackNonTxOperations && storage.getStorageTransaction() == null)
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
 
     if (lockName != null)
@@ -418,7 +417,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       try {
         if (operation.isRollback()) {
           if (storage instanceof ODirectMemoryStorage) {
-            final List<OComponentOperation> componentOperations = operation.getComponentRecords();
+            final List<OComponentOperation> componentOperations = new ArrayList<>(operation.getComponentRecords());
             final ListIterator<OComponentOperation> iterator = componentOperations.listIterator(componentOperations.size());
 
             while (iterator.hasPrevious()) {

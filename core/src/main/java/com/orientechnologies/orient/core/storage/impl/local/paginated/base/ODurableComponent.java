@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -33,6 +34,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
 import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 
@@ -126,9 +128,9 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected OCacheEntry addPage(long fileId) throws IOException {
     final OCacheEntry cacheEntry = readCache.allocateNewPage(fileId, writeCache, true);
+
     if (storage instanceof OLocalPaginatedStorage) {
       final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
-      //TODO: change LSN according new format and add modification counter
       ODurablePage.setLogSequenceNumber(buffer, writeAheadLog.end());
     }
 
@@ -138,48 +140,55 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected void releasePageFromWrite(OCacheEntry cacheEntry, OAtomicOperation atomicOperation) {
     if (cacheEntry.isDirty() && storage instanceof OLocalPaginatedStorage) {
       final OLogSequenceNumber end = writeAheadLog.end();
-      final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
+      final OCachePointer cachePointer = cacheEntry.getCachePointer();
+      final ByteBuffer buffer = cachePointer.getBufferDuplicate();
       final OLogSequenceNumber pageLsn = ODurablePage.getLogSequenceNumberFromPage(buffer);
 
+      final OLogSequenceNumber recordLSN;
       if (pageLsn.getSegment() < end.getSegment()) {
         final byte[] page = new byte[buffer.limit()];
 
         buffer.position(0);
         buffer.get(page);
 
-        final OLogSequenceNumber recordLSN;
         try {
           final OUpdatePageRecord updatePageRecord = new OUpdatePageRecord(cacheEntry.getPageIndex(), cacheEntry.getFileId(),
               atomicOperation.getOperationUnitId(), page);
           recordLSN = writeAheadLog.log(updatePageRecord);
         } catch (IOException e) {
           throw OException.wrapException(new OStorageException(
-              "Error during loging of changes of page " + cacheEntry.getFileId() + ":" + cacheEntry.getPageIndex() + " in storage "
+              "Error during logging of changes of page " + cacheEntry.getFileId() + ":" + cacheEntry.getPageIndex() + " in storage "
                   + storage.getName()), e);
         }
 
-        //TODO: change LSN according new format
-        ODurablePage.setLogSequenceNumber(buffer, recordLSN);
+        cachePointer.setFullContentLogged(true);
+
       } else {
         assert pageLsn.getSegment() == end.getSegment();
-        //TODO:update lsn by using modification counter
+        try {
+          recordLSN = writeAheadLog.log(new OEmptyWALRecord());
+        } catch (IOException e) {
+          throw OException.wrapException(new OStorageException(
+              "Error during generation of LSN for page " + cacheEntry.getFileId() + ":" + cacheEntry.getPageIndex() + " in storage "
+                  + storage.getName()), e);
+        }
       }
+
+      ODurablePage.setLogSequenceNumber(buffer, recordLSN);
     }
 
     readCache.releaseFromWrite(cacheEntry, writeCache);
   }
 
-  public void logComponentOperation(OAtomicOperation atomicOperation, OComponentOperation componentOperation) {
+  protected void logComponentOperation(OAtomicOperation atomicOperation, OComponentOperation componentOperation) {
     assert componentOperation != null;
     try {
       writeAheadLog.log(componentOperation);
-
       if (storage instanceof ODirectMemoryStorage) {
         atomicOperation.addComponentOperation(componentOperation, true);
       } else {
         atomicOperation.addComponentOperation(componentOperation, false);
       }
-
     } catch (IOException e) {
       throw OException
           .wrapException(new OStorageException("Error during logging of component operation in storage " + storage.getName()), e);

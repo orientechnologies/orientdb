@@ -73,8 +73,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
@@ -2671,6 +2690,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           }
 
           final long version;
+          final boolean fullContentLogged;
 
           final ByteBuffer copy = bufferPool.acquireDirect(false);
           final OCachePointer pointer = cacheEntry.getValue();
@@ -2678,6 +2698,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           pointer.acquireSharedLock();
           try {
             version = pointer.getVersion();
+            fullContentLogged = pointer.isFullContentLogged();
+            pointer.setFullContentLogged(false);
 
             final ByteBuffer buffer = pointer.getBufferDuplicate();
 
@@ -2693,7 +2715,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             pointer.releaseSharedLock();
           }
 
-          flushWALTillPageLSN(copy);
+          if (fullContentLogged) {
+            flushWALTillPageLSN(copy);
+          }
+
           copy.position(0);
 
           if (chunk.isEmpty()) {
@@ -2866,9 +2891,13 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         } else {
           pointer.acquireSharedLock();
 
+          final boolean fullContentLogged;
           final ByteBuffer copy = bufferPool.acquireDirect(false);
           try {
             version = pointer.getVersion();
+            fullContentLogged = pointer.isFullContentLogged();
+            pointer.setFullContentLogged(false);
+
             final ByteBuffer buffer = pointer.getBufferDuplicate();
 
             buffer.position(0);
@@ -2882,7 +2911,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             pointer.releaseSharedLock();
           }
 
-          flushWALTillPageLSN(copy);
+          if (fullContentLogged) {
+            flushWALTillPageLSN(copy);
+          }
+
           copy.position(0);
 
           if (chunk.isEmpty()) {

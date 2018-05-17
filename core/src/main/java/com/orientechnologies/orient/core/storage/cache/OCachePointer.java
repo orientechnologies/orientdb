@@ -53,12 +53,22 @@ public class OCachePointer {
   private final long fileId;
   private final long pageIndex;
 
+  private boolean fullContentLogged;
+
   public OCachePointer(final ByteBuffer buffer, final OByteBufferPool bufferPool, final long fileId, final long pageIndex) {
     this.buffer = buffer;
     this.bufferPool = bufferPool;
 
     this.fileId = fileId;
     this.pageIndex = pageIndex;
+  }
+
+  public boolean isFullContentLogged() {
+    return fullContentLogged;
+  }
+
+  public void setFullContentLogged(boolean fullContentLogged) {
+    this.fullContentLogged = fullContentLogged;
   }
 
   public void setWritersListener(WritersListener writersListener) {
