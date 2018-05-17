@@ -796,6 +796,27 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     return callbackHooks(ORecordHook.TYPE.BEFORE_READ, identifiable) == ORecordHook.RESULT.SKIP;
   }
 
+  public <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName) {
+    ORecordId rid = (ORecordId) record.getIdentity();
+    assert rid.isNew();
+
+    ORecordInternal.onBeforeIdentityChanged(record);
+    int id = assignAndCheckCluster(record, clusterName);
+    clusterName = getClusterNameById(id);
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, clusterName);
+
+    byte[] content = getSerializer().writeClassOnly(record);
+
+    final OStorageOperationResult<OPhysicalPosition> ppos = getStorage()
+        .createRecord(rid, content, record.getVersion(), recordType, OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
+
+    ORecordInternal.setVersion(record, ppos.getResult().recordVersion);
+    ((ORecordId) record.getIdentity()).copyFrom(rid);
+    ORecordInternal.onAfterIdentityChanged(record);
+
+    return (RET) record;
+  }
+
   @Override
   public void afterReadOperations(OIdentifiable identifiable) {
     callbackHooks(ORecordHook.TYPE.AFTER_READ, identifiable);

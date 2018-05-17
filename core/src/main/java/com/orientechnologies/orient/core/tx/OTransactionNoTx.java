@@ -24,6 +24,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.LatestVersionRecordReader;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.document.RecordReader;
 import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -42,10 +43,7 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * No operation transaction.
@@ -168,31 +166,50 @@ public class OTransactionNoTx extends OTransactionAbstract {
       Set<ORecord> newRecord = dirtyManager.getNewRecords();
       Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
       dirtyManager.clearForSave();
-      if (newRecord != null) {
-        for (ORecord rec : newRecord) {
-          if (rec.getIdentity().isNew() && rec instanceof ODocument) {
-            ORecord ret = saveNew((ODocument) rec, dirtyManager, iClusterName, iRecord, iMode, iForceCreate, iRecordCreatedCallback,
+      if (database instanceof ODatabaseDocumentEmbedded) {
+        if (iRecord.getIdentity().isNew()) {
+          if (newRecord == null)
+            newRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
+          newRecord.add(iRecord);
+        } else {
+          if (updatedRecord == null)
+            updatedRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
+          updatedRecord.add(iRecord);
+        }
+
+        ((ODatabaseDocumentEmbedded) database)
+            .saveAll(iRecord, newRecord, updatedRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback,
                 iRecordUpdatedCallback);
-            if (ret != null)
-              toRet = ret;
+
+        return iRecord;
+      } else {
+        if (newRecord != null) {
+          for (ORecord rec : newRecord) {
+            if (rec.getIdentity().isNew() && rec instanceof ODocument) {
+              ORecord ret = saveNew((ODocument) rec, dirtyManager, iClusterName, iRecord, iMode, iForceCreate,
+                  iRecordCreatedCallback, iRecordUpdatedCallback);
+              if (ret != null)
+                toRet = ret;
+            }
           }
         }
-      }
-      if (updatedRecord != null) {
-        for (ORecord rec : updatedRecord) {
-          if (rec == iRecord) {
-            toRet = database.executeSaveRecord(rec, iClusterName, rec.getVersion(), iMode, iForceCreate, iRecordCreatedCallback,
-                iRecordUpdatedCallback);
-          } else
-            database.executeSaveRecord(rec, getClusterName(rec), rec.getVersion(), OPERATION_MODE.SYNCHRONOUS, false, null, null);
+        if (updatedRecord != null) {
+          for (ORecord rec : updatedRecord) {
+            if (rec == iRecord) {
+              toRet = database.executeSaveRecord(rec, iClusterName, rec.getVersion(), iMode, iForceCreate, iRecordCreatedCallback,
+                  iRecordUpdatedCallback);
+            } else
+              database.executeSaveRecord(rec, getClusterName(rec), rec.getVersion(), OPERATION_MODE.SYNCHRONOUS, false, null, null);
+          }
         }
-      }
 
-      if (toRet != null)
-        return toRet;
-      else
-        return database.executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iMode, iForceCreate, iRecordCreatedCallback,
-            iRecordUpdatedCallback);
+        if (toRet != null)
+          return toRet;
+        else
+          return database
+              .executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iMode, iForceCreate, iRecordCreatedCallback,
+                  iRecordUpdatedCallback);
+      }
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();

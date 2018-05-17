@@ -34,14 +34,13 @@ import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
@@ -50,6 +49,7 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryMonitorEmbedded;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
@@ -60,8 +60,10 @@ import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 
@@ -716,6 +718,40 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     return;
   }
 
+  public <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName) {
+    ORecordId rid = (ORecordId) record.getIdentity();
+    assert rid.isNew();
+    assert record instanceof ODocument;
+    ODocument doc = (ODocument) record;
+
+    ORecordInternal.onBeforeIdentityChanged(record);
+    int id = assignAndCheckCluster(record, clusterName);
+    clusterName = getClusterNameById(id);
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, clusterName);
+
+    final OMicroTransaction microTx = beginMicroTransaction();
+    ODocument mock = new ODocument(doc.getClassName(), doc.getIdentity().copy()) {
+      @Override
+      public void validate() throws OValidationException {
+      }
+    };
+    try {
+      microTx.internalAddRecord(mock, ORecordOperation.CREATED, clusterName);
+
+    } catch (Exception e) {
+      endMicroTransaction(false);
+      throw e;
+    }
+    endMicroTransaction(true);
+
+    ORecordInternal.setVersion(record, mock.getVersion());
+    rid = (ORecordId) microTx.getRecordEntry(mock.getIdentity()).getRID();
+    ((ORecordId) record.getIdentity()).copyFrom(rid);
+    ORecordInternal.onAfterIdentityChanged(record);
+
+    return (RET) record;
+  }
+
   /**
    * This method is internal, it can be subject to signature change or be removed, do not use.
    *
@@ -1016,5 +1052,55 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     super.afterRollbackOperations();
     OLiveQueryHook.removePendingDatabaseOps(this);
     OLiveQueryHookV2.removePendingDatabaseOps(this);
+  }
+
+  public String getClusterName(final ORecord record) {
+    int clusterId = record.getIdentity().getClusterId();
+    if (clusterId == ORID.CLUSTER_ID_INVALID) {
+      // COMPUTE THE CLUSTER ID
+      OClass schemaClass = null;
+      if (record instanceof ODocument)
+        schemaClass = ODocumentInternal.getImmutableSchemaClass(this, (ODocument) record);
+      if (schemaClass != null) {
+        // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
+        if (schemaClass.isAbstract())
+          throw new OSchemaException("Document belongs to abstract class '" + schemaClass.getName() + "' and cannot be saved");
+        clusterId = schemaClass.getClusterForNewInstance((ODocument) record);
+        return getClusterNameById(clusterId);
+      } else {
+        return getClusterNameById(getStorage().getDefaultClusterId());
+      }
+
+    } else {
+      return getClusterNameById(clusterId);
+    }
+  }
+
+  public void saveAll(ORecord iRecord, Set<ORecord> newRecord, Set<ORecord> updatedRecord, String iClusterName,
+      OPERATION_MODE iMode, boolean iForceCreate, ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<Integer> iRecordUpdatedCallback) {
+    final OMicroTransaction microTx = beginMicroTransaction();
+    try {
+      if (newRecord != null) {
+        for (ORecord rn : newRecord) {
+          String cluster;
+          if (iRecord == rn)
+            cluster = iClusterName;
+          else
+            cluster = getClusterName(rn);
+          microTx.saveRecord(rn, cluster, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+        }
+      }
+      if (updatedRecord != null) {
+        for (ORecord rn : updatedRecord) {
+          microTx.saveRecord(rn, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+        }
+      }
+    } catch (Exception e) {
+      endMicroTransaction(false);
+      throw e;
+    }
+    endMicroTransaction(true);
+
   }
 }

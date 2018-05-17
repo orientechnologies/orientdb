@@ -477,40 +477,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
       }
 
       try {
-        final ORecordId recordId = (ORecordId) record.getIdentity();
-
-        if (!recordId.isValid()) {
-          ORecordInternal.onBeforeIdentityChanged(record);
-          database.assignAndCheckCluster(record, clusterName);
-
-          recordId.setClusterPosition(recordSerial--);
-
-          ORecordInternal.onAfterIdentityChanged(record);
-        }
-
-        ORecordOperation recordOperation = resolveRecordOperation(recordId);
-
-        if (recordOperation == null) {
-          if (!(recordId.isTemporary() && type != ORecordOperation.CREATED)) {
-            recordOperation = new ORecordOperation(record, type);
-            recordOperations.put(recordId.copy(), recordOperation);
-          }
-        } else {
-          recordOperation.record = record;
-
-          switch (recordOperation.type) {
-          case ORecordOperation.CREATED:
-            if (type == ORecordOperation.DELETED)
-              recordOperations.remove(recordId);
-            break;
-          case ORecordOperation.UPDATED:
-            if (type == ORecordOperation.DELETED)
-              recordOperation.type = ORecordOperation.DELETED;
-            break;
-          case ORecordOperation.DELETED:
-            break; // do nothing
-          }
-        }
+        ORecordOperation recordOperation = internalAddRecord(record, type, clusterName);
 
         switch (type) {
         case ORecordOperation.CREATED:
@@ -557,6 +524,44 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
         break;
       }
     }
+  }
+
+  public ORecordOperation internalAddRecord(ORecord record, byte type, String clusterName) {
+    final ORecordId recordId = (ORecordId) record.getIdentity();
+
+    if (!recordId.isValid()) {
+      ORecordInternal.onBeforeIdentityChanged(record);
+      database.assignAndCheckCluster(record, clusterName);
+
+      recordId.setClusterPosition(recordSerial--);
+
+      ORecordInternal.onAfterIdentityChanged(record);
+    }
+
+    ORecordOperation recordOperation = resolveRecordOperation(recordId);
+
+    if (recordOperation == null) {
+      if (!(recordId.isTemporary() && type != ORecordOperation.CREATED)) {
+        recordOperation = new ORecordOperation(record, type);
+        recordOperations.put(recordId.copy(), recordOperation);
+      }
+    } else {
+      recordOperation.record = record;
+
+      switch (recordOperation.type) {
+      case ORecordOperation.CREATED:
+        if (type == ORecordOperation.DELETED)
+          recordOperations.remove(recordId);
+        break;
+      case ORecordOperation.UPDATED:
+        if (type == ORecordOperation.DELETED)
+          recordOperation.type = ORecordOperation.DELETED;
+        break;
+      case ORecordOperation.DELETED:
+        break; // do nothing
+      }
+    }
+    return recordOperation;
   }
 
   @Override
