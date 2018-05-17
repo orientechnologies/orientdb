@@ -24,6 +24,7 @@ import com.orientechnologies.common.collection.closabledictionary.OClosableLinke
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
@@ -33,6 +34,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.sun.jna.Native;
+import com.sun.jna.Platform;
 
 import java.util.Map;
 
@@ -45,10 +48,22 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   private volatile O2QCache readCache;
 
-  protected final OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<>(
-      OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger());
+  protected final OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<>(getOpenFilesLimit());
 
   public OEngineLocalPaginated() {
+  }
+
+  private static int getOpenFilesLimit() {
+    if (OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger() > 0) {
+      OLogManager.instance().infoNoDb(OEngineLocalPaginated.class, "Limit of open files for disk cache will be set to %d.",
+          OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger());
+      return OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger();
+    }
+
+    final int defaultLimit = 512;
+    final int recommendedLimit = 64 * 1024;
+
+    return ONative.instance().getOpenFilesLimit(true, recommendedLimit, defaultLimit);
   }
 
   @Override

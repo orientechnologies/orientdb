@@ -136,7 +136,7 @@ public class MPSCFAAArrayDequeueIT {
 
   @Test
   public void testRandomPolling() {
-    final int iterations = 1_000_000;
+    final int iterations = 10;
 
     for (int n = 0; n < iterations; n++) {
       final long seed = System.nanoTime();
@@ -211,7 +211,7 @@ public class MPSCFAAArrayDequeueIT {
 
   @Test
   public void mtTestForwardEightThreads() throws Exception {
-    final int iterations = 150;
+    final int iterations = 1;
 
     for (int n = 0; n < iterations; n++) {
       final ExecutorService executor = Executors.newCachedThreadPool();
@@ -245,7 +245,7 @@ public class MPSCFAAArrayDequeueIT {
 
   @Test
   public void mtTestForwardTwoThreads() throws Exception {
-    final int iterations = 300;
+    final int iterations = 1;
 
     for (int n = 0; n < iterations; n++) {
       final ExecutorService executor = Executors.newCachedThreadPool();
@@ -280,7 +280,7 @@ public class MPSCFAAArrayDequeueIT {
 
   @Test
   public void mtTestBackwardTwoThreads() throws Exception {
-    final int iterations = 300;
+    final int iterations = 1;
 
     for (int n = 0; n < iterations; n++) {
       final ExecutorService executor = Executors.newCachedThreadPool();
@@ -314,7 +314,7 @@ public class MPSCFAAArrayDequeueIT {
 
   @Test
   public void mtTestBackwardEightThreads() throws Exception {
-    final int iterations = 150;
+    final int iterations = 1;
 
     for (int n = 0; n < iterations; n++) {
       final ExecutorService executor = Executors.newCachedThreadPool();

@@ -584,11 +584,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
           return;
       }
     }
-    // FROM HERE FORWARD COMPLETELY CLOSE THE STORAGE
-    for (Entry<Integer, OLiveQueryClientListener> listener : liveQueryListener.entrySet()) {
-      listener.getValue().onEnd();
-    }
-    liveQueryListener.clear();
 
 //     In backward compatible code the context is missing check if is there.
     if (context != null) {
@@ -600,6 +595,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void shutdown() {
     if (status == STATUS.CLOSED || status == STATUS.CLOSING)
       return;
+
+    // FROM HERE FORWARD COMPLETELY CLOSE THE STORAGE
+    for (Entry<Integer, OLiveQueryClientListener> listener : liveQueryListener.entrySet()) {
+      listener.getValue().onEnd();
+    }
+    liveQueryListener.clear();
 
     stateLock.acquireWriteLock();
     try {

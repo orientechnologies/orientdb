@@ -62,6 +62,9 @@
                             <value>com.orientechnologies.OJUnitTestListener</value>
                         </property>
                     </properties>
+                    <systemPropertyVariables>
+                        <baseDir>${project.basedir}</baseDir>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>

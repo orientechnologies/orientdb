@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.*;
 
@@ -18,17 +19,19 @@ public class OCreateEdgeExecutionPlanner {
   protected OExpression leftExpression;
   protected OExpression rightExpression;
 
+  protected boolean upsert = false;
+
   protected OInsertBody body;
   protected Number      retry;
   protected Number      wait;
   protected OBatch      batch;
-
 
   public OCreateEdgeExecutionPlanner(OCreateEdgeStatement statement) {
     this.targetClass = statement.getTargetClass() == null ? null : statement.getTargetClass().copy();
     this.targetClusterName = statement.getTargetClusterName() == null ? null : statement.getTargetClusterName().copy();
     this.leftExpression = statement.getLeftExpression() == null ? null : statement.getLeftExpression().copy();
     this.rightExpression = statement.getRightExpression() == null ? null : statement.getRightExpression().copy();
+    this.upsert = statement.isUpsert();
     this.body = statement.getBody() == null ? null : statement.getBody().copy();
     this.retry = statement.getRetry();
     this.wait = statement.getWait();
@@ -59,8 +62,25 @@ public class OCreateEdgeExecutionPlanner {
     handleGlobalLet(result, new OIdentifier("$__ORIENT_CREATE_EDGE_fromV"), leftExpression, ctx, enableProfiling);
     handleGlobalLet(result, new OIdentifier("$__ORIENT_CREATE_EDGE_toV"), rightExpression, ctx, enableProfiling);
 
-    result.chain(new CreateEdgesStep(targetClass, targetClusterName, new OIdentifier("$__ORIENT_CREATE_EDGE_fromV"),
-        new OIdentifier("$__ORIENT_CREATE_EDGE_toV"), wait, retry, batch, ctx, enableProfiling));
+    String uniqueIndexName = null;
+    if (upsert) {
+      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass.getStringValue());
+      if (clazz == null) {
+        throw new OCommandExecutionException("Class " + targetClass + " not found in the db schema");
+      }
+      uniqueIndexName = clazz.getIndexes().stream().filter(x -> x.isUnique()).filter(
+          x -> x.getDefinition().getFields().size() == 2 && x.getDefinition().getFields().contains("out") && x.getDefinition()
+              .getFields().contains("in")).map(x -> x.getName()).findFirst().orElse(null);
+
+      if (uniqueIndexName == null) {
+        throw new OCommandExecutionException(
+            "Cannot perform an UPSERT on " + targetClass + " edge class: no unique index present on out/in");
+      }
+    }
+
+    result.chain(
+        new CreateEdgesStep(targetClass, targetClusterName, uniqueIndexName, new OIdentifier("$__ORIENT_CREATE_EDGE_fromV"),
+            new OIdentifier("$__ORIENT_CREATE_EDGE_toV"), wait, retry, batch, ctx, enableProfiling));
 
     handleSetFields(result, body, ctx, enableProfiling);
     handleSave(result, targetClusterName, ctx, enableProfiling);
@@ -68,7 +88,8 @@ public class OCreateEdgeExecutionPlanner {
     return result;
   }
 
-  private void handleGlobalLet(OInsertExecutionPlan result, OIdentifier name, OExpression expression, OCommandContext ctx, boolean profilingEnabled) {
+  private void handleGlobalLet(OInsertExecutionPlan result, OIdentifier name, OExpression expression, OCommandContext ctx,
+      boolean profilingEnabled) {
     result.chain(new GlobalLetExpressionStep(name, expression, ctx, profilingEnabled));
   }
 
@@ -78,7 +99,8 @@ public class OCreateEdgeExecutionPlanner {
     }
   }
 
-  private void handleSave(OInsertExecutionPlan result, OIdentifier targetClusterName, OCommandContext ctx, boolean profilingEnabled) {
+  private void handleSave(OInsertExecutionPlan result, OIdentifier targetClusterName, OCommandContext ctx,
+      boolean profilingEnabled) {
     result.chain(new SaveElementStep(ctx, targetClusterName, profilingEnabled));
   }
 

@@ -183,6 +183,10 @@ public interface ODatabaseObject extends ODatabase<Object>, OUserObject2RecordHa
 
   <RET extends List<?>> RET objectQuery(String iCommand, Map<String, Object> iArgs);
 
+  <RET extends List<?>> RET objectCommand(String iCommand, Object... iArgs);
+
+  <RET extends List<?>> RET objectCommand(String iCommand, Map<String, Object> iArgs);
+
   @Override
   default <T> T executeWithRetry(int nRetries, Function<ODatabaseSession, T> function)
       throws IllegalStateException, IllegalArgumentException, ONeedRetryException, UnsupportedOperationException {
