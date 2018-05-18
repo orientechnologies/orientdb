@@ -43,7 +43,7 @@ public class OShapeOperationImpl implements OShapeOperation {
   @Override
   public boolean isWithInDistance(Shape s1, Shape s2, Double dist) {
     Geometry geometry = factory.toGeometry(s1);
-    Geometry geometry1 = factory.toGeometry(s2);
+    Geometry geometry1 = factory.toGeometry(s2);    
     return geometry.isWithinDistance(geometry1, dist);
   }
 
@@ -81,5 +81,11 @@ public class OShapeOperationImpl implements OShapeOperation {
   @Override
   public boolean isEquals(Shape shape, Shape shape1) {
     return within(shape, shape1) && within(shape1, shape);
+  }
+  
+  public boolean overlaps(Shape shape, Shape shape1){
+    Geometry geometry = factory.toGeometry(shape);
+    Geometry geometry1 = factory.toGeometry(shape1);
+    return geometry.overlaps(geometry1);
   }
 }
