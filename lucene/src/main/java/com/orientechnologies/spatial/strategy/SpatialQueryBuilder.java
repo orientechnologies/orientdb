@@ -45,12 +45,14 @@ public class SpatialQueryBuilder extends SpatialQueryBuilderAbstract {
     addOperator(new SpatialQueryBuilderIntersects(manager, factory));
     addOperator(new SpatialQueryBuilderDistanceSphere(manager, factory));
     addOperator(new SpatialQueryBuilderOverlap(manager, factory));
+    addOperator(new SpatialQueryBuilderSTOverlaps(manager, factory));
   }
 
   private void addOperator(SpatialQueryBuilderAbstract builder) {
     operators.put(builder.getName(), builder);
   }
 
+  @Override
   public OSpatialQueryContext build(Map<String, Object> query) throws Exception {
 
     SpatialQueryBuilderAbstract operation = parseOperation(query);

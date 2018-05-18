@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
-import com.orientechnologies.spatial.strategy.SpatialQueryBuilderWithin;
+import com.orientechnologies.spatial.strategy.SpatialQueryBuilderOverlap;
 import org.locationtech.spatial4j.shape.Shape;
 
 /**
@@ -65,6 +65,6 @@ public class OSTOverlapsFunction extends OSpatialFunctionAbstractIndexable {
 
   @Override
   protected String operator() {
-    return SpatialQueryBuilderWithin.NAME;
+    return SpatialQueryBuilderOverlap.NAME;
   }
 }
