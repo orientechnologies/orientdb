@@ -82,7 +82,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public static final String CONFIG_LOCKMANAGER     = "coordinator";
   public static final String CONFIG_REGISTEREDNODES = "registeredNodes";
 
-  protected String hazelcastConfigFile = "hazelcast.xml";
+  protected          String            hazelcastConfigFile = "hazelcast.xml";
   protected          Config            hazelcastConfig;
   protected          String            membershipListenerRegistration;
   protected          String            membershipListenerMapRegistration;
@@ -1557,7 +1557,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
       else if (autoRemoveOffLineServer > 0) {
         // SCHEDULE AUTO REMOVAL IN A WHILE
-        autoRemovalOfServers.put(nodeLeftName, System.currentTimeMillis());
+        final long currentTime = System.currentTimeMillis();
+        autoRemovalOfServers.put(nodeLeftName, currentTime);
         Orient.instance().scheduleTask(new TimerTask() {
           @Override
           public void run() {
@@ -1567,11 +1568,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                 // NODE WAS BACK ONLINE
                 return;
 
-              if (System.currentTimeMillis() - lastTimeNodeLeft >= autoRemoveOffLineServer) {
+              // Checking that this is the only scheduled operation and so remove it
+              if (lastTimeNodeLeft.longValue() == currentTime) {
                 removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
               }
             } catch (Exception e) {
               // IGNORE IT
+              ODistributedServerLog
+                  .debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on removing the node from distributed configuration", e);
             }
           }
         }, autoRemoveOffLineServer, 0);
