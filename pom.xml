@@ -20,10 +20,10 @@
         <module>lucene-cross-class</module>
 
         <!--<module>distribution-spatial</module>-->
-        <module>distribution-community-importers</module>
-        <module>distribution-community-tp2-importers</module>
-        <module>distribution</module>
-        <module>distribution-tp3</module>
+        <!--<module>distribution-community-importers</module>-->
+        <!--<module>distribution-community-tp2-importers</module>-->
+        <!--<module>distribution</module>-->
+        <!--<module>distribution-tp3</module>-->
 
     </modules>
 
