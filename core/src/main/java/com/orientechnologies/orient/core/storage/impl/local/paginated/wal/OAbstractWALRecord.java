@@ -22,8 +22,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
  * Abstract WAL record.
  *
@@ -34,7 +32,7 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
   private int distance = 0;
   private int diskSize = 0;
 
-  private int binaryContentSize = 0;
+  private byte[] binaryContent;
 
   private boolean written;
 
@@ -73,19 +71,18 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
   }
 
   @Override
-  public void setBinaryContentSize(int size) {
-    this.binaryContentSize = size;
+  public void setBinaryContent(byte[] content) {
+    this.binaryContent = content;
   }
 
   @Override
-  public int getBinaryContentSize() {
-    if (binaryContentSize <= 0) {
-      throw new IllegalStateException("Binary content size is not set");
+  public byte[] getBinaryContent() {
+    if (binaryContent == null) {
+      throw new IllegalStateException("Binary content is not set");
     }
 
-    return binaryContentSize;
+    return binaryContent;
   }
-
 
   @Override
   public void setDistance(int distance) {

@@ -1179,7 +1179,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   private OLogSequenceNumber doLogRecord(OWriteableWALRecord writeableRecord) {
-    writeableRecord.setBinaryContentSize(OWALRecordsFactory.INSTANCE.serializedSize(writeableRecord));
+    writeableRecord.setBinaryContent(OWALRecordsFactory.INSTANCE.toStream(writeableRecord));
     writeableRecord.setLsn(new OLogSequenceNumber(currentSegment, -1));
 
     records.offer(writeableRecord);
@@ -1436,7 +1436,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         record.setDistance(0);
         record.setDiskSize(prevRecord.getDiskSize());
       } else {
-        final int recordLength = ((OWriteableWALRecord) record).getBinaryContentSize();
+        final int recordLength = ((OWriteableWALRecord) record).getBinaryContent().length;
         final int length = OCASWALPage.calculateSerializedSize(recordLength);
 
         final int pages = length / OCASWALPage.MAX_RECORD_SIZE;
@@ -1470,7 +1470,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       } else {
         //we always start from the begging of the page so no need to calculate page offset
         //record is written from the begging of page
-        final int recordLength = ((OWriteableWALRecord) record).getBinaryContentSize();
+        final int recordLength = ((OWriteableWALRecord) record).getBinaryContent().length;
         final int length = OCASWALPage.calculateSerializedSize(recordLength);
 
         final int pages = length / OCASWALPage.MAX_RECORD_SIZE;
@@ -1543,7 +1543,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     final int freeSpace = OCASWALPage.PAGE_SIZE - (int) (start % OCASWALPage.PAGE_SIZE);
     final int startOffset = OCASWALPage.PAGE_SIZE - freeSpace;
 
-    final int recordLength = ((OWriteableWALRecord) record).getBinaryContentSize();
+    final int recordLength = ((OWriteableWALRecord) record).getBinaryContent().length;
     int length = OCASWALPage.calculateSerializedSize(recordLength);
 
     if (length < freeSpace) {
@@ -1707,10 +1707,10 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
                 if (!writeableRecord.isWritten()) {
                   int written = 0;
-                  final int recordContentBinarySize = writeableRecord.getBinaryContentSize();
+                  final int recordContentBinarySize = writeableRecord.getBinaryContent().length;
                   final int bytesToWrite = OIntegerSerializer.INT_SIZE + recordContentBinarySize;
 
-                  byte[] recordContent = null;
+                  byte[] recordContent = writeableRecord.getBinaryContent();
                   byte[] recordSize = null;
                   int recordSizeWritten = -1;
 
@@ -1744,10 +1744,6 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                     assert chunkSize + writeBuffer.position() <= (writeBufferPageIndex + 1) * OCASWALPage.PAGE_SIZE;
                     assert writeBuffer.position() > writeBufferPageIndex * OCASWALPage.PAGE_SIZE;
 
-                    if (written == 0 && chunkSize < bytesToWrite) {
-                      recordContent = OWALRecordsFactory.INSTANCE.toStream(writeableRecord, writeableRecord.getBinaryContentSize());
-                    }
-
                     if (!recordSizeIsWritten) {
                       if (recordSizeWritten > 0) {
                         writeBuffer.put(recordSize, recordSizeWritten, OIntegerSerializer.INT_SIZE - recordSizeWritten);
@@ -1777,12 +1773,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                       }
                     }
 
-                    if (recordContent != null) {
-                      writeBuffer.put(recordContent, written - OIntegerSerializer.INT_SIZE, chunkSize);
-                    } else {
-                      OWALRecordsFactory.INSTANCE.toStream(writeableRecord, writeBuffer);
-                    }
-
+                    writeBuffer.put(recordContent, written - OIntegerSerializer.INT_SIZE, chunkSize);
                     written += chunkSize;
                   }
 

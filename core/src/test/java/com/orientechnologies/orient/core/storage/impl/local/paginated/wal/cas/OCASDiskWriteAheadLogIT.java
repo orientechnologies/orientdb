@@ -52,7 +52,7 @@ public class OCASDiskWriteAheadLogIT {
     testDirectory = Paths.get(System.getProperty("buildDirectory" + File.separator + "casWALTest",
         "." + File.separator + "target" + File.separator + "casWALTest"));
 
-    OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, TestRecord.class);
+    OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 127, TestRecord.class);
   }
 
   @Before

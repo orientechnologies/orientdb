@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OAllocatePositionOperation;
@@ -39,8 +41,11 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compon
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OCreateSBTreeBonsaiRawOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OSBTreeBonsaiPutOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OSBTreeBonsaiRemoveOperation;
+import net.jpountz.lz4.LZ4Compressor;
+import net.jpountz.lz4.LZ4Factory;
+import net.jpountz.lz4.LZ4FastDecompressor;
 
-import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,7 +59,13 @@ public class OWALRecordsFactory {
 
   public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
 
-  public byte[] toStream(OWriteableWALRecord walRecord, int contentSize) {
+  private static final LZ4Factory factory                    = LZ4Factory.fastestInstance();
+  private static final int        MIN_COMPRESSED_RECORD_SIZE = OGlobalConfiguration.WAL_MINIMAL_COMPRESED_RECORD_SIZE.
+
+      getValueAsInteger();
+
+  public byte[] toStream(OWriteableWALRecord walRecord) {
+    final int contentSize = walRecord.serializedSize() + 1;
     byte[] content = new byte[contentSize];
 
     if (walRecord instanceof OUpdatePageRecord)
@@ -122,78 +133,36 @@ public class OWALRecordsFactory {
 
     walRecord.toStream(content, 1);
 
+    if (MIN_COMPRESSED_RECORD_SIZE > 0 && content.length < MIN_COMPRESSED_RECORD_SIZE) {
+      return content;
+    }
+
+    final LZ4Compressor compressor = factory.fastCompressor();
+    final int maxCompressedLength = compressor.maxCompressedLength(content.length - 1);
+    final byte[] compressed = new byte[maxCompressedLength + 5];
+    final int compressedLength = compressor.compress(content, 1, content.length - 1, compressed, 5, maxCompressedLength);
+
+    if (compressedLength + 5 < content.length) {
+      compressed[0] = (byte) (-(content[0] + 1));
+      OIntegerSerializer.INSTANCE.serializeNative(content.length - 1, compressed, 1);
+      return Arrays.copyOf(compressed, compressedLength + 5);
+
+    }
+
     return content;
   }
 
-  public void toStream(OWriteableWALRecord walRecord, ByteBuffer buffer) {
-
-    if (walRecord instanceof OUpdatePageRecord)
-      buffer.put((byte) 0);
-    else if (walRecord instanceof OFuzzyCheckpointStartRecord)
-      buffer.put((byte) 1);
-    else if (walRecord instanceof OFuzzyCheckpointEndRecord)
-      buffer.put((byte) 2);
-    else if (walRecord instanceof OFullCheckpointStartRecord)
-      buffer.put((byte) 4);
-    else if (walRecord instanceof OCheckpointEndRecord)
-      buffer.put((byte) 5);
-    else if (walRecord instanceof OAtomicUnitStartRecord)
-      buffer.put((byte) 8);
-    else if (walRecord instanceof OAtomicUnitEndRecord)
-      buffer.put((byte) 9);
-    else if (walRecord instanceof OFileCreatedWALRecord)
-      buffer.put((byte) 10);
-    else if (walRecord instanceof ONonTxOperationPerformedWALRecord)
-      buffer.put((byte) 11);
-    else if (walRecord instanceof OFileDeletedWALRecord)
-      buffer.put((byte) 12);
-    else if (walRecord instanceof OFileTruncatedWALRecord)
-      buffer.put((byte) 13);
-    else if (walRecord instanceof OEmptyWALRecord)
-      buffer.put((byte) 14);
-    else if (walRecord instanceof OAllocatePositionOperation)
-      buffer.put((byte) 15);
-    else if (walRecord instanceof OCreateRecordOperation)
-      buffer.put((byte) 16);
-    else if (walRecord instanceof ODeleteRecordOperation)
-      buffer.put((byte) 17);
-    else if (walRecord instanceof ORecycleRecordOperation)
-      buffer.put((byte) 18);
-    else if (walRecord instanceof OUpdateRecordOperation)
-      buffer.put((byte) 19);
-    else if (walRecord instanceof OHashTablePutOperation)
-      buffer.put((byte) 20);
-    else if (walRecord instanceof OHashTableRemoveOperation)
-      buffer.put((byte) 21);
-    else if (walRecord instanceof OSBTreePutOperation)
-      buffer.put((byte) 22);
-    else if (walRecord instanceof OSBTreeRemoveOperation)
-      buffer.put((byte) 23);
-    else if (walRecord instanceof OSBTreeBonsaiPutOperation)
-      buffer.put((byte) 24);
-    else if (walRecord instanceof OSBTreeBonsaiRemoveOperation)
-      buffer.put((byte) 25);
-    else if (walRecord instanceof OCreateClusterOperation)
-      buffer.put((byte) 26);
-    else if (walRecord instanceof OCreateHashTableOperation)
-      buffer.put((byte) 27);
-    else if (walRecord instanceof OCreateSBTreeOperation)
-      buffer.put((byte) 28);
-    else if (walRecord instanceof OCreateSBTreeBonsaiOperation)
-      buffer.put((byte) 29);
-    else if (walRecord instanceof OCreateSBTreeBonsaiRawOperation)
-      buffer.put((byte) 30);
-    else if (walRecord instanceof OMakePositionAvailableOperation)
-      buffer.put((byte) 31);
-    else if (typeToIdMap.containsKey(walRecord.getClass())) {
-      buffer.put(typeToIdMap.get(walRecord.getClass()));
-    } else
-      throw new IllegalArgumentException(walRecord.getClass().getName() + " class cannot be serialized.");
-
-    walRecord.toStream(buffer);
-  }
-
   public OWriteableWALRecord fromStream(byte[] content) {
+    if (content[0] < 0) {
+      final int decompressedLength = OIntegerSerializer.INSTANCE.deserializeNative(content, 1);
+      final byte[] restored = new byte[decompressedLength + 1];
+
+      final LZ4FastDecompressor decompressor = factory.fastDecompressor();
+      decompressor.decompress(content, 5, restored, 1, decompressedLength);
+      restored[0] = (byte) (-content[0] - 1);
+      content = restored;
+    }
+
     OWriteableWALRecord walRecord;
     switch (content[0]) {
     case 0:
@@ -297,10 +266,6 @@ public class OWALRecordsFactory {
     walRecord.fromStream(content, 1);
 
     return walRecord;
-  }
-
-  public int serializedSize(OWriteableWALRecord walRecord) {
-    return walRecord.serializedSize() + 1;
   }
 
   public void registerNewRecord(byte id, Class<? extends OWriteableWALRecord> type) {

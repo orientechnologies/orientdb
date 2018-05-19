@@ -230,6 +230,10 @@ public enum OGlobalConfiguration {
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
+  WAL_MINIMAL_COMPRESED_RECORD_SIZE("storage.wal.minCompressedRecordSize",
+      "Minimal size of the record which is going to be compressed, -1 means no compression will be applied, "
+          + "default value  is 256", Integer.class, 256),
+
   WAL_SYNC_ON_PAGE_FLUSH("storage.wal.syncOnPageFlush", "Indicates whether a force sync should be performed during WAL page flush",
       Boolean.class, true),
 

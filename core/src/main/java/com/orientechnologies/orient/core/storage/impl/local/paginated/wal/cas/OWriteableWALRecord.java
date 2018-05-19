@@ -29,9 +29,9 @@ import java.nio.ByteBuffer;
  * @since 25.04.13
  */
 public interface OWriteableWALRecord extends OWALRecord {
-  void setBinaryContentSize(int size);
+  void setBinaryContent(byte[] size);
 
-  int getBinaryContentSize();
+  byte[] getBinaryContent();
 
   int toStream(byte[] content, int offset);
 
