@@ -161,55 +161,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
     try {
 
-      ORecord toRet = null;
-      ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
-      Set<ORecord> newRecord = dirtyManager.getNewRecords();
-      Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
-      dirtyManager.clearForSave();
-      if (database instanceof ODatabaseDocumentEmbedded) {
-        if (iRecord.getIdentity().isNew()) {
-          if (newRecord == null)
-            newRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
-          newRecord.add(iRecord);
-        } else {
-          if (updatedRecord == null)
-            updatedRecord = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
-          updatedRecord.add(iRecord);
-        }
+      return database.saveAll(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
-        ((ODatabaseDocumentEmbedded) database)
-            .saveAll(iRecord, newRecord, updatedRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback,
-                iRecordUpdatedCallback);
-
-        return iRecord;
-      } else {
-        if (newRecord != null) {
-          for (ORecord rec : newRecord) {
-            if (rec.getIdentity().isNew() && rec instanceof ODocument) {
-              ORecord ret = saveNew((ODocument) rec, dirtyManager, iClusterName, iRecord, iMode, iForceCreate,
-                  iRecordCreatedCallback, iRecordUpdatedCallback);
-              if (ret != null)
-                toRet = ret;
-            }
-          }
-        }
-        if (updatedRecord != null) {
-          for (ORecord rec : updatedRecord) {
-            if (rec == iRecord) {
-              toRet = database.executeSaveRecord(rec, iClusterName, rec.getVersion(), iMode, iForceCreate, iRecordCreatedCallback,
-                  iRecordUpdatedCallback);
-            } else
-              database.executeSaveRecord(rec, getClusterName(rec), rec.getVersion(), OPERATION_MODE.SYNCHRONOUS, false, null, null);
-          }
-        }
-
-        if (toRet != null)
-          return toRet;
-        else
-          return database
-              .executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iMode, iForceCreate, iRecordCreatedCallback,
-                  iRecordUpdatedCallback);
-      }
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
@@ -223,55 +176,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
           new ODatabaseException("Error during saving of record" + (iRecord != null ? " with rid " + iRecord.getIdentity() : "")),
           e);
     }
-  }
-
-  public ORecord saveNew(ODocument document, ODirtyManager manager, String iClusterName, ORecord original,
-      final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
-      ORecordCallback<Integer> iRecordUpdatedCallback) {
-    ORecord toRet = null;
-    LinkedList<ODocument> path = new LinkedList<ODocument>();
-    ORecord next = document;
-    do {
-      if (next instanceof ODocument) {
-        ORecord nextToInspect = null;
-        List<OIdentifiable> toSave = manager.getPointed(next);
-        if (toSave != null) {
-          for (OIdentifiable oIdentifiable : toSave) {
-            if (oIdentifiable.getIdentity().isNew()) {
-              if (oIdentifiable instanceof ORecord)
-                nextToInspect = (ORecord) oIdentifiable;
-              else
-                nextToInspect = oIdentifiable.getRecord();
-              break;
-            }
-          }
-        }
-        if (nextToInspect != null) {
-          if (path.contains(nextToInspect)) {
-            if (nextToInspect == original)
-              database.executeSaveEmptyRecord(nextToInspect, iClusterName);
-            else
-              database.executeSaveEmptyRecord(nextToInspect, getClusterName(nextToInspect));
-          } else {
-            path.push((ODocument) next);
-            next = nextToInspect;
-          }
-        } else {
-          if (next == original)
-            toRet = database.executeSaveRecord(next, iClusterName, next.getVersion(), iMode, iForceCreate, iRecordCreatedCallback,
-                iRecordUpdatedCallback);
-          else
-            database
-                .executeSaveRecord(next, getClusterName(next), next.getVersion(), OPERATION_MODE.SYNCHRONOUS, false, null, null);
-          next = path.pollFirst();
-        }
-
-      } else {
-        database.executeSaveRecord(next, null, next.getVersion(), iMode, false, null, null);
-        next = path.pollFirst();
-      }
-    } while (next != null);
-    return toRet;
   }
 
   @Override

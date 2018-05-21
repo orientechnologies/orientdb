@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryMonitorEmbedded;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
@@ -718,71 +719,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     return;
   }
 
-  public <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName) {
-    ORecordId rid = (ORecordId) record.getIdentity();
-    assert rid.isNew();
-    assert record instanceof ODocument;
-    ODocument doc = (ODocument) record;
-
-    ORecordInternal.onBeforeIdentityChanged(record);
-    int id = assignAndCheckCluster(record, clusterName);
-    clusterName = getClusterNameById(id);
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, clusterName);
-
-    final OMicroTransaction microTx = beginMicroTransaction();
-    ODocument mock = new ODocument(doc.getClassName(), doc.getIdentity().copy()) {
-      @Override
-      public void validate() throws OValidationException {
-      }
-    };
-    try {
-      microTx.internalAddRecord(mock, ORecordOperation.CREATED, clusterName);
-
-    } catch (Exception e) {
-      endMicroTransaction(false);
-      throw e;
-    }
-    endMicroTransaction(true);
-
-    ORecordInternal.setVersion(record, mock.getVersion());
-    rid = (ORecordId) microTx.getRecordEntry(mock.getIdentity()).getRID();
-    ((ORecordId) record.getIdentity()).copyFrom(rid);
-    ORecordInternal.onAfterIdentityChanged(record);
-
-    return (RET) record;
-  }
-
-  /**
-   * This method is internal, it can be subject to signature change or be removed, do not use.
-   *
-   * @Internal
-   */
-  public <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
-      final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
-      ORecordCallback<Integer> recordUpdatedCallback) {
-
-    checkOpenness();
-    checkIfActive();
-    if (!record.isDirty())
-      return (RET) record;
-
-    final ORecordId rid = (ORecordId) record.getIdentity();
-
-    if (rid == null)
-      throw new ODatabaseException(
-          "Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
-
-    final OMicroTransaction microTx = beginMicroTransaction();
-    try {
-      microTx.saveRecord(record, clusterName, mode, forceCreate, recordCreatedCallback, recordUpdatedCallback);
-    } catch (Exception e) {
-      endMicroTransaction(false);
-      throw e;
-    }
-    endMicroTransaction(true);
-    return (RET) record;
-  }
-
   private void endMicroTransaction(boolean success) {
     assert microTransaction != null;
 
@@ -1054,31 +990,25 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     OLiveQueryHookV2.removePendingDatabaseOps(this);
   }
 
-  public String getClusterName(final ORecord record) {
-    int clusterId = record.getIdentity().getClusterId();
-    if (clusterId == ORID.CLUSTER_ID_INVALID) {
-      // COMPUTE THE CLUSTER ID
-      OClass schemaClass = null;
-      if (record instanceof ODocument)
-        schemaClass = ODocumentInternal.getImmutableSchemaClass(this, (ODocument) record);
-      if (schemaClass != null) {
-        // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
-        if (schemaClass.isAbstract())
-          throw new OSchemaException("Document belongs to abstract class '" + schemaClass.getName() + "' and cannot be saved");
-        clusterId = schemaClass.getClusterForNewInstance((ODocument) record);
-        return getClusterNameById(clusterId);
-      } else {
-        return getClusterNameById(getStorage().getDefaultClusterId());
-      }
+  @Override
+  public ORecord saveAll(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
 
+    ORecord toRet = null;
+    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
+    Set<ORecord> newRecord = dirtyManager.getNewRecords();
+    Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
+    dirtyManager.clearForSave();
+    if (iRecord.getIdentity().isNew()) {
+      if (newRecord == null)
+        newRecord = Collections.newSetFromMap(new IdentityHashMap<>());
+      newRecord.add(iRecord);
     } else {
-      return getClusterNameById(clusterId);
+      if (updatedRecord == null)
+        updatedRecord = Collections.newSetFromMap(new IdentityHashMap<>());
+      updatedRecord.add(iRecord);
     }
-  }
 
-  public void saveAll(ORecord iRecord, Set<ORecord> newRecord, Set<ORecord> updatedRecord, String iClusterName,
-      OPERATION_MODE iMode, boolean iForceCreate, ORecordCallback<? extends Number> iRecordCreatedCallback,
-      ORecordCallback<Integer> iRecordUpdatedCallback) {
     final OMicroTransaction microTx = beginMicroTransaction();
     try {
       if (newRecord != null) {
@@ -1102,5 +1032,29 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     }
     endMicroTransaction(true);
 
+    return iRecord;
   }
+
+  public String getClusterName(final ORecord record) {
+    int clusterId = record.getIdentity().getClusterId();
+    if (clusterId == ORID.CLUSTER_ID_INVALID) {
+      // COMPUTE THE CLUSTER ID
+      OClass schemaClass = null;
+      if (record instanceof ODocument)
+        schemaClass = ODocumentInternal.getImmutableSchemaClass(this, (ODocument) record);
+      if (schemaClass != null) {
+        // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
+        if (schemaClass.isAbstract())
+          throw new OSchemaException("Document belongs to abstract class '" + schemaClass.getName() + "' and cannot be saved");
+        clusterId = schemaClass.getClusterForNewInstance((ODocument) record);
+        return getClusterNameById(clusterId);
+      } else {
+        return getClusterNameById(getStorage().getDefaultClusterId());
+      }
+
+    } else {
+      return getClusterNameById(clusterId);
+    }
+  }
+
 }
