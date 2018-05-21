@@ -20,6 +20,7 @@ package com.orientechnologies.spatial.strategy;
 import com.orientechnologies.spatial.engine.OLuceneSpatialIndexContainer;
 import com.orientechnologies.spatial.query.OSpatialQueryContext;
 import com.orientechnologies.spatial.shape.OShapeBuilder;
+import com.orientechnologies.spatial.shape.OShapeFactory;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -30,6 +31,13 @@ import org.apache.lucene.spatial.query.SpatialOperation;
 import org.locationtech.spatial4j.shape.Shape;
 
 import java.util.Map;
+import org.apache.lucene.spatial.bbox.BBoxStrategy;
+import org.apache.lucene.spatial.composite.CompositeSpatialStrategy;
+import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
+import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
+import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
+import org.apache.lucene.spatial.serialized.SerializedDVStrategy;
+import org.locationtech.spatial4j.context.SpatialContext;
 
 /**
  * Created by Enrico Risa on 11/08/15.
@@ -45,12 +53,31 @@ public class SpatialQueryBuilderSTOverlaps extends SpatialQueryBuilderAbstract {
   // TODO check PGIS
   @Override
   public OSpatialQueryContext build(Map<String, Object> query) throws Exception {
+    OShapeFactory shapeFactoty = OShapeFactory.INSTANCE;
+//    SpatialContext ctx = shapeFactoty.context();
+    
     Shape shape = parseShape(query);
     SpatialStrategy strategy = manager.strategy();
-    SpatialArgs args = new SpatialArgs(SpatialOperation.Intersects, shape.getBoundingBox());
-    Query filterQuery = strategy.makeQuery(args);
-    BooleanQuery q = new BooleanQuery.Builder().add(filterQuery, BooleanClause.Occur.MUST)
-        .add(new MatchAllDocsQuery(), BooleanClause.Occur.SHOULD).build();
+    
+    if (isOnlyBB(strategy)) {
+      shape = shape.getBoundingBox();
+    }
+    
+//    SpatialPrefixTree gridGeohash = new GeohashPrefixTree(ctx, 11);
+//    
+//    RecursivePrefixTreeStrategy indexStrategy = new RecursivePrefixTreeStrategy(gridGeohash, "recursive_geohash");
+//    SerializedDVStrategy geometryStrategy = new SerializedDVStrategy(ctx, "location");
+//    SpatialStrategy strategy = new CompositeSpatialStrategy("location", indexStrategy, geometryStrategy);
+    
+    SpatialArgs args = new SpatialArgs(SpatialOperation.Intersects, shape);
+    Query intersectsQuery = strategy.makeQuery(args);
+    Query withinQuery = strategy.makeQuery(new SpatialArgs(SpatialOperation.IsWithin, shape));
+    Query containsQuery = strategy.makeQuery(new SpatialArgs(SpatialOperation.Contains, shape));
+    BooleanQuery q = new BooleanQuery.Builder().add(intersectsQuery, BooleanClause.Occur.MUST)
+        .add(withinQuery, BooleanClause.Occur.MUST_NOT)
+        .add(containsQuery, BooleanClause.Occur.MUST_NOT)
+        .add(new MatchAllDocsQuery(), BooleanClause.Occur.SHOULD).
+        build();
 
     return new OSpatialQueryContext(null, manager.searcher(), q);
   }
