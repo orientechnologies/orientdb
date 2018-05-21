@@ -33,6 +33,7 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   Iterator toIterator;
   OVertex  currentFrom;
   OVertex  currentTo;
+  OEdge    edgeToUpdate;//for upsert
   boolean finished = false;
   List    toList   = new ArrayList<>();
   private OIndex<?> uniqueIndex;
@@ -84,7 +85,7 @@ public class CreateEdgesStep extends AbstractExecutionStep {
             throw new OCommandExecutionException("Invalid TO vertex for edge");
           }
 
-          OEdge edge = currentFrom.addEdge(currentTo, targetClass.getStringValue());
+          OEdge edge = edgeToUpdate != null ? edgeToUpdate : currentFrom.addEdge(currentTo, targetClass.getStringValue());
 
           OUpdatableResult result = new OUpdatableResult(edge);
           result.setElement(edge);
@@ -173,38 +174,39 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   protected void loadNextFromTo() {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
-      while (true) {
+      edgeToUpdate = null;
+      this.currentTo = null;
+      if (!toIterator.hasNext()) {
+        toIterator = toList.iterator();
+        if (!fromIter.hasNext()) {
+          finished = true;
+          return;
+        }
+        currentFrom = fromIter.hasNext() ? asVertex(fromIter.next()) : null;
+      }
+      if (toIterator.hasNext() || (toList.size() > 0 && fromIter.hasNext())) {
+        if (currentFrom == null) {
+          throw new OCommandExecutionException("Invalid FROM vertex for edge");
+        }
+
+        Object obj = toIterator.next();
+
+        currentTo = asVertex(obj);
+        if (currentTo == null) {
+          throw new OCommandExecutionException("Invalid TO vertex for edge");
+        }
+
+        if (isUpsert()) {
+          OEdge existingEdge = getExistingEdge(currentFrom, currentTo);
+          if (existingEdge != null) {
+            edgeToUpdate = existingEdge;
+          }
+        }
+        return;
+
+      } else {
         this.currentTo = null;
-        if (!toIterator.hasNext()) {
-          toIterator = toList.iterator();
-          if (!fromIter.hasNext()) {
-            finished = true;
-            return;
-          }
-          currentFrom = fromIter.hasNext() ? asVertex(fromIter.next()) : null;
-        }
-        if (toIterator.hasNext() || (toList.size() > 0 && fromIter.hasNext())) {
-          if (currentFrom == null) {
-            throw new OCommandExecutionException("Invalid FROM vertex for edge");
-          }
-
-          Object obj = toIterator.next();
-
-          currentTo = asVertex(obj);
-          if (currentTo == null) {
-            throw new OCommandExecutionException("Invalid TO vertex for edge");
-          }
-
-          if (isUpsert() && edgeAlreadyExists(currentFrom, currentTo)) {
-            currentTo = null;
-            continue;
-          }
-          return;
-
-        } else {
-          this.currentTo = null;
-          return;
-        }
+        return;
       }
     } finally {
       if (profilingEnabled) {
@@ -213,9 +215,16 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     }
   }
 
-  private boolean edgeAlreadyExists(OVertex currentFrom, OVertex currentTo) {
+  private OEdge getExistingEdge(OVertex currentFrom, OVertex currentTo) {
     Object key = uniqueIndex.getDefinition().createValue(currentFrom.getIdentity(), currentTo.getIdentity());
-    return uniqueIndex.get(key) != null;
+    Object result = uniqueIndex.get(key);
+    if (result instanceof ORID) {
+      result = ((ORID) result).getRecord();
+    }
+    if (result instanceof OElement) {
+      return ((OElement) result).asEdge().get();
+    }
+    return null;
   }
 
   private boolean isUpsert() {

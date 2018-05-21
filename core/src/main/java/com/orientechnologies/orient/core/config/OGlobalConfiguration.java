@@ -648,6 +648,9 @@ public enum OGlobalConfiguration {
       "The size of a remote ResultSet page, ie. the number of records"
           + "that are fetched together during remote query execution. This has to be set on the client.", Integer.class, 100),
 
+  QUERY_REMOTE_SEND_EXECUTION_PLAN("query.remoteResultSet.sendExecutionPlan",
+      "Send the execution plan details or not. False by default", Boolean.class, false),
+
   QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query, if requirements are met", Boolean.class, false),
 
   QUERY_PARALLEL_MINIMUM_RECORDS("query.parallelMinimumRecords",

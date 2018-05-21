@@ -38,7 +38,7 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
     int createCount = -2;//Start from -2 because temporary rids start from -2
     for (ORecordOperationRequest operation : operations) {
       if (!operation.getOldId().equals(operation.getId()))
-        updatedRids.put(operation.getId(), operation.getOldId());
+        updatedRids.put(operation.getId().copy(), operation.getOldId());
 
       ORecord record = null;
       ORecordOperation op = oldEntries.get(operation.getOldId());

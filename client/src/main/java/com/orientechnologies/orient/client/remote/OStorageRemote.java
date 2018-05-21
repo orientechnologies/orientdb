@@ -585,8 +585,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       }
     }
 
-//     In backward compatible code the context is missing check if is there.
-    if (context != null) {
+    //In backward compatible code the context is missing check if is there.
+    //we need to check the status closing here for avoid deadlocks (in future flow refactor this may be removed)
+    if (context != null && status != STATUS.CLOSING) {
       context.closeStorage(this);
     }
 
@@ -939,12 +940,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   public void stickToSession() {
     OStorageRemoteSession session = getCurrentSession();
-    session.setStickToSession(true);
+    session.stickToSession();
   }
 
   public void unstickToSession() {
     OStorageRemoteSession session = getCurrentSession();
-    session.setStickToSession(false);
+    session.unStickToSession();
   }
 
   public ORemoteQueryResult query(ODatabaseDocumentRemote db, String query, Object[] args) {
@@ -957,6 +958,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
     stickToSession();
+    if (!response.isHasNextPage()) {
+      unstickToSession();
+    }
     return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
@@ -971,6 +975,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
     stickToSession();
+    if (!response.isHasNextPage()) {
+      unstickToSession();
+    }
     return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
@@ -1927,7 +1934,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     ODatabaseDocumentRemote remote = (ODatabaseDocumentRemote) ODatabaseDocumentTxInternal.getInternal(db);
     if (remote == null)
       return null;
-    OStorageRemoteSession session = (OStorageRemoteSession) remote.getSessionMetadata();
+    OStorageRemoteSession session = remote.getSessionMetadata();
     if (session == null) {
       session = new OStorageRemoteSession(sessionSerialId.decrementAndGet());
       sessions.add(session);

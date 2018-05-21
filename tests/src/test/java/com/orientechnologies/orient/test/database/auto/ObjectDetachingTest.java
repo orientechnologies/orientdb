@@ -15,40 +15,31 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javassist.util.proxy.Proxy;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.test.domain.base.EnumTest;
 import com.orientechnologies.orient.test.domain.base.JavaAttachDetachTestClass;
-import com.orientechnologies.orient.test.domain.business.Account;
-import com.orientechnologies.orient.test.domain.business.Address;
-import com.orientechnologies.orient.test.domain.business.Child;
-import com.orientechnologies.orient.test.domain.business.City;
-import com.orientechnologies.orient.test.domain.business.Country;
+import com.orientechnologies.orient.test.domain.base.SimpleObject;
+import com.orientechnologies.orient.test.domain.business.*;
 import com.orientechnologies.orient.test.domain.cycle.CycleChild;
 import com.orientechnologies.orient.test.domain.cycle.CycleParent;
 import com.orientechnologies.orient.test.domain.cycle.GrandChild;
 import com.orientechnologies.orient.test.domain.lazy.LazyChild;
 import com.orientechnologies.orient.test.domain.lazy.LazyParent;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+import javassist.util.proxy.Proxy;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.*;
 
 @Test(groups = { "object" })
 public class ObjectDetachingTest extends ObjectDBBaseTest {
@@ -777,5 +768,21 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Assert.assertSame(detached.getChild(), detached.getChildCopy());
     LazyChild loaded = database.load(detached.getChild().getId());
     Assert.assertEquals("name", loaded.getName());
+  }
+
+  public void testDetachMap() {
+    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
+    SimpleObject obj = new SimpleObject();
+    obj.setObjectId("foo");
+    Map<String, String> parts = new HashMap<>();
+    parts.put("foo", "bar");
+    parts.put("bar", "baz");
+    obj.setTemplatePartsIds(parts);
+    SimpleObject saved = database.save(obj);
+
+    SimpleObject loaded = (SimpleObject) ((List) database.objectQuery("SELECT FROM SimpleObject")).get(0);
+    SimpleObject a = OObjectEntitySerializer.detachAll(loaded, database, true, new HashMap<>(), new HashMap<>());
+    Assert.assertEquals(a.getObjectId(), "foo");
+    Assert.assertFalse(a.getTemplatePartsIds() instanceof OTrackedMap);
   }
 }

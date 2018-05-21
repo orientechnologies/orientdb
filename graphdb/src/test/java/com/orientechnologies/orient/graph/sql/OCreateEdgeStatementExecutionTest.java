@@ -182,7 +182,7 @@ public class OCreateEdgeStatementExecutionTest {
     }
 
     db.command("CREATE EDGE " + eClass + " from (select from " + vClass1 + " where name = 'v0') to  (select from " + vClass2
-        + " where name = 'v0')").close();
+        + " where name = 'v0') SET name = 'foo'").close();
 
     OResultSet rs = db.query("SELECT FROM " + eClass);
     Assert.assertTrue(rs.hasNext());
@@ -190,12 +190,15 @@ public class OCreateEdgeStatementExecutionTest {
     Assert.assertFalse(rs.hasNext());
     rs.close();
 
-    db.command("CREATE EDGE " + eClass + " UPSERT from (select from " + vClass1 + ") to  (select from " + vClass2 + ")").close();
+    db.command(
+        "CREATE EDGE " + eClass + " UPSERT from (select from " + vClass1 + ") to  (select from " + vClass2 + ") SET name = 'bar'")
+        .close();
 
     rs = db.query("SELECT FROM " + eclazz);
     for (int i = 0; i < 4; i++) {
       Assert.assertTrue(rs.hasNext());
-      rs.next();
+      OResult item = rs.next();
+      Assert.assertEquals("bar", item.getProperty("name"));
     }
     Assert.assertFalse(rs.hasNext());
     rs.close();
@@ -323,7 +326,6 @@ public class OCreateEdgeStatementExecutionTest {
       v1.setProperty("name", "v" + i);
       v1.save();
     }
-
 
     try {
       db.command("CREATE EDGE " + eClass + " UPSERT from (select from " + vClass1 + ") to  (select from " + vClass2 + ")").close();

@@ -30,7 +30,7 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
 
   @Override
   public OResultSet fetchNext(int n) {
-    return null;
+    return new OInternalResultSet();
   }
 
   public void reset(OCommandContext ctx) {

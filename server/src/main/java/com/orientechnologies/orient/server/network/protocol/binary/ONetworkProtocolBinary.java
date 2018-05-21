@@ -255,6 +255,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           }
           request.read(channel, protocolVersion, serializer);
         } catch (IOException e) {
+          if (connection != null) {
+            connection.endOperation();
+          }
           OLogManager.instance().debug(this, "I/O Error on client clientId=%d reqType=%d", clientTxId, requestType, e);
           sendShutdown();
           return;
