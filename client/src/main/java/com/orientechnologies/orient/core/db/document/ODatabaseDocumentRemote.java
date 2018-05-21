@@ -39,11 +39,14 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDeleter;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -62,10 +65,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSer
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
@@ -509,7 +510,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     return id;
   }
 
-  @Override
   public <RET extends ORecord> RET executeSaveRecord(ORecord record, String clusterName, int ver, OPERATION_MODE mode,
       boolean forceCreate, ORecordCallback<? extends Number> recordCreatedCallback,
       ORecordCallback<Integer> recordUpdatedCallback) {
@@ -820,5 +820,93 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   @Override
   public void afterReadOperations(OIdentifiable identifiable) {
     callbackHooks(ORecordHook.TYPE.AFTER_READ, identifiable);
+  }
+
+  @Override
+  public ORecord saveAll(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
+    ORecord toRet = null;
+    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
+    Set<ORecord> newRecord = dirtyManager.getNewRecords();
+    Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
+    dirtyManager.clearForSave();
+    if (newRecord != null) {
+      for (ORecord rec : newRecord) {
+        if (rec.getIdentity().isNew() && rec instanceof ODocument) {
+          ORecord ret = saveNew((ODocument) rec, dirtyManager, iClusterName, iRecord, iMode, iForceCreate, iRecordCreatedCallback,
+              iRecordUpdatedCallback);
+          if (ret != null)
+            toRet = ret;
+        }
+      }
+    }
+    if (updatedRecord != null) {
+      for (ORecord rec : updatedRecord) {
+        if (rec == iRecord) {
+          toRet = executeSaveRecord(rec, iClusterName, rec.getVersion(), iMode, iForceCreate, iRecordCreatedCallback,
+              iRecordUpdatedCallback);
+        } else
+          executeSaveRecord(rec, getClusterName(rec), rec.getVersion(), OPERATION_MODE.SYNCHRONOUS, false, null, null);
+      }
+    }
+
+    if (toRet != null)
+      return toRet;
+    else
+      return executeSaveRecord(iRecord, iClusterName, iRecord.getVersion(), iMode, iForceCreate, iRecordCreatedCallback,
+          iRecordUpdatedCallback);
+  }
+
+  public ORecord saveNew(ODocument document, ODirtyManager manager, String iClusterName, ORecord original,
+      final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
+      ORecordCallback<Integer> iRecordUpdatedCallback) {
+    ORecord toRet = null;
+    LinkedList<ODocument> path = new LinkedList<ODocument>();
+    ORecord next = document;
+    do {
+      if (next instanceof ODocument) {
+        ORecord nextToInspect = null;
+        List<OIdentifiable> toSave = manager.getPointed(next);
+        if (toSave != null) {
+          for (OIdentifiable oIdentifiable : toSave) {
+            if (oIdentifiable.getIdentity().isNew()) {
+              if (oIdentifiable instanceof ORecord)
+                nextToInspect = (ORecord) oIdentifiable;
+              else
+                nextToInspect = oIdentifiable.getRecord();
+              break;
+            }
+          }
+        }
+        if (nextToInspect != null) {
+          if (path.contains(nextToInspect)) {
+            if (nextToInspect == original)
+              executeSaveEmptyRecord(nextToInspect, iClusterName);
+            else
+              executeSaveEmptyRecord(nextToInspect, getClusterName(nextToInspect));
+          } else {
+            path.push((ODocument) next);
+            next = nextToInspect;
+          }
+        } else {
+          if (next == original)
+            toRet = executeSaveRecord(next, iClusterName, next.getVersion(), iMode, iForceCreate, iRecordCreatedCallback,
+                iRecordUpdatedCallback);
+          else
+            executeSaveRecord(next, getClusterName(next), next.getVersion(), OPERATION_MODE.SYNCHRONOUS, false, null, null);
+          next = path.pollFirst();
+        }
+
+      } else {
+        executeSaveRecord(next, null, next.getVersion(), iMode, false, null, null);
+        next = path.pollFirst();
+      }
+    } while (next != null);
+    return toRet;
+  }
+
+  public String getClusterName(final ORecord record) {
+    // DON'T ASSIGN CLUSTER WITH REMOTE: SERVER KNOWS THE RIGHT CLUSTER BASED ON LOCALITY
+    return null;
   }
 }

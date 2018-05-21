@@ -224,32 +224,6 @@ public abstract class OTransactionAbstract implements OTransaction {
     return lockedRecords;
   }
 
-  public String getClusterName(final ORecord record) {
-    if (ODatabaseRecordThreadLocal.instance().get().getStorage().isRemote())
-      // DON'T ASSIGN CLUSTER WITH REMOTE: SERVER KNOWS THE RIGHT CLUSTER BASED ON LOCALITY
-      return null;
-
-    int clusterId = record.getIdentity().getClusterId();
-    if (clusterId == ORID.CLUSTER_ID_INVALID) {
-      // COMPUTE THE CLUSTER ID
-      OClass schemaClass = null;
-      if (record instanceof ODocument)
-        schemaClass = ODocumentInternal.getImmutableSchemaClass(getDatabase(), (ODocument) record);
-      if (schemaClass != null) {
-        // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
-        if (schemaClass.isAbstract())
-          throw new OSchemaException("Document belongs to abstract class '" + schemaClass.getName() + "' and cannot be saved");
-        clusterId = schemaClass.getClusterForNewInstance((ODocument) record);
-        return database.getClusterNameById(clusterId);
-      } else {
-        return database.getClusterNameById(database.getStorage().getDefaultClusterId());
-      }
-
-    } else {
-      return database.getClusterNameById(clusterId);
-    }
-  }
-
   public abstract void internalRollback();
 
 }
