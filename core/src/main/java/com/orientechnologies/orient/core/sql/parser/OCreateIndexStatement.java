@@ -83,6 +83,23 @@ public class OCreateIndexStatement extends ODDLStatement {
         idx = database.getMetadata().getIndexManager()
             .createIndex(name.getValue(), type.getStringValue(), keyDef, null, null, metadataDoc, engine);
 
+      } else if (className == null && keyTypes == null || keyTypes.length == 0) {
+        //legacy: create index without specifying property names
+        String[] split = name.getValue().split("\\.");
+        if (split.length != 2) {
+          throw new ODatabaseException(
+              "Impossible to create an index without specify class and property name nor key types: " + toString());
+        }
+        OClass oClass = database.getClass(split[0]);
+        if (oClass == null) {
+          throw new ODatabaseException("Impossible to create an index, class not found: " + split[0]);
+        }
+        if (oClass.getProperty(split[1]) == null) {
+          throw new ODatabaseException("Impossible to create an index, property not found: " + name.getValue());
+        }
+        String[] fields = new String[] { split[1] };
+        idx = getoIndex(oClass, fields, engine, database, collatesList, metadataDoc);
+
       } else {
         throw new ODatabaseException(
             "Impossible to create an index without specify the key type or the associated property: " + toString());
@@ -90,35 +107,42 @@ public class OCreateIndexStatement extends ODDLStatement {
     } else {
       String[] fields = calculateProperties(ctx);
       OClass oClass = getIndexClass(ctx);
-      if ((keyTypes == null || keyTypes.size() == 0) && collatesList == null) {
-
-        idx = oClass.createIndex(name.getValue(), type.getStringValue(), null, metadataDoc, engine, fields);
-      } else {
-        final List<OType> fieldTypeList;
-        if (keyTypes == null || keyTypes.size() == 0 && fields.length > 0) {
-          for (final String fieldName : fields) {
-            if (!fieldName.equals("@rid") && !oClass.existsProperty(fieldName))
-              throw new OIndexException(
-                  "Index with name : '" + name.getValue() + "' cannot be created on class : '" + oClass.getName()
-                      + "' because field: '" + fieldName + "' is absent in class definition.");
-          }
-          fieldTypeList = ((OClassImpl) oClass).extractFieldTypes(fields);
-        } else
-          fieldTypeList = keyTypes.stream().map(x -> OType.valueOf(x.getStringValue())).collect(Collectors.toList());
-
-        final OIndexDefinition idxDef = OIndexDefinitionFactory
-            .createIndexDefinition(oClass, Arrays.asList(fields), fieldTypeList, collatesList, type.getStringValue(), null);
-
-        idx = database.getMetadata().getIndexManager()
-            .createIndex(name.getValue(), type.getStringValue(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc,
-                engine);
-      }
+      idx = getoIndex(oClass, fields, engine, database, collatesList, metadataDoc);
     }
 
     if (idx != null)
       return idx.getSize();
 
     return null;
+  }
+
+  private OIndex<?> getoIndex(OClass oClass, String[] fields, String engine, ODatabase database, List<OCollate> collatesList,
+      ODocument metadataDoc) {
+    OIndex<?> idx;
+    if ((keyTypes == null || keyTypes.size() == 0) && collatesList == null) {
+
+      idx = oClass.createIndex(name.getValue(), type.getStringValue(), null, metadataDoc, engine, fields);
+    } else {
+      final List<OType> fieldTypeList;
+      if (keyTypes == null || keyTypes.size() == 0 && fields.length > 0) {
+        for (final String fieldName : fields) {
+          if (!fieldName.equals("@rid") && !oClass.existsProperty(fieldName))
+            throw new OIndexException(
+                "Index with name : '" + name.getValue() + "' cannot be created on class : '" + oClass.getName()
+                    + "' because field: '" + fieldName + "' is absent in class definition.");
+        }
+        fieldTypeList = ((OClassImpl) oClass).extractFieldTypes(fields);
+      } else
+        fieldTypeList = keyTypes.stream().map(x -> OType.valueOf(x.getStringValue())).collect(Collectors.toList());
+
+      final OIndexDefinition idxDef = OIndexDefinitionFactory
+          .createIndexDefinition(oClass, Arrays.asList(fields), fieldTypeList, collatesList, type.getStringValue(), null);
+
+      idx = database.getMetadata().getIndexManager()
+          .createIndex(name.getValue(), type.getStringValue(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc,
+              engine);
+    }
+    return idx;
   }
 
   /***
