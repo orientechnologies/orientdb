@@ -19,18 +19,20 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OLazyIterator;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.OIdentityChangeListener;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Lazy implementation of Set. Can be bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty()
@@ -87,7 +89,23 @@ public class ORecordLazySet extends ORecordTrackedSet
         last = entry;
         if (entry.getValue() != ENTRY_REMOVAL)
           return (OIdentifiable) entry.getValue();
-        return entry.getKey();
+        if (entry.getKey() instanceof ORecordId && autoConvertToRecord && ODatabaseRecordThreadLocal.instance().isDefined()) {
+          try {
+            final ORecord rec = entry.getKey().getRecord();
+            if (sourceRecord != null && rec != null)
+              ORecordInternal.track(sourceRecord, rec);
+            if (iter instanceof OLazyIterator<?>) {
+              ((OLazyIterator<Entry<OIdentifiable, Object>>) iter).update(entry);
+            }
+            last = entry;
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error on iterating record collection", e);
+            entry = null;
+          }
+
+        }
+
+        return entry == null ? null : entry.getKey();
       }
 
       @Override
