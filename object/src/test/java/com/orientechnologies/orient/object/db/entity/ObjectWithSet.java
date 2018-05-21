@@ -11,7 +11,7 @@ public class ObjectWithSet {
   public String id;
 
   @OneToMany
-  Set<ObjectWithSet> friends = new HashSet<>();
+  Set<ObjectWithSet> friends = new HashSet<ObjectWithSet>();
 
   String name;
 
