@@ -35,13 +35,13 @@ public class OStorageRemoteSession {
 
   private Set<OChannelBinary> connections = Collections.newSetFromMap(new WeakHashMap<OChannelBinary, Boolean>());
   private final int uniqueClientSessionId;
-  private boolean closed = true;
+  private boolean closed         = true;
   /**
    * Make the retry to happen only on the current session, if the current session is invalid or the server is offline it kill the operation.
    * <p>
    * this is for avoid to send to the server wrong request expecting a specific state that is not there anymore.
    */
-  private boolean stickToSession;
+  private int     stickToSession = 0;
 
   public OStorageRemoteSession(final int sessionId) {
     this.uniqueClientSessionId = sessionId;
@@ -103,11 +103,15 @@ public class OStorageRemoteSession {
     return sessions.values();
   }
 
-  public void setStickToSession(boolean stickToSession) {
-    this.stickToSession = stickToSession;
+  public void stickToSession() {
+    this.stickToSession++;
+  }
+
+  public void unStickToSession() {
+    this.stickToSession--;
   }
 
   public boolean isStickToSession() {
-    return stickToSession;
+    return stickToSession > 0;
   }
 }

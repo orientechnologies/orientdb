@@ -21,6 +21,7 @@ package com.orientechnologies.common.jna;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMemory;
+import com.sun.jna.LastErrorException;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 
@@ -45,7 +46,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ONative {
   private static volatile OCLibrary C_LIBRARY;
-  private static final String DEFAULT_MEMORY_CGROUP_PATH = "/sys/fs/memory";
+  private static final    String    DEFAULT_MEMORY_CGROUP_PATH = "/sys/fs/memory";
 
   private static volatile ONative instance = null;
   private static final    Lock    initLock = new ReentrantLock();
@@ -77,6 +78,53 @@ public class ONative {
    * Prevent initialization outside singleton
    */
   private ONative() {
+  }
+
+  /**
+   * Detects limit of limit of open files.
+   *
+   * @param recommended recommended value of limit of open files.
+   * @param defLimit    default value for limit of open files.
+   *
+   * @return limit of open files, available for the system.
+   */
+  public int getOpenFilesLimit(boolean verbose, int recommended, int defLimit) {
+    if (Platform.isLinux()) {
+      final OCLibrary.Rlimit rlimit = new OCLibrary.Rlimit();
+      final int result = C_LIBRARY.getrlimit(OCLibrary.RLIMIT_NOFILE, rlimit);
+
+      if (result == 0 && rlimit.rlim_cur > 0) {
+        if (verbose) {
+          OLogManager.instance().infoNoDb(this, "Detected limit of amount of simultaneously open files is %d, "
+              + " limit of open files for disk cache will be set to ", rlimit.rlim_cur, rlimit.rlim_cur - 512);
+        }
+
+        if (rlimit.rlim_cur < recommended) {
+          OLogManager.instance()
+              .warnNoDb(this, "Value of limit of simultaneously open files is too small, recommended value is %d",
+                  recommended);
+        }
+
+        return (int) rlimit.rlim_cur - 512;
+      } else {
+        if (verbose) {
+          OLogManager.instance().infoNoDb(this, "Can not detect value of limit of open files.");
+        }
+      }
+    } else if (Platform.isWindows()) {
+      if (verbose) {
+        OLogManager.instance()
+            .infoNoDb(this, "Windows OS is detected, %d limit of open files will be set for the disk cache.", recommended);
+      }
+
+      return recommended;
+    }
+
+    if (verbose) {
+      OLogManager.instance().infoNoDb(this, "Default limit of open files (%d) will be used.", defLimit);
+    }
+
+    return defLimit;
   }
 
   /**
@@ -163,6 +211,18 @@ public class ONative {
       return null;
 
     return new MemoryLimitResult(memoryLimit, insideContainer);
+  }
+
+  public int open(String path) throws LastErrorException {
+    return C_LIBRARY.open(path, 0x0002);
+  }
+
+  public int fallocate(int fd, long offset, long len) throws LastErrorException {
+    return C_LIBRARY.fallocate(fd, 0, offset, len);
+  }
+
+  public int close(int fd) throws LastErrorException {
+    return C_LIBRARY.close(fd);
   }
 
   private long updateMemoryLimit(long memoryLimit, final long newMemoryLimit) {

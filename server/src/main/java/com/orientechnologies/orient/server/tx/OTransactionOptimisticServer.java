@@ -466,7 +466,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
         ORecordId oldRid = rid.copy();
         ORecordInternal.onBeforeIdentityChanged(record);
         database.assignAndCheckCluster(record, null);
-        updatedRids.put(rid, oldRid);
+        updatedRids.put(rid.copy(), oldRid);
         ORecordInternal.onAfterIdentityChanged(record);
       }
 

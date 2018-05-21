@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -20,6 +21,7 @@ public class CreateEdgesStep extends AbstractExecutionStep {
 
   private final OIdentifier targetClass;
   private final OIdentifier targetCluster;
+  private final String      uniqueIndexName;
   private final OIdentifier fromAlias;
   private final OIdentifier toAlias;
   private final Number      wait;
@@ -30,22 +32,27 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   Iterator fromIter;
   Iterator toIterator;
   OVertex  currentFrom;
-  List toList = new ArrayList<>();
+  OVertex  currentTo;
+  OEdge    edgeToUpdate;//for upsert
+  boolean finished = false;
+  List    toList   = new ArrayList<>();
+  private OIndex<?> uniqueIndex;
+
   private boolean inited = false;
 
   private long cost = 0;
 
-  public CreateEdgesStep(OIdentifier targetClass, OIdentifier targetClusterName, OIdentifier fromAlias, OIdentifier toAlias,
-      Number wait, Number retry, OBatch batch, OCommandContext ctx, boolean profilingEnabled) {
+  public CreateEdgesStep(OIdentifier targetClass, OIdentifier targetClusterName, String uniqueIndex, OIdentifier fromAlias,
+      OIdentifier toAlias, Number wait, Number retry, OBatch batch, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.targetClass = targetClass;
     this.targetCluster = targetClusterName;
+    this.uniqueIndexName = uniqueIndex;
     this.fromAlias = fromAlias;
     this.toAlias = toAlias;
     this.wait = wait;
     this.retry = retry;
     this.batch = batch;
-
   }
 
   @Override
@@ -57,43 +64,38 @@ public class CreateEdgesStep extends AbstractExecutionStep {
 
       @Override
       public boolean hasNext() {
-        return (currentBatch < nRecords && (toIterator.hasNext() || (toList.size() > 0 && fromIter.hasNext())));
+        if (currentTo == null) {
+          loadNextFromTo();
+        }
+        return (currentBatch < nRecords && currentTo != null && !finished);
       }
 
       @Override
       public OResult next() {
-        if (!toIterator.hasNext()) {
-          toIterator = toList.iterator();
-          if (!fromIter.hasNext()) {
+        if (currentTo == null) {
+          loadNextFromTo();
+        }
+        long begin = profilingEnabled ? System.nanoTime() : 0;
+        try {
+
+          if (finished || currentBatch >= nRecords) {
             throw new IllegalStateException();
           }
-          currentFrom = fromIter.hasNext() ? asVertex(fromIter.next()) : null;
-        }
-        if (currentBatch < nRecords && (toIterator.hasNext() || (toList.size() > 0 && fromIter.hasNext()))) {
-
-          if (currentFrom == null) {
-            throw new OCommandExecutionException("Invalid FROM vertex for edge");
+          if (currentTo == null) {
+            throw new OCommandExecutionException("Invalid TO vertex for edge");
           }
 
-          Object obj = toIterator.next();
-          long begin = profilingEnabled ? System.nanoTime() : 0;
-          try {
-            OVertex currentTo = asVertex(obj);
-            if (currentTo == null) {
-              throw new OCommandExecutionException("Invalid TO vertex for edge");
-            }
+          OEdge edge = edgeToUpdate != null ? edgeToUpdate : currentFrom.addEdge(currentTo, targetClass.getStringValue());
 
-            OEdge edge = currentFrom.addEdge(currentTo, targetClass.getStringValue());
-
-            OUpdatableResult result = new OUpdatableResult(edge);
-            result.setElement(edge);
-            currentBatch++;
-            return result;
-          } finally {
-            if(profilingEnabled){cost += (System.nanoTime() - begin);}
+          OUpdatableResult result = new OUpdatableResult(edge);
+          result.setElement(edge);
+          currentTo = null;
+          currentBatch++;
+          return result;
+        } finally {
+          if (profilingEnabled) {
+            cost += (System.nanoTime() - begin);
           }
-        } else {
-          throw new IllegalStateException();
         }
       }
 
@@ -136,8 +138,8 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     }
 
     fromIter = (Iterator) fromValues;
-    if(fromIter instanceof OResultSet){
-      try{
+    if (fromIter instanceof OResultSet) {
+      try {
         ((OResultSet) fromIter).reset();
       } catch (Exception ignore) {
       }
@@ -150,8 +152,8 @@ public class CreateEdgesStep extends AbstractExecutionStep {
     }
 
     toIterator = toList.iterator();
-    if(toIter instanceof OResultSet){
-      try{
+    if (toIter instanceof OResultSet) {
+      try {
         ((OResultSet) toIter).reset();
       } catch (Exception ignore) {
       }
@@ -159,6 +161,74 @@ public class CreateEdgesStep extends AbstractExecutionStep {
 
     currentFrom = fromIter != null && fromIter.hasNext() ? asVertex(fromIter.next()) : null;
 
+    if (uniqueIndexName != null) {
+      uniqueIndex = ctx.getDatabase().getMetadata().getIndexManager().getIndex(uniqueIndexName);
+      if (uniqueIndex == null) {
+        throw new OCommandExecutionException("Index not found for upsert: " + uniqueIndexName);
+      }
+
+    }
+
+  }
+
+  protected void loadNextFromTo() {
+    long begin = profilingEnabled ? System.nanoTime() : 0;
+    try {
+      edgeToUpdate = null;
+      this.currentTo = null;
+      if (!toIterator.hasNext()) {
+        toIterator = toList.iterator();
+        if (!fromIter.hasNext()) {
+          finished = true;
+          return;
+        }
+        currentFrom = fromIter.hasNext() ? asVertex(fromIter.next()) : null;
+      }
+      if (toIterator.hasNext() || (toList.size() > 0 && fromIter.hasNext())) {
+        if (currentFrom == null) {
+          throw new OCommandExecutionException("Invalid FROM vertex for edge");
+        }
+
+        Object obj = toIterator.next();
+
+        currentTo = asVertex(obj);
+        if (currentTo == null) {
+          throw new OCommandExecutionException("Invalid TO vertex for edge");
+        }
+
+        if (isUpsert()) {
+          OEdge existingEdge = getExistingEdge(currentFrom, currentTo);
+          if (existingEdge != null) {
+            edgeToUpdate = existingEdge;
+          }
+        }
+        return;
+
+      } else {
+        this.currentTo = null;
+        return;
+      }
+    } finally {
+      if (profilingEnabled) {
+        cost += (System.nanoTime() - begin);
+      }
+    }
+  }
+
+  private OEdge getExistingEdge(OVertex currentFrom, OVertex currentTo) {
+    Object key = uniqueIndex.getDefinition().createValue(currentFrom.getIdentity(), currentTo.getIdentity());
+    Object result = uniqueIndex.get(key);
+    if (result instanceof ORID) {
+      result = ((ORID) result).getRecord();
+    }
+    if (result instanceof OElement) {
+      return ((OElement) result).asEdge().get();
+    }
+    return null;
+  }
+
+  private boolean isUpsert() {
+    return uniqueIndex != null;
   }
 
   private OVertex asVertex(Object currentFrom) {

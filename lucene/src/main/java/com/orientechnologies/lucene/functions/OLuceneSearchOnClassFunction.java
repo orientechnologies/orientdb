@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.parser.*;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
@@ -43,7 +44,12 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
       Object[] params,
       OCommandContext ctx) {
 
-    OResult result = (OResult) iThis;
+    OResult result;
+    if (iThis instanceof OResult) {
+      result = (OResult) iThis;
+    } else {
+      result = new OResultInternal((OIdentifiable) iThis);
+    }
 
     OElement element = result.toElement();
 

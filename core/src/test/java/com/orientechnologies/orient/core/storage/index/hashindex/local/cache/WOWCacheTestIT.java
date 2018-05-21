@@ -23,6 +23,7 @@ import org.junit.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -116,6 +117,9 @@ public class WOWCacheTestIT {
   }
 
   private void initBuffer() throws IOException, InterruptedException {
+    final Path storagePath = storageLocal.getStoragePath();
+    Files.createDirectories(storagePath);
+
     wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, 10, 100, storageLocal, false, files, 1,
         OChecksumMode.StoreAndVerify);
     wowCache.loadRegisteredFiles();

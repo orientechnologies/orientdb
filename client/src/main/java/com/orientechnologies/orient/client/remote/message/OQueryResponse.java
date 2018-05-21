@@ -2,11 +2,7 @@ package com.orientechnologies.orient.client.remote.message;
 
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
@@ -106,7 +102,7 @@ public class OQueryResponse implements OBinaryResponse {
 
   private void writeExecutionPlan(Optional<OExecutionPlan> executionPlan, OChannelDataOutput channel,
       ORecordSerializer recordSerializer) throws IOException {
-    if (executionPlan.isPresent()) {
+    if (executionPlan.isPresent() && OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN.getValueAsBoolean()) {
       channel.writeBoolean(true);
       OMessageHelper.writeResult(executionPlan.get().toResult(), channel, recordSerializer);
     } else {

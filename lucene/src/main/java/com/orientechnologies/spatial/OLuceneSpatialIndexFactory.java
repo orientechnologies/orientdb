@@ -133,7 +133,6 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
 
   @Override
   public void onOpen(ODatabaseInternal iDatabase) {
-    spatialManager.init(iDatabase);
   }
 
   @Override

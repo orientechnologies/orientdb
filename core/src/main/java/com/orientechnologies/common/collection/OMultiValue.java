@@ -26,6 +26,7 @@ import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -99,6 +100,9 @@ public class OMultiValue {
         i++;
       }
       return i;
+    }
+    if (iObject instanceof OInternalResultSet) {
+      return ((OInternalResultSet) iObject).size();
     }
     return 0;
   }

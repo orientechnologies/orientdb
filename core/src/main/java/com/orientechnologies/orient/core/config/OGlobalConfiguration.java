@@ -108,7 +108,8 @@ public enum OGlobalConfiguration {
   /**
    * Limit of amount of files which may be open simultaneously
    */
-  OPEN_FILES_LIMIT("storage.openFiles.limit", "Limit of amount of files which may be open simultaneously", Integer.class, 512),
+  OPEN_FILES_LIMIT("storage.openFiles.limit",
+      "Limit of amount of files which may be open simultaneously, -1 (default) means automatic detection", Integer.class, -1),
 
   /**
    * Amount of cached locks is used for component lock in atomic operation to avoid constant creation of new lock instances, default
@@ -639,6 +640,9 @@ public enum OGlobalConfiguration {
   QUERY_REMOTE_RESULTSET_PAGE_SIZE("query.remoteResultSet.pageSize",
       "The size of a remote ResultSet page, ie. the number of records"
           + "that are fetched together during remote query execution. This has to be set on the client.", Integer.class, 100),
+
+  QUERY_REMOTE_SEND_EXECUTION_PLAN("query.remoteResultSet.sendExecutionPlan",
+      "Send the execution plan details or not. False by default", Boolean.class, false),
 
   QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query, if requirements are met", Boolean.class, false),
 

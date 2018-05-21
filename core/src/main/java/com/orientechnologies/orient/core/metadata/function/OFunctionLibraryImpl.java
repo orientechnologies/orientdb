@@ -80,20 +80,21 @@ public class OFunctionLibraryImpl {
 
     // LOAD ALL THE FUNCTIONS IN MEMORY
     if (db.getMetadata().getImmutableSchemaSnapshot().existsClass("OFunction")) {
-      OResultSet result = db.query("select from OFunction order by name");
-      while (result.hasNext()) {
-        OResult res = result.next();
-        ODocument d = (ODocument) res.getElement().get();
-        //skip the function records which do not contain real data
-        if (d.fields() == 0)
-          continue;
+      try(OResultSet result = db.query("select from OFunction order by name")) {
+        while (result.hasNext()) {
+          OResult res = result.next();
+          ODocument d = (ODocument) res.getElement().get();
+          //skip the function records which do not contain real data
+          if (d.fields() == 0)
+            continue;
 
-        final OFunction f = new OFunction(d);
+          final OFunction f = new OFunction(d);
 
-        // RESTORE CALLBACK IF ANY
-        f.setCallback(callbacks.get(f.getName()));
+          // RESTORE CALLBACK IF ANY
+          f.setCallback(callbacks.get(f.getName()));
 
-        functions.put(d.field("name").toString().toUpperCase(Locale.ENGLISH), f);
+          functions.put(d.field("name").toString().toUpperCase(Locale.ENGLISH), f);
+        }
       }
     }
   }

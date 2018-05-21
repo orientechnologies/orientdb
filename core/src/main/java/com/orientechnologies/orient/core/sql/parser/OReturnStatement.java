@@ -25,7 +25,8 @@ public class OReturnStatement extends OSimpleExecStatement {
   @Override
   public OResultSet executeSimple(OCommandContext ctx) {
     OInternalResultSet rs = new OInternalResultSet();
-    Object result = expression.execute((OResult) null, ctx);
+
+    Object result = expression == null ? null : expression.execute((OResult) null, ctx);
     if (result instanceof OResult) {
       rs.add((OResult) result);
     } else if (result instanceof OIdentifiable) {

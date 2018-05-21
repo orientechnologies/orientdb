@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
@@ -59,8 +60,10 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
   public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
 
-    iManager.getMessageService().getDatabase(databaseName).getSyncConfiguration().setLastLSN(getNodeSource(), lsn, false);
-
+    ODistributedDatabase database1 = iManager.getMessageService().getDatabase(databaseName);
+    if(database1 != null) {
+      database1.getSyncConfiguration().setLastLSN(getNodeSource(), lsn, false);
+    }
     return true;
   }
 

@@ -1,5 +1,6 @@
 package com.orientechnologies.common.jna;
 
+import com.sun.jna.LastErrorException;
 import com.sun.jna.Library;
 import com.sun.jna.Structure;
 import com.sun.jna.platform.unix.Resource;
@@ -13,6 +14,8 @@ public interface OCLibrary extends Library {
    * Address space limit.
    */
   int RLIMIT_AS = 9;
+
+  int RLIMIT_NOFILE = 7;
 
   /**
    * Denotes no limit on a resource.
@@ -51,4 +54,10 @@ public interface OCLibrary extends Library {
 
   // see man(2) rlimit
   int getrlimit(int resource, Rlimit rlim);
+
+  int open(String path, int flags) throws LastErrorException;
+
+  int fallocate(int fd, int mode, long offset, long len) throws LastErrorException;
+
+  int close(int fd) throws LastErrorException;
 }

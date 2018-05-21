@@ -8,6 +8,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -19,28 +21,83 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
 
   private final OCommandContext ctx;
 
+  boolean executed = false;
+
   protected List<ScriptLineStep> steps = new ArrayList<>();
 
   OExecutionStepInternal lastStep = null;
+
+  OResultSet finalResult = null;
 
   public OScriptExecutionPlan(OCommandContext ctx) {
     this.ctx = ctx;
   }
 
-  @Override public void reset(OCommandContext ctx) {
+  @Override
+  public void reset(OCommandContext ctx) {
     //TODO
     throw new UnsupportedOperationException();
   }
 
-  @Override public void close() {
+  @Override
+  public void close() {
     lastStep.close();
   }
 
-  @Override public OResultSet fetchNext(int n) {
-    return lastStep.syncPull(ctx, n);
+  @Override
+  public OResultSet fetchNext(int n) {
+    doExecute(n);
+    return new OResultSet() {
+      int totalFetched = 0;
+
+      @Override
+      public boolean hasNext() {
+        return finalResult.hasNext() && totalFetched < n;
+      }
+
+      @Override
+      public OResult next() {
+        if (!hasNext()) {
+          throw new IllegalStateException();
+        }
+        return finalResult.next();
+      }
+
+      @Override
+      public void close() {
+        finalResult.close();
+      }
+
+      @Override
+      public Optional<OExecutionPlan> getExecutionPlan() {
+        return finalResult == null ? Optional.empty() : finalResult.getExecutionPlan();
+      }
+
+      @Override
+      public Map<String, Long> getQueryStats() {
+        return null;
+      }
+    };
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  private void doExecute(int n) {
+    if (!executed) {
+      executeUntilReturn();
+      executed = true;
+      finalResult = new OInternalResultSet();
+      OResultSet partial = lastStep.syncPull(ctx, n);
+      while (partial.hasNext()) {
+        while (partial.hasNext()) {
+          ((OInternalResultSet) finalResult).add(partial.next());
+        }
+        partial = lastStep.syncPull(ctx, n);
+      }
+      ((OInternalResultSet) finalResult).setPlan(((ScriptLineStep) lastStep).plan);
+    }
+  }
+
+  @Override
+  public String prettyPrint(int depth, int indent) {
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < steps.size(); i++) {
       OExecutionStepInternal step = steps.get(i);
@@ -63,7 +120,8 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
     this.lastStep = nextStep;
   }
 
-  @Override public List<OExecutionStep> getSteps() {
+  @Override
+  public List<OExecutionStep> getSteps() {
     //TODO do a copy of the steps
     return (List) steps;
   }
@@ -72,7 +130,8 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
     this.steps = (List) steps;
   }
 
-  @Override public OResult toResult() {
+  @Override
+  public OResult toResult() {
     OResultInternal result = new OResultInternal();
     result.setProperty("type", "ScriptExecutionPlan");
     result.setProperty("javaType", getClass().getName());
@@ -82,7 +141,8 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
     return result;
   }
 
-  @Override public long getCost() {
+  @Override
+  public long getCost() {
     return 0l;
   }
 

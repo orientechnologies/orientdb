@@ -246,7 +246,7 @@ public class OFunctionCall extends SimpleNode {
   }
 
   public boolean isExpand() {
-    return name.getStringValue().equals("expand");
+    return name.getStringValue().equalsIgnoreCase("expand");
   }
 
   public boolean needsAliases(Set<String> aliases) {

@@ -40,8 +40,13 @@ public class OLetStatement extends OSimpleExecStatement {
       result = rs;
     }
 
-    if (ctx != null && ctx.getParent() != null) {
-      ctx.getParent().setVariable(name.getStringValue(), result);
+    if (ctx != null) {
+      if (ctx.getParent() != null) {
+
+        ctx.getParent().setVariable(name.getStringValue(), result);
+      } else {
+        ctx.setVariable(name.getStringValue(), result);
+      }
     }
     return new OInternalResultSet();
   }

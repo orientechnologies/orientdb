@@ -1225,6 +1225,80 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
     }
   }
 
+  public <RET extends List<?>> RET objectCommand(String iCommand, Object... iArgs) {
+    checkOpenness();
+
+    convertParameters(iArgs);
+
+    final OResultSet result = underlying.command(iCommand, iArgs);
+
+    if (result == null)
+      return null;
+
+    try {
+
+      final List<Object> resultPojo = new ArrayList<Object>();
+      Object obj;
+      while (result.hasNext()) {
+        OResult doc = result.next();
+        if (doc.isElement()) {
+          // GET THE ASSOCIATED DOCUMENT
+          OElement elem = doc.getElement().get();
+          if (elem.getSchemaType().isPresent())
+            obj = getUserObjectByRecord(elem, null, true);
+          else
+            obj = elem;
+
+          resultPojo.add(obj);
+        } else {
+          resultPojo.add(doc);
+        }
+
+      }
+
+      return (RET) resultPojo;
+    } finally {
+      result.close();
+    }
+  }
+
+  public <RET extends List<?>> RET objectCommand(String iCommand, Map<String, Object> iArgs) {
+    checkOpenness();
+
+    convertParameters(iArgs);
+
+    final OResultSet result = underlying.command(iCommand, iArgs);
+
+    if (result == null)
+      return null;
+
+    try {
+
+      final List<Object> resultPojo = new ArrayList<Object>();
+      Object obj;
+      while (result.hasNext()) {
+        OResult doc = result.next();
+        if (doc.isElement()) {
+          // GET THE ASSOCIATED DOCUMENT
+          OElement elem = doc.getElement().get();
+          if (elem.getSchemaType().isPresent())
+            obj = getUserObjectByRecord(elem, null, true);
+          else
+            obj = elem;
+
+          resultPojo.add(obj);
+        } else {
+          resultPojo.add(doc);
+        }
+
+      }
+
+      return (RET) resultPojo;
+    } finally {
+      result.close();
+    }
+  }
+
   @Override
   public OResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
     return underlying.command(query, args);
