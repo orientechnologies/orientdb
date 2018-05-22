@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
-import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import javax.management.InstanceAlreadyExistsException;
@@ -416,8 +415,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     if (counter == 1) {
       try {
         if (operation.isRollback()) {
-          if (storage instanceof ODirectMemoryStorage) {
-            final List<OComponentOperation> componentOperations = new ArrayList<>(operation.getComponentRecords());
+          List<OComponentOperation> cachedOperations = operation.getComponentRecords();
+          if (!cachedOperations.isEmpty()) {
+            final List<OComponentOperation> componentOperations = new ArrayList<>(cachedOperations);
             final ListIterator<OComponentOperation> iterator = componentOperations.listIterator(componentOperations.size());
 
             while (iterator.hasPrevious()) {
