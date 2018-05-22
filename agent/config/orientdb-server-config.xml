@@ -107,8 +107,6 @@
               name="guest"/>
     </users>
     <properties>
-        <entry value="1" name="db.pool.min"/>
-        <entry value="50" name="db.pool.max"/>
         <entry value="true" name="profiler.enabled"/>
     </properties>
     <isAfterFirstTime>true</isAfterFirstTime>

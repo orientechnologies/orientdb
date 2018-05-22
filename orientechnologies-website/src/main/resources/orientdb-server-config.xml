@@ -144,10 +144,6 @@
               name="guest"/>
     </users>
     <properties>
-        <!-- DATABASE POOL: size min/max -->
-        <entry name="db.pool.min" value="1"/>
-        <entry name="db.pool.max" value="50"/>
-
         <!-- LOCAL CACHE: enable/disable-->
         <entry name="cache.local.enabled" value="true"/>
 
