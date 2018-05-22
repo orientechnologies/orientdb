@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -122,7 +123,7 @@ public class OUpdateItem extends SimpleNode {
     switch (operator) {
     case OPERATOR_EQ:
       Object newValue = convertResultToDocument(rightValue);
-      newValue = convertToPropertyType(doc, attrName, newValue);
+      newValue = convertToPropertyType(doc, attrName, newValue, ctx);
       doc.setProperty(attrName.getStringValue(), newValue);
       break;
     case OPERATOR_MINUSASSIGN:
@@ -140,7 +141,7 @@ public class OUpdateItem extends SimpleNode {
     }
   }
 
-  private Object convertToPropertyType(OResultInternal res, OIdentifier attrName, Object newValue) {
+  public static Object convertToPropertyType(OResultInternal res, OIdentifier attrName, Object newValue, OCommandContext ctx) {
     OElement doc = res.toElement();
     Optional<OClass> optSchema = doc.getSchemaType();
     if (!optSchema.isPresent()) {
@@ -160,9 +161,37 @@ public class OUpdateItem extends SimpleNode {
         } else {
           throw new OCommandExecutionException("Cannot assign a collection to a LINK property");
         }
+      } else if (prop.getType() == OType.EMBEDDEDLIST && prop.getLinkedClass() != null) {
+        return ((Collection) newValue).stream().map(item -> convertToType(item, prop.getLinkedClass(), ctx))
+            .collect(Collectors.toList());
+
+      } else if (prop.getType() == OType.EMBEDDEDSET && prop.getLinkedClass() != null) {
+        return ((Collection) newValue).stream().map(item -> convertToType(item, prop.getLinkedClass(), ctx))
+            .collect(Collectors.toSet());
+
       }
     }
     return newValue;
+  }
+
+  private static Object convertToType(Object item, OClass linkedClass, OCommandContext ctx) {
+    if (item instanceof OElement) {
+      OClass currentType = ((OElement) item).getSchemaType().orElse(null);
+      if (currentType == null || !currentType.isSubClassOf(linkedClass)) {
+        OElement result = ((ODatabaseSession) ctx.getDatabase()).newElement(linkedClass.getName());
+        for (String prop : ((OElement) item).getPropertyNames()) {
+          result.setProperty(prop, ((OElement) item).getProperty(prop));
+        }
+        return result;
+      } else {
+        return item;
+      }
+    } else if (item instanceof Map) {
+      OElement result = ((ODatabaseSession) ctx.getDatabase()).newElement(linkedClass.getName());
+      ((Map<String, Object>) item).entrySet().stream().forEach(x -> result.setProperty(x.getKey(), x.getValue()));
+      return result;
+    }
+    return item;
   }
 
   private Object convertResultToDocument(Object value) {

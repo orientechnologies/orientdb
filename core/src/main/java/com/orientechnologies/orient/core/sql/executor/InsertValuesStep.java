@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OUpdateItem;
 
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,7 @@ public class InsertValuesStep extends AbstractExecutionStep {
         for (int i = 0; i < currentValues.size(); i++) {
           OIdentifier identifier = identifiers.get(i);
           Object value = currentValues.get(i).execute(result, ctx);
+          value = OUpdateItem.convertToPropertyType((OResultInternal) result, identifier, value, ctx);
           ((OResultInternal) result).setProperty(identifier.getStringValue(), value);
         }
         return result;

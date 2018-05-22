@@ -10,6 +10,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
@@ -237,27 +238,83 @@ public class OInsertStatementExecutionTest {
     String className1 = "testLinkConversion1";
     String className2 = "testLinkConversion2";
 
-
     db.command("CREATE CLASS " + className1).close();
     db.command("INSERT INTO " + className1 + " SET name='Active';").close();
     db.command("INSERT INTO " + className1 + " SET name='Inactive';").close();
 
     db.command("CREATE CLASS " + className2 + ";").close();
-    db.command("CREATE PROPERTY " + className2 + ".processingType LINK "+className1+";").close();
+    db.command("CREATE PROPERTY " + className2 + ".processingType LINK " + className1 + ";").close();
 
     db.command("INSERT INTO " + className2 + " SET name='Active', processingType = (SELECT FROM " + className1
         + " WHERE name = 'Active') ;").close();
     db.command("INSERT INTO " + className2 + " SET name='Inactive', processingType = (SELECT FROM " + className1
         + " WHERE name = 'Inactive') ;").close();
 
-
-    OResultSet result = db.query("SELECT FROM "+className2);
+    OResultSet result = db.query("SELECT FROM " + className2);
     for (int i = 0; i < 2; i++) {
       Assert.assertTrue(result.hasNext());
       OResult row = result.next();
       Object val = row.getProperty("processingType");
       Assert.assertNotNull(val);
       Assert.assertTrue(val instanceof OIdentifiable);
+    }
+    result.close();
+  }
+
+  @Test
+  public void testEmbeddedlistConversion() {
+    String className1 = "testEmbeddedlistConversion1";
+    String className2 = "testEmbeddedlistConversion2";
+
+    db.command("CREATE CLASS " + className1).close();
+
+    db.command("CREATE CLASS " + className2 + ";").close();
+    db.command("CREATE PROPERTY " + className2 + ".sub EMBEDDEDLIST " + className1 + ";").close();
+
+    db.command("INSERT INTO " + className2 + " SET name='Active', sub = [{'name':'foo'}];").close();
+
+    OResultSet result = db.query("SELECT FROM " + className2);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult row = result.next();
+      Object list = row.getProperty("sub");
+      Assert.assertNotNull(list);
+      Assert.assertTrue(list instanceof List);
+      Assert.assertEquals(1, ((List) list).size());
+
+      Object o = ((List) list).get(0);
+      Assert.assertTrue(o instanceof OResult);
+      Assert.assertEquals("foo", ((OResult) o).getProperty("name"));
+      Assert.assertEquals(className1, ((OResult) o).toElement().getSchemaType().get().getName());
+    }
+    result.close();
+  }
+
+  @Test
+  public void testEmbeddedlistConversion2() {
+    String className1 = "testEmbeddedlistConversion21";
+    String className2 = "testEmbeddedlistConversion22";
+
+    db.command("CREATE CLASS " + className1).close();
+
+    db.command("CREATE CLASS " + className2 + ";").close();
+    db.command("CREATE PROPERTY " + className2 + ".sub EMBEDDEDLIST " + className1 + ";").close();
+
+    db.command("INSERT INTO " + className2 + " (name, sub) values ('Active', [{'name':'foo'}]);").close();
+
+    OResultSet result = db.query("SELECT FROM " + className2);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult row = result.next();
+      Object list = row.getProperty("sub");
+      Assert.assertNotNull(list);
+      Assert.assertTrue(list instanceof List);
+      Assert.assertEquals(1, ((List) list).size());
+
+      Object o = ((List) list).get(0);
+      Assert.assertTrue(o instanceof OResult);
+      Assert.assertEquals("foo", ((OResult) o).getProperty("name"));
+      Assert.assertEquals(className1, ((OResult) o).toElement().getSchemaType().get().getName());
     }
     result.close();
   }
