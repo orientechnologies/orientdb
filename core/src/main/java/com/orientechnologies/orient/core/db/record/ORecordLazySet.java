@@ -19,37 +19,30 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OLazyIterator;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.OIdentityChangeListener;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
+
 /**
  * Lazy implementation of Set. Can be bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty()
- * by hand when the set is changed.
- * <p>
- * <b>Internals</b>:
- * <ul>
- * <li>stores new records in a separate IdentityHashMap to keep underlying list (delegate) always ordered and minimizing sort
- * operations</li>
- * <li></li>
- * </ul>
- * 
- * </p>
- * 
+ * by hand when the set is changed. <p> <b>Internals</b>: <ul> <li>stores new records in a separate IdentityHashMap to keep
+ * underlying list (delegate) always ordered and minimizing sort operations</li> <li></li> </ul> <p> </p>
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
-public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement,
-    OIdentityChangeListener {
+public class ORecordLazySet extends ORecordTrackedSet
+    implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement, OIdentityChangeListener {
   protected boolean autoConvertToRecord = true;
 
   public ORecordLazySet(final ODocument iSourceRecord) {
@@ -71,10 +64,11 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
   public Iterator<OIdentifiable> iterator() {
     return new OLazyRecordIterator(new OLazyIterator<OIdentifiable>() {
       {
-          iter = ORecordLazySet.super.map.entrySet().iterator();
+        iter = ORecordLazySet.super.map.entrySet().iterator();
       }
+
       private Iterator<Entry<OIdentifiable, Object>> iter;
-      private Entry<OIdentifiable, Object>           last;
+      private Entry<OIdentifiable, Object> last;
 
       @Override
       public boolean hasNext() {
@@ -87,7 +81,23 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
         last = entry;
         if (entry.getValue() != ENTRY_REMOVAL)
           return (OIdentifiable) entry.getValue();
-        return entry.getKey();
+        if (entry.getKey() instanceof ORecordId && autoConvertToRecord && ODatabaseRecordThreadLocal.instance().isDefined()) {
+          try {
+            final ORecord rec = entry.getKey().getRecord();
+            if (sourceRecord != null && rec != null)
+              ORecordInternal.track(sourceRecord, rec);
+            if (iter instanceof OLazyIterator<?>) {
+              ((OLazyIterator<Entry<OIdentifiable, Object>>) iter).update(entry);
+            }
+            last = entry;
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error on iterating record collection", e);
+            entry = null;
+          }
+
+        }
+
+        return entry == null ? null : entry.getKey();
       }
 
       @Override
@@ -129,8 +139,8 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       map.put(e, ENTRY_REMOVAL);
     setDirty();
 
-    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e,
-        e));
+    fireCollectionChangedEvent(
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e, e));
 
     return true;
   }
@@ -200,8 +210,9 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
         ORecordInternal.removeIdentityChangeListener((ORecord) o, this);
 
       setDirty();
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o, null, (OIdentifiable) o));
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o,
+              null, (OIdentifiable) o));
       return true;
     }
     return false;
