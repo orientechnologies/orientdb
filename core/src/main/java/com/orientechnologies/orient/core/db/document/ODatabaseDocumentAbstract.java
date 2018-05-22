@@ -2008,6 +2008,17 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
     checkOpenness();
 
+    if (iRecord instanceof OVertex) {
+      iRecord = iRecord.getRecord();
+    }
+    if (iRecord instanceof OEdge) {
+      if (((OEdge) iRecord).isLightweight()) {
+        iRecord = ((OEdge) iRecord).getFrom();
+      } else {
+        iRecord = iRecord.getRecord();
+      }
+    }
+
     ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
     if (iRecord instanceof OElement && dirtyManager != null && dirtyManager.getReferences() != null && !dirtyManager.getReferences()
         .isEmpty()) {
@@ -2020,12 +2031,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   private <RET extends ORecord> RET saveInternal(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
-    if (iRecord instanceof OVertex) {
-      iRecord = iRecord.getRecord();
-    }
-    if (iRecord instanceof OEdge) {
-      iRecord = iRecord.getRecord();
-    }
+
     if (!(iRecord instanceof ODocument)) {
       assignAndCheckCluster(iRecord, iClusterName);
       return (RET) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
