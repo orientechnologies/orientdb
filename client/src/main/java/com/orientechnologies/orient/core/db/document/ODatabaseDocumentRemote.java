@@ -506,116 +506,19 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       return id;
     }
   }
-  
+
   @Override
   public void executeDeleteRecord(OIdentifiable record, int iVersion, boolean iRequired, OPERATION_MODE iMode,
       boolean prohibitTombstones) {
-    checkOpenness();
-    checkIfActive();
-
-    final ORecordId rid = (ORecordId) record.getIdentity();
-
-    if (rid == null)
-      throw new ODatabaseException(
-          "Cannot delete record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
-
-    if (!rid.isValid())
-      return;
-
-    record = record.getRecord();
-    if (record == null)
-      return;
-
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.getClusterId()));
-
-    ORecordSerializationContext.pushContext();
-    getMetadata().makeThreadLocalSchemaSnapshot();
-    try {
-      if (record instanceof ODocument) {
-        ODocumentInternal.checkClass((ODocument) record, this);
+    OTransactionOptimisticClient tx = new OTransactionOptimisticClient(this) {
+      @Override
+      protected void checkTransaction() {
       }
-      try {
-        // if cache is switched off record will be unreachable after delete.
-        ORecord rec = record.getRecord();
-        if (rec != null) {
-          callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, rec);
+    };
+    tx.begin();
+    tx.deleteRecord((ORecord) record, iMode);
+    tx.commit();
 
-          if (rec instanceof ODocument)
-            ORidBagDeleter.deleteAllRidBags((ODocument) rec);
-        }
-
-        final OStorageOperationResult<Boolean> operationResult;
-        try {
-          if (prohibitTombstones) {
-            final boolean result = getStorage().cleanOutRecord(rid, iVersion, iMode.ordinal(), null);
-            if (!result && iRequired)
-              throw new ORecordNotFoundException(rid);
-            operationResult = new OStorageOperationResult<Boolean>(result);
-          } else {
-            final OStorageOperationResult<Boolean> result = getStorage().deleteRecord(rid, iVersion, iMode.ordinal(), null);
-            if (!result.getResult() && iRequired)
-              throw new ORecordNotFoundException(rid);
-            operationResult = new OStorageOperationResult<Boolean>(result.getResult());
-          }
-
-          if (!operationResult.isMoved() && rec != null)
-            callbackHooks(ORecordHook.TYPE.AFTER_DELETE, rec);
-          else if (rec != null)
-            callbackHooks(ORecordHook.TYPE.DELETE_REPLICATED, rec);
-        } catch (Exception t) {
-          callbackHooks(ORecordHook.TYPE.DELETE_FAILED, rec);
-          throw t;
-        } finally {
-          callbackHooks(ORecordHook.TYPE.FINALIZE_DELETION, rec);
-        }
-
-        clearDocumentTracking(rec);
-
-        // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
-        if (!operationResult.isMoved()) {
-          getLocalCache().deleteRecord(rid);
-        }
-
-      } catch (OException e) {
-        // RE-THROW THE EXCEPTION
-        throw e;
-
-      } catch (Exception t) {
-        // WRAP IT AS ODATABASE EXCEPTION
-        throw OException
-            .wrapException(new ODatabaseException("Error on deleting record in cluster #" + record.getIdentity().getClusterId()),
-                t);
-      }
-    } finally {
-      ORecordSerializationContext.pullContext();
-      getMetadata().clearThreadLocalSchemaSnapshot();
-    }
-  }
-
-  protected byte[] updateStream(final ORecord record) {
-    ORecordSerializationContext.pullContext();
-
-    ODirtyManager manager = ORecordInternal.getDirtyManager(record);
-    Set<ORecord> newRecords = manager.getNewRecords();
-    Set<ORecord> updatedRecords = manager.getUpdateRecords();
-    manager.clearForSave();
-    if (newRecords != null) {
-      for (ORecord newRecord : newRecords) {
-        if (newRecord != record)
-          getTransaction().saveRecord(newRecord, null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
-      }
-    }
-    if (updatedRecords != null) {
-      for (ORecord updatedRecord : updatedRecords) {
-        if (updatedRecord != record)
-          getTransaction().saveRecord(updatedRecord, null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
-      }
-    }
-
-    ORecordSerializationContext.pushContext();
-    ORecordInternal.unsetDirty(record);
-    record.setDirty();
-    return serializer.toStream(record, false);
   }
 
   @Override

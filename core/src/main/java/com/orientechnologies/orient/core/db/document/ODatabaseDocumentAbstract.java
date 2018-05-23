@@ -213,7 +213,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public ODatabaseDocumentInternal cleanOutRecord(final ORID iRecord, final int iVersion) {
-    executeDeleteRecord(iRecord, iVersion, true, OPERATION_MODE.SYNCHRONOUS, true);
+    delete(iRecord, iVersion);
     return this;
   }
 
