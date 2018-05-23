@@ -473,6 +473,13 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return (DB) this;
   }
 
+  public void checkClusterSecurity(final int operation, final OIdentifiable record, String cluster) {
+    if (cluster == null) {
+      cluster = getClusterNameById(record.getIdentity().getClusterId());
+    }
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, operation, cluster);
+  }
+
   /**
    * {@inheritDoc}
    */
