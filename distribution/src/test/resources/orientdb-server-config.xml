@@ -74,8 +74,6 @@
 	<storages />
 	<users/>
 	<properties>
-		<entry value="1" name="db.pool.min" />
-		<entry value="50" name="db.pool.max" />
 		<entry value="true" name="profiler.enabled" />
 		<entry value="info" name="log.console.level" />
 		<entry value="fine" name="log.file.level" />
