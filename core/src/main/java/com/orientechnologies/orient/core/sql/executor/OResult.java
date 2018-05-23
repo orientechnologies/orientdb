@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.util.ODateHelper;
+import jdk.nashorn.internal.ir.debug.JSONWriter;
 
 import java.util.*;
 
@@ -214,7 +215,9 @@ public interface OResult {
   }
 
   default String encode(String s) {
-    String result = s.replaceAll("\"", "\\\\\"");
+    JSONWriter writer;
+    String result = s.replaceAll("\\\\", "\\\\\\\\");
+    result = result.replaceAll("\"", "\\\\\"");
     result = result.replaceAll("\n", "\\\\n");
     result = result.replaceAll("\t", "\\\\t");
     return result;
