@@ -184,7 +184,7 @@
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
 
-        <license.location>ODB-ASL-LICENSE.txt</license.location>
+        <license.location>license.txt</license.location>
         <!--Override with the given url on external modules-->
         <!--<license.location>https://github.com/orientechnologies/orientdb/raw/develop/ODB-ASL-LICENSE.txt</license.location>-->
         <heapSize>2048m</heapSize>
