@@ -10,6 +10,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.concurrent.*;
 
 import javax.crypto.*;
 import javax.crypto.spec.GCMParameterSpec;
@@ -48,6 +49,7 @@ public class OAESGCMEncryption implements OEncryption {
   private static final String              AUTHENTICATION_ERROR             = "Authentication of encrypted data failed. The encrypted data may have been altered or the used key is incorrect";
   private static final String              INVALID_CIPHERTEXT_SIZE_ERROR    = "Invalid ciphertext size: minimum: %d, actual: %d";
   private static final String              INVALID_RANGE_ERROR              = "Invalid range: array size: %d, offset: %d, length: %d";
+  private static final String              BLOCKING_SECURE_RANDOM_ERROR     = "SecureRandom blocked while retrieving randomness. This maybe caused by a misconfigured or absent random source on your operating system.";
 
   private boolean                          initialized;
   private SecretKey                        key;
@@ -131,13 +133,9 @@ public class OAESGCMEncryption implements OEncryption {
   }
 
   private SecureRandom createSecureRandom() {
-    try {
-      return SecureRandom.getInstanceStrong();
-    } catch (NoSuchAlgorithmException e) {
-      // Contract: Every implementation of the Java platform is required to support at least one strong {@code SecureRandom}
-      // implementation.
-      throw new IllegalStateException(e);
-    }
+    SecureRandom secureRandom = new SecureRandom();
+    assertNonBlocking(secureRandom);
+    return secureRandom;
   }
 
   private void validateKeySize(int numBytes) {
@@ -183,6 +181,19 @@ public class OAESGCMEncryption implements OEncryption {
       throw OException.wrapException(new OInvalidStorageEncryptionKeyException(INVALID_KEY_ERROR), e);
     } catch (InvalidAlgorithmParameterException e) {
       throw new IllegalArgumentException("Invalid or re-used nonce.", e);
+    }
+  }
+
+  private void assertNonBlocking(SecureRandom secureRandom) {
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    try {
+      executor.submit(() -> secureRandom.nextInt()).get(1, TimeUnit.MINUTES);
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IllegalStateException(e);
+    } catch (TimeoutException e) {
+      throw new OSecurityException(BLOCKING_SECURE_RANDOM_ERROR);
+    } finally {
+      executor.shutdownNow();
     }
   }
 
