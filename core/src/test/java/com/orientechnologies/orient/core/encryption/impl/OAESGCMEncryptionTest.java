@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.encryption.impl;
 import java.io.File;
 import java.util.List;
 
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -10,8 +12,6 @@ import org.junit.rules.ExpectedException;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -20,6 +20,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_ENCRYPTION_KEY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -77,76 +79,75 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
 
     final String dbPath = buildDirectory + File.separator + DBNAME_DATABASETEST;
     OFileUtils.deleteRecursively(new File(dbPath));
-
-    final ODatabase db = new ODatabaseDocumentTx("plocal:" + dbPath);
-
-    db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey(), "aes/gcm");
-    db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
-
-    db.create();
-
+    OrientDBConfigBuilder builder = OrientDBConfig.builder();
+    builder.addConfig(STORAGE_ENCRYPTION_METHOD, "aes/gcm");
+    builder.addConfig(STORAGE_ENCRYPTION_KEY, "T1JJRU5UREJfSVNfQ09PTA==");
+    OrientDB orientDB = new OrientDB("embedded:" + buildDirectory, builder.build());
+    orientDB.create(DBNAME_DATABASETEST, ODatabaseType.PLOCAL);
+    ODatabaseSession db = orientDB.open(DBNAME_DATABASETEST, "admin", "admin");
     try {
-      db.command(new OCommandSQL("create class TestEncryption")).execute();
-      db.command(new OCommandSQL("insert into TestEncryption set name = 'Jay'")).execute();
+      db.command("create class TestEncryption");
+      db.command("insert into TestEncryption set name = 'Jay'");
 
-      List result = db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
-      Assert.assertEquals(result.size(), 1);
+      try (OResultSet result = db.query("select from TestEncryption")) {
+        Assert.assertEquals(result.stream().count(), 1);
+      }
       db.close();
+      orientDB.close();
 
-      db.open("admin", "admin");
-      OStorage storage = ((ODatabaseDocumentInternal) db).getStorage();
-      db.close();
+      orientDB = new OrientDB("embedded:" + buildDirectory, builder.build());
+      db = orientDB.open(DBNAME_DATABASETEST, "admin", "admin");
+      try (OResultSet result = db.query("select from TestEncryption")) {
+        Assert.assertEquals(result.stream().count(), 1);
+      }
+      orientDB.close();
 
-      storage.close(true, false);
-
-      db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
-      db.open("admin", "admin");
-      result = db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
-      Assert.assertEquals(result.size(), 1);
-      storage = ((ODatabaseDocumentInternal) db).getStorage();
-      db.close();
-
-      storage.close(true, false);
-
-      db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "invalidPassword");
+      builder = OrientDBConfig.builder();
+      builder.addConfig(STORAGE_ENCRYPTION_METHOD, "aes/gcm");
+      builder.addConfig(STORAGE_ENCRYPTION_KEY, "invalidPassword");
+      orientDB = new OrientDB("embedded:" + buildDirectory, builder.build());
       OSecurityException exception = null;
       try {
-        db.open("admin", "admin");
-        storage = ((ODatabaseDocumentInternal) db).getStorage();
+        orientDB.open(DBNAME_DATABASETEST, "admin", "admin");
       } catch (OSecurityException e) {
         exception = e;
       } finally {
-        db.activateOnCurrentThread();
-        db.close();
-        storage.close(true, false);
         assertNotNull(exception);
       }
+      orientDB.close();
 
-      db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA=-");
+      builder = OrientDBConfig.builder();
+      builder.addConfig(STORAGE_ENCRYPTION_METHOD, "aes/gcm");
+      builder.addConfig(STORAGE_ENCRYPTION_KEY, "T1JJRU5UREJfSVNfQ09PTA=-");
+      orientDB = new OrientDB("embedded:" + buildDirectory, builder.build());
+
       exception = null;
       try {
-        db.open("admin", "admin");
-        storage = ((ODatabaseDocumentInternal) db).getStorage();
+        orientDB.open(DBNAME_DATABASETEST, "admin", "admin");
       } catch (OSecurityException e) {
         exception = e;
       } finally {
-        db.activateOnCurrentThread();
-        db.close();
-        storage.close(true, false);
         assertNotNull(exception);
       }
 
-      db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
-      db.open("admin", "admin");
-      result = db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
-      Assert.assertEquals(result.size(), 1);
+      orientDB.close();
 
+      builder = OrientDBConfig.builder();
+      builder.addConfig(STORAGE_ENCRYPTION_METHOD, "aes/gcm");
+      builder.addConfig(STORAGE_ENCRYPTION_KEY, "T1JJRU5UREJfSVNfQ09PTA==");
+      orientDB = new OrientDB("embedded:" + buildDirectory, builder.build());
+      db = orientDB.open(DBNAME_DATABASETEST, "admin", "admin");
+      try (OResultSet result = db.query("select from TestEncryption")) {
+        Assert.assertEquals(result.stream().count(), 1);
+      }
+      orientDB.close();
     } finally {
-      db.activateOnCurrentThread();
-      if (db.isClosed())
-        db.open("admin", "admin");
-
-      db.drop();
+      builder = OrientDBConfig.builder();
+      builder.addConfig(STORAGE_ENCRYPTION_METHOD, "aes/gcm");
+      builder.addConfig(STORAGE_ENCRYPTION_KEY, "T1JJRU5UREJfSVNfQ09PTA==");
+      orientDB = new OrientDB("embedded:" + buildDirectory, builder.build());
+      orientDB.drop(DBNAME_DATABASETEST);
+      orientDB.close();
     }
   }
 
@@ -158,7 +159,7 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
     OFileUtils.deleteRecursively(new File(dbPath));
     final ODatabase db = new ODatabaseDocumentTx("plocal:" + dbPath);
 
-    db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
+    db.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
 
     db.create();
     try {
@@ -177,7 +178,7 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
 
       storage.close(true, false);
 
-      db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
+      db.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
       db.open("admin", "admin");
       result = db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
       Assert.assertEquals(result.size(), 1);
@@ -186,7 +187,7 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
 
       storage.close(true, false);
 
-      db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "invalidPassword");
+      db.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "invalidPassword");
       OSecurityException exception = null;
       try {
         db.open("admin", "admin");
@@ -202,7 +203,7 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
         assertNotNull(exception);
       }
 
-      db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA=-");
+      db.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA=-");
       exception = null;
       try {
         db.open("admin", "admin");
@@ -217,7 +218,7 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
         assertNotNull(exception);
       }
 
-      db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
+      db.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
       db.open("admin", "admin");
       result = db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
       Assert.assertEquals(result.size(), 1);
