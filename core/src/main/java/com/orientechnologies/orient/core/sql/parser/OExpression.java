@@ -152,6 +152,13 @@ public class OExpression extends SimpleNode {
     return false;
   }
 
+  public boolean isTraversePerRecordFunction(){
+    if (mathExpression != null){
+      return mathExpression.isTraversePerRecordFunction();
+    }
+    return false;
+  }
+  
   public boolean isEarlyCalculated() {
     if (this.mathExpression != null) {
       return this.mathExpression.isEarlyCalculated();

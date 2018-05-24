@@ -16,6 +16,8 @@ import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +28,10 @@ public class OFunctionCall extends SimpleNode {
   protected OIdentifier name;
 
   protected List<OExpression> params = new ArrayList<OExpression>();
+  
+  private Set<String> traversePerRecordFunctions = new HashSet<>(Arrays.asList("out".toLowerCase(), "in".toLowerCase(), "both".toLowerCase(),
+                                                                               "outE".toLowerCase(), "inE".toLowerCase(), "bothE".toLowerCase(),
+                                                                               "bothV".toLowerCase(), "outV".toLowerCase(), "inV".toLowerCase()));
 
   public OFunctionCall(int id) {
     super(id);
@@ -346,7 +352,20 @@ public class OFunctionCall extends SimpleNode {
     }
     return true;
   }
+  
+  public boolean isTraversePerRecordFunction(){
+    if (name != null){
+      if (name.getValue() != null){
+        return inSetOfTraversePerRecordFunctions(name.getValue());
+      }        
+    }
+    return false;
+  }
 
+  public boolean inSetOfTraversePerRecordFunctions(String functionName){
+    return traversePerRecordFunctions.contains(functionName.toLowerCase());
+  }
+  
   public AggregationContext getAggregationContext(OCommandContext ctx) {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     function.config(this.params.toArray());
@@ -355,6 +374,7 @@ public class OFunctionCall extends SimpleNode {
     return result;
   }
 
+  @Override
   public OFunctionCall copy() {
     OFunctionCall result = new OFunctionCall(-1);
     result.name = name;

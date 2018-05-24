@@ -208,6 +208,13 @@ public class OBaseIdentifier extends SimpleNode {
     }
     return false;
   }
+  
+  public boolean isTraversePerRecordFunction(){
+    if (levelZero != null) {
+      return levelZero.isTraversePerRecordFunction();
+    }
+    return false;
+  }
 
   public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
     if (isAggregate()) {

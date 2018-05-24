@@ -635,7 +635,10 @@ public class OSelectExecutionPlanner {
       Iterator<OLetItem> iterator = info.perRecordLetClause.getItems().iterator();
       while (iterator.hasNext()) {
         OLetItem item = iterator.next();
-        if (item.getExpression() != null && item.getExpression().isEarlyCalculated()) {
+        if (item.getExpression() != null && item.getExpression().isTraversePerRecordFunction()){
+          continue;
+        }
+        else if (item.getExpression() != null && item.getExpression().isEarlyCalculated()) {
           iterator.remove();
           addGlobalLet(info, item.getVarName(), item.getExpression());
         } else if (item.getQuery() != null && !item.getQuery().refersToParent()) {
