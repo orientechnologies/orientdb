@@ -889,11 +889,7 @@ public class OMathExpression extends SimpleNode {
       }
     }
     return false;
-  }
-  
-  public boolean isTraversePerRecordFunction(){
-    return false;
-  }
+  }    
 
   public boolean isExpand() {
     for (OMathExpression expr : this.childExpressions) {

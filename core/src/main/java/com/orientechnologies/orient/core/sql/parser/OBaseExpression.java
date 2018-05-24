@@ -231,14 +231,7 @@ public class OBaseExpression extends OMathExpression {
       return true;
     }
     return false;
-  }
-  
-  @Override
-  public boolean isTraversePerRecordFunction(){
-    if (identifier != null)
-      return identifier.isTraversePerRecordFunction();
-    return false;
-  }
+  }    
 
   @Override
   public boolean isExpand() {

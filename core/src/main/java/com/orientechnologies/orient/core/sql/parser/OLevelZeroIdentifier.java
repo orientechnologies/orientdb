@@ -189,14 +189,7 @@ public class OLevelZeroIdentifier extends SimpleNode {
       return true;
     }
     return false;
-  }
-  
-  public boolean isTraversePerRecordFunction(){
-    if (functionCall != null){
-      return functionCall.isTraversePerRecordFunction();
-    }
-    return false;
-  }
+  }    
 
   public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
     if (isAggregate()) {

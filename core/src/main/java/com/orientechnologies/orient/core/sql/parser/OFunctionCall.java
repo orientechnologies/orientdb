@@ -350,10 +350,13 @@ public class OFunctionCall extends SimpleNode {
         return false;
       }
     }
+    if (isTraversePerRecordFunction()){
+      return false;
+    }
     return true;
   }
   
-  public boolean isTraversePerRecordFunction(){
+  private boolean isTraversePerRecordFunction(){
     if (name != null){
       if (name.getValue() != null){
         return inSetOfTraversePerRecordFunctions(name.getValue());
