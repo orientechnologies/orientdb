@@ -142,8 +142,12 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
           auditingFileConfig.createNewFile();
 
           final FileOutputStream f = new FileOutputStream(auditingFileConfig);
-          f.write(content.getBytes());
-          f.flush();
+          try {
+            f.write(content.getBytes());
+            f.flush();
+          } finally {
+            f.close();
+          }
         } catch (IOException e) {
           content = "{}";
           OLogManager.instance().error(this, "Cannot save auditing file configuration", e);
@@ -260,8 +264,12 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
     final File auditingFileConfig = getConfigFile(iDatabaseName);
     if (auditingFileConfig != null) {
       final FileOutputStream f = new FileOutputStream(auditingFileConfig);
-      f.write(cfg.toJSON("prettyPrint=true").getBytes());
-      f.flush();
+      try {
+        f.write(cfg.toJSON("prettyPrint=true").getBytes());
+        f.flush();
+      } finally {
+        f.close();
+      }
     }
   }
 
@@ -341,7 +349,12 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
         globalHook.log(operation, dbName, username, message);
       }
     } else { // Use the global hook.
-      globalHook.log(operation, dbName, username, message);
+      if (globalHook == null)
+        OLogManager.instance()
+            .error(this, "Default Auditing is disabled, cannot log: op=%s db='%s' user=%s message='%s'", null, operation, dbName,
+                username, message);
+      else
+        globalHook.log(operation, dbName, username, message);
     }
   }
 
