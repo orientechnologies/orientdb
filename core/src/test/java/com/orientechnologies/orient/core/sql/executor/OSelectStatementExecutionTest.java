@@ -2091,40 +2091,39 @@ public class OSelectStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
   }
-  
+
   @Test
   public void testLetWithTraverseFunction() {
     String vertexClassName = "testLetWithTraverseFunction";
-    String edgeClassName = "testLetWithTraverseFunctioEdge";    
-    
+    String edgeClassName = "testLetWithTraverseFunctioEdge";
+
     OClass vertexClass = db.createVertexClass(vertexClassName);
-    
+
     OVertex doc1 = db.newVertex(vertexClass);
-    doc1.setProperty("name", "A");    
+    doc1.setProperty("name", "A");
     doc1.save();
-    
+
     OVertex doc2 = db.newVertex(vertexClass);
     doc2.setProperty("name", "B");
     doc2.save();
     ORID doc2Id = doc2.getIdentity();
-    
 
     OClass edgeClass = db.createEdgeClass(edgeClassName);
-    
+
     db.newEdge(doc1, doc2, edgeClass);
     String queryString = "SELECT $x, name FROM " + vertexClassName + " let $x = out(\"" + edgeClassName + "\")";
     OResultSet resultSet = db.query(queryString);
     int counter = 0;
-    while (resultSet.hasNext()){
+    while (resultSet.hasNext()) {
       OResult result = resultSet.next();
       OEdgeToVertexIterable edge = result.getProperty("$x");
       Iterator<OVertex> iter = edge.iterator();
-      while (iter.hasNext()){
+      while (iter.hasNext()) {
         OVertex toVertex = iter.next();
-        if (doc2Id.equals(toVertex.getIdentity())){
+        if (doc2Id.equals(toVertex.getIdentity())) {
           ++counter;
         }
-      }      
+      }
     }
     Assert.assertEquals(1, counter);
     resultSet.close();

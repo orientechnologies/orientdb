@@ -207,7 +207,7 @@ public class OBaseIdentifier extends SimpleNode {
       return true;
     }
     return false;
-  }    
+  }
 
   public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
     if (isAggregate()) {

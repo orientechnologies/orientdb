@@ -222,7 +222,6 @@ public class OBaseExpression extends OMathExpression {
     return identifier != null && modifier == null ? identifier.getCollate(currentRecord, ctx) : null;
   }
 
-  @Override
   public boolean isEarlyCalculated() {
     if (number != null || inputParam != null || string != null) {
       return true;
@@ -231,11 +230,6 @@ public class OBaseExpression extends OMathExpression {
       return true;
     }
     return false;
-  }
-  
-  @Override
-  public boolean isStringValue(){
-    return string != null;
   }
 
   @Override

@@ -26,7 +26,7 @@ public class OFunctionCall extends SimpleNode {
 
   protected OIdentifier name;
 
-  protected List<OExpression> params = new ArrayList<OExpression>();    
+  protected List<OExpression> params = new ArrayList<OExpression>();
 
   public OFunctionCall(int id) {
     super(id);
@@ -340,30 +340,30 @@ public class OFunctionCall extends SimpleNode {
   }
 
   public boolean isEarlyCalculated() {
-    
+
     if (isTraverseFunction())
       return false;
-    
+
     for (OExpression param : params) {
       if (!param.isEarlyCalculated()) {
         return false;
       }
     }
-    
+
     return true;
   }
-  
-  private boolean isTraverseFunction(){
-    if (name == null){
+
+  private boolean isTraverseFunction() {
+    if (name == null) {
       return false;
     }
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.value);
-    if (function instanceof OSQLFunctionMove){
+    if (function instanceof OSQLFunctionMove) {
       return true;
     }
     return false;
-  }  
-  
+  }
+
   public AggregationContext getAggregationContext(OCommandContext ctx) {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     function.config(this.params.toArray());

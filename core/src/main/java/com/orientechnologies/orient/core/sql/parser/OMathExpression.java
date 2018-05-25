@@ -793,8 +793,8 @@ public class OMathExpression extends SimpleNode {
     }
     return this.childExpressions.get(0).isIndexedFunctionCall();
   }
-  
-  public boolean isStringValue(){
+
+  public boolean isStringValue() {
     return false;
   }
 
@@ -893,7 +893,7 @@ public class OMathExpression extends SimpleNode {
       }
     }
     return false;
-  }    
+  }
 
   public boolean isExpand() {
     for (OMathExpression expr : this.childExpressions) {
