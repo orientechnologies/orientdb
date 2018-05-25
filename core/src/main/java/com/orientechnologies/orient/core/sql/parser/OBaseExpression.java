@@ -231,7 +231,12 @@ public class OBaseExpression extends OMathExpression {
       return true;
     }
     return false;
-  }    
+  }
+  
+  @Override
+  public boolean isStringValue(){
+    return string != null;
+  }
 
   @Override
   public boolean isExpand() {

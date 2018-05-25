@@ -14,10 +14,9 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionMove;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,11 +26,7 @@ public class OFunctionCall extends SimpleNode {
 
   protected OIdentifier name;
 
-  protected List<OExpression> params = new ArrayList<OExpression>();
-  
-  private Set<String> traversePerRecordFunctions = new HashSet<>(Arrays.asList("out".toLowerCase(), "in".toLowerCase(), "both".toLowerCase(),
-                                                                               "outE".toLowerCase(), "inE".toLowerCase(), "bothE".toLowerCase(),
-                                                                               "bothV".toLowerCase(), "outV".toLowerCase(), "inV".toLowerCase()));
+  protected List<OExpression> params = new ArrayList<OExpression>();    
 
   public OFunctionCall(int id) {
     super(id);
@@ -346,28 +341,25 @@ public class OFunctionCall extends SimpleNode {
 
   public boolean isEarlyCalculated() {
     for (OExpression param : params) {
-      if (!param.isEarlyCalculated()) {
+      if (!param.isEarlyCalculated() ||
+         //special case not covered
+         (isTraverseFunction() && param.mathExpression != null && param.mathExpression.isStringValue())) {
         return false;
       }
-    }
-    if (isTraversePerRecordFunction()){
-      return false;
-    }
+    }    
     return true;
   }
   
-  private boolean isTraversePerRecordFunction(){
-    if (name != null){
-      if (name.getValue() != null){
-        return inSetOfTraversePerRecordFunctions(name.getValue());
-      }        
+  private boolean isTraverseFunction(){
+    if (name == null){
+      return false;
+    }
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.value);
+    if (function instanceof OSQLFunctionMove){
+      return true;
     }
     return false;
-  }
-
-  public boolean inSetOfTraversePerRecordFunctions(String functionName){
-    return traversePerRecordFunctions.contains(functionName.toLowerCase());
-  }
+  }  
   
   public AggregationContext getAggregationContext(OCommandContext ctx) {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
