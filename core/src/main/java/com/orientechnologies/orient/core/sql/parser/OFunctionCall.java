@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.functions.graph.OSQLFunctionMove;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -339,12 +340,28 @@ public class OFunctionCall extends SimpleNode {
   }
 
   public boolean isEarlyCalculated() {
+
+    if (isTraverseFunction())
+      return false;
+
     for (OExpression param : params) {
       if (!param.isEarlyCalculated()) {
         return false;
       }
     }
+
     return true;
+  }
+
+  private boolean isTraverseFunction() {
+    if (name == null) {
+      return false;
+    }
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.value);
+    if (function instanceof OSQLFunctionMove) {
+      return true;
+    }
+    return false;
   }
 
   public AggregationContext getAggregationContext(OCommandContext ctx) {
@@ -355,6 +372,7 @@ public class OFunctionCall extends SimpleNode {
     return result;
   }
 
+  @Override
   public OFunctionCall copy() {
     OFunctionCall result = new OFunctionCall(-1);
     result.name = name;
