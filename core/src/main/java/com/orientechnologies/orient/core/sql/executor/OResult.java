@@ -214,7 +214,8 @@ public interface OResult {
   }
 
   default String encode(String s) {
-    String result = s.replaceAll("\"", "\\\\\"");
+    String result = s.replaceAll("\\\\", "\\\\\\\\");
+    result = result.replaceAll("\"", "\\\\\"");
     result = result.replaceAll("\n", "\\\\n");
     result = result.replaceAll("\t", "\\\\t");
     return result;
