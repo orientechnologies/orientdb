@@ -340,13 +340,16 @@ public class OFunctionCall extends SimpleNode {
   }
 
   public boolean isEarlyCalculated() {
+    
+    if (isTraverseFunction())
+      return false;
+    
     for (OExpression param : params) {
-      if (!param.isEarlyCalculated() ||
-         //special case not covered
-         (isTraverseFunction() && param.mathExpression != null && param.mathExpression.isStringValue())) {
+      if (!param.isEarlyCalculated()) {
         return false;
       }
-    }    
+    }
+    
     return true;
   }
   
