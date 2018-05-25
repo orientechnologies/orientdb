@@ -88,19 +88,5 @@ public class OShapeOperationImpl implements OShapeOperation {
     Geometry geometry = factory.toGeometry(shape);
     Geometry geometry1 = factory.toGeometry(shape1);
     return geometry.overlaps(geometry1);
-  }
-  
-  @Override
-  public boolean touches(Shape shape, Shape shape1){
-    Geometry geometry = factory.toGeometry(shape);
-    Geometry geometry1 = factory.toGeometry(shape1);
-    return geometry.touches(geometry1);
-  }
-  
-  @Override
-  public boolean crosses(Shape shape, Shape shape1){
-    Geometry geometry = factory.toGeometry(shape);
-    Geometry geometry1 = factory.toGeometry(shape1);
-    return geometry.crosses(geometry1);
-  }
+  }    
 }

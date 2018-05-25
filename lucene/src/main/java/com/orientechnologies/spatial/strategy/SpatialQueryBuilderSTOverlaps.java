@@ -31,16 +31,9 @@ import org.apache.lucene.spatial.query.SpatialOperation;
 import org.locationtech.spatial4j.shape.Shape;
 
 import java.util.Map;
-import org.apache.lucene.spatial.bbox.BBoxStrategy;
-import org.apache.lucene.spatial.composite.CompositeSpatialStrategy;
-import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
-import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
-import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
-import org.apache.lucene.spatial.serialized.SerializedDVStrategy;
-import org.locationtech.spatial4j.context.SpatialContext;
 
 /**
- * Created by Enrico Risa on 11/08/15.
+ * Created by Marko Djurovic
  */
 public class SpatialQueryBuilderSTOverlaps extends SpatialQueryBuilderAbstract {
 

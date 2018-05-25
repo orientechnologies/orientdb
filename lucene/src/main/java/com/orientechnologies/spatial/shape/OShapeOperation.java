@@ -36,9 +36,5 @@ public interface OShapeOperation {
 
   boolean isEquals(Shape shape, Shape shape1);
   
-  boolean overlaps(Shape shape, Shape shape1);
-  
-  boolean touches(Shape shape, Shape shape1);
-  
-  boolean crosses(Shape shape, Shape shape1);
+  boolean overlaps(Shape shape, Shape shape1);    
 }
