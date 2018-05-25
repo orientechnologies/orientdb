@@ -1,17 +1,14 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
  * <p>
  * For more information: http://www.orientdb.com
  */
@@ -21,16 +18,19 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.WKBWriter;
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
 import org.locationtech.spatial4j.context.SpatialContext;
+import org.locationtech.spatial4j.context.jts.DatelineRule;
 import org.locationtech.spatial4j.context.jts.JtsSpatialContext;
 import org.locationtech.spatial4j.context.jts.JtsSpatialContextFactory;
 import org.locationtech.spatial4j.context.jts.ValidationRule;
 import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.Shape;
+import org.locationtech.spatial4j.shape.ShapeCollection;
 import org.locationtech.spatial4j.shape.jts.JtsGeometry;
 import org.locationtech.spatial4j.shape.jts.JtsShapeFactory;
 
@@ -38,19 +38,16 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
-import org.locationtech.jts.geom.GeometryCollection;
-import org.locationtech.spatial4j.context.jts.DatelineRule;
-import org.locationtech.spatial4j.shape.ShapeCollection;
 
 public abstract class OShapeBuilder<T extends Shape> {
 
-  public static final String COORDINATES = "coordinates";
-  public static final String BASE_CLASS  = "OShape";
-  protected static final JtsSpatialContext SPATIAL_CONTEXT;
-  protected static final GeometryFactory   GEOMETRY_FACTORY;
-  protected static final JtsShapeFactory   SHAPE_FACTORY;
-  protected static Map<String, Integer> capStyles = new HashMap<String, Integer>();
-  protected static Map<String, Integer> join      = new HashMap<String, Integer>();
+  public static final    String               COORDINATES = "coordinates";
+  public static final    String               BASE_CLASS  = "OShape";
+  protected static final JtsSpatialContext    SPATIAL_CONTEXT;
+  protected static final GeometryFactory      GEOMETRY_FACTORY;
+  protected static final JtsShapeFactory      SHAPE_FACTORY;
+  protected static       Map<String, Integer> capStyles   = new HashMap<String, Integer>();
+  protected static       Map<String, Integer> join        = new HashMap<String, Integer>();
 
   static {
 
@@ -100,18 +97,17 @@ public abstract class OShapeBuilder<T extends Shape> {
 
     Geometry geom = null;
     //this is workaround, because SHAPE_FACTORY (spatial4j) can't make Geometry directly from ShapeCollection
-    if (shape instanceof ShapeCollection){
+    if (shape instanceof ShapeCollection) {
       //TODO decompose and compose again
-      ShapeCollection collection = (ShapeCollection)shape;
+      ShapeCollection collection = (ShapeCollection) shape;
       Geometry[] geometriesCoolection = new Geometry[collection.size()];
-      for (int i = 0; i < collection.size(); i++){
+      for (int i = 0; i < collection.size(); i++) {
         Shape shapeElement = collection.get(i);
         Geometry geomElement = SHAPE_FACTORY.getGeometryFrom(shapeElement);
         geometriesCoolection[i] = geomElement;
-      }      
+      }
       geom = new GeometryCollection(geometriesCoolection, GEOMETRY_FACTORY);
-    }
-    else{
+    } else {
       geom = SHAPE_FACTORY.getGeometryFrom(shape);
     }
     return writer.write(geom);
@@ -136,7 +132,6 @@ public abstract class OShapeBuilder<T extends Shape> {
   public String asGeoJson(ODocument document) {
     return asGeoJson(fromDoc(document));
   }
-
 
   public ODocument fromGeoJson(String geoJson) throws IOException, ParseException {
     Shape shape = SPATIAL_CONTEXT.getFormats().getGeoJsonReader().read(geoJson);
@@ -246,6 +241,5 @@ public abstract class OShapeBuilder<T extends Shape> {
   public SpatialContext context() {
     return SPATIAL_CONTEXT;
   }
-
 
 }

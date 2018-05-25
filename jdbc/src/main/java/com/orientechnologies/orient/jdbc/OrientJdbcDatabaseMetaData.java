@@ -24,11 +24,8 @@ import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OPropertyEmbedded;
-import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
@@ -41,15 +38,13 @@ import java.util.*;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (OrientDB - l.garulli--at--orientdb.com)
  */
 public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
-  protected final static List<String> TABLE_TYPES = Arrays.asList("TABLE", "SYSTEM TABLE");
-  private final OrientJdbcConnection connection;
-  private final ODatabaseDocument    database;
-  private final OMetadata            metadata;
+  protected final static List<String>         TABLE_TYPES = Arrays.asList("TABLE", "SYSTEM TABLE");
+  private final          OrientJdbcConnection connection;
+  private final          ODatabaseDocument    database;
 
   public OrientJdbcDatabaseMetaData(OrientJdbcConnection iConnection, ODatabaseDocument iDatabase) {
     connection = iConnection;
     database = iDatabase;
-    metadata = database.getMetadata();
   }
 
   public boolean allProceduresAreCallable() throws SQLException {
@@ -1347,20 +1342,20 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     final OType type = prop.getType();
     String embeddedClass = null;
     boolean isEmbedded = false;
-    
+
     OResultInternal res = new OResultInternal();
     res.setProperty("TABLE_CAT", database.getName());
     res.setProperty("TABLE_SCHEM", database.getName());
     res.setProperty("TABLE_NAME", clazz.getName());
     res.setProperty("COLUMN_NAME", prop.getName());
     res.setProperty("DATA_TYPE", OrientJdbcResultSetMetaData.getSqlType(type));
-    
-    if (type == OType.EMBEDDED){            
+
+    if (type == OType.EMBEDDED) {
       OClass emType = prop.getLinkedClass();
       embeddedClass = emType.getName();
       isEmbedded = true;
     }
-    
+
     res.setProperty("TYPE_NAME", type.name());
     res.setProperty("COLUMN_SIZE", 1);
     res.setProperty("BUFFER_LENGTH", null);
@@ -1377,7 +1372,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     res.setProperty("IS_EMBEDDED", isEmbedded ? "YES" : "NO");
     if (embeddedClass != null)
       res.setProperty("EMBEDDED_TYPE", embeddedClass);
-    
+
     return res;
   }
 

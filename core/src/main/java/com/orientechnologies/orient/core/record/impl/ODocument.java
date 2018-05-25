@@ -803,8 +803,8 @@ public class ODocument extends ORecordAbstract
         OImmutableClass docClass = doc.getImmutableSchemaClass();
         OClass shapeClass = doc.getSchemaClass("OShape");
         OClass geometryClass = doc.getSchemaClass("OGeometry");
-        if (!(docClass.isSubClassOf(embeddedClass)) && 
-                !(docClass.isSubClassOf(shapeClass) && embeddedClass.isSubClassOf(geometryClass)))
+        if (!(docClass.isSubClassOf(embeddedClass)) && !(docClass.isSubClassOf(shapeClass) && embeddedClass
+            .isSubClassOf(geometryClass)))
           throw new OValidationException(
               "The field '" + p.getFullName() + "' has been declared as " + p.getType() + " with linked class '" + embeddedClass
                   + "' but the record is of class '" + doc.getImmutableSchemaClass().getName()
@@ -2302,7 +2302,7 @@ public class ODocument extends ORecordAbstract
 
     return null;
   }
-  
+
   public OClass getSchemaClass(String className) {
     if (className == null)
       return null;
@@ -2689,8 +2689,8 @@ public class ODocument extends ORecordAbstract
         OClass docClass = ((ODocument) value).getSchemaClass();
         if (docClass == null) {
           ((ODocument) value).setClass(linkedClass);
-        } else if (!docClass.isSubClassOf(linkedClass) && 
-                !(docClass.isSubClassOf(shapeClass) && linkedClass.isSubClassOf(geometryClass))) {
+        } else if (!docClass.isSubClassOf(linkedClass) && !(docClass.isSubClassOf(shapeClass) && linkedClass
+            .isSubClassOf(geometryClass))) {
           throw new OValidationException(
               "impossible to convert value of field \"" + prop.getName() + "\", incompatible with " + linkedClass);
         }

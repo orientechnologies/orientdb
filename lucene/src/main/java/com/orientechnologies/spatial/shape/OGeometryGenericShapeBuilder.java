@@ -20,28 +20,27 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import static com.orientechnologies.spatial.shape.OShapeBuilder.SPATIAL_CONTEXT;
-import java.util.ArrayList;
-import java.util.List;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.spatial4j.shape.Shape;
 import org.locationtech.spatial4j.shape.ShapeCollection;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- *
  * @author marko
  */
-public class OGeometryGenericShapeBuilder extends OComplexShapeBuilder<Shape>{  
-  
-  private static final String GEOMETRIES = "geometries";
+public class OGeometryGenericShapeBuilder extends OComplexShapeBuilder<Shape> {
+
+  private static final String GEOMETRIES    = "geometries";
   private static final String IS_COLLECTION = "is_collection";
-  
+
   protected OShapeFactory shapeFactory;
-  
+
   public OGeometryGenericShapeBuilder(OShapeFactory shapeFactory) {
     this.shapeFactory = shapeFactory;
   }
-  
+
   @Override
   public String getName() {
     return "OGeometry";
@@ -51,7 +50,7 @@ public class OGeometryGenericShapeBuilder extends OComplexShapeBuilder<Shape>{
   public OShapeType getType() {
     return OShapeType.GEOMETRY;
   }
-  
+
   @Override
   public void initClazz(ODatabaseInternal db) {
 
@@ -66,7 +65,7 @@ public class OGeometryGenericShapeBuilder extends OComplexShapeBuilder<Shape>{
   public Shape fromDoc(ODocument doc) {
     List<ODocument> geometries = doc.field(GEOMETRIES);
     byte isCollection = doc.field(IS_COLLECTION);
-    
+
     List<Shape> shapes = new ArrayList<Shape>();
 
     Geometry[] geoms = new Geometry[geometries.size()];
@@ -74,34 +73,33 @@ public class OGeometryGenericShapeBuilder extends OComplexShapeBuilder<Shape>{
       Shape shape = shapeFactory.fromDoc(geometry);
       shapes.add(shape);
     }
-    
+
     if (isCollection == 1)
       return new ShapeCollection(shapes, SPATIAL_CONTEXT);
     else
       return shapes.get(0);
-  }  
-  
+  }
+
   @Override
   public ODocument toDoc(Shape shape) {
-    ODocument doc = new ODocument(getName());    
+    ODocument doc = new ODocument(getName());
     List<ODocument> geometries;
     boolean isCollection = false;
-    if (shape instanceof ShapeCollection){
-      ShapeCollection<Shape> shapes = (ShapeCollection)shape;      
+    if (shape instanceof ShapeCollection) {
+      ShapeCollection<Shape> shapes = (ShapeCollection) shape;
       geometries = new ArrayList<>(shapes.size());
       for (Shape s : shapes) {
         geometries.add(shapeFactory.toDoc(s));
-      }      
+      }
       isCollection = true;
-    }
-    else{
+    } else {
       geometries = new ArrayList<>(1);
       geometries.add(shapeFactory.toDoc(shape));
     }
-    
+
     doc.field(GEOMETRIES, geometries);
-    doc.field(IS_COLLECTION, isCollection ? (byte)1 : (byte)0);
+    doc.field(IS_COLLECTION, isCollection ? (byte) 1 : (byte) 0);
     return doc;
   }
-  
+
 }
