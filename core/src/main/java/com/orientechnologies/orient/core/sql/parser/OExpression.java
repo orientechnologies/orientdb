@@ -22,7 +22,7 @@ public class OExpression extends SimpleNode {
   protected Boolean singleQuotes;
   protected Boolean doubleQuotes;
 
-  protected boolean                isNull = false;
+  protected boolean isNull = false;
   protected ORid                   rid;
   protected OMathExpression        mathExpression;
   protected OArrayConcatExpression arrayConcatExpression;
@@ -665,7 +665,7 @@ public class OExpression extends SimpleNode {
   }
 
   public boolean isIndexChain(OCommandContext ctx, OClass clazz) {
-    if (mathExpression != null) {
+    if(mathExpression!=null){
       return mathExpression.isIndexChain(ctx, clazz);
     }
     return false;

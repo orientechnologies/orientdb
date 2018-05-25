@@ -794,10 +794,6 @@ public class OMathExpression extends SimpleNode {
     return this.childExpressions.get(0).isIndexedFunctionCall();
   }
 
-  public boolean isStringValue() {
-    return false;
-  }
-
   public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (this.childExpressions.size() != 1) {
       return -1;
