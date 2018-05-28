@@ -7,7 +7,10 @@ import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 public class OrientProperty<V> implements Property<V> {
   protected String        key;
@@ -35,7 +38,25 @@ public class OrientProperty<V> implements Property<V> {
         result = element.getGraph().elementFactory().wrapEdge(((OElement) result).asEdge().get());
       }
     }
+    if (result instanceof Collection && containsGraphElements((Collection) result)) {
+      if (result instanceof List) {
+        result = new VertexEdgeListWrapper((List) result, element);
+      } else if (result instanceof Set) {
+        result = new VertexEdgeSetWrapper((Set) result, element);
+      }
+    }
     return result;
+  }
+
+  private boolean containsGraphElements(Collection result) {
+    for (Object o : result) {
+      if (o instanceof OElement) {
+        if (((OElement) o).isVertex() || ((OElement) o).isVertex()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
