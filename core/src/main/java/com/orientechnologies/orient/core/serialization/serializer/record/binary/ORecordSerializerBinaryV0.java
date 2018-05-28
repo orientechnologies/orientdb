@@ -1152,11 +1152,28 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   private int getEmbeddedFieldSize(BytesContainer bytes, int currentFieldDataPos, int serializerVersion, OType type) {
     int startOffset = bytes.offset;
-    bytes.offset = currentFieldDataPos;
-    deserializeValue(bytes, type, new ODocument(), true, -1, serializerVersion, true);
-    int fieldDataLength = bytes.offset - currentFieldDataPos;
-    bytes.offset = startOffset;
-    return fieldDataLength;
+    try{
+      //try to read next position in header if exists
+      int len = OVarIntSerializer.readAsInteger(bytes);
+      if (len != 0){
+        if (len > 0){
+          //skip name bytes
+          bytes.skip(len);            
+        }    
+        int nextFieldPos = readInteger(bytes);
+        return nextFieldPos - currentFieldDataPos;
+      }
+
+      //this means that this is last field so field length have to be calculated 
+      //by deserializing the value
+      bytes.offset = currentFieldDataPos;
+      deserializeValue(bytes, type, new ODocument(), true, -1, serializerVersion, true);
+      int fieldDataLength = bytes.offset - currentFieldDataPos;    
+      return fieldDataLength;
+    }
+    finally{
+      bytes.offset = startOffset;
+    }
   }
 
   protected <RET> RET deserializeFieldTypedLoopAndReturn(BytesContainer bytes, String iFieldName, int serializerVersion) {
