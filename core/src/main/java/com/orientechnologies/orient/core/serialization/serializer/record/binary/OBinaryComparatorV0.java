@@ -580,7 +580,7 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
           break;
         }
         case STRING: {
-          return readOptimizedLink(fieldValue1).toString()
+          return readOptimizedLink(fieldValue1, false).toString()
               .equals(readString(fieldValue2));
         }
         }
@@ -1170,7 +1170,7 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
         }
 
         case STRING: {
-          return readOptimizedLink(fieldValue1).compareTo(
+          return readOptimizedLink(fieldValue1, false).compareTo(
               new ORecordId(readString(fieldValue2)));
         }
         }

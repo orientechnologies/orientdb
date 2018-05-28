@@ -97,7 +97,11 @@ public class HelperClasses {
 //    Object associatedKey;
 //  }
 
-  protected static OType readOType(final BytesContainer bytes) {
+  protected static OType readOType(final BytesContainer bytes, boolean justRunThrough) {
+    if (justRunThrough){
+      bytes.offset++;
+      return null;
+    }
     return OType.getById(readByte(bytes));
   }
 
@@ -136,8 +140,13 @@ public class HelperClasses {
     return value;
   }
 
-  protected static ORecordId readOptimizedLink(final BytesContainer bytes) {
-    return new ORecordId(OVarIntSerializer.readAsInteger(bytes), OVarIntSerializer.readAsLong(bytes));
+  protected static ORecordId readOptimizedLink(final BytesContainer bytes, boolean justRunThrough) {
+    int clusterId = OVarIntSerializer.readAsInteger(bytes);
+    long clusterPos = OVarIntSerializer.readAsLong(bytes);
+    if (justRunThrough)
+      return null;
+    else
+      return new ORecordId(clusterId, clusterPos);
   }
 
   protected static String stringFromBytes(final byte[] bytes, final int offset, final int len) {

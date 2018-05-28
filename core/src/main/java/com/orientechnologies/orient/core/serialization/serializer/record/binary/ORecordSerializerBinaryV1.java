@@ -138,7 +138,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
         Tuple<Boolean, String> matchFieldName = processLenLargerThanZeroDeserializePartial(iFields, bytes, len, fields);
         boolean match = matchFieldName.getFirstVal();
         fieldName = matchFieldName.getSecondVal();
-        Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(bytes);
+        Tuple<Integer, OType> pointerAndType = getFieldSizeAndTypeFromCurrentPosition(bytes);
         int fieldLength = pointerAndType.getFirstVal();
 
         if (!match) {
@@ -215,7 +215,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     if (prop.getType() != OType.ANY)
       type = prop.getType();
     else
-      type = readOType(bytes);
+      type = readOType(bytes, false);
 
     return type;
   }
@@ -226,7 +226,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     boolean match = checkMatchForLargerThenZero(bytes, field, len);
 
     bytes.skip(len);
-    Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(bytes);
+    Tuple<Integer, OType> pointerAndType = getFieldSizeAndTypeFromCurrentPosition(bytes);
     final int fieldLength = pointerAndType.getFirstVal();
     final OType type = pointerAndType.getSecondVal();
 
@@ -347,7 +347,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
         // PARSE FIELD NAME
         fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
         bytes.skip(len);
-        Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(bytes);
+        Tuple<Integer, OType> pointerAndType = getFieldSizeAndTypeFromCurrentPosition(bytes);
         fieldLength = pointerAndType.getFirstVal();
         type = pointerAndType.getSecondVal();
       } else {
@@ -588,7 +588,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
         boolean match = checkMatchForLargerThenZero(bytes, field, len);
 
         bytes.skip(len);
-        Tuple<Integer, OType> pointerAndType = getPointerAndTypeFromCurrentPosition(bytes);
+        Tuple<Integer, OType> pointerAndType = getFieldSizeAndTypeFromCurrentPosition(bytes);
         int fieldLength = pointerAndType.getFirstVal();
         OType type = pointerAndType.getSecondVal();
 
@@ -602,13 +602,13 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
 
         //find start of the next field offset so current field byte length can be calculated
         //actual field byte length is only needed for embedded fields
-        int fieldDataLength = -1;
-        if (type.isEmbedded()) {
-          fieldDataLength = getEmbeddedFieldSize(bytes, valuePos, serializerVersion, type);
-        }
+//        int fieldDataLength = -1;
+//        if (type.isEmbedded()) {
+//          fieldDataLength = getEmbeddedFieldSize(bytes, valuePos, serializerVersion, type);
+//        }
 
         bytes.offset = valuePos;
-        Object value = deserializeValue(bytes, type, null, false, fieldDataLength, serializerVersion, false);
+        Object value = deserializeValue(bytes, type, null, false, fieldLength, serializerVersion, false);
         return (RET) value;
       } else {
         // LOAD GLOBAL PROPERTY BY ID
@@ -623,17 +623,17 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
         if (!iFieldName.equals(prop.getName()))
           continue;
 
-        int fieldDataLength = -1;
-        if (type.isEmbedded()) {
-          fieldDataLength = getEmbeddedFieldSize(bytes, valuePos, serializerVersion, type);
-        }
+//        int fieldDataLength = -1;
+//        if (type.isEmbedded()) {
+//          fieldDataLength = getEmbeddedFieldSize(bytes, valuePos, serializerVersion, type);
+//        }
 
         if (valuePos == 0 || fieldLength == 0)
           return null;
 
         bytes.offset = valuePos;
 
-        Object value = deserializeValue(bytes, type, null, false, fieldDataLength, serializerVersion, false);
+        Object value = deserializeValue(bytes, type, null, false, fieldLength, serializerVersion, false);
         return (RET) value;
       }
     }
@@ -643,9 +643,8 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
   public boolean isSerializingClassNameForEmbedded() {
     return true;
   }
-
-  @Override
-  public Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes) {
+  
+  public Tuple<Integer, OType> getFieldSizeAndTypeFromCurrentPosition(BytesContainer bytes) {
     int fieldSize = OVarIntSerializer.readAsInteger(bytes);
     byte typeId = readByte(bytes);
     OType type = OType.getById(typeId);
@@ -681,7 +680,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
           fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
           bytes.skip(len);
 
-          Tuple<Integer, OType> valuePositionAndType = getPointerAndTypeFromCurrentPosition(bytes);
+          Tuple<Integer, OType> valuePositionAndType = getFieldSizeAndTypeFromCurrentPosition(bytes);
           fieldLength = valuePositionAndType.getFirstVal();
           type = valuePositionAndType.getSecondVal();
         } else {
@@ -769,7 +768,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     result.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
     try {
       for (int i = 0; i < size; i++) {
-        OType keyType = readOType(bytes);
+        OType keyType = readOType(bytes, false);
         Object key = deserializeValue(bytes, keyType, document);
         byte typeId = readByte(bytes);
         if (typeId != -1) {
@@ -960,19 +959,30 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
       }
       break;
     case BYTE:
-      value = readByte(bytes);
+      if (justRunThrough)
+        bytes.offset++;
+      else
+        value = readByte(bytes);
       break;
     case BOOLEAN:
-      value = readByte(bytes) == 1;
+      if (justRunThrough)
+        bytes.offset++;
+      else
+        value = readByte(bytes) == 1;
       break;
     case DATETIME:
-      value = new Date(OVarIntSerializer.readAsLong(bytes));
+      if (justRunThrough)
+        OVarIntSerializer.readAsLong(bytes);
+      else
+        value = new Date(OVarIntSerializer.readAsLong(bytes));
       break;
     case DATE:
-      long savedTime = OVarIntSerializer.readAsLong(bytes) * MILLISEC_PER_DAY;
-      if (!justRunThrough) {
+      if (justRunThrough)
+        OVarIntSerializer.readAsLong(bytes);
+      else{
+        long savedTime = OVarIntSerializer.readAsLong(bytes) * MILLISEC_PER_DAY;        
         savedTime = convertDayToTimezone(TimeZone.getTimeZone("GMT"), ODateHelper.getDatabaseTimeZone(), savedTime);
-        value = new Date(savedTime);
+        value = new Date(savedTime);        
       }
       break;
     case EMBEDDED:
@@ -997,10 +1007,18 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
       }
       break;
     case LINKSET:
-      value = readLinkCollection(bytes, new ORecordLazySet(ownerDocument));
+      ORecordLazySet collectionSet = null;
+      if (!justRunThrough){
+        collectionSet = new ORecordLazySet(ownerDocument);
+      }
+      value = readLinkCollection(bytes, collectionSet, justRunThrough);
       break;
     case LINKLIST:
-      value = readLinkCollection(bytes, new ORecordLazyList(ownerDocument));
+      ORecordLazyList collectionList = null;
+      if (!justRunThrough){
+        collectionList = new ORecordLazyList(ownerDocument);
+      }
+      value = readLinkCollection(bytes, collectionList, justRunThrough);
       break;
     case BINARY:
       if (justRunThrough) {
@@ -1010,11 +1028,11 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
         value = readBinary(bytes);
       }
       break;
-    case LINK:
-      value = readOptimizedLink(bytes);
+    case LINK:              
+      value = readOptimizedLink(bytes, justRunThrough);
       break;
     case LINKMAP:
-      value = readLinkMap(bytes, ownerDocument);
+      value = readLinkMap(bytes, ownerDocument, justRunThrough);
       break;
     case EMBEDDEDMAP:
       if (embeddedAsDocument) {
