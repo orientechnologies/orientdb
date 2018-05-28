@@ -643,7 +643,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
   public boolean isSerializingClassNameForEmbedded() {
     return true;
   }
-  
+
   public Tuple<Integer, OType> getFieldSizeAndTypeFromCurrentPosition(BytesContainer bytes) {
     int fieldSize = OVarIntSerializer.readAsInteger(bytes);
     byte typeId = readByte(bytes);
@@ -979,10 +979,10 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     case DATE:
       if (justRunThrough)
         OVarIntSerializer.readAsLong(bytes);
-      else{
-        long savedTime = OVarIntSerializer.readAsLong(bytes) * MILLISEC_PER_DAY;        
+      else {
+        long savedTime = OVarIntSerializer.readAsLong(bytes) * MILLISEC_PER_DAY;
         savedTime = convertDayToTimezone(TimeZone.getTimeZone("GMT"), ODateHelper.getDatabaseTimeZone(), savedTime);
-        value = new Date(savedTime);        
+        value = new Date(savedTime);
       }
       break;
     case EMBEDDED:
@@ -1008,14 +1008,14 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
       break;
     case LINKSET:
       ORecordLazySet collectionSet = null;
-      if (!justRunThrough){
+      if (!justRunThrough) {
         collectionSet = new ORecordLazySet(ownerDocument);
       }
       value = readLinkCollection(bytes, collectionSet, justRunThrough);
       break;
     case LINKLIST:
       ORecordLazyList collectionList = null;
-      if (!justRunThrough){
+      if (!justRunThrough) {
         collectionList = new ORecordLazyList(ownerDocument);
       }
       value = readLinkCollection(bytes, collectionList, justRunThrough);
@@ -1028,7 +1028,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
         value = readBinary(bytes);
       }
       break;
-    case LINK:              
+    case LINK:
       value = readOptimizedLink(bytes, justRunThrough);
       break;
     case LINKMAP:

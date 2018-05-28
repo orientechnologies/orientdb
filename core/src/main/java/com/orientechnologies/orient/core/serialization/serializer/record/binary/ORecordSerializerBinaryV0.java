@@ -593,10 +593,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     case DATE:
       if (justRunThrough)
         OVarIntSerializer.readAsLong(bytes);
-      else{
-        long savedTime = OVarIntSerializer.readAsLong(bytes) * MILLISEC_PER_DAY;       
+      else {
+        long savedTime = OVarIntSerializer.readAsLong(bytes) * MILLISEC_PER_DAY;
         savedTime = convertDayToTimezone(TimeZone.getTimeZone("GMT"), ODateHelper.getDatabaseTimeZone(), savedTime);
-        value = new Date(savedTime);        
+        value = new Date(savedTime);
       }
       break;
     case EMBEDDED:
@@ -622,14 +622,14 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       break;
     case LINKSET:
       ORecordLazySet collectionSet = null;
-      if (!justRunThrough){
+      if (!justRunThrough) {
         collectionSet = new ORecordLazySet(ownerDocument);
-      }  
+      }
       value = readLinkCollection(bytes, collectionSet, justRunThrough);
       break;
     case LINKLIST:
       ORecordLazyList collectionList = null;
-      if (!justRunThrough){
+      if (!justRunThrough) {
         collectionList = new ORecordLazyList(ownerDocument);
       }
       value = readLinkCollection(bytes, collectionList, justRunThrough);
@@ -766,11 +766,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
   }
 
-  protected Collection<OIdentifiable> readLinkCollection(final BytesContainer bytes, final Collection<OIdentifiable> found, boolean justRunThrough) {
+  protected Collection<OIdentifiable> readLinkCollection(final BytesContainer bytes, final Collection<OIdentifiable> found,
+      boolean justRunThrough) {
     final int items = OVarIntSerializer.readAsInteger(bytes);
     for (int i = 0; i < items; i++) {
       ORecordId id = readOptimizedLink(bytes, justRunThrough);
-      if (!justRunThrough){
+      if (!justRunThrough) {
         if (id.equals(NULL_RECORD_ID))
           found.add(null);
         else
@@ -1152,14 +1153,14 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   private int getEmbeddedFieldSize(BytesContainer bytes, int currentFieldDataPos, int serializerVersion, OType type) {
     int startOffset = bytes.offset;
-    try{
+    try {
       //try to read next position in header if exists
       int len = OVarIntSerializer.readAsInteger(bytes);
-      if (len != 0){
-        if (len > 0){
+      if (len != 0) {
+        if (len > 0) {
           //skip name bytes
-          bytes.skip(len);            
-        }    
+          bytes.skip(len);
+        }
         int nextFieldPos = readInteger(bytes);
         return nextFieldPos - currentFieldDataPos;
       }
@@ -1168,10 +1169,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       //by deserializing the value
       bytes.offset = currentFieldDataPos;
       deserializeValue(bytes, type, new ODocument(), true, -1, serializerVersion, true);
-      int fieldDataLength = bytes.offset - currentFieldDataPos;    
+      int fieldDataLength = bytes.offset - currentFieldDataPos;
       return fieldDataLength;
-    }
-    finally{
+    } finally {
       bytes.offset = startOffset;
     }
   }

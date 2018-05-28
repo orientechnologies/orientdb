@@ -79,7 +79,6 @@ public class HelperClasses {
   }
 
   protected static class RecordInfo {
-    //    public List<Integer> fieldRelatedPositions;
     public int   fieldStartOffset;
     public int   fieldLength;
     public OType fieldType;
@@ -90,15 +89,8 @@ public class HelperClasses {
     public OType  keyType;
   }
 
-//  protected static class MapObjectData{
-//    int startPosition;
-//    int length;
-//    OType type;
-//    Object associatedKey;
-//  }
-
   protected static OType readOType(final BytesContainer bytes, boolean justRunThrough) {
-    if (justRunThrough){
+    if (justRunThrough) {
       bytes.offset++;
       return null;
     }
