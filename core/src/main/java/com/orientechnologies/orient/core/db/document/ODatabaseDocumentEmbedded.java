@@ -775,7 +775,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OIdentifiable beforeCreateOperations(OIdentifiable id, String iClusterName) {
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
+    checkClusterSecurity(ORole.PERMISSION_CREATE, id, iClusterName);
 
     ORecordHook.RESULT triggerChanged = null;
     boolean changed = false;
@@ -820,7 +820,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public OIdentifiable beforeUpdateOperations(OIdentifiable id, String iClusterName) {
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
+    checkClusterSecurity(ORole.PERMISSION_UPDATE, id, iClusterName);
 
     ORecordHook.RESULT triggerChanged = null;
     boolean changed = false;
@@ -866,7 +866,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public void beforeDeleteOperations(OIdentifiable id, String iClusterName) {
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
+    checkClusterSecurity(ORole.PERMISSION_DELETE, id, iClusterName);
     if (id instanceof ODocument) {
       ODocument doc = (ODocument) id;
       OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);

@@ -55,7 +55,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   protected      boolean       changed        = true;
   private        boolean       alreadyCleared = false;
   private        boolean       usingLog       = true;
-  private int txStartCounter;
+  private        int           txStartCounter;
 
   public OTransactionOptimistic(final ODatabaseDocumentInternal iDatabase) {
     super(iDatabase, txSerial.incrementAndGet());
@@ -307,7 +307,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     if (iRecord == null)
       return null;
-
+    ORecordOperation recordOperation = null;
     boolean originalSaved = false;
     final ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
     do {
@@ -319,7 +319,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           if (rec instanceof ODocument)
             ODocumentInternal.convertAllMultiValuesToTrackedVersions((ODocument) rec);
           if (rec == iRecord) {
-            addRecord(rec, ORecordOperation.CREATED, iClusterName);
+            recordOperation = addRecord(rec, ORecordOperation.CREATED, iClusterName);
             originalSaved = true;
           } else
             addRecord(rec, ORecordOperation.CREATED, getClusterName(rec));
@@ -333,7 +333,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             final byte operation = iForceCreate ?
                 ORecordOperation.CREATED :
                 iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
-            addRecord(rec, operation, iClusterName);
+            recordOperation = addRecord(rec, operation, iClusterName);
             originalSaved = true;
           } else
             addRecord(rec, ORecordOperation.UPDATED, getClusterName(rec));
@@ -345,15 +345,14 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       final byte operation = iForceCreate ?
           ORecordOperation.CREATED :
           iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
-      final ORecordOperation recordOperation = addRecord(iRecord, operation, iClusterName);
-
-      if (recordOperation != null) {
-        if (iRecordCreatedCallback != null)
-          //noinspection unchecked
-          recordOperation.createdCallback = (ORecordCallback<Long>) iRecordCreatedCallback;
-        if (iRecordUpdatedCallback != null)
-          recordOperation.updatedCallback = iRecordUpdatedCallback;
-      }
+      recordOperation = addRecord(iRecord, operation, iClusterName);
+    }
+    if (recordOperation != null) {
+      if (iRecordCreatedCallback != null)
+        //noinspection unchecked
+        recordOperation.createdCallback = (ORecordCallback<Long>) iRecordCreatedCallback;
+      if (iRecordUpdatedCallback != null)
+        recordOperation.updatedCallback = iRecordUpdatedCallback;
     }
     return iRecord;
   }
