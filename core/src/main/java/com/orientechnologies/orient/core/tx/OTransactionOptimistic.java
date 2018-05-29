@@ -322,7 +322,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             recordOperation = addRecord(rec, ORecordOperation.CREATED, iClusterName);
             originalSaved = true;
           } else
-            addRecord(rec, ORecordOperation.CREATED, getClusterName(rec));
+            addRecord(rec, ORecordOperation.CREATED, database.getClusterName(rec));
         }
       }
       if (updatedRecord != null) {
@@ -336,7 +336,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             recordOperation = addRecord(rec, operation, iClusterName);
             originalSaved = true;
           } else
-            addRecord(rec, ORecordOperation.UPDATED, getClusterName(rec));
+            addRecord(rec, ORecordOperation.UPDATED, database.getClusterName(rec));
         }
       }
     } while (dirtyManager.getNewRecords() != null || dirtyManager.getUpdateRecords() != null);

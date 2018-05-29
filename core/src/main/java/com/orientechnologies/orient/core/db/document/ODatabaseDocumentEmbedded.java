@@ -34,14 +34,13 @@ import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
@@ -50,6 +49,8 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryMonitorEmbedded;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
@@ -60,8 +61,10 @@ import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 
@@ -716,37 +719,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     return;
   }
 
-  /**
-   * This method is internal, it can be subject to signature change or be removed, do not use.
-   *
-   * @Internal
-   */
-  public <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
-      final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
-      ORecordCallback<Integer> recordUpdatedCallback) {
-
-    checkOpenness();
-    checkIfActive();
-    if (!record.isDirty())
-      return (RET) record;
-
-    final ORecordId rid = (ORecordId) record.getIdentity();
-
-    if (rid == null)
-      throw new ODatabaseException(
-          "Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
-
-    final OMicroTransaction microTx = beginMicroTransaction();
-    try {
-      microTx.saveRecord(record, clusterName, mode, forceCreate, recordCreatedCallback, recordUpdatedCallback);
-    } catch (Exception e) {
-      endMicroTransaction(false);
-      throw e;
-    }
-    endMicroTransaction(true);
-    return (RET) record;
-  }
-
   private void endMicroTransaction(boolean success) {
     assert microTransaction != null;
 
@@ -1017,4 +989,72 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     OLiveQueryHook.removePendingDatabaseOps(this);
     OLiveQueryHookV2.removePendingDatabaseOps(this);
   }
+
+  @Override
+  public ORecord saveAll(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
+
+    ORecord toRet = null;
+    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
+    Set<ORecord> newRecord = dirtyManager.getNewRecords();
+    Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
+    dirtyManager.clearForSave();
+    if (iRecord.getIdentity().isNew()) {
+      if (newRecord == null)
+        newRecord = Collections.newSetFromMap(new IdentityHashMap<>());
+      newRecord.add(iRecord);
+    } else {
+      if (updatedRecord == null)
+        updatedRecord = Collections.newSetFromMap(new IdentityHashMap<>());
+      updatedRecord.add(iRecord);
+    }
+
+    final OMicroTransaction microTx = beginMicroTransaction();
+    try {
+      if (newRecord != null) {
+        for (ORecord rn : newRecord) {
+          String cluster;
+          if (iRecord == rn)
+            cluster = iClusterName;
+          else
+            cluster = getClusterName(rn);
+          microTx.saveRecord(rn, cluster, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+        }
+      }
+      if (updatedRecord != null) {
+        for (ORecord rn : updatedRecord) {
+          microTx.saveRecord(rn, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+        }
+      }
+    } catch (Exception e) {
+      endMicroTransaction(false);
+      throw e;
+    }
+    endMicroTransaction(true);
+
+    return iRecord;
+  }
+
+  public String getClusterName(final ORecord record) {
+    int clusterId = record.getIdentity().getClusterId();
+    if (clusterId == ORID.CLUSTER_ID_INVALID) {
+      // COMPUTE THE CLUSTER ID
+      OClass schemaClass = null;
+      if (record instanceof ODocument)
+        schemaClass = ODocumentInternal.getImmutableSchemaClass(this, (ODocument) record);
+      if (schemaClass != null) {
+        // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
+        if (schemaClass.isAbstract())
+          throw new OSchemaException("Document belongs to abstract class '" + schemaClass.getName() + "' and cannot be saved");
+        clusterId = schemaClass.getClusterForNewInstance((ODocument) record);
+        return getClusterNameById(clusterId);
+      } else {
+        return getClusterNameById(getStorage().getDefaultClusterId());
+      }
+
+    } else {
+      return getClusterNameById(clusterId);
+    }
+  }
+
 }

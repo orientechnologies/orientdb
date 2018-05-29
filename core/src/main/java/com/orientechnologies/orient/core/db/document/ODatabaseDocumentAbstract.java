@@ -1425,34 +1425,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return rid.getClusterId();
   }
 
-  public <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName) {
-    ORecordId rid = (ORecordId) record.getIdentity();
-    assert rid.isNew();
-
-    ORecordInternal.onBeforeIdentityChanged(record);
-    int id = assignAndCheckCluster(record, clusterName);
-    clusterName = getClusterNameById(id);
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, clusterName);
-
-    byte[] content = getSerializer().writeClassOnly(record);
-
-    final OStorageOperationResult<OPhysicalPosition> ppos = getStorage()
-        .createRecord(rid, content, record.getVersion(), recordType, OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
-
-    ORecordInternal.setVersion(record, ppos.getResult().recordVersion);
-    ((ORecordId) record.getIdentity()).copyFrom(rid);
-    ORecordInternal.onAfterIdentityChanged(record);
-
-    return (RET) record;
-  }
-
-  public abstract <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
-      final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
-      ORecordCallback<Integer> recordUpdatedCallback);
-
-  public abstract void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired,
-      final OPERATION_MODE iMode, boolean prohibitTombstones);
-
   /**
    * This method is internal, it can be subject to signature change or be removed, do not use.
    *
@@ -2748,4 +2720,5 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       return true;
     return false;
   }
+
 }

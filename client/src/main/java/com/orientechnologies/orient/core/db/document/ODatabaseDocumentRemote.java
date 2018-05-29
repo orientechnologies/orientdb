@@ -39,11 +39,14 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDeleter;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -62,10 +65,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSer
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
@@ -508,122 +509,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     id = result.getProperty("value");
     return id;
   }
-
-  @Override
-  public <RET extends ORecord> RET executeSaveRecord(ORecord record, String clusterName, int ver, OPERATION_MODE mode,
-      boolean forceCreate, ORecordCallback<? extends Number> recordCreatedCallback,
-      ORecordCallback<Integer> recordUpdatedCallback) {
-
-    checkOpenness();
-    checkIfActive();
-    if (!record.isDirty())
-      return (RET) record;
-
-    final ORecordId rid = (ORecordId) record.getIdentity();
-
-    if (rid == null)
-      throw new ODatabaseException(
-          "Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
-
-    record.setInternalStatus(ORecordElement.STATUS.MARSHALLING);
-    try {
-
-      byte[] stream = null;
-      final OStorageOperationResult<Integer> operationResult;
-
-      getMetadata().makeThreadLocalSchemaSnapshot();
-      if (record instanceof ODocument)
-        ODocumentInternal.checkClass((ODocument) record, this);
-      ORecordSerializationContext.pushContext();
-      final boolean isNew = forceCreate || rid.isNew();
-      try {
-
-        ORecord overwritten;
-        if (isNew) {
-          // NOTIFY IDENTITY HAS CHANGED
-          ORecordInternal.onBeforeIdentityChanged(record);
-          int id = assignAndCheckCluster(record, clusterName);
-          clusterName = getClusterNameById(id);
-          overwritten = (ORecord) beforeCreateOperations(record, clusterName);
-        } else {
-          overwritten = (ORecord) beforeUpdateOperations(record, clusterName);
-        }
-        if (overwritten != null) {
-          record = overwritten;
-        }
-        stream = getSerializer().toStream(record, false);
-
-        ORecordSaveThreadLocal.setLast(record);
-        try {
-          // SAVE IT
-          boolean updateContent = ORecordInternal.isContentChanged(record);
-          byte[] content = (stream == null) ? OCommonConst.EMPTY_BYTE_ARRAY : stream;
-          byte recordType = ORecordInternal.getRecordType(record);
-          final int modeIndex = mode.ordinal();
-
-          // CHECK IF RECORD TYPE IS SUPPORTED
-          Orient.instance().getRecordFactoryManager().getRecordTypeClass(recordType);
-
-          if (forceCreate || ORecordId.isNew(rid.getClusterPosition())) {
-            // CREATE
-            final OStorageOperationResult<OPhysicalPosition> ppos = getStorage()
-                .createRecord(rid, content, ver, recordType, modeIndex, (ORecordCallback<Long>) recordCreatedCallback);
-            operationResult = new OStorageOperationResult<Integer>(ppos.getResult().recordVersion, ppos.isMoved());
-
-          } else {
-            // UPDATE
-            operationResult = getStorage()
-                .updateRecord(rid, updateContent, content, ver, recordType, modeIndex, recordUpdatedCallback);
-          }
-
-          final int version = operationResult.getResult();
-
-          if (isNew) {
-            // UPDATE INFORMATION: CLUSTER ID+POSITION
-            ((ORecordId) record.getIdentity()).copyFrom(rid);
-            // NOTIFY IDENTITY HAS CHANGED
-            ORecordInternal.onAfterIdentityChanged(record);
-            // UPDATE INFORMATION: CLUSTER ID+POSITION
-          }
-
-          if (operationResult.getModifiedRecordContent() != null)
-            stream = operationResult.getModifiedRecordContent();
-          else if (version > record.getVersion() + 1 && getStorage() instanceof OStorageProxy)
-            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
-            record.unload();
-
-          ORecordInternal.fill(record, rid, version, stream, false);
-
-          callbackHookSuccess(record, isNew, stream, operationResult);
-        } catch (Exception t) {
-          callbackHookFailure(record, isNew, stream);
-          throw t;
-        }
-      } finally {
-        callbackHookFinalize(record, isNew, stream);
-        ORecordSerializationContext.pullContext();
-        getMetadata().clearThreadLocalSchemaSnapshot();
-        ORecordSaveThreadLocal.removeLast();
-      }
-
-      if (stream != null && stream.length > 0 && !operationResult.isMoved())
-        // ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
-        getLocalCache().updateRecord(record);
-    } catch (OException e) {
-      throw e;
-    } catch (Exception t) {
-      if (!ORecordId.isValid(record.getIdentity().getClusterPosition()))
-        throw OException
-            .wrapException(new ODatabaseException("Error on saving record in cluster #" + record.getIdentity().getClusterId()), t);
-      else
-        throw OException.wrapException(new ODatabaseException("Error on saving record " + record.getIdentity()), t);
-
-    } finally {
-      record.setInternalStatus(ORecordElement.STATUS.LOADED);
-    }
-    return (RET) record;
-  }
-
+  
   @Override
   public void executeDeleteRecord(OIdentifiable record, int iVersion, boolean iRequired, OPERATION_MODE iMode,
       boolean prohibitTombstones) {
@@ -799,5 +685,25 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   @Override
   public void afterReadOperations(OIdentifiable identifiable) {
     callbackHooks(ORecordHook.TYPE.AFTER_READ, identifiable);
+  }
+
+  @Override
+  public ORecord saveAll(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
+    OTransactionOptimisticClient tx = new OTransactionOptimisticClient(this) {
+      @Override
+      protected void checkTransaction() {
+      }
+    };
+    tx.begin();
+    tx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+    tx.commit();
+
+    return iRecord;
+  }
+
+  public String getClusterName(final ORecord record) {
+    // DON'T ASSIGN CLUSTER WITH REMOTE: SERVER KNOWS THE RIGHT CLUSTER BASED ON LOCALITY
+    return null;
   }
 }
