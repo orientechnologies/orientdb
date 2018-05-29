@@ -660,8 +660,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       bytes.skip(ODecimalSerializer.INSTANCE.getObjectSize(bytes.bytes, bytes.offset));
       break;
     case LINKBAG:
-      ORidBag bag = new ORidBag();
-      bag.fromStream(bytes);
+      ORidBag bag = readRidbag(bytes);
       bag.setOwner(ownerDocument);
       value = bag;
       break;
@@ -692,6 +691,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
     }
     return value;
+  }
+  
+  protected ORidBag readRidbag(BytesContainer bytes){
+    ORidBag bag = new ORidBag();
+    bag.fromStream(bytes);
+    return bag;
   }
 
   protected OClass serializeClass(final ODocument document, final BytesContainer bytes) {
