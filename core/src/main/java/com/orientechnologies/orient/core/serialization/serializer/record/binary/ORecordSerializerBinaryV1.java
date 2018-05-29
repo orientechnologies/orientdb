@@ -44,10 +44,10 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     CONTINUE, RETURN, RETURN_VALUE, NO_ACTION
   }
 
-  private Tuple<Boolean, String> processLenLargerThanZeroDeserializePartial(final String[] iFields, final BytesContainer bytes,
+  private Tuple<Boolean, String> processNamedFieldInDeserializePartial(final String[] iFields, final BytesContainer bytes,
       int len, byte[][] fields) {
     boolean match = false;
-    String fieldName;
+    String fieldName = null;
     for (int i = 0; i < iFields.length; ++i) {
       if (iFields[i] != null && iFields[i].length() == len) {
         boolean matchField = true;
@@ -64,12 +64,14 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
       }
     }
 
-    fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
+    //field name is used only if match exists
+    if (match)
+      fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
     bytes.skip(len);
     return new Tuple<>(match, fieldName);
   }
 
-  private Tuple<Boolean, String> processLenSmallerThanZeroDeserializePartial(OGlobalProperty prop, final String[] iFields) {
+  private Tuple<Boolean, String> checkIfPropertyNameMatchSome(OGlobalProperty prop, final String[] iFields) {
     String fieldName = prop.getName();
 
     boolean matchField = false;
@@ -83,18 +85,18 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     return new Tuple<>(matchField, fieldName);
   }
 
-  private Triple<Signal, Triple<Integer, OType, String>, Integer> processLessThanZeroDeserializePartialFields(
+  private Triple<Signal, Triple<Integer, OType, String>, Integer> processPropertyFiledInDeserializePartial(
       final ODocument document, final int len, final String[] iFields, final BytesContainer bytes, int cumulativeLength,
       int headerStart, int headerLength) {
     // LOAD GLOBAL PROPERTY BY ID
     final OGlobalProperty prop = getGlobalProperty(document, len);
-    Tuple<Boolean, String> matchFieldName = processLenSmallerThanZeroDeserializePartial(prop, iFields);
+    Tuple<Boolean, String> matchFieldName = checkIfPropertyNameMatchSome(prop, iFields);
 
     boolean matchField = matchFieldName.getFirstVal();
     String fieldName = matchFieldName.getSecondVal();
 
     Integer fieldLength = OVarIntSerializer.readAsInteger(bytes);
-    OType type = getTypeForLenLessThanZero(prop, bytes);
+    OType type = getPropertyTypeFromStream(prop, bytes);
 
     if (!matchField) {
       return new Triple<>(Signal.CONTINUE, null, cumulativeLength + fieldLength);
@@ -135,7 +137,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
 
       if (len > 0) {
         // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
-        Tuple<Boolean, String> matchFieldName = processLenLargerThanZeroDeserializePartial(iFields, bytes, len, fields);
+        Tuple<Boolean, String> matchFieldName = processNamedFieldInDeserializePartial(iFields, bytes, len, fields);
         boolean match = matchFieldName.getFirstVal();
         fieldName = matchFieldName.getSecondVal();
         Tuple<Integer, OType> pointerAndType = getFieldSizeAndTypeFromCurrentPosition(bytes);
@@ -156,7 +158,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
         cumulativeLength += fieldLength;
       } else {
         // LOAD GLOBAL PROPERTY BY ID
-        Triple<Signal, Triple<Integer, OType, String>, Integer> actionSignal = processLessThanZeroDeserializePartialFields(document,
+        Triple<Signal, Triple<Integer, OType, String>, Integer> actionSignal = processPropertyFiledInDeserializePartial(document,
             len, iFields, bytes, cumulativeLength, headerStart, headerLength);
         cumulativeLength = actionSignal.getThirdVal();
         switch (actionSignal.getFirstVal()) {
@@ -210,7 +212,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     return match;
   }
 
-  private OType getTypeForLenLessThanZero(final OGlobalProperty prop, final BytesContainer bytes) {
+  private OType getPropertyTypeFromStream(final OGlobalProperty prop, final BytesContainer bytes) {
     final OType type;
     if (prop.getType() != OType.ANY)
       type = prop.getType();
@@ -220,7 +222,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     return type;
   }
 
-  private Triple<Signal, OBinaryField, Integer> processLenLargerThanZeroDeserializeField(final BytesContainer bytes,
+  private Triple<Signal, OBinaryField, Integer> processNamedFieldDeserializeField(final BytesContainer bytes,
       final String iFieldName, final byte[] field, int len, Integer cumulativeLength, int headerStart, int headerLength) {
 
     boolean match = checkMatchForLargerThenZero(bytes, field, len);
@@ -244,14 +246,14 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     return new Triple<>(Signal.RETURN_VALUE, new OBinaryField(iFieldName, type, bytes, null), cumulativeLength + fieldLength);
   }
 
-  private Triple<Signal, OBinaryField, Integer> processLenLessThanZeroDeserializeField(int len, final OImmutableSchema _schema,
+  private Triple<Signal, OBinaryField, Integer> processPropertyDeserializeField(int len, final OImmutableSchema _schema,
       final String iFieldName, final OClass iClass, final BytesContainer bytes, int cumulativeLength, int headerStart,
       int headerLength) {
     final int id = (len * -1) - 1;
     final OGlobalProperty prop = _schema.getGlobalPropertyById(id);
     final int fieldLength = OVarIntSerializer.readAsInteger(bytes);
     final OType type;
-    type = getTypeForLenLessThanZero(prop, bytes);
+    type = getPropertyTypeFromStream(prop, bytes);
 
     if (!iFieldName.equals(prop.getName())) {
       return new Triple<>(Signal.NO_ACTION, null, cumulativeLength + fieldLength);
@@ -289,7 +291,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
 
       if (len > 0) {
         // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
-        Triple<Signal, OBinaryField, Integer> actionSignal = processLenLargerThanZeroDeserializeField(bytes, iFieldName, field, len,
+        Triple<Signal, OBinaryField, Integer> actionSignal = processNamedFieldDeserializeField(bytes, iFieldName, field, len,
             cumulativeLength, headerStart, headerLength);
         cumulativeLength = actionSignal.getThirdVal();
         switch (actionSignal.getFirstVal()) {
@@ -302,7 +304,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
         }
       } else {
         // LOAD GLOBAL PROPERTY BY ID
-        Triple<Signal, OBinaryField, Integer> actionSignal = processLenLessThanZeroDeserializeField(len, _schema, iFieldName,
+        Triple<Signal, OBinaryField, Integer> actionSignal = processPropertyDeserializeField(len, _schema, iFieldName,
             iClass, bytes, cumulativeLength, headerStart, headerLength);
         cumulativeLength = actionSignal.getThirdVal();
         switch (actionSignal.getFirstVal()) {
@@ -319,7 +321,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
 
   @Override
   public OBinaryField deserializeFieldWithClassName(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
-    // SKIP CLASS NAME    
+    // akip class name bytes   
     final int classNameLen = OVarIntSerializer.readAsInteger(bytes);
     bytes.skip(classNameLen);
 
@@ -355,7 +357,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
         prop = getGlobalProperty(document, len);
         fieldName = prop.getName();
         fieldLength = OVarIntSerializer.readAsInteger(bytes);
-        type = getTypeForLenLessThanZero(prop, bytes);
+        type = getPropertyTypeFromStream(prop, bytes);
       }
 
       if (ODocumentInternal.rawContainsField(document, fieldName)) {
@@ -598,14 +600,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
           return null;
 
         if (!match)
-          continue;
-
-        //find start of the next field offset so current field byte length can be calculated
-        //actual field byte length is only needed for embedded fields
-//        int fieldDataLength = -1;
-//        if (type.isEmbedded()) {
-//          fieldDataLength = getEmbeddedFieldSize(bytes, valuePos, serializerVersion, type);
-//        }
+          continue;        
 
         bytes.offset = valuePos;
         Object value = deserializeValue(bytes, type, null, false, fieldLength, serializerVersion, false);
@@ -615,18 +610,13 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
         final int id = (len * -1) - 1;
         final OGlobalProperty prop = _schema.getGlobalPropertyById(id);
         final int fieldLength = OVarIntSerializer.readAsInteger(bytes);
-        OType type = getTypeForLenLessThanZero(prop, bytes);
+        OType type = getPropertyTypeFromStream(prop, bytes);
 
         int valuePos = cumulativeLength + headerStart + headerLength;
         cumulativeLength += fieldLength;
 
         if (!iFieldName.equals(prop.getName()))
           continue;
-
-//        int fieldDataLength = -1;
-//        if (type.isEmbedded()) {
-//          fieldDataLength = getEmbeddedFieldSize(bytes, valuePos, serializerVersion, type);
-//        }
 
         if (valuePos == 0 || fieldLength == 0)
           return null;
@@ -644,7 +634,12 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     return true;
   }
 
-  public Tuple<Integer, OType> getFieldSizeAndTypeFromCurrentPosition(BytesContainer bytes) {
+  /**
+   * use only for named fields
+   * @param bytes
+   * @return 
+   */
+  private Tuple<Integer, OType> getFieldSizeAndTypeFromCurrentPosition(BytesContainer bytes) {
     int fieldSize = OVarIntSerializer.readAsInteger(bytes);
     byte typeId = readByte(bytes);
     OType type = OType.getById(typeId);
@@ -692,7 +687,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
           debugProperty.valuePos = headerPos + headerLength + cumulativeLength;
           if (prop != null) {
             fieldName = prop.getName();
-            type = getTypeForLenLessThanZero(prop, bytes);
+            type = getPropertyTypeFromStream(prop, bytes);
           } else {
             cumulativeLength += fieldLength;
             continue;
@@ -1189,7 +1184,6 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
   private static ORidBag readRidbag(BytesContainer bytes) {
     byte configByte = OByteSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset++);
     boolean isEmbedded = (configByte & 1) != 0;
-//    boolean hasUUID = (configByte & 2) != 0;
 
     UUID uuid = null;
     //removed deserializing UUID
