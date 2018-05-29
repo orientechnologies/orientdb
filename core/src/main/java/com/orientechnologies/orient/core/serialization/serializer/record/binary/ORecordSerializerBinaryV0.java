@@ -946,7 +946,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       pointer = writeEmbeddedMap(bytes, (Map<Object, Object>) value);
       break;
     case LINKBAG:
-      pointer = ((ORidBag) value).toStream(bytes);
+      pointer = writeRidBag(bytes, (ORidBag) value);
       break;
     case CUSTOM:
       if (!(value instanceof OSerializableStream))
@@ -961,6 +961,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
     int length = bytes.offset - startOffset;
     return new Tuple<>(pointer, length);
+  }
+  
+  protected int writeRidBag(BytesContainer bytes, ORidBag ridbag){
+    return ridbag.toStream(bytes);
   }
 
   protected int writeBinary(final BytesContainer bytes, final byte[] valueBytes) {
