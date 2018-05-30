@@ -23,12 +23,23 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.*;
+import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.OIndexUpdateAction;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexBucket;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable20;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -89,10 +100,11 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
       OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata) {
+      ODocument metadata, OEncryption encryption) {
     hashFunction.setValueSerializer(keySerializer);
+    hashFunction.setEncryption(encryption);
 
-    hashTable.create(keySerializer, valueSerializer, keyTypes, nullPointerSupport);
+    hashTable.create(keySerializer, valueSerializer, keyTypes, encryption, nullPointerSupport);
   }
 
   @Override
@@ -116,9 +128,10 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties) {
-    hashTable.load(indexName, keyTypes, nullPointerSupport);
+      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
+    hashTable.load(indexName, keyTypes, nullPointerSupport, encryption);
     hashFunction.setValueSerializer(hashTable.getKeySerializer());
+    hashFunction.setEncryption(encryption);
   }
 
   @Override

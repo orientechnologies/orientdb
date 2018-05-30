@@ -12,7 +12,15 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.NavigableSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -42,7 +50,7 @@ public class SBTreeTestIT {
 
     sbTree = new OSBTree<Integer, OIdentifiable>("sbTree", ".sbt", ".nbt",
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
-    sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
+    sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false, null);
   }
 
   @After
@@ -483,7 +491,7 @@ public class SBTreeTestIT {
   public void testNullKeysInSBTree() {
     final OSBTree<Integer, OIdentifiable> nullSBTree = new OSBTree<Integer, OIdentifiable>("nullSBTree", ".sbt", ".nbt",
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
-    nullSBTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, true);
+    nullSBTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, true, null);
 
     try {
       for (int i = 0; i < 10; i++)

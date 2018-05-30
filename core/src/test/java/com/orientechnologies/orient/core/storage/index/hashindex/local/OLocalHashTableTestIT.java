@@ -41,6 +41,7 @@ public class OLocalHashTableTestIT extends OLocalHashTableBase {
 
     localHashTable
         .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().<String>getObjectSerializer(OType.STRING), null,
+            null,
             true);
 
   }
