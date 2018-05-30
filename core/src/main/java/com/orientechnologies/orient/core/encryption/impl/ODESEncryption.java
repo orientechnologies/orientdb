@@ -18,8 +18,9 @@ import java.util.Base64;
  * https://github.com/orientechnologies/orientdb/issues/89.
  * 
  * @author giastfader
- *
+ * @deprecated This implementation uses DES and ECB mode and is thus not secure. See https://github.com/orientechnologies/orientdb/issues/8207.
  */
+@Deprecated
 public class ODESEncryption extends OAbstractEncryption {
   // @see https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html#SunJCEProvider
   private final String       TRANSFORMATION = "DES/ECB/PKCS5Padding"; // //we use ECB because we cannot

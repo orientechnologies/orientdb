@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.encryption;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.encryption.impl.OAESEncryption;
+import com.orientechnologies.orient.core.encryption.impl.OAESGCMEncryption;
 import com.orientechnologies.orient.core.encryption.impl.ODESEncryption;
 import com.orientechnologies.orient.core.encryption.impl.ONothingEncryption;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -49,6 +50,7 @@ public class OEncryptionFactory {
     register(ONothingEncryption.class);
     register(ODESEncryption.class);
     register(OAESEncryption.class);
+    register(OAESGCMEncryption.class);
   }
 
   public OEncryption getEncryption(final String name, final String iOptions) {
