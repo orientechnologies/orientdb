@@ -61,6 +61,10 @@ public class OZIPCompressionUtil {
       String name, dir;
       while ((entry = zin.getNextEntry()) != null) {
         name = entry.getName();
+
+        if (name.startsWith("/") || name.contains(".."))
+          throw new IOException("Invalid name '" + name + "' in the zip file");
+
         if (entry.isDirectory()) {
           mkdirs(outdir, name);
           continue;
