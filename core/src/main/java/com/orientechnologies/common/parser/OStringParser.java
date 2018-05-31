@@ -63,16 +63,16 @@ public class OStringParser {
         if (nextChar == 'u') {
           i = readUnicode(iText, i + 2, buffer);
         } else if (nextChar == 'n') {
-          buffer.append(stringBeginChar == ' ' ? "\n" : "\\\n");
+          buffer.append(stringBeginChar == ' ' ? "\n" : "\\n");
           i++;
         } else if (nextChar == 'r') {
-          buffer.append(stringBeginChar == ' ' ? "\r" : "\\\r");
+          buffer.append(stringBeginChar == ' ' ? "\r" : "\\r");
           i++;
         } else if (nextChar == 't') {
-          buffer.append(stringBeginChar == ' ' ? "\t" : "\\\t");
+          buffer.append(stringBeginChar == ' ' ? "\t" : "\\t");
           i++;
         } else if (nextChar == 'f') {
-          buffer.append(stringBeginChar == ' ' ? "\f" : "\\\f");
+          buffer.append(stringBeginChar == ' ' ? "\f" : "\\f");
           i++;
         } else if (stringBeginChar != ' ' && nextChar == '\'' || nextChar == '"') {
           buffer.append('\\');
