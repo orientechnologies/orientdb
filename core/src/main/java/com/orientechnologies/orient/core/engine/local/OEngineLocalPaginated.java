@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.engine.local;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
-import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.jna.ONative;
@@ -34,8 +33,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.sun.jna.Native;
-import com.sun.jna.Platform;
 
 import java.util.Map;
 
@@ -61,7 +58,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     }
 
     final int defaultLimit = 512;
-    final int recommendedLimit = 64 * 1024;
+    final int recommendedLimit = 256 * 1024;
 
     return ONative.instance().getOpenFilesLimit(true, recommendedLimit, defaultLimit);
   }

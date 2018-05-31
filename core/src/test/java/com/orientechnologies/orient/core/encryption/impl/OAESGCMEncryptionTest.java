@@ -6,6 +6,7 @@ import java.util.List;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -63,11 +64,13 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
   }
 
   @Test
+  @Ignore
   public void testOAESEncryptedWith192BitKey() {
     assertTrue(testEncryption(OAESGCMEncryption.NAME, "T1JJRU5UREJfSVNfQ09PTF9TT19DT09M"));
   }
 
   @Test
+  @Ignore
   public void testOAESEncryptedWith256BitKey() {
     assertTrue(testEncryption(OAESGCMEncryption.NAME, "T1JJRU5UREJfSVNfQ09PTF9TT19DT09MX1NPX0NPT0w="));
   }
