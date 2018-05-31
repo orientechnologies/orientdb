@@ -178,7 +178,7 @@ public class OAESGCMEncryption implements OEncryption {
       cipher.init(mode, key, gcmParameterSpec(nonce));
       return cipher;
     } catch (InvalidKeyException e) {
-      throw OException.wrapException(new OInvalidStorageEncryptionKeyException(INVALID_KEY_ERROR), e);
+      throw OException.wrapException(new OInvalidStorageEncryptionKeyException(e.getMessage()), e);
     } catch (InvalidAlgorithmParameterException e) {
       throw new IllegalArgumentException("Invalid or re-used nonce.", e);
     }
