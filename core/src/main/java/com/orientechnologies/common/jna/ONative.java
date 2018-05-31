@@ -93,7 +93,7 @@ public class ONative {
       if (result == 0 && rlimit.rlim_cur > 0) {
         if (verbose) {
           OLogManager.instance().infoNoDb(this, "Detected limit of amount of simultaneously open files is %d, "
-              + " limit of open files for disk cache will be set to ", rlimit.rlim_cur, rlimit.rlim_cur / 2 - 512);
+              + " limit of open files for disk cache will be set to %d", rlimit.rlim_cur, rlimit.rlim_cur / 2 - 512);
         }
 
         if (rlimit.rlim_cur < recommended) {
