@@ -124,7 +124,7 @@ public class OAESGCMEncryption implements OEncryption {
       throw new OSecurityException(format(MISSING_KEY_ERROR, OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey()));
     }
     try {
-      final byte[] keyBytes = Base64.getDecoder().decode(base64EncodedKey);
+      final byte[] keyBytes = Base64.getDecoder().decode(base64EncodedKey.getBytes());
       validateKeySize(keyBytes.length);
       return new SecretKeySpec(keyBytes, ALGORITHM_NAME);
     } catch (IllegalArgumentException e) {
