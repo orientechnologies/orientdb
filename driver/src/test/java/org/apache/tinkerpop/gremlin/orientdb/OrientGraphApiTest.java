@@ -7,6 +7,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,4 +30,32 @@ public class OrientGraphApiTest {
         Assert.assertEquals(0, collected.size());
 
     }
+
+
+    @Test
+    public void testLinklistProperty() {
+        OrientGraph graph = OrientGraph.open();
+
+        Vertex vertex = graph.addVertex(T.label, "Person", "name", "Foo");
+        Vertex vertex2 = graph.addVertex(T.label, "Person", "name", "Bar");
+        Vertex vertex3 = graph.addVertex(T.label, "Person", "name", "Baz");
+
+        List listProp = new ArrayList();
+        listProp.add(vertex2.id());
+        listProp.add(vertex3.id());
+
+        vertex.property("links",listProp);
+
+        Object retrieved = vertex.value("links");
+        Assert.assertTrue(retrieved instanceof List);
+        List resultList = (List) retrieved;
+        for (Object o : resultList) {
+            Assert.assertTrue(o instanceof Vertex);
+        }
+
+
+        graph.close();
+    }
+
+
 }

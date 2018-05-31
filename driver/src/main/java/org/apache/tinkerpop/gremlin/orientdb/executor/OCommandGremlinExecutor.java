@@ -111,7 +111,7 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
 
                 Traversal result = (Traversal) eval;
 
-                return new OGremlinScriptResultSet(result, scriptManager.getTransformer(), true);
+                return new OGremlinScriptResultSet(result, scriptManager.getTransformer(), false);
             } else if (eval instanceof TraversalExplanation) {
                 OInternalResultSet resultSet = new OInternalResultSet();
                 resultSet.setPlan(new OGremlinExecutionPlan((TraversalExplanation) eval));
