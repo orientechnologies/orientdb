@@ -18,7 +18,7 @@ import java.util.Base64;
  * https://github.com/orientechnologies/orientdb/issues/89.
  * 
  * @author giastfader
- *
+ * This implementation uses DES and ECB mode and is thus not secure. See https://github.com/orientechnologies/orientdb/issues/8207.
  */
 public class ODESEncryption extends OAbstractEncryption {
   // @see https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html#SunJCEProvider

@@ -22,16 +22,24 @@ package com.orientechnologies.orient.core.sharding.auto;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.OIndexUpdateAction;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +67,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   private       int                              version;
   private final String                           name;
   private       int                              partitionSize;
-  private final AtomicLong bonsayFileId = new AtomicLong(0);
+  private final AtomicLong                       bonsayFileId = new AtomicLong(0);
 
   public OAutoShardingIndexEngine(final String iName, final Boolean iDurableInNonTxMode, final OAbstractPaginatedStorage iStorage,
       final int iVersion) {
@@ -88,10 +96,12 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   @Override
   public void create(final OBinarySerializer valueSerializer, final boolean isAutomatic, final OType[] keyTypes,
       final boolean nullPointerSupport, final OBinarySerializer keySerializer, final int keySize, final Set<String> clustersToIndex,
-      final Map<String, String> engineProperties, final ODocument metadata) {
+      final Map<String, String> engineProperties, final ODocument metadata, OEncryption encryption) {
 
     this.strategy = new OAutoShardingMurmurStrategy(keySerializer);
     this.hashFunction.setValueSerializer(keySerializer);
+    this.hashFunction.setEncryption(encryption);
+
     this.partitionSize = clustersToIndex.size();
     if (metadata != null && metadata.containsField("partitions"))
       this.partitionSize = metadata.field("partitions");
@@ -101,14 +111,14 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     init();
 
     for (OHashTable<Object, Object> p : partitions) {
-      p.create(keySerializer, valueSerializer, keyTypes, nullPointerSupport);
+      p.create(keySerializer, valueSerializer, keyTypes, encryption, nullPointerSupport);
     }
   }
 
   @Override
   public void load(final String indexName, final OBinarySerializer valueSerializer, final boolean isAutomatic,
       final OBinarySerializer keySerializer, final OType[] keyTypes, final boolean nullPointerSupport, final int keySize,
-      final Map<String, String> engineProperties) {
+      final Map<String, String> engineProperties, OEncryption encryption) {
 
     this.strategy = new OAutoShardingMurmurStrategy(keySerializer);
 
@@ -123,10 +133,11 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
       int i = 0;
       for (OHashTable<Object, Object> p : partitions)
-        p.load(indexName + "_" + (i++), keyTypes, nullPointerSupport);
+        p.load(indexName + "_" + (i++), keyTypes, nullPointerSupport, encryption);
     }
 
     hashFunction.setValueSerializer(keySerializer);
+    hashFunction.setEncryption(encryption);
   }
 
   @Override
