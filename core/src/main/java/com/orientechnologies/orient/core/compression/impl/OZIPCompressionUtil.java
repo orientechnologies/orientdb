@@ -55,6 +55,8 @@ public class OZIPCompressionUtil {
   public static void uncompressDirectory(final InputStream in, final String out, final OCommandOutputListener iListener)
       throws IOException {
     final File outdir = new File(out);
+    final String targetDirPath = outdir.getCanonicalPath() + File.separator;
+
     final ZipInputStream zin = new ZipInputStream(in);
     try {
       ZipEntry entry;
@@ -62,13 +64,15 @@ public class OZIPCompressionUtil {
       while ((entry = zin.getNextEntry()) != null) {
         name = entry.getName();
 
-        if (name.startsWith("/") || name.contains(".."))
-          throw new IOException("Invalid name '" + name + "' in the zip file");
+        final File file = new File(outdir, name);
+        if (!file.getCanonicalPath().startsWith(targetDirPath))
+          throw new IOException("Expanding '" + entry.getName() + "' would create file outside of directory '" + outdir + "'");
 
         if (entry.isDirectory()) {
           mkdirs(outdir, name);
           continue;
         }
+        
         /*
          * this part is necessary because file entry can come before directory entry where is file located i.e.: /foo/foo.txt /foo/
          */
