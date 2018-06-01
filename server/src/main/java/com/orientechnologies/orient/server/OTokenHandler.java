@@ -23,6 +23,8 @@ public interface OTokenHandler  {
   // The returned token should be checked to ensure isVerified == true.
   OToken parseWebToken(byte tokenBytes[]) throws InvalidKeyException, NoSuchAlgorithmException, IOException;
 
+  OToken parseNotVerifyBinaryToken(byte tokenBytes[]);
+
   OToken parseBinaryToken(byte tokenBytes[]);
 
   boolean validateToken(OToken token, String command, String database);

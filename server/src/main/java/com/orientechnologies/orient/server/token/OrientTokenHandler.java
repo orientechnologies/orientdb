@@ -93,6 +93,11 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
   }
 
   @Override
+  public OToken parseNotVerifyBinaryToken(byte[] tokenBytes) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public String getName() {
     return OTokenHandler.TOKEN_HANDLER_NAME;
   }
