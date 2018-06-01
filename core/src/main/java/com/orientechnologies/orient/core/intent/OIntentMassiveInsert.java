@@ -38,10 +38,10 @@ public class OIntentMassiveInsert implements OIntent {
   private boolean                                     previousTxRequiredForSQLGraphOperations;
   private Map<ORecordHook, ORecordHook.HOOK_POSITION> removedHooks;
   private OSecurityUser                               currentUser;
-  private boolean                                     disableValidation = true;
-  private boolean                                     disableSecurity   = true;
-  private boolean                                     disableHooks      = true;
-  private boolean                                     enableCache       = true;
+  private boolean disableValidation = true;
+  private boolean disableSecurity   = true;
+  private boolean disableHooks      = true;
+  private boolean enableCache       = true;
 
   public void begin(final ODatabaseDocumentInternal iDatabase) {
     if (disableSecurity) {
@@ -53,8 +53,9 @@ public class OIntentMassiveInsert implements OIntent {
 
     // DISABLE TX IN GRAPH SQL OPERATIONS
     previousTxRequiredForSQLGraphOperations = ownerDb.getStorage().getConfiguration().isTxRequiredForSQLGraphOperations();
-    if (previousTxRequiredForSQLGraphOperations)
+    if (previousTxRequiredForSQLGraphOperations && !ownerDb.getStorage().isRemote()) {
       ownerDb.getStorage().setProperty("txRequiredForSQLGraphOperations", Boolean.FALSE.toString());
+    }
 
     if (!enableCache) {
       ownerDb.getLocalCache().setEnable(enableCache);
@@ -65,7 +66,7 @@ public class OIntentMassiveInsert implements OIntent {
       ((ODatabaseDocument) ownerDb).setRetainRecords(false);
 
       // VALIDATION
-      if (disableValidation && !iDatabase.getStorage().isRemote() ) {
+      if (disableValidation && !iDatabase.getStorage().isRemote()) {
         // Avoid to change server side validation if massive intent run on a client
         previousValidation = ((ODatabaseDocument) ownerDb).isValidationEnabled();
         if (previousValidation)
@@ -103,7 +104,8 @@ public class OIntentMassiveInsert implements OIntent {
         // RE-ENABLE CHECK OF SECURITY
         ownerDb.setUser(currentUser);
 
-    if (previousTxRequiredForSQLGraphOperations)
+    if (previousTxRequiredForSQLGraphOperations && !ownerDb.getStorage().isRemote())
+      //TODO it would be better to check if you have write permissions for internal cluster, but you cannot do it in remote...
       ownerDb.getStorage().setProperty("txRequiredForSQLGraphOperations", Boolean.TRUE.toString());
 
     if (!enableCache) {
