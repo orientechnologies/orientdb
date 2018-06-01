@@ -1561,5 +1561,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   public void setSkip(OSkip skip) {
     this.skip = skip;
   }
+
+  @Override
+  public boolean refersToParent() {
+    //TODO check this!
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=6ff0afbe9d31f08b72159fcf24070c9f (do not edit this line) */
