@@ -303,7 +303,26 @@ public class OConsoleApplication {
       // COMMENT: JUMP IT
       return RESULT.OK;
 
-    String[] commandWords = OStringParser.getWords(iCommand, wordSeparator);
+    String[] commandWords;
+    if (iCommand.toLowerCase().startsWith("load script")){
+      commandWords = iCommand.split(" ");
+      for (int i = 2; i < commandWords.length; i++){
+        boolean wrappedInQuotes = false;
+        if (commandWords[i].startsWith("'") && commandWords[i].endsWith("'")){
+          wrappedInQuotes = true;
+        }
+        else if (commandWords[i].startsWith("\"") && commandWords[i].endsWith("\"")){
+          wrappedInQuotes = true;
+        }
+        
+        if (wrappedInQuotes){
+          commandWords[i] = commandWords[i].substring(1, commandWords[i].length() - 1);
+        }
+      }
+    }
+    else{
+      commandWords = OStringParser.getWords(iCommand, wordSeparator);
+    }
 
     for (String cmd : helpCommands)
       if (cmd.equals(commandWords[0])) {
