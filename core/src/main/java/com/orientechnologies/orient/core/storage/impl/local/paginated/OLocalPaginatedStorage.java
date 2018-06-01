@@ -95,14 +95,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     File f = new File(url);
 
-    String sp;
-    if (f.exists() || !exists(Paths.get(f.getParent()))) {
-      // ALREADY EXISTS OR NOT LEGACY
-      sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
-    } else {
-      // LEGACY DB
-      sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getParent()));
-    }
+    String sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));    
 
     storagePath = Paths.get(OIOUtils.getPathFromDatabaseName(sp));
     variableParser = new OStorageVariableParser(storagePath);

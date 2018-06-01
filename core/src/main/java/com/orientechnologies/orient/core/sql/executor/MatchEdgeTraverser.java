@@ -209,7 +209,7 @@ public class MatchEdgeTraverser {
     OElement element = null;
     if (origin instanceof OElement) {
       element = (OElement) origin;
-    } else {
+    } else if (origin != null) {
       Object record = origin.getRecord();
       if (record instanceof OElement) {
         element = (OElement) record;

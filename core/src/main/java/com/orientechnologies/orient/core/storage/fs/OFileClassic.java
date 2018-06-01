@@ -525,7 +525,7 @@ public class OFileClassic implements OFile, OClosableItem {
           channel.force(false);
         } catch (IOException e) {
           OLogManager.instance()
-              .warn(this, "Error during flush of file %s. Data may be lost in case of power failure", getName(), e);
+              .warn(this, "Error during flush of file %s. Data may be lost in case of power failure", e, getName());
         }
 
       }
