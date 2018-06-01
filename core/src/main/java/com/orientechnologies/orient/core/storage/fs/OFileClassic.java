@@ -23,9 +23,14 @@ import com.orientechnologies.common.collection.closabledictionary.OClosableItem;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.sun.jna.LastErrorException;
+import com.sun.jna.Native;
+import com.sun.jna.Platform;
+import com.sun.jna.Pointer;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -43,7 +48,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.orientechnologies.common.io.OIOUtils.*;
+import static com.orientechnologies.common.io.OIOUtils.readByteBuffer;
+import static com.orientechnologies.common.io.OIOUtils.readByteBuffers;
+import static com.orientechnologies.common.io.OIOUtils.writeByteBuffer;
+import static com.orientechnologies.common.io.OIOUtils.writeByteBuffers;
 
 public class OFileClassic implements OFile, OClosableItem {
   public final static  String NAME            = "classic";
@@ -65,6 +73,9 @@ public class OFileClassic implements OFile, OClosableItem {
   private          int              version;
 
   private volatile long size;
+
+  private AllocationMode allocationMode;
+  private int            fd;
 
   /**
    * Map which calculates which files are opened and how many users they have
@@ -96,7 +107,52 @@ public class OFileClassic implements OFile, OClosableItem {
       this.size += size;
 
       assert this.size >= size;
-      frnd.setLength(this.size + HEADER_SIZE);
+
+      assert allocationMode != null;
+      if (allocationMode == AllocationMode.WRITE) {
+        final long ptr = Native.malloc(size);
+        try {
+          final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, size);
+          buffer.position(0);
+          OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
+        } finally {
+          Native.free(ptr);
+        }
+      } else if (allocationMode == AllocationMode.DESCRIPTOR) {
+        assert fd > 0;
+
+        try {
+          ONative.instance().fallocate(fd, currentSize + HEADER_SIZE, size);
+        } catch (LastErrorException e) {
+          OLogManager.instance().warnNoDb(this,
+              "Can not allocate space (error %d) for file %s using native Linux API, more slower methods will be used",
+              e.getErrorCode(), osFile.toAbsolutePath().toString());
+
+          allocationMode = AllocationMode.WRITE;
+
+          try {
+            ONative.instance().close(fd);
+          } catch (LastErrorException lee) {
+            OLogManager.instance()
+                .warnNoDb(this, "Can not close Linux descriptor of file %s, error %d", osFile.toAbsolutePath().toString(),
+                    lee.getErrorCode());
+          }
+
+          final long ptr = Native.malloc(size);
+          try {
+            final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, size);
+            buffer.position(0);
+            OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
+          } finally {
+            Native.free(ptr);
+          }
+        }
+
+      } else if (allocationMode == AllocationMode.LENGTH) {
+        frnd.setLength(this.size + HEADER_SIZE);
+      } else {
+        throw new IllegalStateException("Unknown allocation mode");
+      }
 
       assert channel.size() == this.size + HEADER_SIZE;
       return currentSize;
@@ -469,7 +525,7 @@ public class OFileClassic implements OFile, OClosableItem {
           channel.force(false);
         } catch (IOException e) {
           OLogManager.instance()
-              .warn(this, "Error during flush of file %s. Data may be lost in case of power failure", getName(), e);
+              .warn(this, "Error during flush of file %s. Data may be lost in case of power failure", e, getName());
         }
 
       }
@@ -490,8 +546,33 @@ public class OFileClassic implements OFile, OClosableItem {
       setVersion(OFileClassic.CURRENT_VERSION);
       version = OFileClassic.CURRENT_VERSION;
 
+      initAllocationMode();
     } finally {
       releaseWriteLock();
+    }
+  }
+
+  private void initAllocationMode() {
+    if (allocationMode != null) {
+      return;
+    }
+
+    if (Platform.isLinux()) {
+      allocationMode = AllocationMode.DESCRIPTOR;
+      int fd = 0;
+      try {
+        fd = ONative.instance().open(osFile.toAbsolutePath().toString());
+      } catch (LastErrorException e) {
+        OLogManager.instance().warnNoDb(this, "File %s can not be opened using Linux native API,"
+                + " more slower methods of allocation will be used. Error code : %d.", osFile.toAbsolutePath().toString(),
+            e.getErrorCode());
+        allocationMode = AllocationMode.WRITE;
+      }
+      this.fd = fd;
+    } else if (Platform.isWindows()) {
+      allocationMode = AllocationMode.LENGTH;
+    } else {
+      allocationMode = AllocationMode.WRITE;
     }
   }
 
@@ -562,6 +643,7 @@ public class OFileClassic implements OFile, OClosableItem {
         version = CURRENT_VERSION;
       }
 
+      initAllocationMode();
     } catch (IOException e) {
       throw OException.wrapException(new OIOException("Error during file open"), e);
     } finally {
@@ -654,6 +736,8 @@ public class OFileClassic implements OFile, OClosableItem {
             frnd.close();
             frnd = null;
           }
+
+          closeFD();
         } finally {
           releaseWriteLock();
           attempts++;
@@ -672,6 +756,21 @@ public class OFileClassic implements OFile, OClosableItem {
       }
     }
 
+  }
+
+  private void closeFD() {
+    if (allocationMode == AllocationMode.DESCRIPTOR && fd > 0) {
+      try {
+        ONative.instance().close(fd);
+      } catch (LastErrorException e) {
+        OLogManager.instance()
+            .warnNoDb(this, "Can not close Linux descriptor of file %s, error %d", osFile.toAbsolutePath().toString(),
+                e.getErrorCode());
+      }
+
+      allocationMode = null;
+      fd = 0;
+    }
   }
 
   /*
@@ -952,5 +1051,10 @@ public class OFileClassic implements OFile, OClosableItem {
     }
 
   }
+
+  private enum AllocationMode {
+    LENGTH, DESCRIPTOR, WRITE
+  }
+
 }
 

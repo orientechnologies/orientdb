@@ -36,7 +36,15 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -67,8 +75,8 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
   protected final OReadersWriterSpinLock lock = new OReadersWriterSpinLock();
 
-  private String charset;
-  private final List<OStorageEntryConfiguration> properties = new ArrayList<>();
+  private                 String                                 charset;
+  private final           List<OStorageEntryConfiguration>       properties = new ArrayList<>();
   private final transient OAbstractPaginatedStorage              storage;
   private                 OContextConfiguration                  configuration;
   private                 int                                    version;
@@ -99,12 +107,12 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   private int freeListBoundary = -1;
   private int maxKeySize       = -1;
 
-  private transient boolean validation = true;
-  protected OStorageConfigurationUpdateListener updateListener;
+  private transient boolean                             validation = true;
+  protected         OStorageConfigurationUpdateListener updateListener;
   /**
    * Version of product release under which storage was created
    */
-  private   String                              createdAtVersion;
+  private           String                              createdAtVersion;
 
   protected final Charset streamCharset;
 
@@ -538,6 +546,13 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
           final boolean nullValuesSupport = Boolean.parseBoolean(read((values[index++])));
           final int keySize = Integer.parseInt(read(values[index++]));
 
+          String encryption = null;
+          String encryptionOptions = null;
+          if (this.version > 19) {
+            encryption = read(values[index++]);
+            encryptionOptions = read(values[index++]);
+          }
+
           final int typesLength = Integer.parseInt(read(values[index++]));
           final OType[] types = new OType[typesLength];
 
@@ -560,7 +575,8 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
           }
 
           final IndexEngineData indexEngineData = new IndexEngineData(name, algorithm, indexType, durableInNonTxMode, version,
-              valueSerializerId, keySerializerId, isAutomatic, types, nullValuesSupport, keySize, engineProperties);
+              valueSerializerId, keySerializerId, isAutomatic, types, nullValuesSupport, keySize, encryption, encryptionOptions,
+              engineProperties);
 
           indexEngines.put(name, indexEngineData);
         }
@@ -713,6 +729,8 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
         write(buffer, engineData.version);
         write(buffer, engineData.nullValuesSupport);
         write(buffer, engineData.keySize);
+        write(buffer, engineData.encryption);
+        write(buffer, engineData.encryptionOptions);
 
         if (engineData.keyTypes != null) {
           write(buffer, engineData.keyTypes.length);
@@ -1204,10 +1222,13 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     private final boolean             nullValuesSupport;
     private final int                 keySize;
     private final Map<String, String> engineProperties;
+    private final String              encryption;
+    private final String              encryptionOptions;
 
     public IndexEngineData(final String name, final String algorithm, String indexType, final Boolean durableInNonTxMode,
         final int version, final byte valueSerializerId, final byte keySerializedId, final boolean isAutomatic,
-        final OType[] keyTypes, final boolean nullValuesSupport, final int keySize, final Map<String, String> engineProperties) {
+        final OType[] keyTypes, final boolean nullValuesSupport, final int keySize, final String encryption,
+        final String encryptionOptions, final Map<String, String> engineProperties) {
       this.name = name;
       this.algorithm = algorithm;
       this.indexType = indexType;
@@ -1219,6 +1240,8 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
       this.keyTypes = keyTypes;
       this.nullValuesSupport = nullValuesSupport;
       this.keySize = keySize;
+      this.encryption = encryption;
+      this.encryptionOptions = encryptionOptions;
       if (engineProperties == null)
         this.engineProperties = null;
       else
@@ -1259,6 +1282,14 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
     public OType[] getKeyTypes() {
       return keyTypes;
+    }
+
+    public String getEncryption() {
+      return encryption;
+    }
+
+    public String getEncryptionOptions() {
+      return encryptionOptions;
     }
 
     public boolean isNullValuesSupport() {

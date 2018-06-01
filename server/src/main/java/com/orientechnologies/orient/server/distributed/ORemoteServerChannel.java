@@ -34,6 +34,7 @@ import com.orientechnologies.orient.client.remote.message.ODistributedConnectRes
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 import java.io.IOException;
@@ -48,25 +49,26 @@ import java.util.concurrent.TimeUnit;
  * @author Luca Garulli
  */
 public class ORemoteServerChannel {
-  private final        ODistributedServerManager manager;
-  private final        String                    url;
-  private final        String                    remoteHost;
-  private final        int                       remotePort;
-  private final        String                    userName;
-  private final        String                    userPassword;
-  private final        String                    server;
-  private              OChannelBinarySynchClient channel;
-  private              int                       protocolVersion;
-  private              ODistributedRequest       prevRequest;
-  private              ODistributedResponse       prevResponse;
+  private final ODistributedServerManager manager;
+  private final String                    url;
+  private final String                    remoteHost;
+  private final int                       remotePort;
+  private final String                    userName;
+  private final String                    userPassword;
+  private final String                    server;
+  private       OChannelBinarySynchClient channel;
+  private       int                       protocolVersion;
+  private       ODistributedRequest       prevRequest;
+  private       ODistributedResponse      prevResponse;
 
-  private static final int                       MAX_RETRY     = 3;
-  private static final String                    CLIENT_TYPE   = "OrientDB Server";
-  private static final boolean                   COLLECT_STATS = false;
-  private              int                       sessionId     = -1;
-  private              byte[]                    sessionToken;
-  private              OContextConfiguration     contextConfig = new OContextConfiguration();
-  private              Date                      createdOn     = new Date();
+  private static final int                   MAX_RETRY     = 3;
+  private static final String                CLIENT_TYPE   = "OrientDB Server";
+  private static final boolean               COLLECT_STATS = false;
+  private              int                   sessionId     = -1;
+  private              byte[]                sessionToken;
+  private              OToken                token;
+  private              OContextConfiguration contextConfig = new OContextConfiguration();
+  private              Date                  createdOn     = new Date();
 
   private volatile     int totalConsecutiveErrors = 0;
   private final static int MAX_CONSECUTIVE_ERRORS = 10;
@@ -86,6 +88,23 @@ public class ORemoteServerChannel {
     protocolVersion = currentProtocolVersion;
 
     connect();
+
+  }
+
+  private synchronized void checkReconnect() {
+    long now = System.currentTimeMillis();
+    // if is after 5 sec from expire re-negotiate session
+    if (token.getExpiry() - 5000 < now) {
+      try {
+        connect();
+      } catch (IOException e) {
+        handleNewError();
+
+        ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
+            "Error on reconnecting to distributed node (%s)", e.toString());
+        throw OException.wrapException(new ODistributedException("Error reconnecting to remote node"), e);
+      }
+    }
   }
 
   public int getDistributedProtocolVersion() {
@@ -97,6 +116,7 @@ public class ORemoteServerChannel {
   }
 
   public void sendRequest(final ODistributedRequest request) {
+    checkReconnect();
     networkOperation(OChannelBinaryProtocol.DISTRIBUTED_REQUEST, () -> {
       request.toStream(channel.getDataOutput());
       channel.flush();
@@ -107,6 +127,7 @@ public class ORemoteServerChannel {
   }
 
   public void sendResponse(final ODistributedResponse response) {
+    checkReconnect();
     networkOperation(OChannelBinaryProtocol.DISTRIBUTED_RESPONSE, () -> {
           response.toStream(channel.getDataOutput());
           channel.flush();
@@ -137,6 +158,7 @@ public class ORemoteServerChannel {
 
       return null;
     }, "Cannot connect to the remote server '" + url + "'", MAX_RETRY, false);
+    token = manager.getServerInstance().getTokenHandler().parseNotVerifyBinaryToken(sessionToken);
   }
 
   public void close() {
@@ -159,15 +181,15 @@ public class ORemoteServerChannel {
         // RESET ERRORS
         totalConsecutiveErrors = 0;
 
-
         return result;
 
       } catch (Exception e) {
         // DIRTY CONNECTION, CLOSE IT AND RE-ACQUIRE A NEW ONE
         lastException = e;
 
-        OLogManager.instance()
-            .error(this, " current message: " + operation.getClass() + " previous message: " + this.prevRequest + " prev response" + prevResponse, e);
+        OLogManager.instance().error(this,
+            " current message: " + operation.getClass() + " previous message: " + this.prevRequest + " prev response"
+                + prevResponse, e);
         handleNewError();
 
         close();
