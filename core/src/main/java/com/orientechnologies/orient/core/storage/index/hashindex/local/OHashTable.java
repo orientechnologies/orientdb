@@ -33,7 +33,7 @@ import java.util.Comparator;
  */
 public interface OHashTable<K, V> {
   void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes, OEncryption encryption,
-      boolean nullKeyIsSupported);
+      OHashFunction<K> keyHashFunction, boolean nullKeyIsSupported);
 
   OBinarySerializer<K> getKeySerializer();
 
@@ -68,7 +68,7 @@ public interface OHashTable<K, V> {
 
   OHashIndexBucket.Entry<K, V>[] higherEntries(K key, int limit);
 
-  void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OEncryption encryption);
+  void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OEncryption encryption, OHashFunction<K> keyHashFunction);
 
   void deleteWithoutLoad(String name);
 

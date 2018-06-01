@@ -1,7 +1,12 @@
 package com.orientechnologies.orient.core.storage.index.sbtree.local;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -9,6 +14,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -28,40 +34,35 @@ import java.util.TreeSet;
  */
 public class SBTreeTestIT {
   private static final int KEYS_COUNT = 500000;
-  protected OSBTree<Integer, OIdentifiable> sbTree;
-  protected ODatabaseDocumentTx             databaseDocumentTx;
-  private   String                          buildDirectory;
+  OSBTree<Integer, OIdentifiable> sbTree;
+  protected ODatabaseSession databaseDocumentTx;
+  protected String           buildDirectory;
+  protected OrientDB         orientDB;
 
-  public SBTreeTestIT() {
-    buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+  String dbName;
 
-    final File dbDirectory = new File(buildDirectory, "localSBTreeTest");
-    System.out.println(this.getClass().getSimpleName() + " test is initializing using DB directory = " + dbDirectory);
+  @Before
+  public void before() {
+    buildDirectory = System.getProperty("buildDirectory", ".") + File.separator + SBTreeTestIT.class.getSimpleName();
 
-    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localSBTreeTest");
-    if (databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
-    }
+    dbName = "localSBTreeTest";
+    final File dbDirectory = new File(buildDirectory, dbName);
+    OFileUtils.deleteRecursively(dbDirectory);
 
-    databaseDocumentTx.create();
+    orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
+    orientDB.create(dbName, ODatabaseType.PLOCAL);
 
-    sbTree = new OSBTree<Integer, OIdentifiable>("sbTree", ".sbt", ".nbt",
-        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+    databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
+
+    sbTree = new OSBTree<>("sbTree", ".sbt", ".nbt",
+        (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false, null);
   }
 
   @After
   public void afterMethod() throws Exception {
-    sbTree.clear();
-  }
-
-  public void afterClass() throws Exception {
-    sbTree.clear();
-    sbTree.delete();
-    databaseDocumentTx.drop();
+    orientDB.drop(dbName);
+    orientDB.close();
   }
 
   @Test
@@ -86,7 +87,7 @@ public class SBTreeTestIT {
 
   @Test
   public void testKeyPutRandomUniform() throws Exception {
-    final NavigableSet<Integer> keys = new TreeSet<Integer>();
+    final NavigableSet<Integer> keys = new TreeSet<>();
     final Random random = new Random();
 
     while (keys.size() < KEYS_COUNT) {
@@ -108,7 +109,7 @@ public class SBTreeTestIT {
 
   @Test
   public void testKeyPutRandomGaussian() throws Exception {
-    NavigableSet<Integer> keys = new TreeSet<Integer>();
+    NavigableSet<Integer> keys = new TreeSet<>();
     long seed = System.currentTimeMillis();
 
     System.out.println("testKeyPutRandomGaussian seed : " + seed);
@@ -137,7 +138,7 @@ public class SBTreeTestIT {
 
   @Test
   public void testKeyDeleteRandomUniform() throws Exception {
-    NavigableSet<Integer> keys = new TreeSet<Integer>();
+    NavigableSet<Integer> keys = new TreeSet<>();
     for (int i = 0; i < KEYS_COUNT; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
       keys.add(i);
@@ -166,7 +167,7 @@ public class SBTreeTestIT {
 
   @Test
   public void testKeyDeleteRandomGaussian() throws Exception {
-    NavigableSet<Integer> keys = new TreeSet<Integer>();
+    NavigableSet<Integer> keys = new TreeSet<>();
 
     long seed = System.currentTimeMillis();
 
@@ -219,6 +220,7 @@ public class SBTreeTestIT {
     }
 
     Assert.assertEquals((int) sbTree.firstKey(), 1);
+    //noinspection ConstantConditions
     Assert.assertEquals((int) sbTree.lastKey(), (KEYS_COUNT - 1) % 3 == 0 ? KEYS_COUNT - 2 : KEYS_COUNT - 1);
 
     for (int i = 0; i < KEYS_COUNT; i++) {
@@ -263,7 +265,7 @@ public class SBTreeTestIT {
 
   @Test
   public void testIterateEntriesMajor() {
-    NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
+    NavigableMap<Integer, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 
     while (keyValues.size() < KEYS_COUNT) {
@@ -285,7 +287,7 @@ public class SBTreeTestIT {
 
   @Test
   public void testIterateEntriesMinor() {
-    NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
+    NavigableMap<Integer, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 
     while (keyValues.size() < KEYS_COUNT) {
@@ -307,7 +309,7 @@ public class SBTreeTestIT {
 
   @Test
   public void testIterateEntriesBetween() {
-    NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
+    NavigableMap<Integer, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 
     while (keyValues.size() < KEYS_COUNT) {
@@ -394,7 +396,7 @@ public class SBTreeTestIT {
     Assert.assertEquals((int) sbTree.firstKey(), 1730);
     Assert.assertEquals((int) sbTree.lastKey(), 8599);
 
-    Set<OIdentifiable> identifiables = new HashSet<OIdentifiable>();
+    Set<OIdentifiable> identifiables = new HashSet<>();
 
     OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor = sbTree.iterateEntriesMinor(7200, true, true);
     cursorToSet(identifiables, cursor);
@@ -489,8 +491,8 @@ public class SBTreeTestIT {
 
   @Test
   public void testNullKeysInSBTree() {
-    final OSBTree<Integer, OIdentifiable> nullSBTree = new OSBTree<Integer, OIdentifiable>("nullSBTree", ".sbt", ".nbt",
-        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+    final OSBTree<Integer, OIdentifiable> nullSBTree = new OSBTree<>("nullSBTree", ".sbt", ".nbt",
+        (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     nullSBTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, true, null);
 
     try {

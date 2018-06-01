@@ -89,13 +89,13 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
   private static final int LEVEL_MASK = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
-  private final OHashFunction<K> keyHashFunction;
+  private OHashFunction<K> keyHashFunction;
 
   private OBinarySerializer<K> keySerializer;
   private OBinarySerializer<V> valueSerializer;
   private OType[]              keyTypes;
 
-  private final OHashTable.KeyHashCodeComparator<K> comparator;
+  private OHashTable.KeyHashCodeComparator<K> comparator;
 
   private       boolean nullKeyIsSupported;
   private       long    nullBucketFileId = -1;
@@ -111,22 +111,18 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   private OEncryption encryption;
 
   public OLocalHashTable(String name, String metadataConfigurationFileExtension, String treeStateFileExtension,
-      String bucketFileExtension, String nullBucketFileExtension, OHashFunction<K> keyHashFunction,
-      OAbstractPaginatedStorage abstractPaginatedStorage) {
+      String bucketFileExtension, String nullBucketFileExtension, OAbstractPaginatedStorage abstractPaginatedStorage) {
     super(abstractPaginatedStorage, name, bucketFileExtension, name + bucketFileExtension);
 
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
-    this.keyHashFunction = keyHashFunction;
     this.nullBucketFileExtension = nullBucketFileExtension;
-
-    this.comparator = new OHashTable.KeyHashCodeComparator<>(this.keyHashFunction);
   }
 
   @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
   @Override
   public void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
-      OEncryption encryption, boolean nullKeyIsSupported) {
+      OEncryption encryption, OHashFunction<K> keyHashFunction, boolean nullKeyIsSupported) {
     startOperation();
     try {
       final OAtomicOperation atomicOperation;
@@ -139,6 +135,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       acquireExclusiveLock();
       try {
         try {
+          this.keyHashFunction = keyHashFunction;
+          this.comparator = new OHashTable.KeyHashCodeComparator<>(this.keyHashFunction);
           this.encryption = encryption;
 
           if (keyTypes != null)
@@ -619,11 +617,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OEncryption encryption) {
+  public void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OEncryption encryption,
+      OHashFunction<K> keyHashFunction) {
     startOperation();
     try {
       acquireExclusiveLock();
       try {
+        this.keyHashFunction = keyHashFunction;
+        this.comparator = new OHashTable.KeyHashCodeComparator<>(this.keyHashFunction);
         if (keyTypes != null)
           this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
         else

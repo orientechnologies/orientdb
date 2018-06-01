@@ -1,16 +1,18 @@
 package com.orientechnologies.orient.core.storage.index.sbtree.local;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -26,7 +28,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOpera
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Assert;
@@ -50,28 +51,30 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
   }
 
-  private String buildDirectory;
-
-  private ODatabaseDocumentTx expectedDatabaseDocumentTx;
-
-  private String actualStorageDir;
-  private String expectedStorageDir;
-
   private OLocalPaginatedStorage actualStorage;
   private OWriteCache            actualWriteCache;
 
-  private OReadCache     expectedReadCache;
-  private OWriteCache    expectedWriteCache;
-  private OWriteAheadLog expectedWAL;
+  private ODatabaseSession       expectedDatabaseDocumentTx;
+  private OLocalPaginatedStorage expectedStorage;
+  private OReadCache             expectedReadCache;
+  private OWriteCache            expectedWriteCache;
+
+  private String expectedStorageDir;
+  private String actualStorageDir;
+
+  private static final String DIR_NAME         = SBTreeWALTestIT.class.getSimpleName();
+  private static final String ACTUAL_DB_NAME   = "sbtreeWithWALTestActual";
+  private static final String EXPECTED_DB_NAME = "sbtreeWithWALTestExpected";
 
   @Before
-  public void before() throws IOException {
-    buildDirectory = System.getProperty("buildDirectory", ".");
-    buildDirectory += "/sbtreeWithWALTest";
+  public void before() {
+    String buildDirectory = System.getProperty("buildDirectory", ".");
+    buildDirectory += "/" + DIR_NAME;
 
     final File buildDir = new File(buildDirectory);
-    if (!buildDir.exists())
-      buildDir.mkdirs();
+    OFileUtils.deleteRecursively(buildDir);
+
+    orientDB = new OrientDB("plocal:" + buildDir, OrientDBConfig.defaultConfig());
 
     createExpectedSBTree();
     createActualSBTree();
@@ -80,72 +83,37 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
   @After
   @Override
   public void afterMethod() throws Exception {
-    databaseDocumentTx.open("admin", "admin");
-    databaseDocumentTx.drop();
-
-    expectedDatabaseDocumentTx.open("admin", "admin");
-    expectedDatabaseDocumentTx.drop();
-
-    final File actualStorage = new File(actualStorageDir);
-    if (actualStorage.exists())
-      Assert.assertTrue(actualStorage.delete());
-
-    final File expectedStorage = new File(expectedStorageDir);
-    if (expectedStorage.exists())
-      Assert.assertTrue(expectedStorage.delete());
-
-    final File buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      Assert.assertTrue(buildDir.delete());
+    orientDB.drop(ACTUAL_DB_NAME);
+    orientDB.drop(EXPECTED_DB_NAME);
+    orientDB.close();
   }
 
-  private void createActualSBTree() throws IOException {
-    actualStorageDir = buildDirectory + "/sbtreeWithWALTestActual";
+  private void createActualSBTree() {
+    orientDB.create(ACTUAL_DB_NAME, ODatabaseType.PLOCAL);
 
-    File actualStorageDirFile = new File(actualStorageDir);
-    if (!actualStorageDirFile.exists())
-      actualStorageDirFile.mkdirs();
-
-    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + actualStorageDir);
-    if (databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
-    } else {
-      databaseDocumentTx.create();
-    }
-
-    actualStorage = (OLocalPaginatedStorage) databaseDocumentTx.getStorage();
+    databaseDocumentTx = orientDB.open(ACTUAL_DB_NAME, "admin", "admin");
+    actualStorage = (OLocalPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
+    actualStorageDir = actualStorage.getStoragePath().toString();
     ODiskWriteAheadLog writeAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
 
     actualStorage.synch();
     writeAheadLog.addCutTillLimit(writeAheadLog.getFlushedLsn());
 
-    OReadCache actualReadCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getReadCache();
-    actualWriteCache = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getWriteCache();
+    actualWriteCache = actualStorage.getWriteCache();
 
     sbTree = new OSBTree<>("actualSBTree", ".sbt", ".nbt", actualStorage);
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false, null);
   }
 
   private void createExpectedSBTree() {
-    expectedStorageDir = buildDirectory + "/sbtreeWithWALTestExpected";
+    orientDB.create(EXPECTED_DB_NAME, ODatabaseType.PLOCAL);
 
-    File expectedStorageDirFile = new File(expectedStorageDir);
-    if (!expectedStorageDirFile.exists())
-      expectedStorageDirFile.mkdirs();
-
-    expectedDatabaseDocumentTx = new ODatabaseDocumentTx("plocal:" + expectedStorageDir);
-    if (expectedDatabaseDocumentTx.exists()) {
-      expectedDatabaseDocumentTx.open("admin", "admin");
-      expectedDatabaseDocumentTx.drop();
-    } else {
-      expectedDatabaseDocumentTx.create();
-    }
-
-    OLocalPaginatedStorage expectedStorage = (OLocalPaginatedStorage) expectedDatabaseDocumentTx.getStorage();
+    expectedDatabaseDocumentTx = orientDB.open(EXPECTED_DB_NAME, "admin", "admin");
+    expectedStorage = (OLocalPaginatedStorage) ((ODatabaseInternal) expectedDatabaseDocumentTx).getStorage();
     expectedReadCache = expectedStorage.getReadCache();
     expectedWriteCache = expectedStorage.getWriteCache();
-    expectedWAL = expectedStorage.getWALInstance();
+
+    expectedStorageDir = expectedStorage.getStoragePath().toString();
   }
 
   @Override
@@ -258,22 +226,20 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
 
   private void assertFileRestoreFromWAL() throws IOException {
     long sbTreeFileId = actualWriteCache.fileIdByName(sbTree.getName() + ".sbt");
-    String nativeSBTreeFileName = ((OWOWCache) actualWriteCache).nativeFileNameById(sbTreeFileId);
+    String nativeSBTreeFileName = actualWriteCache.nativeFileNameById(sbTreeFileId);
 
-    OStorage storage = databaseDocumentTx.getStorage();
     databaseDocumentTx.activateOnCurrentThread();
     databaseDocumentTx.close();
-    storage.close(true, false);
+    actualStorage.close(true, false);
 
     restoreDataFromWAL();
 
     long expectedSBTreeFileId = expectedWriteCache.fileIdByName("expectedSBTree.sbt");
-    String expectedSBTreeNativeFileName = ((OWOWCache) expectedWriteCache).nativeFileNameById(expectedSBTreeFileId);
+    String expectedSBTreeNativeFileName = expectedWriteCache.nativeFileNameById(expectedSBTreeFileId);
 
     expectedDatabaseDocumentTx.activateOnCurrentThread();
     expectedDatabaseDocumentTx.close();
-    storage = expectedDatabaseDocumentTx.getStorage();
-    storage.close(true, false);
+    expectedStorage.close(true, false);
 
     assertFileContentIsTheSame(expectedSBTreeNativeFileName, nativeSBTreeFileName);
   }
@@ -283,7 +249,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
         16 * OWALPage.PAGE_SIZE, 120);
     OLogSequenceNumber lsn = log.begin();
 
-    List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();
+    List<OWALRecord> atomicUnit = new ArrayList<>();
 
     boolean atomicChangeIsProcessed = false;
     while (lsn != null) {
@@ -353,29 +319,30 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
 
   private void assertFileContentIsTheSame(String expectedBTreeFileName, String actualBTreeFileName) throws IOException {
     File expectedFile = new File(expectedStorageDir, expectedBTreeFileName);
-    RandomAccessFile fileOne = new RandomAccessFile(expectedFile, "r");
-    RandomAccessFile fileTwo = new RandomAccessFile(new File(actualStorageDir, actualBTreeFileName), "r");
+    try (RandomAccessFile fileOne = new RandomAccessFile(expectedFile, "r")) {
+      try (RandomAccessFile fileTwo = new RandomAccessFile(new File(actualStorageDir, actualBTreeFileName), "r")) {
 
-    Assert.assertEquals(fileOne.length(), fileTwo.length());
+        Assert.assertEquals(fileOne.length(), fileTwo.length());
 
-    byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
-    byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
+        byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
+        byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
 
-    fileOne.seek(OFileClassic.HEADER_SIZE);
-    fileTwo.seek(OFileClassic.HEADER_SIZE);
+        fileOne.seek(OFileClassic.HEADER_SIZE);
+        fileTwo.seek(OFileClassic.HEADER_SIZE);
 
-    int bytesRead = fileOne.read(expectedContent);
-    while (bytesRead >= 0) {
-      fileTwo.readFully(actualContent, 0, bytesRead);
+        int bytesRead = fileOne.read(expectedContent);
+        while (bytesRead >= 0) {
+          fileTwo.readFully(actualContent, 0, bytesRead);
 
-      Assertions.assertThat(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES))
-          .isEqualTo(Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES));
-      expectedContent = new byte[OClusterPage.PAGE_SIZE];
-      actualContent = new byte[OClusterPage.PAGE_SIZE];
-      bytesRead = fileOne.read(expectedContent);
+          Assertions
+              .assertThat(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES))
+              .isEqualTo(Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES));
+          expectedContent = new byte[OClusterPage.PAGE_SIZE];
+          actualContent = new byte[OClusterPage.PAGE_SIZE];
+          bytesRead = fileOne.read(expectedContent);
+        }
+
+      }
     }
-
-    fileOne.close();
-    fileTwo.close();
   }
 }

@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
 import com.orientechnologies.common.hash.OMurmurHash3;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.encryption.OEncryption;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
@@ -32,18 +31,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class OMurmurHash3HashFunction<V> implements OHashFunction<V> {
   private static final int SEED = 362498820;
 
-  private OBinarySerializer<V> valueSerializer;
-  private OEncryption          encryption;
+  private final OBinarySerializer<V> valueSerializer;
 
-  public OBinarySerializer<V> getValueSerializer() {
-    return valueSerializer;
-  }
-
-  public void setEncryption(OEncryption encryption) {
-    this.encryption = encryption;
-  }
-
-  public void setValueSerializer(OBinarySerializer<V> valueSerializer) {
+  public OMurmurHash3HashFunction(OBinarySerializer<V> valueSerializer) {
     this.valueSerializer = valueSerializer;
   }
 
@@ -52,11 +42,6 @@ public class OMurmurHash3HashFunction<V> implements OHashFunction<V> {
     final byte[] serializedValue = new byte[valueSerializer.getObjectSize(value)];
     valueSerializer.serializeNativeObject(value, serializedValue, 0);
 
-    if (encryption == null) {
-      return OMurmurHash3.murmurHash3_x64_64(serializedValue, SEED);
-    } else {
-      final byte[] encrypted = encryption.encrypt(serializedValue);
-      return OMurmurHash3.murmurHash3_x64_64(encrypted, SEED);
-    }
+    return OMurmurHash3.murmurHash3_x64_64(serializedValue, SEED);
   }
 }

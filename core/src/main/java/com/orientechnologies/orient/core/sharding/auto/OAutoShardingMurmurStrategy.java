@@ -27,14 +27,14 @@ import static java.lang.Math.abs;
 /**
  * Auto-sharding strategy implementation that uses Murmur hashing.
  *
- * @since 3.0
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
+ * @since 3.0
  */
 public final class OAutoShardingMurmurStrategy implements OAutoShardingStrategy {
-  private OMurmurHash3HashFunction hashFunction = new OMurmurHash3HashFunction<Object>();
+  private OMurmurHash3HashFunction hashFunction;
 
   public OAutoShardingMurmurStrategy(final OBinarySerializer keySerializer) {
-    hashFunction.setValueSerializer(keySerializer);
+    hashFunction = new OMurmurHash3HashFunction<Object>(keySerializer);
   }
 
   public int getPartitionsId(final Object iKey, final int partitionSize) {

@@ -36,10 +36,12 @@ import com.orientechnologies.orient.core.index.OIndexUpdateAction;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OSHA256HashFunction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +63,6 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
   private final OAbstractPaginatedStorage        storage;
   private final boolean                          durableInNonTx;
-  private final OMurmurHash3HashFunction<Object> hashFunction;
   private       List<OHashTable<Object, Object>> partitions;
   private       OAutoShardingStrategy            strategy;
   private       int                              version;
@@ -73,7 +74,6 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       final int iVersion) {
     this.name = iName;
     this.storage = iStorage;
-    this.hashFunction = new OMurmurHash3HashFunction<Object>();
 
     if (iDurableInNonTxMode == null)
       durableInNonTx = iStorage.getConfiguration().getContextConfiguration()
@@ -99,8 +99,14 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       final Map<String, String> engineProperties, final ODocument metadata, OEncryption encryption) {
 
     this.strategy = new OAutoShardingMurmurStrategy(keySerializer);
-    this.hashFunction.setValueSerializer(keySerializer);
-    this.hashFunction.setEncryption(encryption);
+
+    final OHashFunction<Object> hashFunction;
+
+    if (encryption != null) {
+      hashFunction = new OSHA256HashFunction<>(keySerializer);
+    } else {
+      hashFunction = new OMurmurHash3HashFunction<>(keySerializer);
+    }
 
     this.partitionSize = clustersToIndex.size();
     if (metadata != null && metadata.containsField("partitions"))
@@ -111,7 +117,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     init();
 
     for (OHashTable<Object, Object> p : partitions) {
-      p.create(keySerializer, valueSerializer, keyTypes, encryption, nullPointerSupport);
+      p.create(keySerializer, valueSerializer, keyTypes, encryption, hashFunction, nullPointerSupport);
     }
   }
 
@@ -132,12 +138,18 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       init();
 
       int i = 0;
-      for (OHashTable<Object, Object> p : partitions)
-        p.load(indexName + "_" + (i++), keyTypes, nullPointerSupport, encryption);
-    }
 
-    hashFunction.setValueSerializer(keySerializer);
-    hashFunction.setEncryption(encryption);
+      final OHashFunction<Object> hashFunction;
+
+      if (encryption != null) {
+        hashFunction = new OSHA256HashFunction<>(keySerializer);
+      } else {
+        hashFunction = new OMurmurHash3HashFunction<>(keySerializer);
+      }
+
+      for (OHashTable<Object, Object> p : partitions)
+        p.load(indexName + "_" + (i++), keyTypes, nullPointerSupport, encryption, hashFunction);
+    }
   }
 
   @Override
@@ -174,7 +186,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     for (int i = 0; i < partitionSize; ++i) {
       partitions.add(
           new OLocalHashTable<Object, Object>(name + "_" + i, SUBINDEX_METADATA_FILE_EXTENSION, SUBINDEX_TREE_FILE_EXTENSION,
-              SUBINDEX_BUCKET_FILE_EXTENSION, SUBINDEX_NULL_BUCKET_FILE_EXTENSION, hashFunction, storage));
+              SUBINDEX_BUCKET_FILE_EXTENSION, SUBINDEX_NULL_BUCKET_FILE_EXTENSION, storage));
     }
   }
 
