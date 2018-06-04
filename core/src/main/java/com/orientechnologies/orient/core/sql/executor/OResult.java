@@ -218,6 +218,7 @@ public interface OResult {
     result = result.replaceAll("\"", "\\\\\"");
     result = result.replaceAll("\n", "\\\\n");
     result = result.replaceAll("\t", "\\\\t");
+    result = result.replaceAll("\r", "\\\\r");
     return result;
   }
 
