@@ -665,8 +665,15 @@ public class OExpression extends SimpleNode {
   }
 
   public boolean isIndexChain(OCommandContext ctx, OClass clazz) {
-    if(mathExpression!=null){
+    if (mathExpression != null) {
       return mathExpression.isIndexChain(ctx, clazz);
+    }
+    return false;
+  }
+
+  public boolean isFunctionAny() {
+    if (mathExpression != null) {
+      return mathExpression.isFunctionAny();
     }
     return false;
   }
