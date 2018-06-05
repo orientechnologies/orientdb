@@ -1725,13 +1725,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   public void resetLastValidBackup() {
-    File backupFile = lastValidBackup;
     lastValidBackup = null;
-    if (backupFile != null) {
-      if (backupFile.exists()) {
-        backupFile.delete();
-      }
-    }
   }
 
   void executeUndoOnLocalServer(final ODistributedRequestId reqId, final OAbstractReplicatedTask task) {
