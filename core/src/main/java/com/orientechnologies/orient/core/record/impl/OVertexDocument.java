@@ -198,6 +198,7 @@ public class OVertexDocument extends ODocument implements OVertex {
 
     // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
     copyRidBags(oldRecord, doc);//TODO! check this!!!
+    detachRidbags(oldRecord);
     oldRecord.delete();
 
     if (iClassName != null)
@@ -254,6 +255,19 @@ public class OVertexDocument extends ODocument implements OVertex {
     doc.save();
 
     return newIdentity;
+  }
+
+  private void detachRidbags(ORecord oldRecord) {
+    ODocument oldDoc = (ODocument) oldRecord;
+    for (String field : oldDoc.fieldNames()) {
+      if (field.equalsIgnoreCase("out") || field.equalsIgnoreCase("in") || field.startsWith("out_") || field.startsWith("in_")
+          || field.startsWith("OUT_") || field.startsWith("IN_")) {
+        Object val = oldDoc.rawField(field);
+        if (val instanceof ORidBag) {
+          oldDoc.removeField(field);
+        }
+      }
+    }
   }
 
   @Override

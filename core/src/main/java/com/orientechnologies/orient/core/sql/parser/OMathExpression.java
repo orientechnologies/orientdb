@@ -860,6 +860,13 @@ public class OMathExpression extends SimpleNode {
     return this.childExpressions.get(0).executeIndexedFunctionAfterIndexSearch(target, context, operator, right);
   }
 
+  public boolean isFunctionAny() {
+    if (this.childExpressions.size() != 1) {
+      return false;
+    }
+    return this.childExpressions.get(0).isFunctionAny();
+  }
+
   public boolean isBaseIdentifier() {
     if (childExpressions.size() == 1) {
       return childExpressions.get(0).isBaseIdentifier();
