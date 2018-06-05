@@ -31,13 +31,9 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class OMurmurHash3HashFunction<V> implements OHashFunction<V> {
   private static final int SEED = 362498820;
 
-  private OBinarySerializer<V> valueSerializer;
+  private final OBinarySerializer<V> valueSerializer;
 
-  public OBinarySerializer<V> getValueSerializer() {
-    return valueSerializer;
-  }
-
-  public void setValueSerializer(OBinarySerializer<V> valueSerializer) {
+  public OMurmurHash3HashFunction(OBinarySerializer<V> valueSerializer) {
     this.valueSerializer = valueSerializer;
   }
 

@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -12,11 +11,11 @@ import java.util.Set;
  * Created by frank on 24/04/2016.
  */
 public abstract class OLocalHashTableBase {
-  protected static final int                              KEYS_COUNT = 500000;
-  protected              OLocalHashTable<Integer, String> localHashTable;
+  private static final int KEYS_COUNT = 500000;
+  OLocalHashTable<Integer, String> localHashTable;
 
   @Test
-  public void testKeyPut() throws IOException {
+  public void testKeyPut() {
     for (int i = 0; i < KEYS_COUNT; i++) {
       localHashTable.put(i, i + "");
       Assert.assertEquals(localHashTable.get(i), i + "");
@@ -32,8 +31,8 @@ public abstract class OLocalHashTableBase {
   }
 
   @Test
-  public void testKeyPutRandomUniform() throws IOException {
-    final Set<Integer> keys = new HashSet<Integer>();
+  public void testKeyPutRandomUniform() {
+    final Set<Integer> keys = new HashSet<>();
     final Random random = new Random();
 
     while (keys.size() < KEYS_COUNT) {
@@ -49,8 +48,8 @@ public abstract class OLocalHashTableBase {
   }
 
   @Test
-  public void testKeyPutRandomGaussian() throws IOException {
-    Set<Integer> keys = new HashSet<Integer>();
+  public void testKeyPutRandomGaussian() {
+    Set<Integer> keys = new HashSet<>();
     Random random = new Random();
     keys.clear();
 
@@ -67,8 +66,8 @@ public abstract class OLocalHashTableBase {
   }
 
   @Test
-  public void testKeyDeleteRandomUniform() throws IOException {
-    final Set<Integer> keys = new HashSet<Integer>();
+  public void testKeyDeleteRandomUniform() {
+    final Set<Integer> keys = new HashSet<>();
     long ms = System.currentTimeMillis();
     System.out.println("testKeyDeleteRandomUniform : " + ms);
     final Random random = new Random(ms);
@@ -96,7 +95,7 @@ public abstract class OLocalHashTableBase {
   }
 
   @Test
-  public void testKeyDelete() throws IOException {
+  public void testKeyDelete() {
     for (int i = 0; i < KEYS_COUNT; i++) {
       localHashTable.put(i, i + "");
     }
@@ -115,7 +114,7 @@ public abstract class OLocalHashTableBase {
   }
 
   @Test
-  public void testKeyAddDelete() throws IOException {
+  public void testKeyAddDelete() {
     for (int i = 0; i < KEYS_COUNT; i++)
       localHashTable.put(i, i + "");
 
@@ -139,7 +138,7 @@ public abstract class OLocalHashTableBase {
   }
 
   @Test
-  public void testKeyPutRemoveNullKey() throws IOException {
+  public void testKeyPutRemoveNullKey() {
     for (int i = 0; i < 10; i++)
       localHashTable.put(i, i + "");
 
@@ -170,8 +169,8 @@ public abstract class OLocalHashTableBase {
   }
 
   @Test
-  public void testKeyDeleteRandomGaussian() throws IOException {
-    HashSet<Integer> keys = new HashSet<Integer>();
+  public void testKeyDeleteRandomGaussian() {
+    HashSet<Integer> keys = new HashSet<>();
 
     Random random = new Random();
     while (keys.size() < KEYS_COUNT) {

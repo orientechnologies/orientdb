@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.PaginatedClusterRollbackIT;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -41,7 +42,7 @@ public class LocalHashTableRollbackIT {
   public void testPut() {
     final String dbName = "testPut";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -72,7 +73,7 @@ public class LocalHashTableRollbackIT {
         try {
           documentTwo.save();
           Assert.fail();
-        } catch (Exception e) {
+        } catch (ORecordDuplicatedException e) {
           //ignore
         }
 
@@ -96,7 +97,7 @@ public class LocalHashTableRollbackIT {
   public void testPutCamelCase() {
     final String dbName = "testPutCamelCase";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -127,7 +128,7 @@ public class LocalHashTableRollbackIT {
         try {
           documentTwo.save();
           Assert.fail();
-        } catch (Exception e) {
+        } catch (ORecordDuplicatedException e) {
           //ignore
         }
 
@@ -151,7 +152,7 @@ public class LocalHashTableRollbackIT {
   public void testRemove() {
     final String dbName = "testRemove";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -200,7 +201,7 @@ public class LocalHashTableRollbackIT {
         try {
           session.commit();
           Assert.fail();
-        } catch (Exception e) {
+        } catch (ORecordDuplicatedException e) {
           //ignore
         }
 
@@ -227,7 +228,7 @@ public class LocalHashTableRollbackIT {
   public void testRemoveCamelCase() {
     final String dbName = "testRemoveCamelCase";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -276,7 +277,7 @@ public class LocalHashTableRollbackIT {
         try {
           session.commit();
           Assert.fail();
-        } catch (Exception e) {
+        } catch (ORecordDuplicatedException e) {
           //ignore
         }
 
@@ -297,6 +298,10 @@ public class LocalHashTableRollbackIT {
         Assert.assertEquals(2, secondary_index.getKeySize());
       }
     }
+  }
+
+  protected OrientDBConfig getConfig() {
+    return OrientDBConfig.defaultConfig();
   }
 
 }

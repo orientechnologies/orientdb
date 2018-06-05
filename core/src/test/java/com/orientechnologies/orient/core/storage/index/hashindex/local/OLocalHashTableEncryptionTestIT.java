@@ -41,8 +41,8 @@ public class OLocalHashTableEncryptionTestIT extends OLocalHashTableBase {
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
 
     localHashTable
-        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null,
-            encryption, SHA256HashFunction, true);
+        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), encryption,
+            true, null, SHA256HashFunction);
 
   }
 

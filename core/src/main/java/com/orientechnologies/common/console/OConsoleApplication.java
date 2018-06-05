@@ -25,14 +25,27 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OArrays;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.ServiceLoader;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -304,23 +317,21 @@ public class OConsoleApplication {
       return RESULT.OK;
 
     String[] commandWords;
-    if (iCommand.toLowerCase().startsWith("load script")){
+    if (iCommand.toLowerCase().startsWith("load script")) {
       commandWords = iCommand.split(" ");
-      for (int i = 2; i < commandWords.length; i++){
+      for (int i = 2; i < commandWords.length; i++) {
         boolean wrappedInQuotes = false;
-        if (commandWords[i].startsWith("'") && commandWords[i].endsWith("'")){
+        if (commandWords[i].startsWith("'") && commandWords[i].endsWith("'")) {
+          wrappedInQuotes = true;
+        } else if (commandWords[i].startsWith("\"") && commandWords[i].endsWith("\"")) {
           wrappedInQuotes = true;
         }
-        else if (commandWords[i].startsWith("\"") && commandWords[i].endsWith("\"")){
-          wrappedInQuotes = true;
-        }
-        
-        if (wrappedInQuotes){
+
+        if (wrappedInQuotes) {
           commandWords[i] = commandWords[i].substring(1, commandWords[i].length() - 1);
         }
       }
-    }
-    else{
+    } else {
       commandWords = OStringParser.getWords(iCommand, wordSeparator);
     }
 

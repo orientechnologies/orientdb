@@ -21,7 +21,7 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Set;
 
-public class SBTreeWALRollbackIT {
+public class SBTreeRollbackIT {
   public static  String buildDirectory;
   private static String orientDirectory;
 
@@ -41,7 +41,7 @@ public class SBTreeWALRollbackIT {
   public void testPut() {
     final String dbName = "testPut";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -96,7 +96,7 @@ public class SBTreeWALRollbackIT {
   public void testPutCamelCase() {
     final String dbName = "testPutCamelCase";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -151,7 +151,7 @@ public class SBTreeWALRollbackIT {
   public void testRemove() {
     final String dbName = "testRemove";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -227,7 +227,7 @@ public class SBTreeWALRollbackIT {
   public void testRemoveCamelCase() {
     final String dbName = "testRemoveCamelCase";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -297,5 +297,9 @@ public class SBTreeWALRollbackIT {
         Assert.assertEquals(2, secondary_index.getKeySize());
       }
     }
+  }
+
+  protected OrientDBConfig getConfig() {
+    return OrientDBConfig.defaultConfig();
   }
 }

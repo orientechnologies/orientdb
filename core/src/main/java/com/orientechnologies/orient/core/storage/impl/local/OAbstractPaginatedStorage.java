@@ -59,6 +59,9 @@ import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFact
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDeleter;
+import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
+import com.orientechnologies.orient.core.encryption.impl.ONothingEncryption;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -497,9 +500,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               engineData.getDurableInNonTxMode(), this, engineData.getVersion(), engineData.getEngineProperties(), null);
 
       try {
+        final OEncryption encryption;
+        if (engineData.getEncryption() == null || engineData.getEncryption().toLowerCase(configuration.getLocaleInstance())
+            .equals(ONothingEncryption.NAME)) {
+          encryption = null;
+        } else {
+          encryption = OEncryptionFactory.INSTANCE.getEncryption(engineData.getEncryption(), engineData.getEncryptionOptions());
+        }
+
         engine.load(engineData.getName(), cf.binarySerializerFactory.getObjectSerializer(engineData.getValueSerializerId()),
             engineData.isAutomatic(), cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()),
-            engineData.getKeyTypes(), engineData.isNullValuesSupport(), engineData.getKeySize(), engineData.getEngineProperties());
+            engineData.getKeyTypes(), engineData.isNullValuesSupport(), engineData.getKeySize(), engineData.getEngineProperties(),
+            encryption);
 
         indexEngineNameMap.put(engineData.getName(), engine);
         indexEngines.add(engine);
@@ -2362,12 +2374,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         final OStorageConfigurationImpl.IndexEngineData engineData = new OStorageConfigurationImpl.IndexEngineData(engineName,
             algorithm, indexType, durableInNonTxMode, version, valueSerializer.getId(), keySerializer.getId(), isAutomatic,
-            keyTypes, nullValuesSupport, keySize, engineProperties);
+            keyTypes, nullValuesSupport, keySize, null, null, engineProperties);
 
         final OIndexEngine engine = OIndexes
             .createIndexEngine(engineName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties, null);
         engine.load(engineName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullValuesSupport, keySize,
-            engineData.getEngineProperties());
+            engineData.getEngineProperties(), null);
 
         indexEngineNameMap.put(engineName, engine);
         indexEngines.add(engine);
@@ -2428,8 +2440,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final OIndexEngine engine = OIndexes
             .createIndexEngine(engineName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties, metadata);
 
+        final OContextConfiguration ctxCfg = getConfiguration().getContextConfiguration();
+        final String cfgEncryption = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD);
+        final String cfgEncryptionKey = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+
+        final OEncryption encryption;
+        if (cfgEncryption == null || cfgEncryption.equals(ONothingEncryption.NAME)) {
+          encryption = null;
+        } else {
+          encryption = OEncryptionFactory.INSTANCE.getEncryption(cfgEncryption, cfgEncryptionKey);
+        }
+
         engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize, clustersToIndex,
-            engineProperties, metadata);
+            engineProperties, metadata, encryption);
 
         indexEngineNameMap.put(engineName, engine);
 
@@ -2437,7 +2460,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         final OStorageConfigurationImpl.IndexEngineData engineData = new OStorageConfigurationImpl.IndexEngineData(engineName,
             algorithm, indexType, durableInNonTxMode, version, serializerId, keySerializer.getId(), isAutomatic, keyTypes,
-            nullValuesSupport, keySize, engineProperties);
+            nullValuesSupport, keySize, cfgEncryption, cfgEncryptionKey, engineProperties);
 
         ((OStorageConfigurationImpl) configuration).addIndexEngine(engineName, engineData);
 

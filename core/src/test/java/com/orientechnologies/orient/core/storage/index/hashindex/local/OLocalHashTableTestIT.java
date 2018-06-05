@@ -41,8 +41,8 @@ public class OLocalHashTableTestIT extends OLocalHashTableBase {
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
 
     localHashTable
-        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null,
-            murmurHash3HashFunction, true);
+        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().<String>getObjectSerializer(OType.STRING), null,
+            true, null, murmurHash3HashFunction);
 
   }
 

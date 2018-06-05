@@ -11,11 +11,18 @@ public class OSHA256HashFunction<V> implements OHashFunction<V> {
   }
 
   @Override
-  public long hashCode(V value) {
-    final byte[] serializedValue = new byte[valueSerializer.getObjectSize(value)];
-    valueSerializer.serializeNativeObject(value, serializedValue, 0);
+  public long hashCode(byte[] value) {
+    final byte[] digest = MessageDigestHolder.instance().get().digest(value);
+    return OLongSerializer.INSTANCE.deserializeNative(digest, 0);
+  }
+
+  @Override
+  public long hashCode(V value, Object[] keyTypes) {
+    final byte[] serializedValue = new byte[valueSerializer.getObjectSize(value, keyTypes)];
+    valueSerializer.serializeNativeObject(value, serializedValue, 0, keyTypes);
 
     final byte[] digest = MessageDigestHolder.instance().get().digest(serializedValue);
     return OLongSerializer.INSTANCE.deserializeNative(digest, 0);
   }
+
 }

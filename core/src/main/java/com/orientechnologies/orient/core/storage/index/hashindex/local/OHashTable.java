@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -31,8 +32,8 @@ import java.util.Comparator;
  * Created by lomak_000 on 15.04.2015.
  */
 public interface OHashTable<K, V> {
-  void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
-      boolean nullKeyIsSupported);
+  void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OEncryption encryption,
+      boolean nullKeyIsSupported, OType[] keyTypes, OHashFunction<K> hashFunction);
 
   V get(K key);
 
@@ -60,7 +61,7 @@ public interface OHashTable<K, V> {
   OHashIndexBucket.Entry<K, V>[] higherEntries(K key, int limit);
 
   void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer);
+      OBinarySerializer<V> valueSerializer, OEncryption encryption, OHashFunction<K> hashFunction);
 
   void deleteWithoutLoad(String name);
 

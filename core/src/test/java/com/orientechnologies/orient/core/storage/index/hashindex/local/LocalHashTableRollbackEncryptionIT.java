@@ -4,7 +4,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
 
-public class LocalHashTableRollbackEncryptedIT extends LocalHashTableRollbackIT {
+public class LocalHashTableRollbackEncryptionIT extends LocalHashTableRollbackIT {
   @Override
   protected OrientDBConfig getConfig() {
     return new OrientDBConfigBuilder().addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, "aes/gcm").
