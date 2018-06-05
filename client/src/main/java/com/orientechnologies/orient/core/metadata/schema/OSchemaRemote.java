@@ -120,7 +120,7 @@ public class OSchemaRemote extends OSchemaShared {
         }
       }
 
-      database.command(cmd.toString());
+      database.command(cmd.toString()).close();
       reload();
 
       result = classes.get(className.toLowerCase(Locale.ENGLISH));
@@ -186,7 +186,7 @@ public class OSchemaRemote extends OSchemaShared {
         cmd.append(clusters);
       }
 
-      database.command(cmd.toString());
+      database.command(cmd.toString()).close();
       reload();
       result = classes.get(className.toLowerCase(Locale.ENGLISH));
 
@@ -244,7 +244,7 @@ public class OSchemaRemote extends OSchemaShared {
       final StringBuilder cmd = new StringBuilder("drop class ");
       cmd.append(className);
       cmd.append(" unsafe");
-      database.command(cmd.toString());
+      database.command(cmd.toString()).close();
       reload();
 
       // FREE THE RECORD CACHE
