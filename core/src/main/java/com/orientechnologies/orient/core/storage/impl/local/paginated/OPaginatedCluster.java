@@ -454,8 +454,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       allocatedPosition = allocatePosition(recordType);
     }
 
-    byte[] originalContent = content;
-
     content = compression.compress(content);
     content = encryption.encrypt(content);
 
@@ -494,8 +492,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
 
           logComponentOperation(atomicOperation,
-              new OCreateRecordOperation(id, atomicOperation.getOperationUnitId(), allocatedPosition.clusterPosition,
-                  originalContent, recordVersion, recordType));
+              new OCreateRecordOperation(id, atomicOperation.getOperationUnitId(), allocatedPosition.clusterPosition, content,
+                  recordVersion, recordType));
 
           endAtomicOperation(false, null);
 
@@ -581,8 +579,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
 
           logComponentOperation(atomicOperation,
-              new OCreateRecordOperation(id, atomicOperation.getOperationUnitId(), allocatedPosition.clusterPosition,
-                  originalContent, recordVersion, recordType));
+              new OCreateRecordOperation(id, atomicOperation.getOperationUnitId(), allocatedPosition.clusterPosition, content,
+                  recordVersion, recordType));
 
           endAtomicOperation(false, null);
 
@@ -789,9 +787,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       byte[] prevRecordContent = Arrays
           .copyOfRange(prevFullRecord, prevFullContentPosition, prevFullContentPosition + prevRecordContentSize);
 
-      prevRecordContent = encryption.decrypt(prevRecordContent);
-      prevRecordContent = compression.uncompress(prevRecordContent);
-
       logComponentOperation(atomicOperation,
           new ODeleteRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, prevRecordContent,
               prevRecordVersion, prevRecordType));
@@ -873,9 +868,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       byte[] prevRecordContent = Arrays
           .copyOfRange(prevFullRecord, prevFullContentPosition, prevFullContentPosition + prevRecordContentSize);
 
-      prevRecordContent = encryption.decrypt(prevRecordContent);
-      prevRecordContent = compression.uncompress(prevRecordContent);
-
       logComponentOperation(atomicOperation,
           new ODeleteRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, prevRecordContent,
               prevRecordVersion, prevRecordType));
@@ -894,8 +886,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   @Override
   public void updateRecord(final long clusterPosition, byte[] content, final int recordVersion, final byte recordType)
       throws IOException {
-    byte[] originalContent = content;
-
     content = compression.compress(content);
     content = encryption.encrypt(content);
 
@@ -1153,12 +1143,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       byte[] prevRecordContent = Arrays
           .copyOfRange(prevFullRecord, prevFullContentPosition, prevFullContentPosition + prevRecordContentSize);
 
-      prevRecordContent = encryption.decrypt(prevRecordContent);
-      prevRecordContent = compression.uncompress(prevRecordContent);
-
       logComponentOperation(atomicOperation,
-          new OUpdateRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, originalContent, recordVersion,
-              recordType, prevRecordContent, prevRecordVersion, prevRecordType));
+          new OUpdateRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, content, recordVersion, recordType,
+              prevRecordContent, prevRecordVersion, prevRecordType));
 
       endAtomicOperation(false, null);
     } catch (RuntimeException e) {
@@ -1171,11 +1158,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   public void updateRecordRollback(final long clusterPosition, byte[] content, final int recordVersion, final byte recordType,
       OAtomicOperation atomicOperation) {
-    byte[] originalContent = content;
-
-    content = compression.compress(content);
-    content = encryption.encrypt(content);
-
     acquireExclusiveLock();
     try {
       final OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition, 1);
@@ -1423,12 +1405,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       byte[] prevRecordContent = Arrays
           .copyOfRange(prevFullRecord, prevFullContentPosition, prevFullContentPosition + prevRecordContentSize);
 
-      prevRecordContent = encryption.decrypt(prevRecordContent);
-      prevRecordContent = compression.uncompress(prevRecordContent);
-
       logComponentOperation(atomicOperation,
-          new OUpdateRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, originalContent, recordVersion,
-              recordType, prevRecordContent, prevRecordVersion, prevRecordType));
+          new OUpdateRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, content, recordVersion, recordType,
+              prevRecordContent, prevRecordVersion, prevRecordType));
 
     } catch (IOException e) {
       throw OException.wrapException(new OPaginatedClusterException("Error during record update", this), e);
@@ -1452,8 +1431,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         // NOT DELETED
         throw new OPaginatedClusterException("Record with rid " + new ORecordId(id, clusterPosition) + " was not deleted", this);
       }
-
-      final byte[] originalContent = content;
 
       content = compression.compress(content);
       content = encryption.encrypt(content);
@@ -1489,7 +1466,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
 
           logComponentOperation(atomicOperation,
-              new ORecycleRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, originalContent, recordVersion,
+              new ORecycleRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, content, recordVersion,
                   recordType));
 
           endAtomicOperation(false, null);
@@ -1570,7 +1547,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
 
           logComponentOperation(atomicOperation,
-              new ORecycleRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, originalContent, recordVersion,
+              new ORecycleRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, content, recordVersion,
                   recordType));
 
           endAtomicOperation(false, null);
@@ -1598,10 +1575,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       OAtomicOperation atomicOperation) {
     acquireExclusiveLock();
     try {
-      final byte[] originalContent = content;
-      content = compression.compress(content);
-      content = encryption.encrypt(content);
-
       int entryContentLength = getEntryContentLength(content.length);
 
       if (entryContentLength < OClusterPage.MAX_RECORD_SIZE) {
@@ -1633,7 +1606,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
 
           logComponentOperation(atomicOperation,
-              new ORecycleRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, originalContent, recordVersion,
+              new ORecycleRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, content, recordVersion,
                   recordType));
 
         } catch (IOException e) {
@@ -1713,7 +1686,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         addAtomicOperationMetadata(new ORecordId(id, clusterPosition), atomicOperation);
 
         logComponentOperation(atomicOperation,
-            new ORecycleRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, originalContent, recordVersion,
+            new ORecycleRecordOperation(atomicOperation.getOperationUnitId(), id, clusterPosition, content, recordVersion,
                 recordType));
 
       }

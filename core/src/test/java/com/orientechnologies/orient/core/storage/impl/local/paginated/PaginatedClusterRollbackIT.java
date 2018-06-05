@@ -36,7 +36,7 @@ public class PaginatedClusterRollbackIT {
   public void testAllocationRollback() throws Exception {
     final String dbName = "testAllocationRollback";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -63,7 +63,7 @@ public class PaginatedClusterRollbackIT {
   public void testAllocationRollbackCamelCase() throws Exception {
     final String dbName = "testAllocationRollbackCamelCase";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -90,7 +90,7 @@ public class PaginatedClusterRollbackIT {
   public void testCreateFromScratch() throws Exception {
     final String dbName = "testCreateFromScratch";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -132,7 +132,7 @@ public class PaginatedClusterRollbackIT {
   public void testCreateFromScratchCamelCase() throws Exception {
     final String dbName = "testCreateFromScratchCamelCase";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -174,7 +174,7 @@ public class PaginatedClusterRollbackIT {
   public void testUpdateRecord() throws Exception {
     final String dbName = "testUpdateRecord";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -222,7 +222,7 @@ public class PaginatedClusterRollbackIT {
   public void testUpdateRecordCamelCase() throws Exception {
     final String dbName = "testUpdateRecordCamelCase";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -270,7 +270,7 @@ public class PaginatedClusterRollbackIT {
   public void testDeleteRecord() throws Exception {
     final String dbName = "testDeleteRecord";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -311,7 +311,7 @@ public class PaginatedClusterRollbackIT {
   public void testDeleteRecordCamelCase() throws Exception {
     final String dbName = "testDeleteRecordCamelCase";
 
-    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, OrientDBConfig.defaultConfig())) {
+    try (OrientDB orientDB = new OrientDB("plocal:" + orientDirectory, getConfig())) {
       orientDB.create(dbName, ODatabaseType.PLOCAL);
 
       try (ODatabaseSession session = orientDB.open(dbName, "admin", "admin")) {
@@ -346,6 +346,10 @@ public class PaginatedClusterRollbackIT {
         Assert.assertNull(rawBuffer);
       }
     }
+  }
+
+  OrientDBConfig getConfig() {
+    return OrientDBConfig.defaultConfig();
   }
 
 }
