@@ -39,7 +39,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     sequenceLibrary = new OSequenceLibraryImpl();
     liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
     liveQueryOpsV2 = new OLiveQueryHookV2.OLiveQueryOps();
-    commandCache = new OCommandCacheSoftRefs(storage);
+    commandCache = new OCommandCacheSoftRefs(storage.getUnderlying());
     statementCache = new OStatementCache(
         storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
 
@@ -87,7 +87,6 @@ public class OSharedContextEmbedded extends OSharedContext {
     functionLibrary.close();
     scheduler.close();
     sequenceLibrary.close();
-    commandCache.clear();
     commandCache.shutdown();
     statementCache.clear();
     executionPlanCache.invalidate();
