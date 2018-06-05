@@ -36,11 +36,11 @@ import org.testng.annotations.Test;
  */
 @Test
 public class AutoShardingTest extends DocumentDBBaseTest {
-  private static final int               ITERATIONS   = 500;
-  private OClass                         cls;
-  private OIndex<?>                      idx;
-  private final OMurmurHash3HashFunction hashFunction = new OMurmurHash3HashFunction();
-  private int[]                          clusterIds;
+  private static final int                      ITERATIONS   = 500;
+  private              OClass                   cls;
+  private              OIndex<?>                idx;
+  private final        OMurmurHash3HashFunction hashFunction = new OMurmurHash3HashFunction(new OIntegerSerializer());
+  private              int[]                    clusterIds;
 
   @Parameters(value = "url")
   public AutoShardingTest(@Optional String url) {
@@ -50,8 +50,6 @@ public class AutoShardingTest extends DocumentDBBaseTest {
   @BeforeMethod
   public void beforeMethod() throws Exception {
     super.beforeMethod();
-
-    hashFunction.setValueSerializer(new OIntegerSerializer());
 
     if (database.getMetadata().getSchema().existsClass("AutoShardingTest"))
       database.getMetadata().getSchema().dropClass("AutoShardingTest");

@@ -22,6 +22,7 @@ import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.query.OLuceneQueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -85,7 +86,7 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
       OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata) {
+      ODocument metadata, OEncryption encryption) {
 
   }
 
@@ -108,10 +109,10 @@ public class OLuceneSpatialIndexEngineDelegator implements OLuceneIndexEngine, O
 
   @Override
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties) {
+      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
     if (delegate != null)
-      delegate
-          .load(indexName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullPointerSupport, keySize, engineProperties);
+      delegate.load(indexName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullPointerSupport, keySize, engineProperties,
+          encryption);
 
   }
 

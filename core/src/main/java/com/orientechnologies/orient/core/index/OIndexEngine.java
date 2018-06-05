@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -40,14 +41,14 @@ public interface OIndexEngine {
 
   void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
       OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata);
+      ODocument metadata, OEncryption encryption);
 
   void delete();
 
   void deleteWithoutLoad(String indexName);
 
   void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties);
+      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties, OEncryption encryption);
 
   boolean contains(Object key);
 

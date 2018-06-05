@@ -7,6 +7,8 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -15,14 +17,10 @@ import org.junit.Before;
 
 import java.io.File;
 
-/**
- * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
- * @since 19.02.13
- */
-public class OLocalHashTableTestIT extends OLocalHashTableBase {
+public class OLocalHashTableEncryptionTestIT extends OLocalHashTableBase {
   private OrientDB orientDB;
 
-  private static final String DB_NAME = "localHashTableTest";
+  private static final String DB_NAME = "localHashTableEncryptionTest";
 
   @Before
   public void before() {
@@ -31,18 +29,20 @@ public class OLocalHashTableTestIT extends OLocalHashTableBase {
 
     OFileUtils.deleteRecursively(dbDirectory);
     orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
-
     orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
-    final ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin");
 
-    OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>(OIntegerSerializer.INSTANCE);
+    ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin");
 
-    localHashTable = new OLocalHashTable<>("localHashTableTest", ".imc", ".tsc", ".obf", ".nbh",
+    final OEncryption encryption = OEncryptionFactory.INSTANCE.getEncryption("aes/gcm", "T1JJRU5UREJfSVNfQ09PTA==");
+
+    OSHA256HashFunction<Integer> SHA256HashFunction = new OSHA256HashFunction<>(OIntegerSerializer.INSTANCE);
+
+    localHashTable = new OLocalHashTable<>("localHashTableEncryptionTest", ".imc", ".tsc", ".obf", ".nbh",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
 
     localHashTable
-        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null,
-            murmurHash3HashFunction, true);
+        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null,
+            encryption, SHA256HashFunction, true);
 
   }
 
@@ -51,5 +51,4 @@ public class OLocalHashTableTestIT extends OLocalHashTableBase {
     orientDB.drop(DB_NAME);
     orientDB.close();
   }
-
 }

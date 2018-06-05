@@ -40,9 +40,8 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
@@ -54,9 +53,8 @@ import java.util.Map.Entry;
 
 /**
  * Document Database wrapper class to use from scripts.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings("unchecked")
 
@@ -79,7 +77,9 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public OIdentifiable[] query(final String iText, final Object... iParameters) {
-    return query(new OSQLSynchQuery<Object>(iText), iParameters);
+    try (OResultSet rs = database.query(iText, iParameters)) {
+      return rs.stream().map(x -> x.toElement()).toArray(size -> new OIdentifiable[size]);
+    }
   }
 
   public OIdentifiable[] query(final OSQLQuery iQuery, final Object... iParameters) {
@@ -108,12 +108,9 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public Object command(final String iText, final Object... iParameters) {
-    Object res = database.command(new OCommandSQL(iText)).execute(convertParameters(iParameters));
-    if (res instanceof List) {
-      final List<OIdentifiable> list = (List<OIdentifiable>) res;
-      return list.toArray(new OIdentifiable[list.size()]);
+    try (OResultSet rs = database.command(iText, iParameters)) {
+      return rs.stream().map(x -> x.toElement()).toArray(size -> new OIdentifiable[size]);
     }
-    return res;
   }
 
   public OIndex<?> getIndex(final String iName) {

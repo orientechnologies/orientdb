@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -51,7 +50,14 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -990,12 +996,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   protected void onIndexEngineChange(final int indexId) {
     while (true)
       try {
-        storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Object>() {
-          @Override
-          public Object callEngine(OIndexEngine engine) {
-            engine.init(getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
-            return null;
-          }
+        storage.callIndexEngine(false, false, indexId, engine -> {
+          engine.init(getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
+          return null;
         });
         break;
       } catch (OInvalidIndexEngineIdException ignore) {
