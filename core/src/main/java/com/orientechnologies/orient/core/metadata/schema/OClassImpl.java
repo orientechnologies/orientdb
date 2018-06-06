@@ -1454,7 +1454,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     if (!hasClusterId(clusterId))
       return;
 
-    database.command("alter cluster `" + oldName + "` NAME \"" + newName + "\"");
+    database.command("alter cluster `" + oldName + "` NAME \"" + newName + "\"").close();
   }
 
   protected void addPolymorphicClusterId(int clusterId) {

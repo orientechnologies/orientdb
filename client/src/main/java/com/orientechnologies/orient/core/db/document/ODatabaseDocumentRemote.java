@@ -501,12 +501,13 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   @Override
   public int addBlobCluster(final String iClusterName, final Object... iParameters) {
     int id;
-    OResultSet resultSet = command("create blob cluster :1", iClusterName);
-    assert resultSet.hasNext();
-    OResult result = resultSet.next();
-    assert result.getProperty("value") != null;
-    id = result.getProperty("value");
-    return id;
+    try (OResultSet resultSet = command("create blob cluster :1", iClusterName)) {
+      assert resultSet.hasNext();
+      OResult result = resultSet.next();
+      assert result.getProperty("value") != null;
+      id = result.getProperty("value");
+      return id;
+    }
   }
 
   @Override

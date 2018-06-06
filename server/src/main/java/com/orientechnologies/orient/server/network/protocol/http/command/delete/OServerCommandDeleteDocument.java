@@ -70,10 +70,10 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
       if (cls != null) {
         if (cls.isSubClassOf("V"))
           // DELETE IT AS VERTEX
-          db.command("DELETE VERTEX ?", recordId);
+          db.command("DELETE VERTEX ?", recordId).close();
         else if (cls.isSubClassOf("E"))
           // DELETE IT AS EDGE
-          db.command("DELETE EDGE ?", recordId);
+          db.command("DELETE EDGE ?", recordId).close();
         else {
           doc.reload(null,true);
           doc.delete();

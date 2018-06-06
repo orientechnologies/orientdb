@@ -164,7 +164,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
   private void dropRelatedIndexes(final List<OIndex<?>> indexes) {
     final ODatabaseDocument database = getDatabase();
     for (final OIndex<?> index : indexes) {
-      database.command("DROP INDEX " + index.getName());
+      database.command("DROP INDEX " + index.getName()).close();
     }
   }
 

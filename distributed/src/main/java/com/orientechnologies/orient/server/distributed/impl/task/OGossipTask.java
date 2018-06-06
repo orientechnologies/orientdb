@@ -141,6 +141,11 @@ public class OGossipTask extends OAbstractRemoteTask {
   }
 
   @Override
+  public boolean isNodeOnlineRequired() {
+    return false;
+  }
+
+  @Override
   public String toString() {
     return getName() + " timestamp: " + timestamp + " lockManagerServer: " + lockManagerServer;
   }
