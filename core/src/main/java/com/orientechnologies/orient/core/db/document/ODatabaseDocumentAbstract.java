@@ -2701,7 +2701,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   public synchronized void queryStarted(String id, OResultSet rs) {
     if (this.activeQueries.size() > 1 && this.activeQueries.size() % 10 == 0) {
-      StringBuilder msg = new StringBuilder();
+        StringBuilder msg = new StringBuilder();
       msg.append("This database instance has ");
       msg.append(activeQueries.size());
       msg.append(" open command/query result sets, please make sure you close them with OResultSet.close()");

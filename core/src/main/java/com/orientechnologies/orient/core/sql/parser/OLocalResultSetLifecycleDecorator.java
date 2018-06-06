@@ -19,9 +19,9 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
 
   private static final AtomicLong counter = new AtomicLong(0);
 
-  private OResultSet entity;
+  private OResultSet                    entity;
   private List<OQueryLifecycleListener> lifecycleListeners = new ArrayList<>();
-  private String queryId;
+  private String                        queryId;
 
   private boolean hasNextPage;
 
@@ -41,15 +41,19 @@ public class OLocalResultSetLifecycleDecorator implements OResultSet {
 
   @Override
   public boolean hasNext() {
-    return entity.hasNext();
+    boolean hasNext = entity.hasNext();
+    if (!hasNext) {
+      close();
+    }
+    return hasNext;
   }
 
   @Override
   public OResult next() {
-    OResult result = entity.next();
     if (!hasNext()) {
-      close();
+      throw new IllegalStateException();
     }
+    OResult result = entity.next();
     return result;
   }
 
