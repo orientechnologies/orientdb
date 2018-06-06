@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-gremlin-parent</artifactId>
-        <version>3.0.2</version>
+        <version>3.0.3-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
