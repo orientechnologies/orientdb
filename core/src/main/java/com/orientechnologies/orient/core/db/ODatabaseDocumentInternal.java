@@ -223,4 +223,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   boolean isClusterEdge(int cluster);
 
+  default OTransaction swapTx(OTransaction newTx) {
+    throw new UnsupportedOperationException();
+  }
+
 }

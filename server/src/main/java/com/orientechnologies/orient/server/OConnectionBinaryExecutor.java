@@ -195,6 +195,7 @@ import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTre
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
@@ -644,80 +645,86 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeCommand(OCommandRequest request) {
+    OTransaction oldTx = connection.getDatabase().getTransaction();
+    try {
+      connection.getDatabase().swapTx(new OTransactionNoTx(connection.getDatabase()));
 
-    final boolean live = request.isLive();
-    final boolean asynch = request.isAsynch();
+      final boolean live = request.isLive();
+      final boolean asynch = request.isAsynch();
 
-    OCommandRequestText command = request.getQuery();
+      OCommandRequestText command = request.getQuery();
 
-    final Map<Object, Object> params = command.getParameters();
+      final Map<Object, Object> params = command.getParameters();
 
-    if (asynch && command instanceof OSQLSynchQuery) {
-      // CONVERT IT IN ASYNCHRONOUS QUERY
-      final OSQLAsynchQuery asynchQuery = new OSQLAsynchQuery(command.getText());
-      asynchQuery.setFetchPlan(command.getFetchPlan());
-      asynchQuery.setLimit(command.getLimit());
-      asynchQuery.setTimeout(command.getTimeoutTime(), command.getTimeoutStrategy());
-      asynchQuery.setUseCache(((OSQLSynchQuery) command).isUseCache());
-      command = asynchQuery;
-    }
+      if (asynch && command instanceof OSQLSynchQuery) {
+        // CONVERT IT IN ASYNCHRONOUS QUERY
+        final OSQLAsynchQuery asynchQuery = new OSQLAsynchQuery(command.getText());
+        asynchQuery.setFetchPlan(command.getFetchPlan());
+        asynchQuery.setLimit(command.getLimit());
+        asynchQuery.setTimeout(command.getTimeoutTime(), command.getTimeoutStrategy());
+        asynchQuery.setUseCache(((OSQLSynchQuery) command).isUseCache());
+        command = asynchQuery;
+      }
 
-    connection.getData().commandDetail = command.getText();
+      connection.getData().commandDetail = command.getText();
 
-    connection.getData().command = command;
-    OAbstractCommandResultListener listener = null;
-    OLiveCommandResultListener liveListener = null;
+      connection.getData().command = command;
+      OAbstractCommandResultListener listener = null;
+      OLiveCommandResultListener liveListener = null;
 
-    OCommandResultListener cmdResultListener = command.getResultListener();
+      OCommandResultListener cmdResultListener = command.getResultListener();
 
-    if (live) {
-      liveListener = new OLiveCommandResultListener(server, connection, cmdResultListener);
-      listener = new OSyncCommandResultListener(null);
-      command.setResultListener(liveListener);
-    } else if (asynch) {
-      // IF COMMAND CACHE IS ENABLED, RESULT MUST BE COLLECTED
-      final OCommandCache cmdCache = connection.getDatabase().getMetadata().getCommandCache();
-      if (cmdCache.isEnabled())
-        // CREATE E COLLECTOR OF RESULT IN RAM TO CACHE THE RESULT
-        cmdResultListener = new OCommandCacheRemoteResultListener(cmdResultListener, cmdCache);
+      if (live) {
+        liveListener = new OLiveCommandResultListener(server, connection, cmdResultListener);
+        listener = new OSyncCommandResultListener(null);
+        command.setResultListener(liveListener);
+      } else if (asynch) {
+        // IF COMMAND CACHE IS ENABLED, RESULT MUST BE COLLECTED
+        final OCommandCache cmdCache = connection.getDatabase().getMetadata().getCommandCache();
+        if (cmdCache.isEnabled())
+          // CREATE E COLLECTOR OF RESULT IN RAM TO CACHE THE RESULT
+          cmdResultListener = new OCommandCacheRemoteResultListener(cmdResultListener, cmdCache);
 
-      listener = new OAsyncCommandResultListener(connection, cmdResultListener);
-      command.setResultListener(listener);
-    } else {
-      listener = new OSyncCommandResultListener(null);
-    }
+        listener = new OAsyncCommandResultListener(connection, cmdResultListener);
+        command.setResultListener(listener);
+      } else {
+        listener = new OSyncCommandResultListener(null);
+      }
 
-    final long serverTimeout = connection.getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
+      final long serverTimeout = connection.getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
 
-    if (serverTimeout > 0 && command.getTimeoutTime() > serverTimeout)
-      // FORCE THE SERVER'S TIMEOUT
-      command.setTimeout(serverTimeout, command.getTimeoutStrategy());
+      if (serverTimeout > 0 && command.getTimeoutTime() > serverTimeout)
+        // FORCE THE SERVER'S TIMEOUT
+        command.setTimeout(serverTimeout, command.getTimeoutStrategy());
 
-    // REQUEST CAN'T MODIFY THE RESULT, SO IT'S CACHEABLE
-    command.setCacheableResult(true);
+      // REQUEST CAN'T MODIFY THE RESULT, SO IT'S CACHEABLE
+      command.setCacheableResult(true);
 
-    // ASSIGNED THE PARSED FETCHPLAN
-    final OCommandRequestText commandRequest = (OCommandRequestText) connection.getDatabase().command(command);
-    listener.setFetchPlan(commandRequest.getFetchPlan());
-    OCommandResponse response;
-    if (asynch) {
-      // In case of async it execute the request during the write of the response
-      response = new OCommandResponse(null, listener, false, asynch, connection.getDatabase(), command, params);
-    } else {
-      // SYNCHRONOUS
-      final Object result;
-      if (params == null)
-        result = commandRequest.execute();
-      else
-        result = commandRequest.execute(params);
-
-      // FETCHPLAN HAS TO BE ASSIGNED AGAIN, because it can be changed by SQL statement
+      // ASSIGNED THE PARSED FETCHPLAN
+      final OCommandRequestText commandRequest = (OCommandRequestText) connection.getDatabase().command(command);
       listener.setFetchPlan(commandRequest.getFetchPlan());
-      boolean isRecordResultSet = true;
-      isRecordResultSet = command.isRecordResultSet();
-      response = new OCommandResponse(result, listener, isRecordResultSet, asynch, connection.getDatabase(), command, params);
+      OCommandResponse response;
+      if (asynch) {
+        // In case of async it execute the request during the write of the response
+        response = new OCommandResponse(null, listener, false, asynch, connection.getDatabase(), command, params);
+      } else {
+        // SYNCHRONOUS
+        final Object result;
+        if (params == null)
+          result = commandRequest.execute();
+        else
+          result = commandRequest.execute(params);
+
+        // FETCHPLAN HAS TO BE ASSIGNED AGAIN, because it can be changed by SQL statement
+        listener.setFetchPlan(commandRequest.getFetchPlan());
+        boolean isRecordResultSet = true;
+        isRecordResultSet = command.isRecordResultSet();
+        response = new OCommandResponse(result, listener, isRecordResultSet, asynch, connection.getDatabase(), command, params);
+      }
+      return response;
+    } finally {
+      connection.getDatabase().swapTx(oldTx);
     }
-    return response;
   }
 
   @Override
