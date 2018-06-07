@@ -432,7 +432,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     workerThreads.get(partition).processRequest(request);
   }
-  
+
   @Override
   public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Collection<String> iClusterNames,
       Collection<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
