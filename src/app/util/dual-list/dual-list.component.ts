@@ -143,13 +143,13 @@ export class DualListComponent implements DoCheck, OnChanges {
     this.available.pick.length = 0;
 
     if (this.source !== undefined) {
-      this.sourceDiffer = this.differs.find(this.source).create(this.cdr);
+      this.sourceDiffer = this.differs.find(this.source).create(null);
     }
   }
 
   updatedDestination() {
     if (this.destination !== undefined) {
-      this.destinationDiffer = this.differs.find(this.destination).create(this.cdr);
+      this.destinationDiffer = this.differs.find(this.destination).create(null);
     }
   }
 
