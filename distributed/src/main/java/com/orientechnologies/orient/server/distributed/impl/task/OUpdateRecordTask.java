@@ -158,42 +158,6 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public ORemoteTask getFixTask(final ODistributedRequest iRequest, ORemoteTask iOriginalTask, final Object iBadResponse,
-      final Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
-
-    if (iGoodResponse instanceof Integer) {
-      // JUST VERSION
-      final int versionCopy = ORecordVersionHelper.setRollbackMode((Integer) iGoodResponse);
-
-      return ((OFixUpdateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerName(executorNodeName)
-          .createTask(OFixUpdateRecordTask.FACTORYID)).init(rid, content, versionCopy, recordType);
-
-    } else if (iGoodResponse instanceof ORecord) {
-      // RECORD
-      final ORecord goodRecord = (ORecord) iGoodResponse;
-      final int versionCopy = ORecordVersionHelper.setRollbackMode(goodRecord.getVersion());
-
-      return ((OFixUpdateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerName(executorNodeName)
-          .createTask(OFixUpdateRecordTask.FACTORYID)).init(rid, goodRecord.toStream(), versionCopy, recordType);
-    }
-
-    return null;
-  }
-
-  @Override
-  public ORemoteTask getUndoTask(ODistributedServerManager dManager, final ODistributedRequestId reqId, List<String> servers) {
-    if (previousRecord == null)
-      return null;
-
-    final int versionCopy = ORecordVersionHelper.setRollbackMode(previousRecordVersion);
-
-    final OUpdateRecordTask task = ((OFixUpdateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(servers)
-        .createTask(OFixUpdateRecordTask.FACTORYID)).init(rid, previousRecordContent, versionCopy, recordType);
-    task.setLockRecords(false);
-    return task;
-  }
-
-  @Override
   public void toStream(final DataOutput out) throws IOException {
     super.toStream(out);
     out.writeInt(content.length);

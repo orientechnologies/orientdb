@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.junit.Assert; import org.junit.Test;
 
 import java.io.IOException;
@@ -18,7 +19,7 @@ public class ClusterDebugInfoTest {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:ClusterDebugInfoTest");
     db.create();
     try {
-      OStorage storage = db.getStorage();
+      OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
       int defaultId = storage.getDefaultClusterId();
       OPaginatedCluster cluster = (OPaginatedCluster) storage.getClusterById(defaultId);
       int size = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger();
@@ -48,7 +49,7 @@ public class ClusterDebugInfoTest {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:ClusterDebugInfoTest");
     db.create();
     try {
-      OStorage storage = db.getStorage();
+      OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
       int defaultId = storage.getDefaultClusterId();
       OPaginatedCluster cluster = (OPaginatedCluster) storage.getClusterById(defaultId);
       int size = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger();
@@ -84,7 +85,7 @@ public class ClusterDebugInfoTest {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:ClusterDebugInfoTest");
     db.create();
     try {
-      OStorage storage = db.getStorage();
+      OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) db.getStorage();
       int defaultId = storage.getDefaultClusterId();
       OPaginatedCluster cluster = (OPaginatedCluster) storage.getClusterById(defaultId);
       int size = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger();

@@ -67,14 +67,4 @@ public class ORepairRecordsTask extends OTxTask {
     return FACTORYID;
   }
 
-  @Override
-  public ORemoteTask getUndoTask(ODistributedServerManager dManager, ODistributedRequestId reqId, List<String> servers) {
-    return null;
-  }
-
-  @Override
-  public ORemoteTask getFixTask(ODistributedRequest iRequest, ORemoteTask iOriginalTask, Object iBadResponse, Object iGoodResponse,
-      String executorNodeName, ODistributedServerManager dManager) {
-    return null;
-  }
 }

@@ -133,7 +133,7 @@ public class ORemoteServerChannel {
     channel = new OChannelBinarySynchClient(remoteHost, remotePort, null, contextConfig,
         OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
 
-    networkOperation(OChannelBinaryProtocol.DISTRIBUTED_CONNECT, (OStorageRemoteOperation<Void>) () -> {
+    networkOperation(OChannelBinaryProtocol.DISTRIBUTED_CONNECT, () -> {
 
       ODistributedConnectRequest request = new ODistributedConnectRequest(protocolVersion, userName, userPassword);
       request.write(channel, null);
