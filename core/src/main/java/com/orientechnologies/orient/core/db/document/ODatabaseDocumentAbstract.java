@@ -84,26 +84,26 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
-  protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
-  protected       ORecordSerializer                           serializer;
-  protected       String                                      url;
-  protected       STATUS                                      status;
-  protected       OIntent                                     currentIntent;
-  protected       ODatabaseInternal<?>                        databaseOwner;
-  protected       OMetadataDefault                            metadata;
-  protected       OImmutableUser                              user;
+  protected final Map<String, Object> properties = new HashMap<String, Object>();
+  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
+  protected ORecordSerializer    serializer;
+  protected String               url;
+  protected STATUS               status;
+  protected OIntent              currentIntent;
+  protected ODatabaseInternal<?> databaseOwner;
+  protected OMetadataDefault     metadata;
+  protected OImmutableUser       user;
   protected final byte                                        recordType    = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
-  protected       OLocalRecordCache                           localCache;
-  protected       OCurrentStorageComponentsFactory            componentsFactory;
-  protected       boolean                                     initialized   = false;
-  protected       OTransaction                                currentTx;
+  protected OLocalRecordCache                localCache;
+  protected OCurrentStorageComponentsFactory componentsFactory;
+  protected boolean initialized = false;
+  protected OTransaction currentTx;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected       OSharedContext  sharedContext;
+  protected OSharedContext sharedContext;
 
   private boolean prefetchRecords;
 
@@ -1206,6 +1206,12 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public ODatabaseDocument begin(final OTransaction iTx) {
     begin();
     return this;
+  }
+
+  public OTransaction swapTx(OTransaction newTx) {
+    OTransaction old = getTransaction();
+    currentTx = newTx;
+    return old;
   }
 
   public void rawBegin(final OTransaction iTx) {
@@ -2701,7 +2707,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   public synchronized void queryStarted(String id, OResultSet rs) {
     if (this.activeQueries.size() > 1 && this.activeQueries.size() % 10 == 0) {
-        StringBuilder msg = new StringBuilder();
+      StringBuilder msg = new StringBuilder();
       msg.append("This database instance has ");
       msg.append(activeQueries.size());
       msg.append(" open command/query result sets, please make sure you close them with OResultSet.close()");
