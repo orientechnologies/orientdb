@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class OCreateUserStatement extends OSimpleExecStatement {
 
-  private static final String USER_FIELD_NAME     = "name";
+  protected static final String USER_FIELD_NAME     = "name";
   private static final String USER_FIELD_PASSWORD = "password";
   private static final String USER_FIELD_STATUS   = "status";
   private static final String USER_FIELD_ROLES    = "roles";
