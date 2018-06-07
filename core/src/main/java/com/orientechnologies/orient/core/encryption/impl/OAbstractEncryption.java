@@ -9,11 +9,13 @@ import javax.crypto.Cipher;
 /***
  * (https://docs.oracle.com/javase/7/docs/technotes/guides/security/SunProviders.html). Issue
  * https://github.com/orientechnologies/orientdb/issues/89.
- * 
+ *
  * @author giastfader
  *
  */
 public abstract class OAbstractEncryption implements OEncryption {
+  private String option;
+
   /***
    *
    * @param mode
@@ -43,7 +45,9 @@ public abstract class OAbstractEncryption implements OEncryption {
     } catch (Exception e) {
       throw OException.wrapException(new OInvalidStorageEncryptionKeyException("Cannot encrypt content"), e);
     }
-  };
+  }
+
+  ;
 
   @Override
   public byte[] decrypt(final byte[] content, final int offset, final int length) {
@@ -52,5 +56,18 @@ public abstract class OAbstractEncryption implements OEncryption {
     } catch (Exception e) {
       throw OException.wrapException(new OInvalidStorageEncryptionKeyException("Cannot decrypt content"), e);
     }
-  };
+  }
+
+  ;
+
+  @Override
+  public OEncryption configure(String iOptions) {
+    this.option = iOptions;
+    return this;
+  }
+
+  @Override
+  public String getOption() {
+    return option;
+  }
 }

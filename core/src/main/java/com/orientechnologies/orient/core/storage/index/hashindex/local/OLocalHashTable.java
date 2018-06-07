@@ -178,7 +178,11 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         }
 
         logComponentOperation(atomicOperation,
-            new OCreateHashTableOperation(atomicOperation.getOperationUnitId(), getName(), fileId, directory.getFileId()));
+            new OCreateHashTableOperation(atomicOperation.getOperationUnitId(), getName(), metadataConfigurationFileExtension,
+                treeStateFileExtension, getExtension(), nullBucketFileExtension, fileId, directory.getFileId(),
+                keySerializer.getId(), valueSerializer.getId(), nullKeyIsSupported, keyTypes,
+                encryption != null ? encryption.name() : null, encryption != null ? encryption.getOption() : null));
+
         endAtomicOperation(false, null);
       } catch (IOException e) {
         endAtomicOperation(true, e);
@@ -187,6 +191,60 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         endAtomicOperation(true, e);
         throw OException.wrapException(new OStorageException("Error during local hash table creation"), e);
       }
+    } catch (IOException e) {
+      throw OException.wrapException(new OIndexException("Error during local hash table creation"), e);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public void createRestore(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OEncryption encryption,
+      boolean nullKeyIsSupported, OType[] keyTypes, OHashFunction<K> hashFunction, OAtomicOperation atomicOperation) {
+    acquireExclusiveLock();
+    try {
+      this.encryption = encryption;
+
+      if (keyTypes != null)
+        this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
+      else
+        this.keyTypes = null;
+
+      this.keyHashFunction = hashFunction;
+      this.comparator = new OHashTable.KeyHashCodeComparator<>(this.keyHashFunction, this.keyTypes);
+
+      this.nullKeyIsSupported = nullKeyIsSupported;
+
+      this.directory = new OHashTableDirectory(treeStateFileExtension, getName(), getFullName(), storage);
+
+      final String metadataFile = getName() + metadataConfigurationFileExtension;
+      fileStateId = addFileOnRestore(metadataFile);
+
+      directory.createOnRestore(atomicOperation);
+
+      final OCacheEntry hashStateEntry = addPage(fileStateId);
+      pinPage(hashStateEntry);
+
+      try {
+        @SuppressWarnings("unused")
+        OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(hashStateEntry, true);
+
+        hashStateEntryIndex = hashStateEntry.getPageIndex();
+      } finally {
+        releasePageFromWrite(hashStateEntry, atomicOperation);
+      }
+
+      final String fileName = getFullName();
+      fileId = addFileOnRestore(fileName);
+
+      this.keySerializer = keySerializer;
+      this.valueSerializer = valueSerializer;
+
+      initHashTreeState(atomicOperation);
+
+      if (nullKeyIsSupported) {
+        nullBucketFileId = addFileOnRestore(getName() + nullBucketFileExtension);
+      }
+
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during local hash table creation"), e);
     } finally {
@@ -405,6 +463,89 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     } catch (Exception e) {
       rollback(e);
       throw OException.wrapException(new OStorageException("Error during index removal"), e);
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
+  public void removeRestore(byte[] rawKey, OAtomicOperation atomicOperation) {
+    final K key;
+    final byte[] serializedKey;
+
+    if (rawKey != null) {
+      if (encryption == null) {
+        serializedKey = rawKey;
+      } else {
+        serializedKey = encryption.decrypt(rawKey, OIntegerSerializer.INT_SIZE, rawKey.length - OIntegerSerializer.INT_SIZE);
+      }
+
+      key = keySerializer.deserializeNativeObject(serializedKey, 0);
+    } else {
+      key = null;
+      serializedKey = null;
+    }
+
+    acquireExclusiveLock();
+    try {
+      int sizeDiff = 0;
+      if (key != null) {
+        final long hashCode = keyHashFunction.hashCode(serializedKey);
+
+        final OHashTable.BucketPath nodePath = getBucket(hashCode);
+        final long bucketPointer = directory.getNodePointer(nodePath.nodeIndex, nodePath.itemIndex + nodePath.hashMapOffset);
+
+        final long pageIndex = getPageIndex(bucketPointer);
+        final boolean found;
+
+        final OCacheEntry cacheEntry = loadPageForWrite(fileId, pageIndex, false);
+        try {
+          final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
+          final int positionIndex = bucket.getIndex(hashCode, key);
+          found = positionIndex >= 0;
+
+          if (found) {
+            bucket.deleteEntry(positionIndex);
+            sizeDiff--;
+          }
+        } finally {
+          releasePageFromWrite(cacheEntry, atomicOperation);
+        }
+
+        if (found) {
+          if (nodePath.parent != null) {
+            final int hashMapSize = 1 << nodePath.nodeLocalDepth;
+
+            final boolean allMapsContainSameBucket = checkAllMapsContainSameBucket(directory.getNode(nodePath.nodeIndex),
+                hashMapSize);
+            if (allMapsContainSameBucket) {
+              mergeNodeToParent(nodePath, atomicOperation);
+            }
+          }
+
+          changeSize(sizeDiff, atomicOperation);
+        }
+      } else {
+        if (getFilledUpTo(nullBucketFileId) == 0) {
+          return;
+        }
+
+        OCacheEntry cacheEntry = loadPageForWrite(nullBucketFileId, 0, false);
+        try {
+          final ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, false);
+
+          final byte[] oldRawValue = nullBucket.getRawValue();
+          if (oldRawValue != null) {
+            nullBucket.removeValue();
+            sizeDiff--;
+          }
+        } finally {
+          releasePageFromWrite(cacheEntry, atomicOperation);
+        }
+
+        changeSize(sizeDiff, atomicOperation);
+      }
+    } catch (IOException e) {
+      throw OException.wrapException(new OIndexException("Error during index removal"), e);
     } finally {
       releaseExclusiveLock();
     }
@@ -1287,7 +1428,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         key = keySerializer.deserializeNativeObject(serializedKey, 0);
       }
 
-      doRawPut(key, rawKey, hashCode, rawValue, atomicOperation);
+      doPutRollback(key, rawKey, hashCode, rawValue, atomicOperation);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexException("Error during index update"), e);
     } finally {
@@ -1295,8 +1436,177 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     }
   }
 
+  public void putRestore(byte[] rawKey, byte[] rawValue, OAtomicOperation atomicOperation) {
+    acquireExclusiveLock();
+    try {
+      K key;
+      long hashCode;
+
+      if (rawKey != null) {
+        if (encryption == null) {
+          key = keySerializer.deserializeNativeObject(rawKey, 0);
+          hashCode = keyHashFunction.hashCode(rawKey);
+        } else {
+          final byte[] serializedKey = encryption
+              .decrypt(rawKey, OIntegerSerializer.INT_SIZE, rawKey.length - OIntegerSerializer.INT_SIZE);
+
+          hashCode = keyHashFunction.hashCode(serializedKey);
+          key = keySerializer.deserializeNativeObject(serializedKey, 0);
+        }
+      } else {
+        key = null;
+        hashCode = 0;
+      }
+
+      doPutRestore(key, rawKey, rawValue, hashCode, atomicOperation);
+    } catch (IOException e) {
+      throw OException.wrapException(new OIndexException("Error during index update"), e);
+    } finally {
+      releaseExclusiveLock();
+    }
+
+  }
+
+  private void doPutRestore(K key, byte[] rawKey, byte[] rawValue, long hashCode, OAtomicOperation atomicOperation)
+      throws IOException {
+    int sizeDiff = 0;
+
+    if (key == null) {
+      boolean needsNew = getFilledUpTo(nullBucketFileId) == 0;
+      OCacheEntry cacheEntry = null;
+      try {
+        if (!needsNew) {
+          cacheEntry = loadPageForWrite(nullBucketFileId, 0, false);
+
+          ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, false);
+
+          final byte[] oldRawValue = nullBucket.getRawValue();
+          if (oldRawValue != null) {
+            sizeDiff--;
+          }
+
+          nullBucket.setValue(rawValue);
+          sizeDiff++;
+        } else {
+          cacheEntry = addPage(nullBucketFileId);
+          ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, false);
+
+          nullBucket.setValue(rawValue);
+          sizeDiff++;
+        }
+      } finally {
+        assert cacheEntry != null;
+        releasePageFromWrite(cacheEntry, atomicOperation);
+      }
+
+      changeSize(sizeDiff, atomicOperation);
+    } else {
+      final OHashTable.BucketPath bucketPath = getBucket(hashCode);
+      final long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
+      if (bucketPointer == 0) {
+        throw new IllegalStateException("In this version of hash table buckets are added through split only.");
+      }
+
+      final long pageIndex = getPageIndex(bucketPointer);
+
+      final OCacheEntry cacheEntry = loadPageForWrite(fileId, pageIndex, false);
+      try {
+        final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
+        final int index = bucket.getIndex(hashCode, key);
+
+        final byte[] oldRawValue;
+        if (index > -1) {
+          oldRawValue = bucket.getRawValue(index);
+        } else {
+          oldRawValue = null;
+        }
+
+        if (index > -1) {
+          if (oldRawValue != null && oldRawValue.length == rawValue.length) {
+            bucket.updateEntry(index, rawValue);
+
+            changeSize(sizeDiff, atomicOperation);
+            return;
+          }
+
+          bucket.deleteEntry(index);
+          sizeDiff--;
+        }
+
+        final int insertionIndex = bucket.entryInsertionIndex(hashCode, key, rawKey.length, rawValue.length);
+        if (insertionIndex >= 0) {
+          bucket.insertEntry(hashCode, rawKey, rawValue, insertionIndex);
+          sizeDiff++;
+
+          changeSize(sizeDiff, atomicOperation);
+          return;
+        }
+
+        final OHashTable.BucketSplitResult splitResult = splitBucket(bucket, pageIndex, atomicOperation);
+
+        final long updatedBucketPointer = splitResult.updatedBucketPointer;
+        final long newBucketPointer = splitResult.newBucketPointer;
+        final int bucketDepth = splitResult.newDepth;
+
+        if (bucketDepth <= bucketPath.nodeGlobalDepth) {
+          updateNodeAfterBucketSplit(bucketPath, bucketDepth, newBucketPointer, updatedBucketPointer, atomicOperation);
+        } else {
+          if (bucketPath.nodeLocalDepth < MAX_LEVEL_DEPTH) {
+            final OHashTable.NodeSplitResult nodeSplitResult = splitNode(bucketPath, atomicOperation);
+
+            assert !(nodeSplitResult.allLeftHashMapsEqual && nodeSplitResult.allRightHashMapsEqual);
+
+            final long[] newNode = nodeSplitResult.newNode;
+
+            final int nodeLocalDepth = bucketPath.nodeLocalDepth + 1;
+            final int hashMapSize = 1 << nodeLocalDepth;
+
+            assert nodeSplitResult.allRightHashMapsEqual == checkAllMapsContainSameBucket(newNode, hashMapSize);
+
+            int newNodeIndex = -1;
+            if (!nodeSplitResult.allRightHashMapsEqual || bucketPath.itemIndex >= MAX_LEVEL_SIZE / 2)
+              newNodeIndex = directory.addNewNode((byte) 0, (byte) 0, (byte) nodeLocalDepth, newNode, atomicOperation);
+
+            final int updatedItemIndex = bucketPath.itemIndex << 1;
+            final int updatedOffset = bucketPath.hashMapOffset << 1;
+            final int updatedGlobalDepth = bucketPath.nodeGlobalDepth + 1;
+
+            boolean allLeftHashMapsEqual = nodeSplitResult.allLeftHashMapsEqual;
+            boolean allRightHashMapsEqual = nodeSplitResult.allRightHashMapsEqual;
+
+            if (updatedOffset < MAX_LEVEL_SIZE) {
+              allLeftHashMapsEqual = false;
+              final OHashTable.BucketPath updatedBucketPath = new OHashTable.BucketPath(bucketPath.parent, updatedOffset,
+                  updatedItemIndex, bucketPath.nodeIndex, nodeLocalDepth, updatedGlobalDepth);
+              updateNodeAfterBucketSplit(updatedBucketPath, bucketDepth, newBucketPointer, updatedBucketPointer, atomicOperation);
+            } else {
+              allRightHashMapsEqual = false;
+              final OHashTable.BucketPath newBucketPath = new OHashTable.BucketPath(bucketPath.parent,
+                  updatedOffset - MAX_LEVEL_SIZE, updatedItemIndex, newNodeIndex, nodeLocalDepth, updatedGlobalDepth);
+              updateNodeAfterBucketSplit(newBucketPath, bucketDepth, newBucketPointer, updatedBucketPointer, atomicOperation);
+            }
+
+            updateNodesAfterSplit(bucketPath, bucketPath.nodeIndex, newNode, nodeLocalDepth, hashMapSize, allLeftHashMapsEqual,
+                allRightHashMapsEqual, newNodeIndex, atomicOperation);
+
+            if (allLeftHashMapsEqual)
+              directory.deleteNode(bucketPath.nodeIndex, atomicOperation);
+          } else {
+            addNewLevelNode(bucketPath, bucketPath.nodeIndex, newBucketPointer, updatedBucketPointer, atomicOperation);
+          }
+        }
+      } finally {
+        releasePageFromWrite(cacheEntry, atomicOperation);
+      }
+
+      changeSize(sizeDiff, atomicOperation);
+      doPutRestore(key, rawKey, rawValue, hashCode, atomicOperation);
+    }
+  }
+
   @SuppressWarnings("unchecked")
-  private void doRawPut(K key, byte[] rawKey, long hashCode, byte[] rawValue, OAtomicOperation atomicOperation) throws IOException {
+  private void doPutRollback(K key, byte[] rawKey, long hashCode, byte[] rawValue, OAtomicOperation atomicOperation)
+      throws IOException {
     int sizeDiff = 0;
 
     if (key == null) {
@@ -1440,7 +1750,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       }
 
       changeSize(sizeDiff, atomicOperation);
-      doRawPut(key, rawKey, hashCode, rawValue, atomicOperation);
+      doPutRollback(key, rawKey, hashCode, rawValue, atomicOperation);
     }
   }
 

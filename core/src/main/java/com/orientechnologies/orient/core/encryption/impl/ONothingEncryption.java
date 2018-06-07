@@ -73,4 +73,9 @@ public class ONothingEncryption implements OEncryption {
   public OEncryption configure(String iOptions) {
     return null;
   }
+
+  @Override
+  public String getOption() {
+    return null;
+  }
 }

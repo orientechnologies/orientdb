@@ -44,4 +44,6 @@ public interface OEncryption {
   String name();
 
   OEncryption configure(String iOptions);
+
+  String getOption();
 }

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
@@ -221,5 +222,18 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected void truncateFile(long filedId) throws IOException {
     readCache.truncateFile(filedId, writeCache);
+  }
+
+  protected long addFileOnRestore(String fileName) throws IOException {
+    long fileId;
+    if (writeCache.exists(fileName)) {
+      OLogManager.instance().warn(this, "File %s already exists in storage %s and will be truncated", fileName, storage.getName());
+      fileId = writeCache.loadFile(fileName);
+      readCache.truncateFile(fileId, writeCache);
+    } else {
+      fileId = readCache.addFile(fileName, writeCache);
+    }
+
+    return fileId;
   }
 }

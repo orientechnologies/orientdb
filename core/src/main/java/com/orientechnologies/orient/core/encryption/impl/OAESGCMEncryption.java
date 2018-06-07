@@ -63,6 +63,8 @@ public class OAESGCMEncryption implements OEncryption {
   private SecretKey    key;
   private SecureRandom csprng;
 
+  private String option;
+
   @Override
   public String name() {
     return NAME;
@@ -70,6 +72,8 @@ public class OAESGCMEncryption implements OEncryption {
 
   @Override
   public OEncryption configure(final String base64EncodedKey) {
+    this.option = base64EncodedKey;
+
     initialized = false;
 
     key = createKey(base64EncodedKey);
@@ -203,6 +207,11 @@ public class OAESGCMEncryption implements OEncryption {
     } finally {
       executor.shutdownNow();
     }
+  }
+
+  @Override
+  public String getOption() {
+    return option;
   }
 
   private GCMParameterSpec gcmParameterSpec(byte[] nonce) {

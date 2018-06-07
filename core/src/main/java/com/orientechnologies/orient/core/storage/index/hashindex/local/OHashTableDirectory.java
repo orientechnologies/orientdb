@@ -54,6 +54,12 @@ public class OHashTableDirectory extends ODurableComponent {
     init(atomicOperation);
   }
 
+  void createOnRestore(OAtomicOperation atomicOperation) throws IOException {
+    fileId = addFileOnRestore(getFullName());
+
+    init(atomicOperation);
+  }
+
   long getFileId() {
     return fileId;
   }

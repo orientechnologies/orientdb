@@ -41,6 +41,8 @@ public class ODESEncryption extends OAbstractEncryption {
   }
 
   public OEncryption configure(final String iOptions) {
+    super.configure(iOptions);
+
     initialized = false;
 
     if (iOptions == null)
