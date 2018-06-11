@@ -92,7 +92,9 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
         }
         partial = lastStep.syncPull(ctx, n);
       }
-      ((OInternalResultSet) finalResult).setPlan(((ScriptLineStep) lastStep).plan);
+      if(lastStep instanceof ScriptLineStep) {
+        ((OInternalResultSet) finalResult).setPlan(((ScriptLineStep) lastStep).plan);
+      }
     }
   }
 

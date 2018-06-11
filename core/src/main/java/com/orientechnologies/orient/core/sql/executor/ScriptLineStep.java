@@ -3,7 +3,9 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.parser.OIfStatement;
 import com.orientechnologies.orient.core.sql.parser.OReturnStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
@@ -50,8 +52,28 @@ public class ScriptLineStep extends AbstractExecutionStep {
     }
     if (plan instanceof OIfExecutionPlan) {
       IfStep step = (IfStep) plan.getSteps().get(0);
-      if (step.positivePlan.containsReturn()) {
+      if (step.positivePlan != null && step.positivePlan.containsReturn()) {
         return true;
+      } else if (step.positiveStatements != null) {
+        for (OStatement stm : step.positiveStatements) {
+          if (containsReturn(stm)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean containsReturn(OStatement stm) {
+    if (stm instanceof OReturnStatement) {
+      return true;
+    }
+    if (stm instanceof OIfStatement) {
+      for (OStatement o : ((OIfStatement) stm).getStatements()) {
+        if (containsReturn(o)) {
+          return true;
+        }
       }
     }
     return false;
