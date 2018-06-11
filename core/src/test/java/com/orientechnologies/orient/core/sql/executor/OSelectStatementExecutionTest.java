@@ -509,6 +509,56 @@ public class OSelectStatementExecutionTest {
   }
 
   @Test
+  public void testCountStarEmptyNoIndex() {
+    String className = "testCountStarEmptyNoIndex";
+    db.getMetadata().getSchema().createClass(className);
+
+    OElement elem = db.newElement(className);
+    elem.setProperty("name", "bar");
+    elem.save();
+
+    try {
+      OResultSet result = db.query("select count(*) from " + className+" where name = 'foo'");
+      printExecutionPlan(result);
+      Assert.assertNotNull(result);
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      Assert.assertEquals(0L, (Object) next.getProperty("count(*)"));
+      Assert.assertFalse(result.hasNext());
+      result.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void testCountStarEmptyNoIndexWithAlias() {
+    String className = "testCountStarEmptyNoIndexWithAlias";
+    db.getMetadata().getSchema().createClass(className);
+
+    OElement elem = db.newElement(className);
+    elem.setProperty("name", "bar");
+    elem.save();
+
+    try {
+      OResultSet result = db.query("select count(*) as a from " + className + " where name = 'foo'");
+      printExecutionPlan(result);
+      Assert.assertNotNull(result);
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      Assert.assertEquals(0L, (Object) next.getProperty("a"));
+      Assert.assertFalse(result.hasNext());
+      result.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+      Assert.fail();
+    }
+  }
+
+  @Test
   public void testAggretateMixedWithNonAggregate() {
     String className = "testAggretateMixedWithNonAggregate";
     db.getMetadata().getSchema().createClass(className);
