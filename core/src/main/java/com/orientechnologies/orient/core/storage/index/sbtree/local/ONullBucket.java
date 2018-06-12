@@ -23,6 +23,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
+import java.nio.ByteBuffer;
 /**
  * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has following layout:
  * <ol>
@@ -42,56 +43,116 @@ public final class ONullBucket<V> extends ODurablePage {
     super(cacheEntry);
     this.valueSerializer = valueSerializer;
 
-    if (isNew)
-      setByteValue(NEXT_FREE_POSITION, (byte) 0);
+    if (isNew) {
+      buffer.put(NEXT_FREE_POSITION, (byte) 0);
+      cacheEntry.markDirty();
+    }
   }
 
   public void setValue(OSBTreeValue<V> value) {
-    setByteValue(NEXT_FREE_POSITION, (byte) 1);
+    final ByteBuffer buffer = getBufferDuplicate();
+
+    buffer.put(NEXT_FREE_POSITION, (byte) 1);
 
     if (value.isLink()) {
-      setByteValue(NEXT_FREE_POSITION + 1, (byte) 0);
-      setLongValue(NEXT_FREE_POSITION + 2, value.getLink());
+      buffer.put(NEXT_FREE_POSITION + 1, (byte) 0);
+      buffer.putLong(NEXT_FREE_POSITION + 2, value.getLink());
     } else {
       final int valueSize = valueSerializer.getObjectSize(value.getValue());
 
       final byte[] serializedValue = new byte[valueSize];
       valueSerializer.serializeNativeObject(value.getValue(), serializedValue, 0);
 
-      setByteValue(NEXT_FREE_POSITION + 1, (byte) 1);
-      setBinaryValue(NEXT_FREE_POSITION + 2, serializedValue);
+      buffer.put(NEXT_FREE_POSITION + 1, (byte) 1);
+
+      buffer.position(NEXT_FREE_POSITION + 2);
+      buffer.put(serializedValue);
     }
+
+    cacheEntry.markDirty();
   }
 
-  public void setRawValue(byte[] rawValue) {
-    setByteValue(NEXT_FREE_POSITION, (byte) 1);
+  void setRawValue(byte[] rawValue) {
+    final ByteBuffer buffer = getBufferDuplicate();
 
-    setByteValue(NEXT_FREE_POSITION + 1, (byte) 1);
-    setBinaryValue(NEXT_FREE_POSITION + 2, rawValue);
+    buffer.put(NEXT_FREE_POSITION, (byte) 1);
+
+    buffer.put(NEXT_FREE_POSITION + 1, (byte) 1);
+
+    buffer.position(NEXT_FREE_POSITION + 2);
+    buffer.put(rawValue);
+
+    cacheEntry.markDirty();
   }
 
   public OSBTreeValue<V> getValue() {
-    if (getByteValue(NEXT_FREE_POSITION) == 0)
+    final ByteBuffer buffer = getBufferDuplicate();
+
+    if (buffer.get(NEXT_FREE_POSITION) == 0) {
       return null;
+    }
 
-    final boolean isLink = getByteValue(NEXT_FREE_POSITION + 1) == 0;
-    if (isLink)
-      return new OSBTreeValue<>(true, getLongValue(NEXT_FREE_POSITION + 2), null);
+    final boolean isLink = buffer.get(NEXT_FREE_POSITION + 1) == 0;
+    if (isLink) {
+      return new OSBTreeValue<>(true, buffer.getLong(NEXT_FREE_POSITION + 2), null);
+    }
 
-    return new OSBTreeValue<>(false, -1, deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2));
+    buffer.position(NEXT_FREE_POSITION + 2);
+    return new OSBTreeValue<>(false, -1, valueSerializer.deserializeFromByteBufferObject(buffer));
   }
 
   byte[] getRawValue() {
-    if (getByteValue(NEXT_FREE_POSITION) == 0)
+    final ByteBuffer buffer = getBufferDuplicate();
+
+    if (buffer.get(NEXT_FREE_POSITION) == 0) {
       return null;
+    }
 
-    assert getByteValue(NEXT_FREE_POSITION + 1) > 0;
+    assert buffer.get(NEXT_FREE_POSITION + 1) > 0;
 
-    final int valueLen = getObjectSizeInDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2);
-    return getBinaryValue(NEXT_FREE_POSITION + 2, valueLen);
+    buffer.position(NEXT_FREE_POSITION + 2);
+    final int valueLen = valueSerializer.getObjectSizeInByteBuffer(buffer);
+
+    buffer.position(NEXT_FREE_POSITION + 2);
+    final byte[] value = new byte[valueLen];
+    buffer.get(value);
+    return value;
   }
 
   void removeValue() {
-    setByteValue(NEXT_FREE_POSITION, (byte) 0);
+    buffer.put(NEXT_FREE_POSITION, (byte) 0);
+    cacheEntry.markDirty();
+  }
+
+  @Override
+  protected byte[] serializePage() {
+    final ByteBuffer buffer = getBufferDuplicate();
+
+    if (buffer.get(NEXT_FREE_POSITION) == 0) {
+      final byte[] page = new byte[NEXT_FREE_POSITION];
+      buffer.position(0);
+      buffer.get(page);
+      return page;
+    }
+
+    buffer.position(NEXT_FREE_POSITION + 2);
+    final int valueLen = valueSerializer.getObjectSizeInByteBuffer(buffer);
+    final int size = NEXT_FREE_POSITION + 1 + valueLen;
+
+    final byte[] page = new byte[size];
+
+    buffer.position(0);
+    buffer.get(page);
+
+    return page;
+  }
+
+  @Override
+  protected void deserializePage(byte[] page) {
+    final ByteBuffer buffer = getBufferDuplicate();
+    buffer.position(0);
+    buffer.put(page);
+
+    cacheEntry.markDirty();
   }
 }

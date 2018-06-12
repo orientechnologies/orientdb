@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * Base page class for all durable data structures, that is data structures state of which can be consistently restored after system
@@ -58,15 +59,18 @@ public class ODurablePage {
 
   public static final int NEXT_FREE_POSITION = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
 
-  private final OCacheEntry cacheEntry;
-
-  private final OCachePointer pointer;
+  protected final OCacheEntry   cacheEntry;
+  private final   OCachePointer pointer;
+  protected final ByteBuffer    buffer;
 
   public ODurablePage(OCacheEntry cacheEntry) {
     assert cacheEntry != null;
 
     this.cacheEntry = cacheEntry;
     this.pointer = cacheEntry.getCachePointer();
+    this.buffer = pointer.getBuffer();
+
+    assert buffer != null;
   }
 
   public static OLogSequenceNumber getLogSequenceNumberFromPage(ByteBuffer buffer) {
@@ -237,6 +241,27 @@ public class ODurablePage {
     buffer.putLong(lsn.getPosition());
 
     cacheEntry.markDirty();
+  }
+
+  protected final ByteBuffer getBufferDuplicate() {
+    return buffer.duplicate().order(ByteOrder.nativeOrder());
+  }
+
+  protected byte[] serializePage() {
+    final ByteBuffer buffer = pointer.getBufferDuplicate();
+    buffer.position(0);
+
+    final byte[] page = new byte[buffer.limit()];
+    buffer.get(page);
+
+    return page;
+  }
+
+  protected void deserializePage(byte[] page) {
+    final ByteBuffer buffer = pointer.getBufferDuplicate();
+    buffer.position(0);
+
+    buffer.put(page);
   }
 
   @Override

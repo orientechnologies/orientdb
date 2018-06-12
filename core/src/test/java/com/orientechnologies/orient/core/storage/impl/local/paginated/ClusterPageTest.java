@@ -9,7 +9,13 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class ClusterPageTest {
   @Test
-  public void testAddOneRecord()  {
+  public void testAddOneRecord() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
 
     ByteBuffer directBuffer = bufferPool.acquireDirect(true);
@@ -31,7 +37,7 @@ public class ClusterPageTest {
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
-      addOneRecord(directLocalPage);
+      addOneRecord(directLocalPage, bufferPool);
 
     } finally {
       directCacheEntry.releaseExclusiveLock();
@@ -39,13 +45,37 @@ public class ClusterPageTest {
     }
   }
 
-  private void addOneRecord(OClusterPage localPage) {
+  private void addOneRecord(OClusterPage localPage, OByteBufferPool bufferPool) {
     int freeSpace = localPage.getFreeSpace();
     Assert.assertEquals(localPage.getRecordsCount(), 0);
 
     int recordVersion = 1;
 
     int position = localPage.appendRecord(recordVersion, new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
+
+    assertAddOneRecordState(localPage, freeSpace, recordVersion, position);
+
+    final byte[] serializedPage = localPage.serializePage();
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      final OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertAddOneRecordState(restoredPage, freeSpace, recordVersion, position);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+
+  }
+
+  private void assertAddOneRecordState(OClusterPage localPage, int freeSpace, int recordVersion, int position) {
     Assert.assertEquals(localPage.getRecordsCount(), 1);
     Assert.assertEquals(localPage.getRecordSize(0), 11);
     Assert.assertEquals(position, 0);
@@ -53,11 +83,11 @@ public class ClusterPageTest {
     Assert.assertFalse(localPage.isDeleted(0));
     Assert.assertEquals(localPage.getRecordVersion(0), recordVersion);
 
-    assertThat(localPage.getRecordBinaryValue(0, 0, 11)).isEqualTo(new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
+    assertThat(localPage.getRecordBinaryValue(0, 11)).isEqualTo(new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
   }
 
   @Test
-  public void testAddThreeRecords()  {
+  public void testAddThreeRecords() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
@@ -68,14 +98,14 @@ public class ClusterPageTest {
 
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      addThreeRecords(directLocalPage);
+      addThreeRecords(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void addThreeRecords(OClusterPage localPage) {
+  private void addThreeRecords(OClusterPage localPage, OByteBufferPool bufferPool) {
     int freeSpace = localPage.getFreeSpace();
 
     Assert.assertEquals(localPage.getRecordsCount(), 0);
@@ -87,6 +117,29 @@ public class ClusterPageTest {
     int positionTwo = localPage.appendRecord(recordVersion, new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
     int positionThree = localPage.appendRecord(recordVersion, new byte[] { 3, 2, 3, 4, 5, 6, 5, 4, 3, 2, 3 });
 
+    final byte[] serializedPage = localPage.serializePage();
+
+    assertAddThreeRecordsState(localPage, freeSpace, recordVersion, positionOne, positionTwo, positionThree);
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertAddThreeRecordsState(restoredPage, freeSpace, recordVersion, positionOne, positionTwo, positionThree);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertAddThreeRecordsState(OClusterPage localPage, int freeSpace, int recordVersion, int positionOne,
+      int positionTwo, int positionThree) {
     Assert.assertEquals(localPage.getRecordsCount(), 3);
     Assert.assertEquals(positionOne, 0);
     Assert.assertEquals(positionTwo, 1);
@@ -97,17 +150,15 @@ public class ClusterPageTest {
     Assert.assertFalse(localPage.isDeleted(1));
     Assert.assertFalse(localPage.isDeleted(2));
 
-    //    Assert.assertEquals(localPage.getRecordBinaryValue(0, 0, 11), new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
-    assertThat(localPage.getRecordBinaryValue(0, 0, 11)).isEqualTo(new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
+    assertThat(localPage.getRecordBinaryValue(0, 11)).isEqualTo(new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
     Assert.assertEquals(localPage.getRecordSize(0), 11);
     Assert.assertEquals(localPage.getRecordVersion(0), recordVersion);
 
-    //    Assert.assertEquals(localPage.getRecordBinaryValue(1, 0, 11), new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
-    assertThat(localPage.getRecordBinaryValue(1, 0, 11)).isEqualTo(new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
+    assertThat(localPage.getRecordBinaryValue(1, 11)).isEqualTo(new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
     Assert.assertEquals(localPage.getRecordSize(0), 11);
     Assert.assertEquals(localPage.getRecordVersion(1), recordVersion);
 
-    assertThat(localPage.getRecordBinaryValue(2, 0, 11)).isEqualTo(new byte[] { 3, 2, 3, 4, 5, 6, 5, 4, 3, 2, 3 });
+    assertThat(localPage.getRecordBinaryValue(2, 11)).isEqualTo(new byte[] { 3, 2, 3, 4, 5, 6, 5, 4, 3, 2, 3 });
     Assert.assertEquals(localPage.getRecordSize(0), 11);
     Assert.assertEquals(localPage.getRecordVersion(2), recordVersion);
   }
@@ -125,14 +176,14 @@ public class ClusterPageTest {
 
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      addFullPage(directLocalPage);
+      addFullPage(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void addFullPage(OClusterPage localPage) {
+  private void addFullPage(OClusterPage localPage, OByteBufferPool bufferPool) {
     int recordVersion = 0;
     recordVersion++;
 
@@ -152,11 +203,34 @@ public class ClusterPageTest {
       }
     } while (lastPosition >= 0);
 
+    assertAddFullPageState(localPage, recordVersion, positions);
+
+    final byte[] serializedPage = localPage.serializePage();
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertAddFullPageState(restoredPage, recordVersion, positions);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertAddFullPageState(OClusterPage localPage, int recordVersion, List<Integer> positions) {
+    byte counter;
     Assert.assertEquals(localPage.getRecordsCount(), positions.size());
 
     counter = 0;
     for (int position : positions) {
-      assertThat(localPage.getRecordBinaryValue(position, 0, 3)).isEqualTo(new byte[] { counter, counter, counter });
+      assertThat(localPage.getRecordBinaryValue(position, 3)).isEqualTo(new byte[] { counter, counter, counter });
       Assert.assertEquals(localPage.getRecordSize(position), 3);
       Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
       counter++;
@@ -175,15 +249,14 @@ public class ClusterPageTest {
 
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      deleteAddLowerVersion(directLocalPage);
+      deleteAddLowerVersion(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
-
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void deleteAddLowerVersion(OClusterPage localPage) {
+  private void deleteAddLowerVersion(OClusterPage localPage, OByteBufferPool bufferPool) {
     int recordVersion = 0;
     recordVersion++;
     recordVersion++;
@@ -196,11 +269,33 @@ public class ClusterPageTest {
 
     Assert.assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }), position);
 
+    assertDeleteAddLowerVersionState(localPage, position, newRecordVersion);
+
+    final byte[] serializedPage = localPage.serializePage();
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertDeleteAddLowerVersionState(restoredPage, position, newRecordVersion);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertDeleteAddLowerVersionState(OClusterPage localPage, int position, int newRecordVersion) {
     int recordSize = localPage.getRecordSize(position);
     Assert.assertEquals(recordSize, 11);
 
     Assert.assertEquals(localPage.getRecordVersion(position), newRecordVersion);
-    assertThat(localPage.getRecordBinaryValue(position, 0, recordSize)).isEqualTo(new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+    assertThat(localPage.getRecordBinaryValue(position, recordSize)).isEqualTo(new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
   }
 
   @Test
@@ -215,15 +310,14 @@ public class ClusterPageTest {
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      deleteAddBiggerVersion(directLocalPage);
+      deleteAddBiggerVersion(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
-
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void deleteAddBiggerVersion(OClusterPage localPage) {
+  private void deleteAddBiggerVersion(OClusterPage localPage, OByteBufferPool bufferPool) {
     int recordVersion = 0;
     recordVersion++;
     recordVersion++;
@@ -240,12 +334,34 @@ public class ClusterPageTest {
 
     Assert.assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }), position);
 
+    assertDeleteAddBiggerVersionState(localPage, position, newRecordVersion);
+
+    final byte[] serializedPage = localPage.serializePage();
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertDeleteAddBiggerVersionState(restoredPage, position, newRecordVersion);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertDeleteAddBiggerVersionState(OClusterPage localPage, int position, int newRecordVersion) {
     int recordSize = localPage.getRecordSize(position);
     Assert.assertEquals(recordSize, 11);
 
     Assert.assertEquals(localPage.getRecordVersion(position), newRecordVersion);
 
-    assertThat(localPage.getRecordBinaryValue(position, 0, recordSize)).isEqualTo(new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+    assertThat(localPage.getRecordBinaryValue(position, recordSize)).isEqualTo(new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
   }
 
   @Test
@@ -261,14 +377,14 @@ public class ClusterPageTest {
 
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      deleteAddEqualVersion(directLocalPage);
+      deleteAddEqualVersion(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void deleteAddEqualVersion(OClusterPage localPage) {
+  private void deleteAddEqualVersion(OClusterPage localPage, OByteBufferPool bufferPool) {
     int recordVersion = 0;
     recordVersion++;
     recordVersion++;
@@ -279,15 +395,37 @@ public class ClusterPageTest {
 
     Assert.assertEquals(localPage.appendRecord(recordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }), position);
 
+    assertDeleteAddEqualVersionState(localPage, recordVersion, position);
+
+    final byte[] serializedPage = localPage.serializePage();
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertDeleteAddEqualVersionState(restoredPage, recordVersion, position);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertDeleteAddEqualVersionState(OClusterPage localPage, int recordVersion, int position) {
     int recordSize = localPage.getRecordSize(position);
     Assert.assertEquals(recordSize, 11);
 
     Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
-    assertThat(localPage.getRecordBinaryValue(position, 0, recordSize)).isEqualTo(new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+    assertThat(localPage.getRecordBinaryValue(position, recordSize)).isEqualTo(new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
   }
 
   @Test
-  public void testDeleteAddEqualVersionKeepTombstoneVersion()  {
+  public void testDeleteAddEqualVersionKeepTombstoneVersion() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
@@ -297,14 +435,14 @@ public class ClusterPageTest {
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      deleteAddEqualVersionKeepTombstoneVersion(directLocalPage);
+      deleteAddEqualVersionKeepTombstoneVersion(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void deleteAddEqualVersionKeepTombstoneVersion(OClusterPage localPage) {
+  private void deleteAddEqualVersionKeepTombstoneVersion(OClusterPage localPage, OByteBufferPool bufferPool) {
     int recordVersion = 0;
     recordVersion++;
     recordVersion++;
@@ -315,11 +453,33 @@ public class ClusterPageTest {
 
     Assert.assertEquals(localPage.appendRecord(recordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }), position);
 
+    assertDeleteAddEqualVersionKeepTombstoneVersionState(localPage, recordVersion, position);
+
+    final byte[] serializedPage = localPage.serializePage();
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertDeleteAddEqualVersionKeepTombstoneVersionState(restoredPage, recordVersion, position);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertDeleteAddEqualVersionKeepTombstoneVersionState(OClusterPage localPage, int recordVersion, int position) {
     int recordSize = localPage.getRecordSize(position);
     Assert.assertEquals(recordSize, 11);
 
     Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
-    assertThat(localPage.getRecordBinaryValue(position, 0, recordSize)).isEqualTo(new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+    assertThat(localPage.getRecordBinaryValue(position, recordSize)).isEqualTo(new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
   }
 
   @Test
@@ -333,15 +493,14 @@ public class ClusterPageTest {
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      deleteTwoOutOfFour(directLocalPage);
+      deleteTwoOutOfFour(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
-
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void deleteTwoOutOfFour(OClusterPage localPage) {
+  private void deleteTwoOutOfFour(OClusterPage localPage, OByteBufferPool bufferPool) {
     int recordVersion = 0;
     recordVersion++;
 
@@ -369,6 +528,27 @@ public class ClusterPageTest {
     Assert.assertFalse(localPage.deleteRecord(0));
     Assert.assertFalse(localPage.deleteRecord(7));
 
+    assertDeleteTwoOutOfFourState(localPage, recordVersion, freeSpace);
+
+    final byte[] serializedPage = localPage.serializePage();
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertDeleteTwoOutOfFourState(restoredPage, recordVersion, freeSpace);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertDeleteTwoOutOfFourState(OClusterPage localPage, int recordVersion, int freeSpace) {
     Assert.assertEquals(localPage.findFirstDeletedRecord(0), 0);
     Assert.assertEquals(localPage.findFirstDeletedRecord(1), 2);
     Assert.assertEquals(localPage.findFirstDeletedRecord(3), -1);
@@ -377,7 +557,7 @@ public class ClusterPageTest {
     Assert.assertEquals(localPage.getRecordSize(0), -1);
     Assert.assertEquals(localPage.getRecordVersion(0), recordVersion);
 
-    assertThat(localPage.getRecordBinaryValue(1, 0, 11)).isEqualTo(new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
+    assertThat(localPage.getRecordBinaryValue(1, 11)).isEqualTo(new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
     Assert.assertEquals(localPage.getRecordSize(1), 11);
     Assert.assertEquals(localPage.getRecordVersion(1), recordVersion);
 
@@ -385,7 +565,7 @@ public class ClusterPageTest {
     Assert.assertEquals(localPage.getRecordSize(2), -1);
     Assert.assertEquals(localPage.getRecordVersion(2), recordVersion);
 
-    assertThat(localPage.getRecordBinaryValue(3, 0, 11)).isEqualTo(new byte[] { 4, 2, 3, 4, 5, 6, 5, 4, 3, 2, 4 });
+    assertThat(localPage.getRecordBinaryValue(3, 11)).isEqualTo(new byte[] { 4, 2, 3, 4, 5, 6, 5, 4, 3, 2, 4 });
 
     Assert.assertEquals(localPage.getRecordSize(3), 11);
     Assert.assertEquals(localPage.getRecordVersion(3), recordVersion);
@@ -407,14 +587,14 @@ public class ClusterPageTest {
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
-      addFullPageDeleteAndAddAgain(directLocalPage);
+      addFullPageDeleteAndAddAgain(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void addFullPageDeleteAndAddAgain(OClusterPage localPage)  {
+  private void addFullPageDeleteAndAddAgain(OClusterPage localPage, OByteBufferPool bufferPool) {
     Map<Integer, Byte> positionCounter = new HashMap<>();
     Set<Integer> deletedPositions = new HashSet<>();
 
@@ -457,10 +637,32 @@ public class ClusterPageTest {
       }
     } while (lastPosition >= 0);
 
+    assertAddFullPageDeleteAndAddAgainState(localPage, positionCounter, deletedPositions, recordVersion, filledRecordsCount);
+
+    final byte[] serializedPage = localPage.serializePage();
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertAddFullPageDeleteAndAddAgainState(restoredPage, positionCounter, deletedPositions, recordVersion, filledRecordsCount);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertAddFullPageDeleteAndAddAgainState(OClusterPage localPage, Map<Integer, Byte> positionCounter,
+      Set<Integer> deletedPositions, int recordVersion, int filledRecordsCount) {
     Assert.assertEquals(localPage.getRecordsCount(), filledRecordsCount);
     for (Map.Entry<Integer, Byte> entry : positionCounter.entrySet()) {
-      assertThat(localPage.getRecordBinaryValue(entry.getKey(), 0, 3))
-          .isEqualTo(new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
+      assertThat(localPage.getRecordBinaryValue(entry.getKey(), 3)).isEqualTo(new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
 
       Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
 
@@ -484,7 +686,7 @@ public class ClusterPageTest {
       final long seed = System.currentTimeMillis();
 
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      addBigRecordDeleteAndAddSmallRecords(seed, directLocalPage);
+      addBigRecordDeleteAndAddSmallRecords(seed, directLocalPage, bufferPool);
 
     } finally {
       directCacheEntry.releaseExclusiveLock();
@@ -492,7 +694,7 @@ public class ClusterPageTest {
     }
   }
 
-  private void addBigRecordDeleteAndAddSmallRecords(long seed, OClusterPage localPage) {
+  private void addBigRecordDeleteAndAddSmallRecords(long seed, OClusterPage localPage, OByteBufferPool bufferPool) {
     final Random mersenneTwisterFast = new Random(seed);
 
     int recordVersion = 0;
@@ -530,10 +732,33 @@ public class ClusterPageTest {
       }
     } while (lastPosition >= 0);
 
+    assertAddBigRecordDeleteAndAddSmallRecordsState(localPage, recordVersion, positionCounter);
+
+    final byte[] serializedPage = localPage.serializePage();
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertAddBigRecordDeleteAndAddSmallRecordsState(restoredPage, recordVersion, positionCounter);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertAddBigRecordDeleteAndAddSmallRecordsState(OClusterPage localPage, int recordVersion,
+      Map<Integer, Byte> positionCounter) {
     Assert.assertEquals(localPage.getRecordsCount(), positionCounter.size());
     for (Map.Entry<Integer, Byte> entry : positionCounter.entrySet()) {
-      assertThat(localPage.getRecordBinaryValue(entry.getKey(), 0, 3))
-          .isEqualTo(new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
+      assertThat(localPage.getRecordBinaryValue(entry.getKey(), 3)).isEqualTo(new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
       Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
       Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
     }
@@ -554,7 +779,7 @@ public class ClusterPageTest {
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
-      findFirstRecord(seed, directLocalPage);
+      findFirstRecord(seed, directLocalPage, bufferPool);
 
     } finally {
       directCacheEntry.releaseExclusiveLock();
@@ -562,7 +787,7 @@ public class ClusterPageTest {
     }
   }
 
-  private void findFirstRecord(long seed, OClusterPage localPage) {
+  private void findFirstRecord(long seed, OClusterPage localPage, OByteBufferPool bufferPool) {
     final Random mersenneTwister = new Random(seed);
     Set<Integer> positions = new HashSet<>();
 
@@ -595,6 +820,27 @@ public class ClusterPageTest {
       }
     }
 
+    assertFindFirstRecordState(localPage, positions);
+
+    final byte[] serializedPage = localPage.serializePage();
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertFindFirstRecordState(restoredPage, positions);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertFindFirstRecordState(OClusterPage localPage, Set<Integer> positions) {
     int recordsIterated = 0;
     int recordPosition = 0;
     int lastRecordPosition = -1;
@@ -629,7 +875,7 @@ public class ClusterPageTest {
     final long seed = System.currentTimeMillis();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      findLastRecord(seed, directLocalPage);
+      findLastRecord(seed, directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
 
@@ -637,7 +883,7 @@ public class ClusterPageTest {
     }
   }
 
-  private void findLastRecord(long seed, OClusterPage localPage) {
+  private void findLastRecord(long seed, OClusterPage localPage, OByteBufferPool bufferPool) {
     final Random mersenneTwister = new Random(seed);
     Set<Integer> positions = new HashSet<>();
 
@@ -670,6 +916,28 @@ public class ClusterPageTest {
       }
     }
 
+    assertFindLastRecordState(localPage, positions);
+
+    final byte[] serializedPage = localPage.serializePage();
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, true);
+      restoredPage.deserializePage(serializedPage);
+
+      assertFindLastRecordState(restoredPage, positions);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertFindLastRecordState(OClusterPage localPage, Set<Integer> positions) {
     int recordsIterated = 0;
     int recordPosition = Integer.MAX_VALUE;
     int lastRecordPosition = Integer.MAX_VALUE;
@@ -699,16 +967,34 @@ public class ClusterPageTest {
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      setGetNextPage(directLocalPage);
+      setGetNextPage(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void setGetNextPage(OClusterPage localPage) {
+  private void setGetNextPage(OClusterPage localPage, OByteBufferPool bufferPool) {
     localPage.setNextPage(1034);
     Assert.assertEquals(localPage.getNextPage(), 1034);
+
+    final byte[] serializedPage = localPage.serializePage();
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      Assert.assertEquals(restoredPage.getNextPage(), 1034);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
   }
 
   @Test
@@ -722,16 +1008,33 @@ public class ClusterPageTest {
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      setGetPrevPage(directLocalPage);
+      setGetPrevPage(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void setGetPrevPage(OClusterPage localPage) {
+  private void setGetPrevPage(OClusterPage localPage, OByteBufferPool bufferPool) {
     localPage.setPrevPage(1034);
     Assert.assertEquals(localPage.getPrevPage(), 1034);
+
+    final byte[] serializedPage = localPage.serializePage();
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      Assert.assertEquals(restoredPage.getPrevPage(), 1034);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
   }
 
   @Test
@@ -746,14 +1049,14 @@ public class ClusterPageTest {
 
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      replaceOneRecordWithBiggerSize(directLocalPage);
+      replaceOneRecordWithBiggerSize(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void replaceOneRecordWithBiggerSize(OClusterPage localPage) {
+  private void replaceOneRecordWithBiggerSize(OClusterPage localPage, OByteBufferPool bufferPool) {
     Assert.assertEquals(localPage.getRecordsCount(), 0);
 
     int recordVersion = 0;
@@ -766,11 +1069,35 @@ public class ClusterPageTest {
     newRecordVersion++;
 
     int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1, 3 }, newRecordVersion);
+    assertReplaceOneRecordWithBiggerSizeState(localPage, index, freeSpace, newRecordVersion, written);
+
+    final byte[] serializedPage = localPage.serializePage();
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertReplaceOneRecordWithBiggerSizeState(restoredPage, index, freeSpace, newRecordVersion, written);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertReplaceOneRecordWithBiggerSizeState(OClusterPage localPage, int index, int freeSpace, int newRecordVersion,
+      int written) {
     Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
     Assert.assertEquals(written, 11);
 
     Assert.assertEquals(localPage.getRecordSize(index), 11);
-    assertThat(localPage.getRecordBinaryValue(index, 0, 11)).isEqualTo(new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+    assertThat(localPage.getRecordBinaryValue(index, 11)).isEqualTo(new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
     Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
   }
 
@@ -786,14 +1113,14 @@ public class ClusterPageTest {
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
-      replaceOneRecordWithEqualSize(directLocalPage);
+      replaceOneRecordWithEqualSize(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void replaceOneRecordWithEqualSize(OClusterPage localPage) {
+  private void replaceOneRecordWithEqualSize(OClusterPage localPage, OByteBufferPool bufferPool) {
     Assert.assertEquals(localPage.getRecordsCount(), 0);
 
     int recordVersion = 0;
@@ -806,11 +1133,34 @@ public class ClusterPageTest {
     newRecordVersion++;
 
     int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 }, newRecordVersion);
+    assertReplaceOneRecordWithEqualSizeState(localPage, index, freeSpace, newRecordVersion, written);
+
+    final byte[] serializedPage = localPage.serializePage();
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertReplaceOneRecordWithEqualSizeState(restoredPage, index, freeSpace, newRecordVersion, written);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertReplaceOneRecordWithEqualSizeState(OClusterPage localPage, int index, int freeSpace, int newRecordVersion,
+      int written) {
     Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
     Assert.assertEquals(written, 11);
 
     Assert.assertEquals(localPage.getRecordSize(index), 11);
-    assertThat(localPage.getRecordBinaryValue(index, 0, 11)).isEqualTo(new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+    assertThat(localPage.getRecordBinaryValue(index, 11)).isEqualTo(new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
     Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
   }
 
@@ -826,14 +1176,14 @@ public class ClusterPageTest {
 
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      replaceOneRecordWithSmallerSize(directLocalPage);
+      replaceOneRecordWithSmallerSize(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void replaceOneRecordWithSmallerSize(OClusterPage localPage) {
+  private void replaceOneRecordWithSmallerSize(OClusterPage localPage, OByteBufferPool bufferPool) {
     Assert.assertEquals(localPage.getRecordsCount(), 0);
 
     int recordVersion = 0;
@@ -846,11 +1196,35 @@ public class ClusterPageTest {
     newRecordVersion++;
 
     int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, }, newRecordVersion);
+    assertReplaceOneRecordWithSmallerSizeState(localPage, index, freeSpace, newRecordVersion, written);
+
+    final byte[] serializedPage = localPage.serializePage();
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertReplaceOneRecordWithSmallerSizeState(restoredPage, index, freeSpace, newRecordVersion, written);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertReplaceOneRecordWithSmallerSizeState(OClusterPage localPage, int index, int freeSpace, int newRecordVersion,
+      int written) {
     Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
     Assert.assertEquals(written, 6);
 
     Assert.assertEquals(localPage.getRecordSize(index), 6);
-    assertThat(localPage.getRecordBinaryValue(index, 0, 6)).isEqualTo(new byte[] { 5, 2, 3, 4, 5, 11 });
+    assertThat(localPage.getRecordBinaryValue(index, 6)).isEqualTo(new byte[] { 5, 2, 3, 4, 5, 11 });
     Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
   }
 
@@ -865,14 +1239,14 @@ public class ClusterPageTest {
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      replaceOneRecordNoVersionUpdate(directLocalPage);
+      replaceOneRecordNoVersionUpdate(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void replaceOneRecordNoVersionUpdate(OClusterPage localPage) {
+  private void replaceOneRecordNoVersionUpdate(OClusterPage localPage, OByteBufferPool bufferPool) {
     Assert.assertEquals(localPage.getRecordsCount(), 0);
 
     int recordVersion = 0;
@@ -882,12 +1256,35 @@ public class ClusterPageTest {
     int freeSpace = localPage.getFreeSpace();
 
     int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1, 3 }, -1);
+    assertReplaceOneRecordNoVersionUpdateState(localPage, recordVersion, index, freeSpace, written);
+
+    final byte[] serializedPage = localPage.serializePage();
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertReplaceOneRecordNoVersionUpdateState(restoredPage, recordVersion, index, freeSpace, written);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertReplaceOneRecordNoVersionUpdateState(OClusterPage localPage, int recordVersion, int index, int freeSpace,
+      int written) {
     Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
     Assert.assertEquals(written, 11);
 
     Assert.assertEquals(localPage.getRecordSize(index), 11);
 
-    assertThat(localPage.getRecordBinaryValue(index, 0, 11)).isEqualTo(new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+    assertThat(localPage.getRecordBinaryValue(index, 11)).isEqualTo(new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
     Assert.assertEquals(localPage.getRecordVersion(index), recordVersion);
   }
 
@@ -902,14 +1299,14 @@ public class ClusterPageTest {
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
-      replaceOneRecordLowerVersion(directLocalPage);
+      replaceOneRecordLowerVersion(directLocalPage, bufferPool);
     } finally {
       directCacheEntry.releaseExclusiveLock();
       directCachePointer.decrementReferrer();
     }
   }
 
-  private void replaceOneRecordLowerVersion(OClusterPage localPage) {
+  private void replaceOneRecordLowerVersion(OClusterPage localPage, OByteBufferPool bufferPool) {
     Assert.assertEquals(localPage.getRecordsCount(), 0);
 
     int recordVersion = 0;
@@ -921,12 +1318,36 @@ public class ClusterPageTest {
     int newRecordVersion = recordVersion;
 
     int written = localPage.replaceRecord(index, new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1, 3 }, newRecordVersion);
+    assertReplaceOneRecordLowerVersionState(localPage, recordVersion, index, freeSpace, written);
+
+    final byte[] serializedPage = localPage.serializePage();
+
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
+    OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
+    directCachePointer.incrementReferrer();
+
+    OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
+    directCacheEntry.acquireExclusiveLock();
+    try {
+      OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
+      restoredPage.deserializePage(serializedPage);
+
+      assertReplaceOneRecordLowerVersionState(restoredPage, recordVersion, index, freeSpace, written);
+    } finally {
+      directCacheEntry.releaseExclusiveLock();
+      directCachePointer.decrementReferrer();
+    }
+  }
+
+  private void assertReplaceOneRecordLowerVersionState(OClusterPage localPage, int recordVersion, int index, int freeSpace,
+      int written) {
     Assert.assertEquals(localPage.getFreeSpace(), freeSpace);
     Assert.assertEquals(written, 11);
 
     Assert.assertEquals(localPage.getRecordSize(index), 11);
 
-    assertThat(localPage.getRecordBinaryValue(index, 0, 11)).isEqualTo(new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+    assertThat(localPage.getRecordBinaryValue(index, 11)).isEqualTo(new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
     Assert.assertEquals(localPage.getRecordVersion(index), recordVersion);
   }
+
 }

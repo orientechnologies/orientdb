@@ -27,6 +27,8 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
+import java.nio.ByteBuffer;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 10/7/13
@@ -51,94 +53,112 @@ public class OClusterPositionMapBucket extends ODurablePage {
   }
 
   public int add(long pageIndex, int recordPosition) {
-    int size = getIntValue(SIZE_OFFSET);
+    int size = buffer.getInt(SIZE_OFFSET);
 
     int position = entryPosition(size);
 
-    position += setByteValue(position, FILLED);
-    position += setLongValue(position, pageIndex);
-    setIntValue(position, recordPosition);
+    buffer.put(position, FILLED);
+    position += OByteSerializer.BYTE_SIZE;
 
-    setIntValue(SIZE_OFFSET, size + 1);
+    buffer.putLong(pageIndex);
+    position += OLongSerializer.LONG_SIZE;
+
+    buffer.putInt(position, recordPosition);
+
+    buffer.putInt(SIZE_OFFSET, size + 1);
+    cacheEntry.markDirty();
 
     return size;
   }
 
   public int allocate() {
-    int size = getIntValue(SIZE_OFFSET);
+    int size = buffer.getInt(SIZE_OFFSET);
 
-    int position = entryPosition(size);
+    final int position = entryPosition(size);
 
-    position += setByteValue(position, ALLOCATED);
-    position += setLongValue(position, -1);
-    setIntValue(position, -1);
+    buffer.put(position, ALLOCATED);
+    buffer.putInt(SIZE_OFFSET, size + 1);
 
-    setIntValue(SIZE_OFFSET, size + 1);
+    cacheEntry.markDirty();
 
     return size;
   }
 
   public PositionEntry get(int index) {
-    int size = getIntValue(SIZE_OFFSET);
+    final int size = buffer.getInt(SIZE_OFFSET);
 
-    if (index >= size)
+    if (index >= size) {
       return null;
+    }
 
-    int position = entryPosition(index);
-    if (getByteValue(position) != FILLED)
+    final int position = entryPosition(index);
+    if (buffer.get(position) != FILLED) {
       return null;
+    }
 
-    return readEntry(position);
+    return readEntry(position, buffer);
   }
 
   public void set(final int index, final PositionEntry entry) {
-    final int size = getIntValue(SIZE_OFFSET);
+    final int size = buffer.getInt(SIZE_OFFSET);
 
-    if (index >= size)
+    if (index >= size) {
       throw new OStorageException("Provided index " + index + " is out of range");
+    }
 
     final int position = entryPosition(index);
-    final byte flag = getByteValue(position);
-    if (flag == ALLOCATED)
-      setByteValue(position, FILLED);
-    else if (flag != FILLED)
+    final byte flag = buffer.get(position);
+    if (flag == ALLOCATED) {
+      buffer.put(position, FILLED);
+    } else if (flag != FILLED) {
       throw new OStorageException("Provided index " + index + " points to removed entry");
+    }
 
-    updateEntry(position, entry);
+    updateEntry(position, entry, buffer);
+
+    cacheEntry.markDirty();
   }
 
   void resurrect(final int index, final PositionEntry entry) {
-    final int size = getIntValue(SIZE_OFFSET);
+    final int size = buffer.getInt(SIZE_OFFSET);
 
-    if (index >= size)
+    if (index >= size) {
       throw new OStorageException("Cannot resurrect a record: provided index " + index + " is out of range");
+    }
 
     final int position = entryPosition(index);
-    final byte flag = getByteValue(position);
-    if (flag == REMOVED)
-      setByteValue(position, FILLED);
-    else
+    final byte flag = buffer.get(position);
+    if (flag == REMOVED) {
+      buffer.put(position, FILLED);
+    } else {
       throw new OStorageException("Cannot resurrect a record: provided index " + index + " points to a non removed entry");
+    }
 
-    updateEntry(position, entry);
+    updateEntry(position, entry, buffer);
+    cacheEntry.markDirty();
   }
 
   void makeAvailable(final int index) {
-    final int size = getIntValue(SIZE_OFFSET);
+    final int size = buffer.getInt(SIZE_OFFSET);
 
-    if (index >= size)
+    if (index >= size) {
       throw new OStorageException("Cannot make available index " + index + ", it is out of range");
+    }
 
     final int position = entryPosition(index);
-    final byte flag = getByteValue(position);
-    if (flag != NOT_EXISTENT)
-      setByteValue(position, NOT_EXISTENT);
-    else
+    final byte flag = buffer.get(position);
+
+    if (flag != NOT_EXISTENT) {
+      buffer.put(position, NOT_EXISTENT);
+    } else {
       throw new OStorageException("Cannot make available index " + index + ", it points to a non removed entry");
+    }
 
     if (index == size - 1) {
-      setIntValue(SIZE_OFFSET, size - 1);
+      buffer.putInt(SIZE_OFFSET, size - 1);
     }
+
+    cacheEntry.markDirty();
   }
 
   private int entryPosition(int index) {
@@ -146,65 +166,91 @@ public class OClusterPositionMapBucket extends ODurablePage {
   }
 
   public boolean isFull() {
-    return getIntValue(SIZE_OFFSET) == MAX_ENTRIES;
+    return buffer.getInt(SIZE_OFFSET) == MAX_ENTRIES;
   }
 
   public int getSize() {
-    return getIntValue(SIZE_OFFSET);
+    return buffer.getInt(SIZE_OFFSET);
   }
 
   public void remove(int index) {
-    int size = getIntValue(SIZE_OFFSET);
+    final int size = buffer.getInt(SIZE_OFFSET);
 
-    if (index >= size)
+    if (index >= size) {
       return;
+    }
 
-    int position = entryPosition(index);
+    final int position = entryPosition(index);
 
-    if (getByteValue(position) != FILLED)
+    if (buffer.get(position) != FILLED) {
       return;
+    }
 
-    setByteValue(position, REMOVED);
-
-    readEntry(position);
+    buffer.put(position, REMOVED);
+    cacheEntry.markDirty();
   }
 
-  private PositionEntry readEntry(int position) {
+  private PositionEntry readEntry(int position, ByteBuffer buffer) {
     position += OByteSerializer.BYTE_SIZE;
 
-    final long pageIndex = getLongValue(position);
+    final long pageIndex = buffer.getLong(position);
     position += OLongSerializer.LONG_SIZE;
 
-    final int pagePosition = getIntValue(position);
+    final int pagePosition = buffer.getInt(position);
 
     return new PositionEntry(pageIndex, pagePosition);
   }
 
-  private void updateEntry(int position, final PositionEntry entry) {
+  private void updateEntry(int position, final PositionEntry entry, ByteBuffer buffer) {
     position += OByteSerializer.BYTE_SIZE;
 
-    setLongValue(position, entry.pageIndex);
+    buffer.putLong(position, entry.pageIndex);
     position += OLongSerializer.LONG_SIZE;
 
-    setIntValue(position, entry.recordPosition);
+    buffer.putInt(position, entry.recordPosition);
   }
 
   public boolean exists(final int index) {
-    int size = getIntValue(SIZE_OFFSET);
-    if (index >= size)
+    final int size = buffer.getInt(SIZE_OFFSET);
+    if (index >= size) {
       return false;
+    }
 
     final int position = entryPosition(index);
-    return getByteValue(position) == FILLED;
+    return buffer.get(position) == FILLED;
   }
 
   public byte getStatus(final int index) {
-    int size = getIntValue(SIZE_OFFSET);
-    if (index >= size)
+    final int size = buffer.getInt(SIZE_OFFSET);
+
+    if (index >= size) {
       return NOT_EXISTENT;
+    }
 
     final int position = entryPosition(index);
-    return getByteValue(position);
+    return buffer.get(position);
+  }
+
+  @Override
+  protected byte[] serializePage() {
+    final ByteBuffer buffer = getBufferDuplicate();
+    final int positions = buffer.getInt(SIZE_OFFSET);
+    final int size = POSITIONS_OFFSET + positions * ENTRY_SIZE;
+
+    final byte[] page = new byte[size];
+    buffer.position(0);
+    buffer.get(page);
+
+    return page;
+  }
+
+  @Override
+  protected void deserializePage(byte[] page) {
+    final ByteBuffer buffer = getBufferDuplicate();
+    buffer.position(0);
+    buffer.put(page);
+
+    cacheEntry.markDirty();
   }
 
   public static class PositionEntry {
