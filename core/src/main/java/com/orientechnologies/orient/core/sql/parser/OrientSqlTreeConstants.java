@@ -175,22 +175,23 @@ public interface OrientSqlTreeConstants
   public int JJTREVOKESTATEMENT = 169;
   public int JJTCREATEFUNCTIONSTATEMENT = 170;
   public int JJTCREATEUSERSTATEMENT = 171;
-  public int JJTLETSTATEMENT = 172;
-  public int JJTBEGINSTATEMENT = 173;
-  public int JJTCOMMITSTATEMENT = 174;
-  public int JJTROLLBACKSTATEMENT = 175;
-  public int JJTRETURNSTATEMENT = 176;
-  public int JJTIFSTATEMENT = 177;
-  public int JJTSLEEPSTATEMENT = 178;
-  public int JJTCONSOLESTATEMENT = 179;
-  public int JJTCREATESEQUENCESTATEMENT = 180;
-  public int JJTALTERSEQUENCESTATEMENT = 181;
-  public int JJTDROPSEQUENCESTATEMENT = 182;
-  public int JJTHASTATUSSTATEMENT = 183;
-  public int JJTHAREMOVESERVERSTATEMENT = 184;
-  public int JJTHASYNCDATABASESTATEMENT = 185;
-  public int JJTHASYNCCLUSTERSTATEMENT = 186;
-  public int JJTFOREACHBLOCK = 187;
+  public int JJTDROPUSERSTATEMENT = 172;
+  public int JJTLETSTATEMENT = 173;
+  public int JJTBEGINSTATEMENT = 174;
+  public int JJTCOMMITSTATEMENT = 175;
+  public int JJTROLLBACKSTATEMENT = 176;
+  public int JJTRETURNSTATEMENT = 177;
+  public int JJTIFSTATEMENT = 178;
+  public int JJTSLEEPSTATEMENT = 179;
+  public int JJTCONSOLESTATEMENT = 180;
+  public int JJTCREATESEQUENCESTATEMENT = 181;
+  public int JJTALTERSEQUENCESTATEMENT = 182;
+  public int JJTDROPSEQUENCESTATEMENT = 183;
+  public int JJTHASTATUSSTATEMENT = 184;
+  public int JJTHAREMOVESERVERSTATEMENT = 185;
+  public int JJTHASYNCDATABASESTATEMENT = 186;
+  public int JJTHASYNCCLUSTERSTATEMENT = 187;
+  public int JJTFOREACHBLOCK = 188;
 
 
   public String[] jjtNodeName = {
@@ -366,6 +367,7 @@ public interface OrientSqlTreeConstants
     "RevokeStatement",
     "CreateFunctionStatement",
     "CreateUserStatement",
+    "DropUserStatement",
     "LetStatement",
     "BeginStatement",
     "CommitStatement",
@@ -384,4 +386,4 @@ public interface OrientSqlTreeConstants
     "ForEachBlock",
   };
 }
-/* JavaCC - OriginalChecksum=ecb8d71d7cb844b98f04e2f8c5558053 (do not edit this line) */
+/* JavaCC - OriginalChecksum=5f5dbd050e29aa0475fb353c52f97418 (do not edit this line) */

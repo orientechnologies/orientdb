@@ -38,9 +38,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.net.URL;
-import java.security.CodeSource;
-import java.security.ProtectionDomain;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -96,7 +93,7 @@ public class ONative {
       if (result == 0 && rlimit.rlim_cur > 0) {
         if (verbose) {
           OLogManager.instance().infoNoDb(this, "Detected limit of amount of simultaneously open files is %d, "
-              + " limit of open files for disk cache will be set to ", rlimit.rlim_cur, rlimit.rlim_cur - 512);
+              + " limit of open files for disk cache will be set to %d", rlimit.rlim_cur, rlimit.rlim_cur / 2 - 512);
         }
 
         if (rlimit.rlim_cur < recommended) {
@@ -105,7 +102,7 @@ public class ONative {
                   recommended);
         }
 
-        return (int) rlimit.rlim_cur - 512;
+        return (int) rlimit.rlim_cur / 2 - 512;
       } else {
         if (verbose) {
           OLogManager.instance().infoNoDb(this, "Can not detect value of limit of open files.");

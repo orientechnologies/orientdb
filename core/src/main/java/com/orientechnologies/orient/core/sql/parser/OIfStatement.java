@@ -26,7 +26,8 @@ public class OIfStatement extends OStatement {
     super(p, id);
   }
 
-  @Override public boolean isIdempotent() {
+  @Override
+  public boolean isIdempotent() {
     for (OStatement stm : statements) {
       if (!stm.isIdempotent()) {
         return false;
@@ -40,7 +41,8 @@ public class OIfStatement extends OStatement {
     return true;
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  @Override
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -56,6 +58,9 @@ public class OIfStatement extends OStatement {
     OIfExecutionPlan executionPlan = createExecutionPlan(ctx, false);
 
     OExecutionStepInternal last = executionPlan.executeUntilReturn();
+    if (last == null) {
+      last = new EmptyStep(ctx, false);
+    }
     if (isIdempotent()) {
       OSelectExecutionPlan finalPlan = new OSelectExecutionPlan(ctx);
       finalPlan.chain(last);
@@ -68,7 +73,8 @@ public class OIfStatement extends OStatement {
     }
   }
 
-  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  @Override
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -90,7 +96,8 @@ public class OIfStatement extends OStatement {
     }
   }
 
-  @Override public OIfExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
+  @Override
+  public OIfExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
 
     OIfExecutionPlan plan = new OIfExecutionPlan(ctx);
 
@@ -98,26 +105,13 @@ public class OIfStatement extends OStatement {
     step.setCondition(this.expression);
     plan.chain(step);
 
-    OBasicCommandContext subCtx1 = new OBasicCommandContext();
-    subCtx1.setParent(ctx);
-    OScriptExecutionPlan positivePlan = new OScriptExecutionPlan(subCtx1);
-    for (OStatement stm : statements) {
-      positivePlan.chain(stm.createExecutionPlan(subCtx1, enableProfiling), enableProfiling);
-    }
-    step.setPositivePlan(positivePlan);
-    if (elseStatements.size() > 0) {
-      OBasicCommandContext subCtx2 = new OBasicCommandContext();
-      subCtx2.setParent(ctx);
-      OScriptExecutionPlan negativePlan = new OScriptExecutionPlan(subCtx2);
-      for (OStatement stm : elseStatements) {
-        negativePlan.chain(stm.createExecutionPlan(subCtx2, enableProfiling), enableProfiling);
-      }
-      step.setNegativePlan(negativePlan);
-    }
+    step.positiveStatements = statements;
+    step.negativeStatements = elseStatements;
     return plan;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("IF(");
     expression.toString(params, builder);
     builder.append("){\n");
@@ -137,7 +131,8 @@ public class OIfStatement extends OStatement {
     }
   }
 
-  @Override public OIfStatement copy() {
+  @Override
+  public OIfStatement copy() {
     OIfStatement result = new OIfStatement(-1);
     result.expression = expression == null ? null : expression.copy();
     result.statements = statements == null ? null : statements.stream().map(OStatement::copy).collect(Collectors.toList());
@@ -146,7 +141,8 @@ public class OIfStatement extends OStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -164,11 +160,16 @@ public class OIfStatement extends OStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = expression != null ? expression.hashCode() : 0;
     result = 31 * result + (statements != null ? statements.hashCode() : 0);
     result = 31 * result + (elseStatements != null ? elseStatements.hashCode() : 0);
     return result;
+  }
+
+  public List<OStatement> getStatements() {
+    return statements;
   }
 }
 /* JavaCC - OriginalChecksum=a8cd4fb832a4f3b6e71bb1a12f8d8819 (do not edit this line) */

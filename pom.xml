@@ -15,7 +15,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>3.0.2-SNAPSHOT</version>
+    <version>3.0.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>OrientDB</name>
@@ -184,7 +184,7 @@
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
 
-        <license.location>ODB-ASL-LICENSE.txt</license.location>
+        <license.location>license.txt</license.location>
         <!--Override with the given url on external modules-->
         <!--<license.location>https://github.com/orientechnologies/orientdb/raw/develop/ODB-ASL-LICENSE.txt</license.location>-->
         <heapSize>2048m</heapSize>

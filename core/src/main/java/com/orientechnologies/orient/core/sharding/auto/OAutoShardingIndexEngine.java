@@ -22,16 +22,26 @@ package com.orientechnologies.orient.core.sharding.auto;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.OIndexUpdateAction;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OSHA256HashFunction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,19 +63,17 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
   private final OAbstractPaginatedStorage        storage;
   private final boolean                          durableInNonTx;
-  private final OMurmurHash3HashFunction<Object> hashFunction;
   private       List<OHashTable<Object, Object>> partitions;
   private       OAutoShardingStrategy            strategy;
   private       int                              version;
   private final String                           name;
   private       int                              partitionSize;
-  private final AtomicLong bonsayFileId = new AtomicLong(0);
+  private final AtomicLong                       bonsayFileId = new AtomicLong(0);
 
   public OAutoShardingIndexEngine(final String iName, final Boolean iDurableInNonTxMode, final OAbstractPaginatedStorage iStorage,
       final int iVersion) {
     this.name = iName;
     this.storage = iStorage;
-    this.hashFunction = new OMurmurHash3HashFunction<Object>();
 
     if (iDurableInNonTxMode == null)
       durableInNonTx = iStorage.getConfiguration().getContextConfiguration()
@@ -88,10 +96,18 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   @Override
   public void create(final OBinarySerializer valueSerializer, final boolean isAutomatic, final OType[] keyTypes,
       final boolean nullPointerSupport, final OBinarySerializer keySerializer, final int keySize, final Set<String> clustersToIndex,
-      final Map<String, String> engineProperties, final ODocument metadata) {
+      final Map<String, String> engineProperties, final ODocument metadata, OEncryption encryption) {
 
     this.strategy = new OAutoShardingMurmurStrategy(keySerializer);
-    this.hashFunction.setValueSerializer(keySerializer);
+
+    final OHashFunction<Object> hashFunction;
+
+    if (encryption != null) {
+      hashFunction = new OSHA256HashFunction<>(keySerializer);
+    } else {
+      hashFunction = new OMurmurHash3HashFunction<>(keySerializer);
+    }
+
     this.partitionSize = clustersToIndex.size();
     if (metadata != null && metadata.containsField("partitions"))
       this.partitionSize = metadata.field("partitions");
@@ -101,14 +117,14 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     init();
 
     for (OHashTable<Object, Object> p : partitions) {
-      p.create(keySerializer, valueSerializer, keyTypes, nullPointerSupport);
+      p.create(keySerializer, valueSerializer, keyTypes, encryption, hashFunction, nullPointerSupport);
     }
   }
 
   @Override
   public void load(final String indexName, final OBinarySerializer valueSerializer, final boolean isAutomatic,
       final OBinarySerializer keySerializer, final OType[] keyTypes, final boolean nullPointerSupport, final int keySize,
-      final Map<String, String> engineProperties) {
+      final Map<String, String> engineProperties, OEncryption encryption) {
 
     this.strategy = new OAutoShardingMurmurStrategy(keySerializer);
 
@@ -122,11 +138,18 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       init();
 
       int i = 0;
-      for (OHashTable<Object, Object> p : partitions)
-        p.load(indexName + "_" + (i++), keyTypes, nullPointerSupport);
-    }
 
-    hashFunction.setValueSerializer(keySerializer);
+      final OHashFunction<Object> hashFunction;
+
+      if (encryption != null) {
+        hashFunction = new OSHA256HashFunction<>(keySerializer);
+      } else {
+        hashFunction = new OMurmurHash3HashFunction<>(keySerializer);
+      }
+
+      for (OHashTable<Object, Object> p : partitions)
+        p.load(indexName + "_" + (i++), keyTypes, nullPointerSupport, encryption, hashFunction);
+    }
   }
 
   @Override
@@ -163,7 +186,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
     for (int i = 0; i < partitionSize; ++i) {
       partitions.add(
           new OLocalHashTable<Object, Object>(name + "_" + i, SUBINDEX_METADATA_FILE_EXTENSION, SUBINDEX_TREE_FILE_EXTENSION,
-              SUBINDEX_BUCKET_FILE_EXTENSION, SUBINDEX_NULL_BUCKET_FILE_EXTENSION, hashFunction, storage));
+              SUBINDEX_BUCKET_FILE_EXTENSION, SUBINDEX_NULL_BUCKET_FILE_EXTENSION, storage));
     }
   }
 

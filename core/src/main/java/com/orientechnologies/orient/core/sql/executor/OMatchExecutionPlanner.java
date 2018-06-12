@@ -547,7 +547,7 @@ public class OMatchExecutionPlanner {
     assignDefaultAliases(this.matchExpressions);
     pattern = new Pattern();
     for (OMatchExpression expr : this.matchExpressions) {
-      pattern.addExpression(expr.copy());
+      pattern.addExpression(expr);
     }
 
     Map<String, OWhereClause> aliasFilters = new LinkedHashMap<>();

@@ -15,33 +15,32 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sharding.auto.OAutoShardingClusterSelectionStrategy;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sharding.auto.OAutoShardingClusterSelectionStrategy;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-
 /**
  * Tests Auto-Sharding indexes (Since v2.2.0).
  */
 @Test
 public class AutoShardingTest extends DocumentDBBaseTest {
-  private static final int               ITERATIONS   = 500;
-  private OClass                         cls;
-  private OIndex<?>                      idx;
-  private final OMurmurHash3HashFunction hashFunction = new OMurmurHash3HashFunction();
-  private int[]                          clusterIds;
+  private static final int                      ITERATIONS   = 500;
+  private              OClass                   cls;
+  private              OIndex<?>                idx;
+  private final        OMurmurHash3HashFunction hashFunction = new OMurmurHash3HashFunction(new OIntegerSerializer());
+  private              int[]                    clusterIds;
 
   @Parameters(value = "url")
   public AutoShardingTest(@Optional String url) {
@@ -51,8 +50,6 @@ public class AutoShardingTest extends DocumentDBBaseTest {
   @BeforeMethod
   public void beforeMethod() throws Exception {
     super.beforeMethod();
-
-    hashFunction.setValueSerializer(new OIntegerSerializer());
 
     if (database.getMetadata().getSchema().existsClass("AutoShardingTest"))
       database.getMetadata().getSchema().dropClass("AutoShardingTest");

@@ -135,6 +135,14 @@ public class OBaseExpression extends OMathExpression {
   }
 
   @Override
+  public boolean isFunctionAny() {
+    if (this.identifier == null) {
+      return false;
+    }
+    return identifier.isFunctionAny();
+  }
+
+  @Override
   public boolean isIndexedFunctionCall() {
     if (this.identifier == null) {
       return false;

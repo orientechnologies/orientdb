@@ -1036,7 +1036,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         // listener.registerStatelessCommand(new OServerCommandPostSecurityReload(this));
       } else {
         OLogManager.instance()
-            .error(this, "ODefaultServerSecurity.registerRESTCommands() unable to retrieve Network Protocol listener.", null);
+            .info(this, "ODefaultServerSecurity.registerRESTCommands() unable to retrieve Network Protocol listener.", null);
       }
     } catch (Exception th) {
       OLogManager.instance().error(this, "ODefaultServerSecurity.registerRESTCommands()", th);

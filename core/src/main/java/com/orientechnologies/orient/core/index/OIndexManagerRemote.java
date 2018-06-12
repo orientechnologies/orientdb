@@ -64,7 +64,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       if (progressListener != null)
         progressListener.onBegin(this, 0, false);
 
-      getDatabase().command(createIndexDDL);
+      getDatabase().command(createIndexDDL).close();
 
       ORecordInternal.setIdentity(document, new ORecordId(getDatabase().getStorage().getConfiguration().getIndexMgrRecordId()));
 
@@ -92,10 +92,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     acquireExclusiveLock();
     try {
       final String text = String.format(QUERY_DROP, iIndexName);
-      getDatabase().command(text);
+      getDatabase().command(text).close();
 
       // REMOVE THE INDEX LOCALLY
-      final Locale locale = getServerLocale();
       indexes.remove(iIndexName);
       reload();
 

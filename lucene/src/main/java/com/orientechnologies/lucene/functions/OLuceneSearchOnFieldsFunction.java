@@ -7,10 +7,12 @@ import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.lucene.query.OLuceneKeyAndMetadata;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.parser.*;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.memory.MemoryIndex;
@@ -37,12 +39,14 @@ public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate
   }
 
   @Override
-  public Object execute(Object iThis,
-      OIdentifiable iCurrentRecord,
-      Object iCurrentResult,
-      Object[] params,
-      OCommandContext ctx) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] params, OCommandContext ctx) {
 
+    if (iThis instanceof ORID) {
+      iThis = ((ORID) iThis).getRecord();
+    }
+    if (iThis instanceof OIdentifiable) {
+      iThis = new OResultInternal((OIdentifiable) iThis);
+    }
     OResult result = (OResult) iThis;
 
     OElement element = result.toElement();
@@ -59,10 +63,7 @@ public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate
 
     MemoryIndex memoryIndex = getOrCreateMemoryIndex(ctx);
 
-    List<Object> key = index.getDefinition().getFields()
-        .stream()
-        .map(s -> element.getProperty(s))
-        .collect(Collectors.toList());
+    List<Object> key = index.getDefinition().getFields().stream().map(s -> element.getProperty(s)).collect(Collectors.toList());
 
     try {
       for (IndexableField field : index.buildDocument(key).getFields()) {
@@ -98,11 +99,8 @@ public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate
   }
 
   @Override
-  public Iterable<OIdentifiable> searchFromTarget(OFromClause target,
-      OBinaryCompareOperator operator,
-      Object rightValue,
-      OCommandContext ctx,
-      OExpression... args) {
+  public Iterable<OIdentifiable> searchFromTarget(OFromClause target, OBinaryCompareOperator operator, Object rightValue,
+      OCommandContext ctx, OExpression... args) {
 
     OLuceneFullTextIndex index = searchForIndex(target, ctx, args);
 
@@ -139,15 +137,9 @@ public class OLuceneSearchOnFieldsFunction extends OLuceneSearchFunctionTemplate
   private OLuceneFullTextIndex searchForIndex(String className, OCommandContext ctx, List<String> fieldNames) {
     OMetadata dbMetadata = ctx.getDatabase().activateOnCurrentThread().getMetadata();
 
-    List<OLuceneFullTextIndex> indices = dbMetadata
-        .getSchema()
-        .getClass(className)
-        .getIndexes()
-        .stream()
-        .filter(idx -> idx instanceof OLuceneFullTextIndex)
-        .map(idx -> (OLuceneFullTextIndex) idx)
-        .filter(idx -> intersect(idx.getDefinition().getFields(), fieldNames))
-        .collect(Collectors.toList());
+    List<OLuceneFullTextIndex> indices = dbMetadata.getSchema().getClass(className).getIndexes().stream()
+        .filter(idx -> idx instanceof OLuceneFullTextIndex).map(idx -> (OLuceneFullTextIndex) idx)
+        .filter(idx -> intersect(idx.getDefinition().getFields(), fieldNames)).collect(Collectors.toList());
 
     if (indices.size() > 1) {
       throw new IllegalArgumentException("too many indices matching given field name: " + String.join(",", fieldNames));

@@ -1,53 +1,55 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.junit.After;
+import org.junit.Before;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 19.02.13
  */
 public class OLocalHashTableTestIT extends OLocalHashTableBase {
+  private OrientDB orientDB;
 
-  public OLocalHashTableTestIT() throws Exception {
+  private static final String DB_NAME = "localHashTableTest";
 
-    String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+  @Before
+  public void before() {
+    String buildDirectory = System.getProperty("buildDirectory", ".");
+    final File dbDirectory = new File(buildDirectory, DB_NAME);
 
-    final File dbDirectory = new File(buildDirectory, "localHashTableTest");
-    System.out.println(this.getClass().getSimpleName() + " test is initializing using DB directory = " + dbDirectory);
+    OFileUtils.deleteRecursively(dbDirectory);
+    orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
 
-    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + dbDirectory.getCanonicalPath());
-    if (databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
-    }
+    orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
+    final ODatabaseSession databaseDocumentTx = orientDB.open(DB_NAME, "admin", "admin");
 
-    databaseDocumentTx.create();
+    OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>(OIntegerSerializer.INSTANCE);
 
-    OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
-    murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
-
-    localHashTable = new OLocalHashTable<Integer, String>("localHashTableTest", ".imc", ".tsc", ".obf", ".nbh",
-        murmurHash3HashFunction, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+    localHashTable = new OLocalHashTable<>("localHashTableTest", ".imc", ".tsc", ".obf", ".nbh",
+        (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
 
     localHashTable
-        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().<String>getObjectSerializer(OType.STRING), null,
-            true);
+        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().getObjectSerializer(OType.STRING), null, null,
+            murmurHash3HashFunction, true);
 
   }
 
   @After
-  public void afterMethod() throws IOException {
-    localHashTable.clear();
+  public void after() {
+    orientDB.drop(DB_NAME);
+    orientDB.close();
   }
 
 }

@@ -541,7 +541,7 @@ public class OSelectExecutionPlanner {
     return true;
   }
 
-  private boolean isCountStar(QueryPlanningInfo info) {
+  private static boolean isCountStar(QueryPlanningInfo info) {
     if (info.aggregateProjection == null || info.projection == null || info.aggregateProjection.getItems().size() != 1
         || info.projection.getItems().size() != 1) {
       return false;
@@ -590,6 +590,10 @@ public class OSelectExecutionPlanner {
       }
       if (info.aggregateProjection != null) {
         result.chain(new AggregateProjectionCalculationStep(info.aggregateProjection, info.groupBy, ctx, profilingEnabled));
+        if (isCountStar(info) && info.groupBy == null) {
+          result.chain(new GuaranteeEmptyCountStep(info.aggregateProjection.getItems().get(0), ctx, profilingEnabled));
+        }
+
       }
       result.chain(new ProjectionCalculationStep(info.projection, ctx, profilingEnabled));
 

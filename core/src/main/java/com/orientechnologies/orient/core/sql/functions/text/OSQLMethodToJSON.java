@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 import java.util.Map;
@@ -52,6 +53,9 @@ public class OSQLMethodToJSON extends OAbstractSQLMethod {
 
     final String format = iParams.length > 0 ? ((String) iParams[0]).replace("\"", "") : null;
 
+    if(iThis instanceof OResult){
+      iThis = ((OResult) iThis).toElement();
+    }
     if (iThis instanceof ORecord) {
 
       final ORecord record = (ORecord) iThis;

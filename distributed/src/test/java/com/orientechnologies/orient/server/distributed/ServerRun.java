@@ -97,8 +97,8 @@ public class ServerRun {
 
       final Node otherNode = getHazelcastNode(((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
 
-      currentNode.clusterService.removeAddress(otherNode.address, "test");
-      otherNode.clusterService.removeAddress(currentNode.address, "test");
+      currentNode.clusterService.suspectMember(currentNode.clusterService.getMember(otherNode.address), "test", true);
+//      otherNode.clusterService.suspectMember(currentNode.clusterService.getMember(currentNode.address), "test", true);
     }
   }
 
@@ -128,7 +128,7 @@ public class ServerRun {
   }
 
   public ODatabaseDocument createDatabase(final String iName) {
-    server.createDatabase(iName,ODatabaseType.PLOCAL,OrientDBConfig.defaultConfig());
+    server.createDatabase(iName, ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
     return server.openDatabase(iName, "admin", "admin");
   }
   
@@ -145,7 +145,6 @@ System.out.println("----- db exists = " + orientDB.exists(dbName));
   	 
   	 return orientDB.open(dbName, "admin", "admin");
   }*/
-  
 
   public void copyDatabase(final String iDatabaseName, final String iDestinationDirectory) throws IOException {
     // COPY THE DATABASE TO OTHER DIRECTORIES
@@ -165,7 +164,7 @@ System.out.println("----- db exists = " + orientDB.exists(dbName));
       server = OServerMain.create(false);
 
     server.setServerRootDirectory(getServerHome());
-    server.startup(getClass().getClassLoader().getResourceAsStream(iServerConfigFile));    
+    server.startup(getClass().getClassLoader().getResourceAsStream(iServerConfigFile));
     server.activate();
 
     return server;
@@ -219,17 +218,17 @@ System.out.println("----- db exists = " + orientDB.exists(dbName));
     server.getDatabases().close();
   }
 
-/*
-  public void deleteStorages() {
-    for (OStorage s : Orient.instance().getStorages()) {
-      if (s instanceof OLocalPaginatedStorage && new File(((OLocalPaginatedStorage) s).getStoragePath()).getAbsolutePath()
-          .startsWith(getDatabasePath(""))) {
-        s.close(true, true);
-        Orient.instance().unregisterStorage(s);
+  /*
+    public void deleteStorages() {
+      for (OStorage s : Orient.instance().getStorages()) {
+        if (s instanceof OLocalPaginatedStorage && new File(((OLocalPaginatedStorage) s).getStoragePath()).getAbsolutePath()
+            .startsWith(getDatabasePath(""))) {
+          s.close(true, true);
+          Orient.instance().unregisterStorage(s);
+        }
       }
     }
-  }
-*/
+  */
   public String getServerHome() {
     return getServerHome(serverId);
   }

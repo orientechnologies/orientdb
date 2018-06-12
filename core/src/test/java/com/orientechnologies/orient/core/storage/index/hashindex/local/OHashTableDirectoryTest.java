@@ -1,10 +1,14 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.assertj.core.api.Assertions;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.IOException;
 
@@ -30,9 +34,6 @@ public class OHashTableDirectoryTest {
     }
 
     databaseDocumentTx.create();
-
-    OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
-    murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
     directory = new OHashTableDirectory(".tsc", "hashTableDirectoryTest", "hashTableDirectoryTest", (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
