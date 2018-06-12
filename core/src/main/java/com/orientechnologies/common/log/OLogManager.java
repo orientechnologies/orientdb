@@ -176,7 +176,7 @@ public class OLogManager {
         try {
           final String msg = String.format(iMessage, iAdditionalArgs);
           final LogRecord record = new LogRecord(iLevel, msg);
-
+          record.setLoggerName(log.getName());
           if (iException != null) {
             record.setThrown(iException);
           }
