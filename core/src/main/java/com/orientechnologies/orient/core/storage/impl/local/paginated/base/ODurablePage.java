@@ -117,6 +117,10 @@ public class ODurablePage {
     return new OLogSequenceNumber(segment, position);
   }
 
+  public OCacheEntry getCacheEntry() {
+    return cacheEntry;
+  }
+
   protected int getIntValue(int pageOffset) {
     assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 

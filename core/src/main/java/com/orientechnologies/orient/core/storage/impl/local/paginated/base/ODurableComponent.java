@@ -138,7 +138,9 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return cacheEntry;
   }
 
-  protected void releasePageFromWrite(OCacheEntry cacheEntry, OAtomicOperation atomicOperation) {
+  protected void releasePageFromWrite(ODurablePage page, OAtomicOperation atomicOperation) {
+    assert page != null;
+    final OCacheEntry cacheEntry = page.getCacheEntry();
     if (cacheEntry.isDirty() && storage instanceof OLocalPaginatedStorage) {
       final OLogSequenceNumber end = writeAheadLog.end();
       final OCachePointer cachePointer = cacheEntry.getCachePointer();
@@ -147,14 +149,10 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
       final OLogSequenceNumber recordLSN;
       if (pageLsn.getSegment() < end.getSegment()) {
-        final byte[] page = new byte[buffer.limit()];
-
-        buffer.position(0);
-        buffer.get(page);
-
+        final byte[] serializedPage = page.serializePage();
         try {
           final OUpdatePageRecord updatePageRecord = new OUpdatePageRecord(cacheEntry.getPageIndex(), cacheEntry.getFileId(),
-              atomicOperation.getOperationUnitId(), page);
+              atomicOperation.getOperationUnitId(), serializedPage);
           recordLSN = writeAheadLog.log(updatePageRecord);
         } catch (IOException e) {
           throw OException.wrapException(new OStorageException(
@@ -214,10 +212,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected boolean isFileExists(String fileName) {
     return writeCache.exists(fileName);
-  }
-
-  protected boolean isFileExists(long fileId) {
-    return writeCache.exists(fileId);
   }
 
   protected void truncateFile(long filedId) throws IOException {
