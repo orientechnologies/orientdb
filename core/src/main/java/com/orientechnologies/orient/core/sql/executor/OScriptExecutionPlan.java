@@ -92,7 +92,7 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
         }
         partial = lastStep.syncPull(ctx, n);
       }
-      if(lastStep instanceof ScriptLineStep) {
+      if (lastStep instanceof ScriptLineStep) {
         ((OInternalResultSet) finalResult).setPlan(((ScriptLineStep) lastStep).plan);
       }
     }
@@ -166,6 +166,11 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
     return false;
   }
 
+  /**
+   * executes all the script and returns last statement execution step, so that it can be executed from outside
+   *
+   * @return
+   */
   public OExecutionStepInternal executeUntilReturn() {
     if (steps.size() > 0) {
       lastStep = steps.get(steps.size() - 1);
@@ -190,6 +195,33 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
     }
     this.lastStep = steps.get(steps.size() - 1);
     return lastStep;
+  }
+
+  /**
+   * executes the whole script and returns last statement ONLY if it's a RETURN, otherwise it returns null;
+   *
+   * @return
+   */
+  public OExecutionStepInternal executeFull() {
+    for (int i = 0; i < steps.size(); i++) {
+      ScriptLineStep step = steps.get(i);
+      if (step.containsReturn()) {
+        OExecutionStepInternal returnStep = step.executeUntilReturn(ctx);
+        if (returnStep != null) {
+          return returnStep;
+        }
+      }
+      OResultSet lastResult = step.syncPull(ctx, 100);
+
+      while (lastResult.hasNext()) {
+        while (lastResult.hasNext()) {
+          lastResult.next();
+        }
+        lastResult = step.syncPull(ctx, 100);
+      }
+    }
+
+    return null;
   }
 }
 

@@ -171,5 +171,34 @@ public class OIfStatement extends OStatement {
   public List<OStatement> getStatements() {
     return statements;
   }
+
+  public boolean containsReturn() {
+    for (OStatement stm : this.statements) {
+      if (stm instanceof OReturnStatement) {
+        return true;
+      }
+      if (stm instanceof OForEachBlock && ((OForEachBlock) stm).containsReturn()) {
+        return true;
+      }
+      if (stm instanceof OIfStatement && ((OIfStatement) stm).containsReturn()) {
+        return true;
+      }
+    }
+
+    if (elseStatements != null) {
+      for (OStatement stm : this.elseStatements) {
+        if (stm instanceof OReturnStatement) {
+          return true;
+        }
+        if (stm instanceof OForEachBlock && ((OForEachBlock) stm).containsReturn()) {
+          return true;
+        }
+        if (stm instanceof OIfStatement && ((OIfStatement) stm).containsReturn()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=a8cd4fb832a4f3b6e71bb1a12f8d8819 (do not edit this line) */

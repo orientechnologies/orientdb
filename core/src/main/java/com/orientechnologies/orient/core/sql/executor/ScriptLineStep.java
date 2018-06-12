@@ -62,6 +62,12 @@ public class ScriptLineStep extends AbstractExecutionStep {
         }
       }
     }
+
+    if (plan instanceof OForEachExecutionPlan) {
+      if (((OForEachExecutionPlan) plan).containsReturn()) {
+        return true;
+      }
+    }
     return false;
   }
 
