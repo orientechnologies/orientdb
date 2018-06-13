@@ -93,7 +93,7 @@ public class OClusterList extends SimpleNode {
       List<OResult> ser = fromResult.getProperty("clusters");
       for (OResult item : ser) {
         OIdentifier id = new OIdentifier(-1);
-        id.deserialize(item);
+        OIdentifier.deserialize(item);
         clusters.add(id);
       }
     }
