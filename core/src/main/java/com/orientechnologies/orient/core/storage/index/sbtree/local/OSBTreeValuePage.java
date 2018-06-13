@@ -20,12 +20,12 @@
 
 package com.orientechnologies.orient.core.storage.index.sbtree.local;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+
+import java.nio.ByteBuffer;
 
 /**
  * This page will contain value if it exceeds value limit for SBTree. Value is stored as list of linked pages. Following format is
@@ -37,23 +37,22 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  * <li>Next page which contains next portion of data. 8 bytes.</li>
  * <li>Serialized value presentation.</li>
  * </ol>
- * 
  * !!! This functionality should be removed after new sbtree based ridbag will be implemented, because it doest not make any sense
  * to keep it, it will provide performance degradation only !!!!!!
- * 
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 9/27/13
  */
-public class OSBTreeValuePage extends ODurablePage {
+public final class OSBTreeValuePage extends ODurablePage {
   private static final int FREE_LIST_NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
   private static final int WHOLE_VALUE_SIZE_OFFSET    = FREE_LIST_NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int PAGE_VALUE_SIZE_OFFSET     = WHOLE_VALUE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int NEXT_VALUE_PAGE_OFFSET     = PAGE_VALUE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int BINARY_CONTENT_OFFSET      = NEXT_VALUE_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
-  public static final int  MAX_BINARY_VALUE_SIZE      = MAX_PAGE_SIZE_BYTES - BINARY_CONTENT_OFFSET;
+  static final int MAX_BINARY_VALUE_SIZE = MAX_PAGE_SIZE_BYTES - BINARY_CONTENT_OFFSET;
 
-  public OSBTreeValuePage(OCacheEntry cacheEntry, boolean isNew) throws IOException {
+  OSBTreeValuePage(final OCacheEntry cacheEntry, final boolean isNew) {
     super(cacheEntry);
 
     if (isNew) {
@@ -63,51 +62,55 @@ public class OSBTreeValuePage extends ODurablePage {
 
   }
 
-  public void setNextPage(long nextPage) throws IOException {
-    setLongValue(NEXT_VALUE_PAGE_OFFSET, nextPage);
+  void setNextPage(final long nextPage) {
+    buffer.putLong(NEXT_VALUE_PAGE_OFFSET, nextPage);
+    cacheEntry.markDirty();
   }
 
   public int getSize() {
-    return getIntValue(WHOLE_VALUE_SIZE_OFFSET);
+    return buffer.getInt(WHOLE_VALUE_SIZE_OFFSET);
   }
 
-  public int fillBinaryContent(byte[] data, int offset) throws IOException {
-    setIntValue(WHOLE_VALUE_SIZE_OFFSET, data.length);
+  int fillBinaryContent(final byte[] data, final int offset) {
+    buffer.putInt(WHOLE_VALUE_SIZE_OFFSET, data.length);
 
-    int maxSize = Math.min(data.length - offset, MAX_BINARY_VALUE_SIZE);
+    final int maxSize = Math.min(data.length - offset, MAX_BINARY_VALUE_SIZE);
 
-    setIntValue(PAGE_VALUE_SIZE_OFFSET, maxSize);
+    buffer.putInt(PAGE_VALUE_SIZE_OFFSET, maxSize);
 
-    byte[] pageValue = new byte[maxSize];
+    final byte[] pageValue = new byte[maxSize];
     System.arraycopy(data, offset, pageValue, 0, maxSize);
 
-    setBinaryValue(BINARY_CONTENT_OFFSET, pageValue);
+    buffer.position(BINARY_CONTENT_OFFSET);
+    buffer.put(pageValue);
 
+    cacheEntry.markDirty();
     return offset + maxSize;
   }
 
-  public int readBinaryContent(byte[] data, int offset) throws IOException {
-    int valueSize = getIntValue(PAGE_VALUE_SIZE_OFFSET);
-    byte[] content = getBinaryValue(BINARY_CONTENT_OFFSET, valueSize);
+  int readBinaryContent(final byte[] data, final int offset) {
+    final int valueSize = buffer.getInt(PAGE_VALUE_SIZE_OFFSET);
+
+    final ByteBuffer buffer = getBufferDuplicate();
+    final byte[] content = new byte[valueSize];
+    buffer.position(BINARY_CONTENT_OFFSET);
+    buffer.get(content);
 
     System.arraycopy(content, 0, data, offset, valueSize);
 
     return offset + valueSize;
   }
 
-  public long getNextPage() {
-    return getLongValue(NEXT_VALUE_PAGE_OFFSET);
+  long getNextPage() {
+    return buffer.getLong(NEXT_VALUE_PAGE_OFFSET);
   }
 
-  public void setNextFreeListPage(long pageIndex) throws IOException {
-    setLongValue(FREE_LIST_NEXT_PAGE_OFFSET, pageIndex);
+  void setNextFreeListPage(final long pageIndex) {
+    buffer.putLong(FREE_LIST_NEXT_PAGE_OFFSET, pageIndex);
+    cacheEntry.markDirty();
   }
 
-  public long getNextFreeListPage() {
-    return getLongValue(FREE_LIST_NEXT_PAGE_OFFSET);
-  }
-
-  public static int calculateAmountOfPage(int contentSize) {
-    return (int) Math.ceil(1.0 * contentSize / MAX_BINARY_VALUE_SIZE);
+  long getNextFreeListPage() {
+    return buffer.getLong(FREE_LIST_NEXT_PAGE_OFFSET);
   }
 }

@@ -33,7 +33,7 @@ import java.nio.ByteBuffer;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 10/7/13
  */
-public class OClusterPositionMapBucket extends ODurablePage {
+public final class OClusterPositionMapBucket extends ODurablePage {
   private static final int NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
   private static final int SIZE_OFFSET      = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int POSITIONS_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -48,12 +48,12 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
   static final int MAX_ENTRIES = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / ENTRY_SIZE;
 
-  OClusterPositionMapBucket(OCacheEntry cacheEntry) {
+  OClusterPositionMapBucket(final OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
-  public int add(long pageIndex, int recordPosition) {
-    int size = buffer.getInt(SIZE_OFFSET);
+  public int add(final long pageIndex, final int recordPosition) {
+    final int size = buffer.getInt(SIZE_OFFSET);
 
     int position = entryPosition(size);
 
@@ -72,7 +72,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
   }
 
   public int allocate() {
-    int size = buffer.getInt(SIZE_OFFSET);
+    final int size = buffer.getInt(SIZE_OFFSET);
 
     final int position = entryPosition(size);
 
@@ -84,7 +84,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
     return size;
   }
 
-  public PositionEntry get(int index) {
+  public PositionEntry get(final int index) {
     final int size = buffer.getInt(SIZE_OFFSET);
 
     if (index >= size) {
@@ -161,7 +161,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
     cacheEntry.markDirty();
   }
 
-  private int entryPosition(int index) {
+  private static int entryPosition(final int index) {
     return index * ENTRY_SIZE + POSITIONS_OFFSET;
   }
 
@@ -173,7 +173,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
     return buffer.getInt(SIZE_OFFSET);
   }
 
-  public void remove(int index) {
+  public void remove(final int index) {
     final int size = buffer.getInt(SIZE_OFFSET);
 
     if (index >= size) {
@@ -190,7 +190,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
     cacheEntry.markDirty();
   }
 
-  private PositionEntry readEntry(int position, ByteBuffer buffer) {
+  private static PositionEntry readEntry(int position, final ByteBuffer buffer) {
     position += OByteSerializer.BYTE_SIZE;
 
     final long pageIndex = buffer.getLong(position);
@@ -201,7 +201,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
     return new PositionEntry(pageIndex, pagePosition);
   }
 
-  private void updateEntry(int position, final PositionEntry entry, ByteBuffer buffer) {
+  private static void updateEntry(int position, final PositionEntry entry, final ByteBuffer buffer) {
     position += OByteSerializer.BYTE_SIZE;
 
     buffer.putLong(position, entry.pageIndex);
@@ -233,7 +233,6 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
   @Override
   protected byte[] serializePage() {
-    final ByteBuffer buffer = getBufferDuplicate();
     final int positions = buffer.getInt(SIZE_OFFSET);
     final int size = POSITIONS_OFFSET + positions * ENTRY_SIZE;
 
@@ -245,8 +244,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
   }
 
   @Override
-  protected void deserializePage(byte[] page) {
-    final ByteBuffer buffer = getBufferDuplicate();
+  protected void deserializePage(final byte[] page) {
     buffer.position(0);
     buffer.put(page);
 

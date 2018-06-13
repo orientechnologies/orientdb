@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage.index.sbtree.local;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import org.assertj.core.api.Assertions;
@@ -18,14 +17,14 @@ import java.util.Random;
  */
 public class SBTreeValuePageTest {
   @Test
-  public void fillPageDataTest() throws Exception {
+  public void fillPageDataTest() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer bufferOne = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointerOne = new OCachePointer(bufferOne, bufferPool, 0, 0);
     cachePointerOne.incrementReferrer();
 
-    OCacheEntry cacheEntryOne = new OCacheEntryImpl(0, 0, cachePointerOne, false);
+    OCacheEntry cacheEntryOne = new OCacheEntry(0, 0, cachePointerOne, false);
     cacheEntryOne.acquireExclusiveLock();
     OSBTreeValuePage valuePageOne = new OSBTreeValuePage(cacheEntryOne, true);
 
@@ -40,7 +39,7 @@ public class SBTreeValuePageTest {
     OCachePointer cachePointerTwo = new OCachePointer(bufferTwo, bufferPool,  0, 0);
     cachePointerTwo.incrementReferrer();
 
-    OCacheEntry cacheEntryTwo = new OCacheEntryImpl(0, 0, cachePointerTwo, false);
+    OCacheEntry cacheEntryTwo = new OCacheEntry(0, 0, cachePointerTwo, false);
     cacheEntryTwo.acquireExclusiveLock();
 
     OSBTreeValuePage valuePageTwo = new OSBTreeValuePage(cacheEntryTwo, true);
@@ -68,14 +67,14 @@ public class SBTreeValuePageTest {
   }
 
   @Test
-  public void testFreeListPointer() throws Exception {
+  public void testFreeListPointer() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
 
     OSBTreeValuePage valuePage = new OSBTreeValuePage(cacheEntry, true);

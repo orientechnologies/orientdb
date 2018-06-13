@@ -75,7 +75,7 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     public final  V                     value;
     private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
-    SBTreeEntry(OBonsaiBucketPointer leftChild, OBonsaiBucketPointer rightChild, K key, V value) {
+    SBTreeEntry(final OBonsaiBucketPointer leftChild, final OBonsaiBucketPointer rightChild, final K key, final V value) {
       this.leftChild = leftChild;
       this.rightChild = rightChild;
       this.key = key;
@@ -93,18 +93,18 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     }
 
     @Override
-    public V setValue(V value) {
+    public V setValue(final V value) {
       throw new UnsupportedOperationException("SBTreeEntry.setValue");
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
       if (this == o)
         return true;
       if (o == null || getClass() != o.getClass())
         return false;
 
-      SBTreeEntry that = (SBTreeEntry) o;
+      final SBTreeEntry that = (SBTreeEntry) o;
 
       if (!leftChild.equals(that.leftChild))
         return false;
@@ -133,13 +133,13 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     }
 
     @Override
-    public int compareTo(SBTreeEntry<K, V> other) {
+    public int compareTo(final SBTreeEntry<K, V> other) {
       return comparator.compare(key, other.key);
     }
   }
 
-  OSBTreeBonsaiBucketV1(OCacheEntry cacheEntry, int pageOffset, boolean isLeaf, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OSBTreeBonsaiLocalV1<K, V> tree) {
+  OSBTreeBonsaiBucketV1(final OCacheEntry cacheEntry, final int pageOffset, final boolean isLeaf,
+      final OBinarySerializer<K> keySerializer, final OBinarySerializer<V> valueSerializer, final OSBTreeBonsaiLocalV1<K, V> tree) {
     super(cacheEntry);
 
     this.offset = pageOffset;
@@ -165,12 +165,12 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     this.tree = tree;
   }
 
-  OSBTreeBonsaiBucketV1(OCacheEntry cacheEntry, int pageOffset, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OSBTreeBonsaiLocalV1<K, V> tree) {
+  OSBTreeBonsaiBucketV1(final OCacheEntry cacheEntry, final int pageOffset, final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer, final OSBTreeBonsaiLocalV1<K, V> tree) {
     super(cacheEntry);
 
     this.offset = pageOffset;
-    this.isLeaf = (getByteValue(offset + FLAGS_OFFSET) & LEAF) == LEAF;
+    this.isLeaf = (buffer.get(offset + FLAGS_OFFSET) & LEAF) == LEAF;
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
     this.tree = tree;
@@ -188,7 +188,7 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     return buffer.getLong(offset + TREE_SIZE_OFFSET);
   }
 
-  void setTreeSize(long size) {
+  void setTreeSize(final long size) {
     buffer.putLong(offset + TREE_SIZE_OFFSET, size);
     cacheEntry.markDirty();
   }
@@ -197,14 +197,14 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     return size() == 0;
   }
 
-  public int find(K key) {
+  public int find(final K key) {
     int low = 0;
     int high = size() - 1;
 
     while (low <= high) {
-      int mid = (low + high) >>> 1;
-      K midVal = getKey(mid);
-      int cmp = comparator.compare(midVal, key);
+      final int mid = (low + high) >>> 1;
+      final K midVal = getKey(mid);
+      final int cmp = comparator.compare(midVal, key);
 
       if (cmp < 0)
         low = mid + 1;
@@ -216,8 +216,8 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     return -(low + 1); // key not found.
   }
 
-  public void remove(int entryIndex) {
-    int entryPosition = buffer.getInt(offset + POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
+  public void remove(final int entryIndex) {
+    final int entryPosition = buffer.getInt(offset + POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
 
     buffer.position(offset + entryPosition);
     int entrySize = keySerializer.getObjectSizeInByteBuffer(buffer);
@@ -233,22 +233,22 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     if (entryIndex < size - 1) {
       moveData(offset + POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE,
           offset + POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE,
-          (size - entryIndex - 1) * OIntegerSerializer.INT_SIZE, buffer);
+          (size - entryIndex - 1) * OIntegerSerializer.INT_SIZE);
     }
 
     size--;
     buffer.putInt(offset + SIZE_OFFSET, size);
 
-    int freePointer = buffer.getInt(offset + FREE_POINTER_OFFSET);
+    final int freePointer = buffer.getInt(offset + FREE_POINTER_OFFSET);
     if (size > 0 && entryPosition > freePointer) {
-      moveData(offset + freePointer, offset + freePointer + entrySize, entryPosition - freePointer, buffer);
+      moveData(offset + freePointer, offset + freePointer + entrySize, entryPosition - freePointer);
     }
     buffer.putInt(offset + FREE_POINTER_OFFSET, freePointer + entrySize);
 
     int currentPositionOffset = offset + POSITIONS_ARRAY_OFFSET;
 
     for (int i = 0; i < size; i++) {
-      int currentEntryPosition = buffer.getInt(currentPositionOffset);
+      final int currentEntryPosition = buffer.getInt(currentPositionOffset);
       if (currentEntryPosition < entryPosition) {
         buffer.putInt(currentPositionOffset, currentEntryPosition + entrySize);
       }
@@ -260,42 +260,41 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     return buffer.getInt(offset + SIZE_OFFSET);
   }
 
-  public SBTreeEntry<K, V> getEntry(int entryIndex) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
+  public SBTreeEntry<K, V> getEntry(final int entryIndex) {
     int entryPosition = buffer.getInt(offset + entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+
+    final ByteBuffer buffer = getBufferDuplicate();
 
     if (isLeaf) {
       buffer.position(offset + entryPosition);
-      K key = keySerializer.deserializeFromByteBufferObject(buffer);
+      final K key = keySerializer.deserializeFromByteBufferObject(buffer);
 
       buffer.position(offset + entryPosition);
       entryPosition += keySerializer.getObjectSizeInByteBuffer(buffer);
 
       buffer.position(offset + entryPosition);
-      V value = valueSerializer.deserializeFromByteBufferObject(buffer);
+      final V value = valueSerializer.deserializeFromByteBufferObject(buffer);
 
       return new SBTreeEntry<>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key, value);
     } else {
-      OBonsaiBucketPointer leftChild = getBucketPointer(offset + entryPosition);
+      final OBonsaiBucketPointer leftChild = getBucketPointer(offset + entryPosition);
       entryPosition += OBonsaiBucketPointer.SIZE;
 
-      OBonsaiBucketPointer rightChild = getBucketPointer(offset + entryPosition);
+      final OBonsaiBucketPointer rightChild = getBucketPointer(offset + entryPosition);
       entryPosition += OBonsaiBucketPointer.SIZE;
 
       buffer.position(offset + entryPosition);
-      K key = keySerializer.deserializeFromByteBufferObject(buffer);
+      final K key = keySerializer.deserializeFromByteBufferObject(buffer);
 
       return new SBTreeEntry<>(leftChild, rightChild, key, null);
     }
   }
 
-  byte[] getRawEntry(int entryIndex) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
+  byte[] getRawEntry(final int entryIndex) {
     int entryPosition = buffer.getInt(offset + entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     final int startEntryPosition = entryPosition;
 
+    final ByteBuffer buffer = getBufferDuplicate();
     if (isLeaf) {
       buffer.position(offset + entryPosition);
       final int keySize = keySerializer.getObjectSizeInByteBuffer(buffer);
@@ -323,11 +322,11 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     }
   }
 
-  byte[][] getRawLeafEntry(int entryIndex) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
+  byte[][] getRawLeafEntry(final int entryIndex) {
     int entryPosition = buffer.getInt(offset + entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     assert isLeaf;
+
+    final ByteBuffer buffer = getBufferDuplicate();
 
     buffer.position(offset + entryPosition);
     final int keyLen = keySerializer.getObjectSizeInByteBuffer(buffer);
@@ -348,13 +347,13 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     return new byte[][] { rawKey, rawValue };
   }
 
-  byte[] getRawValue(int entryIndex, int keyLen) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
+  byte[] getRawValue(final int entryIndex, final int keyLen) {
     int entryPosition = buffer.getInt(offset + entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     assert isLeaf;
 
     entryPosition += keyLen;
+
+    final ByteBuffer buffer = getBufferDuplicate();
 
     buffer.position(offset + entryPosition);
     final int valueLen = valueSerializer.getObjectSizeInByteBuffer(buffer);
@@ -366,14 +365,14 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     return rawValue;
   }
 
-  public K getKey(int index) {
-    final ByteBuffer buffer = getBufferDuplicate();
+  public K getKey(final int index) {
     int entryPosition = buffer.getInt(offset + index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 
     if (!isLeaf) {
       entryPosition += 2 * (OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
     }
 
+    final ByteBuffer buffer = getBufferDuplicate();
     buffer.position(offset + entryPosition);
     return keySerializer.deserializeFromByteBufferObject(buffer);
   }
@@ -382,7 +381,7 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     return isLeaf;
   }
 
-  public void addAll(List<byte[]> entries) {
+  public void addAll(final List<byte[]> entries) {
     cacheEntry.markDirty();
 
     for (int i = 0; i < entries.size(); i++) {
@@ -392,10 +391,10 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     buffer.putInt(offset + SIZE_OFFSET, entries.size());
   }
 
-  public void shrink(int newSize) {
+  public void shrink(final int newSize) {
     cacheEntry.markDirty();
 
-    List<byte[]> rawEntries = new ArrayList<>(newSize);
+    final List<byte[]> rawEntries = new ArrayList<>(newSize);
 
     for (int i = 0; i < newSize; i++) {
       rawEntries.add(getRawEntry(i));
@@ -404,7 +403,7 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     buffer.putInt(offset + FREE_POINTER_OFFSET, MAX_BUCKET_SIZE_BYTES);
 
     int index = 0;
-    for (byte[] entry : rawEntries) {
+    for (final byte[] entry : rawEntries) {
       appendRawEntry(index, entry);
       index++;
     }
@@ -412,7 +411,8 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     buffer.putInt(offset + SIZE_OFFSET, newSize);
   }
 
-  public boolean addEntry(int index, SBTreeEntry<K, V> treeEntry, boolean updateNeighbors) {
+  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+  public boolean addEntry(final int index, final SBTreeEntry<K, V> treeEntry, final boolean updateNeighbors) {
     final int keySize = keySerializer.getObjectSize(treeEntry.key);
     int valueSize = 0;
     int entrySize = keySize;
@@ -443,8 +443,8 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
 
     if (index <= size - 1) {
       moveData(offset + POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE,
-          offset + POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE, (size - index) * OIntegerSerializer.INT_SIZE,
-          buffer);
+          offset + POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE,
+          (size - index) * OIntegerSerializer.INT_SIZE);
     }
 
     freePointer -= entrySize;
@@ -454,13 +454,13 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     buffer.putInt(offset + SIZE_OFFSET, size + 1);
 
     if (isLeaf) {
-      byte[] serializedKey = new byte[keySize];
+      final byte[] serializedKey = new byte[keySize];
       keySerializer.serializeNativeObject(treeEntry.key, serializedKey, 0);
 
       buffer.position(offset + freePointer);
       buffer.put(serializedKey);
 
-      byte[] serializedValue = new byte[valueSize];
+      final byte[] serializedValue = new byte[valueSize];
       valueSerializer.serializeNativeObject(treeEntry.value, serializedValue, 0);
 
       buffer.put(serializedValue);
@@ -471,7 +471,7 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
       setBucketPointer(offset + freePointer, treeEntry.rightChild);
       freePointer += OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
 
-      byte[] serializedKey = new byte[keySize];
+      final byte[] serializedKey = new byte[keySize];
       keySerializer.serializeNativeObject(treeEntry.key, serializedKey, 0);
 
       buffer.position(offset + freePointer);
@@ -496,7 +496,7 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     return true;
   }
 
-  private void appendRawEntry(int index, byte[] rawEntry) {
+  private void appendRawEntry(final int index, final byte[] rawEntry) {
     int freePointer = buffer.getInt(offset + FREE_POINTER_OFFSET);
 
     freePointer -= rawEntry.length;
@@ -509,7 +509,7 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
   }
 
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-  boolean addLeafEntry(int index, byte[] serializedKey, byte[] serializedValue) {
+  boolean addLeafEntry(final int index, final byte[] serializedKey, final byte[] serializedValue) {
     final int keySize = serializedKey.length;
     final int valueSize = serializedValue.length;
 
@@ -522,14 +522,15 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
 
     checkEntreeSize(entrySize);
 
-    int size = size();
+    final int size = size();
     int freePointer = buffer.getInt(offset + FREE_POINTER_OFFSET);
     if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
       if (size > 1) {
         return false;
       } else {
         throw new OSBTreeBonsaiLocalException(
-            "Entry size ('key + value') is more than is more than allowed " + (freePointer - 2 * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) + " bytes, either increase page size using '"
+            "Entry size ('key + value') is more than is more than allowed " + (freePointer - 2 * OIntegerSerializer.INT_SIZE
+                + POSITIONS_ARRAY_OFFSET) + " bytes, either increase page size using '"
                 + OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getKey() + "' parameter, or decrease 'key + value' size.", tree);
       }
     }
@@ -538,8 +539,8 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
 
     if (index <= size - 1) {
       moveData(offset + POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE,
-          offset + POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE, (size - index) * OIntegerSerializer.INT_SIZE,
-          buffer);
+          offset + POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE,
+          (size - index) * OIntegerSerializer.INT_SIZE);
     }
 
     freePointer -= entrySize;
@@ -555,7 +556,7 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     return true;
   }
 
-  void updateRawValue(int index, int keySize, byte[] rawValue) {
+  void updateRawValue(final int index, final int keySize, final byte[] rawValue) {
     int entryPosition = buffer.getInt(offset + index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     entryPosition += keySize;
 
@@ -565,7 +566,7 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     cacheEntry.markDirty();
   }
 
-  void updateValue(int index, V value) {
+  void updateValue(final int index, final V value) {
     assert valueSerializer.isFixedLength();
 
     int entryPosition = buffer.getInt(offset + index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
@@ -576,11 +577,11 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
 
     final int size = valueSerializer.getFixedLength();
 
-    byte[] serializedValue = new byte[size];
+    final byte[] serializedValue = new byte[size];
     valueSerializer.serializeNativeObject(value, serializedValue, 0);
 
     buffer.position(offset + entryPosition);
-    byte[] oldSerializedValue = new byte[size];
+    final byte[] oldSerializedValue = new byte[size];
     buffer.get(oldSerializedValue);
 
     if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, serializedValue) == 0) {
@@ -597,12 +598,12 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     return getBucketPointer(offset + FREE_LIST_POINTER_OFFSET);
   }
 
-  void setFreeListPointer(OBonsaiBucketPointer pointer) {
+  void setFreeListPointer(final OBonsaiBucketPointer pointer) {
     setBucketPointer(offset + FREE_LIST_POINTER_OFFSET, pointer);
   }
 
   void setDeleted() {
-    byte value = buffer.get(offset + FLAGS_OFFSET);
+    final byte value = buffer.get(offset + FLAGS_OFFSET);
     buffer.put(offset + FLAGS_OFFSET, (byte) (value | DELETED));
 
     cacheEntry.markDirty();
@@ -616,7 +617,7 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     return getBucketPointer(offset + LEFT_SIBLING_OFFSET);
   }
 
-  void setLeftSibling(OBonsaiBucketPointer pointer) {
+  void setLeftSibling(final OBonsaiBucketPointer pointer) {
     setBucketPointer(offset + LEFT_SIBLING_OFFSET, pointer);
   }
 
@@ -624,11 +625,11 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     return getBucketPointer(offset + RIGHT_SIBLING_OFFSET);
   }
 
-  void setRightSibling(OBonsaiBucketPointer pointer) {
+  void setRightSibling(final OBonsaiBucketPointer pointer) {
     setBucketPointer(offset + RIGHT_SIBLING_OFFSET, pointer);
   }
 
-  private void checkEntreeSize(int entreeSize) {
+  private void checkEntreeSize(final int entreeSize) {
     if (entreeSize > MAX_ENTREE_SIZE)
       throw new OSBTreeBonsaiLocalException(
           "Serialized key-value pair size bigger than allowed " + entreeSize + " vs " + MAX_ENTREE_SIZE + ".", tree);

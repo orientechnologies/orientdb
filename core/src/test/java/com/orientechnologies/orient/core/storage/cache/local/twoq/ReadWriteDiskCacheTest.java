@@ -8,20 +8,23 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import org.assertj.core.api.Assertions;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -1256,6 +1259,7 @@ public class ReadWriteDiskCacheTest {
       }
     } finally {
       for (int i = 0; i < 4; i++) {
+        assert entries[i] != null;
         readBuffer.releaseFromWrite(entries[i], writeBuffer);
       }
     }
@@ -1285,11 +1289,11 @@ public class ReadWriteDiskCacheTest {
   }
 
   private OCacheEntry generateEntry(long fileId, long pageIndex, ByteBuffer buffer, OByteBufferPool bufferPool) {
-    return new OCacheEntryImpl(fileId, pageIndex, new OCachePointer(buffer, bufferPool, fileId, pageIndex), false);
+    return new OCacheEntry(fileId, pageIndex, new OCachePointer(buffer, bufferPool, fileId, pageIndex), false);
   }
 
   private OCacheEntry generateRemovedEntry(long fileId, long pageIndex) {
-    return new OCacheEntryImpl(fileId, pageIndex, null, false);
+    return new OCacheEntry(fileId, pageIndex, null, false);
   }
 
   private void setLsn(ByteBuffer buffer, OLogSequenceNumber lsn) {
@@ -1309,12 +1313,6 @@ public class ReadWriteDiskCacheTest {
     @SuppressWarnings("unused")
     public TestRecord(byte[] data) {
       this.data = data;
-    }
-
-    TestRecord(Random random, int maxSize, int minSize) {
-      int len = random.nextInt(maxSize - minSize + 1) + 1;
-      data = new byte[len];
-      random.nextBytes(data);
     }
 
     @Override

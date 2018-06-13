@@ -36,11 +36,11 @@ import java.util.Arrays;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 10/7/13
  */
-public class OClusterPositionMap extends ODurableComponent {
+public final class OClusterPositionMap extends ODurableComponent {
   public static final String DEF_EXTENSION = ".cpm";
   private             long   fileId;
 
-  OClusterPositionMap(OAbstractPaginatedStorage storage, String name, String lockName) {
+  OClusterPositionMap(final OAbstractPaginatedStorage storage, final String name, final String lockName) {
     super(storage, name, DEF_EXTENSION, lockName);
   }
 
@@ -56,7 +56,7 @@ public class OClusterPositionMap extends ODurableComponent {
     writeCache.flush(fileId);
   }
 
-  public void close(boolean flush) throws IOException {
+  public void close(final boolean flush) {
     readCache.closeFile(fileId, flush, writeCache);
   }
 
@@ -68,13 +68,13 @@ public class OClusterPositionMap extends ODurableComponent {
     deleteFile(fileId);
   }
 
-  void rename(String newName) throws IOException {
+  void rename(final String newName) throws IOException {
     writeCache.renameFile(fileId, newName + getExtension());
     setName(newName);
   }
 
-  public long add(long pageIndex, int recordPosition, OAtomicOperation atomicOperation) throws IOException {
-    long lastPage = getFilledUpTo(fileId) - 1;
+  public long add(final long pageIndex, final int recordPosition, final OAtomicOperation atomicOperation) throws IOException {
+    final long lastPage = getFilledUpTo(fileId) - 1;
     OCacheEntry cacheEntry;
     if (lastPage < 0)
       cacheEntry = addPage(fileId);
@@ -94,7 +94,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
       final long index = bucket.add(pageIndex, recordPosition);
       return index + cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES;
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw OException.wrapException(
           new OClusterPositionMapException("Error during creation of mapping between logical and physical record position", this),
           e);
@@ -103,8 +103,8 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public long allocate(OAtomicOperation atomicOperation) throws IOException {
-    long lastPage = getFilledUpTo(fileId) - 1;
+  public long allocate(final OAtomicOperation atomicOperation) throws IOException {
+    final long lastPage = getFilledUpTo(fileId) - 1;
     OCacheEntry cacheEntry;
     if (lastPage < 0)
       cacheEntry = addPage(fileId);
@@ -123,7 +123,7 @@ public class OClusterPositionMap extends ODurableComponent {
       final long index = bucket.allocate();
 
       return index + cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES;
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw OException.wrapException(
           new OClusterPositionMapException("Error during creation of mapping between logical and physical record position", this),
           e);
@@ -132,7 +132,7 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  void makePositionAvailable(final long clusterPosition, OAtomicOperation atomicOperation) {
+  void makePositionAvailable(final long clusterPosition, final OAtomicOperation atomicOperation) {
     try {
       final long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
       final int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
@@ -146,14 +146,14 @@ public class OClusterPositionMap extends ODurableComponent {
         releasePageFromWrite(bucket, atomicOperation);
       }
 
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw OException.wrapException(
           new OClusterPositionMapException("Error during making position " + clusterPosition + " available again.", this), e);
     }
   }
 
   public void update(final long clusterPosition, final OClusterPositionMapBucket.PositionEntry entry,
-      OAtomicOperation atomicOperation) {
+      final OAtomicOperation atomicOperation) {
     try {
       final long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
       final int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
@@ -171,14 +171,14 @@ public class OClusterPositionMap extends ODurableComponent {
         releasePageFromWrite(bucket, atomicOperation);
       }
 
-    } catch (IOException | RuntimeException e) {
+    } catch (final IOException | RuntimeException e) {
       throw OException.wrapException(
           new OClusterPositionMapException("Error of update of mapping between logical adn physical record position", this), e);
     }
   }
 
   void resurrect(final long clusterPosition, final OClusterPositionMapBucket.PositionEntry entry,
-      OAtomicOperation atomicOperation) {
+      final OAtomicOperation atomicOperation) {
     try {
       final long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
       final int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
@@ -196,15 +196,15 @@ public class OClusterPositionMap extends ODurableComponent {
         releasePageFromWrite(bucket, atomicOperation);
       }
 
-    } catch (IOException | RuntimeException e) {
+    } catch (final IOException | RuntimeException e) {
       throw OException.wrapException(
           new OClusterPositionMapException("Error of resurrecting mapping between logical adn physical record position", this), e);
     }
   }
 
   public OClusterPositionMapBucket.PositionEntry get(final long clusterPosition, final int pageCount) throws IOException {
-    long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
-    int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
+    final long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
+    final int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
     if (pageIndex >= getFilledUpTo(fileId))
       return null;
@@ -218,16 +218,16 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public void remove(final long clusterPosition, OAtomicOperation atomicOperation) throws IOException {
-    long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
-    int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
+  public void remove(final long clusterPosition, final OAtomicOperation atomicOperation) throws IOException {
+    final long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
+    final int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
     OClusterPositionMapBucket bucket = null;
     final OCacheEntry cacheEntry = loadPageForWrite(fileId, pageIndex, false);
     try {
       bucket = new OClusterPositionMapBucket(cacheEntry);
       bucket.remove(index);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw OException.wrapException(
           new OClusterPositionMapException("Error during removal of mapping between logical and physical record position", this),
           e);
@@ -261,10 +261,10 @@ public class OClusterPositionMap extends ODurableComponent {
 
     OClusterPositionEntry[] result = null;
     do {
-      OCacheEntry cacheEntry = loadPageForRead(fileId, pageIndex, false, 1);
+      final OCacheEntry cacheEntry = loadPageForRead(fileId, pageIndex, false, 1);
 
-      OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
-      int resultSize = bucket.getSize() - index;
+      final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
+      final int resultSize = bucket.getSize() - index;
 
       if (resultSize <= 0) {
         releasePageFromRead(cacheEntry);
@@ -272,12 +272,13 @@ public class OClusterPositionMap extends ODurableComponent {
         index = 0;
       } else {
         int entriesCount = 0;
-        long startIndex = cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES + index;
+        final long startIndex = cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES + index;
 
         result = new OClusterPositionEntry[resultSize];
         for (int i = 0; i < resultSize; i++) {
           if (bucket.exists(i + index)) {
-            OClusterPositionMapBucket.PositionEntry val = bucket.get(i + index);
+            final OClusterPositionMapBucket.PositionEntry val = bucket.get(i + index);
+            assert val != null;
             result[entriesCount] = new OClusterPositionEntry(startIndex + i, val.getPageIndex(), val.getRecordPosition());
             entriesCount++;
           }
@@ -314,10 +315,10 @@ public class OClusterPositionMap extends ODurableComponent {
 
     long[] result = null;
     do {
-      OCacheEntry cacheEntry = loadPageForRead(fileId, pageIndex, false, 1);
+      final OCacheEntry cacheEntry = loadPageForRead(fileId, pageIndex, false, 1);
 
-      OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
-      int resultSize = bucket.getSize() - index;
+      final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
+      final int resultSize = bucket.getSize() - index;
 
       if (resultSize <= 0) {
         releasePageFromRead(cacheEntry);
@@ -325,7 +326,7 @@ public class OClusterPositionMap extends ODurableComponent {
         index = 0;
       } else {
         int entriesCount = 0;
-        long startIndex = cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES + index;
+        final long startIndex = cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES + index;
 
         result = new long[resultSize];
         for (int i = 0; i < resultSize; i++) {
@@ -379,16 +380,16 @@ public class OClusterPositionMap extends ODurableComponent {
     }
 
     do {
-      OCacheEntry cacheEntry = loadPageForRead(fileId, pageIndex, false, 1);
+      final OCacheEntry cacheEntry = loadPageForRead(fileId, pageIndex, false, 1);
 
-      OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
+      final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
       if (index == Integer.MIN_VALUE)
         index = bucket.getSize() - 1;
 
-      int resultSize = index + 1;
+      final int resultSize = index + 1;
       int entriesCount = 0;
 
-      long startPosition = cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES;
+      final long startPosition = cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES;
       result = new long[resultSize];
 
       for (int i = 0; i < resultSize; i++) {
@@ -417,10 +418,10 @@ public class OClusterPositionMap extends ODurableComponent {
   long getFirstPosition() throws IOException {
     final long filledUpTo = getFilledUpTo(fileId);
     for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
-      OCacheEntry cacheEntry = loadPageForRead(fileId, pageIndex, false, 1);
+      final OCacheEntry cacheEntry = loadPageForRead(fileId, pageIndex, false, 1);
       try {
-        OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
-        int bucketSize = bucket.getSize();
+        final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
+        final int bucketSize = bucket.getSize();
 
         for (int index = 0; index < bucketSize; index++) {
           if (bucket.exists(index))
@@ -456,9 +457,9 @@ public class OClusterPositionMap extends ODurableComponent {
     final long filledUpTo = getFilledUpTo(fileId);
 
     for (long pageIndex = filledUpTo - 1; pageIndex >= 0; pageIndex--) {
-      OCacheEntry cacheEntry = loadPageForRead(fileId, pageIndex, false, 1);
+      final OCacheEntry cacheEntry = loadPageForRead(fileId, pageIndex, false, 1);
       try {
-        OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
+        final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
         final int bucketSize = bucket.getSize();
 
         for (int index = bucketSize - 1; index >= 0; index--) {
@@ -480,9 +481,9 @@ public class OClusterPositionMap extends ODurableComponent {
     final long filledUpTo = getFilledUpTo(fileId);
 
     final long pageIndex = filledUpTo - 1;
-    OCacheEntry cacheEntry = loadPageForRead(fileId, pageIndex, false, 1);
+    final OCacheEntry cacheEntry = loadPageForRead(fileId, pageIndex, false, 1);
     try {
-      OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
+      final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
       final int bucketSize = bucket.getSize();
       return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + bucketSize;
     } finally {
@@ -494,16 +495,16 @@ public class OClusterPositionMap extends ODurableComponent {
     return fileId;
   }
 
-  void replaceFileId(long newFileId) {
+  void replaceFileId(final long newFileId) {
     this.fileId = newFileId;
   }
 
   public static class OClusterPositionEntry {
-    private long position;
-    private long page;
-    private int  offset;
+    private final long position;
+    private final long page;
+    private final int  offset;
 
-    OClusterPositionEntry(long position, long page, int offset) {
+    OClusterPositionEntry(final long position, final long page, final int offset) {
       this.position = position;
       this.page = page;
       this.offset = offset;

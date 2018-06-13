@@ -24,42 +24,62 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
+import java.nio.ByteBuffer;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 4/25/14
  */
-public class ONullBucket<V> extends ODurablePage {
+public final class ONullBucket<V> extends ODurablePage {
   private final OBinarySerializer<V> valueSerializer;
 
-  ONullBucket(OCacheEntry cacheEntry, OBinarySerializer<V> valueSerializer, boolean isNew) {
+  ONullBucket(final OCacheEntry cacheEntry, final OBinarySerializer<V> valueSerializer, final boolean isNew) {
     super(cacheEntry);
     this.valueSerializer = valueSerializer;
 
-    if (isNew)
-      setByteValue(NEXT_FREE_POSITION, (byte) 0);
+    if (isNew) {
+      buffer.put(NEXT_FREE_POSITION, (byte) 0);
+      cacheEntry.markDirty();
+    }
   }
 
-  public void setValue(byte[] value) {
-    setByteValue(NEXT_FREE_POSITION, (byte) 1);
-    setBinaryValue(NEXT_FREE_POSITION + 1, value);
+  public void setValue(final byte[] value) {
+    buffer.position(NEXT_FREE_POSITION);
+    buffer.put((byte) 1);
+    buffer.put(value);
+
+    cacheEntry.markDirty();
   }
 
   public V getValue() {
-    if (getByteValue(NEXT_FREE_POSITION) == 0)
+    if (buffer.get(NEXT_FREE_POSITION) == 0) {
       return null;
+    }
 
-    return deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 1);
+    final ByteBuffer buffer = getBufferDuplicate();
+    buffer.position(NEXT_FREE_POSITION + 1);
+    return valueSerializer.deserializeFromByteBufferObject(buffer);
   }
 
   byte[] getRawValue() {
-    if (getByteValue(NEXT_FREE_POSITION) == 0)
+    if (buffer.get(NEXT_FREE_POSITION) == 0) {
       return null;
+    }
 
-    final int valueLen = getObjectSizeInDirectMemory(valueSerializer, NEXT_FREE_POSITION + 1);
-    return getBinaryValue(NEXT_FREE_POSITION + 1, valueLen);
+    buffer.position(NEXT_FREE_POSITION + 1);
+    final int valueLen = valueSerializer.getObjectSizeInByteBuffer(buffer);
+
+    final ByteBuffer buffer = getBufferDuplicate();
+
+    final byte[] value = new byte[valueLen];
+    buffer.position(NEXT_FREE_POSITION + 1);
+    buffer.get(value);
+
+    return value;
   }
 
   void removeValue() {
-    setByteValue(NEXT_FREE_POSITION, (byte) 0);
+    buffer.put(NEXT_FREE_POSITION, (byte) 0);
+    cacheEntry.markDirty();
   }
 }

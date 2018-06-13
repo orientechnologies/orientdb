@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -59,21 +57,20 @@ public class ODurablePage {
 
   public static final int NEXT_FREE_POSITION = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
 
-  protected final OCacheEntry   cacheEntry;
-  private final   OCachePointer pointer;
-  protected final ByteBuffer    buffer;
+  protected final OCacheEntry cacheEntry;
+  protected final ByteBuffer  buffer;
 
-  public ODurablePage(OCacheEntry cacheEntry) {
+  public ODurablePage(final OCacheEntry cacheEntry) {
     assert cacheEntry != null;
 
     this.cacheEntry = cacheEntry;
-    this.pointer = cacheEntry.getCachePointer();
+    final OCachePointer pointer = cacheEntry.getCachePointer();
     this.buffer = pointer.getBuffer();
 
     assert buffer != null;
   }
 
-  public static OLogSequenceNumber getLogSequenceNumberFromPage(ByteBuffer buffer) {
+  public static OLogSequenceNumber getLogSequenceNumberFromPage(final ByteBuffer buffer) {
     buffer.position(WAL_SEGMENT_OFFSET);
     final long segment = buffer.getLong();
     final long position = buffer.getLong();
@@ -81,7 +78,7 @@ public class ODurablePage {
     return new OLogSequenceNumber(segment, position);
   }
 
-  static void setLogSequenceNumber(ByteBuffer buffer, OLogSequenceNumber lsn) {
+  static void setLogSequenceNumber(final ByteBuffer buffer, final OLogSequenceNumber lsn) {
     buffer.position(WAL_SEGMENT_OFFSET);
     buffer.putLong(lsn.getSegment());
     buffer.putLong(lsn.getPosition());
@@ -97,7 +94,7 @@ public class ODurablePage {
    * @param length Length of data to be copied
    */
   @SuppressWarnings("unused")
-  public static void getPageData(ByteBuffer buffer, byte[] data, int offset, int length) {
+  public static void getPageData(final ByteBuffer buffer, final byte[] data, final int offset, final int length) {
     buffer.position(0);
     buffer.get(data, offset, length);
   }
@@ -110,7 +107,7 @@ public class ODurablePage {
    * @param data   Byte array from which LSN value will be read.
    */
   @SuppressWarnings("unused")
-  public static OLogSequenceNumber getLogSequenceNumber(int offset, byte[] data) {
+  public static OLogSequenceNumber getLogSequenceNumber(final int offset, final byte[] data) {
     final long segment = OLongSerializer.INSTANCE.deserializeNative(data, offset + WAL_SEGMENT_OFFSET);
     final long position = OLongSerializer.INSTANCE.deserializeNative(data, offset + WAL_POSITION_OFFSET);
 
@@ -121,121 +118,9 @@ public class ODurablePage {
     return cacheEntry;
   }
 
-  protected int getIntValue(int pageOffset) {
+  protected final void moveData(final int from, final int to, final int len) {
     assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
-    final ByteBuffer buffer = pointer.getBuffer();
-    return buffer.getInt(pageOffset);
-  }
-
-  protected long getLongValue(int pageOffset) {
-    assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
-
-    final ByteBuffer buffer = pointer.getBuffer();
-    return buffer.getLong(pageOffset);
-  }
-
-  protected byte[] getBinaryValue(int pageOffset, int valLen) {
-    assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
-
-    final ByteBuffer buffer = pointer.getBufferDuplicate();
-    final byte[] result = new byte[valLen];
-
-    buffer.position(pageOffset);
-    buffer.get(result);
-
-    return result;
-  }
-
-  protected int getObjectSizeInDirectMemory(OBinarySerializer binarySerializer, int offset) {
-    assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
-
-    final ByteBuffer buffer = pointer.getBufferDuplicate();
-    buffer.position(offset);
-
-    return binarySerializer.getObjectSizeInByteBuffer(buffer);
-  }
-
-  protected <T> T deserializeFromDirectMemory(OBinarySerializer<T> binarySerializer, int offset) {
-    assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
-
-    final ByteBuffer buffer = pointer.getBufferDuplicate();
-    buffer.position(offset);
-    return binarySerializer.deserializeFromByteBufferObject(buffer);
-  }
-
-  protected byte getByteValue(int pageOffset) {
-    assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
-
-    final ByteBuffer buffer = pointer.getBuffer();
-    return buffer.get(pageOffset);
-  }
-
-  @SuppressWarnings("SameReturnValue")
-  protected int setIntValue(int pageOffset, int value) {
-    assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
-
-    final ByteBuffer buffer = pointer.getBuffer();
-    buffer.putInt(pageOffset, value);
-    cacheEntry.markDirty();
-
-    return OIntegerSerializer.INT_SIZE;
-  }
-
-  @SuppressWarnings("SameReturnValue")
-  protected int setByteValue(int pageOffset, byte value) {
-    assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
-
-    final ByteBuffer buffer = pointer.getBuffer();
-    buffer.put(pageOffset, value);
-    cacheEntry.markDirty();
-
-    return OByteSerializer.BYTE_SIZE;
-  }
-
-  @SuppressWarnings("SameReturnValue")
-  protected int setLongValue(int pageOffset, long value) {
-    assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
-
-    final ByteBuffer buffer = pointer.getBuffer();
-    buffer.putLong(pageOffset, value);
-    cacheEntry.markDirty();
-
-    return OLongSerializer.LONG_SIZE;
-  }
-
-  protected int setBinaryValue(int pageOffset, byte[] value) {
-    assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
-
-    if (value.length == 0)
-      return 0;
-
-    final ByteBuffer buffer = pointer.getBuffer();
-    buffer.position(pageOffset);
-    buffer.put(value);
-    cacheEntry.markDirty();
-
-    return value.length;
-  }
-
-  protected void moveData(int from, int to, int len) {
-    assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
-
-    if (len == 0)
-      return;
-
-    final ByteBuffer buffer = pointer.getBuffer();
-    final ByteBuffer rb = buffer.asReadOnlyBuffer();
-    rb.position(from);
-    rb.limit(from + len);
-
-    buffer.position(to);
-    buffer.put(rb);
-
-    cacheEntry.markDirty();
-  }
-
-  protected void moveData(int from, int to, int len, ByteBuffer buffer) {
     if (len == 0) {
       return;
     }
@@ -248,10 +133,9 @@ public class ODurablePage {
     buffer.put(rb);
   }
 
-  public void setLsn(OLogSequenceNumber lsn) {
+  public final void setLsn(final OLogSequenceNumber lsn) {
     assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 
-    final ByteBuffer buffer = pointer.getBuffer();
     buffer.position(WAL_SEGMENT_OFFSET);
 
     buffer.putLong(lsn.getSegment());
@@ -265,7 +149,6 @@ public class ODurablePage {
   }
 
   protected byte[] serializePage() {
-    final ByteBuffer buffer = pointer.getBufferDuplicate();
     buffer.position(0);
 
     final byte[] page = new byte[buffer.limit()];
@@ -274,11 +157,11 @@ public class ODurablePage {
     return page;
   }
 
-  protected void deserializePage(byte[] page) {
-    final ByteBuffer buffer = pointer.getBufferDuplicate();
+  protected void deserializePage(final byte[] page) {
     buffer.position(0);
-
     buffer.put(page);
+
+    cacheEntry.markDirty();
   }
 
   @Override

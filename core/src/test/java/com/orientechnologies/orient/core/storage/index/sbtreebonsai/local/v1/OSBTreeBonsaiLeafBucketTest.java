@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import org.junit.Assert;
@@ -25,23 +24,22 @@ import java.util.TreeSet;
  */
 public class OSBTreeBonsaiLeafBucketTest {
   @Test
-  public void testInitialization() throws Exception {
+  public void testInitialization() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
 
-    OSBTreeBonsaiBucketV1<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV1<Long, OIdentifiable>(cacheEntry, 0, true,
+    OSBTreeBonsaiBucketV1<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV1<>(cacheEntry, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertTrue(treeBucket.isLeaf());
 
-    treeBucket = new OSBTreeBonsaiBucketV1<Long, OIdentifiable>(cacheEntry, 0, OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE,
-        null);
+    treeBucket = new OSBTreeBonsaiBucketV1<>(cacheEntry, 0, OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertTrue(treeBucket.isLeaf());
     Assert.assertFalse(treeBucket.getLeftSibling().isValid());
@@ -52,11 +50,11 @@ public class OSBTreeBonsaiLeafBucketTest {
   }
 
   @Test
-  public void testSearch() throws Exception {
+  public void testSearch() {
     long seed = System.currentTimeMillis();
     System.out.println("testSearch seed : " + seed);
 
-    TreeSet<Long> keys = new TreeSet<Long>();
+    TreeSet<Long> keys = new TreeSet<>();
     Random random = new Random(seed);
 
     while (keys.size() < 2 * OSBTreeBonsaiBucketV1.MAX_BUCKET_SIZE_BYTES / OLongSerializer.LONG_SIZE) {
@@ -69,14 +67,14 @@ public class OSBTreeBonsaiLeafBucketTest {
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
 
-    OSBTreeBonsaiBucketV1<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV1<Long, OIdentifiable>(cacheEntry, 0, true,
+    OSBTreeBonsaiBucketV1<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV1<>(cacheEntry, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
 
     int index = 0;
-    Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
+    Map<Long, Integer> keyIndexMap = new HashMap<>();
     for (Long key : keys) {
       if (!treeBucket.addEntry(index,
           new OSBTreeBonsaiBucketV1.SBTreeEntry<>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key,
@@ -98,11 +96,11 @@ public class OSBTreeBonsaiLeafBucketTest {
   }
 
   @Test
-  public void testUpdateValue() throws Exception {
+  public void testUpdateValue() {
     long seed = System.currentTimeMillis();
     System.out.println("testUpdateValue seed : " + seed);
 
-    TreeSet<Long> keys = new TreeSet<Long>();
+    TreeSet<Long> keys = new TreeSet<>();
     Random random = new Random(seed);
 
     while (keys.size() < 2 * OSBTreeBonsaiBucketV1.MAX_BUCKET_SIZE_BYTES / OLongSerializer.LONG_SIZE) {
@@ -115,17 +113,17 @@ public class OSBTreeBonsaiLeafBucketTest {
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
 
-    OSBTreeBonsaiBucketV1<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV1<Long, OIdentifiable>(cacheEntry, 0, true,
+    OSBTreeBonsaiBucketV1<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV1<>(cacheEntry, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
 
-    Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
+    Map<Long, Integer> keyIndexMap = new HashMap<>();
     int index = 0;
     for (Long key : keys) {
       if (!treeBucket.addEntry(index,
-          new OSBTreeBonsaiBucketV1.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key,
+          new OSBTreeBonsaiBucketV1.SBTreeEntry<>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key,
               new ORecordId(index, index)), true))
         break;
 
@@ -152,11 +150,11 @@ public class OSBTreeBonsaiLeafBucketTest {
   }
 
   @Test
-  public void testShrink() throws Exception {
+  public void testShrink() {
     long seed = System.currentTimeMillis();
     System.out.println("testShrink seed : " + seed);
 
-    TreeSet<Long> keys = new TreeSet<Long>();
+    TreeSet<Long> keys = new TreeSet<>();
     Random random = new Random(seed);
 
     while (keys.size() < 2 * OSBTreeBonsaiBucketV1.MAX_BUCKET_SIZE_BYTES / OLongSerializer.LONG_SIZE) {
@@ -167,18 +165,18 @@ public class OSBTreeBonsaiLeafBucketTest {
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
 
     cachePointer.incrementReferrer();
 
-    OSBTreeBonsaiBucketV1<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV1<Long, OIdentifiable>(cacheEntry, 0, true,
+    OSBTreeBonsaiBucketV1<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV1<>(cacheEntry, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
 
     int index = 0;
     for (Long key : keys) {
       if (!treeBucket.addEntry(index,
-          new OSBTreeBonsaiBucketV1.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key,
+          new OSBTreeBonsaiBucketV1.SBTreeEntry<>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key,
               new ORecordId(index, index)), true))
         break;
 
@@ -191,7 +189,7 @@ public class OSBTreeBonsaiLeafBucketTest {
     Assert.assertEquals(treeBucket.size(), index / 2);
 
     index = 0;
-    final Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
+    final Map<Long, Integer> keyIndexMap = new HashMap<>();
 
     Iterator<Long> keysIterator = keys.iterator();
     while (keysIterator.hasNext() && index < treeBucket.size()) {
@@ -211,7 +209,7 @@ public class OSBTreeBonsaiLeafBucketTest {
       Long key = keysIterator.next();
 
       if (!treeBucket.addEntry(index,
-          new OSBTreeBonsaiBucketV1.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key,
+          new OSBTreeBonsaiBucketV1.SBTreeEntry<>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key,
               new ORecordId(index, index)), true))
         break;
 
@@ -236,11 +234,11 @@ public class OSBTreeBonsaiLeafBucketTest {
   }
 
   @Test
-  public void testRemove() throws Exception {
+  public void testRemove() {
     long seed = System.currentTimeMillis();
     System.out.println("testRemove seed : " + seed);
 
-    TreeSet<Long> keys = new TreeSet<Long>();
+    TreeSet<Long> keys = new TreeSet<>();
     Random random = new Random(seed);
 
     while (keys.size() < 2 * OSBTreeBonsaiBucketV1.MAX_BUCKET_SIZE_BYTES / OLongSerializer.LONG_SIZE) {
@@ -253,16 +251,16 @@ public class OSBTreeBonsaiLeafBucketTest {
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
 
-    OSBTreeBonsaiBucketV1<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV1<Long, OIdentifiable>(cacheEntry, 0, true,
+    OSBTreeBonsaiBucketV1<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV1<>(cacheEntry, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
 
     int index = 0;
     for (Long key : keys) {
       if (!treeBucket.addEntry(index,
-          new OSBTreeBonsaiBucketV1.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key,
+          new OSBTreeBonsaiBucketV1.SBTreeEntry<>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key,
               new ORecordId(index, index)), true))
         break;
 
@@ -278,7 +276,7 @@ public class OSBTreeBonsaiLeafBucketTest {
 
     Assert.assertEquals(treeBucket.size(), originalSize - itemsToDelete);
 
-    final Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
+    final Map<Long, Integer> keyIndexMap = new HashMap<>();
     Iterator<Long> keysIterator = keys.iterator();
 
     index = 0;
@@ -299,7 +297,7 @@ public class OSBTreeBonsaiLeafBucketTest {
       Long key = keysIterator.next();
 
       if (!treeBucket.addEntry(index,
-          new OSBTreeBonsaiBucketV1.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key,
+          new OSBTreeBonsaiBucketV1.SBTreeEntry<>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key,
               new ORecordId(index, index)), true))
         break;
 
@@ -324,17 +322,17 @@ public class OSBTreeBonsaiLeafBucketTest {
   }
 
   @Test
-  public void testSetLeftSibling() throws Exception {
+  public void testSetLeftSibling() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
 
-    OSBTreeBonsaiBucketV1<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV1<Long, OIdentifiable>(cacheEntry, 0, true,
+    OSBTreeBonsaiBucketV1<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV1<>(cacheEntry, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
     final OBonsaiBucketPointer p = new OBonsaiBucketPointer(123, 8192 * 2, 0);
     treeBucket.setLeftSibling(p);
@@ -345,17 +343,17 @@ public class OSBTreeBonsaiLeafBucketTest {
   }
 
   @Test
-  public void testSetRightSibling() throws Exception {
+  public void testSetRightSibling() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
 
-    OSBTreeBonsaiBucketV1<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV1<Long, OIdentifiable>(cacheEntry, 0, true,
+    OSBTreeBonsaiBucketV1<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV1<>(cacheEntry, 0, true,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
     final OBonsaiBucketPointer p = new OBonsaiBucketPointer(123, 8192 * 2, 0);
     treeBucket.setRightSibling(p);

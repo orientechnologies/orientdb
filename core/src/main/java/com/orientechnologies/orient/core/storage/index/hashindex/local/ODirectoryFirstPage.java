@@ -24,39 +24,39 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 
-import java.io.IOException;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/14/14
  */
-public class ODirectoryFirstPage extends ODirectoryPage {
+public final class ODirectoryFirstPage extends ODirectoryPage {
   private static final int TREE_SIZE_OFFSET = NEXT_FREE_POSITION;
   private static final int TOMBSTONE_OFFSET = TREE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
   private static final int ITEMS_OFFSET     = TOMBSTONE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  public static final int  NODES_PER_PAGE   = (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET)
+  static final int NODES_PER_PAGE = (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET)
                                                 / OHashTableDirectory.BINARY_LEVEL_SIZE;
 
-  public ODirectoryFirstPage(OCacheEntry cacheEntry, OCacheEntry entry) {
+  ODirectoryFirstPage(final OCacheEntry cacheEntry, final OCacheEntry entry) {
     super(cacheEntry, entry);
   }
 
-  public void setTreeSize(int treeSize) throws IOException {
-    setIntValue(TREE_SIZE_OFFSET, treeSize);
+  void setTreeSize(final int treeSize) {
+    buffer.putInt(TREE_SIZE_OFFSET, treeSize);
+    cacheEntry.markDirty();
   }
 
-  public int getTreeSize() {
-    return getIntValue(TREE_SIZE_OFFSET);
+  int getTreeSize() {
+    return buffer.getInt(TREE_SIZE_OFFSET);
   }
 
-  public void setTombstone(int tombstone) throws IOException {
-    setIntValue(TOMBSTONE_OFFSET, tombstone);
+  void setTombstone(final int tombstone) {
+    buffer.putInt(TOMBSTONE_OFFSET, tombstone);
+    cacheEntry.markDirty();
   }
 
-  public int getTombstone() {
-    return getIntValue(TOMBSTONE_OFFSET);
+  int getTombstone() {
+    return buffer.getInt(TOMBSTONE_OFFSET);
   }
 
   @Override

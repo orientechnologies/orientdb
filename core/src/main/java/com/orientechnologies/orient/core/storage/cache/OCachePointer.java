@@ -32,7 +32,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 05.08.13
  */
-public class OCachePointer {
+public final class OCachePointer {
   private static final int WRITERS_OFFSET = 32;
   private static final int READERS_MASK   = 0xFFFFFFFF;
 
@@ -56,6 +56,7 @@ public class OCachePointer {
   private boolean fullContentLogged;
 
   public OCachePointer(final ByteBuffer buffer, final OByteBufferPool bufferPool, final long fileId, final long pageIndex) {
+    assert buffer != null;
     this.buffer = buffer;
     this.bufferPool = bufferPool;
 
@@ -67,11 +68,11 @@ public class OCachePointer {
     return fullContentLogged;
   }
 
-  public void setFullContentLogged(boolean fullContentLogged) {
+  public void setFullContentLogged(final boolean fullContentLogged) {
     this.fullContentLogged = fullContentLogged;
   }
 
-  public void setWritersListener(WritersListener writersListener) {
+  public void setWritersListener(final WritersListener writersListener) {
     this.writersListener = writersListener;
   }
 
@@ -178,7 +179,7 @@ public class OCachePointer {
    *
    * @return Whether pointer lock (read or write )is acquired
    */
-  public boolean isLockAcquiredByCurrentThread() {
+  boolean isLockAcquiredByCurrentThread() {
     return readWriteLock.getReadHoldCount() > 0 || readWriteLock.isWriteLockedByCurrentThread();
   }
 
@@ -188,7 +189,7 @@ public class OCachePointer {
 
   public void decrementReferrer() {
     final int rf = referrersCount.decrementAndGet();
-    if (rf == 0 && buffer != null) {
+    if (rf == 0) {
       bufferPool.release(buffer);
     }
 
@@ -201,26 +202,12 @@ public class OCachePointer {
   }
 
   public ByteBuffer getBufferDuplicate() {
-    if (buffer == null) {
-      return null;
-    }
-
     return buffer.duplicate().order(ByteOrder.nativeOrder());
   }
 
   public void acquireExclusiveLock() {
     readWriteLock.writeLock().lock();
     version++;
-  }
-
-  public boolean tryAcquireExclusiveLock() {
-    boolean result = readWriteLock.writeLock().tryLock();
-
-    if (result) {
-      version++;
-    }
-
-    return result;
   }
 
   public long getVersion() {
@@ -259,10 +246,11 @@ public class OCachePointer {
       OLogManager.instance().error(this, "OCachePointer.finalize: writers != 0", null);
     }
 
-    if (needInfo && buffer != null)
+    if (needInfo) {
       bufferPool.logTrackedBufferInfo("finalizing", buffer);
+    }
 
-    if (referrersCount.get() > 0 && buffer != null) {
+    if (referrersCount.get() > 0) {
       if (!needInfo) // not logged yet
         bufferPool.logTrackedBufferInfo("finalizing", buffer);
       bufferPool.release(buffer);
@@ -270,13 +258,13 @@ public class OCachePointer {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
 
-    OCachePointer that = (OCachePointer) o;
+    final OCachePointer that = (OCachePointer) o;
 
     buffer.position(0);
     that.buffer.position(0);
@@ -289,7 +277,7 @@ public class OCachePointer {
 
   @Override
   public int hashCode() {
-    return buffer != null ? buffer.hashCode() : 0;
+    return buffer.hashCode();
   }
 
   @Override
@@ -297,16 +285,16 @@ public class OCachePointer {
     return "OCachePointer{" + "referrersCount=" + referrersCount + ", usagesCount=" + usagesCounter + '}';
   }
 
-  private long composeReadersWriters(int readers, int writers) {
+  private static long composeReadersWriters(final int readers, final int writers) {
     return ((long) writers) << WRITERS_OFFSET | readers;
   }
 
-  private int getReaders(long readersWriters) {
+  private static int getReaders(final long readersWriters) {
     //noinspection PointlessBitwiseExpression
     return (int) (readersWriters & READERS_MASK);
   }
 
-  private int getWriters(long readersWriters) {
+  private static int getWriters(final long readersWriters) {
     return (int) (readersWriters >>> WRITERS_OFFSET);
   }
 

@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsa
  * 
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public class OSysBucketV1 extends OBonsaiBucketAbstractV1 {
+public final class OSysBucketV1 extends OBonsaiBucketAbstractV1 {
   private static final int  SYS_MAGIC_OFFSET        = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int  FREE_SPACE_OFFSET       = SYS_MAGIC_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int  FREE_LIST_HEAD_OFFSET   = FREE_SPACE_OFFSET + OBonsaiBucketPointer.SIZE;
@@ -51,7 +51,7 @@ public class OSysBucketV1 extends OBonsaiBucketAbstractV1 {
    */
   private static final byte SYS_MAGIC               = (byte) 41;
 
-  OSysBucketV1(OCacheEntry cacheEntry) {
+  OSysBucketV1(final OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
@@ -71,7 +71,7 @@ public class OSysBucketV1 extends OBonsaiBucketAbstractV1 {
     return buffer.getLong(FREE_LIST_LENGTH_OFFSET);
   }
 
-  void setFreeListLength(long length) {
+  void setFreeListLength(final long length) {
     buffer.putLong(FREE_LIST_LENGTH_OFFSET, length);
     cacheEntry.markDirty();
   }
@@ -80,7 +80,7 @@ public class OSysBucketV1 extends OBonsaiBucketAbstractV1 {
     return getBucketPointer(FREE_SPACE_OFFSET);
   }
 
-  void setFreeSpacePointer(OBonsaiBucketPointer pointer) {
+  void setFreeSpacePointer(final OBonsaiBucketPointer pointer) {
     setBucketPointer(FREE_SPACE_OFFSET, pointer);
   }
 
@@ -88,7 +88,7 @@ public class OSysBucketV1 extends OBonsaiBucketAbstractV1 {
     return getBucketPointer(FREE_LIST_HEAD_OFFSET);
   }
 
-  void setFreeListHead(OBonsaiBucketPointer pointer) {
+  void setFreeListHead(final OBonsaiBucketPointer pointer) {
     setBucketPointer(FREE_LIST_HEAD_OFFSET, pointer);
   }
 }

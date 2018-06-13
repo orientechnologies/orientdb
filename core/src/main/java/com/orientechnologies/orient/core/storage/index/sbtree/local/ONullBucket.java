@@ -39,7 +39,7 @@ import java.nio.ByteBuffer;
 public final class ONullBucket<V> extends ODurablePage {
   private final OBinarySerializer<V> valueSerializer;
 
-  ONullBucket(OCacheEntry cacheEntry, OBinarySerializer<V> valueSerializer, boolean isNew) {
+  ONullBucket(final OCacheEntry cacheEntry, final OBinarySerializer<V> valueSerializer, final boolean isNew) {
     super(cacheEntry);
     this.valueSerializer = valueSerializer;
 
@@ -49,9 +49,7 @@ public final class ONullBucket<V> extends ODurablePage {
     }
   }
 
-  public void setValue(OSBTreeValue<V> value) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
+  public void setValue(final OSBTreeValue<V> value) {
     buffer.put(NEXT_FREE_POSITION, (byte) 1);
 
     if (value.isLink()) {
@@ -72,9 +70,7 @@ public final class ONullBucket<V> extends ODurablePage {
     cacheEntry.markDirty();
   }
 
-  void setRawValue(byte[] rawValue) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
+  void setRawValue(final byte[] rawValue) {
     buffer.put(NEXT_FREE_POSITION, (byte) 1);
 
     buffer.put(NEXT_FREE_POSITION + 1, (byte) 1);
@@ -86,8 +82,6 @@ public final class ONullBucket<V> extends ODurablePage {
   }
 
   public OSBTreeValue<V> getValue() {
-    final ByteBuffer buffer = getBufferDuplicate();
-
     if (buffer.get(NEXT_FREE_POSITION) == 0) {
       return null;
     }
@@ -97,19 +91,19 @@ public final class ONullBucket<V> extends ODurablePage {
       return new OSBTreeValue<>(true, buffer.getLong(NEXT_FREE_POSITION + 2), null);
     }
 
+    final ByteBuffer buffer = getBufferDuplicate();
     buffer.position(NEXT_FREE_POSITION + 2);
     return new OSBTreeValue<>(false, -1, valueSerializer.deserializeFromByteBufferObject(buffer));
   }
 
   byte[] getRawValue() {
-    final ByteBuffer buffer = getBufferDuplicate();
-
     if (buffer.get(NEXT_FREE_POSITION) == 0) {
       return null;
     }
 
     assert buffer.get(NEXT_FREE_POSITION + 1) > 0;
 
+    final ByteBuffer buffer = getBufferDuplicate();
     buffer.position(NEXT_FREE_POSITION + 2);
     final int valueLen = valueSerializer.getObjectSizeInByteBuffer(buffer);
 
@@ -126,8 +120,6 @@ public final class ONullBucket<V> extends ODurablePage {
 
   @Override
   protected byte[] serializePage() {
-    final ByteBuffer buffer = getBufferDuplicate();
-
     if (buffer.get(NEXT_FREE_POSITION) == 0) {
       final byte[] page = new byte[NEXT_FREE_POSITION];
       buffer.position(0);
@@ -148,8 +140,7 @@ public final class ONullBucket<V> extends ODurablePage {
   }
 
   @Override
-  protected void deserializePage(byte[] page) {
-    final ByteBuffer buffer = getBufferDuplicate();
+  protected void deserializePage(final byte[] page) {
     buffer.position(0);
     buffer.put(page);
 

@@ -5,7 +5,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,7 +28,7 @@ public class SBTreeNonLeafBucketTest {
     final ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
     cachePointer.incrementReferrer();
 
@@ -76,7 +75,7 @@ public class SBTreeNonLeafBucketTest {
     final ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
     cachePointer.incrementReferrer();
 
@@ -131,11 +130,11 @@ public class SBTreeNonLeafBucketTest {
   }
 
   @Test
-  public void testShrink() throws Exception {
+  public void testShrink() {
     long seed = System.currentTimeMillis();
     System.out.println("testShrink seed : " + seed);
 
-    TreeSet<Long> keys = new TreeSet<Long>();
+    TreeSet<Long> keys = new TreeSet<>();
     Random random = new Random(seed);
 
     while (keys.size() < 2 * OSBTreeBucket.MAX_PAGE_SIZE_BYTES / OLongSerializer.LONG_SIZE) {
@@ -146,17 +145,17 @@ public class SBTreeNonLeafBucketTest {
     final ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
 
     cachePointer.incrementReferrer();
 
-    OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, false,
-        OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, null);
+    OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<>(cacheEntry, false, OLongSerializer.INSTANCE, null,
+        OLinkSerializer.INSTANCE, null);
 
     int index = 0;
     for (Long key : keys) {
-      if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(index, index + 1, key, null), true))
+      if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<>(index, index + 1, key, null), true))
         break;
 
       index++;
@@ -168,7 +167,7 @@ public class SBTreeNonLeafBucketTest {
     Assert.assertEquals(treeBucket.size(), index / 2);
 
     index = 0;
-    final Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
+    final Map<Long, Integer> keyIndexMap = new HashMap<>();
 
     Iterator<Long> keysIterator = keys.iterator();
     while (keysIterator.hasNext() && index < treeBucket.size()) {
@@ -195,7 +194,7 @@ public class SBTreeNonLeafBucketTest {
     while (keysIterator.hasNext() && index < originalSize) {
       Long key = keysIterator.next();
 
-      if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(index, index + 1, key, null), true))
+      if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<>(index, index + 1, key, null), true))
         break;
 
       keyIndexMap.put(key, index);
@@ -231,7 +230,7 @@ public class SBTreeNonLeafBucketTest {
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
 
     final OSBTreeBucket<Long, OIdentifiable> restoredBucket = new OSBTreeBucket<>(cacheEntry, true, OLongSerializer.INSTANCE, null,

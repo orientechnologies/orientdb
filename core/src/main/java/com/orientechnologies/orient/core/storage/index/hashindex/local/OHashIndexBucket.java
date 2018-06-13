@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -56,8 +57,8 @@ public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterab
   private final OEncryption encryption;
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  OHashIndexBucket(int depth, OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
-      OEncryption encryption) {
+  OHashIndexBucket(final int depth, final OCacheEntry cacheEntry, final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer, final OEncryption encryption) {
     super(cacheEntry);
 
     this.keySerializer = keySerializer;
@@ -68,8 +69,8 @@ public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterab
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  OHashIndexBucket(OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
-      OEncryption encryption) {
+  OHashIndexBucket(final OCacheEntry cacheEntry, final OBinarySerializer<K> keySerializer,
+      final OBinarySerializer<V> valueSerializer, final OEncryption encryption) {
     super(cacheEntry);
 
     this.keySerializer = keySerializer;
@@ -77,10 +78,11 @@ public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterab
     this.encryption = encryption;
   }
 
-  public void init(int depth) {
-    setByteValue(DEPTH_OFFSET, (byte) depth);
-    setIntValue(FREE_POINTER_OFFSET, MAX_BUCKET_SIZE_BYTES);
-    setIntValue(SIZE_OFFSET, 0);
+  public void init(final int depth) {
+    buffer.put(DEPTH_OFFSET, (byte) depth);
+    buffer.putInt(FREE_POINTER_OFFSET, MAX_BUCKET_SIZE_BYTES);
+    buffer.putInt(SIZE_OFFSET, 0);
+    cacheEntry.markDirty();
   }
 
   public Entry<K, V> find(final K key, final long hashCode) {
@@ -92,7 +94,7 @@ public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterab
     return getEntry(index);
   }
 
-  private int binarySearch(K key, long hashCode) {
+  private int binarySearch(final K key, final long hashCode) {
     int low = 0;
     int high = size() - 1;
 
@@ -121,60 +123,80 @@ public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterab
     return -(low + 1); // key not found.
   }
 
-  private static boolean lessThanUnsigned(long longOne, long longTwo) {
+  private static boolean lessThanUnsigned(final long longOne, final long longTwo) {
     return (longOne + Long.MIN_VALUE) < (longTwo + Long.MIN_VALUE);
   }
 
-  private static boolean greaterThanUnsigned(long longOne, long longTwo) {
+  private static boolean greaterThanUnsigned(final long longOne, final long longTwo) {
     return (longOne + Long.MIN_VALUE) > (longTwo + Long.MIN_VALUE);
   }
 
-  public Entry<K, V> getEntry(int index) {
-    int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
+  public Entry<K, V> getEntry(final int index) {
+    int entryPosition = buffer.getInt(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
 
-    final long hashCode = getLongValue(entryPosition);
+    final long hashCode = buffer.getLong(entryPosition);
     entryPosition += OLongSerializer.LONG_SIZE;
 
     final K key;
 
+    final ByteBuffer buffer = getBufferDuplicate();
     if (encryption == null) {
-      key = deserializeFromDirectMemory(keySerializer, entryPosition);
-      entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
+      buffer.position(entryPosition);
+      key = keySerializer.deserializeFromByteBufferObject(buffer);
+      buffer.position(entryPosition);
+      entryPosition += keySerializer.getObjectSizeInByteBuffer(buffer);
     } else {
-      final int encryptedSize = getIntValue(entryPosition);
+      final int encryptedSize = buffer.getInt(entryPosition);
       entryPosition += OIntegerSerializer.INT_SIZE;
 
-      final byte[] encryptedKey = getBinaryValue(entryPosition, encryptedSize);
+      final byte[] encryptedKey = new byte[encryptedSize];
+      buffer.position(entryPosition);
+      buffer.get(encryptedKey);
+
       entryPosition += encryptedSize;
 
       final byte[] serializedKey = encryption.decrypt(encryptedKey);
       key = keySerializer.deserializeNativeObject(serializedKey, 0);
     }
 
-    final V value = deserializeFromDirectMemory(valueSerializer, entryPosition);
+    buffer.position(entryPosition);
+    final V value = valueSerializer.deserializeFromByteBufferObject(buffer);
     return new Entry<>(key, value, hashCode);
   }
 
-  RawEntry getRawEntry(int index) {
-    int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
+  RawEntry getRawEntry(final int index) {
+    int entryPosition = buffer.getInt(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
 
-    final long hashCode = getLongValue(entryPosition);
+    final long hashCode = buffer.getLong(entryPosition);
     entryPosition += OLongSerializer.LONG_SIZE;
 
+    final ByteBuffer buffer = getBufferDuplicate();
     final byte[] rawKey;
     if (encryption == null) {
-      final int keyLen = getObjectSizeInDirectMemory(keySerializer, entryPosition);
-      rawKey = getBinaryValue(entryPosition, keyLen);
+      buffer.position(entryPosition);
+      final int keyLen = keySerializer.getObjectSizeInByteBuffer(buffer);
+
+      buffer.position(entryPosition);
+      rawKey = new byte[keyLen];
+      buffer.get(rawKey);
 
       entryPosition += rawKey.length;
     } else {
-      final int encryptedLen = getIntValue(entryPosition);
-      rawKey = getBinaryValue(entryPosition, encryptedLen + OIntegerSerializer.INT_SIZE);
+      final int encryptedLen = buffer.getInt(entryPosition);
+
+      rawKey = new byte[encryptedLen + OIntegerSerializer.INT_SIZE];
+      buffer.position(entryPosition);
+      buffer.get(rawKey);
+
       entryPosition += encryptedLen + OIntegerSerializer.INT_SIZE;
     }
 
-    final int valueLen = getObjectSizeInDirectMemory(valueSerializer, entryPosition);
-    final byte[] rawValue = getBinaryValue(entryPosition, valueLen);
+    buffer.position(entryPosition);
+    final int valueLen = valueSerializer.getObjectSizeInByteBuffer(buffer);
+
+    final byte[] rawValue = new byte[valueLen];
+    buffer.position(entryPosition);
+    buffer.get(rawValue);
 
     return new RawEntry(hashCode, rawKey, rawValue);
   }
@@ -186,58 +208,75 @@ public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterab
    *
    * @return the obtained value.
    */
-  public V getValue(int index) {
-    int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
+  public V getValue(final int index) {
+    int entryPosition = buffer.getInt(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
 
     // skip hash code
     entryPosition += OLongSerializer.LONG_SIZE;
 
+    final ByteBuffer buffer = getBufferDuplicate();
+
     // skip key
     if (encryption == null) {
-      entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
+      buffer.position(entryPosition);
+      entryPosition += keySerializer.getObjectSizeInByteBuffer(buffer);
     } else {
-      final int encryptedSize = getIntValue(entryPosition);
+      final int encryptedSize = buffer.getInt(entryPosition);
       entryPosition += OIntegerSerializer.INT_SIZE + encryptedSize;
     }
 
-    return deserializeFromDirectMemory(valueSerializer, entryPosition);
+    buffer.position(entryPosition);
+    return valueSerializer.deserializeFromByteBufferObject(buffer);
   }
 
-  byte[] getRawValue(int index) {
-    int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
-
+  byte[] getRawValue(final int index) {
+    int entryPosition = buffer.getInt(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
     // skip hash code
     entryPosition += OLongSerializer.LONG_SIZE;
 
+    final ByteBuffer buffer = getBufferDuplicate();
     // skip key
     if (encryption == null) {
-      entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
+      buffer.position(entryPosition);
+      entryPosition += keySerializer.getObjectSizeInByteBuffer(buffer);
     } else {
-      final int encryptedSize = getIntValue(entryPosition);
+      final int encryptedSize = buffer.getInt(entryPosition);
       entryPosition += encryptedSize + OIntegerSerializer.INT_SIZE;
     }
 
-    final int valSize = getObjectSizeInDirectMemory(valueSerializer, entryPosition);
-    return getBinaryValue(entryPosition, valSize);
+    buffer.position(entryPosition);
+    final int valSize = valueSerializer.getObjectSizeInByteBuffer(buffer);
+
+    final byte[] value = new byte[valSize];
+    buffer.position(entryPosition);
+    buffer.get(value);
+
+    return value;
   }
 
-  private long getHashCode(int index) {
-    int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
-    return getLongValue(entryPosition);
+  private long getHashCode(final int index) {
+    final int entryPosition = buffer.getInt(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
+    return buffer.getLong(entryPosition);
   }
 
-  public K getKey(int index) {
-    int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
+  public K getKey(final int index) {
+    int entryPosition = buffer.getInt(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
+
+    final ByteBuffer buffer = getBufferDuplicate();
 
     if (encryption == null) {
-      return deserializeFromDirectMemory(keySerializer, entryPosition + OLongSerializer.LONG_SIZE);
+      buffer.position(entryPosition + OLongSerializer.LONG_SIZE);
+      return keySerializer.deserializeFromByteBufferObject(buffer);
     }
 
     entryPosition += OLongSerializer.LONG_SIZE;
-    final int encryptedSize = getIntValue(entryPosition);
+    final int encryptedSize = buffer.getInt(entryPosition);
     entryPosition += OIntegerSerializer.INT_SIZE;
 
-    final byte[] encryptedKey = getBinaryValue(entryPosition, encryptedSize);
+    final byte[] encryptedKey = new byte[encryptedSize];
+    buffer.position(entryPosition);
+    buffer.get(encryptedKey);
+
     return keySerializer.deserializeNativeObject(encryption.decrypt(encryptedKey), 0);
   }
 
@@ -246,49 +285,55 @@ public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterab
   }
 
   public int size() {
-    return getIntValue(SIZE_OFFSET);
+    return buffer.getInt(SIZE_OFFSET);
   }
 
   public Iterator<Entry<K, V>> iterator() {
     return new EntryIterator(0);
   }
 
-  public Iterator<Entry<K, V>> iterator(int index) {
+  public Iterator<Entry<K, V>> iterator(final int index) {
     return new EntryIterator(index);
   }
 
   public int getContentSize() {
-    return POSITIONS_ARRAY_OFFSET + size() * OIntegerSerializer.INT_SIZE + (MAX_BUCKET_SIZE_BYTES - getIntValue(
-        FREE_POINTER_OFFSET));
+    return POSITIONS_ARRAY_OFFSET + size() * OIntegerSerializer.INT_SIZE + (MAX_BUCKET_SIZE_BYTES - buffer
+        .getInt(FREE_POINTER_OFFSET));
   }
 
-  void updateEntry(int index, byte[] value) {
-    int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
+  void updateEntry(final int index, final byte[] value) {
+    int entryPosition = buffer.getInt(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
     entryPosition += OLongSerializer.LONG_SIZE;
 
     if (encryption == null) {
-      entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
+      buffer.position(entryPosition);
+      entryPosition += keySerializer.getObjectSizeInByteBuffer(buffer);
     } else {
-      entryPosition += getIntValue(entryPosition) + OIntegerSerializer.INT_SIZE;
+      entryPosition += buffer.getInt(entryPosition) + OIntegerSerializer.INT_SIZE;
     }
 
-    setBinaryValue(entryPosition, value);
+    buffer.position(entryPosition);
+    buffer.put(value);
+
+    cacheEntry.markDirty();
   }
 
-  void deleteEntry(int index) {
-    final int freePointer = getIntValue(FREE_POINTER_OFFSET);
+  void deleteEntry(final int index) {
+    final int freePointer = buffer.getInt(FREE_POINTER_OFFSET);
 
     final int positionOffset = POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE;
-    final int entryPosition = getIntValue(positionOffset);
+    final int entryPosition = buffer.getInt(positionOffset);
 
     final int keySize;
     if (encryption == null) {
-      keySize = getObjectSizeInDirectMemory(keySerializer, entryPosition + OLongSerializer.LONG_SIZE);
+      buffer.position(entryPosition + OLongSerializer.LONG_SIZE);
+      keySize = keySerializer.getObjectSizeInByteBuffer(buffer);
     } else {
-      keySize = getIntValue(entryPosition + OLongSerializer.LONG_SIZE) + OIntegerSerializer.INT_SIZE;
+      keySize = buffer.getInt(entryPosition + OLongSerializer.LONG_SIZE) + OIntegerSerializer.INT_SIZE;
     }
 
-    final int ridSize = getObjectSizeInDirectMemory(valueSerializer, entryPosition + keySize + OLongSerializer.LONG_SIZE);
+    buffer.position(entryPosition + keySize + OLongSerializer.LONG_SIZE);
+    final int ridSize = valueSerializer.getObjectSizeInByteBuffer(buffer);
     final int entrySize = keySize + ridSize + OLongSerializer.LONG_SIZE;
 
     moveData(positionOffset + OIntegerSerializer.INT_SIZE, positionOffset,
@@ -299,23 +344,25 @@ public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterab
     }
 
     int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
-    int size = size();
+    final int size = size();
     for (int i = 0; i < size - 1; i++) {
-      int currentEntryPosition = getIntValue(currentPositionOffset);
+      final int currentEntryPosition = buffer.getInt(currentPositionOffset);
       if (currentEntryPosition < entryPosition)
-        setIntValue(currentPositionOffset, currentEntryPosition + entrySize);
+        buffer.putInt(currentPositionOffset, currentEntryPosition + entrySize);
       currentPositionOffset += OIntegerSerializer.INT_SIZE;
     }
 
-    setIntValue(FREE_POINTER_OFFSET, freePointer + entrySize);
-    setIntValue(SIZE_OFFSET, size - 1);
+    buffer.putInt(FREE_POINTER_OFFSET, freePointer + entrySize);
+    buffer.putInt(SIZE_OFFSET, size - 1);
+
+    cacheEntry.markDirty();
   }
 
-  int entryInsertionIndex(long hashCode, K key, int keyLen, int valueLen) {
-    int entreeSize = keyLen + valueLen + OLongSerializer.LONG_SIZE;
-    int freePointer = getIntValue(FREE_POINTER_OFFSET);
+  int entryInsertionIndex(final long hashCode, final K key, final int keyLen, final int valueLen) {
+    final int entreeSize = keyLen + valueLen + OLongSerializer.LONG_SIZE;
+    final int freePointer = buffer.getInt(FREE_POINTER_OFFSET);
 
-    int size = size();
+    final int size = size();
     if (freePointer - entreeSize < POSITIONS_ARRAY_OFFSET + (size + 1) * OIntegerSerializer.INT_SIZE) {
       return -1;
     }
@@ -328,14 +375,15 @@ public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterab
     return -index - 1;
   }
 
-  void insertEntry(long hashCode, byte[] key, byte[] value, int insertionPoint) {
+  void insertEntry(final long hashCode, final byte[] key, final byte[] value, final int insertionPoint) {
     final int entreeSize = key.length + value.length + OLongSerializer.LONG_SIZE;
     insertEntry(hashCode, key, value, insertionPoint, entreeSize);
   }
 
-  private void insertEntry(long hashCode, byte[] key, byte[] value, int insertionPoint, int entreeSize) {
-    int freePointer = getIntValue(FREE_POINTER_OFFSET);
-    int size = size();
+  private void insertEntry(final long hashCode, final byte[] key, final byte[] value, final int insertionPoint,
+      final int entreeSize) {
+    final int freePointer = buffer.getInt(FREE_POINTER_OFFSET);
+    final int size = size();
 
     final int positionsOffset = insertionPoint * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET;
 
@@ -343,43 +391,43 @@ public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterab
         size() * OIntegerSerializer.INT_SIZE - insertionPoint * OIntegerSerializer.INT_SIZE);
 
     final int entreePosition = freePointer - entreeSize;
-    setIntValue(positionsOffset, entreePosition);
+    buffer.putInt(positionsOffset, entreePosition);
     serializeEntry(hashCode, key, value, entreePosition);
 
-    setIntValue(FREE_POINTER_OFFSET, entreePosition);
-    setIntValue(SIZE_OFFSET, size + 1);
+    buffer.putInt(FREE_POINTER_OFFSET, entreePosition);
+    buffer.putInt(SIZE_OFFSET, size + 1);
+    cacheEntry.markDirty();
   }
 
-  void appendEntry(long hashCode, byte[] key, byte[] value) {
+  void appendEntry(final long hashCode, final byte[] key, final byte[] value) {
     final int positionsOffset = size() * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET;
     final int entreeSize = key.length + value.length + OLongSerializer.LONG_SIZE;
 
-    final int freePointer = getIntValue(FREE_POINTER_OFFSET);
+    final int freePointer = buffer.getInt(FREE_POINTER_OFFSET);
     final int entreePosition = freePointer - entreeSize;
 
-    setIntValue(positionsOffset, entreePosition);
+    buffer.putInt(positionsOffset, entreePosition);
     serializeEntry(hashCode, key, value, entreePosition);
 
-    setIntValue(FREE_POINTER_OFFSET, freePointer - entreeSize);
-    setIntValue(SIZE_OFFSET, size() + 1);
+    buffer.putInt(FREE_POINTER_OFFSET, freePointer - entreeSize);
+    buffer.putInt(SIZE_OFFSET, size() + 1);
+    cacheEntry.markDirty();
   }
 
-  private void serializeEntry(long hashCode, byte[] key, byte[] value, int entryOffset) {
-    setLongValue(entryOffset, hashCode);
-    entryOffset += OLongSerializer.LONG_SIZE;
-
-    setBinaryValue(entryOffset, key);
-
-    entryOffset += key.length;
-    setBinaryValue(entryOffset, value);
+  private void serializeEntry(final long hashCode, final byte[] key, final byte[] value, final int entryOffset) {
+    buffer.position(entryOffset);
+    buffer.putLong(hashCode);
+    buffer.put(key);
+    buffer.put(value);
   }
 
   public int getDepth() {
-    return getByteValue(DEPTH_OFFSET);
+    return buffer.get(DEPTH_OFFSET);
   }
 
-  public void setDepth(int depth) {
-    setByteValue(DEPTH_OFFSET, (byte) depth);
+  public void setDepth(final int depth) {
+    buffer.put(DEPTH_OFFSET, (byte) depth);
+    cacheEntry.markDirty();
   }
 
   public static final class RawEntry {
@@ -387,7 +435,7 @@ public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterab
     final        byte[] rawKey;
     final        byte[] rawValue;
 
-    RawEntry(long hashCode, byte[] rawKey, byte[] rawValue) {
+    RawEntry(final long hashCode, final byte[] rawKey, final byte[] rawValue) {
       this.hashCode = hashCode;
       this.rawKey = rawKey;
       this.rawValue = rawValue;
@@ -399,7 +447,7 @@ public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterab
     public final V    value;
     public final long hashCode;
 
-    public Entry(K key, V value, long hashCode) {
+    public Entry(final K key, final V value, final long hashCode) {
       this.key = key;
       this.value = value;
       this.hashCode = hashCode;
@@ -409,7 +457,7 @@ public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterab
   private final class EntryIterator implements Iterator<Entry<K, V>> {
     private int currentIndex;
 
-    private EntryIterator(int currentIndex) {
+    private EntryIterator(final int currentIndex) {
       this.currentIndex = currentIndex;
     }
 

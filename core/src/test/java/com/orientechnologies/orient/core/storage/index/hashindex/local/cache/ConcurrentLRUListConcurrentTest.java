@@ -1,14 +1,6 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local.cache;
 
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import  java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.Callable;
-
-import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.ConcurrentLRUList;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.LRUList;
 import com.orientechnologies.orient.test.ConcurrentTestHelper;
@@ -16,6 +8,13 @@ import com.orientechnologies.orient.test.TestFactory;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.Callable;
 
 /**
  * Concurrent test for {@link ConcurrentLRUList}.
@@ -35,7 +34,7 @@ public class ConcurrentLRUListConcurrentTest {
   }
 
   @Test
-  public void testConcurrentAdd() throws Exception {
+  public void testConcurrentAdd() {
     ConcurrentTestHelper.test(THREAD_COUNT, new AdderFactory());
 
     int expectedSize = AMOUNT_OF_OPERATIONS * THREAD_COUNT;
@@ -43,7 +42,7 @@ public class ConcurrentLRUListConcurrentTest {
   }
 
   @Test
-  public void testConcurrentAddAndRemove() throws Exception {
+  public void testConcurrentAddAndRemove() {
     Collection<Integer> res = ConcurrentTestHelper.<Integer>build().add(THREAD_COUNT, new AdderFactory())
         .add(THREAD_COUNT, new RemoveLRUFactory()).go();
 
@@ -56,14 +55,14 @@ public class ConcurrentLRUListConcurrentTest {
   }
 
   @Test
-  public void testAddRemoveSameEntries() throws Exception {
+  public void testAddRemoveSameEntries() {
     ConcurrentTestHelper.<Integer>build().add(THREAD_COUNT, new AddSameFactory()).add(THREAD_COUNT, new RemoveLRUFactory()).go();
 
     assertListConsistency();
   }
 
   @Test
-  public void testAllOperationsRandomEntries() throws Exception {
+  public void testAllOperationsRandomEntries() {
     ConcurrentTestHelper.<Integer>build().add(THREAD_COUNT, new RandomAdderFactory()).add(THREAD_COUNT, new RandomRemoveFactory())
         .add(THREAD_COUNT, new RemoveLRUFactory()).go();
 
@@ -73,7 +72,7 @@ public class ConcurrentLRUListConcurrentTest {
   private void assertListConsistency(int expectedSize) {
     Assert.assertEquals(list.size(), expectedSize);
     int count = 0;
-    List<OCacheEntry> items = new ArrayList<OCacheEntry>();
+    List<OCacheEntry> items = new ArrayList<>();
     for (OCacheEntry entry : list) {
       items.add(entry);
       count++;
@@ -92,7 +91,7 @@ public class ConcurrentLRUListConcurrentTest {
   private void assertListConsistency() {
     int expectedSize = list.size();
     int count = 0;
-    List<OCacheEntry> items = new ArrayList<OCacheEntry>();
+    List<OCacheEntry> items = new ArrayList<>();
     for (OCacheEntry entry : list) {
       items.add(entry);
       count++;
@@ -125,9 +124,9 @@ public class ConcurrentLRUListConcurrentTest {
         private int threadNumber = ++j;
 
         @Override
-        public Integer call() throws Exception {
+        public Integer call() {
           for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
-            list.putToMRU(new OCacheEntryImpl(threadNumber, i, null, false));
+            list.putToMRU(new OCacheEntry(threadNumber, i, null, false));
           }
           return AMOUNT_OF_OPERATIONS;
         }
@@ -138,20 +137,17 @@ public class ConcurrentLRUListConcurrentTest {
   private class RemoveLRUFactory implements TestFactory<Integer> {
     @Override
     public Callable<Integer> createWorker() {
-      return new Callable<Integer>() {
-        @Override
-        public Integer call() throws Exception {
-          int actualRemoves = 0;
-          consumeCPU(1000);
-          for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
-            OCacheEntry e = list.removeLRU();
-            if (e != null) {
-              actualRemoves++;
-            }
-            consumeCPU(1000);
+      return () -> {
+        int actualRemoves = 0;
+        consumeCPU(1000);
+        for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
+          OCacheEntry e = list.removeLRU();
+          if (e != null) {
+            actualRemoves++;
           }
-          return -actualRemoves;
+          consumeCPU(1000);
         }
+        return -actualRemoves;
       };
     }
   }
@@ -160,17 +156,13 @@ public class ConcurrentLRUListConcurrentTest {
 
     @Override
     public Callable<Integer> createWorker() {
-      return new Callable<Integer>() {
-
-        @Override
-        public Integer call() throws Exception {
-          Random r = new Random();
-          for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
-            list.putToMRU(new OCacheEntryImpl(0, r.nextInt(200), null, false));
-            consumeCPU(r.nextInt(500) + 1000);
-          }
-          return AMOUNT_OF_OPERATIONS;
+      return () -> {
+        Random r = new Random();
+        for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
+          list.putToMRU(new OCacheEntry(0, r.nextInt(200), null, false));
+          consumeCPU(r.nextInt(500) + 1000);
         }
+        return AMOUNT_OF_OPERATIONS;
       };
     }
   }
@@ -179,17 +171,13 @@ public class ConcurrentLRUListConcurrentTest {
 
     @Override
     public Callable<Integer> createWorker() {
-      return new Callable<Integer>() {
-
-        @Override
-        public Integer call() throws Exception {
-          Random r = new Random();
-          for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
-            list.putToMRU(new OCacheEntryImpl(0, 0, null, false));
-            consumeCPU(r.nextInt(500) + 1000);
-          }
-          return AMOUNT_OF_OPERATIONS;
+      return () -> {
+        Random r = new Random();
+        for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
+          list.putToMRU(new OCacheEntry(0, 0, null, false));
+          consumeCPU(r.nextInt(500) + 1000);
         }
+        return AMOUNT_OF_OPERATIONS;
       };
     }
   }
@@ -197,20 +185,17 @@ public class ConcurrentLRUListConcurrentTest {
   private class RandomRemoveFactory implements TestFactory<Integer> {
     @Override
     public Callable<Integer> createWorker() {
-      return new Callable<Integer>() {
-        @Override
-        public Integer call() throws Exception {
-          Random r = new Random();
-          int actualRemoves = 0;
-          for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
-            OCacheEntry e = list.remove(0, r.nextInt(100));
-            if (e != null) {
-              actualRemoves++;
-            }
-            consumeCPU(r.nextInt(1000) + 1000);
+      return () -> {
+        Random r = new Random();
+        int actualRemoves = 0;
+        for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
+          OCacheEntry e = list.remove(0, r.nextInt(100));
+          if (e != null) {
+            actualRemoves++;
           }
-          return -actualRemoves;
+          consumeCPU(r.nextInt(1000) + 1000);
         }
+        return -actualRemoves;
       };
     }
   }

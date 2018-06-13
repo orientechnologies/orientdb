@@ -72,8 +72,8 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
   private final OEncryption encryption;
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  OSBTreeBucket(OCacheEntry cacheEntry, boolean isLeaf, OBinarySerializer<K> keySerializer, OType[] keyTypes,
-      OBinarySerializer<V> valueSerializer, OEncryption encryption) {
+  OSBTreeBucket(final OCacheEntry cacheEntry, final boolean isLeaf, final OBinarySerializer<K> keySerializer,
+      final OType[] keyTypes, final OBinarySerializer<V> valueSerializer, final OEncryption encryption) {
     super(cacheEntry);
 
     this.isLeaf = isLeaf;
@@ -99,8 +99,8 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  OSBTreeBucket(OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer, OType[] keyTypes, OBinarySerializer<V> valueSerializer,
-      OEncryption encryption) {
+  OSBTreeBucket(final OCacheEntry cacheEntry, final OBinarySerializer<K> keySerializer, final OType[] keyTypes,
+      final OBinarySerializer<V> valueSerializer, final OEncryption encryption) {
     super(cacheEntry);
 
     this.keyTypes = keyTypes;
@@ -111,7 +111,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     this.valueSerializer = valueSerializer;
   }
 
-  void setTreeSize(long size) {
+  void setTreeSize(final long size) {
     buffer.putLong(TREE_SIZE_OFFSET, size);
     cacheEntry.markDirty();
   }
@@ -128,19 +128,19 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     return buffer.getLong(FREE_VALUES_LIST_OFFSET);
   }
 
-  void setValuesFreeListFirstIndex(long pageIndex) {
+  void setValuesFreeListFirstIndex(final long pageIndex) {
     buffer.putLong(FREE_VALUES_LIST_OFFSET, pageIndex);
     cacheEntry.markDirty();
   }
 
-  public int find(K key) {
+  public int find(final K key) {
     int low = 0;
     int high = size() - 1;
 
     while (low <= high) {
-      int mid = (low + high) >>> 1;
-      K midVal = getKey(mid);
-      int cmp = comparator.compare(midVal, key);
+      final int mid = (low + high) >>> 1;
+      final K midVal = getKey(mid);
+      final int cmp = comparator.compare(midVal, key);
 
       if (cmp < 0)
         low = mid + 1;
@@ -152,11 +152,9 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     return -(low + 1); // key not found.
   }
 
-  public void remove(int entryIndex) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
-    int entryPosition = buffer.getInt(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
-    int keySize;
+  public void remove(final int entryIndex) {
+    final int entryPosition = buffer.getInt(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
+    final int keySize;
 
     if (encryption == null) {
       buffer.position(entryPosition);
@@ -166,7 +164,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
       keySize = OIntegerSerializer.INT_SIZE + encryptedSize;
     }
 
-    int entrySize;
+    final int entrySize;
     if (isLeaf) {
       if (valueSerializer.isFixedLength()) {
         entrySize = keySize + valueSerializer.getFixedLength() + OByteSerializer.BYTE_SIZE;
@@ -190,7 +188,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     size--;
     buffer.putInt(SIZE_OFFSET, size);
 
-    int freePointer = buffer.getInt(FREE_POINTER_OFFSET);
+    final int freePointer = buffer.getInt(FREE_POINTER_OFFSET);
     if (size > 0 && entryPosition > freePointer) {
       moveData(freePointer, freePointer + entrySize, entryPosition - freePointer);
     }
@@ -200,7 +198,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
 
     for (int i = 0; i < size; i++) {
-      int currentEntryPosition = buffer.getInt(currentPositionOffset);
+      final int currentEntryPosition = buffer.getInt(currentPositionOffset);
       if (currentEntryPosition < entryPosition) {
         buffer.putInt(currentPositionOffset, currentEntryPosition + entrySize);
       }
@@ -212,13 +210,12 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     return buffer.getInt(SIZE_OFFSET);
   }
 
-  public SBTreeEntry<K, V> getEntry(int entryIndex) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
+  public SBTreeEntry<K, V> getEntry(final int entryIndex) {
     int entryPosition = buffer.getInt(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 
+    final ByteBuffer buffer = getBufferDuplicate();
     if (isLeaf) {
-      K key;
+      final K key;
       if (encryption == null) {
         buffer.position(entryPosition);
         key = keySerializer.deserializeFromByteBufferObject(buffer);
@@ -238,7 +235,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
         key = keySerializer.deserializeNativeObject(encryption.decrypt(encryptedKey), 0);
       }
 
-      boolean isLinkValue = buffer.get(entryPosition) > 0;
+      final boolean isLinkValue = buffer.get(entryPosition) > 0;
       long link = -1;
       V value = null;
 
@@ -252,10 +249,10 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
       return new SBTreeEntry<>(-1, -1, key, new OSBTreeValue<>(link >= 0, link, value));
     } else {
       buffer.position(entryPosition);
-      long leftChild = buffer.getLong();
-      long rightChild = buffer.getLong();
+      final long leftChild = buffer.getLong();
+      final long rightChild = buffer.getLong();
 
-      K key;
+      final K key;
 
       if (encryption == null) {
         key = keySerializer.deserializeFromByteBufferObject(buffer);
@@ -272,11 +269,11 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     }
   }
 
-  byte[] getRawEntry(int entryIndex) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
+  byte[] getRawEntry(final int entryIndex) {
     int entryPosition = buffer.getInt(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     final int startEntryPosition = entryPosition;
+
+    final ByteBuffer buffer = getBufferDuplicate();
 
     if (isLeaf) {
       final int keySize;
@@ -327,12 +324,12 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
    *
    * @return the obtained value.
    */
-  public OSBTreeValue<V> getValue(int entryIndex) {
-    final ByteBuffer buffer = getBufferDuplicate();
+  public OSBTreeValue<V> getValue(final int entryIndex) {
     assert isLeaf;
 
     int entryPosition = buffer.getInt(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 
+    final ByteBuffer buffer = getBufferDuplicate();
     // skip key
     if (encryption == null) {
       buffer.position(entryPosition);
@@ -342,7 +339,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
       entryPosition += OIntegerSerializer.INT_SIZE + encryptedSize;
     }
 
-    boolean isLinkValue = buffer.get(entryPosition) > 0;
+    final boolean isLinkValue = buffer.get(entryPosition) > 0;
     long link = -1;
     V value = null;
 
@@ -356,12 +353,12 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     return new OSBTreeValue<>(link >= 0, link, value);
   }
 
-  byte[] getRawValue(int entryIndex) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
+  byte[] getRawValue(final int entryIndex) {
     assert isLeaf;
 
     int entryPosition = buffer.getInt(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+
+    final ByteBuffer buffer = getBufferDuplicate();
 
     // skip key
     if (encryption == null) {
@@ -384,14 +381,14 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     return rawValue;
   }
 
-  public K getKey(int index) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
+  public K getKey(final int index) {
     int entryPosition = buffer.getInt(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 
     if (!isLeaf) {
       entryPosition += 2 * OLongSerializer.LONG_SIZE;
     }
+
+    final ByteBuffer buffer = getBufferDuplicate();
 
     if (encryption == null) {
       buffer.position(entryPosition);
@@ -412,8 +409,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     return isLeaf;
   }
 
-  public void addAll(List<byte[]> rawEntries) {
-    final ByteBuffer buffer = getBufferDuplicate();
+  public void addAll(final List<byte[]> rawEntries) {
     cacheEntry.markDirty();
 
     for (int i = 0; i < rawEntries.size(); i++) {
@@ -423,11 +419,10 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     buffer.putInt(SIZE_OFFSET, rawEntries.size());
   }
 
-  public void shrink(int newSize) {
-    final ByteBuffer buffer = getBufferDuplicate();
+  public void shrink(final int newSize) {
     cacheEntry.markDirty();
 
-    List<byte[]> rawEntries = new ArrayList<>(newSize);
+    final List<byte[]> rawEntries = new ArrayList<>(newSize);
 
     for (int i = 0; i < newSize; i++) {
       rawEntries.add(getRawEntry(i));
@@ -436,7 +431,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     buffer.putInt(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
 
     int index = 0;
-    for (byte[] entry : rawEntries) {
+    for (final byte[] entry : rawEntries) {
       appendRawEntry(index, entry, buffer);
       index++;
     }
@@ -446,8 +441,6 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
 
   @Override
   protected byte[] serializePage() {
-    final ByteBuffer buffer = getBufferDuplicate();
-
     final int bucketSize = buffer.getInt(SIZE_OFFSET);
     final int positionsEndPointer = POSITIONS_ARRAY_OFFSET + bucketSize * OIntegerSerializer.INT_SIZE;
     int size = positionsEndPointer;
@@ -469,9 +462,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
   }
 
   @Override
-  protected void deserializePage(byte[] page) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
+  protected void deserializePage(final byte[] page) {
     buffer.position(0);
     buffer.put(page, 0, POSITIONS_ARRAY_OFFSET);
 
@@ -496,13 +487,11 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
   }
 
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-  boolean addLeafEntry(int index, byte[] serializedKey, byte[] serializedValue) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
+  boolean addLeafEntry(final int index, final byte[] serializedKey, final byte[] serializedValue) {
     final int entrySize = serializedKey.length + serializedValue.length + OByteSerializer.BYTE_SIZE;
 
     assert isLeaf;
-    int size = buffer.getInt(SIZE_OFFSET);
+    final int size = buffer.getInt(SIZE_OFFSET);
 
     int freePointer = buffer.getInt(FREE_POINTER_OFFSET);
     if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
@@ -531,7 +520,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     return true;
   }
 
-  private void appendRawEntry(int index, byte[] rawEntry, ByteBuffer buffer) {
+  private static void appendRawEntry(final int index, final byte[] rawEntry, final ByteBuffer buffer) {
     int freePointer = buffer.getInt(FREE_POINTER_OFFSET);
     freePointer -= rawEntry.length;
 
@@ -542,9 +531,8 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     buffer.put(rawEntry);
   }
 
-  public boolean addEntry(int index, SBTreeEntry<K, V> treeEntry, boolean updateNeighbors) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
+  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+  public boolean addEntry(final int index, final SBTreeEntry<K, V> treeEntry, final boolean updateNeighbors) {
     final int keySize;
     byte[] encryptedKey = null;
 
@@ -597,7 +585,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     buffer.position(freePointer);
     if (isLeaf) {
       if (encryption == null) {
-        byte[] serializedKey = new byte[keySize];
+        final byte[] serializedKey = new byte[keySize];
         keySerializer.serializeNativeObject(treeEntry.key, serializedKey, 0, (Object[]) keyTypes);
 
         buffer.put(serializedKey);
@@ -608,7 +596,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
 
       buffer.put(treeEntry.value.isLink() ? (byte) 1 : (byte) 0);
 
-      byte[] serializedValue = new byte[valueSize];
+      final byte[] serializedValue = new byte[valueSize];
       if (treeEntry.value.isLink())
         OLongSerializer.INSTANCE.serializeNative(treeEntry.value.getLink(), serializedValue, 0);
       else
@@ -620,7 +608,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
       buffer.putLong(treeEntry.rightChild);
 
       if (encryption == null) {
-        byte[] serializedKey = new byte[keySize];
+        final byte[] serializedKey = new byte[keySize];
         keySerializer.serializeNativeObject(treeEntry.key, serializedKey, 0, (Object[]) keyTypes);
 
         buffer.put(serializedKey);
@@ -647,8 +635,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     return true;
   }
 
-  void updateValue(int index, byte[] value) {
-    final ByteBuffer buffer = getBufferDuplicate();
+  void updateValue(final int index, final byte[] value) {
     cacheEntry.markDirty();
 
     int entryPosition = buffer.getInt(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
@@ -669,7 +656,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     buffer.put(value);
   }
 
-  void setLeftSibling(long pageIndex) {
+  void setLeftSibling(final long pageIndex) {
     buffer.putLong(LEFT_SIBLING_OFFSET, pageIndex);
     cacheEntry.markDirty();
   }
@@ -678,7 +665,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     return buffer.getLong(LEFT_SIBLING_OFFSET);
   }
 
-  void setRightSibling(long pageIndex) {
+  void setRightSibling(final long pageIndex) {
     buffer.putLong(RIGHT_SIBLING_OFFSET, pageIndex);
     cacheEntry.markDirty();
   }
@@ -695,7 +682,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     public final K               key;
     public final OSBTreeValue<V> value;
 
-    SBTreeEntry(long leftChild, long rightChild, K key, OSBTreeValue<V> value) {
+    SBTreeEntry(final long leftChild, final long rightChild, final K key, final OSBTreeValue<V> value) {
       this.leftChild = leftChild;
       this.rightChild = rightChild;
       this.key = key;
@@ -703,7 +690,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
       if (this == o)
         return true;
       if (o == null || getClass() != o.getClass())
@@ -743,7 +730,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     }
 
     @Override
-    public int compareTo(SBTreeEntry<K, V> other) {
+    public int compareTo(final SBTreeEntry<K, V> other) {
       return comparator.compare(key, other.key);
     }
   }

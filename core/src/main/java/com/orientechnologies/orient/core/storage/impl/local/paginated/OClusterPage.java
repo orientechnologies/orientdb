@@ -35,7 +35,7 @@ import java.nio.ByteBuffer;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 19.03.13
  */
-public class OClusterPage extends ODurablePage {
+public final class OClusterPage extends ODurablePage {
 
   private static final int VERSION_SIZE = ORecordVersionHelper.SERIALIZED_SIZE;
 
@@ -62,7 +62,7 @@ public class OClusterPage extends ODurablePage {
   private static final int ENTRY_KIND_UNKNOWN = 0;
   private static final int ENTRY_KIND_DATA    = +1;
 
-  OClusterPage(OCacheEntry cacheEntry, boolean newPage) {
+  OClusterPage(final OCacheEntry cacheEntry, final boolean newPage) {
     super(cacheEntry);
 
     if (newPage) {
@@ -77,15 +77,13 @@ public class OClusterPage extends ODurablePage {
   }
 
   int appendRecord(final int recordVersion, final byte[] record) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
     int freePosition = buffer.getInt(FREE_POSITION_OFFSET);
     final int indexesLength = buffer.getInt(PAGE_INDEXES_LENGTH_OFFSET);
 
     final int lastEntryIndexPosition = PAGE_INDEXES_OFFSET + indexesLength * INDEX_ITEM_SIZE;
 
-    int entrySize = record.length + 3 * OIntegerSerializer.INT_SIZE;
-    int freeListHeader = buffer.getInt(FREELIST_HEADER_OFFSET);
+    final int entrySize = record.length + 3 * OIntegerSerializer.INT_SIZE;
+    final int freeListHeader = buffer.getInt(FREELIST_HEADER_OFFSET);
 
     if (!checkSpace(entrySize, freeListHeader, buffer)) {
       return -1;
@@ -95,22 +93,22 @@ public class OClusterPage extends ODurablePage {
 
     if (freeListHeader > 0) {
       if (freePosition - entrySize < lastEntryIndexPosition)
-        doDefragmentation(buffer);
+        doDefragmentation();
     } else {
       if (freePosition - entrySize < lastEntryIndexPosition + INDEX_ITEM_SIZE)
-        doDefragmentation(buffer);
+        doDefragmentation();
     }
 
     freePosition = buffer.getInt(FREE_POSITION_OFFSET);
     freePosition -= entrySize;
-    int entryIndex;
+    final int entryIndex;
 
     if (freeListHeader > 0) {
       entryIndex = freeListHeader - 1;
 
       final int tombstonePointer = buffer.getInt(PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * entryIndex);
 
-      int nextEntryPosition = tombstonePointer & POSITION_MASK;
+      final int nextEntryPosition = tombstonePointer & POSITION_MASK;
       if (nextEntryPosition > 0)
         buffer.putInt(FREELIST_HEADER_OFFSET, nextEntryPosition);
       else
@@ -118,7 +116,7 @@ public class OClusterPage extends ODurablePage {
 
       buffer.putInt(FREE_SPACE_COUNTER_OFFSET, getFreeSpace() - entrySize);
 
-      int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
+      final int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
       buffer.putInt(entryIndexPosition, freePosition);
 
       buffer.putInt(entryIndexPosition + OIntegerSerializer.INT_SIZE, recordVersion);
@@ -128,7 +126,7 @@ public class OClusterPage extends ODurablePage {
       buffer.putInt(PAGE_INDEXES_LENGTH_OFFSET, indexesLength + 1);
       buffer.putInt(FREE_SPACE_COUNTER_OFFSET, getFreeSpace() - entrySize - INDEX_ITEM_SIZE);
 
-      int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
+      final int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
       buffer.putInt(entryIndexPosition, freePosition);
 
       buffer.putInt(entryIndexPosition + OIntegerSerializer.INT_SIZE, recordVersion);
@@ -148,21 +146,20 @@ public class OClusterPage extends ODurablePage {
     return entryIndex;
   }
 
-  int replaceRecord(int entryIndex, byte[] record, final int recordVersion) {
-    final ByteBuffer buffer = getBufferDuplicate();
+  int replaceRecord(final int entryIndex, final byte[] record, final int recordVersion) {
     cacheEntry.markDirty();
 
-    int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
+    final int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
 
     if (recordVersion != -1) {
       buffer.putInt(entryIndexPosition + OIntegerSerializer.INT_SIZE, recordVersion);
     }
 
-    int entryPointer = buffer.getInt(entryIndexPosition);
-    int entryPosition = entryPointer & POSITION_MASK;
+    final int entryPointer = buffer.getInt(entryIndexPosition);
+    final int entryPosition = entryPointer & POSITION_MASK;
 
-    int recordSize = buffer.getInt(entryPosition) - 3 * OIntegerSerializer.INT_SIZE;
-    int writtenBytes;
+    final int recordSize = buffer.getInt(entryPosition) - 3 * OIntegerSerializer.INT_SIZE;
+    final int writtenBytes;
     if (record.length <= recordSize) {
       buffer.putInt(entryPointer + 2 * OIntegerSerializer.INT_SIZE, record.length);
 
@@ -171,7 +168,7 @@ public class OClusterPage extends ODurablePage {
 
       writtenBytes = record.length;
     } else {
-      byte[] newRecord = new byte[recordSize];
+      final byte[] newRecord = new byte[recordSize];
       System.arraycopy(record, 0, newRecord, 0, newRecord.length);
 
       buffer.position(entryPointer + 3 * OIntegerSerializer.INT_SIZE);
@@ -183,8 +180,8 @@ public class OClusterPage extends ODurablePage {
     return writtenBytes;
   }
 
-  public int getRecordVersion(int position) {
-    int indexesLength = buffer.getInt(PAGE_INDEXES_LENGTH_OFFSET);
+  public int getRecordVersion(final int position) {
+    final int indexesLength = buffer.getInt(PAGE_INDEXES_LENGTH_OFFSET);
     if (position >= indexesLength) {
       return -1;
     }
@@ -197,7 +194,7 @@ public class OClusterPage extends ODurablePage {
     return buffer.getInt(FREE_SPACE_COUNTER_OFFSET) == PAGE_SIZE - PAGE_INDEXES_OFFSET;
   }
 
-  private boolean checkSpace(int entrySize, int freeListHeader, ByteBuffer buffer) {
+  private static boolean checkSpace(final int entrySize, final int freeListHeader, final ByteBuffer buffer) {
     if (freeListHeader > 0) {
       if (buffer.getInt(FREE_SPACE_COUNTER_OFFSET) - entrySize < 0) {
         return false;
@@ -210,23 +207,23 @@ public class OClusterPage extends ODurablePage {
     return true;
   }
 
-  public boolean deleteRecord(int position) {
-    int indexesLength = buffer.getInt(PAGE_INDEXES_LENGTH_OFFSET);
+  public boolean deleteRecord(final int position) {
+    final int indexesLength = buffer.getInt(PAGE_INDEXES_LENGTH_OFFSET);
     if (position >= indexesLength) {
       return false;
     }
 
-    int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * position;
-    int entryPointer = buffer.getInt(entryIndexPosition);
+    final int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * position;
+    final int entryPointer = buffer.getInt(entryIndexPosition);
 
     if ((entryPointer & MARKED_AS_DELETED_FLAG) != 0) {
       return false;
     }
 
     cacheEntry.markDirty();
-    int entryPosition = entryPointer & POSITION_MASK;
+    final int entryPosition = entryPointer & POSITION_MASK;
 
-    int freeListHeader = buffer.getInt(FREELIST_HEADER_OFFSET);
+    final int freeListHeader = buffer.getInt(FREELIST_HEADER_OFFSET);
     if (freeListHeader <= 0) {
       buffer.putInt(entryIndexPosition, MARKED_AS_DELETED_FLAG);
     } else {
@@ -252,16 +249,14 @@ public class OClusterPage extends ODurablePage {
       return true;
     }
 
-    int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * position;
-    int entryPointer = buffer.getInt(entryIndexPosition);
+    final int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * position;
+    final int entryPointer = buffer.getInt(entryIndexPosition);
 
     return (entryPointer & MARKED_AS_DELETED_FLAG) != 0;
   }
 
   @Override
   protected byte[] serializePage() {
-    final ByteBuffer buffer = getBufferDuplicate();
-
     final int indexesLength = buffer.getInt(PAGE_INDEXES_LENGTH_OFFSET);
     final int lastEntryIndexPosition = PAGE_INDEXES_OFFSET + indexesLength * INDEX_ITEM_SIZE;
     int size = lastEntryIndexPosition;
@@ -283,9 +278,7 @@ public class OClusterPage extends ODurablePage {
   }
 
   @Override
-  protected void deserializePage(byte[] page) {
-    final ByteBuffer buffer = getBufferDuplicate();
-
+  protected void deserializePage(final byte[] page) {
     buffer.position(0);
     buffer.put(page, 0, PAGE_INDEXES_OFFSET);
 
@@ -325,8 +318,8 @@ public class OClusterPage extends ODurablePage {
   int findFirstDeletedRecord(final int position) {
     final int indexesLength = buffer.getInt(PAGE_INDEXES_LENGTH_OFFSET);
     for (int i = position; i < indexesLength; i++) {
-      int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * i;
-      int entryPointer = buffer.getInt(entryIndexPosition);
+      final int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * i;
+      final int entryPointer = buffer.getInt(entryIndexPosition);
 
       if ((entryPointer & MARKED_AS_DELETED_FLAG) != 0) {
         return i;
@@ -413,45 +406,46 @@ public class OClusterPage extends ODurablePage {
   void setNextPagePointer(final int recordPosition, final long value) {
     cacheEntry.markDirty();
 
-    assert isPositionInsideInterval(recordPosition, buffer);
+    assert isPositionInsideInterval(recordPosition);
 
     final int entryIndexPosition = PAGE_INDEXES_OFFSET + recordPosition * INDEX_ITEM_SIZE;
     final int entryPointer = buffer.getInt(entryIndexPosition);
     final int entryPosition = entryPointer & POSITION_MASK;
 
     final int recordSize = buffer.getInt(entryPosition + 2 * OIntegerSerializer.INT_SIZE);
-    assert insideRecordBounds(entryPosition, recordSize - OLongSerializer.LONG_SIZE, OLongSerializer.LONG_SIZE, buffer);
+    assert insideRecordBounds(entryPosition, recordSize - OLongSerializer.LONG_SIZE, OLongSerializer.LONG_SIZE);
     buffer.putLong(entryPosition + 3 * OIntegerSerializer.INT_SIZE + recordSize - OLongSerializer.LONG_SIZE, value);
   }
 
   long getRecordLongValue(final int recordPosition, final int offset) {
-    assert isPositionInsideInterval(recordPosition, buffer);
+    assert isPositionInsideInterval(recordPosition);
 
     final int entryIndexPosition = PAGE_INDEXES_OFFSET + recordPosition * INDEX_ITEM_SIZE;
     final int entryPointer = buffer.getInt(entryIndexPosition);
     final int entryPosition = entryPointer & POSITION_MASK;
 
     if (offset >= 0) {
-      assert insideRecordBounds(entryPosition, offset, OLongSerializer.LONG_SIZE, buffer);
+      assert insideRecordBounds(entryPosition, offset, OLongSerializer.LONG_SIZE);
       return buffer.getLong(entryPosition + offset + 3 * OIntegerSerializer.INT_SIZE);
     } else {
       final int recordSize = buffer.getInt(entryPosition + 2 * OIntegerSerializer.INT_SIZE);
-      assert insideRecordBounds(entryPosition, recordSize + offset, OLongSerializer.LONG_SIZE, buffer);
+      assert insideRecordBounds(entryPosition, recordSize + offset, OLongSerializer.LONG_SIZE);
       return buffer.getLong(entryPosition + 3 * OIntegerSerializer.INT_SIZE + recordSize + offset);
     }
   }
 
   byte[] getRecordBinaryValue(final int recordPosition, final int size) {
-    final ByteBuffer buffer = getBufferDuplicate();
-    assert isPositionInsideInterval(recordPosition, buffer);
+    assert isPositionInsideInterval(recordPosition);
 
     final int entryIndexPosition = PAGE_INDEXES_OFFSET + recordPosition * INDEX_ITEM_SIZE;
     final int entryPointer = buffer.getInt(entryIndexPosition);
     final int entryPosition = entryPointer & POSITION_MASK;
 
-    assert insideRecordBounds(entryPosition, 0, size, buffer);
+    assert insideRecordBounds(entryPosition, 0, size);
 
     final byte[] value = new byte[size];
+
+    final ByteBuffer buffer = getBufferDuplicate();
     buffer.position(entryPosition + 3 * OIntegerSerializer.INT_SIZE);
     buffer.get(value);
 
@@ -459,18 +453,18 @@ public class OClusterPage extends ODurablePage {
   }
 
   byte getRecordByteValue(final int recordPosition, final int offset) {
-    assert isPositionInsideInterval(recordPosition, buffer);
+    assert isPositionInsideInterval(recordPosition);
 
     final int entryIndexPosition = PAGE_INDEXES_OFFSET + recordPosition * INDEX_ITEM_SIZE;
-    final int entryPointer = getIntValue(entryIndexPosition);
+    final int entryPointer = buffer.getInt(entryIndexPosition);
     final int entryPosition = entryPointer & POSITION_MASK;
 
     if (offset >= 0) {
-      assert insideRecordBounds(entryPosition, offset, OByteSerializer.BYTE_SIZE, buffer);
+      assert insideRecordBounds(entryPosition, offset, OByteSerializer.BYTE_SIZE);
       return buffer.get(entryPosition + offset + 3 * OIntegerSerializer.INT_SIZE);
     } else {
       final int recordSize = buffer.getInt(entryPosition + 2 * OIntegerSerializer.INT_SIZE);
-      assert insideRecordBounds(entryPosition, recordSize + offset, OByteSerializer.BYTE_SIZE, buffer);
+      assert insideRecordBounds(entryPosition, recordSize + offset, OByteSerializer.BYTE_SIZE);
       return buffer.get(entryPosition + 3 * OIntegerSerializer.INT_SIZE + recordSize + offset);
     }
   }
@@ -533,17 +527,17 @@ public class OClusterPage extends ODurablePage {
     OLogManager.instance().error(this, "%s", null, text);
   }
 
-  private boolean insideRecordBounds(final int entryPosition, final int offset, final int contentSize, ByteBuffer buffer) {
+  private boolean insideRecordBounds(final int entryPosition, final int offset, final int contentSize) {
     final int recordSize = buffer.getInt(entryPosition + 2 * OIntegerSerializer.INT_SIZE);
     return offset >= 0 && offset + contentSize <= recordSize;
   }
 
-  private boolean isPositionInsideInterval(final int recordPosition, ByteBuffer buffer) {
+  private boolean isPositionInsideInterval(final int recordPosition) {
     final int indexesLength = buffer.getInt(PAGE_INDEXES_LENGTH_OFFSET);
     return recordPosition < indexesLength;
   }
 
-  private void doDefragmentation(ByteBuffer buffer) {
+  private void doDefragmentation() {
     final int recordsCount = buffer.getInt(ENTRIES_COUNT_OFFSET);
     final int freePosition = buffer.getInt(FREE_POSITION_OFFSET);
 

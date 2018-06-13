@@ -24,22 +24,20 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
-import java.nio.ByteBuffer;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 20.08.13
  */
-public class OPaginatedClusterState extends ODurablePage {
+public final class OPaginatedClusterState extends ODurablePage {
   private static final int RECORDS_SIZE_OFFSET = NEXT_FREE_POSITION;
   private static final int SIZE_OFFSET         = RECORDS_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int FREE_LIST_OFFSET    = SIZE_OFFSET + OLongSerializer.LONG_SIZE;
 
-  OPaginatedClusterState(OCacheEntry cacheEntry) {
+  OPaginatedClusterState(final OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
-  public void setSize(long size) {
+  public void setSize(final long size) {
     buffer.putLong(SIZE_OFFSET, size);
     cacheEntry.markDirty();
   }
@@ -48,7 +46,7 @@ public class OPaginatedClusterState extends ODurablePage {
     return buffer.getLong(SIZE_OFFSET);
   }
 
-  void setRecordsSize(long recordsSize) {
+  void setRecordsSize(final long recordsSize) {
     buffer.putLong(RECORDS_SIZE_OFFSET, recordsSize);
     cacheEntry.markDirty();
   }
@@ -57,12 +55,12 @@ public class OPaginatedClusterState extends ODurablePage {
     return buffer.getLong(RECORDS_SIZE_OFFSET);
   }
 
-  void setFreeListPage(int index, long pageIndex) {
+  void setFreeListPage(final int index, final long pageIndex) {
     buffer.putLong(FREE_LIST_OFFSET + index * OLongSerializer.LONG_SIZE, pageIndex);
     cacheEntry.markDirty();
   }
 
-  long getFreeListPage(int index) {
+  long getFreeListPage(final int index) {
     return buffer.getLong(FREE_LIST_OFFSET + index * OLongSerializer.LONG_SIZE);
   }
 
@@ -71,7 +69,6 @@ public class OPaginatedClusterState extends ODurablePage {
     final int size =
         FREE_LIST_OFFSET + OPaginatedCluster.FREE_LIST_SIZE * OLongSerializer.LONG_SIZE; // size of all free list elements
 
-    final ByteBuffer buffer = getBufferDuplicate();
     final byte[] page = new byte[size];
     buffer.position(0);
     buffer.get(page);
@@ -79,8 +76,7 @@ public class OPaginatedClusterState extends ODurablePage {
   }
 
   @Override
-  protected void deserializePage(byte[] page) {
-    final ByteBuffer buffer = getBufferDuplicate();
+  protected void deserializePage(final byte[] page) {
     buffer.position(0);
     buffer.put(page);
     cacheEntry.markDirty();
