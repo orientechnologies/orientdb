@@ -92,8 +92,6 @@ public class OVertexDocument extends ODocument implements OVertex {
       Object fieldValue = getProperty(fieldName);
 
       if (fieldValue != null) {
-        final OIdentifiable destinationVId = null;
-
         if (fieldValue instanceof OIdentifiable) {
           fieldValue = Collections.singleton(fieldValue);
         }

@@ -24,8 +24,7 @@ package com.orientechnologies.orient.core.command;
  * Generic GOF command pattern implementation.
  * 
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
- * @param <T>
+ *
  */
 public interface OCommand {
   /**

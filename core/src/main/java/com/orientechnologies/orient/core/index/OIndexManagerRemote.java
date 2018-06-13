@@ -73,7 +73,6 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
       reload();
 
-      final Locale locale = getServerLocale();
       return preProcessBeforeReturn(getDatabase(), indexes.get(iName));
     } catch (OCommandExecutionException x) {
       throw new OIndexException(x.getMessage());

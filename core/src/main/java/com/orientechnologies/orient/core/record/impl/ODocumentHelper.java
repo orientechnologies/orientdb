@@ -502,7 +502,7 @@ public class ODocumentHelper {
         else if (fieldName.contains("(")) {
           boolean executedMethod = false;
           if (!firstInChain && fieldName.endsWith("()")) {
-            OSQLMethod method = OSQLEngine.getInstance().getMethod(fieldName.substring(0, fieldName.length() - 2));
+            OSQLMethod method = OSQLEngine.getMethod(fieldName.substring(0, fieldName.length() - 2));
             if (method != null) {
               value = method.execute(value, currentRecord, iContext, value, new Object[] {});
               executedMethod = true;

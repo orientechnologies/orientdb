@@ -161,7 +161,7 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
 
     final List<String> funcParamsText = OStringSerializerHelper.getParameters(iText);
 
-    method = OSQLEngine.getInstance().getMethod(funcName);
+    method = OSQLEngine.getMethod(funcName);
     if (method == null)
       throw new OCommandSQLParsingException("Unknown method " + funcName + "()");
 

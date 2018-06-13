@@ -12,7 +12,6 @@ public class SkipExecutionStep extends AbstractExecutionStep {
 
   int skipped = 0;
 
-  OResultSet lastFetch;
   private boolean finished;
 
   public SkipExecutionStep(OSkip skip, OCommandContext ctx, boolean profilingEnabled) {
