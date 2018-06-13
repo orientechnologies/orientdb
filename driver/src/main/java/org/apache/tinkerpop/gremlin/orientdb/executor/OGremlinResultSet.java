@@ -34,42 +34,41 @@ import java.util.stream.StreamSupport;
  */
 public class OGremlinResultSet implements Iterable<OGremlinResult>, AutoCloseable {
 
-    private OrientGraph graph;
-    OResultSet inner;
+  private OrientGraph graph;
+  private OResultSet inner;
 
-    public OGremlinResultSet(OrientGraph graph, OResultSet inner) {
-        this.graph = graph;
-        this.inner = inner;
-    }
+  public OGremlinResultSet(OrientGraph graph, OResultSet inner) {
+    this.graph = graph;
+    this.inner = inner;
+  }
 
-    @Override
-    public void close() {
-        inner.close();
-    }
+  @Override
+  public void close() {
+    inner.close();
+  }
 
-    @Override
-    public Iterator<OGremlinResult> iterator() {
-        return new Iterator<OGremlinResult>() {
-            @Override
-            public boolean hasNext() {
-                return inner.hasNext();
-            }
+  @Override
+  public Iterator<OGremlinResult> iterator() {
+    return new Iterator<OGremlinResult>() {
+      @Override
+      public boolean hasNext() {
+        return inner.hasNext();
+      }
 
-            @Override
-            public OGremlinResult next() {
-                OResult next = inner.next();
-                return new OGremlinResult(graph, next);
-            }
+      @Override
+      public OGremlinResult next() {
+        OResult next = inner.next();
+        return new OGremlinResult(graph, next);
+      }
 
-        };
-    }
+    };
+  }
 
-    public Stream<OGremlinResult> stream() {
-        return StreamSupport
-                .stream(Spliterators.spliteratorUnknownSize(iterator(), Spliterator.IMMUTABLE | Spliterator.ORDERED), false);
-    }
+  public Stream<OGremlinResult> stream() {
+    return inner.stream().map((result) -> new OGremlinResult(graph, result));
+  }
 
-    public OResultSet getRawResultSet() {
-        return inner;
-    }
+  public OResultSet getRawResultSet() {
+    return inner;
+  }
 }

@@ -17,6 +17,7 @@ import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.util.DefaultCloseableIterator;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 import org.apache.tinkerpop.gremlin.util.function.TriFunction;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
@@ -52,16 +53,15 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
   }
 
   /**
-   * Gets an iterator over those vertices/edges that have the specific IDs
-   * wanted, or those that have indexed properties with the wanted values, or
-   * failing that by just getting all of the vertices or edges.
+   * Gets an iterator over those vertices/edges that have the specific IDs wanted, or those that have indexed properties with the
+   * wanted values, or failing that by just getting all of the vertices or edges.
    *
-   * @param getElementsByIds   Function that will return an iterator over all the
-   *                           vertices/edges in the graph that have the specific IDs
-   * @param getElementsByIndex Function that returns a stream of all the vertices/edges in
-   *                           the graph that have an indexed property with a specific value
-   * @param getAllElements     Function that returns an iterator of all the vertices or all
-   *                           the edges (i.e. full scan)
+   * @param getElementsByIds   Function that will return an iterator over all the vertices/edges in the graph that have the specific
+   *                           IDs
+   * @param getElementsByIndex Function that returns a stream of all the vertices/edges in the graph that have an indexed property
+   *                           with a specific value
+   * @param getAllElements     Function that returns an iterator of all the vertices or all the edges (i.e. full scan)
+   *
    * @return An iterator for all the vertices/edges for this step
    */
   private <ElementType extends Element> Iterator<? extends ElementType> elements(
@@ -76,7 +76,13 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> imple
     } else {
       Optional<? extends Iterator<? extends ElementType>> streamIterator = buildQuery().map(
           (query) -> query.execute(getGraph()).stream().map(getElement::apply)
-              .filter(element -> HasContainer.testAll(element, this.hasContainers))).map(stream -> stream.iterator());
+              .filter(element -> HasContainer.testAll(element, this.hasContainers)))
+          .map(stream -> new DefaultCloseableIterator<ElementType>(stream.iterator()) {
+            @Override
+            public void close() {
+              stream.close();
+            }
+          });
       if (streamIterator.isPresent()) {
         return streamIterator.get();
       } else {
