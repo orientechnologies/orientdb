@@ -125,7 +125,11 @@ public class ORecordSerializerBinary implements ORecordSerializer {
       int pos = container.alloc(1);
       container.bytes[pos] = currentSerializerVersion;
       // SERIALIZE RECORD
-      serializerByVersion[currentSerializerVersion].serialize((ODocument) iSource, container, false);
+      ODocument documentToSerialize = (ODocument) iSource;
+      if (iOnlyDelta){
+        documentToSerialize = documentToSerialize.getDeltaFromOriginal();
+      }
+      serializerByVersion[currentSerializerVersion].serialize(documentToSerialize, container, false);
 
       return container.fitBytes();
     }

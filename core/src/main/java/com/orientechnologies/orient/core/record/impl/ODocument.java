@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -3168,5 +3169,45 @@ public class ODocument extends ORecordAbstract
   protected void unTrack(OIdentifiable id) {
     if (isTrackingChanges() && id.getIdentity().getClusterId() != -2)
       super.unTrack(id);
+  }
+  
+  private Object getDeltaValue(Object originalValue, Object currentValue, OType type){
+    if (!type.isEmbedded()){
+      return currentValue;
+    }
+    else{
+      if (type == OType.EMBEDDEDLIST){
+        //TODO probably could be more optimized
+        return currentValue;
+      }
+      else if (type == OType.EMBEDDEDMAP){
+        //TODO probably could be more optimized
+        return currentValue;
+      }
+      else{// if (type == OType.EMBEDDED){
+        ODocument docVal;
+        if (currentValue instanceof ODocumentSerializable){
+          docVal = ((ODocumentSerializable)currentValue).toDocument();          
+        }
+        else{
+          docVal = (ODocument)currentValue;
+        }
+        return docVal.getDeltaFromOriginal();
+      }     
+    }
+  }
+  
+  public ODocument getDeltaFromOriginal(){
+    ODocument retVal = new ODocument();
+    for (Map.Entry<String, ODocumentEntry> fieldVal : _fields.entrySet()){
+      ODocumentEntry val = fieldVal.getValue();            
+      if (val.changed){
+        OType type = val.type;
+        String fieldName = fieldVal.getKey();
+        Object deltaValue = getDeltaValue(val.original, val.value, type);
+        retVal.field(fieldName, val.value);
+      }
+    }
+    return retVal;
   }
 }

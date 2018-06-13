@@ -91,6 +91,7 @@ public class OTransactionPhase1TaskTest {
   public void testExecutionConcurrentModificationUpdate() throws Exception {
     ODocument doc = new ODocument("TestClass");
     doc.field("first", "one");
+    doc.field("second", "constantFieldValue");
     session.save(doc);
     ODocument old = doc.copy();
     doc.field("first", "two");

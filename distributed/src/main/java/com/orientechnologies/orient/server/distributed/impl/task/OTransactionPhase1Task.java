@@ -70,7 +70,9 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       switch (txEntry.type) {
       case ORecordOperation.CREATED:
       case ORecordOperation.UPDATED:
-        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false));
+        byte[] deltaRec = ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), true);
+        byte[] newRec = ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false);
+        request.setRecord(newRec);
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
       case ORecordOperation.DELETED:
@@ -78,7 +80,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       }
       operations.add(request);
     }
-  }
+  }    
 
   @Override
   public String getName() {
