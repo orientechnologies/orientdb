@@ -18,13 +18,12 @@
  *
  */
 
-package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local;
+package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v1;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-
-import java.io.IOException;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 
 /**
  * <p>
@@ -41,7 +40,7 @@ import java.io.IOException;
  * 
  * @author Artem Orobets (enisher-at-gmail.com)
  */
-public class OSysBucket extends OBonsaiBucketAbstract {
+public class OSysBucketV1 extends OBonsaiBucketAbstractV1 {
   private static final int  SYS_MAGIC_OFFSET        = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int  FREE_SPACE_OFFSET       = SYS_MAGIC_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int  FREE_LIST_HEAD_OFFSET   = FREE_SPACE_OFFSET + OBonsaiBucketPointer.SIZE;
@@ -52,42 +51,44 @@ public class OSysBucket extends OBonsaiBucketAbstract {
    */
   private static final byte SYS_MAGIC               = (byte) 41;
 
-  public OSysBucket(OCacheEntry cacheEntry) {
+  OSysBucketV1(OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
-  public void init() throws IOException {
-    setByteValue(SYS_MAGIC_OFFSET, SYS_MAGIC);
-    setBucketPointer(FREE_SPACE_OFFSET, new OBonsaiBucketPointer(0, OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
+  public void init() {
+    buffer.put(SYS_MAGIC_OFFSET, SYS_MAGIC);
+    setBucketPointer(FREE_SPACE_OFFSET,
+        new OBonsaiBucketPointer(0, OSBTreeBonsaiBucketV1.MAX_BUCKET_SIZE_BYTES, OSBTreeBonsaiLocalV1.BINARY_VERSION));
     setBucketPointer(FREE_LIST_HEAD_OFFSET, OBonsaiBucketPointer.NULL);
-    setLongValue(FREE_LIST_LENGTH_OFFSET, 0L);
+    buffer.putLong(FREE_LIST_LENGTH_OFFSET, 0L);
   }
 
   public boolean isInitialized() {
-    return getByteValue(SYS_MAGIC_OFFSET) != 41;
+    return buffer.get(SYS_MAGIC_OFFSET) != 41;
   }
 
-  public long freeListLength() {
-    return getLongValue(FREE_LIST_LENGTH_OFFSET);
+  long freeListLength() {
+    return buffer.getLong(FREE_LIST_LENGTH_OFFSET);
   }
 
-  public void setFreeListLength(long length) throws IOException {
-    setLongValue(FREE_LIST_LENGTH_OFFSET, length);
+  void setFreeListLength(long length) {
+    buffer.putLong(FREE_LIST_LENGTH_OFFSET, length);
+    cacheEntry.markDirty();
   }
 
-  public OBonsaiBucketPointer getFreeSpacePointer() {
+  OBonsaiBucketPointer getFreeSpacePointer() {
     return getBucketPointer(FREE_SPACE_OFFSET);
   }
 
-  public void setFreeSpacePointer(OBonsaiBucketPointer pointer) throws IOException {
+  void setFreeSpacePointer(OBonsaiBucketPointer pointer) {
     setBucketPointer(FREE_SPACE_OFFSET, pointer);
   }
 
-  public OBonsaiBucketPointer getFreeListHead() {
+  OBonsaiBucketPointer getFreeListHead() {
     return getBucketPointer(FREE_LIST_HEAD_OFFSET);
   }
 
-  public void setFreeListHead(OBonsaiBucketPointer pointer) throws IOException {
+  void setFreeListHead(OBonsaiBucketPointer pointer) {
     setBucketPointer(FREE_LIST_HEAD_OFFSET, pointer);
   }
 }

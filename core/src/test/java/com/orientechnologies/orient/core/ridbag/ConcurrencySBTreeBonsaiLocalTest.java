@@ -5,14 +5,18 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v1.OSBTreeBonsaiLocalV1;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ConcurrencySBTreeBonsaiLocalTest {
 
@@ -24,10 +28,11 @@ public class ConcurrencySBTreeBonsaiLocalTest {
     try {
       OSBTreeCollectionManager coll = db.getSbTreeCollectionManager();
       OBonsaiCollectionPointer treePointer = coll.createSBTree(3, null);
-      OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = (OSBTreeBonsaiLocal<OIdentifiable, Integer>) coll.loadSBTree(treePointer);
+      OSBTreeBonsaiLocalV1<OIdentifiable, Integer> tree = (OSBTreeBonsaiLocalV1<OIdentifiable, Integer>) coll
+          .loadSBTree(treePointer);
 
       OBonsaiCollectionPointer treePointer1 = coll.createSBTree(3, null);
-      final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree1 = (OSBTreeBonsaiLocal<OIdentifiable, Integer>) coll
+      final OSBTreeBonsaiLocalV1<OIdentifiable, Integer> tree1 = (OSBTreeBonsaiLocalV1<OIdentifiable, Integer>) coll
           .loadSBTree(treePointer1);
 
       final OAtomicOperationsManager atomManager = ((OAbstractPaginatedStorage) db.getStorage()).getAtomicOperationsManager();

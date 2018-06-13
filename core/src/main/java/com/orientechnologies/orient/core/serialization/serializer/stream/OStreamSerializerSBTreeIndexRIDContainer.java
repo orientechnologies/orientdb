@@ -118,7 +118,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OBinarySerializ
     } else {
       final OIndexRIDContainerSBTree underlying = (OIndexRIDContainerSBTree) object.getUnderlying();
       final OBonsaiBucketPointer rootPointer = underlying.getRootPointer();
-      LONG_SERIALIZER.serializeNative(rootPointer.getPageIndex(), stream, offset + SBTREE_ROOTINDEX_OFFSET);
+      LONG_SERIALIZER.serializeNative(rootPointer.getPageIndexVersion(), stream, offset + SBTREE_ROOTINDEX_OFFSET);
       INT_SERIALIZER.serializeNative(rootPointer.getPageOffset(), stream, offset + SBTREE_ROOTOFFSET_OFFSET);
     }
   }
@@ -140,9 +140,9 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OBinarySerializ
 
       return new OIndexRIDContainer(fileId, underlying, durable);
     } else {
-      final long pageIndex = LONG_SERIALIZER.deserializeNative(stream, offset + SBTREE_ROOTINDEX_OFFSET);
+      final long pageIndexVersion = LONG_SERIALIZER.deserializeNative(stream, offset + SBTREE_ROOTINDEX_OFFSET);
       final int pageOffset = INT_SERIALIZER.deserializeNative(stream, offset + SBTREE_ROOTOFFSET_OFFSET);
-      final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
+      final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndexVersion, pageOffset);
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
       final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer,
           (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
@@ -187,7 +187,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OBinarySerializ
       final OIndexRIDContainerSBTree underlying = (OIndexRIDContainerSBTree) object.getUnderlying();
       final OBonsaiBucketPointer rootPointer = underlying.getRootPointer();
 
-      buffer.putLong(rootPointer.getPageIndex());
+      buffer.putLong(rootPointer.getPageIndexVersion());
       buffer.putInt(rootPointer.getPageOffset());
     }
   }
@@ -211,10 +211,10 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OBinarySerializ
 
       return new OIndexRIDContainer(fileId, underlying, durable);
     } else {
-      final long pageIndex = buffer.getLong();
+      final long pageIndexVersion = buffer.getLong();
       final int pageOffset = buffer.getInt();
 
-      final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
+      final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndexVersion, pageOffset);
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
       final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer,
           (OAbstractPaginatedStorage) db.getStorage().getUnderlying());

@@ -27,7 +27,11 @@ import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -38,12 +42,26 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagDel
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagUpdateSerializationOperation;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v1.OSBTreeBonsaiLocalV1;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
@@ -692,7 +710,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     offset += OLongSerializer.LONG_SIZE;
 
     OBonsaiBucketPointer rootPointer = collectionPointer.getRootPointer();
-    OLongSerializer.INSTANCE.serializeLiteral(rootPointer.getPageIndex(), stream, offset);
+    OLongSerializer.INSTANCE.serializeLiteral(rootPointer.getPageIndexVersion(), stream, offset);
     offset += OLongSerializer.LONG_SIZE;
 
     OIntegerSerializer.INSTANCE.serializeLiteral(rootPointer.getPageOffset(), stream, offset);
@@ -755,7 +773,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     final long fileId = OLongSerializer.INSTANCE.deserializeLiteral(stream, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    final long pageIndex = OLongSerializer.INSTANCE.deserializeLiteral(stream, offset);
+    final long pageIndexVersion = OLongSerializer.INSTANCE.deserializeLiteral(stream, offset);
     offset += OLongSerializer.LONG_SIZE;
 
     final int pageOffset = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset);
@@ -767,7 +785,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (fileId == -1)
       collectionPointer = null;
     else
-      collectionPointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
+      collectionPointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndexVersion, pageOffset));
 
     this.size = -1;
 
@@ -952,8 +970,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   public void debugPrint(PrintStream writer) throws IOException {
     OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
-    if (tree instanceof OSBTreeBonsaiLocal) {
-      ((OSBTreeBonsaiLocal) tree).debugPrintBucket(writer);
+    if (tree instanceof OSBTreeBonsaiLocalV1) {
+      ((OSBTreeBonsaiLocalV1) tree).debugPrintBucket(writer);
     }
   }
 

@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v1.OSBTreeBonsaiLocalV1;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.
@@ -11,7 +11,7 @@ public class OSBTreeBonsaiLocalException extends ODurableComponentException {
     super(exception);
   }
 
-  public OSBTreeBonsaiLocalException(String message, OSBTreeBonsaiLocal component) {
+  public OSBTreeBonsaiLocalException(String message, OSBTreeBonsaiLocalV1 component) {
     super(message, component);
   }
 }

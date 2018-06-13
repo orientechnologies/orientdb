@@ -159,7 +159,7 @@ import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEng
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v1.OSBTreeBonsaiLocalV1;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
@@ -2264,7 +2264,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final OBonsaiCollectionPointer collectionPointer = new OBonsaiCollectionPointer(modificationOperation.getFileId(),
             modificationOperation.getPointer());
 
-        final OSBTreeBonsaiLocal sbTreeBonsaiLocal = (OSBTreeBonsaiLocal) sbTreeCollectionManager.loadSBTree(collectionPointer);
+        final OSBTreeBonsaiLocalV1 sbTreeBonsaiLocal = (OSBTreeBonsaiLocalV1) sbTreeCollectionManager.loadSBTree(collectionPointer);
         try {
           modificationOperation.rollbackOperation(sbTreeBonsaiLocal, atomicOperation);
         } finally {

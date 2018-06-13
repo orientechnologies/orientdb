@@ -14,7 +14,7 @@ public class OSBTreeBonsaiRemoveOperationTest {
   public void testSerializationArray() {
     OOperationUnitId unitId = OOperationUnitId.generateId();
     long fileId = 124;
-    OBonsaiBucketPointer pointer = new OBonsaiBucketPointer(25, 31);
+    OBonsaiBucketPointer pointer = new OBonsaiBucketPointer(25, 31, 1);
 
     Random random = new Random();
 
@@ -46,7 +46,7 @@ public class OSBTreeBonsaiRemoveOperationTest {
   public void testSerializationBuffer() {
     OOperationUnitId unitId = OOperationUnitId.generateId();
     long fileId = 124;
-    OBonsaiBucketPointer pointer = new OBonsaiBucketPointer(25, 31);
+    OBonsaiBucketPointer pointer = new OBonsaiBucketPointer(25, 31, 1);
 
     Random random = new Random();
 

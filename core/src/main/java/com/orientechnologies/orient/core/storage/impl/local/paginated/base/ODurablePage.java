@@ -235,6 +235,19 @@ public class ODurablePage {
     cacheEntry.markDirty();
   }
 
+  protected void moveData(int from, int to, int len, ByteBuffer buffer) {
+    if (len == 0) {
+      return;
+    }
+
+    final ByteBuffer rb = buffer.asReadOnlyBuffer();
+    rb.position(from);
+    rb.limit(from + len);
+
+    buffer.position(to);
+    buffer.put(rb);
+  }
+
   public void setLsn(OLogSequenceNumber lsn) {
     assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 

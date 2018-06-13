@@ -18,54 +18,50 @@
  *
  */
 
-package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local;
-
-import java.io.IOException;
+package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v1;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 
 /**
  * A base class for bonsai buckets. Bonsai bucket size is usually less than page size and one page could contain multiple bonsai
  * buckets.
- * 
  * Adds methods to read and write bucket pointers.
  *
+ * @author Artem Orobets (enisher-at-gmail.com)
  * @see com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer
  * @see com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai
- * 
- * @author Artem Orobets (enisher-at-gmail.com)
  */
-public class OBonsaiBucketAbstract extends ODurablePage {
-  public OBonsaiBucketAbstract(OCacheEntry cacheEntry) {
+class OBonsaiBucketAbstractV1 extends ODurablePage {
+  OBonsaiBucketAbstractV1(OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
   /**
    * Write a bucket pointer to specific location.
-   * 
-   * @param pageOffset
-   *          where to write
-   * @param value
-   *          - pointer to write
-   * @throws IOException
+   *
+   * @param pageOffset where to write
+   * @param value      - pointer to write
    */
-  protected void setBucketPointer(int pageOffset, OBonsaiBucketPointer value) throws IOException {
-    setLongValue(pageOffset, value.getPageIndex());
-    setIntValue(pageOffset + OLongSerializer.LONG_SIZE, value.getPageOffset());
+  void setBucketPointer(int pageOffset, OBonsaiBucketPointer value) {
+    buffer.putLong(pageOffset, value.getPageIndex());
+    buffer.putInt(pageOffset + OLongSerializer.LONG_SIZE, value.getPageOffset());
+
+    cacheEntry.markDirty();
   }
 
   /**
    * Read bucket pointer from page.
-   * 
-   * @param offset
-   *          where the pointer should be read from
+   *
+   * @param offset where the pointer should be read from
+   *
    * @return bucket pointer
    */
-  protected OBonsaiBucketPointer getBucketPointer(int offset) {
-    final long pageIndex = getLongValue(offset);
-    final int pageOffset = getIntValue(offset + OLongSerializer.LONG_SIZE);
-    return new OBonsaiBucketPointer(pageIndex, pageOffset);
+  OBonsaiBucketPointer getBucketPointer(int offset) {
+    final long pageIndex = buffer.getLong(offset);
+    final int pageOffset = buffer.getInt(offset + OLongSerializer.LONG_SIZE);
+    return new OBonsaiBucketPointer((int) pageIndex, pageOffset, OSBTreeBonsaiLocalV1.BINARY_VERSION);
   }
 }

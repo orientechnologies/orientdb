@@ -40,9 +40,9 @@ public class OCollectionNetworkSerializer {
   }
 
   private OBonsaiBucketPointer readBonsaiBucketPointer(OChannelDataInput client) throws IOException {
-    long pageIndex = client.readLong();
+    long pageIndexVersion = client.readLong();
     int pageOffset = client.readInt();
-    return new OBonsaiBucketPointer(pageIndex, pageOffset);
+    return new OBonsaiBucketPointer(pageIndexVersion, pageOffset);
   }
 
   public void writeCollectionPointer(OChannelDataOutput client, OBonsaiCollectionPointer treePointer) throws IOException {

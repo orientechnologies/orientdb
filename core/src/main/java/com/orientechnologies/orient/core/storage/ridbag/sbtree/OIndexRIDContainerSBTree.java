@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.storage.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v1.OSBTreeBonsaiLocalV1;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,14 +53,15 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
     return indexName + INDEX_FILE_EXTENSION;
   }
 
-  private final OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree;
+  private final OSBTreeBonsaiLocalV1<OIdentifiable, Boolean> tree;
 
   OIndexRIDContainerSBTree(long fileId, OAbstractPaginatedStorage storage) {
     String fileName;
 
     fileName = storage.getWriteCache().fileNameById(fileId);
 
-    tree = new OSBTreeBonsaiLocal<>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()), INDEX_FILE_EXTENSION,
+    tree = new OSBTreeBonsaiLocalV1<>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
+        INDEX_FILE_EXTENSION,
         storage);
 
     tree.create(OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
@@ -71,7 +72,8 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
     fileName = storage.getWriteCache().fileNameById(fileId);
 
-    tree = new OSBTreeBonsaiLocal<>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()), INDEX_FILE_EXTENSION,
+    tree = new OSBTreeBonsaiLocalV1<>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
+        INDEX_FILE_EXTENSION,
         storage);
     tree.load(rootPointer);
   }

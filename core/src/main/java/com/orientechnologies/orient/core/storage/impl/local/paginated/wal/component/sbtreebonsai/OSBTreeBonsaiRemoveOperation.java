@@ -4,7 +4,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v1.OSBTreeBonsaiLocalV1;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -33,7 +33,7 @@ public class OSBTreeBonsaiRemoveOperation extends OSBTreeBonsaiModificationOpera
   }
 
   @Override
-  public void rollbackOperation(OSBTreeBonsaiLocal tree, OAtomicOperation atomicOperation) {
+  public void rollbackOperation(OSBTreeBonsaiLocalV1 tree, OAtomicOperation atomicOperation) {
     tree.rollbackPut(key, value, atomicOperation);
   }
 

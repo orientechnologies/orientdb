@@ -29,9 +29,8 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OAccessToSBtreeCollectionManagerIsProhibitedException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v1.OSBTreeBonsaiLocalV1;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -130,9 +129,9 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   }
 
   @Override
-  protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createTree(int clusterId) {
+  protected OSBTreeBonsaiLocalV1<OIdentifiable, Integer> createTree(int clusterId) {
 
-    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(FILE_NAME_PREFIX + clusterId, DEFAULT_EXTENSION,
+    OSBTreeBonsaiLocalV1<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocalV1<>(FILE_NAME_PREFIX + clusterId, DEFAULT_EXTENSION,
         storage);
     tree.create(OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
 
@@ -143,7 +142,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   protected OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer) {
     String fileName = storage.getWriteCache().fileNameById(collectionPointer.getFileId());
 
-    OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(
+    OSBTreeBonsaiLocalV1<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocalV1<>(
         fileName.substring(0, fileName.length() - DEFAULT_EXTENSION.length()), DEFAULT_EXTENSION, storage);
 
     if (tree.load(collectionPointer.getRootPointer()))

@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 
@@ -27,8 +26,11 @@ public abstract class OSBTreeBonsaiModificationOperation extends OSBTreeBonsaiOp
   @Override
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);
-    OLongSerializer.INSTANCE.serializeNative(pointer.getPageIndex(), content, offset);
-    offset += OLongSerializer.LONG_SIZE;
+    OIntegerSerializer.INSTANCE.serializeNative(pointer.getPageIndex(), content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    OIntegerSerializer.INSTANCE.serializeNative(pointer.getVersion(), content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
 
     OIntegerSerializer.INSTANCE.serializeNative(pointer.getPageOffset(), content, offset);
     offset += OIntegerSerializer.INT_SIZE;
@@ -40,13 +42,16 @@ public abstract class OSBTreeBonsaiModificationOperation extends OSBTreeBonsaiOp
   public int fromStream(byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
-    long pageIndex = OLongSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OLongSerializer.LONG_SIZE;
+    int pageIndex = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    int version = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
 
     int pageOffset = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    pointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
+    pointer = new OBonsaiBucketPointer(pageIndex, pageOffset, version);
 
     return offset;
   }
@@ -55,13 +60,14 @@ public abstract class OSBTreeBonsaiModificationOperation extends OSBTreeBonsaiOp
   public void toStream(ByteBuffer buffer) {
     super.toStream(buffer);
 
-    buffer.putLong(pointer.getPageIndex());
+    buffer.putInt(pointer.getPageIndex());
+    buffer.putInt(pointer.getVersion());
     buffer.putInt(pointer.getPageOffset());
   }
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
+    return super.serializedSize() + 3 * OIntegerSerializer.INT_SIZE;
   }
 
   @Override

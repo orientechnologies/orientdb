@@ -29,7 +29,14 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -40,7 +47,11 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.*;
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -54,8 +65,21 @@ import com.orientechnologies.orient.core.util.ODateHelper;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.UUID;
 
 public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
@@ -358,7 +382,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       if (pointer == null)
         pointer = OBonsaiCollectionPointer.INVALID;
       OVarIntSerializer.write(bytes, pointer.getFileId());
-      OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageIndex());
+      OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageIndexVersion());
       OVarIntSerializer.write(bytes, pointer.getRootPointer().getPageOffset());
       OVarIntSerializer.write(bytes, bag.size());
       NavigableMap<OIdentifiable, Change> changes = bag.getChanges();
@@ -396,7 +420,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       return bag;
     } else {
       long fileId = OVarIntSerializer.readAsLong(bytes);
-      long pageIndex = OVarIntSerializer.readAsLong(bytes);
+      long pageIndexVersion = OVarIntSerializer.readAsLong(bytes);
       int pageOffset = OVarIntSerializer.readAsInteger(bytes);
       int bagSize = OVarIntSerializer.readAsInteger(bytes);
 
@@ -412,7 +436,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
       OBonsaiCollectionPointer pointer = null;
       if (fileId != -1)
-        pointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
+        pointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndexVersion, pageOffset));
       return new ORidBag(pointer, changes, uuid);
     }
   }

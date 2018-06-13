@@ -12,7 +12,7 @@ public class OCreateSBTreeBonsaiOperationTest {
   @Test
   public void testSerializationArray() {
     OOperationUnitId unitId = OOperationUnitId.generateId();
-    OBonsaiBucketPointer pointer = new OBonsaiBucketPointer(13, 15);
+    OBonsaiBucketPointer pointer = new OBonsaiBucketPointer(13, 15, 1);
     final OCreateSBTreeBonsaiOperation createSBTreeBonsaiOperation = new OCreateSBTreeBonsaiOperation(unitId, 42, pointer,
         "caprica");
 
@@ -35,7 +35,7 @@ public class OCreateSBTreeBonsaiOperationTest {
   @Test
   public void testSerializationBuffer() {
     OOperationUnitId unitId = OOperationUnitId.generateId();
-    OBonsaiBucketPointer pointer = new OBonsaiBucketPointer(13, 15);
+    OBonsaiBucketPointer pointer = new OBonsaiBucketPointer(13, 15, 1);
     final OCreateSBTreeBonsaiOperation createSBTreeBonsaiOperation = new OCreateSBTreeBonsaiOperation(unitId, 42, pointer,
         "caprica");
     final int serializedSize = createSBTreeBonsaiOperation.serializedSize();

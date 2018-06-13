@@ -1,10 +1,10 @@
-package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local;
+package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v1;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 8/27/13
  */
-public class OSBTreeBonsaiWALTestIT extends OSBTreeBonsaiLocalTestIT {
+public class OSBTreeBonsaiWALTestIT extends OSBTreeBonsaiLocalV1TestIT {
 //  static {
 //    OGlobalConfiguration.FILE_LOCK.setValue(false);
 //  }
@@ -90,7 +90,7 @@ public class OSBTreeBonsaiWALTestIT extends OSBTreeBonsaiLocalTestIT {
 //    actualStorage.synch();
 //    writeAheadLog.addCutTillLimit(writeAheadLog.getFlushedLsn());
 //
-//    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("actualSBTree", ".sbt", actualStorage);
+//    sbTree = new OSBTreeBonsaiLocalV1<Integer, OIdentifiable>("actualSBTree", ".sbt", actualStorage);
 //    sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
 //  }
 //
