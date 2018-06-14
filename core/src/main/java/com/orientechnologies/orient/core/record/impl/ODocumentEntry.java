@@ -51,13 +51,31 @@ public class ODocumentEntry {
   }
   
   public boolean isChangedTree(){
-    if (changed)
+    if (changed && exist){
       return true;
+    }
     
     if (value instanceof ODocument){
       ODocument doc  = (ODocument)value;
       for (Map.Entry<String, ODocumentEntry> field : doc._fields.entrySet()){
         if (field.getValue().isChangedTree()){
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  public boolean hasNonExistingTree(){
+    if (!exist){
+      return true;
+    }
+    
+    if (value instanceof ODocument){
+      ODocument doc  = (ODocument)value;
+      for (Map.Entry<String, ODocumentEntry> field : doc._fields.entrySet()){
+        if (field.getValue().hasNonExistingTree()){
           return true;
         }
       }

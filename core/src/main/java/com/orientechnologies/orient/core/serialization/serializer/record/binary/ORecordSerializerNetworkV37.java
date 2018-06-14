@@ -866,8 +866,15 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     } else {
       final BytesContainer container = new BytesContainer();
 
+      ODocument doc = (ODocument) iSource;
       // SERIALIZE RECORD
-      serialize((ODocument) iSource, container, false);
+      if (!iOnlyDelta){
+        serialize(doc, container, false);
+      }
+      else{
+        ODocument deltaDoc = doc.getDeltaFromOriginal();
+        serialize(deltaDoc, container, false);
+      }
 
       return container.fitBytes();
     }

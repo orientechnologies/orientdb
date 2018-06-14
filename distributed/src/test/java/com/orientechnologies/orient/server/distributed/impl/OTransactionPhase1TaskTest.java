@@ -117,7 +117,7 @@ public class OTransactionPhase1TaskTest {
     doc.field("first", "one");
     session.save(doc);
     ODocument old = doc.copy();
-    doc.field("first", "two");
+    doc.field("first", "two");    
     session.save(doc);
     session.getLocalCache().clear();
 

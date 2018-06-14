@@ -392,19 +392,31 @@ public class ODocumentTest {
     String constantFieldName = "constantField";
     String originalValue = "orValue";
     String testValue = "testValue";
+    String removeField = "removeField";
+    
     doc.field(fieldName, originalValue);
     doc.field(constantFieldName, "someValue");
+    doc.field(removeField, "removeVal");
     
     doc = db.save(doc);
     
 //    doc._fields.get(fieldName).original = originalValue;
 //    doc._fields.get(constantFieldName).changed = false;
     doc.field(fieldName, testValue);
+    doc.removeField(removeField);
     ODocument dc = doc.getDeltaFromOriginal();
-    assertFalse(dc._fields.containsKey(constantFieldName));
-    assertTrue(dc._fields.containsKey(fieldName));
-    assertEquals(dc.field(fieldName), testValue);
     
+    ODocument updatePart = dc.field("u");
+    ODocument deletePart = dc.field("d");
+    
+    assertFalse(updatePart._fields.containsKey(constantFieldName));
+    assertTrue(updatePart._fields.containsKey(fieldName));
+    assertEquals(updatePart.field(fieldName), testValue);
+    
+    assertFalse(deletePart._fields.containsKey(constantFieldName));
+    assertTrue(deletePart._fields.containsKey(removeField));    
+    
+    doc = db.save(doc);    
     db.close();
   }
   

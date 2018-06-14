@@ -6,7 +6,6 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -68,7 +67,12 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       request.setId(txEntry.getRecord().getIdentity());
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
       switch (txEntry.type) {
-      case ORecordOperation.CREATED:
+      case ORecordOperation.CREATED:{        
+          byte[] newRec = ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false);
+          request.setRecord(newRec);
+          request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
+        }
+        break;
       case ORecordOperation.UPDATED:
         byte[] deltaRec = ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), true);
         byte[] newRec = ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false);
@@ -157,12 +161,16 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
       ORecord record = null;
       switch (type) {
-      case ORecordOperation.CREATED:
+      case ORecordOperation.CREATED:{
+          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+          ORecordInternal.setRecordSerializer(record, database.getSerializer());
+        }
+        break;
       case ORecordOperation.UPDATED: {
-        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
-        ORecordInternal.setRecordSerializer(record, database.getSerializer());
-      }
-      break;
+          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+          ORecordInternal.setRecordSerializer(record, database.getSerializer());
+        }
+        break;
       case ORecordOperation.DELETED:
         record = database.getRecord(req.getId());
         if (record == null) {

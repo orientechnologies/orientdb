@@ -3171,8 +3171,8 @@ public class ODocument extends ORecordAbstract
       super.unTrack(id);
   }
   
-  private Object getDeltaValue(Object originalValue, Object currentValue, boolean changed){
-    //TODO review this clause once again
+  private Object getUpdateDeltaValue(Object currentValue, boolean changed){
+    //TODO review this clause once again    
     if (changed || !(currentValue instanceof ODocument)){
       return currentValue;
     }
@@ -3184,20 +3184,64 @@ public class ODocument extends ORecordAbstract
       else{
         docVal = (ODocument)currentValue;
       }
-      return docVal.getDeltaFromOriginal();      
+      return docVal.getDeltaFromOriginalForUpdate();      
+    }    
+  }
+  
+  private Object getDeleteDeltaValue(Object currentValue, boolean exist){
+    //TODO review this clause once again
+    if (!exist || !(currentValue instanceof ODocument)){
+      return currentValue;
+    }
+    else{      
+      ODocument docVal;
+      if (currentValue instanceof ODocumentSerializable){
+        docVal = ((ODocumentSerializable)currentValue).toDocument();          
+      }
+      else{
+        docVal = (ODocument)currentValue;
+      }
+      return docVal.getDeltaFromOriginalForDelete();      
     }
   }
   
-  public ODocument getDeltaFromOriginal(){
-    ODocument retVal = new ODocument();
+  private ODocument getDeltaFromOriginalForUpdate(){
+    ODocument updated = new ODocument();
+    //get updated and new records
     for (Map.Entry<String, ODocumentEntry> fieldVal : _fields.entrySet()){
       ODocumentEntry val = fieldVal.getValue();      
       if (val.isChangedTree()){        
         String fieldName = fieldVal.getKey();
-        Object deltaValue = getDeltaValue(val.original, val.value, val.isChanged());
-        retVal.field(fieldName, deltaValue);
+        Object deltaValue = getUpdateDeltaValue(val.value, val.isChanged());
+        updated.field(fieldName, deltaValue);
       }
     }
-    return retVal;
+    return updated;
+  }
+  
+  private ODocument getDeltaFromOriginalForDelete(){
+    ODocument updated = new ODocument();
+    //get updated and new records
+    for (Map.Entry<String, ODocumentEntry> fieldVal : _fields.entrySet()){
+      ODocumentEntry val = fieldVal.getValue();      
+      if (val.hasNonExistingTree()){        
+        String fieldName = fieldVal.getKey();
+        Object deltaValue = getDeleteDeltaValue(val.value, val.exist());
+        updated.field(fieldName, deltaValue);
+      }
+    }
+    return updated;
+  }
+  
+  public ODocument getDeltaFromOriginal(){
+    ODocument ret = new ODocument();
+    ODocument updated = getDeltaFromOriginalForUpdate();
+    ret.field("u", updated);
+    
+    //get deleted delta
+    ODocument deleted = getDeltaFromOriginalForDelete();
+    ret.field("d", deleted);    
+    
+    return ret;
   }
 }
