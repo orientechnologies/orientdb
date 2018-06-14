@@ -36,11 +36,12 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
 
 /**
  * Implementation v0 of comparator based on protocol v0.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OBinaryComparatorV0 implements OBinaryComparator {
@@ -72,10 +73,9 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
   /**
    * Compares if 2 field values are the same.
    *
-   * @param iField1
-   *          First value to compare
-   * @param iField2
-   *          Second value to compare
+   * @param iField1 First value to compare
+   * @param iField2 Second value to compare
+   *
    * @return true if they match, otherwise false
    */
   @Override
@@ -258,14 +258,13 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
           if (len1 != len2)
             return false;
 
-          final OCollate collate = (iField1.collate != null && !ODefaultCollate.NAME.equals(iField1.collate.getName())) ? iField1.collate
-              : (iField2.collate != null && !ODefaultCollate.NAME.equals(iField2.collate.getName()) ? iField2.collate : null);
+          final OCollate collate = (iField1.collate != null && !ODefaultCollate.NAME.equals(iField1.collate.getName())) ?
+              iField1.collate :
+              (iField2.collate != null && !ODefaultCollate.NAME.equals(iField2.collate.getName()) ? iField2.collate : null);
 
           if (collate != null) {
-            final String str1 = (String) collate.transform(stringFromBytes(fieldValue1.bytes,
-                fieldValue1.offset, len1));
-            final String str2 = (String) collate.transform(stringFromBytes(fieldValue2.bytes,
-                fieldValue2.offset, len2));
+            final String str1 = (String) collate.transform(stringFromBytes(fieldValue1.bytes, fieldValue1.offset, len1));
+            final String str2 = (String) collate.transform(stringFromBytes(fieldValue2.bytes, fieldValue2.offset, len2));
 
             return str1.equals(str2);
 
@@ -520,16 +519,18 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
 
           final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
           try {
-            final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateTimeFormatInstance()
-                : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
+            final SimpleDateFormat dateFormat = db != null ?
+                db.getStorage().getConfiguration().getDateTimeFormatInstance() :
+                new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
 
             final Date value2AsDate = dateFormat.parse(value2AsString);
             final long value2 = value2AsDate.getTime();
             return value1 == value2;
           } catch (ParseException ignore) {
             try {
-              final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateFormatInstance()
-                  : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
+              final SimpleDateFormat dateFormat = db != null ?
+                  db.getStorage().getConfiguration().getDateFormatInstance() :
+                  new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
 
               final Date value2AsDate = dateFormat.parse(value2AsString);
               final long value2 = value2AsDate.getTime();
@@ -580,8 +581,7 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
           break;
         }
         case STRING: {
-          return readOptimizedLink(fieldValue1).toString()
-              .equals(readString(fieldValue2));
+          return readOptimizedLink(fieldValue1, false).toString().equals(readString(fieldValue2));
         }
         }
         break;
@@ -634,10 +634,9 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
   /**
    * Compares two values executing also conversion between types.
    *
-   * @param iField1
-   *          First value to compare
-   * @param iField2
-   *          Second value to compare
+   * @param iField1 First value to compare
+   * @param iField2 Second value to compare
+   *
    * @return 0 if they matches, >0 if first value is major than second, <0 in case is minor
    */
   @Override
@@ -821,8 +820,9 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
         case STRING: {
           final String value2 = readString(fieldValue2);
 
-          final OCollate collate = (iField1.collate != null && !ODefaultCollate.NAME.equals(iField1.collate.getName())) ? iField1.collate
-              : (iField2.collate != null && !ODefaultCollate.NAME.equals(iField2.collate.getName()) ? iField2.collate : null);
+          final OCollate collate = (iField1.collate != null && !ODefaultCollate.NAME.equals(iField1.collate.getName())) ?
+              iField1.collate :
+              (iField2.collate != null && !ODefaultCollate.NAME.equals(iField2.collate.getName()) ? iField2.collate : null);
 
           if (collate != null) {
             final String str1 = (String) collate.transform(value1);
@@ -1026,16 +1026,18 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
 
           final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
           try {
-            final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateTimeFormatInstance()
-                : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
+            final SimpleDateFormat dateFormat = db != null ?
+                db.getStorage().getConfiguration().getDateTimeFormatInstance() :
+                new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
 
             final Date value2AsDate = dateFormat.parse(value2AsString);
             final long value2 = value2AsDate.getTime();
             return (value1 < value2) ? -1 : ((value1 == value2) ? 0 : 1);
           } catch (ParseException ignored) {
             try {
-              final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateFormatInstance()
-                  : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
+              final SimpleDateFormat dateFormat = db != null ?
+                  db.getStorage().getConfiguration().getDateFormatInstance() :
+                  new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
 
               final Date value2AsDate = dateFormat.parse(value2AsString);
               final long value2 = value2AsDate.getTime();
@@ -1092,16 +1094,18 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
 
           final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
           try {
-            final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateFormatInstance()
-                : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
+            final SimpleDateFormat dateFormat = db != null ?
+                db.getStorage().getConfiguration().getDateFormatInstance() :
+                new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATE_FORMAT);
             final Date value2AsDate = dateFormat.parse(value2AsString);
             long value2 = value2AsDate.getTime();
             value2 = convertDayToTimezone(ODateHelper.getDatabaseTimeZone(), TimeZone.getTimeZone("GMT"), value2);
             return (value1 < value2) ? -1 : ((value1 == value2) ? 0 : 1);
           } catch (ParseException ignore) {
             try {
-              final SimpleDateFormat dateFormat = db != null ? db.getStorage().getConfiguration().getDateFormatInstance()
-                  : new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
+              final SimpleDateFormat dateFormat = db != null ?
+                  db.getStorage().getConfiguration().getDateFormatInstance() :
+                  new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
 
               final Date value2AsDate = dateFormat.parse(value2AsString);
               long value2 = value2AsDate.getTime();
@@ -1170,8 +1174,7 @@ public class OBinaryComparatorV0 implements OBinaryComparator {
         }
 
         case STRING: {
-          return readOptimizedLink(fieldValue1).compareTo(
-              new ORecordId(readString(fieldValue2)));
+          return readOptimizedLink(fieldValue1, false).compareTo(new ORecordId(readString(fieldValue2)));
         }
         }
         break;

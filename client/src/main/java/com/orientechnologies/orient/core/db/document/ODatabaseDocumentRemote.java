@@ -207,8 +207,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       status = STATUS.OPEN;
 
       initAtFirstOpen();
-      this.user = new OImmutableUser(-1, new OUser(user, OUser.encryptPassword(password))
-          .addRole(new ORole("passthrough", null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
+      this.user = new OImmutableUser(-1,
+          new OUser(user, password).addRole(new ORole("passthrough", null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
 
       // WAKE UP LISTENERS
       callOnOpenListeners();

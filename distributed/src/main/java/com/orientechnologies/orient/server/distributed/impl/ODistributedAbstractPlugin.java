@@ -997,16 +997,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 setDatabaseStatus(nodeName, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
                 distrDatabase.setOnline();
 
-                final Set<String> otherServers = getAvailableNodeNames(databaseName);
-                otherServers.remove(nodeName);
-
-                ODistributedServerLog.info(this, nodeName, otherServers.toString(), DIRECTION.OUT,
+                ODistributedServerLog.info(this, nodeName, null, DIRECTION.OUT,
                     "Current copy of database '%s' is newer than the copy present in the cluster. Use the local copy and force other nodes to download this",
                     databaseName);
 
-                for (String s : otherServers) {
-                  setDatabaseStatus(s, databaseName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-                }
                 databaseInstalled = true;
                 distrDatabase.resume();
               }

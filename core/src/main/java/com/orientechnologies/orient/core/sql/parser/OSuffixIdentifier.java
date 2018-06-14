@@ -417,7 +417,7 @@ public class OSuffixIdentifier extends SimpleNode {
   }
 
   public OCollate getCollate(OResult currentRecord, OCommandContext ctx) {
-    if (identifier != null) {
+    if (identifier != null && currentRecord != null) {
       return currentRecord.getRecord().map(x -> (OElement) x).flatMap(elem -> elem.getSchemaType())
           .map(clazz -> clazz.getProperty(identifier.getStringValue())).map(prop -> prop.getCollate()).orElse(null);
     }

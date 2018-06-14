@@ -24,20 +24,24 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
     this.ctx = ctx;
   }
 
-  @Override public void reset(OCommandContext ctx) {
+  @Override
+  public void reset(OCommandContext ctx) {
     //TODO
     throw new UnsupportedOperationException();
   }
 
-  @Override public void close() {
+  @Override
+  public void close() {
     step.close();
   }
 
-  @Override public OResultSet fetchNext(int n) {
+  @Override
+  public OResultSet fetchNext(int n) {
     return step.syncPull(ctx, n);
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     StringBuilder result = new StringBuilder();
     result.append(step.prettyPrint(depth, indent));
     return result.toString();
@@ -47,7 +51,8 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
     this.step = step;
   }
 
-  @Override public List<OExecutionStep> getSteps() {
+  @Override
+  public List<OExecutionStep> getSteps() {
     //TODO do a copy of the steps
     return Collections.singletonList(step);
   }
@@ -56,7 +61,8 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
     this.step = (IfStep) steps.get(0);
   }
 
-  @Override public OResult toResult() {
+  @Override
+  public OResult toResult() {
     OResultInternal result = new OResultInternal();
     result.setProperty("type", "IfExecutionPlan");
     result.setProperty("javaType", getClass().getName());
@@ -66,7 +72,8 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
     return result;
   }
 
-  @Override public long getCost() {
+  @Override
+  public long getCost() {
     return 0l;
   }
 
@@ -76,12 +83,22 @@ public class OIfExecutionPlan implements OInternalExecutionPlan {
   }
 
   public boolean containsReturn() {
+    step.init(ctx);
     return step.getPositivePlan().containsReturn() || step.getNegativePlan() != null && step.getPositivePlan().containsReturn();
   }
 
   public OExecutionStepInternal executeUntilReturn() {
     step.init(ctx);
-    return step;
+    if (step.condition.evaluate(new OResultInternal(), ctx)) {
+      step.initPositivePlan(ctx);
+      return step.positivePlan.executeUntilReturn();
+    } else {
+      step.initNegativePlan(ctx);
+      if (step.negativePlan != null) {
+        return step.negativePlan.executeUntilReturn();
+      }
+    }
+    return null;
   }
 }
 

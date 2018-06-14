@@ -5,9 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.sql.executor.LetExpressionStep;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,7 +31,8 @@ public class OForEachBlock extends OStatement {
     super(p, id);
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  @Override
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -51,7 +50,8 @@ public class OForEachBlock extends OStatement {
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  @Override
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -64,18 +64,19 @@ public class OForEachBlock extends OStatement {
   }
 
   public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
-    OUpdateExecutionPlan plan = new OUpdateExecutionPlan(ctx);
+    OForEachExecutionPlan plan = new OForEachExecutionPlan(ctx);
     int nextProg = ++FOREACH_VARIABLE_PROGR;
     if (FOREACH_VARIABLE_PROGR < 0) {
       FOREACH_VARIABLE_PROGR = 0;
     }
     OIdentifier varName = new OIdentifier("__ORIENTDB_FOREACH_VAR_" + nextProg);
-    plan.chain(new LetExpressionStep(varName, loopValues, ctx, enableProfiling));
-//    ForEachStep step = new ForEachStep(loopVariable, new OExpression(varName), ctx);//TODO
+    plan.chain(new GlobalLetExpressionStep(varName, loopValues, ctx, enableProfiling));
+    plan.chain(new ForEachStep(loopVariable, new OExpression(varName), statements, ctx, enableProfiling));
     return plan;
   }
 
-  @Override public OStatement copy() {
+  @Override
+  public OStatement copy() {
     OForEachBlock result = new OForEachBlock(-1);
     result.loopVariable = loopVariable.copy();
     result.loopValues = loopValues.copy();
@@ -83,7 +84,8 @@ public class OForEachBlock extends OStatement {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -99,11 +101,41 @@ public class OForEachBlock extends OStatement {
 
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = loopVariable != null ? loopVariable.hashCode() : 0;
     result = 31 * result + (loopValues != null ? loopValues.hashCode() : 0);
     result = 31 * result + (statements != null ? statements.hashCode() : 0);
     return result;
+  }
+
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    builder.append("FOREACH (");
+    loopVariable.toString(params, builder);
+    builder.append(" IN ");
+    loopValues.toString(params, builder);
+    builder.append(") {\n");
+    for (OStatement stm : statements) {
+      stm.toString(params, builder);
+      builder.append("\n");
+    }
+    builder.append("}");
+
+  }
+
+  public boolean containsReturn() {
+    for (OStatement stm : this.statements) {
+      if (stm instanceof OReturnStatement) {
+        return true;
+      }
+      if(stm instanceof OForEachBlock && ((OForEachBlock) stm).containsReturn()) {
+        return true;
+      }
+      if (stm instanceof OIfStatement && ((OIfStatement) stm).containsReturn()) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=071053b057a38c57f3c90d28399615d0 (do not edit this line) */

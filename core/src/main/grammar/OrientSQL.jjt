@@ -5034,4 +5034,5 @@ OForEachBlock ForEachBlock():
         <SEMICOLON>
     )*
     <RBRACE>
+    { return jjtThis; }
 }

@@ -41,20 +41,20 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class OClientConnection {
-  private final int                          id;
-  private final long                         since;
-  private Set<ONetworkProtocol>              protocols = Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
+  private final    int                       id;
+  private final    long                      since;
+  private          Set<ONetworkProtocol>     protocols = Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
   private volatile ONetworkProtocol          protocol;
   private volatile ODatabaseDocumentInternal database;
   private volatile OServerUserConfiguration  serverUser;
-  private ONetworkProtocolData               data      = new ONetworkProtocolData();
-  private OClientConnectionStats             stats     = new OClientConnectionStats();
-  private Lock                               lock      = new ReentrantLock();
-  private Boolean                            tokenBased;
-  private byte[]                             tokenBytes;
-  private OToken                             token;
-  private boolean                            disconnectOnAfter;
-  private OBinaryRequestExecutor             executor;
+  private          ONetworkProtocolData      data      = new ONetworkProtocolData();
+  private          OClientConnectionStats    stats     = new OClientConnectionStats();
+  private          Lock                      lock      = new ReentrantLock();
+  private          Boolean                   tokenBased;
+  private          byte[]                    tokenBytes;
+  private          OToken                    token;
+  private          boolean                   disconnectOnAfter;
+  private          OBinaryRequestExecutor    executor;
 
   public OClientConnection(final int id, final ONetworkProtocol protocol) {
     this.id = id;
@@ -95,10 +95,10 @@ public class OClientConnection {
 
   @Override
   public String toString() {
-    return "OClientConnection [id=" + getId() + ", source="
-        + (getProtocol() != null && getProtocol().getChannel() != null && getProtocol().getChannel().socket != null
-            ? getProtocol().getChannel().socket.getRemoteSocketAddress() : "?")
-        + ", since=" + getSince() + "]";
+    return "OClientConnection [id=" + getId() + ", source=" + (
+        getProtocol() != null && getProtocol().getChannel() != null && getProtocol().getChannel().socket != null ?
+            getProtocol().getChannel().socket.getRemoteSocketAddress() :
+            "?") + ", since=" + getSince() + "]";
   }
 
   /**
@@ -161,7 +161,7 @@ public class OClientConnection {
     } else {
       // IF the byte from the network are the same of the one i have a don't check them
       if (tokenBytes != null && tokenBytes.length > 0) {
-        if (tokenBytes.equals(tokenFromNetwork)) // SAME SESSION AND TOKEN DO
+        if (Arrays.equals(tokenBytes, tokenFromNetwork)) // SAME SESSION AND TOKEN NO NEED CHECK VALIDITY
           return;
       }
 
