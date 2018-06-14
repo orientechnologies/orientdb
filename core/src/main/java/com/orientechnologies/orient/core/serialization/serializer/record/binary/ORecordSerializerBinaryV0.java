@@ -26,7 +26,15 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -34,7 +42,11 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -46,10 +58,33 @@ import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.TreeMap;
 
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.MILLISEC_PER_DAY;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.MapRecordInfo;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.NULL_RECORD_ID;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.RecordInfo;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Tuple;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.bytesFromString;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.convertDayToTimezone;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readBinary;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readByte;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readInteger;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readLong;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readOType;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readOptimizedLink;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readString;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.stringFromBytes;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeOType;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
@@ -692,8 +727,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
     return value;
   }
-  
-  protected ORidBag readRidbag(BytesContainer bytes){
+
+  protected ORidBag readRidbag(BytesContainer bytes) {
     ORidBag bag = new ORidBag();
     bag.fromStream(bytes);
     return bag;
@@ -962,8 +997,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     int length = bytes.offset - startOffset;
     return new Tuple<>(pointer, length);
   }
-  
-  protected int writeRidBag(BytesContainer bytes, ORidBag ridbag){
+
+  protected int writeRidBag(BytesContainer bytes, ORidBag ridbag) {
     return ridbag.toStream(bytes);
   }
 

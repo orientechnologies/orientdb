@@ -37,7 +37,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.MILLISEC_PER_DAY;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.convertDayToTimezone;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readByte;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readInteger;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readLong;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readOptimizedLink;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readString;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.stringFromBytes;
 
 /**
  * Implementation v0 of comparator based on protocol v0.

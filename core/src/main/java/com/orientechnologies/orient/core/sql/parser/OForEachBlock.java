@@ -5,7 +5,11 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.sql.executor.*;
+import com.orientechnologies.orient.core.sql.executor.ForEachStep;
+import com.orientechnologies.orient.core.sql.executor.GlobalLetExpressionStep;
+import com.orientechnologies.orient.core.sql.executor.OForEachExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlan;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -128,7 +132,7 @@ public class OForEachBlock extends OStatement {
       if (stm instanceof OReturnStatement) {
         return true;
       }
-      if(stm instanceof OForEachBlock && ((OForEachBlock) stm).containsReturn()) {
+      if (stm instanceof OForEachBlock && ((OForEachBlock) stm).containsReturn()) {
         return true;
       }
       if (stm instanceof OIfStatement && ((OIfStatement) stm).containsReturn()) {

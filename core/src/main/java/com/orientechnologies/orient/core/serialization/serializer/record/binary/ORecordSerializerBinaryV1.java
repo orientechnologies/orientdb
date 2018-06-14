@@ -7,8 +7,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
@@ -26,25 +24,28 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.MapRecordInfo;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Triple;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Tuple;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.*;
-import java.util.*;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.ChangeSerializationHelper;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.UUID;
 
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.MILLISEC_PER_DAY;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.convertDayToTimezone;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readBinary;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readByte;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readInteger;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readLong;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readOType;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readOptimizedLink;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readString;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.stringFromBytes;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeOType;
@@ -647,8 +648,6 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
 
   /**
    * use only for named fields
-   * @param bytes
-   * @return
    */
   private Tuple<Integer, OType> getFieldSizeAndTypeFromCurrentPosition(BytesContainer bytes) {
     int fieldSize = OVarIntSerializer.readAsInteger(bytes);

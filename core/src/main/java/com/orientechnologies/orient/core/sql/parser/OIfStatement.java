@@ -5,7 +5,13 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.sql.executor.*;
+import com.orientechnologies.orient.core.sql.executor.EmptyStep;
+import com.orientechnologies.orient.core.sql.executor.IfStep;
+import com.orientechnologies.orient.core.sql.executor.OExecutionStepInternal;
+import com.orientechnologies.orient.core.sql.executor.OIfExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.executor.OSelectExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlan;
 
 import java.util.ArrayList;
 import java.util.HashMap;

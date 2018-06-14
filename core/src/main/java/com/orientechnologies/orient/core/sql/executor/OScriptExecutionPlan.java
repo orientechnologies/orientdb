@@ -168,8 +168,6 @@ public class OScriptExecutionPlan implements OInternalExecutionPlan {
 
   /**
    * executes all the script and returns last statement execution step, so that it can be executed from outside
-   *
-   * @return
    */
   public OExecutionStepInternal executeUntilReturn() {
     if (steps.size() > 0) {
