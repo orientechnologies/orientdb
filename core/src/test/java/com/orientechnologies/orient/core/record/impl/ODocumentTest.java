@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -375,6 +378,74 @@ public class ODocumentTest {
     doc.field("bytes", bytes.clone());
     assertFalse(doc.isDirty());
     assertNull(doc.getOriginalValue("bytes"));
+  }
+  
+  @Test
+  public void testGetDiffFromOriginalSimple(){
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
+    db.create();
+    
+    OClass claz = db.createClassIfNotExist("TestClass");
+    
+    ODocument doc = new ODocument(claz);
+    String fieldName = "testField";
+    String constantFieldName = "constantField";
+    String originalValue = "orValue";
+    String testValue = "testValue";
+    doc.field(fieldName, originalValue);
+    doc.field(constantFieldName, "someValue");
+    
+    doc = db.save(doc);
+    
+//    doc._fields.get(fieldName).original = originalValue;
+//    doc._fields.get(constantFieldName).changed = false;
+    doc.field(fieldName, testValue);
+    ODocument dc = doc.getDeltaFromOriginal();
+    assertFalse(dc._fields.containsKey(constantFieldName));
+    assertTrue(dc._fields.containsKey(fieldName));
+    assertEquals(dc.field(fieldName), testValue);
+    
+    db.close();
+  }
+  
+  @Test
+  public void testGetDiffFromOriginalNested(){
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
+    db.create();
+    
+    OClass claz = db.createClassIfNotExist("TestClass");
+    
+    ODocument doc = new ODocument(claz);
+    ODocument nestedDoc = new ODocument(claz);
+    String fieldName = "testField";
+    String constantFieldName = "constantField";
+    String originalValue = "orValue";
+    String testValue = "testValue";
+    String nestedDocField = "nestedField";
+    
+    nestedDoc.field(fieldName, originalValue);
+    nestedDoc.field(constantFieldName, "someValue1");
+
+    doc.field(constantFieldName, "someValue2");
+    doc.field(nestedDocField, nestedDoc);
+    
+    doc = db.save(doc);
+    
+    nestedDoc = doc.field(nestedDocField);
+    nestedDoc.field(fieldName, testValue);        
+    
+    doc.field(nestedDocField, nestedDoc);
+    
+     ODocument dc = doc.getDeltaFromOriginal();
+    assertFalse(dc._fields.containsKey(constantFieldName));
+    assertTrue(dc._fields.containsKey(nestedDocField));        
+    
+    ODocument nestedDc = dc.field(nestedDocField);
+    assertFalse(nestedDc._fields.containsKey(constantFieldName));
+    assertTrue(nestedDc._fields.containsKey(fieldName));
+    assertEquals(nestedDc.field(fieldName), testValue);
+    
+    db.close();
   }
 
 }

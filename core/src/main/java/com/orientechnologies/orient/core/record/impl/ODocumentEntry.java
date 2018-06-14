@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.record.impl;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import java.util.Map;
 
 /**
  * Document entry. Used by ODocument.
@@ -47,6 +48,22 @@ public class ODocumentEntry {
 
   public boolean isChanged() {
     return changed;
+  }
+  
+  public boolean isChangedTree(){
+    if (changed)
+      return true;
+    
+    if (value instanceof ODocument){
+      ODocument doc  = (ODocument)value;
+      for (Map.Entry<String, ODocumentEntry> field : doc._fields.entrySet()){
+        if (field.getValue().isChangedTree()){
+          return true;
+        }
+      }
+    }
+    
+    return false;
   }
 
   public void setChanged(final boolean changed) {

@@ -3171,41 +3171,31 @@ public class ODocument extends ORecordAbstract
       super.unTrack(id);
   }
   
-  private Object getDeltaValue(Object originalValue, Object currentValue, OType type){
-    if (!type.isEmbedded()){
+  private Object getDeltaValue(Object originalValue, Object currentValue, boolean changed){
+    //TODO review this clause once again
+    if (changed || !(currentValue instanceof ODocument)){
       return currentValue;
     }
-    else{
-      if (type == OType.EMBEDDEDLIST){
-        //TODO probably could be more optimized
-        return currentValue;
+    else{      
+      ODocument docVal;
+      if (currentValue instanceof ODocumentSerializable){
+        docVal = ((ODocumentSerializable)currentValue).toDocument();          
       }
-      else if (type == OType.EMBEDDEDMAP){
-        //TODO probably could be more optimized
-        return currentValue;
+      else{
+        docVal = (ODocument)currentValue;
       }
-      else{// if (type == OType.EMBEDDED){
-        ODocument docVal;
-        if (currentValue instanceof ODocumentSerializable){
-          docVal = ((ODocumentSerializable)currentValue).toDocument();          
-        }
-        else{
-          docVal = (ODocument)currentValue;
-        }
-        return docVal.getDeltaFromOriginal();
-      }     
+      return docVal.getDeltaFromOriginal();      
     }
   }
   
   public ODocument getDeltaFromOriginal(){
     ODocument retVal = new ODocument();
     for (Map.Entry<String, ODocumentEntry> fieldVal : _fields.entrySet()){
-      ODocumentEntry val = fieldVal.getValue();            
-      if (val.changed){
-        OType type = val.type;
+      ODocumentEntry val = fieldVal.getValue();      
+      if (val.isChangedTree()){        
         String fieldName = fieldVal.getKey();
-        Object deltaValue = getDeltaValue(val.original, val.value, type);
-        retVal.field(fieldName, val.value);
+        Object deltaValue = getDeltaValue(val.original, val.value, val.isChanged());
+        retVal.field(fieldName, deltaValue);
       }
     }
     return retVal;
