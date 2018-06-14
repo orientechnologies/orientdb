@@ -24,10 +24,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 
 import java.util.Iterator;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * Created by Enrico Risa on 05/06/2017.

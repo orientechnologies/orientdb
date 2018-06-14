@@ -6,6 +6,9 @@ import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
 
 import java.util.Optional;
+import java.util.Spliterator;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Created by Enrico Risa on 05/06/2017.
@@ -21,7 +24,19 @@ public class OGremlinResult {
   }
 
   public <T> T getProperty(String name) {
-    return inner.getProperty(name);
+    Object value = inner.getProperty(name);
+    if (value instanceof Iterable) {
+      Spliterator spliterator = ((Iterable) value).spliterator();
+      value = StreamSupport.stream(spliterator, false).map((e) -> {
+        if (e instanceof OResult) {
+          return new OGremlinResult(this.graph, (OResult) e);
+        } else {
+          return e;
+        }
+      }).collect(Collectors.toList());
+
+    }
+    return (T) value;
   }
 
   public Optional<OrientVertex> getVertex() {

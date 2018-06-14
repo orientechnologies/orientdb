@@ -28,9 +28,7 @@ import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -38,75 +36,117 @@ import java.util.stream.Collectors;
  */
 public class OrientGraphExecuteQueryTest extends OrientGraphBaseTest {
 
-    @Test
-    public void testExecuteGremlinSimpleQueryTest() {
+  @Test
+  public void testExecuteGremlinSimpleQueryTest() {
 
-        OrientGraph noTx = factory.getNoTx();
+    OrientGraph noTx = factory.getNoTx();
 
-        noTx.addVertex(T.label, "Person", "name", "John");
-        noTx.addVertex(T.label, "Person", "name", "Luke");
+    noTx.addVertex(T.label, "Person", "name", "John");
+    noTx.addVertex(T.label, "Person", "name", "Luke");
 
-        OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V()", null);
+    OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V()", null);
 
-        Assert.assertEquals(2, gremlin.stream().count());
+    Assert.assertEquals(2, gremlin.stream().count());
 
-    }
+  }
 
-    @Test
-    public void testExecuteGremlinCountQueryTest() {
+  @Test
+  public void testExecuteGremlinCountQueryTest() {
 
-        OrientGraph noTx = factory.getNoTx();
+    OrientGraph noTx = factory.getNoTx();
 
-        noTx.addVertex(T.label, "Person", "name", "John");
-        noTx.addVertex(T.label, "Person", "name", "Luke");
+    noTx.addVertex(T.label, "Person", "name", "John");
+    noTx.addVertex(T.label, "Person", "name", "Luke");
 
-        OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V().count()", null);
+    OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V().count()", null);
 
-        Iterator<OGremlinResult> iterator = gremlin.iterator();
-        Assert.assertEquals(true, iterator.hasNext());
-        OGremlinResult result = iterator.next();
-        Long count = result.getProperty("value");
-        Assert.assertEquals(new Long(2), count);
+    Iterator<OGremlinResult> iterator = gremlin.iterator();
+    Assert.assertEquals(true, iterator.hasNext());
+    OGremlinResult result = iterator.next();
+    Long count = result.getProperty("value");
+    Assert.assertEquals(new Long(2), count);
 
-    }
+  }
 
-    @Test
-    public void testExecuteGremlinVertexQueryTest() {
+  @Test
+  public void testExecuteGremlinVertexQueryTest() {
 
-        OrientGraph noTx = factory.getNoTx();
+    OrientGraph noTx = factory.getNoTx();
 
-        noTx.addVertex(T.label, "Person", "name", "John");
-        noTx.addVertex(T.label, "Person", "name", "Luke");
+    noTx.addVertex(T.label, "Person", "name", "John");
+    noTx.addVertex(T.label, "Person", "name", "Luke");
 
-        OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V().hasLabel('Person').has('name','Luke')", null);
+    OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V().hasLabel('Person').has('name','Luke')", null);
 
-        List<OGremlinResult> collected = gremlin.stream().collect(Collectors.toList());
-        Assert.assertEquals(1, collected.size());
+    List<OGremlinResult> collected = gremlin.stream().collect(Collectors.toList());
+    Assert.assertEquals(1, collected.size());
 
-        OGremlinResult result = collected.iterator().next();
-        OrientVertex vertex = result.getVertex().get();
-        Assert.assertEquals("Luke", vertex.value("name"));
+    OGremlinResult result = collected.iterator().next();
+    OrientVertex vertex = result.getVertex().get();
+    Assert.assertEquals("Luke", vertex.value("name"));
 
-    }
+  }
 
-    @Test
-    public void testExecuteGremlinEdgeQueryTest() {
+  @Test
+  public void testExecuteGremlinEdgeQueryTest() {
 
-        OrientGraph noTx = factory.getNoTx();
+    OrientGraph noTx = factory.getNoTx();
 
-        Vertex v1 = noTx.addVertex(T.label, "Person", "name", "John");
-        Vertex v2 = noTx.addVertex(T.label, "Person", "name", "Luke");
+    Vertex v1 = noTx.addVertex(T.label, "Person", "name", "John");
+    Vertex v2 = noTx.addVertex(T.label, "Person", "name", "Luke");
 
-        v1.addEdge("HasFriend", v2, "since", new Date());
+    v1.addEdge("HasFriend", v2, "since", new Date());
 
-        OGremlinResultSet gremlin = noTx.execute("gremlin", "g.E().hasLabel('HasFriend')", null);
+    OGremlinResultSet gremlin = noTx.execute("gremlin", "g.E().hasLabel('HasFriend')", null);
 
-        List<OGremlinResult> collected = gremlin.stream().collect(Collectors.toList());
-        Assert.assertEquals(1, collected.size());
+    List<OGremlinResult> collected = gremlin.stream().collect(Collectors.toList());
+    Assert.assertEquals(1, collected.size());
 
-        OGremlinResult result = collected.iterator().next();
-        OrientEdge vertex = result.getEdge().get();
-        Assert.assertNotNull(vertex.value("since"));
+    OGremlinResult result = collected.iterator().next();
+    OrientEdge vertex = result.getEdge().get();
+    Assert.assertNotNull(vertex.value("since"));
 
-    }
+  }
+
+  @Test
+  public void testExecuteGremlinPathQueryTest() {
+
+    OrientGraph noTx = factory.getNoTx();
+
+    Vertex v1 = noTx.addVertex(T.label, "Person", "name", "John");
+    Vertex v2 = noTx.addVertex(T.label, "Person", "name", "Luke", "values", new ArrayList<String>() {{
+      add("first");
+      add("second");
+    }});
+
+    v1.addEdge("HasFriend", v2, "since", new Date());
+
+    OGremlinResultSet gremlin = noTx.execute("gremlin", "g.V().has('name','John').out().values('values').path()", null);
+
+    List<OGremlinResult> collected = gremlin.stream().collect(Collectors.toList());
+    Assert.assertEquals(1, collected.size());
+
+    OGremlinResult result = collected.iterator().next();
+
+    List results = result.getProperty("value");
+
+    Assert.assertEquals(3, results.size());
+
+    Assert.assertTrue(results.get(0) instanceof OGremlinResult);
+
+    OGremlinResult r = (OGremlinResult) results.get(0);
+    Assert.assertTrue(r.getVertex().isPresent());
+
+    Assert.assertTrue(results.get(1) instanceof OGremlinResult);
+
+    r = (OGremlinResult) results.get(1);
+    Assert.assertTrue(r.getVertex().isPresent());
+
+    Assert.assertTrue(results.get(2) instanceof Collection);
+
+    List coll = (List) results.get(2);
+
+    Assert.assertEquals(2, coll.size());
+
+  }
 }

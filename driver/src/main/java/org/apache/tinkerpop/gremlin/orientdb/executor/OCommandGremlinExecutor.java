@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.command.script.OScriptResultHandler;
 import com.orientechnologies.orient.core.command.script.formatter.OGroovyScriptFormatter;
+import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -37,6 +38,7 @@ import org.apache.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFacto
 import org.apache.tinkerpop.gremlin.jsr223.CachedGremlinScriptEngineManager;
 import org.apache.tinkerpop.gremlin.orientdb.*;
 import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OElementTransformer;
+import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OGremlinTransformer;
 import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OTraversalMetricTransformer;
 import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OrientPropertyTransformer;
 import org.apache.tinkerpop.gremlin.process.traversal.Traversal;
@@ -60,13 +62,16 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
     private final OScriptManager scriptManager;
     private GremlinGroovyScriptEngineFactory factory;
 
+    private OScriptTransformer transformer;
+
     public OCommandGremlinExecutor(OScriptManager scriptManager) {
 
         factory = new GremlinGroovyScriptEngineFactory();
         factory.setCustomizerManager(new CachedGremlinScriptEngineManager());
         this.scriptManager = scriptManager;
+        this.transformer = new OGremlinTransformer(scriptManager.getTransformer());
 
-        initCustomTransformer(scriptManager);
+        initCustomTransformer(this.transformer);
 
         scriptManager.registerInjection(this);
 
@@ -76,13 +81,13 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
         scriptManager.registerResultHandler(GREMLIN_GROOVY, this);
     }
 
-    private void initCustomTransformer(OScriptManager scriptManager) {
+    private void initCustomTransformer(OScriptTransformer transformer) {
 
-        scriptManager.getTransformer().registerResultTransformer(DefaultTraversalMetrics.class, new OTraversalMetricTransformer());
-        scriptManager.getTransformer().registerResultTransformer(OrientEdge.class, new OElementTransformer());
-        scriptManager.getTransformer().registerResultTransformer(OrientVertex.class, new OElementTransformer());
-        scriptManager.getTransformer().registerResultTransformer(OrientElement.class, new OElementTransformer());
-        scriptManager.getTransformer().registerResultTransformer(OrientVertexProperty.class, new OrientPropertyTransformer());
+        transformer.registerResultTransformer(DefaultTraversalMetrics.class, new OTraversalMetricTransformer());
+        transformer.registerResultTransformer(OrientEdge.class, new OElementTransformer());
+        transformer.registerResultTransformer(OrientVertex.class, new OElementTransformer());
+        transformer.registerResultTransformer(OrientElement.class, new OElementTransformer());
+        transformer.registerResultTransformer(OrientVertexProperty.class, new OrientPropertyTransformer());
     }
 
     @Override
@@ -111,7 +116,7 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
 
                 Traversal result = (Traversal) eval;
 
-                return new OGremlinScriptResultSet(result, scriptManager.getTransformer(), false);
+                return new OGremlinScriptResultSet(result, this.transformer, false);
             } else if (eval instanceof TraversalExplanation) {
                 OInternalResultSet resultSet = new OInternalResultSet();
                 resultSet.setPlan(new OGremlinExecutionPlan((TraversalExplanation) eval));
