@@ -236,10 +236,6 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     return genericClass;
   }
 
-  public void setGenericClass(Class<?> genericClass) {
-    this.genericClass = genericClass;
-  }
-
   private Object writeReplace() {
     return new LinkedHashMap<Object, T>(this);
   }

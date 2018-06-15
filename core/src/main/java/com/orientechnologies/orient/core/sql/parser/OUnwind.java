@@ -82,8 +82,7 @@ public class OUnwind extends SimpleNode {
       List<OResult> ser = fromResult.getProperty("items");
       items = new ArrayList<>();
       for (OResult r : ser) {
-        OIdentifier exp = new OIdentifier(-1);
-        exp.deserialize(r);
+        OIdentifier exp = OIdentifier.deserialize(r);
         items.add(exp);
       }
     }

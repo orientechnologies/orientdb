@@ -236,8 +236,7 @@ public class OMethodCall extends SimpleNode {
 
   public void deserialize(OResult fromResult) {
     if (fromResult.getProperty("methodName") != null) {
-      methodName = new OIdentifier(-1);
-      methodName.deserialize(fromResult.getProperty("methodName"));
+      methodName = OIdentifier.deserialize(fromResult.getProperty("methodName"));
     }
     if (fromResult.getProperty("params") != null) {
       List<OResult> ser = fromResult.getProperty("params");

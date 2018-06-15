@@ -213,10 +213,6 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     return genericClass;
   }
 
-  public void setGenericClass(Class<?> genericClass) {
-    this.genericClass = genericClass;
-  }
-
   public void fireCollectionChangedEvent(final OMultiValueChangeEvent<T, T> event) {
     if (status == STATUS.UNMARSHALLING)
       return;

@@ -133,8 +133,7 @@ public class OLetItem extends SimpleNode {
 
   public void deserialize(OResult fromResult) {
     if (fromResult.getProperty("varName") != null) {
-      varName = new OIdentifier(-1);
-      varName.deserialize(fromResult.getProperty("varName"));
+      varName = OIdentifier.deserialize(fromResult.getProperty("varName"));
     }
     if (fromResult.getProperty("expression") != null) {
       expression = new OExpression(-1);

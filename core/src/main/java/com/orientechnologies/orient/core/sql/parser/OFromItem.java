@@ -347,8 +347,7 @@ public class OFromItem extends SimpleNode {
       inputParam = OInputParameter.deserializeFromOResult(fromResult.getProperty("inputParam"));
     }
     if (fromResult.getProperty("identifier") != null) {
-      identifier = new OIdentifier(-1);
-      identifier.deserialize(fromResult.getProperty("identifier"));
+      identifier = OIdentifier.deserialize(fromResult.getProperty("identifier"));
     }
     if (fromResult.getProperty("functionCall") != null) {
       functionCall = new OFunctionCall(-1);

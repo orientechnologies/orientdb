@@ -61,7 +61,6 @@ public class SimpleIndexDistributedIT {
       assertTrue(res1.hasNext());
     }
     session1.close();
-
   }
 
   @After

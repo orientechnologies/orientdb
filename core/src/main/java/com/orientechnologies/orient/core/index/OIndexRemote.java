@@ -284,9 +284,6 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return rid;
   }
 
-  public void commit(final ODocument iDocument) {
-  }
-
   public OIndexInternal<T> getInternal() {
     return null;
   }

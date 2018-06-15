@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.index;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
- * Key that is used in {@link com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree} for partial composite key search.
  * It always lesser than any passed in key.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)

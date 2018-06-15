@@ -439,8 +439,7 @@ public class OFunctionCall extends SimpleNode {
 
   public void deserialize(OResult fromResult) {
     if (fromResult.getProperty("name") != null) {
-      name = new OIdentifier(-1);
-      name.deserialize(fromResult.getProperty("name"));
+      name = OIdentifier.deserialize(fromResult.getProperty("name"));
     }
     if (fromResult.getProperty("params") != null) {
       params = new ArrayList<>();
