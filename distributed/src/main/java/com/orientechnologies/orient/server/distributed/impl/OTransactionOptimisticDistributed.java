@@ -54,21 +54,25 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         break;
       case ORecordOperation.UPDATED:
         if (change.getRecord() instanceof ODocument) {
-          ODocument doc = (ODocument) change.getRecord();
-          ODocument original = database.load(doc.getIdentity());
-          original.merge(doc, false, false);
-          doc = original;
-          OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, database);
-          OLiveQueryHookV2.addOp(doc, ORecordOperation.UPDATED, database);
-          OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
+          ODocument deltaRecord = (ODocument) change.getRecord();
+//          ODocument updateDoc = deltaRecord.field("u");
+//          ODocument deleteDoc = deltaRecord.field("d");
+          ODocument original = database.load(deltaRecord.getIdentity());
+//          original = original.mergeUpdateDelta(updateDoc);
+//          original = original.mergeDeleteDelta(deleteDoc);
+          
+          ODocument updateDoc = original;
+          OLiveQueryHook.addOp(updateDoc, ORecordOperation.UPDATED, database);
+          OLiveQueryHookV2.addOp(updateDoc, ORecordOperation.UPDATED, database);
+          OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
           if (clazz != null) {
-            OClassIndexManager.processIndexOnUpdate(database, doc, changes);
+            OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
             if (clazz.isFunction()) {
-              database.getSharedContext().getFunctionLibrary().updatedFunction(doc);
+              database.getSharedContext().getFunctionLibrary().updatedFunction(updateDoc);
               Orient.instance().getScriptManager().close(database.getName());
             }
             if (clazz.isSequence()) {
-              ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(database, doc);
+              ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(database, updateDoc);
             }
           }
         }

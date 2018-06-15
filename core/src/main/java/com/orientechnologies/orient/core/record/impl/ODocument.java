@@ -1550,6 +1550,81 @@ public class ODocument extends ORecordAbstract
 
     return mergeMap(iOther._fields, iUpdateOnlyMode, iMergeSingleItemsOfMultiValueFields);
   }
+  
+  //process in depth first
+  private static void mergeUpdateTree(final ODocument to, final ODocument from){
+    for (Map.Entry<String, ODocumentEntry> field : from._fields.entrySet()){
+      final String fieldName = field.getKey();
+      final Object fieldVal = field.getValue().value;
+      if (!(fieldVal instanceof ODocument) ||
+          !to._fields.keySet().contains(fieldName) ||
+          !to._fields.get(fieldName).getClass().equals(fieldVal.getClass())){
+        to.field(fieldName, fieldVal);
+      }
+      else{
+        if (fieldVal instanceof ODocument){
+          final ODocument fromDocField = (ODocument)fieldVal;
+          final ODocument toDocField = (ODocument)to.field(fieldName);
+          mergeUpdateTree(fromDocField, toDocField);
+        }
+      }
+    }
+  }
+  
+  public ODocument mergeUpdateDelta(final ODocument iOther){
+    iOther.checkForLoading();
+    iOther.checkForFields();
+    
+    checkForLoading();
+    checkForFields();
+
+    if (_className == null && iOther.getImmutableSchemaClass() != null)
+      _className = iOther.getImmutableSchemaClass().getName();
+
+    mergeUpdateTree(this, iOther);
+    
+    return this;
+  }
+  
+  private static boolean isLeaf(ODocument doc){
+    return doc._fieldSize == 0;
+  }
+  
+  private static void mergeDeleteTree(final ODocument to, final ODocument from){
+    for (Map.Entry<String, ODocumentEntry> field : from._fields.entrySet()){
+      final String fieldName = field.getKey();
+      final Object fieldVal = field.getValue().value;
+      if (!(fieldVal instanceof ODocument) ||
+          isLeaf((ODocument)fieldVal)){
+        to.removeField(fieldName);
+      }
+      else{
+        if (to._fields.keySet().contains(fieldName)){
+          ODocument fromDoc = (ODocument)fieldVal;
+          Object toVal = to.field(fieldName);
+          if (toVal instanceof ODocument){
+            ODocument toDoc = (ODocument) toVal;
+            mergeDeleteTree(toDoc, fromDoc);
+          }
+        }
+      }
+    } 
+  }
+  
+  public ODocument mergeDeleteDelta(final ODocument iOther){
+    iOther.checkForLoading();
+    iOther.checkForFields();
+    
+    checkForLoading();
+    checkForFields();
+
+    if (_className == null && iOther.getImmutableSchemaClass() != null)
+      _className = iOther.getImmutableSchemaClass().getName();
+    
+    mergeDeleteTree(this, iOther);
+    
+    return this;
+  }
 
   /**
    * Merge current document with the document passed as parameter. If the field already exists then the conflicts are managed based
@@ -3243,5 +3318,5 @@ public class ODocument extends ORecordAbstract
     ret.field("d", deleted);    
     
     return ret;
-  }
+  }  
 }
