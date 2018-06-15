@@ -75,6 +75,9 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         break;
       case ORecordOperation.UPDATED:        
         byte[] deltaRec = ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), true);
+        ORecord tmp = ORecordSerializerNetworkV37.INSTANCE.fromStream(deltaRec, null, null);
+        
+        
         request.setRecord(deltaRec);
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
@@ -152,6 +155,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   }
 
   private void convert(ODatabaseDocumentInternal database) {
+    ops.clear();
     for (ORecordOperationRequest req : operations) {
       byte type = req.getType();
       if (type == ORecordOperation.LOADED) {

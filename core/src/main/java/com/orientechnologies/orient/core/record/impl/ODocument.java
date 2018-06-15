@@ -3280,8 +3280,17 @@ public class ODocument extends ORecordAbstract
     }
   }
   
+  private void addThisAsOwnerToDoc(ODocument doc){
+    if (doc._owners == null){
+      doc._owners = new LinkedList<>();
+    }
+    WeakReference<ORecordElement> wrf = new WeakReference<>(this);
+    doc._owners.add(wrf);
+  }
+  
   private ODocument getDeltaFromOriginalForUpdate(){
     ODocument updated = new ODocument();
+    addThisAsOwnerToDoc(updated);
     //get updated and new records
     for (Map.Entry<String, ODocumentEntry> fieldVal : _fields.entrySet()){
       ODocumentEntry val = fieldVal.getValue();      
@@ -3295,17 +3304,18 @@ public class ODocument extends ORecordAbstract
   }
   
   private ODocument getDeltaFromOriginalForDelete(){
-    ODocument updated = new ODocument();
+    ODocument delete = new ODocument();
+    addThisAsOwnerToDoc(delete);
     //get updated and new records
     for (Map.Entry<String, ODocumentEntry> fieldVal : _fields.entrySet()){
       ODocumentEntry val = fieldVal.getValue();      
       if (val.hasNonExistingTree()){        
         String fieldName = fieldVal.getKey();
         Object deltaValue = getDeleteDeltaValue(val.value, val.exist());
-        updated.field(fieldName, deltaValue);
+        delete.field(fieldName, deltaValue);
       }
     }
-    return updated;
+    return delete;
   }
   
   public ODocument getDeltaFromOriginal(){
@@ -3316,6 +3326,10 @@ public class ODocument extends ORecordAbstract
     //get deleted delta
     ODocument deleted = getDeltaFromOriginalForDelete();
     ret.field("d", deleted);    
+    
+    ORecordId id = (ORecordId)getIdentity();
+    
+    ret.setIdentity(id);
     
     return ret;
   }  
