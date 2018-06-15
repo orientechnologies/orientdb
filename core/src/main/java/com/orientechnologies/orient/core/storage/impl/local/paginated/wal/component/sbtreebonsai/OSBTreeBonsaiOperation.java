@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v1.OSBTreeBonsaiLocalV1;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -31,7 +31,7 @@ public abstract class OSBTreeBonsaiOperation extends OComponentOperation {
     storage.rollbackSBTreeBonsaiOperation(this, atomicOperation);
   }
 
-  public abstract void rollbackOperation(OSBTreeBonsaiLocalV1 tree, OAtomicOperation atomicOperation);
+  public abstract void rollbackOperation(OSBTreeBonsaiLocal tree, OAtomicOperation atomicOperation);
 
   @Override
   public int toStream(byte[] content, int offset) {

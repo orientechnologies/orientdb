@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v1;
+package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v2;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -28,9 +28,9 @@ import java.util.TreeSet;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12.08.13
  */
-public class OSBTreeBonsaiLocalV1TestIT {
+public class OSBTreeBonsaiLocalV2TestIT {
   private static final int                                          KEYS_COUNT = 500000;
-  private static       OSBTreeBonsaiLocalV1<Integer, OIdentifiable> sbTree;
+  private static       OSBTreeBonsaiLocalV2<Integer, OIdentifiable> sbTree;
   @SuppressWarnings("deprecation")
   protected static     ODatabaseDocumentTx                          databaseDocumentTx;
 
@@ -49,7 +49,7 @@ public class OSBTreeBonsaiLocalV1TestIT {
 
     databaseDocumentTx.create();
 
-    sbTree = new OSBTreeBonsaiLocalV1<>("actualSBTreeBonsaiLocalTest", ".irs",
+    sbTree = new OSBTreeBonsaiLocalV2<>("actualSBTreeBonsaiLocalTest", ".irs",
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
@@ -386,7 +386,7 @@ public class OSBTreeBonsaiLocalV1TestIT {
 
     Collection<OIdentifiable> result = sbTree.getValuesMinor(250, true, -1);
 
-    Set<OIdentifiable> identifiables = new HashSet<OIdentifiable>(result);
+    Set<OIdentifiable> identifiables = new HashSet<>(result);
     for (int i = 250; i >= 220; i--) {
       boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
       Assert.assertTrue(removed);
@@ -400,7 +400,7 @@ public class OSBTreeBonsaiLocalV1TestIT {
     Assert.assertTrue(identifiables.isEmpty());
 
     result = sbTree.getValuesMajor(70, true, -1);
-    identifiables = new HashSet<OIdentifiable>(result);
+    identifiables = new HashSet<>(result);
 
     for (int i = 70; i < 100; i++) {
       boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
@@ -430,7 +430,8 @@ public class OSBTreeBonsaiLocalV1TestIT {
     Assert.assertTrue(identifiables.isEmpty());
   }
 
-  private int generateGaussianKey(double mx, double dx, Random random) {
+  private int generateGaussianKey(@SuppressWarnings("SameParameterValue") double mx,
+      @SuppressWarnings("SameParameterValue") double dx, Random random) {
     double v;
     do {
       v = random.nextGaussian() * dx + mx;
@@ -458,7 +459,7 @@ public class OSBTreeBonsaiLocalV1TestIT {
       int maxValuesToFetch = 10000;
       Collection<OIdentifiable> orids = sbTree.getValuesMajor(fromKey, keyInclusive, maxValuesToFetch);
 
-      Set<OIdentifiable> result = new HashSet<OIdentifiable>(orids);
+      Set<OIdentifiable> result = new HashSet<>(orids);
 
       Iterator<ORID> valuesIterator = keyValues.tailMap(fromKey, keyInclusive).values().iterator();
 
@@ -497,7 +498,7 @@ public class OSBTreeBonsaiLocalV1TestIT {
       int maxValuesToFetch = 10000;
       Collection<OIdentifiable> orids = sbTree.getValuesMinor(toKey, keyInclusive, maxValuesToFetch);
 
-      Set<OIdentifiable> result = new HashSet<OIdentifiable>(orids);
+      Set<OIdentifiable> result = new HashSet<>(orids);
 
       Iterator<ORID> valuesIterator = keyValues.headMap(toKey, keyInclusive).descendingMap().values().iterator();
 

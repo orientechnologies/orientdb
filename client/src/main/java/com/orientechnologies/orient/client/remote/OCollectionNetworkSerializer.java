@@ -47,7 +47,7 @@ public class OCollectionNetworkSerializer {
 
   public void writeCollectionPointer(OChannelDataOutput client, OBonsaiCollectionPointer treePointer) throws IOException {
     client.writeLong(treePointer.getFileId());
-    client.writeLong(treePointer.getRootPointer().getPageIndex());
+    client.writeLong(treePointer.getRootPointer().getPageIndexVersion());
     client.writeInt(treePointer.getRootPointer().getPageOffset());
   }
 }

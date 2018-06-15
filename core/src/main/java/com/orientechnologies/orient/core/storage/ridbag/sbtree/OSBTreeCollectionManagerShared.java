@@ -29,8 +29,11 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OAccessToSBtreeCollectionManagerIsProhibitedException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v1.OSBTreeBonsaiLocalV1;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v2.OSBTreeBonsaiLocalV2;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +52,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
       + "that following setting in your server configuration " + OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
       .getKey() + " is set to " + Integer.MAX_VALUE;
 
-  private final OAbstractPaginatedStorage storage;
+  private final    OAbstractPaginatedStorage                        storage;
   private volatile ThreadLocal<Map<UUID, OBonsaiCollectionPointer>> collectionPointerChanges = new CollectionPointerChangesThreadLocal();
 
   /**
@@ -129,10 +132,10 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   }
 
   @Override
-  protected OSBTreeBonsaiLocalV1<OIdentifiable, Integer> createTree(int clusterId) {
+  protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createTree(int clusterId) {
 
-    OSBTreeBonsaiLocalV1<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocalV1<>(FILE_NAME_PREFIX + clusterId, DEFAULT_EXTENSION,
-        storage);
+    final OSBTreeBonsaiLocalV2<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocalV2<>(FILE_NAME_PREFIX + clusterId,
+        DEFAULT_EXTENSION, storage);
     tree.create(OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
 
     return tree;
@@ -142,13 +145,24 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   protected OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer) {
     String fileName = storage.getWriteCache().fileNameById(collectionPointer.getFileId());
 
-    OSBTreeBonsaiLocalV1<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocalV1<>(
-        fileName.substring(0, fileName.length() - DEFAULT_EXTENSION.length()), DEFAULT_EXTENSION, storage);
+    final OSBTreeBonsaiLocal<OIdentifiable, Integer> tree;
+    final OBonsaiBucketPointer rootPointer = collectionPointer.getRootPointer();
 
-    if (tree.load(collectionPointer.getRootPointer()))
+    if (rootPointer.getVersion() == OSBTreeBonsaiLocalV1.BINARY_VERSION) {
+      tree = new OSBTreeBonsaiLocalV1<>(fileName.substring(0, fileName.length() - DEFAULT_EXTENSION.length()), DEFAULT_EXTENSION,
+          storage);
+    } else if (rootPointer.getVersion() == OSBTreeBonsaiLocalV2.BINARY_VERSION) {
+      tree = new OSBTreeBonsaiLocalV2<>(fileName.substring(0, fileName.length() - DEFAULT_EXTENSION.length()), DEFAULT_EXTENSION,
+          storage);
+    } else {
+      throw new IllegalStateException("Invalid tree version " + rootPointer.getVersion());
+    }
+
+    if (tree.load(rootPointer)) {
       return tree;
-    else
+    } else {
       return null;
+    }
   }
 
   /**

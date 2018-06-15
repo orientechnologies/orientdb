@@ -42,7 +42,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagDel
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagUpdateSerializationOperation;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v1.OSBTreeBonsaiLocalV1;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -970,8 +970,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   public void debugPrint(PrintStream writer) throws IOException {
     OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
-    if (tree instanceof OSBTreeBonsaiLocalV1) {
-      ((OSBTreeBonsaiLocalV1) tree).debugPrintBucket(writer);
+    if (tree instanceof OSBTreeBonsaiLocal) {
+      ((OSBTreeBonsaiLocal) tree).debugPrintBucket(writer);
     }
   }
 

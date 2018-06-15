@@ -22,7 +22,7 @@ import java.util.TreeSet;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 09.08.13
  */
-public class OSBTreeBonsaiLeafBucketTest {
+public class OSBTreeBonsaiLeafBucketV1Test {
   @Test
   public void testInitialization() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();

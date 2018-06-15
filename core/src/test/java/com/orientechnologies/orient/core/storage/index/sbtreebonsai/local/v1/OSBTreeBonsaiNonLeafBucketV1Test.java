@@ -21,7 +21,7 @@ import java.util.TreeSet;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12.08.13
  */
-public class OSBTreeBonsaiNonLeafBucketTest {
+public class OSBTreeBonsaiNonLeafBucketV1Test {
 
   @Test
   public void testInitialization() {
