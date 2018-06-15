@@ -4,12 +4,13 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class OSBTreePutOperation extends OSBTreeOperation {
+public final class OSBTreePutOperation extends OSBTreeOperation {
   private byte[] key;
   private byte[] value;
   private byte[] oldValue;
@@ -18,7 +19,8 @@ public class OSBTreePutOperation extends OSBTreeOperation {
   public OSBTreePutOperation() {
   }
 
-  public OSBTreePutOperation(OOperationUnitId operationUnitId, String name, byte[] key, byte[] value, byte[] oldValue) {
+  public OSBTreePutOperation(final OOperationUnitId operationUnitId, final String name, final byte[] key, final byte[] value,
+      final byte[] oldValue) {
     super(operationUnitId, name);
 
     this.key = key;
@@ -39,7 +41,7 @@ public class OSBTreePutOperation extends OSBTreeOperation {
   }
 
   @Override
-  public void rollbackOperation(OSBTree tree, OAtomicOperation atomicOperation) {
+  public void rollbackOperation(final OSBTree tree, final OAtomicOperation atomicOperation) {
     if (oldValue != null) {
       tree.putRollback(key, oldValue, atomicOperation);
     } else {
@@ -48,7 +50,7 @@ public class OSBTreePutOperation extends OSBTreeOperation {
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
     if (key == null) {
@@ -87,7 +89,7 @@ public class OSBTreePutOperation extends OSBTreeOperation {
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
     if (content[offset] == 0) {
@@ -95,7 +97,7 @@ public class OSBTreePutOperation extends OSBTreeOperation {
     } else {
       offset++;
 
-      int keyLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+      final int keyLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
       offset += OIntegerSerializer.INT_SIZE;
 
       key = new byte[keyLen];
@@ -103,7 +105,7 @@ public class OSBTreePutOperation extends OSBTreeOperation {
       offset += keyLen;
     }
 
-    int valueLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    final int valueLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     value = new byte[valueLen];
@@ -113,7 +115,7 @@ public class OSBTreePutOperation extends OSBTreeOperation {
     if (content[offset] > 0) {
       offset++;
 
-      int oldValueLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+      final int oldValueLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
       offset += OIntegerSerializer.INT_SIZE;
 
       oldValue = new byte[oldValueLen];
@@ -127,7 +129,7 @@ public class OSBTreePutOperation extends OSBTreeOperation {
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
     if (key == null) {
       buffer.put((byte) 0);
@@ -175,14 +177,19 @@ public class OSBTreePutOperation extends OSBTreeOperation {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public byte getId() {
+    return WALRecordTypes.SBTREE_PUT_OPERATION;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
     if (!super.equals(o))
       return false;
-    OSBTreePutOperation that = (OSBTreePutOperation) o;
+    final OSBTreePutOperation that = (OSBTreePutOperation) o;
     return Arrays.equals(key, that.key) && Arrays.equals(value, that.value) && Arrays.equals(oldValue, that.oldValue);
   }
 

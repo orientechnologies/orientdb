@@ -4,12 +4,13 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class OSBTreeRemoveOperation extends OSBTreeOperation {
+public final class OSBTreeRemoveOperation extends OSBTreeOperation {
   private byte[] key;
   private byte[] oldValue;
 
@@ -17,14 +18,15 @@ public class OSBTreeRemoveOperation extends OSBTreeOperation {
   public OSBTreeRemoveOperation() {
   }
 
-  public OSBTreeRemoveOperation(OOperationUnitId operationUnitId, String name, byte[] key, byte[] oldValue) {
+  public OSBTreeRemoveOperation(final OOperationUnitId operationUnitId, final String name, final byte[] key,
+      final byte[] oldValue) {
     super(operationUnitId, name);
     this.key = key;
     this.oldValue = oldValue;
   }
 
   @Override
-  public void rollbackOperation(OSBTree tree, OAtomicOperation atomicOperation) {
+  public void rollbackOperation(final OSBTree tree, final OAtomicOperation atomicOperation) {
     tree.putRollback(key, oldValue, atomicOperation);
   }
 
@@ -37,7 +39,7 @@ public class OSBTreeRemoveOperation extends OSBTreeOperation {
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
     if (key == null) {
@@ -63,7 +65,7 @@ public class OSBTreeRemoveOperation extends OSBTreeOperation {
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
     if (content[offset] == 0) {
@@ -90,7 +92,7 @@ public class OSBTreeRemoveOperation extends OSBTreeOperation {
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
     if (key == null) {
       buffer.put((byte) 0);
@@ -122,14 +124,19 @@ public class OSBTreeRemoveOperation extends OSBTreeOperation {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public byte getId() {
+    return WALRecordTypes.SBTREE_REMOVE_OPERATION;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
     if (!super.equals(o))
       return false;
-    OSBTreeRemoveOperation that = (OSBTreeRemoveOperation) o;
+    final OSBTreeRemoveOperation that = (OSBTreeRemoveOperation) o;
     return Arrays.equals(key, that.key) && Arrays.equals(oldValue, that.oldValue);
   }
 

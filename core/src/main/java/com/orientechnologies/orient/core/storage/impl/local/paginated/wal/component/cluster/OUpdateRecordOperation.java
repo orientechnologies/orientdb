@@ -6,10 +6,11 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 
 import java.nio.ByteBuffer;
 
-public class OUpdateRecordOperation extends OClusterOperation {
+public final class OUpdateRecordOperation extends OClusterOperation {
   private long clusterPosition;
 
   private byte[] record;
@@ -23,8 +24,9 @@ public class OUpdateRecordOperation extends OClusterOperation {
   public OUpdateRecordOperation() {
   }
 
-  public OUpdateRecordOperation(OOperationUnitId operationUnitId, int clusterId, long clusterPosition, byte[] record,
-      int recordVersion, byte recordType, byte[] prevRecord, int prevRecordVersion, byte prevRecordType) {
+  public OUpdateRecordOperation(final OOperationUnitId operationUnitId, final int clusterId, final long clusterPosition,
+      final byte[] record, final int recordVersion, final byte recordType, final byte[] prevRecord, final int prevRecordVersion,
+      final byte prevRecordType) {
     super(operationUnitId, clusterId);
 
     this.clusterPosition = clusterPosition;
@@ -54,25 +56,25 @@ public class OUpdateRecordOperation extends OClusterOperation {
     return recordType;
   }
 
-  public byte[] getPrevRecord() {
+  byte[] getPrevRecord() {
     return prevRecord;
   }
 
-  public int getPrevRecordVersion() {
+  int getPrevRecordVersion() {
     return prevRecordVersion;
   }
 
-  public byte getPrevRecordType() {
+  byte getPrevRecordType() {
     return prevRecordType;
   }
 
   @Override
-  public void rollbackOperation(OPaginatedCluster cluster, OAtomicOperation atomicOperation) {
+  public void rollbackOperation(final OPaginatedCluster cluster, final OAtomicOperation atomicOperation) {
     cluster.updateRecordRollback(clusterPosition, prevRecord, prevRecordVersion, prevRecordType, atomicOperation);
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
     OLongSerializer.INSTANCE.serializeNative(clusterPosition, content, offset);
@@ -106,13 +108,13 @@ public class OUpdateRecordOperation extends OClusterOperation {
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
     clusterPosition = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    int recordLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    final int recordLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     record = new byte[recordLen];
@@ -125,7 +127,7 @@ public class OUpdateRecordOperation extends OClusterOperation {
     recordType = content[offset];
     offset++;
 
-    int prevRecordLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    final int prevRecordLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     prevRecord = new byte[prevRecordLen];
@@ -142,7 +144,7 @@ public class OUpdateRecordOperation extends OClusterOperation {
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
 
     buffer.putLong(clusterPosition);
@@ -174,5 +176,10 @@ public class OUpdateRecordOperation extends OClusterOperation {
     size += OByteSerializer.BYTE_SIZE;
 
     return size;
+  }
+
+  @Override
+  public byte getId() {
+    return WALRecordTypes.UPDATE_RECORD_OPERATION;
   }
 }

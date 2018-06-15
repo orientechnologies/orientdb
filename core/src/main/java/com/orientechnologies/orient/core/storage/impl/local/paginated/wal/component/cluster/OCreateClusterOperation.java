@@ -5,11 +5,12 @@ import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-public class OCreateClusterOperation extends OClusterOperation {
+public final class OCreateClusterOperation extends OClusterOperation {
   private String name;
   private long   mapFileId;
 
@@ -73,6 +74,11 @@ public class OCreateClusterOperation extends OClusterOperation {
   @Override
   public int serializedSize() {
     return super.serializedSize() + OStringSerializer.INSTANCE.getObjectSize(name) + OLongSerializer.LONG_SIZE;
+  }
+
+  @Override
+  public byte getId() {
+    return WALRecordTypes.CREATE_CLUSTER_OPERATION;
   }
 
   @Override

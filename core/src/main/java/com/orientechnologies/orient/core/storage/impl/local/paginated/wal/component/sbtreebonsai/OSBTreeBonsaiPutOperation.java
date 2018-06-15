@@ -4,13 +4,14 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class OSBTreeBonsaiPutOperation extends OSBTreeBonsaiModificationOperation {
+public final class OSBTreeBonsaiPutOperation extends OSBTreeBonsaiModificationOperation {
   private byte[] key;
   private byte[] value;
   private byte[] oldValue;
@@ -19,8 +20,8 @@ public class OSBTreeBonsaiPutOperation extends OSBTreeBonsaiModificationOperatio
   public OSBTreeBonsaiPutOperation() {
   }
 
-  public OSBTreeBonsaiPutOperation(OOperationUnitId operationUnitId, long fileId, OBonsaiBucketPointer pointer, byte[] key,
-      byte[] value, byte[] oldValue) {
+  public OSBTreeBonsaiPutOperation(final OOperationUnitId operationUnitId, final long fileId, final OBonsaiBucketPointer pointer,
+      final byte[] key, final byte[] value, final byte[] oldValue) {
     super(operationUnitId, fileId, pointer);
     this.key = key;
     this.value = value;
@@ -40,7 +41,7 @@ public class OSBTreeBonsaiPutOperation extends OSBTreeBonsaiModificationOperatio
   }
 
   @Override
-  public void rollbackOperation(OSBTreeBonsaiLocal tree, OAtomicOperation atomicOperation) {
+  public void rollbackOperation(final OSBTreeBonsaiLocal tree, final OAtomicOperation atomicOperation) {
     if (oldValue != null) {
       tree.rollbackPut(key, oldValue, atomicOperation);
     } else {
@@ -49,7 +50,7 @@ public class OSBTreeBonsaiPutOperation extends OSBTreeBonsaiModificationOperatio
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
     OIntegerSerializer.INSTANCE.serializeNative(key.length, content, offset);
@@ -81,7 +82,7 @@ public class OSBTreeBonsaiPutOperation extends OSBTreeBonsaiModificationOperatio
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
     final int keyLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
@@ -116,7 +117,7 @@ public class OSBTreeBonsaiPutOperation extends OSBTreeBonsaiModificationOperatio
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
 
     buffer.putInt(key.length);
@@ -154,14 +155,19 @@ public class OSBTreeBonsaiPutOperation extends OSBTreeBonsaiModificationOperatio
   }
 
   @Override
-  public boolean equals(Object o) {
+  public byte getId() {
+    return WALRecordTypes.SBTREE_BONSAI_PUT_OPERATION;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
     if (!super.equals(o))
       return false;
-    OSBTreeBonsaiPutOperation that = (OSBTreeBonsaiPutOperation) o;
+    final OSBTreeBonsaiPutOperation that = (OSBTreeBonsaiPutOperation) o;
     return Arrays.equals(key, that.key) && Arrays.equals(value, that.value) && Arrays.equals(oldValue, that.oldValue);
   }
 

@@ -30,20 +30,17 @@ import java.util.Arrays;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 26.04.13
  */
-public class OUpdatePageRecord extends OAbstractPageWALRecord {
+public final class OUpdatePageRecord extends OAbstractPageWALRecord {
   private byte[] compressedPage;
 
   @SuppressWarnings("WeakerAccess")
   public OUpdatePageRecord() {
   }
 
-  public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId, byte[] compressedPage) {
+  public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId,
+      final byte[] compressedPage) {
     super(pageIndex, fileId, operationUnitId);
     this.compressedPage = compressedPage;
-  }
-
-  public byte[] getCompressedPage() {
-    return compressedPage;
   }
 
   @Override
@@ -69,7 +66,7 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
 
     buffer.putInt(compressedPage.length);
@@ -95,14 +92,19 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public byte getId() {
+    return WALRecordTypes.UPDATE_PAGE_RECORD;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
     if (!super.equals(o))
       return false;
-    OUpdatePageRecord that = (OUpdatePageRecord) o;
+    final OUpdatePageRecord that = (OUpdatePageRecord) o;
     return Arrays.equals(compressedPage, that.compressedPage);
   }
 

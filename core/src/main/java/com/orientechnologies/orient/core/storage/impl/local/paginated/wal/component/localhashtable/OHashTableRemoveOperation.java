@@ -4,12 +4,13 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class OHashTableRemoveOperation extends OLocalHashTableOperation {
+public final class OHashTableRemoveOperation extends OLocalHashTableOperation {
   private byte[] key;
   private byte[] oldValue;
 
@@ -17,7 +18,8 @@ public class OHashTableRemoveOperation extends OLocalHashTableOperation {
   public OHashTableRemoveOperation() {
   }
 
-  public OHashTableRemoveOperation(OOperationUnitId operationUnitId, String name, byte[] key, byte[] oldValue) {
+  public OHashTableRemoveOperation(final OOperationUnitId operationUnitId, final String name, final byte[] key,
+      final byte[] oldValue) {
     super(operationUnitId, name);
     this.key = key;
     this.oldValue = oldValue;
@@ -32,12 +34,12 @@ public class OHashTableRemoveOperation extends OLocalHashTableOperation {
   }
 
   @Override
-  public void rollbackOperation(OLocalHashTable hashTable, OAtomicOperation atomicOperation) {
+  public void rollbackOperation(final OLocalHashTable hashTable, final OAtomicOperation atomicOperation) {
     hashTable.putRollback(key, oldValue, atomicOperation);
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
     if (key == null) {
@@ -63,7 +65,7 @@ public class OHashTableRemoveOperation extends OLocalHashTableOperation {
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
     if (content[offset] == 0) {
@@ -90,7 +92,7 @@ public class OHashTableRemoveOperation extends OLocalHashTableOperation {
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
     if (key == null) {
       buffer.put((byte) 0);
@@ -122,14 +124,19 @@ public class OHashTableRemoveOperation extends OLocalHashTableOperation {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public byte getId() {
+    return WALRecordTypes.HASH_TABLE_REMOVE_OPERATION;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
     if (!super.equals(o))
       return false;
-    OHashTableRemoveOperation that = (OHashTableRemoveOperation) o;
+    final OHashTableRemoveOperation that = (OHashTableRemoveOperation) o;
     return Arrays.equals(key, that.key) && Arrays.equals(oldValue, that.oldValue);
   }
 

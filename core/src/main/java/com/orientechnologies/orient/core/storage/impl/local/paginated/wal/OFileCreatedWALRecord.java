@@ -29,17 +29,11 @@ import java.nio.ByteBuffer;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/21/14
  */
-public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
+public final class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
   private String fileName;
   private long   fileId;
 
-  public OFileCreatedWALRecord() {
-  }
-
-  public OFileCreatedWALRecord(OOperationUnitId operationUnitId, String fileName, long fileId) {
-    super(operationUnitId);
-    this.fileName = fileName;
-    this.fileId = fileId;
+  OFileCreatedWALRecord() {
   }
 
   public String getFileName() {
@@ -51,7 +45,7 @@ public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
     OStringSerializer.INSTANCE.serializeNativeObject(fileName, content, offset);
@@ -64,7 +58,7 @@ public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
 
     OStringSerializer.INSTANCE.serializeInByteBufferObject(fileName, buffer);
@@ -72,7 +66,7 @@ public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
     fileName = OStringSerializer.INSTANCE.deserializeNativeObject(content, offset);
@@ -92,5 +86,10 @@ public class OFileCreatedWALRecord extends OOperationUnitBodyRecord {
   @Override
   public boolean isUpdateMasterRecord() {
     return false;
+  }
+
+  @Override
+  public byte getId() {
+    return WALRecordTypes.FILE_CREATED_WAL_RECORD;
   }
 }

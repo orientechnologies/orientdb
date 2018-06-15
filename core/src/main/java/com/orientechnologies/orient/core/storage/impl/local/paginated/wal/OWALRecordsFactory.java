@@ -49,13 +49,42 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.ALLOCATE_POSITION_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.ATOMIC_UNIT_END_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.ATOMIC_UNIT_START_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CHECKPOINT_END_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CREATE_CLUSTER_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CREATE_HASH_TABLE_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CREATE_RECORD_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CREATE_SBTREE_BONSAI_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CREATE_SBTREE_BONSAI_RAW_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CREATE_SBTREE_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.DELETE_RECORD_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.EMPTY_WAL_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_CREATED_WAL_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_DELETED_WAL_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_TRUNCATED_WAL_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FULL_CHECKPOINT_START_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FUZZY_CHECKPOINT_END_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FUZZY_CHECKPOINT_START_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.HASH_TABLE_PUT_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.HASH_TABLE_REMOVE_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.MAKE_POSITION_AVAILABLE_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.NON_TX_OPERATION_PERFORMED_WAL_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.RECYCLE_RECORD_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.SBTREE_BONSAI_PUT_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.SBTREE_BONSAI_REMOVE_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.SBTREE_PUT_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.SBTREE_REMOVE_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.UPDATE_PAGE_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.UPDATE_RECORD_OPERATION;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 25.04.13
  */
-public class OWALRecordsFactory {
+public final class OWALRecordsFactory {
   private final Map<Byte, Class> idToTypeMap = new HashMap<>();
-  private final Map<Class, Byte> typeToIdMap = new HashMap<>();
 
   public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
 
@@ -64,72 +93,10 @@ public class OWALRecordsFactory {
 
       getValueAsInteger();
 
-  public byte[] toStream(OWriteableWALRecord walRecord) {
+  public static byte[] toStream(final OWriteableWALRecord walRecord) {
     final int contentSize = walRecord.serializedSize() + 1;
-    byte[] content = new byte[contentSize];
-
-    if (walRecord instanceof OUpdatePageRecord)
-      content[0] = 0;
-    else if (walRecord instanceof OFuzzyCheckpointStartRecord)
-      content[0] = 1;
-    else if (walRecord instanceof OFuzzyCheckpointEndRecord)
-      content[0] = 2;
-    else if (walRecord instanceof OFullCheckpointStartRecord)
-      content[0] = 4;
-    else if (walRecord instanceof OCheckpointEndRecord)
-      content[0] = 5;
-    else if (walRecord instanceof OAtomicUnitStartRecord)
-      content[0] = 8;
-    else if (walRecord instanceof OAtomicUnitEndRecord)
-      content[0] = 9;
-    else if (walRecord instanceof OFileCreatedWALRecord)
-      content[0] = 10;
-    else if (walRecord instanceof ONonTxOperationPerformedWALRecord)
-      content[0] = 11;
-    else if (walRecord instanceof OFileDeletedWALRecord)
-      content[0] = 12;
-    else if (walRecord instanceof OFileTruncatedWALRecord)
-      content[0] = 13;
-    else if (walRecord instanceof OEmptyWALRecord)
-      content[0] = 14;
-    else if (walRecord instanceof OAllocatePositionOperation)
-      content[0] = 15;
-    else if (walRecord instanceof OCreateRecordOperation)
-      content[0] = 16;
-    else if (walRecord instanceof ODeleteRecordOperation)
-      content[0] = 17;
-    else if (walRecord instanceof ORecycleRecordOperation)
-      content[0] = 18;
-    else if (walRecord instanceof OUpdateRecordOperation)
-      content[0] = 19;
-    else if (walRecord instanceof OHashTablePutOperation)
-      content[0] = 20;
-    else if (walRecord instanceof OHashTableRemoveOperation)
-      content[0] = 21;
-    else if (walRecord instanceof OSBTreePutOperation)
-      content[0] = 22;
-    else if (walRecord instanceof OSBTreeRemoveOperation)
-      content[0] = 23;
-    else if (walRecord instanceof OSBTreeBonsaiPutOperation)
-      content[0] = 24;
-    else if (walRecord instanceof OSBTreeBonsaiRemoveOperation)
-      content[0] = 25;
-    else if (walRecord instanceof OCreateClusterOperation)
-      content[0] = 26;
-    else if (walRecord instanceof OCreateHashTableOperation)
-      content[0] = 27;
-    else if (walRecord instanceof OCreateSBTreeOperation)
-      content[0] = 28;
-    else if (walRecord instanceof OCreateSBTreeBonsaiOperation)
-      content[0] = 29;
-    else if (walRecord instanceof OCreateSBTreeBonsaiRawOperation)
-      content[0] = 30;
-    else if (walRecord instanceof OMakePositionAvailableOperation)
-      content[0] = 31;
-    else if (typeToIdMap.containsKey(walRecord.getClass())) {
-      content[0] = typeToIdMap.get(walRecord.getClass());
-    } else
-      throw new IllegalArgumentException(walRecord.getClass().getName() + " class cannot be serialized.");
+    final byte[] content = new byte[contentSize];
+    content[0] = walRecord.getId();
 
     walRecord.toStream(content, 1);
 
@@ -163,100 +130,100 @@ public class OWALRecordsFactory {
       content = restored;
     }
 
-    OWriteableWALRecord walRecord;
+    final OWriteableWALRecord walRecord;
     switch (content[0]) {
-    case 0:
+    case UPDATE_PAGE_RECORD:
       walRecord = new OUpdatePageRecord();
       break;
-    case 1:
+    case FUZZY_CHECKPOINT_START_RECORD:
       walRecord = new OFuzzyCheckpointStartRecord();
       break;
-    case 2:
+    case FUZZY_CHECKPOINT_END_RECORD:
       walRecord = new OFuzzyCheckpointEndRecord();
       break;
-    case 4:
+    case FULL_CHECKPOINT_START_RECORD:
       walRecord = new OFullCheckpointStartRecord();
       break;
-    case 5:
+    case CHECKPOINT_END_RECORD:
       walRecord = new OCheckpointEndRecord();
       break;
-    case 8:
+    case ATOMIC_UNIT_START_RECORD:
       walRecord = new OAtomicUnitStartRecord();
       break;
-    case 9:
+    case ATOMIC_UNIT_END_RECORD:
       walRecord = new OAtomicUnitEndRecord();
       break;
-    case 10:
+    case FILE_CREATED_WAL_RECORD:
       walRecord = new OFileCreatedWALRecord();
       break;
-    case 11:
+    case NON_TX_OPERATION_PERFORMED_WAL_RECORD:
       walRecord = new ONonTxOperationPerformedWALRecord();
       break;
-    case 12:
+    case FILE_DELETED_WAL_RECORD:
       walRecord = new OFileDeletedWALRecord();
       break;
-    case 13:
+    case FILE_TRUNCATED_WAL_RECORD:
       walRecord = new OFileTruncatedWALRecord();
       break;
-    case 14:
+    case EMPTY_WAL_RECORD:
       walRecord = new OEmptyWALRecord();
       break;
-    case 15:
+    case ALLOCATE_POSITION_OPERATION:
       walRecord = new OAllocatePositionOperation();
       break;
-    case 16:
+    case CREATE_RECORD_OPERATION:
       walRecord = new OCreateRecordOperation();
       break;
-    case 17:
+    case DELETE_RECORD_OPERATION:
       walRecord = new ODeleteRecordOperation();
       break;
-    case 18:
+    case RECYCLE_RECORD_OPERATION:
       walRecord = new ORecycleRecordOperation();
       break;
-    case 19:
+    case UPDATE_RECORD_OPERATION:
       walRecord = new OUpdateRecordOperation();
       break;
-    case 20:
+    case HASH_TABLE_PUT_OPERATION:
       walRecord = new OHashTablePutOperation();
       break;
-    case 21:
+    case HASH_TABLE_REMOVE_OPERATION:
       walRecord = new OHashTableRemoveOperation();
       break;
-    case 22:
+    case SBTREE_PUT_OPERATION:
       walRecord = new OSBTreePutOperation();
       break;
-    case 23:
+    case SBTREE_REMOVE_OPERATION:
       walRecord = new OSBTreeRemoveOperation();
       break;
-    case 24:
+    case SBTREE_BONSAI_PUT_OPERATION:
       walRecord = new OSBTreeBonsaiPutOperation();
       break;
-    case 25:
+    case SBTREE_BONSAI_REMOVE_OPERATION:
       walRecord = new OSBTreeBonsaiRemoveOperation();
       break;
-    case 26:
+    case CREATE_CLUSTER_OPERATION:
       walRecord = new OCreateClusterOperation();
       break;
-    case 27:
+    case CREATE_HASH_TABLE_OPERATION:
       walRecord = new OCreateHashTableOperation();
       break;
-    case 28:
+    case CREATE_SBTREE_OPERATION:
       walRecord = new OCreateSBTreeOperation();
       break;
-    case 29:
+    case CREATE_SBTREE_BONSAI_OPERATION:
       walRecord = new OCreateSBTreeBonsaiOperation();
       break;
-    case 30:
+    case CREATE_SBTREE_BONSAI_RAW_OPERATION:
       walRecord = new OCreateSBTreeBonsaiRawOperation();
       break;
-    case 31:
+    case MAKE_POSITION_AVAILABLE_OPERATION:
       walRecord = new OMakePositionAvailableOperation();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
           walRecord = (OWriteableWALRecord) idToTypeMap.get(content[0]).newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (final InstantiationException | IllegalAccessException e) {
           throw new IllegalStateException("Cannot deserialize passed in record", e);
         }
       else
@@ -268,8 +235,7 @@ public class OWALRecordsFactory {
     return walRecord;
   }
 
-  public void registerNewRecord(byte id, Class<? extends OWriteableWALRecord> type) {
-    typeToIdMap.put(type, id);
+  public void registerNewRecord(final byte id, final Class<? extends OWriteableWALRecord> type) {
     idToTypeMap.put(id, type);
   }
 }

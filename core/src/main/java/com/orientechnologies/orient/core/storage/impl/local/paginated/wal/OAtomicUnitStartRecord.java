@@ -28,19 +28,15 @@ import java.nio.ByteBuffer;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 24.05.13
  */
-public class OAtomicUnitStartRecord extends OOperationUnitRecord {
+public final class OAtomicUnitStartRecord extends OOperationUnitRecord {
   private boolean isRollbackSupported;
 
-  public OAtomicUnitStartRecord() {
+  OAtomicUnitStartRecord() {
   }
 
   public OAtomicUnitStartRecord(final boolean isRollbackSupported, final OOperationUnitId unitId) {
     super(unitId);
     this.isRollbackSupported = isRollbackSupported;
-  }
-
-  public boolean isRollbackSupported() {
-    return isRollbackSupported;
   }
 
   @Override
@@ -55,7 +51,7 @@ public class OAtomicUnitStartRecord extends OOperationUnitRecord {
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
 
     buffer.put(isRollbackSupported ? (byte) 1 : 0);
@@ -79,6 +75,11 @@ public class OAtomicUnitStartRecord extends OOperationUnitRecord {
   @Override
   public boolean isUpdateMasterRecord() {
     return false;
+  }
+
+  @Override
+  public byte getId() {
+    return WALRecordTypes.ATOMIC_UNIT_START_RECORD;
   }
 
   @Override

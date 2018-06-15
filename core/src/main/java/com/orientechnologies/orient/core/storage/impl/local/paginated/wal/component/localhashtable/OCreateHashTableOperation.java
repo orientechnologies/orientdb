@@ -7,13 +7,14 @@ import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class OCreateHashTableOperation extends OLocalHashTableOperation {
+public final class OCreateHashTableOperation extends OLocalHashTableOperation {
   private long fileId;
   private long directoryFileId;
 
@@ -33,10 +34,11 @@ public class OCreateHashTableOperation extends OLocalHashTableOperation {
   public OCreateHashTableOperation() {
   }
 
-  public OCreateHashTableOperation(OOperationUnitId operationUnitId, String name, String metadataConfigurationFileExtension,
-      String treeStateFileExtension, String bucketFileExtension, String nullBucketFileExtension, long fileId, long directoryFileId,
-      byte keySerializerId, byte valueSerializerId, boolean nullKeyIsSupported, OType[] keyTypes, String encryptionName,
-      String encryptionOptions) {
+  public OCreateHashTableOperation(final OOperationUnitId operationUnitId, final String name,
+      final String metadataConfigurationFileExtension, final String treeStateFileExtension, final String bucketFileExtension,
+      final String nullBucketFileExtension, final long fileId, final long directoryFileId, final byte keySerializerId,
+      final byte valueSerializerId, final boolean nullKeyIsSupported, final OType[] keyTypes, final String encryptionName,
+      final String encryptionOptions) {
     super(operationUnitId, name);
     this.fileId = fileId;
 
@@ -58,7 +60,7 @@ public class OCreateHashTableOperation extends OLocalHashTableOperation {
     return fileId;
   }
 
-  public long getDirectoryFileId() {
+  long getDirectoryFileId() {
     return directoryFileId;
   }
 
@@ -103,12 +105,12 @@ public class OCreateHashTableOperation extends OLocalHashTableOperation {
   }
 
   @Override
-  public void rollbackOperation(OLocalHashTable hashTable, OAtomicOperation atomicOperation) {
+  public void rollbackOperation(final OLocalHashTable hashTable, final OAtomicOperation atomicOperation) {
     hashTable.deleteRollback(atomicOperation);
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
     OLongSerializer.INSTANCE.serializeNative(fileId, content, offset);
@@ -148,7 +150,7 @@ public class OCreateHashTableOperation extends OLocalHashTableOperation {
       OIntegerSerializer.INSTANCE.serializeNative(keyTypes.length, content, offset);
       offset += OIntegerSerializer.INT_SIZE;
 
-      for (OType keyType : keyTypes) {
+      for (final OType keyType : keyTypes) {
         content[offset] = (byte) keyType.getId();
         offset++;
       }
@@ -180,7 +182,7 @@ public class OCreateHashTableOperation extends OLocalHashTableOperation {
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
     fileId = OLongSerializer.INSTANCE.deserializeNative(content, offset);
@@ -252,7 +254,7 @@ public class OCreateHashTableOperation extends OLocalHashTableOperation {
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
 
     buffer.putLong(fileId);
@@ -274,7 +276,7 @@ public class OCreateHashTableOperation extends OLocalHashTableOperation {
 
       buffer.putInt(keyTypes.length);
 
-      for (OType keyType : keyTypes) {
+      for (final OType keyType : keyTypes) {
         buffer.put((byte) keyType.getId());
       }
     }
@@ -326,14 +328,19 @@ public class OCreateHashTableOperation extends OLocalHashTableOperation {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public byte getId() {
+    return WALRecordTypes.CREATE_HASH_TABLE_OPERATION;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
     if (!super.equals(o))
       return false;
-    OCreateHashTableOperation that = (OCreateHashTableOperation) o;
+    final OCreateHashTableOperation that = (OCreateHashTableOperation) o;
     return fileId == that.fileId && directoryFileId == that.directoryFileId && keySerializerId == that.keySerializerId
         && valueSerializerId == that.valueSerializerId && nullKeyIsSupported == that.nullKeyIsSupported && Objects
         .equals(metadataConfigurationFileExtension, that.metadataConfigurationFileExtension) && Objects

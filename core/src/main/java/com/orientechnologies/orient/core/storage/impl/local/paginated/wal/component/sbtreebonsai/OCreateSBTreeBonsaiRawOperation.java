@@ -3,18 +3,19 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compo
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-public class OCreateSBTreeBonsaiRawOperation extends OSBTreeBonsaiOperation {
+public final class OCreateSBTreeBonsaiRawOperation extends OSBTreeBonsaiOperation {
   private String name;
 
   public OCreateSBTreeBonsaiRawOperation() {
   }
 
-  public OCreateSBTreeBonsaiRawOperation(OOperationUnitId operationUnitId, long fileId, String name) {
+  public OCreateSBTreeBonsaiRawOperation(final OOperationUnitId operationUnitId, final long fileId, final String name) {
     super(operationUnitId, fileId);
     this.name = name;
   }
@@ -24,12 +25,12 @@ public class OCreateSBTreeBonsaiRawOperation extends OSBTreeBonsaiOperation {
   }
 
   @Override
-  public void rollbackOperation(OSBTreeBonsaiLocal tree, OAtomicOperation atomicOperation) {
+  public void rollbackOperation(final OSBTreeBonsaiLocal tree, final OAtomicOperation atomicOperation) {
     throw new UnsupportedOperationException("SBTreeBonsai files can not be deleted");
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
     OStringSerializer.INSTANCE.serializeNativeObject(name, content, offset);
     offset += OStringSerializer.INSTANCE.getObjectSize(name);
@@ -38,7 +39,7 @@ public class OCreateSBTreeBonsaiRawOperation extends OSBTreeBonsaiOperation {
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
     name = OStringSerializer.INSTANCE.deserializeNativeObject(content, offset);
     offset += OStringSerializer.INSTANCE.getObjectSize(name);
@@ -47,7 +48,7 @@ public class OCreateSBTreeBonsaiRawOperation extends OSBTreeBonsaiOperation {
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
 
     OStringSerializer.INSTANCE.serializeInByteBufferObject(name, buffer);
@@ -59,14 +60,19 @@ public class OCreateSBTreeBonsaiRawOperation extends OSBTreeBonsaiOperation {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public byte getId() {
+    return WALRecordTypes.CREATE_SBTREE_BONSAI_RAW_OPERATION;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
     if (!super.equals(o))
       return false;
-    OCreateSBTreeBonsaiRawOperation that = (OCreateSBTreeBonsaiRawOperation) o;
+    final OCreateSBTreeBonsaiRawOperation that = (OCreateSBTreeBonsaiRawOperation) o;
     return Objects.equals(name, that.name);
   }
 

@@ -3913,6 +3913,10 @@ public class OCASDiskWriteAheadLogIT {
       return false;
     }
 
+    @Override
+    public byte getId() {
+      return 127;
+    }
   }
 
   public static final class RecordsAdder implements Callable<List<TestRecord>> {

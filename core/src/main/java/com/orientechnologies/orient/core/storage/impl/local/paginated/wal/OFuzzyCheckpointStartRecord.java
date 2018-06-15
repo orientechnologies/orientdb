@@ -28,21 +28,21 @@ import java.nio.ByteBuffer;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 30.04.13
  */
-public class OFuzzyCheckpointStartRecord extends OAbstractCheckPointStartRecord {
+public final class OFuzzyCheckpointStartRecord extends OAbstractCheckPointStartRecord {
   private volatile OLogSequenceNumber lsn;
   private OLogSequenceNumber flushedLsn;
 
-  public OFuzzyCheckpointStartRecord() {
+  OFuzzyCheckpointStartRecord() {
   }
 
-  public OFuzzyCheckpointStartRecord(OLogSequenceNumber previousCheckpoint, OLogSequenceNumber flushedLsn) {
+  public OFuzzyCheckpointStartRecord(final OLogSequenceNumber previousCheckpoint, final OLogSequenceNumber flushedLsn) {
     super(previousCheckpoint);
 
     this.flushedLsn = flushedLsn;
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
     OLongSerializer.INSTANCE.serializeNative(flushedLsn.getSegment(), content, offset);
@@ -55,7 +55,7 @@ public class OFuzzyCheckpointStartRecord extends OAbstractCheckPointStartRecord 
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
 
     buffer.putLong(flushedLsn.getSegment());
@@ -63,13 +63,13 @@ public class OFuzzyCheckpointStartRecord extends OAbstractCheckPointStartRecord 
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
-    long segment = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    final long segment = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    long position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    final long position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
     flushedLsn = new OLogSequenceNumber(segment, position);
@@ -92,8 +92,13 @@ public class OFuzzyCheckpointStartRecord extends OAbstractCheckPointStartRecord 
   }
 
   @Override
-  public void setLsn(OLogSequenceNumber lsn) {
+  public void setLsn(final OLogSequenceNumber lsn) {
     this.lsn = lsn;
+  }
+
+  @Override
+  public byte getId() {
+    return WALRecordTypes.FUZZY_CHECKPOINT_START_RECORD;
   }
 
   @Override

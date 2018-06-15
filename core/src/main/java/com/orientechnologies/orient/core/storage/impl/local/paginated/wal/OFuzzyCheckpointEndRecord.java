@@ -26,21 +26,21 @@ import java.nio.ByteBuffer;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 30.04.13
  */
-public class OFuzzyCheckpointEndRecord extends OAbstractWALRecord {
+public final class OFuzzyCheckpointEndRecord extends OAbstractWALRecord {
   public OFuzzyCheckpointEndRecord() {
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, final int offset) {
     return offset;
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, final int offset) {
     return offset;
   }
 
@@ -52,5 +52,10 @@ public class OFuzzyCheckpointEndRecord extends OAbstractWALRecord {
   @Override
   public boolean isUpdateMasterRecord() {
     return false;
+  }
+
+  @Override
+  public byte getId() {
+    return WALRecordTypes.FUZZY_CHECKPOINT_END_RECORD;
   }
 }

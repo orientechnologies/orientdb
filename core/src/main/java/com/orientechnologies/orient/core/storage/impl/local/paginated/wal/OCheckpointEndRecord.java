@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/2/13
  */
-public class OCheckpointEndRecord extends OAbstractWALRecord {
+public final class OCheckpointEndRecord extends OAbstractWALRecord {
   public OCheckpointEndRecord() {
   }
 
@@ -35,7 +35,7 @@ public class OCheckpointEndRecord extends OAbstractWALRecord {
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
   }
 
   @Override
@@ -51,5 +51,10 @@ public class OCheckpointEndRecord extends OAbstractWALRecord {
   @Override
   public boolean isUpdateMasterRecord() {
     return false;
+  }
+
+  @Override
+  public byte getId() {
+    return WALRecordTypes.CHECKPOINT_END_RECORD;
   }
 }

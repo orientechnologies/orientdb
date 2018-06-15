@@ -20,12 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -34,11 +28,17 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 24.05.13
  */
-public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
+public final class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   private boolean rollback;
 
   private Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap = new LinkedHashMap<>();
@@ -71,7 +71,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
     offset++;
 
     if (atomicOperationMetadataMap.size() > 0) {
-      for (Map.Entry<String, OAtomicOperationMetadata<?>> entry : atomicOperationMetadataMap.entrySet()) {
+      for (final Map.Entry<String, OAtomicOperationMetadata<?>> entry : atomicOperationMetadataMap.entrySet()) {
         if (entry.getKey().equals(ORecordOperationMetadata.RID_METADATA_KEY)) {
           content[offset] = 1;
           offset++;
@@ -81,7 +81,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
           OIntegerSerializer.INSTANCE.serializeNative(rids.size(), content, offset);
           offset += OIntegerSerializer.INT_SIZE;
 
-          for (ORID rid : rids) {
+          for (final ORID rid : rids) {
             OLongSerializer.INSTANCE.serializeNative(rid.getClusterPosition(), content, offset);
             offset += OLongSerializer.LONG_SIZE;
 
@@ -100,13 +100,13 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
 
     buffer.put(rollback ? (byte) 1 : 0);
 
     if (atomicOperationMetadataMap.size() > 0) {
-      for (Map.Entry<String, OAtomicOperationMetadata<?>> entry : atomicOperationMetadataMap.entrySet()) {
+      for (final Map.Entry<String, OAtomicOperationMetadata<?>> entry : atomicOperationMetadataMap.entrySet()) {
         if (entry.getKey().equals(ORecordOperationMetadata.RID_METADATA_KEY)) {
           buffer.put((byte) 1);
 
@@ -114,7 +114,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
           final Set<ORID> rids = recordOperationMetadata.getValue();
           buffer.putInt(rids.size());
 
-          for (ORID rid : rids) {
+          for (final ORID rid : rids) {
             buffer.putLong(rid.getClusterPosition());
             buffer.putInt(rid.getClusterId());
           }
@@ -173,7 +173,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   private int metadataSize() {
     int size = OByteSerializer.BYTE_SIZE;
 
-    for (Map.Entry<String, OAtomicOperationMetadata<?>> entry : atomicOperationMetadataMap.entrySet()) {
+    for (final Map.Entry<String, OAtomicOperationMetadata<?>> entry : atomicOperationMetadataMap.entrySet()) {
       if (entry.getKey().equals(ORecordOperationMetadata.RID_METADATA_KEY)) {
         final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) entry.getValue();
 
@@ -191,6 +191,11 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   @Override
   public boolean isUpdateMasterRecord() {
     return false;
+  }
+
+  @Override
+  public byte getId() {
+    return WALRecordTypes.ATOMIC_UNIT_END_RECORD;
   }
 
   @Override

@@ -6,18 +6,18 @@ import java.nio.ByteBuffer;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 12/12/14
  */
-public class ONonTxOperationPerformedWALRecord extends OAbstractWALRecord {
+public final class ONonTxOperationPerformedWALRecord extends OAbstractWALRecord {
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, final int offset) {
     return offset;
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, final int offset) {
     return offset;
   }
 
@@ -29,5 +29,10 @@ public class ONonTxOperationPerformedWALRecord extends OAbstractWALRecord {
   @Override
   public boolean isUpdateMasterRecord() {
     return false;
+  }
+
+  @Override
+  public byte getId() {
+    return WALRecordTypes.NON_TX_OPERATION_PERFORMED_WAL_RECORD;
   }
 }

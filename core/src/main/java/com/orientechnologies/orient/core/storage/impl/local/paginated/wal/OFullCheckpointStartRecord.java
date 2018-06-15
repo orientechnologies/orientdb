@@ -23,11 +23,16 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/2/13
  */
-public class OFullCheckpointStartRecord extends OAbstractCheckPointStartRecord {
+public final class OFullCheckpointStartRecord extends OAbstractCheckPointStartRecord {
   public OFullCheckpointStartRecord() {
   }
 
   public OFullCheckpointStartRecord(final OLogSequenceNumber previousCheckpoint) {
     super(previousCheckpoint);
+  }
+
+  @Override
+  public byte getId() {
+    return WALRecordTypes.FULL_CHECKPOINT_START_RECORD;
   }
 }

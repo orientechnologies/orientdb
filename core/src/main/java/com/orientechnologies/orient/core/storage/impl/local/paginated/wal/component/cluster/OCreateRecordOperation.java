@@ -6,12 +6,13 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class OCreateRecordOperation extends OClusterOperation {
+public final class OCreateRecordOperation extends OClusterOperation {
   private long   position;
   private byte[] record;
   private int    recordVersion;
@@ -20,8 +21,8 @@ public class OCreateRecordOperation extends OClusterOperation {
   public OCreateRecordOperation() {
   }
 
-  public OCreateRecordOperation(int clusterId, OOperationUnitId operationUnitId, long position, byte[] record, int recordVersion,
-      byte recordType) {
+  public OCreateRecordOperation(final int clusterId, final OOperationUnitId operationUnitId, final long position,
+      final byte[] record, final int recordVersion, final byte recordType) {
     super(operationUnitId, clusterId);
 
     this.position = position;
@@ -47,12 +48,12 @@ public class OCreateRecordOperation extends OClusterOperation {
   }
 
   @Override
-  public void rollbackOperation(OPaginatedCluster cluster, OAtomicOperation atomicOperation) {
+  public void rollbackOperation(final OPaginatedCluster cluster, final OAtomicOperation atomicOperation) {
     cluster.deleteRecordRollback(position, atomicOperation);
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
     OLongSerializer.INSTANCE.serializeNative(position, content, offset);
@@ -74,13 +75,13 @@ public class OCreateRecordOperation extends OClusterOperation {
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
     position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    int recordLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    final int recordLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     record = new byte[recordLen];
@@ -97,7 +98,7 @@ public class OCreateRecordOperation extends OClusterOperation {
   }
 
   @Override
-  public void toStream(ByteBuffer buffer) {
+  public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
     buffer.putLong(position);
     buffer.putInt(record.length);
@@ -119,14 +120,19 @@ public class OCreateRecordOperation extends OClusterOperation {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public byte getId() {
+    return WALRecordTypes.CREATE_RECORD_OPERATION;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
     if (!super.equals(o))
       return false;
-    OCreateRecordOperation that = (OCreateRecordOperation) o;
+    final OCreateRecordOperation that = (OCreateRecordOperation) o;
     return recordVersion == that.recordVersion && recordType == that.recordType && Arrays.equals(record, that.record);
   }
 

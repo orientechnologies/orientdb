@@ -1354,6 +1354,10 @@ public class ReadWriteDiskCacheTest {
       return false;
     }
 
+    @Override
+    public byte getId() {
+      return (byte) 128;
+    }
   }
 
 }
