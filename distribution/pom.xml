@@ -172,13 +172,22 @@
             <plugin>
                 <groupId>com.spotify</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
-                <version>0.4.13</version>
+                <version>1.1.1</version>
+                <executions>
+                    <execution>
+                        <id>build-image</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                </executions>
                 <configuration>
                     <imageName>orientdb/orientdb</imageName>
                     <imageTags>
                         <imageTag>${project.version}</imageTag>
                     </imageTags>
-                    <dockerDirectory>docker</dockerDirectory>
+                    <dockerDirectory>${project.basedir}/docker</dockerDirectory>
                     <!-- copy the service's jar file from target into the root directory of the image -->
                     <resources>
                         <resource>
