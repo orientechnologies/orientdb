@@ -35,15 +35,8 @@ public class ODirectoryPage extends ODurablePage {
   static final int NODES_PER_PAGE =
       (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET) / OHashTableDirectory.BINARY_LEVEL_SIZE;
 
-  private final OCacheEntry entry;
-
-  ODirectoryPage(final OCacheEntry cacheEntry, final OCacheEntry entry) {
+  ODirectoryPage(final OCacheEntry cacheEntry) {
     super(cacheEntry);
-    this.entry = entry;
-  }
-
-  public OCacheEntry getEntry() {
-    return entry;
   }
 
   void setMaxLeftChildDepth(final int localNodeIndex, final byte maxLeftChildDepth) {

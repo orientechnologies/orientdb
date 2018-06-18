@@ -25,6 +25,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerializationType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.nio.ByteBuffer;
@@ -162,6 +163,10 @@ public class ODurablePage {
     buffer.put(page);
 
     cacheEntry.markDirty();
+  }
+
+  protected PageSerializationType serializationType() {
+    return PageSerializationType.GENERIC;
   }
 
   @Override

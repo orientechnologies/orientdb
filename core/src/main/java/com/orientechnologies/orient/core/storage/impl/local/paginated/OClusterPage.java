@@ -62,6 +62,10 @@ public final class OClusterPage extends ODurablePage {
   private static final int ENTRY_KIND_UNKNOWN = 0;
   private static final int ENTRY_KIND_DATA    = +1;
 
+  OClusterPage(OCacheEntry cacheEntry) {
+    super(cacheEntry);
+  }
+
   OClusterPage(final OCacheEntry cacheEntry, final boolean newPage) {
     super(cacheEntry);
 
@@ -297,6 +301,11 @@ public final class OClusterPage extends ODurablePage {
     }
 
     cacheEntry.markDirty();
+  }
+
+  @Override
+  protected PageSerializationType serializationType() {
+    return PageSerializationType.CLUSTER_PAGE;
   }
 
   int getRecordSize(final int position) {

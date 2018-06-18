@@ -78,7 +78,7 @@ public final class OHashTableDirectory extends ODurableComponent {
 
     ODirectoryFirstPage firstPage = null;
     try {
-      firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
+      firstPage = new ODirectoryFirstPage(firstEntry);
 
       firstPage.setTreeSize(0);
       firstPage.setTombstone(-1);
@@ -122,7 +122,7 @@ public final class OHashTableDirectory extends ODurableComponent {
     ODirectoryFirstPage firstPage = null;
     final OCacheEntry firstEntry = loadPageForWrite(fileId, firstEntryIndex, true);
     try {
-      firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
+      firstPage = new ODirectoryFirstPage(firstEntry);
 
       final int tombstone = firstPage.getTombstone();
 
@@ -160,7 +160,7 @@ public final class OHashTableDirectory extends ODurableComponent {
 
         ODirectoryPage page = null;
         try {
-          page = new ODirectoryPage(cacheEntry, cacheEntry);
+          page = new ODirectoryPage(cacheEntry);
 
           page.setMaxLeftChildDepth(localLevel, maxLeftChildDepth);
           page.setMaxRightChildDepth(localLevel, maxRightChildDepth);
@@ -188,7 +188,7 @@ public final class OHashTableDirectory extends ODurableComponent {
     ODirectoryFirstPage firstPage = null;
     final OCacheEntry firstEntry = loadPageForWrite(fileId, firstEntryIndex, true);
     try {
-      firstPage = new ODirectoryFirstPage(firstEntry, firstEntry);
+      firstPage = new ODirectoryFirstPage(firstEntry);
       if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
         firstPage.setPointer(nodeIndex, 0, firstPage.getTombstone());
         firstPage.setTombstone(nodeIndex);
@@ -199,7 +199,7 @@ public final class OHashTableDirectory extends ODurableComponent {
         ODirectoryPage page = null;
         final OCacheEntry cacheEntry = loadPageForWrite(fileId, pageIndex, true);
         try {
-          page = new ODirectoryPage(cacheEntry, cacheEntry);
+          page = new ODirectoryPage(cacheEntry);
 
           page.setPointer(localNodeIndex, 0, firstPage.getTombstone());
           firstPage.setTombstone(nodeIndex);
@@ -333,7 +333,7 @@ public final class OHashTableDirectory extends ODurableComponent {
       else
         cacheEntry = loadPageForRead(fileId, firstEntryIndex, true);
 
-      return new ODirectoryFirstPage(cacheEntry, cacheEntry);
+      return new ODirectoryFirstPage(cacheEntry);
     }
 
     final int pageIndex = nodeIndex / ODirectoryPage.NODES_PER_PAGE;
@@ -345,11 +345,11 @@ public final class OHashTableDirectory extends ODurableComponent {
     else
       cacheEntry = loadPageForRead(fileId, pageIndex, true);
 
-    return new ODirectoryPage(cacheEntry, cacheEntry);
+    return new ODirectoryPage(cacheEntry);
   }
 
   private void releasePage(final ODirectoryPage page, final boolean exclusiveLock, final OAtomicOperation atomicOperation) {
-    final OCacheEntry cacheEntry = page.getEntry();
+    final OCacheEntry cacheEntry = page.getCacheEntry();
 
     if (exclusiveLock)
       releasePageFromWrite(page, atomicOperation);

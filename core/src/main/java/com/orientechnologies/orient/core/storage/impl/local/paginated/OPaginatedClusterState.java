@@ -81,4 +81,9 @@ public final class OPaginatedClusterState extends ODurablePage {
     buffer.put(page);
     cacheEntry.markDirty();
   }
+
+  @Override
+  protected PageSerializationType serializationType() {
+    return PageSerializationType.PAGINATED_CLUSTER_STATE;
+  }
 }

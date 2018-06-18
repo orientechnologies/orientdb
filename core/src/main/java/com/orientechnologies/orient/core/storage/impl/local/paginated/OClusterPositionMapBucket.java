@@ -251,6 +251,11 @@ public final class OClusterPositionMapBucket extends ODurablePage {
     cacheEntry.markDirty();
   }
 
+  @Override
+  protected PageSerializationType serializationType() {
+    return PageSerializationType.CLUSTER_POSITION_MAP_BUCKET;
+  }
+
   public static class PositionEntry {
     private final long pageIndex;
     private final int  recordPosition;

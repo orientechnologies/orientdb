@@ -28,6 +28,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerializationType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -70,6 +71,15 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
   private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
   private final OEncryption encryption;
+
+  public OSBTreeBucket(final OCacheEntry cacheEntry) {
+    super(cacheEntry);
+
+    keySerializer = null;
+    valueSerializer = null;
+    keyTypes = null;
+    encryption = null;
+  }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
   OSBTreeBucket(final OCacheEntry cacheEntry, final boolean isLeaf, final OBinarySerializer<K> keySerializer,
@@ -484,6 +494,11 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     this.isLeaf = buffer.get(IS_LEAF_OFFSET) > 0;
 
     cacheEntry.markDirty();
+  }
+
+  @Override
+  protected PageSerializationType serializationType() {
+    return PageSerializationType.SBTREE_BUCKET;
   }
 
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")

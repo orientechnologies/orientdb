@@ -25,6 +25,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerializationType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 
@@ -37,7 +38,7 @@ import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsa
  * @see OBonsaiBucketPointer
  * @see com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai
  */
-class OBonsaiBucketAbstractV2 extends ODurablePage {
+public class OBonsaiBucketAbstractV2 extends ODurablePage {
   private static final int BITS_IN_BYTE          = 8;
   static final         int MAX_BUCKET_SIZE_BYTES = OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getValueAsInteger() * 1024;
 
@@ -63,7 +64,7 @@ class OBonsaiBucketAbstractV2 extends ODurablePage {
   static final int FREE_LIST_HEAD_OFFSET   = FREE_SPACE_OFFSET + 2 * OIntegerSerializer.INT_SIZE;
   static final int FREE_LIST_LENGTH_OFFSET = FREE_LIST_HEAD_OFFSET + 2 * OIntegerSerializer.INT_SIZE;
 
-  OBonsaiBucketAbstractV2(OCacheEntry cacheEntry) {
+  public OBonsaiBucketAbstractV2(OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
@@ -166,6 +167,11 @@ class OBonsaiBucketAbstractV2 extends ODurablePage {
     }
 
     cacheEntry.markDirty();
+  }
+
+  @Override
+  protected PageSerializationType serializationType() {
+    return PageSerializationType.SBTREE_BONSAI_BUCKET;
   }
 
   private int serializedBucketsSize() {

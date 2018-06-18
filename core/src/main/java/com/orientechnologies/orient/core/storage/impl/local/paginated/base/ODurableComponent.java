@@ -152,7 +152,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
         final byte[] serializedPage = page.serializePage();
         try {
           final OUpdatePageRecord updatePageRecord = new OUpdatePageRecord(cacheEntry.getPageIndex(), cacheEntry.getFileId(),
-              atomicOperation.getOperationUnitId(), serializedPage);
+              atomicOperation.getOperationUnitId(), serializedPage, page.serializationType());
           recordLSN = writeAheadLog.log(updatePageRecord);
         } catch (IOException e) {
           throw OException.wrapException(new OStorageException(

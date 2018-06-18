@@ -21,9 +21,11 @@ package com.orientechnologies.orient.core.storage.index.sbtree.local;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerializationType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 import java.nio.ByteBuffer;
+
 /**
  * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has following layout:
  * <ol>
@@ -38,6 +40,12 @@ import java.nio.ByteBuffer;
  */
 public final class ONullBucket<V> extends ODurablePage {
   private final OBinarySerializer<V> valueSerializer;
+
+  public ONullBucket(final OCacheEntry cacheEntry) {
+    super(cacheEntry);
+
+    valueSerializer = null;
+  }
 
   ONullBucket(final OCacheEntry cacheEntry, final OBinarySerializer<V> valueSerializer, final boolean isNew) {
     super(cacheEntry);
@@ -145,5 +153,10 @@ public final class ONullBucket<V> extends ODurablePage {
     buffer.put(page);
 
     cacheEntry.markDirty();
+  }
+
+  @Override
+  protected PageSerializationType serializationType() {
+    return PageSerializationType.SBTREE_NULL_BUCKET;
   }
 }

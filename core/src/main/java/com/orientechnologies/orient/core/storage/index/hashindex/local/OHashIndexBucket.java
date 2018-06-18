@@ -56,6 +56,14 @@ public final class OHashIndexBucket<K, V> extends ODurablePage implements Iterab
 
   private final OEncryption encryption;
 
+  public OHashIndexBucket(final OCacheEntry cacheEntry) {
+    super(cacheEntry);
+
+    keySerializer = null;
+    valueSerializer = null;
+    encryption = null;
+  }
+
   @SuppressFBWarnings("EI_EXPOSE_REP2")
   OHashIndexBucket(final int depth, final OCacheEntry cacheEntry, final OBinarySerializer<K> keySerializer,
       final OBinarySerializer<V> valueSerializer, final OEncryption encryption) {

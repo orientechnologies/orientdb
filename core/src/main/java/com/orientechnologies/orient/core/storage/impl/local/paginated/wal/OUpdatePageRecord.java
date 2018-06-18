@@ -21,34 +21,47 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerializationType;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 26.04.13
  */
 public final class OUpdatePageRecord extends OAbstractPageWALRecord {
-  private byte[] compressedPage;
+  private byte[] page;
+
+  private PageSerializationType serializationType;
 
   @SuppressWarnings("WeakerAccess")
   public OUpdatePageRecord() {
   }
 
-  public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId,
-      final byte[] compressedPage) {
+  public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId, final byte[] page,
+      final PageSerializationType serializationType) {
     super(pageIndex, fileId, operationUnitId);
-    this.compressedPage = compressedPage;
+
+    this.page = page;
+    this.serializationType = serializationType;
+  }
+
+  public byte[] getPage() {
+    return page;
+  }
+
+  public PageSerializationType getSerializationType() {
+    return serializationType;
   }
 
   @Override
   public int serializedSize() {
     int serializedSize = super.serializedSize();
-    serializedSize += compressedPage.length + OIntegerSerializer.INT_SIZE;
+    serializedSize += page.length + OIntegerSerializer.INT_SIZE;
 
-    serializedSize += 2 * OLongSerializer.LONG_SIZE;
+    serializedSize += OIntegerSerializer.INT_SIZE;
 
     return serializedSize;
   }
@@ -56,11 +69,15 @@ public final class OUpdatePageRecord extends OAbstractPageWALRecord {
   @Override
   public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
-    OIntegerSerializer.INSTANCE.serializeNative(compressedPage.length, content, offset);
+
+    OIntegerSerializer.INSTANCE.serializeNative(page.length, content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    System.arraycopy(compressedPage, 0, content, offset, compressedPage.length);
-    offset += compressedPage.length;
+    System.arraycopy(page, 0, content, offset, page.length);
+    offset += page.length;
+
+    OIntegerSerializer.INSTANCE.serializeNative(serializationType.ordinal(), content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
 
     return offset;
   }
@@ -69,8 +86,9 @@ public final class OUpdatePageRecord extends OAbstractPageWALRecord {
   public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
 
-    buffer.putInt(compressedPage.length);
-    buffer.put(compressedPage);
+    buffer.putInt(page.length);
+    buffer.put(page);
+    buffer.putInt(serializationType.ordinal());
   }
 
   @Override
@@ -80,8 +98,13 @@ public final class OUpdatePageRecord extends OAbstractPageWALRecord {
     final int pageLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    compressedPage = new byte[pageLen];
-    System.arraycopy(content, offset, compressedPage, 0, pageLen);
+    page = new byte[pageLen];
+    System.arraycopy(content, offset, page, 0, pageLen);
+
+    final int serializationTypeId = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    serializationType = PageSerializationType.values()[serializationTypeId];
 
     return offset;
   }
@@ -97,22 +120,22 @@ public final class OUpdatePageRecord extends OAbstractPageWALRecord {
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
       return false;
     if (!super.equals(o))
       return false;
-    final OUpdatePageRecord that = (OUpdatePageRecord) o;
-    return Arrays.equals(compressedPage, that.compressedPage);
+    OUpdatePageRecord that = (OUpdatePageRecord) o;
+    return Arrays.equals(page, that.page) && serializationType == that.serializationType;
   }
 
   @Override
   public int hashCode() {
 
-    int result = super.hashCode();
-    result = 31 * result + Arrays.hashCode(compressedPage);
+    int result = Objects.hash(super.hashCode(), serializationType);
+    result = 31 * result + Arrays.hashCode(page);
     return result;
   }
 }

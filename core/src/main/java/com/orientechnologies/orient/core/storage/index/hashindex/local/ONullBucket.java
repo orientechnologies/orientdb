@@ -33,6 +33,12 @@ import java.nio.ByteBuffer;
 public final class ONullBucket<V> extends ODurablePage {
   private final OBinarySerializer<V> valueSerializer;
 
+  public ONullBucket(OCacheEntry cacheEntry) {
+    super(cacheEntry);
+
+    valueSerializer = null;
+  }
+
   ONullBucket(final OCacheEntry cacheEntry, final OBinarySerializer<V> valueSerializer, final boolean isNew) {
     super(cacheEntry);
     this.valueSerializer = valueSerializer;
