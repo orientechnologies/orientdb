@@ -43,13 +43,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.Orient;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -321,8 +316,12 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   public ORole getRole(final OIdentifiable iRole) {
     final ODocument doc = iRole.getRecord();
-    if (doc != null && "ORole".equals(doc.getClassName()))
-      return new ORole(doc);
+    if (doc != null) {
+      OClass clazz = doc.getSchemaClass();
+      if (clazz != null && clazz.isSubClassOf("ORole")) {
+        return new ORole(doc);
+      }
+    }
 
     return null;
   }
