@@ -33,12 +33,12 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>6.9.8</version>
-            <scope>test</scope>
-        </dependency>
+        <!--<dependency>-->
+        <!--<groupId>org.testng</groupId>-->
+        <!--<artifactId>testng</artifactId>-->
+        <!--<version>6.9.8</version>-->
+        <!--<scope>test</scope>-->
+        <!--</dependency>-->
 
 
         <dependency>
@@ -98,6 +98,41 @@
         </dependency>
 
 
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.8.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.11.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-jul</artifactId>
+            <version>2.11.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>2.11.0</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>
@@ -136,8 +171,13 @@
                                 <argument>-classpath</argument>
                                 <classpath/>
                                 <argument>com.orientechnologies.orient.console.OConsoleDatabaseApp</argument>
-                                <argument>CREATE DATABASE plocal:./target/databases/demodb;</argument>
-                                <argument>LOAD SCRIPT ./src/main/resources/demoDB.osql;</argument>
+                                <argument>CREATE DATABASE plocal:${basedir}/target/databases/demodb;</argument>
+                                <argument>CONNECT plocal:${basedir}/target/databases/demodb admin admin;</argument>
+                                <argument>LOAD SCRIPT ${basedir}/src/main/resources/demodb-1-schema.osql;</argument>
+                                <argument>LOAD SCRIPT ${basedir}/src/main/resources/demodb-2.osql;</argument>
+                                <argument>LOAD SCRIPT ${basedir}/src/main/resources/demodb-3.osql;</argument>
+                                <argument>LOAD SCRIPT ${basedir}/src/main/resources/demodb-4.osql;</argument>
+                                <argument>LOAD SCRIPT ${basedir}/src/main/resources/demodb-5.osql;</argument>
                             </arguments>
                         </configuration>
                     </execution>
