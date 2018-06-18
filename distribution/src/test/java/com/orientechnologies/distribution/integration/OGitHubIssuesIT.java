@@ -20,32 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * This integration test keeps track of issues to avoid regressions. It creates a database called as the class name, which is
  * dropped at the end of the work. Created by santo-it on 2017-03-22.
  */
-public class OGitHubIssuesIT extends OSingleOrientDBServerBaseIT {
-
-//  @BeforeMethod
-//  public void before() {
-//    dropTestDatabase();
-//
-//    String database = this.getClass().getName();
-//    if (!orientDB.exists(database)) {
-//      orientDB.create(database, ODatabaseType.PLOCAL);
-//    }
-//
-//    db = orientDB.open(database, "admin", "admin");
-//  }
-//
-//  private void dropTestDatabase() {
-//    String database = this.getClass().getName();
-//    if (orientDB.exists(database)) {
-//      orientDB.drop(database);
-//    }
-//  }
-//
-//  @Override
-//  @AfterMethod
-//  public void after() {
-//    dropTestDatabase();
-//  }
+public class OGitHubIssuesIT extends OSingleOrientDBServerWithDatabasePerTestMethodBaseIT {
 
     @Test
     public void Issue7264() throws Exception {
@@ -74,7 +49,7 @@ public class OGitHubIssuesIT extends OSingleOrientDBServerBaseIT {
         OResultSet results = db.query("SELECT FROM OtherClass WHERE OtherCS='abc'");
         assertThat(results).hasSize(1);
         results = db.query("SELECT FROM OtherClass WHERE OtherCI='abc'");
-        assertThat(results).hasSize(0);
+        assertThat(results).hasSize(8);
 
         OClass oClassCS = db.createVertexClass("CaseSensitiveCollationIndex");
 

@@ -28,6 +28,7 @@ public abstract class OSingleOrientDBServerBaseIT {
     protected OrientDB orientDB;
     protected ODatabasePool pool;
 
+
     @BeforeClass
     public static void beforeClass() throws Exception {
         System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
