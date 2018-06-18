@@ -1,29 +1,31 @@
 package com.orientechnologies.distribution.integration;
 
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by frank on 15/03/2017.
  */
-@Test
 public class OCommunityEditionSingleNodeIT extends OIntegrationTestTemplate {
 
-  @Test
-  public void testSearchOnField() throws Exception {
+    @Test
+    public void testSearchOnField() {
 
-    OResultSet result = db.query("SELECT from ArchaeologicalSites where search_fields(['Name'],'foro') = true");
-    Assert.assertEquals(result.stream().count(), 2);
-    result.close();
-  }
+        OResultSet result = db.query("SELECT from ArchaeologicalSites where search_fields(['Name'],'foro') = true");
 
-  @Test
-  public void testSearchOnClass() throws Exception {
+        assertThat(result).hasSize(2);
+        result.close();
+    }
 
-    OResultSet result = db.query("select * from `Hotels` where search_class('western')=true");
-    Assert.assertEquals(result.stream().count(), 6);
-    result.close();
-  }
+    @Test
+    public void testSearchOnClass() {
+
+        OResultSet result = db.query("select * from `Hotels` where search_class('western')=true");
+
+        assertThat(result).hasSize(6);
+        result.close();
+    }
 
 }
