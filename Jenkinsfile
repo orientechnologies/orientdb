@@ -9,14 +9,12 @@ node("master") {
         ansiColor('xterm') {
             milestone()
             def mvnHome = tool 'mvn'
-            def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-8"
+            def mvnJdk8Image = "azul/zulu-openjdk-alpine:8"
 
-            def containerName = env.JOB_NAME.replaceAll(/\//, "_") +
-                    "_build_${currentBuild.number}"
+            def containerName = env.JOB_NAME.replaceAll(/\//, "_") + "_build_${currentBuild.number}"
 
             def appNameLabel = "docker_ci";
             def taskLabel = env.JOB_NAME.replaceAll(/\//, "_")
-
 
             stage('Source checkout') {
                 checkout scm
@@ -34,11 +32,11 @@ node("master") {
                                     --cap-add=SYS_PTRACE""") {
                             try {
                                 //skip integration test for now
-                                sh "${mvnHome}/bin/mvn -V  -fae clean install   -Dsurefire.useFile=false -DskipITs"
+                                sh "./mvnw  -V  -fae clean install   -Dsurefire.useFile=false -DskipITs"
                                 //clean distribution to enable recreation of databases
-                                sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean"
-                                sh "${mvnHome}/bin/mvn -f distribution-tp2/pom.xml clean"
-                                sh "${mvnHome}/bin/mvn clean deploy -DskipTests -DskipITs"
+                                sh "./mvnw  -f distribution/pom.xml clean"
+                                sh "./mvnw  -f distribution-tp2/pom.xml clean"
+                                sh "./mvnw  clean deploy -DskipTests -DskipITs"
                             } finally {
                                 junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
 
@@ -54,7 +52,7 @@ node("master") {
                                 --name ${containerName} 
                                 --memory=5g ${env.VOLUMES}""") {
                             try {
-                                sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install -Pqa"
+                                sh "./mvnw  -f distribution/pom.xml clean install -Pqa"
                             } finally {
                                 junit allowEmptyResults: true, testResults: '**/target/failsafe-reports/TEST-*.xml'
 
@@ -69,7 +67,7 @@ node("master") {
                                 --label collectd_docker_task=${taskLabel} 
                                 --name ${containerName} 
                                 --memory=2g ${env.VOLUMES}""") {
-                            sh "${mvnHome}/bin/mvn  javadoc:aggregate"
+                            sh "./mvnw   javadoc:aggregate"
                             sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
                         }
                     }
