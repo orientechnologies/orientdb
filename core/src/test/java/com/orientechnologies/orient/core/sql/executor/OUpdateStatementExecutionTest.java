@@ -27,7 +27,7 @@ public class OUpdateStatementExecutionTest {
 
   private ODatabaseDocument db;
 
-  private String className;
+  private String   className;
   private OrientDB orientDB;
 
   @Before
@@ -569,12 +569,7 @@ public class OUpdateStatementExecutionTest {
     Assert.assertNotNull(item);
     List ls = item.getProperty("theProperty");
 
-    Assertions.assertThat(ls).isNotNull()
-        .hasSize(7)
-        .doesNotContain("n0")
-        .doesNotContain("n1")
-        .contains("n2")
-        .doesNotContain("n3")
+    Assertions.assertThat(ls).isNotNull().hasSize(7).doesNotContain("n0").doesNotContain("n1").contains("n2").doesNotContain("n3")
         .contains("n4");
 
 //    Assert.assertNotNull(ls);
@@ -623,4 +618,39 @@ public class OUpdateStatementExecutionTest {
     result.close();
   }
 
+  @Test
+  public void testRemoveFromMapSquare() {
+
+    db.command("UPDATE " + className + " REMOVE tagsMap[\"bar\"]").close();
+
+    OResultSet result = db.query("SELECT tagsMap FROM " + className);
+    printExecutionPlan(result);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals(2, ((Map) item.getProperty("tagsMap")).size());
+      Assert.assertFalse(((Map) item.getProperty("tagsMap")).containsKey("bar"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testRemoveFromMapEquals() {
+
+    db.command("UPDATE " + className + " REMOVE tagsMap = \"bar\"").close();
+
+    OResultSet result = db.query("SELECT tagsMap FROM " + className);
+    printExecutionPlan(result);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals(2, ((Map) item.getProperty("tagsMap")).size());
+      Assert.assertFalse(((Map) item.getProperty("tagsMap")).containsKey("bar"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
 }
