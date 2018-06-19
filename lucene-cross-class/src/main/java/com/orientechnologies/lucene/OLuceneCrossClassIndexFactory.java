@@ -178,7 +178,7 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
       OLogManager.instance().info(this, "creating cross class Lucene index");
 
       dbd.command(
-          "CREATE INDEX CrossClassSearchIndex FULLTEXT ENGINE LUCENE_CROSS_CLASS");
+          "CREATE INDEX CrossClassSearchIndex FULLTEXT ENGINE LUCENE_CROSS_CLASS").close();
     }
   }
 }
