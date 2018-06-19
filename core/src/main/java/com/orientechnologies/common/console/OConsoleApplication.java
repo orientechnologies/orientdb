@@ -121,7 +121,7 @@ public class OConsoleApplication {
           if (consoleInput == null || consoleInput.length() == 0)
             continue;
 
-          if (!executeCommands(new OConsoleCommandStream(consoleInput), false))
+          if (!executeCommands(new ODFACommandStream(consoleInput), false))
             break;
         } catch (Exception e) {
           result = 1;
@@ -203,9 +203,9 @@ public class OConsoleApplication {
 
     OCommandStream scanner;
     try {
-      scanner = new OConsoleCommandStream(commandFile);
+      scanner = new ODFACommandStream(commandFile);
     } catch (FileNotFoundException ignore) {
-      scanner = new OConsoleCommandStream(commandLine);
+      scanner = new ODFACommandStream(commandLine);
     }
 
     return executeCommands(scanner, true);
