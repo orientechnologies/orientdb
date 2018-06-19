@@ -3246,10 +3246,83 @@ public class ODocument extends ORecordAbstract
       super.unTrack(id);
   }
   
-  private Object getUpdateDeltaValue(Object currentValue, boolean changed){
+  private class TypeValue{
+    Object value;
+    UpdateDeltaValueType type;
+  }
+  
+  private TypeValue getUpdateDeltaValue(Object currentValue, Object previousValue, boolean changed){
     //TODO review this clause once again    
     if (changed || !(currentValue instanceof ODocument)){
-      return currentValue;
+      OType currentType = OType.getTypeByClass(currentValue.getClass());      
+      TypeValue retVal = new TypeValue();
+      //separate processing for embedded lists
+      //if previous value is null we want to send whole list to reduce overhead
+      if (currentType == OType.EMBEDDEDLIST && previousValue != null){
+        OType previousType = OType.getTypeByClass(previousValue.getClass());
+        //if previous value differs in type we want to send whole list to reduce overhead
+        if (currentType == previousType){
+          retVal.type = UpdateDeltaValueType.LIST_UPDATE;
+          List deltaList = new ArrayList();                    
+          retVal.value = deltaList;
+          //now find a diff
+          List currentList = (List)currentValue;
+          List previousList = (List)previousValue;
+          int i = 0;
+          for (i = 0; i < currentList.size(); i++){
+            Object currentElement = currentList.get(i);
+            if (i > previousList.size() - 1){
+              //these elements doesn't have pair in original list
+              ODocument deltaElement = new ODocument();
+              deltaElement.field("t", UpdateDeltaValueType.getOrd(UpdateDeltaValueType.LIST_ELEMENT_ADD));              
+              deltaElement.field("v", currentElement);
+              deltaElement.field("i", i);
+              deltaList.add(deltaElement);
+              continue;
+            }
+            //these elements have pairs in original list, so we need to calculate deltas
+            Object originalElement = previousList.get(i);
+            //check if can we go just we value change
+            if (!currentElement.getClass().equals(originalElement.getClass()) || 
+                !(currentElement instanceof ODocument) ||
+                !(currentElement instanceof List)){
+              ODocument deltaElement = new ODocument();
+              deltaElement.field("t", UpdateDeltaValueType.getOrd(UpdateDeltaValueType.LIST_ELEMENT_CHANGE));              
+              deltaElement.field("v", currentElement);
+              deltaElement.field("i", i);
+              deltaList.add(deltaElement);
+            }
+            else{              
+              if (!currentElement.equals(originalElement)){
+                //now we want to go in depth to get delta value
+                ODocument deltaElement = new ODocument();
+                deltaElement.field("t", UpdateDeltaValueType.getOrd(UpdateDeltaValueType.LIST_ELEMENT_UPDATE));
+                
+                TypeValue delta = getUpdateDeltaValue(currentElement, originalElement, true);
+                ODocument doc = new ODocument();
+                doc.field("t", UpdateDeltaValueType.getOrd(delta.type));
+                doc.field("v", delta.value);                
+                deltaElement.field("v", doc);
+                deltaElement.field("i", i);
+                deltaList.add(deltaElement);
+              }
+              //this means that elements are equal so nothig to do
+            }
+          }
+          //these element are contained only in original list , so they should be removed
+          for (int j = i; j < previousList.size(); j++){
+            ODocument deltaEelement = new ODocument();
+            deltaEelement.field("t", UpdateDeltaValueType.getOrd(UpdateDeltaValueType.LIST_ELEMENT_REMOVE));
+            deltaEelement.field("i", j);
+            deltaList.add(deltaEelement);
+          }
+          return retVal;
+        }
+      }
+      
+      retVal.value = currentValue;
+      retVal.type = UpdateDeltaValueType.UPDATE;      
+      return new TypeValue();
     }
     else{      
       ODocument docVal;
@@ -3259,7 +3332,10 @@ public class ODocument extends ORecordAbstract
       else{
         docVal = (ODocument)currentValue;
       }
-      return docVal.getDeltaFromOriginalForUpdate();      
+      TypeValue retVal = new TypeValue();
+      retVal.value = docVal.getDeltaFromOriginalForUpdate();
+      retVal.type = UpdateDeltaValueType.UPDATE;
+      return retVal;
     }    
   }
   
@@ -3296,7 +3372,10 @@ public class ODocument extends ORecordAbstract
       ODocumentEntry val = fieldVal.getValue();      
       if (val.isChangedTree()){        
         String fieldName = fieldVal.getKey();
-        Object deltaValue = getUpdateDeltaValue(val.value, val.isChanged());
+        TypeValue deltaValue = getUpdateDeltaValue(val.value, val.original, val.isChanged());
+        ODocument doc = new ODocument();
+        doc.field("v", deltaValue.value);
+        doc.field("t", UpdateDeltaValueType.getOrd(deltaValue.type));
         updated.field(fieldName, deltaValue);
       }
     }
