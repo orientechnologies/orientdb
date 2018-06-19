@@ -123,7 +123,12 @@ public class OConsoleCommandStream implements OCommandStream {
             state = State.SINGLE_QUOTE_STRING;
             break;
           case HYPHEN:
-            state = State.HYPHEN;
+            if (result.toString().trim().length() == 0) {
+              //allow commands only at the beginning of a row
+              state = State.HYPHEN;
+            } else {
+              result.append("-");
+            }
             break;
           case POUND:
             if (result.toString().trim().length() == 0) {
