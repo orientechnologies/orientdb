@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.sharding.auto;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -42,6 +41,7 @@ import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTabl
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OSHA256HashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OLocalHashTableV2;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.v3.OLocalHashTableV3;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,31 +55,23 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public final class OAutoShardingIndexEngine implements OIndexEngine {
-  public static final int    VERSION                             = 1;
-  public static final String SUBINDEX_METADATA_FILE_EXTENSION    = ".asm";
-  public static final String SUBINDEX_TREE_FILE_EXTENSION        = ".ast";
-  public static final String SUBINDEX_BUCKET_FILE_EXTENSION      = ".asb";
-  public static final String SUBINDEX_NULL_BUCKET_FILE_EXTENSION = ".asn";
+  public static final  int    VERSION                             = 2;
+  private static final String SUBINDEX_METADATA_FILE_EXTENSION    = ".asm";
+  private static final String SUBINDEX_TREE_FILE_EXTENSION        = ".ast";
+  private static final String SUBINDEX_BUCKET_FILE_EXTENSION      = ".asb";
+  private static final String SUBINDEX_NULL_BUCKET_FILE_EXTENSION = ".asn";
 
   private final OAbstractPaginatedStorage        storage;
-  private final boolean                          durableInNonTx;
   private       List<OHashTable<Object, Object>> partitions;
   private       OAutoShardingStrategy            strategy;
-  private       int                              version;
+  private final int                              version;
   private final String                           name;
   private       int                              partitionSize;
   private final AtomicLong                       bonsayFileId = new AtomicLong(0);
 
-  public OAutoShardingIndexEngine(final String iName, final Boolean iDurableInNonTxMode, final OAbstractPaginatedStorage iStorage,
-      final int iVersion) {
+  OAutoShardingIndexEngine(final String iName, final OAbstractPaginatedStorage iStorage, final int iVersion) {
     this.name = iName;
     this.storage = iStorage;
-
-    if (iDurableInNonTxMode == null)
-      durableInNonTx = iStorage.getConfiguration().getContextConfiguration()
-          .getValueAsBoolean(OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE);
-    else
-      durableInNonTx = iDurableInNonTxMode;
 
     this.version = iVersion;
   }
@@ -189,9 +181,19 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       return;
 
     partitions = new ArrayList<>(partitionSize);
-    for (int i = 0; i < partitionSize; ++i) {
-      partitions.add(new OLocalHashTableV2<>(name + "_" + i, SUBINDEX_METADATA_FILE_EXTENSION, SUBINDEX_TREE_FILE_EXTENSION,
-          SUBINDEX_BUCKET_FILE_EXTENSION, SUBINDEX_NULL_BUCKET_FILE_EXTENSION, storage));
+
+    if (version == 1) {
+      for (int i = 0; i < partitionSize; ++i) {
+        partitions.add(new OLocalHashTableV2<>(name + "_" + i, SUBINDEX_METADATA_FILE_EXTENSION, SUBINDEX_TREE_FILE_EXTENSION,
+            SUBINDEX_BUCKET_FILE_EXTENSION, SUBINDEX_NULL_BUCKET_FILE_EXTENSION, storage));
+      }
+    } else if (version == 2) {
+      for (int i = 0; i < partitionSize; ++i) {
+        partitions.add(new OLocalHashTableV3<>(name + "_" + i, SUBINDEX_METADATA_FILE_EXTENSION, SUBINDEX_TREE_FILE_EXTENSION,
+            SUBINDEX_BUCKET_FILE_EXTENSION, SUBINDEX_NULL_BUCKET_FILE_EXTENSION, storage));
+      }
+    } else {
+      throw new IllegalStateException("Illegal index version " + version);
     }
   }
 

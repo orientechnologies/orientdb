@@ -65,7 +65,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   private final AtomicLong bonsayFileId = new AtomicLong(0);
 
-  private int version;
+  private final int version;
 
   private final String name;
 
@@ -77,9 +77,11 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     } else if (version == 2) {
       hashTable = new OLocalHashTableV2<>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, storage);
-    } else {
+    } else if (version == 3) {
       hashTable = new OLocalHashTableV3<>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, storage);
+    } else {
+      throw new IllegalStateException("Illegal index version " + version);
     }
 
     this.name = name;
