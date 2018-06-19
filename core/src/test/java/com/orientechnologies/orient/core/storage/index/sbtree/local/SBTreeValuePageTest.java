@@ -28,7 +28,7 @@ public class SBTreeValuePageTest {
     cacheEntryOne.acquireExclusiveLock();
     OSBTreeValuePage valuePageOne = new OSBTreeValuePage(cacheEntryOne, true);
 
-    byte[] data = new byte[ODurablePage.MAX_PAGE_SIZE_BYTES + 100];
+    byte[] data = new byte[ODurablePage.PAGE_SIZE + 100];
     Random random = new Random();
     random.nextBytes(data);
 

@@ -330,8 +330,8 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
 //    while (bytesRead >= 0) {
 //      fileTwo.readFully(actualContent, 0, bytesRead);
 //
-//      Assertions.assertThat(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES))
-//          .isEqualTo(Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES));
+//      Assertions.assertThat(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.PAGE_SIZE))
+//          .isEqualTo(Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.PAGE_SIZE));
 //      expectedContent = new byte[OClusterPage.PAGE_SIZE];
 //      actualContent = new byte[OClusterPage.PAGE_SIZE];
 //      bytesRead = fileOne.read(expectedContent);

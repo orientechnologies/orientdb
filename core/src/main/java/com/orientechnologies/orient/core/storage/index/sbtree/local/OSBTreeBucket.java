@@ -92,7 +92,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     this.valueSerializer = valueSerializer;
     this.encryption = encryption;
 
-    buffer.putInt(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
+    buffer.putInt(FREE_POINTER_OFFSET, PAGE_SIZE);
     buffer.putInt(SIZE_OFFSET, 0);
 
     buffer.put(IS_LEAF_OFFSET, (byte) (isLeaf ? 1 : 0));
@@ -438,7 +438,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
       rawEntries.add(getRawEntry(i));
     }
 
-    buffer.putInt(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
+    buffer.putInt(FREE_POINTER_OFFSET, PAGE_SIZE);
 
     int index = 0;
     for (final byte[] entry : rawEntries) {
@@ -456,7 +456,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     int size = positionsEndPointer;
 
     final int freePointer = buffer.getInt(FREE_POINTER_OFFSET);
-    final int entriesSize = MAX_PAGE_SIZE_BYTES - freePointer;
+    final int entriesSize = PAGE_SIZE - freePointer;
     size += entriesSize;
 
     final byte[] page = new byte[size];
@@ -484,7 +484,7 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     }
 
     final int freePointer = buffer.getInt(FREE_POINTER_OFFSET);
-    final int entriesSize = MAX_PAGE_SIZE_BYTES - freePointer;
+    final int entriesSize = PAGE_SIZE - freePointer;
 
     if (entriesSize > 0) {
       buffer.position(freePointer);

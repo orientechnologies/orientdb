@@ -56,24 +56,24 @@ public interface OHashTable<K, V> {
 
   void clear();
 
-  OHashIndexBucket.Entry<K, V>[] higherEntries(K key);
+  OHashTableBucket.Entry<K, V>[] higherEntries(K key);
 
-  OHashIndexBucket.Entry<K, V>[] higherEntries(K key, int limit);
+  OHashTableBucket.Entry<K, V>[] higherEntries(K key, int limit);
 
   void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OBinarySerializer<K> keySerializer,
       OBinarySerializer<V> valueSerializer, OEncryption encryption, OHashFunction<K> hashFunction);
 
   void deleteWithoutLoad(String name);
 
-  OHashIndexBucket.Entry<K, V>[] ceilingEntries(K key);
+  OHashTableBucket.Entry<K, V>[] ceilingEntries(K key);
 
-  OHashIndexBucket.Entry<K, V> firstEntry();
+  OHashTableBucket.Entry<K, V> firstEntry();
 
-  OHashIndexBucket.Entry<K, V> lastEntry();
+  OHashTableBucket.Entry<K, V> lastEntry();
 
-  OHashIndexBucket.Entry<K, V>[] lowerEntries(K key);
+  OHashTableBucket.Entry<K, V>[] lowerEntries(K key);
 
-  OHashIndexBucket.Entry<K, V>[] floorEntries(K key);
+  OHashTableBucket.Entry<K, V>[] floorEntries(K key);
 
   long size();
 

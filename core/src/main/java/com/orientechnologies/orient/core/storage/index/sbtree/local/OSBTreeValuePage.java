@@ -50,7 +50,7 @@ public final class OSBTreeValuePage extends ODurablePage {
   private static final int NEXT_VALUE_PAGE_OFFSET     = PAGE_VALUE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int BINARY_CONTENT_OFFSET      = NEXT_VALUE_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
-  static final int MAX_BINARY_VALUE_SIZE = MAX_PAGE_SIZE_BYTES - BINARY_CONTENT_OFFSET;
+  static final int MAX_BINARY_VALUE_SIZE = PAGE_SIZE - BINARY_CONTENT_OFFSET;
 
   OSBTreeValuePage(final OCacheEntry cacheEntry, final boolean isNew) {
     super(cacheEntry);

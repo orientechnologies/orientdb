@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OLocalHashTableV2;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -31,7 +31,7 @@ public abstract class OLocalHashTableOperation extends OComponentOperation {
     storage.rollbackHashTableOperation(this, atomicOperation);
   }
 
-  public abstract void rollbackOperation(OLocalHashTable hashTable, OAtomicOperation atomicOperation);
+  public abstract void rollbackOperation(OLocalHashTableV2 hashTable, OAtomicOperation atomicOperation);
 
   @Override
   public int toStream(byte[] content, int offset) {

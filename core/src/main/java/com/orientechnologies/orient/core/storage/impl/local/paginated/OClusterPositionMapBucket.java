@@ -46,7 +46,7 @@ public final class OClusterPositionMapBucket extends ODurablePage {
 
   private static final int ENTRY_SIZE = OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE;
 
-  static final int MAX_ENTRIES = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / ENTRY_SIZE;
+  static final int MAX_ENTRIES = (PAGE_SIZE - POSITIONS_OFFSET) / ENTRY_SIZE;
 
   OClusterPositionMapBucket(final OCacheEntry cacheEntry) {
     super(cacheEntry);

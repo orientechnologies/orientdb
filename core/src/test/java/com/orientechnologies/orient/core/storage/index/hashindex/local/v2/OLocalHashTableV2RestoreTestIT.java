@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.hashindex.local;
+package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compon
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OHashTablePutOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OHashTableRemoveOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OLocalHashTableOperation;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,8 +42,8 @@ import java.util.List;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/19/14
  */
-public class OLocalHashTableRestoreTestIT extends OLocalHashTableBase {
-  private static final String ENGINE_DIRECTORY = OLocalHashTableRestoreTestIT.class.getSimpleName();
+public class OLocalHashTableV2RestoreTestIT extends OLocalHashTableV2Base {
+  private static final String ENGINE_DIRECTORY = OLocalHashTableV2RestoreTestIT.class.getSimpleName();
 
   private static final String ORIGINAL_DB_NAME = "originalLocalHashTableTest";
   private static final String RESTORED_DB_NAME = "restoredLocalHashTableTest";
@@ -77,7 +78,7 @@ public class OLocalHashTableRestoreTestIT extends OLocalHashTableBase {
 
       OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<>(OIntegerSerializer.INSTANCE);
 
-      localHashTable = new OLocalHashTable<>(HASH_TABLE_NAME, ".imc", ".tsc", ".obf", ".nbh",
+      localHashTable = new OLocalHashTableV2<>(HASH_TABLE_NAME, ".imc", ".tsc", ".obf", ".nbh",
           (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
 
       localHashTable
@@ -236,7 +237,7 @@ public class OLocalHashTableRestoreTestIT extends OLocalHashTableBase {
   }
 
   private void restoreDataFromWAL() throws IOException {
-    OLocalHashTable localHashTable = null;
+    OLocalHashTableV2 localHashTable = null;
 
     final OCASDiskWriteAheadLog originalWriteAheadLog;
     final OLocalPaginatedStorage restoredPaginatedStorage;
@@ -265,7 +266,7 @@ public class OLocalHashTableRestoreTestIT extends OLocalHashTableBase {
           Assert.assertNull(createHashTableOperation.getEncryptionName());
           Assert.assertNull(createHashTableOperation.getEncryptionOptions());
 
-          localHashTable = new OLocalHashTable(createHashTableOperation.getName(),
+          localHashTable = new OLocalHashTableV2(createHashTableOperation.getName(),
               createHashTableOperation.getMetadataConfigurationFileExtension(),
               createHashTableOperation.getTreeStateFileExtension(), createHashTableOperation.getBucketFileExtension(),
               createHashTableOperation.getNullBucketFileExtension(), restoredPaginatedStorage);
@@ -326,9 +327,8 @@ public class OLocalHashTableRestoreTestIT extends OLocalHashTableBase {
         while (bytesRead >= 0) {
           fileTwo.readFully(actualContent, 0, bytesRead);
 
-          Assert.assertArrayEquals(
-              Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES),
-              Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES));
+          Assert.assertArrayEquals(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.PAGE_SIZE),
+              Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.PAGE_SIZE));
 
           expectedContent = new byte[OClusterPage.PAGE_SIZE];
           actualContent = new byte[OClusterPage.PAGE_SIZE];

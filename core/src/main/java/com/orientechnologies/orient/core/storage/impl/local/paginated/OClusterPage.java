@@ -24,7 +24,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -52,7 +51,6 @@ public final class OClusterPage extends ODurablePage {
   private static final int INDEX_ITEM_SIZE        = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
   private static final int MARKED_AS_DELETED_FLAG = 1 << 16;
   private static final int POSITION_MASK          = 0xFFFF;
-  public static final  int PAGE_SIZE              = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
   static final int MAX_ENTRY_SIZE = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
 
@@ -513,18 +511,18 @@ public final class OClusterPage extends ODurablePage {
       final int cleanOffset = offset & POSITION_MASK;
 
       text.append("\t\tEntry Size:\t");
-      if (cleanOffset + OIntegerSerializer.INT_SIZE <= MAX_PAGE_SIZE_BYTES)
+      if (cleanOffset + OIntegerSerializer.INT_SIZE <= PAGE_SIZE)
         text.append(String.format("%08X", buffer.getInt(cleanOffset))).append(" (").append(foundEntries).append(")\n");
       else
         text.append("?\n");
 
-      if (cleanOffset + OIntegerSerializer.INT_SIZE * 2 <= MAX_PAGE_SIZE_BYTES)
+      if (cleanOffset + OIntegerSerializer.INT_SIZE * 2 <= PAGE_SIZE)
         text.append("\t\tIndex:\t\t").append(String.format("%08X", buffer.getInt(cleanOffset + OIntegerSerializer.INT_SIZE)))
             .append('\n');
       else
         text.append("?\n");
 
-      if (cleanOffset + OIntegerSerializer.INT_SIZE * 3 <= MAX_PAGE_SIZE_BYTES)
+      if (cleanOffset + OIntegerSerializer.INT_SIZE * 3 <= PAGE_SIZE)
         text.append("\t\tData Size:\t").append(String.format("%08X", buffer.getInt(cleanOffset + OIntegerSerializer.INT_SIZE * 2)))
             .append('\n');
       else

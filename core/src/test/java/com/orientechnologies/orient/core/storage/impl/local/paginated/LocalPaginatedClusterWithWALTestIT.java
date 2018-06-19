@@ -410,8 +410,8 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
 //
 //      //      Assert.assertEquals(expectedContent, actualContent);
 //
-//      assertThat(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES))
-//          .isEqualTo(Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES));
+//      assertThat(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.PAGE_SIZE))
+//          .isEqualTo(Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.PAGE_SIZE));
 //
 //      expectedContent = new byte[OClusterPage.PAGE_SIZE];
 //      actualContent = new byte[OClusterPage.PAGE_SIZE];

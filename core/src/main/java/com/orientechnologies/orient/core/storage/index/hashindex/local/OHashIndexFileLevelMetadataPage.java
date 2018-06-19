@@ -24,6 +24,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OLocalHashTableV2;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -38,23 +39,23 @@ public final class OHashIndexFileLevelMetadataPage extends ODurablePage {
 
   private final static int ITEM_SIZE = OByteSerializer.BYTE_SIZE + 3 * OLongSerializer.LONG_SIZE;
 
-  OHashIndexFileLevelMetadataPage(final OCacheEntry cacheEntry, final boolean isNewPage) {
+  public OHashIndexFileLevelMetadataPage(final OCacheEntry cacheEntry, final boolean isNewPage) {
     super(cacheEntry);
 
     if (isNewPage) {
-      for (int i = 0; i < OLocalHashTable.HASH_CODE_SIZE; i++)
+      for (int i = 0; i < OLocalHashTableV2.HASH_CODE_SIZE; i++)
         remove(i);
 
       setRecordsCount(0);
     }
   }
 
-  void setRecordsCount(final long recordsCount) {
+  public void setRecordsCount(final long recordsCount) {
     buffer.putLong(RECORDS_COUNT_OFFSET, recordsCount);
     cacheEntry.markDirty();
   }
 
-  long getRecordsCount() {
+  public long getRecordsCount() {
     return buffer.getLong(RECORDS_COUNT_OFFSET);
   }
 

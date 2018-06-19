@@ -43,7 +43,7 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
   static final         int MAX_BUCKET_SIZE_BYTES = OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getValueAsInteger() * 1024;
 
   private static final int CREATED_BUCKETS_OFFSET = NEXT_FREE_POSITION;
-  private static final int AMOUNT_OF_BUCKETS      = MAX_PAGE_SIZE_BYTES / MAX_BUCKET_SIZE_BYTES;
+  private static final int AMOUNT_OF_BUCKETS      = PAGE_SIZE / MAX_BUCKET_SIZE_BYTES;
   private static final int BUCKETS_FILL_SIZE      = (AMOUNT_OF_BUCKETS + BITS_IN_BYTE - 1) / BITS_IN_BYTE;
 
   private static final int END_CREATED_BUCKETS = CREATED_BUCKETS_OFFSET + BUCKETS_FILL_SIZE;

@@ -37,11 +37,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTableBucket;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OSHA256HashFunction;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OLocalHashTableV2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -190,7 +190,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
     partitions = new ArrayList<>(partitionSize);
     for (int i = 0; i < partitionSize; ++i) {
-      partitions.add(new OLocalHashTable<>(name + "_" + i, SUBINDEX_METADATA_FILE_EXTENSION, SUBINDEX_TREE_FILE_EXTENSION,
+      partitions.add(new OLocalHashTableV2<>(name + "_" + i, SUBINDEX_METADATA_FILE_EXTENSION, SUBINDEX_TREE_FILE_EXTENSION,
           SUBINDEX_BUCKET_FILE_EXTENSION, SUBINDEX_NULL_BUCKET_FILE_EXTENSION, storage));
     }
   }
@@ -257,14 +257,14 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
         if (transformer == null)
           counter += p.size();
         else {
-          final OHashIndexBucket.Entry<Object, Object> firstEntry = p.firstEntry();
+          final OHashTableBucket.Entry<Object, Object> firstEntry = p.firstEntry();
           if (firstEntry == null)
             continue;
 
-          OHashIndexBucket.Entry<Object, Object>[] entries = p.ceilingEntries(firstEntry.key);
+          OHashTableBucket.Entry<Object, Object>[] entries = p.ceilingEntries(firstEntry.key);
 
           while (entries.length > 0) {
-            for (OHashIndexBucket.Entry<Object, Object> entry : entries)
+            for (OHashTableBucket.Entry<Object, Object> entry : entries)
               counter += transformer.transformFromValue(entry.value).size();
 
             entries = p.higherEntries(entries[entries.length - 1].key);
@@ -300,14 +300,14 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
       private int nextPartition = 1;
       private OHashTable<Object, Object> hashTable;
       private int nextEntriesIndex;
-      private OHashIndexBucket.Entry<Object, Object>[] entries;
+      private OHashTableBucket.Entry<Object, Object>[] entries;
 
       {
         if (partitions == null || partitions.isEmpty())
           entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
         else {
           hashTable = partitions.get(0);
-          OHashIndexBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
+          OHashTableBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
           if (firstEntry == null)
             entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
           else
@@ -321,7 +321,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
           return null;
         }
 
-        final OHashIndexBucket.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
+        final OHashTableBucket.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
         nextEntriesIndex++;
         if (nextEntriesIndex >= entries.length) {
           entries = hashTable.higherEntries(entries[entries.length - 1].key);
@@ -330,7 +330,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
           if (entries.length == 0 && nextPartition < partitions.size()) {
             // GET NEXT PARTITION
             hashTable = partitions.get(nextPartition++);
-            OHashIndexBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
+            OHashTableBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
             if (firstEntry == null)
               entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
             else

@@ -1287,7 +1287,7 @@ public final class OSBTree<K, V> extends ODurableComponent {
               bucketIndex = entry.leftChild;
             }
 
-            itemIndex = OSBTreeBucket.MAX_PAGE_SIZE_BYTES + 1;
+            itemIndex = OSBTreeBucket.PAGE_SIZE + 1;
           }
         } else {
           if (bucket.isEmpty()) {
@@ -1314,7 +1314,7 @@ public final class OSBTree<K, V> extends ODurableComponent {
         cacheEntry = loadPageForRead(fileId, bucketIndex, false);
 
         bucket = new OSBTreeBucket<>(cacheEntry, keySerializer, keyTypes, valueSerializer, encryption);
-        if (itemIndex == OSBTreeBucket.MAX_PAGE_SIZE_BYTES + 1)
+        if (itemIndex == OSBTreeBucket.PAGE_SIZE + 1)
           itemIndex = bucket.size() - 1;
       }
     } finally {

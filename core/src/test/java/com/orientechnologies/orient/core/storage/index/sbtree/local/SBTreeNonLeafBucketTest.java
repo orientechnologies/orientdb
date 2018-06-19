@@ -67,7 +67,7 @@ public class SBTreeNonLeafBucketTest {
     TreeSet<Long> keys = new TreeSet<>();
     Random random = new Random(seed);
 
-    while (keys.size() < 2 * OSBTreeBucket.MAX_PAGE_SIZE_BYTES / OLongSerializer.LONG_SIZE) {
+    while (keys.size() < 2 * OSBTreeBucket.PAGE_SIZE / OLongSerializer.LONG_SIZE) {
       keys.add(random.nextLong());
     }
 
@@ -137,7 +137,7 @@ public class SBTreeNonLeafBucketTest {
     TreeSet<Long> keys = new TreeSet<>();
     Random random = new Random(seed);
 
-    while (keys.size() < 2 * OSBTreeBucket.MAX_PAGE_SIZE_BYTES / OLongSerializer.LONG_SIZE) {
+    while (keys.size() < 2 * OSBTreeBucket.PAGE_SIZE / OLongSerializer.LONG_SIZE) {
       keys.add(random.nextLong());
     }
 

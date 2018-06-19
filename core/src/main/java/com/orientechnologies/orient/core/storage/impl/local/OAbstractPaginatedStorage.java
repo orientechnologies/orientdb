@@ -157,7 +157,7 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerforman
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OLocalHashTableV2;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -2240,7 +2240,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       final String name = operation.getName();
       final OIndexEngine engine = indexEngineNameMap.get(name);
-      final OLocalHashTable hashTable = engine.getComponent(name);
+      final OLocalHashTableV2 hashTable = engine.getComponent(name);
       makeStorageDirty();
 
       if (operation instanceof OCreateHashTableOperation) {

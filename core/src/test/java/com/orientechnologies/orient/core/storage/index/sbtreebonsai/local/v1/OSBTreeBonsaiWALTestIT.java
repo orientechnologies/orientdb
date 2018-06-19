@@ -335,8 +335,8 @@ public class OSBTreeBonsaiWALTestIT extends OSBTreeBonsaiLocalV1TestIT {
 //      fileTwo.readFully(actualContent, 0, bytesRead);
 //
 //      Assert
-//          .assertArrayEquals(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES),
-//              Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.MAX_PAGE_SIZE_BYTES));
+//          .assertArrayEquals(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.PAGE_SIZE),
+//              Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.PAGE_SIZE));
 //
 //      expectedContent = new byte[OClusterPage.PAGE_SIZE];
 //      actualContent = new byte[OClusterPage.PAGE_SIZE];

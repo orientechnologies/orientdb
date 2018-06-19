@@ -1,10 +1,12 @@
-package com.orientechnologies.orient.core.storage.index.hashindex.local;
+package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTableBucket;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,12 +24,12 @@ import java.util.TreeSet;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 13.03.13
  */
-public class LocalHashTableIterationTestIT {
+public class LocalHashTableV2IterationTestIT {
   private static final int KEYS_COUNT = 500000;
 
   private ODatabaseDocumentTx databaseDocumentTx;
 
-  private OLocalHashTable<Integer, String> localHashTable;
+  private OLocalHashTableV2<Integer, String> localHashTable;
 
   @Before
   public void beforeClass() {
@@ -56,7 +58,7 @@ public class LocalHashTableIterationTestIT {
       }
     };
 
-    localHashTable = new OLocalHashTable<>("localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
+    localHashTable = new OLocalHashTableV2<>("localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
     localHashTable
@@ -92,7 +94,7 @@ public class LocalHashTableIterationTestIT {
       }
     }
 
-    OHashIndexBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(Integer.MIN_VALUE);
+    OHashTableBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(Integer.MIN_VALUE);
     int curPos = 0;
     for (int key : keys) {
       int sKey = entries[curPos].key;
@@ -123,7 +125,7 @@ public class LocalHashTableIterationTestIT {
 
     Collections.sort(keys);
 
-    OHashIndexBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(keys.get(10));
+    OHashTableBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(keys.get(10));
     int curPos = 0;
     for (int key : keys) {
       if (key < keys.get(10)) {
@@ -160,7 +162,7 @@ public class LocalHashTableIterationTestIT {
     Collections.sort(keys);
 
     for (int key : keys) {
-      OHashIndexBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(key);
+      OHashTableBucket.Entry<Integer, String>[] entries = localHashTable.ceilingEntries(key);
       Assert.assertTrue(key == entries[0].key);
     }
 

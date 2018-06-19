@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.hashindex.local;
+package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -18,10 +18,10 @@ import java.io.IOException;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/15/14
  */
-public class OHashTableDirectoryTest {
+public class OHashTableDirectoryV2Test {
   private static ODatabaseDocumentTx databaseDocumentTx;
 
-  private static OHashTableDirectory directory;
+  private static OHashTableDirectoryV2 directory;
 
   private OAtomicOperation atomicOperation;
 
@@ -31,7 +31,7 @@ public class OHashTableDirectoryTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("memory:" + OHashTableDirectoryTest.class.getSimpleName());
+    databaseDocumentTx = new ODatabaseDocumentTx("memory:" + OHashTableDirectoryV2Test.class.getSimpleName());
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -39,7 +39,7 @@ public class OHashTableDirectoryTest {
 
     databaseDocumentTx.create();
 
-    directory = new OHashTableDirectory(".tsc", "hashTableDirectoryTest", "hashTableDirectoryTest",
+    directory = new OHashTableDirectoryV2(".tsc", "hashTableDirectoryTest", "hashTableDirectoryTest",
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
     final OAtomicOperation atomicOperation = startAtomicOperation(directory);
@@ -75,7 +75,7 @@ public class OHashTableDirectoryTest {
 
   @Test
   public void addFirstLevel() throws IOException {
-    long[] level = new long[OLocalHashTable.MAX_LEVEL_SIZE];
+    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
@@ -94,7 +94,7 @@ public class OHashTableDirectoryTest {
 
   @Test
   public void changeFirstLevel() throws IOException {
-    long[] level = new long[OLocalHashTable.MAX_LEVEL_SIZE];
+    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
@@ -117,7 +117,7 @@ public class OHashTableDirectoryTest {
 
   @Test
   public void addThreeRemoveSecondAddNewAndChange() throws IOException {
-    long[] level = new long[OLocalHashTable.MAX_LEVEL_SIZE];
+    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
@@ -154,7 +154,7 @@ public class OHashTableDirectoryTest {
 
   @Test
   public void addRemoveChangeMix() throws IOException {
-    long[] level = new long[OLocalHashTable.MAX_LEVEL_SIZE];
+    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
       level[i] = i;
 
@@ -234,9 +234,9 @@ public class OHashTableDirectoryTest {
     int secondIndex = -1;
     int thirdIndex = -1;
 
-    long[] level = new long[OLocalHashTable.MAX_LEVEL_SIZE];
+    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
 
-    for (int n = 0; n < ODirectoryFirstPage.NODES_PER_PAGE; n++) {
+    for (int n = 0; n < ODirectoryFirstPageV2.NODES_PER_PAGE; n++) {
       for (int i = 0; i < level.length; i++)
         level[i] = i + n * 100;
 
@@ -245,7 +245,7 @@ public class OHashTableDirectoryTest {
         firsIndex = index;
     }
 
-    for (int n = 0; n < ODirectoryPage.NODES_PER_PAGE; n++) {
+    for (int n = 0; n < ODirectoryPageV2.NODES_PER_PAGE; n++) {
       for (int i = 0; i < level.length; i++)
         level[i] = i + n * 100;
 
@@ -254,7 +254,7 @@ public class OHashTableDirectoryTest {
         secondIndex = index;
     }
 
-    for (int n = 0; n < ODirectoryPage.NODES_PER_PAGE; n++) {
+    for (int n = 0; n < ODirectoryPageV2.NODES_PER_PAGE; n++) {
       for (int i = 0; i < level.length; i++)
         level[i] = i + n * 100;
 
@@ -264,8 +264,8 @@ public class OHashTableDirectoryTest {
     }
 
     Assert.assertEquals(firsIndex, 0);
-    Assert.assertEquals(secondIndex, ODirectoryFirstPage.NODES_PER_PAGE);
-    Assert.assertEquals(thirdIndex, ODirectoryFirstPage.NODES_PER_PAGE + ODirectoryPage.NODES_PER_PAGE);
+    Assert.assertEquals(secondIndex, ODirectoryFirstPageV2.NODES_PER_PAGE);
+    Assert.assertEquals(thirdIndex, ODirectoryFirstPageV2.NODES_PER_PAGE + ODirectoryPageV2.NODES_PER_PAGE);
 
     directory.deleteNode(secondIndex, atomicOperation);
     directory.deleteNode(firsIndex, atomicOperation);
@@ -293,7 +293,7 @@ public class OHashTableDirectoryTest {
       level[i] = i + 4000;
 
     index = directory.addNewNode((byte) 17, (byte) 18, (byte) 19, level, atomicOperation);
-    Assert.assertEquals(index, ODirectoryFirstPage.NODES_PER_PAGE + 2 * ODirectoryPage.NODES_PER_PAGE);
+    Assert.assertEquals(index, ODirectoryFirstPageV2.NODES_PER_PAGE + 2 * ODirectoryPageV2.NODES_PER_PAGE);
 
     Assert.assertEquals(directory.getMaxLeftChildDepth(thirdIndex), 8);
     Assert.assertEquals(directory.getMaxRightChildDepth(thirdIndex), 9);
@@ -316,7 +316,7 @@ public class OHashTableDirectoryTest {
     for (int i = 0; i < level.length; i++)
       Assert.assertEquals(directory.getNodePointer(secondIndex, i), i + 3000);
 
-    final int lastIndex = ODirectoryFirstPage.NODES_PER_PAGE + 2 * ODirectoryPage.NODES_PER_PAGE;
+    final int lastIndex = ODirectoryFirstPageV2.NODES_PER_PAGE + 2 * ODirectoryPageV2.NODES_PER_PAGE;
 
     Assert.assertEquals(directory.getMaxLeftChildDepth(lastIndex), 17);
     Assert.assertEquals(directory.getMaxRightChildDepth(lastIndex), 18);
@@ -328,36 +328,36 @@ public class OHashTableDirectoryTest {
 
   @Test
   public void changeLastNodeSecondPage() throws IOException {
-    long[] level = new long[OLocalHashTable.MAX_LEVEL_SIZE];
+    long[] level = new long[OLocalHashTableV2.MAX_LEVEL_SIZE];
 
-    for (int n = 0; n < ODirectoryFirstPage.NODES_PER_PAGE; n++) {
+    for (int n = 0; n < ODirectoryFirstPageV2.NODES_PER_PAGE; n++) {
       for (int i = 0; i < level.length; i++)
         level[i] = i + n * 100;
 
       directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
     }
 
-    for (int n = 0; n < ODirectoryPage.NODES_PER_PAGE; n++) {
+    for (int n = 0; n < ODirectoryPageV2.NODES_PER_PAGE; n++) {
       for (int i = 0; i < level.length; i++)
         level[i] = i + n * 100;
 
       directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
     }
 
-    for (int n = 0; n < ODirectoryPage.NODES_PER_PAGE; n++) {
+    for (int n = 0; n < ODirectoryPageV2.NODES_PER_PAGE; n++) {
       for (int i = 0; i < level.length; i++)
         level[i] = i + n * 100;
 
       directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level, atomicOperation);
     }
 
-    directory.deleteNode(ODirectoryFirstPage.NODES_PER_PAGE + ODirectoryPage.NODES_PER_PAGE - 1, atomicOperation);
+    directory.deleteNode(ODirectoryFirstPageV2.NODES_PER_PAGE + ODirectoryPageV2.NODES_PER_PAGE - 1, atomicOperation);
 
     for (int i = 0; i < level.length; i++)
       level[i] = i + 1000;
 
     int index = directory.addNewNode((byte) 8, (byte) 9, (byte) 10, level, atomicOperation);
-    Assert.assertEquals(index, ODirectoryFirstPage.NODES_PER_PAGE + ODirectoryPage.NODES_PER_PAGE - 1);
+    Assert.assertEquals(index, ODirectoryFirstPageV2.NODES_PER_PAGE + ODirectoryPageV2.NODES_PER_PAGE - 1);
 
     directory.setMaxLeftChildDepth(index - 1, (byte) 10, atomicOperation);
     directory.setMaxRightChildDepth(index - 1, (byte) 11, atomicOperation);

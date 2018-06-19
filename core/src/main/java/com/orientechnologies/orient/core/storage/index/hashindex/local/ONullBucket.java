@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerializationType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 import java.nio.ByteBuffer;
@@ -39,7 +40,7 @@ public final class ONullBucket<V> extends ODurablePage {
     valueSerializer = null;
   }
 
-  ONullBucket(final OCacheEntry cacheEntry, final OBinarySerializer<V> valueSerializer, final boolean isNew) {
+  public ONullBucket(final OCacheEntry cacheEntry, final OBinarySerializer<V> valueSerializer, final boolean isNew) {
     super(cacheEntry);
     this.valueSerializer = valueSerializer;
 
@@ -67,7 +68,7 @@ public final class ONullBucket<V> extends ODurablePage {
     return valueSerializer.deserializeFromByteBufferObject(buffer);
   }
 
-  byte[] getRawValue() {
+  public byte[] getRawValue() {
     if (buffer.get(NEXT_FREE_POSITION) == 0) {
       return null;
     }
@@ -84,8 +85,41 @@ public final class ONullBucket<V> extends ODurablePage {
     return value;
   }
 
-  void removeValue() {
+  public void removeValue() {
     buffer.put(NEXT_FREE_POSITION, (byte) 0);
     cacheEntry.markDirty();
+  }
+
+  @Override
+  protected byte[] serializePage() {
+    if (buffer.get(NEXT_FREE_POSITION) == 0) {
+      final byte[] page = new byte[NEXT_FREE_POSITION];
+      buffer.position(0);
+      buffer.get(page);
+
+      return page;
+    }
+
+    buffer.position(NEXT_FREE_POSITION + 1);
+    final int valueLen = valueSerializer.getObjectSizeInByteBuffer(buffer);
+
+    final byte[] page = new byte[valueLen + NEXT_FREE_POSITION + 1];
+    buffer.position(0);
+    buffer.get(page);
+
+    return page;
+  }
+
+  @Override
+  protected void deserializePage(byte[] page) {
+    buffer.position(0);
+    buffer.put(page);
+
+    cacheEntry.markDirty();
+  }
+
+  @Override
+  protected PageSerializationType serializationType() {
+    return PageSerializationType.HASH_NULL_BUCKET;
   }
 }

@@ -36,11 +36,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunction;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTableBucket;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OSHA256HashFunction;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OLocalHashTableV2;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -73,7 +73,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     if (version < 2) {
       throw new OStorageException("Not supported version of index " + version);
     } else
-      hashTable = new OLocalHashTable<Object, Object>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+      hashTable = new OLocalHashTableV2<Object, Object>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, storage);
 
     this.name = name;
@@ -204,14 +204,14 @@ public final class OHashTableIndexEngine implements OIndexEngine {
         }
       }
 
-      OHashIndexBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
+      OHashTableBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
       if (firstEntry == null)
         return counter;
 
-      OHashIndexBucket.Entry<Object, Object>[] entries = hashTable.ceilingEntries(firstEntry.key);
+      OHashTableBucket.Entry<Object, Object>[] entries = hashTable.ceilingEntries(firstEntry.key);
 
       while (entries.length > 0) {
-        for (OHashIndexBucket.Entry<Object, Object> entry : entries)
+        for (OHashTableBucket.Entry<Object, Object> entry : entries)
           counter += transformer.transformFromValue(entry.value).size();
 
         entries = hashTable.higherEntries(entries[entries.length - 1].key);
@@ -262,13 +262,13 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   public OIndexCursor cursor(final ValuesTransformer valuesTransformer) {
     return new OIndexAbstractCursor() {
       private int nextEntriesIndex;
-      private OHashIndexBucket.Entry<Object, Object>[] entries;
+      private OHashTableBucket.Entry<Object, Object>[] entries;
 
       private Iterator<OIdentifiable> currentIterator = new OEmptyIterator<OIdentifiable>();
       private Object currentKey;
 
       {
-        OHashIndexBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
+        OHashTableBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
         if (firstEntry == null)
           entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
         else
@@ -292,7 +292,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
             return null;
           }
 
-          final OHashIndexBucket.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
+          final OHashTableBucket.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
 
           currentKey = bucketEntry.key;
 
@@ -345,13 +345,13 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   public OIndexCursor descCursor(final ValuesTransformer valuesTransformer) {
     return new OIndexAbstractCursor() {
       private int nextEntriesIndex;
-      private OHashIndexBucket.Entry<Object, Object>[] entries;
+      private OHashTableBucket.Entry<Object, Object>[] entries;
 
       private Iterator<OIdentifiable> currentIterator = new OEmptyIterator<OIdentifiable>();
       private Object currentKey;
 
       {
-        OHashIndexBucket.Entry<Object, Object> lastEntry = hashTable.lastEntry();
+        OHashTableBucket.Entry<Object, Object> lastEntry = hashTable.lastEntry();
         if (lastEntry == null)
           entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
         else
@@ -375,7 +375,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
             return null;
           }
 
-          final OHashIndexBucket.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
+          final OHashTableBucket.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
 
           currentKey = bucketEntry.key;
 
@@ -428,10 +428,10 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   public OIndexKeyCursor keyCursor() {
     return new OIndexKeyCursor() {
       private int nextEntriesIndex;
-      private OHashIndexBucket.Entry<Object, Object>[] entries;
+      private OHashTableBucket.Entry<Object, Object>[] entries;
 
       {
-        OHashIndexBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
+        OHashTableBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
         if (firstEntry == null)
           entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
         else
@@ -444,7 +444,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
           return null;
         }
 
-        final OHashIndexBucket.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
+        final OHashTableBucket.Entry<Object, Object> bucketEntry = entries[nextEntriesIndex];
         nextEntriesIndex++;
         if (nextEntriesIndex >= entries.length) {
           entries = hashTable.higherEntries(entries[entries.length - 1].key);
