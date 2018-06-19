@@ -9,12 +9,14 @@ node("master") {
         ansiColor('xterm') {
             milestone()
             def mvnHome = tool 'mvn'
-            def mvnJdk8Image = "azul/zulu-openjdk-alpine:8"
+            def mvnJdk8Image = "orientdb/mvn-gradle-zulu-jdk-8"
 
-            def containerName = env.JOB_NAME.replaceAll(/\//, "_") + "_build_${currentBuild.number}"
+            def containerName = env.JOB_NAME.replaceAll(/\//, "_") +
+                    "_build_${currentBuild.number}"
 
             def appNameLabel = "docker_ci";
             def taskLabel = env.JOB_NAME.replaceAll(/\//, "_")
+
 
             stage('Source checkout') {
                 checkout scm
@@ -24,19 +26,15 @@ node("master") {
 
                 stage('Run tests on Java8') {
                     lock("label": "memory", "quantity": 6) {
-                        docker.image("${mvnJdk8Image}")
-                                .inside("""--label collectd_docker_app=${appNameLabel} 
-                                    --label collectd_docker_task=${taskLabel} 
-                                    --name ${containerName} 
-                                    --memory=6g ${env.VOLUMES} 
-                                    --cap-add=SYS_PTRACE""") {
+                        docker.image("${mvnJdk8Image}").inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} "
+                                + "--name ${containerName} --memory=6g ${env.VOLUMES} --cap-add=SYS_PTRACE") {
                             try {
                                 //skip integration test for now
-                                sh "./mvnw  -V  -fae clean install   -Dsurefire.useFile=false -DskipITs"
+                                sh "${mvnHome}/bin/mvn -V  -fae clean install   -Dsurefire.useFile=false -DskipITs"
                                 //clean distribution to enable recreation of databases
-                                sh "./mvnw  -f distribution/pom.xml clean"
-                                sh "./mvnw  -f distribution-tp2/pom.xml clean"
-                                sh "./mvnw  clean deploy -DskipTests -DskipITs"
+                                sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean"
+                                sh "${mvnHome}/bin/mvn -f distribution-tp2/pom.xml clean"
+                                sh "${mvnHome}/bin/mvn clean deploy -DskipTests -DskipITs"
                             } finally {
                                 junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
 
@@ -47,12 +45,10 @@ node("master") {
 
                 stage('Run QA/Integration tests on Java8') {
                     lock("label": "memory", "quantity": 5) {
-                        docker.image("${mvnJdk8Image}").inside("""--label collectd_docker_app=${appNameLabel} 
-                                --label collectd_docker_task=${taskLabel} 
-                                --name ${containerName} 
-                                --memory=5g ${env.VOLUMES}""") {
+                        docker.image("${mvnJdk8Image}").inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} " +
+                                "--name ${containerName} --memory=5g ${env.VOLUMES}") {
                             try {
-                                sh "./mvnw  -f distribution/pom.xml clean install -Pqa"
+                                sh "${mvnHome}/bin/mvn -f distribution/pom.xml clean install -Pqa"
                             } finally {
                                 junit allowEmptyResults: true, testResults: '**/target/failsafe-reports/TEST-*.xml'
 
@@ -63,11 +59,9 @@ node("master") {
 
                 stage('Publish Javadoc') {
                     lock("label": "memory", "quantity": 2) {
-                        docker.image("${mvnJdk8Image}").inside("""--label collectd_docker_app=${appNameLabel} 
-                                --label collectd_docker_task=${taskLabel} 
-                                --name ${containerName} 
-                                --memory=2g ${env.VOLUMES}""") {
-                            sh "./mvnw   javadoc:aggregate"
+                        docker.image("${mvnJdk8Image}").inside("--label collectd_docker_app=${appNameLabel} --label collectd_docker_task=${taskLabel} " +
+                                "--name ${containerName} --memory=2g ${env.VOLUMES}") {
+                            sh "${mvnHome}/bin/mvn  javadoc:aggregate"
                             sh "rsync -ra --stats ${WORKSPACE}/target/site/apidocs/ -e ${env.RSYNC_JAVADOC}/${env.BRANCH_NAME}/"
                         }
                     }
