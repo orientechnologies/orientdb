@@ -10,18 +10,27 @@ public class ORequestContext {
   private List<ONodeResponse>     responses = Collections.synchronizedList(new ArrayList<>());
   private ODistributedCoordinator coordinator;
   private int                     quorum;
+  private OResponseHandler        handler;
 
-  public ORequestContext(ODistributedCoordinator coordinator, OSubmitRequest submitRequest, ONodeRequest nodeRequest) {
+  public ORequestContext(ODistributedCoordinator coordinator, OSubmitRequest submitRequest, ONodeRequest nodeRequest, int quorum,
+      OResponseHandler handler) {
     this.coordinator = coordinator;
     this.submitRequest = submitRequest;
     this.nodeRequest = nodeRequest;
+    this.quorum = quorum;
+    this.handler = handler;
   }
 
   public void receive(ONodeResponse response) {
     responses.add(response);
-    if (responses.size() > quorum) {
-      //TODO Trigger the second phase scheduling a task in the executor
-      //this.coordinator.
-    }
+    handler.receive(coordinator, this, response);
+  }
+
+  public List<ONodeResponse> getResponses() {
+    return responses;
+  }
+
+  public int getQuorum() {
+    return quorum;
   }
 }
