@@ -316,8 +316,12 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   public ORole getRole(final OIdentifiable iRole) {
     final ODocument doc = iRole.getRecord();
-    if (doc != null && "ORole".equals(doc.getClassName()))
-      return new ORole(doc);
+    if (doc != null) {
+      OClass clazz = doc.getSchemaClass();
+      if (clazz != null && clazz.isSubClassOf("ORole")) {
+        return new ORole(doc);
+      }
+    }
 
     return null;
   }
