@@ -2088,6 +2088,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     executeBatch(scriptPath);
 
+    message("\nLoaded script " + scriptPath);
+
   }
 
   @ConsoleCommand(description = "Import a database into the current one", splitInWords = false, onlineHelp = "Console-Command-Import")

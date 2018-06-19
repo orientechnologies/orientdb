@@ -168,6 +168,14 @@ public class OArraySingleValuesSelector extends SimpleNode {
           iterator.remove();
         }
       }
+    } else if (currentValue instanceof Map) {
+      for (Object val : values) {
+        ((Map) currentValue).remove(val);
+      }
+    } else if (currentValue instanceof OElement) {
+      for (Object val : values) {
+        ((OElement) currentValue).removeProperty("" + val);
+      }
     } else {
       throw new OCommandExecutionException(
           "Trying to remove elements from " + currentValue + " (" + currentValue.getClass().getSimpleName() + ")");
