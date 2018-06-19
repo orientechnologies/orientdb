@@ -108,7 +108,7 @@ public class OTransactionPhase1TaskTest {
 
     assertTrue(res.getResultPayload() instanceof OTxConcurrentModification);
     assertEquals(((OTxConcurrentModification) res.getResultPayload()).getRecordId(), old.getIdentity());
-    assertEquals(((OTxConcurrentModification) res.getResultPayload()).getVersion(), doc.getVersion());
+    assertEquals(((OTxConcurrentModification) res.getResultPayload()).getVersion(), doc.getVersion());                
   }
 
   @Test

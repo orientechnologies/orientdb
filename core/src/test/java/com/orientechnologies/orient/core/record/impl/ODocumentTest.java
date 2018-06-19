@@ -382,47 +382,53 @@ public class ODocumentTest {
   
   @Test
   public void testGetDiffFromOriginalSimple(){
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
-    db.create();
-    
-    OClass claz = db.createClassIfNotExist("TestClass");
-    
-    ODocument doc = new ODocument(claz);
-    String fieldName = "testField";
-    String constantFieldName = "constantField";
-    String originalValue = "orValue";
-    String testValue = "testValue";
-    String removeField = "removeField";
-    
-    doc.field(fieldName, originalValue);
-    doc.field(constantFieldName, "someValue");
-    doc.field(removeField, "removeVal");
-    
-    doc = db.save(doc);
-    
-//    doc._fields.get(fieldName).original = originalValue;
-//    doc._fields.get(constantFieldName).changed = false;
-    doc.field(fieldName, testValue);
-    doc.removeField(removeField);
-    ODocument dc = doc.getDeltaFromOriginal();
-    
-    ODocument updatePart = dc.field("u");
-    ODocument deletePart = dc.field("d");
-    
-    assertFalse(updatePart._fields.containsKey(constantFieldName));
-    assertTrue(updatePart._fields.containsKey(fieldName));
-    assertEquals(updatePart.field(fieldName), testValue);
-    
-    assertFalse(deletePart._fields.containsKey(constantFieldName));
-    assertTrue(deletePart._fields.containsKey(removeField));    
-    
-    doc = db.save(doc);    
-    db.close();
+    ODatabaseDocumentTx db = null;
+    try{
+      db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
+      db.create();
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      String fieldName = "testField";
+      String constantFieldName = "constantField";
+      String originalValue = "orValue";
+      String testValue = "testValue";
+      String removeField = "removeField";
+
+      doc.field(fieldName, originalValue);
+      doc.field(constantFieldName, "someValue");
+      doc.field(removeField, "removeVal");
+
+      doc = db.save(doc);
+
+      doc.field(fieldName, testValue);
+      doc.removeField(removeField);
+      ODocument dc = doc.getDeltaFromOriginal();
+
+      ODocument updatePart = dc.field("u");
+      ODocument deletePart = dc.field("d");
+
+      assertFalse(updatePart._fields.containsKey(constantFieldName));
+      assertTrue(updatePart._fields.containsKey(fieldName));
+      assertEquals(updatePart.field(fieldName), testValue);
+
+      assertFalse(deletePart._fields.containsKey(constantFieldName));
+      assertTrue(deletePart._fields.containsKey(removeField));    
+
+      doc = db.save(doc);    
+    }
+    finally{
+      if (db != null)
+        db.drop();
+    }
   }
   
   @Test
   public void testGetDiffFromOriginalNested(){
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
+    ODatabaseDocumentTx db = null;
+    try{
+    db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
     db.create();
     
     OClass claz = db.createClassIfNotExist("TestClass");
@@ -448,7 +454,8 @@ public class ODocumentTest {
     
     doc.field(nestedDocField, nestedDoc);
     
-     ODocument dc = doc.getDeltaFromOriginal();
+    ODocument dc = doc.getDeltaFromOriginal();
+    dc = dc.field("u");
     assertFalse(dc._fields.containsKey(constantFieldName));
     assertTrue(dc._fields.containsKey(nestedDocField));        
     
@@ -457,7 +464,11 @@ public class ODocumentTest {
     assertTrue(nestedDc._fields.containsKey(fieldName));
     assertEquals(nestedDc.field(fieldName), testValue);
     
-    db.close();
+    }
+    finally{
+      if (db != null)
+        db.drop();
+    }
   }
 
 }
