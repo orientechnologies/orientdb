@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OLocalHashTableV2;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -105,7 +105,7 @@ public final class OCreateHashTableOperation extends OLocalHashTableOperation {
   }
 
   @Override
-  public void rollbackOperation(final OLocalHashTableV2 hashTable, final OAtomicOperation atomicOperation) {
+  public void rollbackOperation(final OLocalHashTable hashTable, final OAtomicOperation atomicOperation) {
     hashTable.deleteRollback(atomicOperation);
   }
 

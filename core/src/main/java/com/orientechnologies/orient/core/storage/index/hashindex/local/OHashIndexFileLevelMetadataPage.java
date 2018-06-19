@@ -24,7 +24,6 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OLocalHashTableV2;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -43,8 +42,9 @@ public final class OHashIndexFileLevelMetadataPage extends ODurablePage {
     super(cacheEntry);
 
     if (isNewPage) {
-      for (int i = 0; i < OLocalHashTableV2.HASH_CODE_SIZE; i++)
+      for (int i = 0; i < OLocalHashTable.HASH_CODE_SIZE; i++) {
         remove(i);
+      }
 
       setRecordsCount(0);
     }

@@ -136,24 +136,28 @@ public final class OHashTableDirectoryV3 extends ODurableComponent {
       if (nodeIndex < ODirectoryFirstPageV3.NODES_PER_PAGE) {
         final int localNodeIndex = nodeIndex;
 
+        firstPage.markNodeAsAllocated(localNodeIndex);
+
         firstPage.setMaxLeftChildDepth(localNodeIndex, maxLeftChildDepth);
         firstPage.setMaxRightChildDepth(localNodeIndex, maxRightChildDepth);
         firstPage.setNodeLocalDepth(localNodeIndex, nodeLocalDepth);
 
-        if (tombstone >= 0)
+        if (tombstone >= 0) {
           firstPage.setTombstone((int) firstPage.getPointer(nodeIndex, 0));
+        }
 
-        for (int i = 0; i < newNode.length; i++)
+        for (int i = 0; i < newNode.length; i++) {
           firstPage.setPointer(localNodeIndex, i, newNode[i]);
-
+        }
       } else {
         final int pageIndex = nodeIndex / ODirectoryPageV3.NODES_PER_PAGE;
         final int localLevel = nodeIndex % ODirectoryPageV3.NODES_PER_PAGE;
 
         OCacheEntry cacheEntry = loadPageForWrite(fileId, pageIndex, true);
         while (cacheEntry == null || cacheEntry.getPageIndex() < pageIndex) {
-          if (cacheEntry != null)
+          if (cacheEntry != null) {
             releasePageFromWrite(new ODurablePage(cacheEntry), atomicOperation);
+          }
 
           cacheEntry = addPage(fileId);
         }
@@ -166,17 +170,20 @@ public final class OHashTableDirectoryV3 extends ODurableComponent {
           page.setMaxRightChildDepth(localLevel, maxRightChildDepth);
           page.setNodeLocalDepth(localLevel, nodeLocalDepth);
 
-          if (tombstone >= 0)
+          if (tombstone >= 0) {
             firstPage.setTombstone((int) page.getPointer(localLevel, 0));
+          }
 
-          for (int i = 0; i < newNode.length; i++)
+          for (int i = 0; i < newNode.length; i++) {
             page.setPointer(localLevel, i, newNode[i]);
+          }
 
+          page.markNodeAsAllocated(localLevel);
+          pinPage(cacheEntry);
         } finally {
           releasePageFromWrite(page, atomicOperation);
         }
       }
-
     } finally {
       releasePageFromWrite(firstPage, atomicOperation);
     }
@@ -192,6 +199,7 @@ public final class OHashTableDirectoryV3 extends ODurableComponent {
       if (nodeIndex < ODirectoryFirstPageV3.NODES_PER_PAGE) {
         firstPage.setPointer(nodeIndex, 0, firstPage.getTombstone());
         firstPage.setTombstone(nodeIndex);
+        firstPage.markNodeAsDeleted(nodeIndex);
       } else {
         final int pageIndex = nodeIndex / ODirectoryPageV3.NODES_PER_PAGE;
         final int localNodeIndex = nodeIndex % ODirectoryPageV3.NODES_PER_PAGE;
@@ -204,6 +212,7 @@ public final class OHashTableDirectoryV3 extends ODurableComponent {
           page.setPointer(localNodeIndex, 0, firstPage.getTombstone());
           firstPage.setTombstone(nodeIndex);
 
+          page.markNodeAsDeleted(localNodeIndex);
         } finally {
           releasePageFromWrite(page, atomicOperation);
         }

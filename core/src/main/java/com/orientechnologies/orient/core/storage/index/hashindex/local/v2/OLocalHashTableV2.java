@@ -90,7 +90,6 @@ public final class OLocalHashTableV2<K, V> extends OLocalHashTableAbstract<K, V>
   private final String metadataConfigurationFileExtension;
   private final String treeStateFileExtension;
 
-  public static final  int HASH_CODE_SIZE  = 64;
   private static final int MAX_LEVEL_DEPTH = 8;
   static final         int MAX_LEVEL_SIZE  = 1 << MAX_LEVEL_DEPTH;
 

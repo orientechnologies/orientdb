@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.v3;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerializationType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
@@ -30,13 +31,37 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  * @since 5/14/14
  */
 public class ODirectoryPageV3 extends ODurablePage {
-  private static final int ITEMS_OFFSET = NEXT_FREE_POSITION;
+  private static final int BITS_PER_BYTE = 8;
 
-  static final int NODES_PER_PAGE = (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET)
+  private static final int NODES_FILLED_OFFSET = NEXT_FREE_POSITION;
+  private static final int NODES_FILLED_SIZE   = 32;
+  static final         int NODES_FILLED_END    = NODES_FILLED_OFFSET + NODES_FILLED_SIZE / BITS_PER_BYTE;
+
+  static final int NODES_PER_PAGE = (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - NODES_FILLED_END)
       / OHashTableDirectoryV3.BINARY_LEVEL_SIZE;
 
-  ODirectoryPageV3(final OCacheEntry cacheEntry) {
+  public ODirectoryPageV3(final OCacheEntry cacheEntry) {
     super(cacheEntry);
+  }
+
+  void markNodeAsAllocated(final int nodeIndex) {
+    final int byteIndex = nodeIndex / BITS_PER_BYTE;
+    final int bitIndex = nodeIndex - byteIndex * BITS_PER_BYTE;
+
+    final byte fillByte = (byte) (buffer.get(byteIndex + NODES_FILLED_OFFSET) | (1 << bitIndex));
+    buffer.put(byteIndex + NODES_FILLED_OFFSET, fillByte);
+
+    cacheEntry.markDirty();
+  }
+
+  void markNodeAsDeleted(final int nodeIndex) {
+    final int byteIndex = nodeIndex / BITS_PER_BYTE;
+    final int bitIndex = nodeIndex - byteIndex * BITS_PER_BYTE;
+
+    final byte fillByte = (byte) (buffer.get(byteIndex + NODES_FILLED_OFFSET) & (~(1 << bitIndex)));
+    buffer.put(byteIndex + NODES_FILLED_OFFSET, fillByte);
+
+    cacheEntry.markDirty();
   }
 
   void setMaxLeftChildDepth(final int localNodeIndex, final byte maxLeftChildDepth) {
@@ -88,6 +113,85 @@ public class ODirectoryPageV3 extends ODurablePage {
   }
 
   protected int getItemsOffset() {
-    return ITEMS_OFFSET;
+    return NODES_FILLED_END;
+  }
+
+  final int serializedNodesSize() {
+    return Integer.bitCount(buffer.getInt(NODES_FILLED_OFFSET)) * OHashTableDirectoryV3.BINARY_LEVEL_SIZE;
+  }
+
+  final void serializeNodes(final byte[] page, int offset) {
+    final int nodesStart = getItemsOffset();
+
+    int fillFlags = buffer.getInt(NODES_FILLED_OFFSET);
+
+    for (int i = 0; i < NODES_FILLED_SIZE; i++) {
+      final int mask = 1 << i;
+      if ((fillFlags & mask) != 0) {
+        final int nodeOffset = nodesStart + i * OHashTableDirectoryV3.BINARY_LEVEL_SIZE;
+
+        buffer.position(nodeOffset);
+        buffer.get(page, offset, OHashTableDirectoryV3.BINARY_LEVEL_SIZE);
+
+        offset += OHashTableDirectoryV3.BINARY_LEVEL_SIZE;
+      }
+
+      fillFlags = fillFlags & (~mask);
+      if (fillFlags == 0) {
+        break;
+      }
+    }
+  }
+
+  final void deserializeNodes(final byte[] page, int offset) {
+    final int nodesStart = getItemsOffset();
+
+    int fillFlags = buffer.get(NODES_FILLED_OFFSET);
+
+    for (int i = 0; i < NODES_FILLED_SIZE; i++) {
+      final int mask = 1 << i;
+      if ((fillFlags & mask) != 0) {
+        final int nodeOffset = nodesStart + i * OHashTableDirectoryV3.BINARY_LEVEL_SIZE;
+
+        buffer.position(nodeOffset);
+        buffer.put(page, offset, OHashTableDirectoryV3.BINARY_LEVEL_SIZE);
+
+        offset += OHashTableDirectoryV3.BINARY_LEVEL_SIZE;
+      }
+
+      fillFlags = fillFlags & (~mask);
+      if (fillFlags == 0) {
+        break;
+      }
+    }
+  }
+
+  @Override
+  protected byte[] serializePage() {
+    int size = NODES_FILLED_END;
+    size += serializedNodesSize();
+
+    final byte[] page = new byte[size];
+    buffer.position(0);
+    buffer.get(page, 0, NODES_FILLED_END);
+
+    serializeNodes(page, NODES_FILLED_END);
+
+    return page;
+  }
+
+  @Override
+  protected void deserializePage(byte[] page) {
+    buffer.position(0);
+    buffer.put(page, 0, NODES_FILLED_END);
+
+    deserializeNodes(page, NODES_FILLED_END);
+
+    cacheEntry.markDirty();
+  }
+
+  @Override
+  protected PageSerializationType serializationType() {
+    return PageSerializationType.HASH_DIRECTORY_PAGE;
   }
 }

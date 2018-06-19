@@ -89,7 +89,7 @@ public final class OWALRecordsFactory {
   public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
 
   private static final LZ4Factory factory                    = LZ4Factory.fastestInstance();
-  private static final int        MIN_COMPRESSED_RECORD_SIZE = OGlobalConfiguration.WAL_MINIMAL_COMPRESED_RECORD_SIZE.
+  private static final int        MIN_COMPRESSED_RECORD_SIZE = OGlobalConfiguration.WAL_MINIMAL_COMPRESSED_RECORD_SIZE.
 
       getValueAsInteger();
 

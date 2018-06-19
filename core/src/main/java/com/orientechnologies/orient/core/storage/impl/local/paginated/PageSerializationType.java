@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTableBucket;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.v3.ODirectoryFirstPageV3;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.v3.ODirectoryPageV3;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.ONullBucket;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTreeBucket;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v2.OBonsaiBucketAbstractV2;
@@ -52,6 +54,16 @@ public enum PageSerializationType {
     @Override
     public ODurablePage pageInstance(OCacheEntry cacheEntry) {
       return new com.orientechnologies.orient.core.storage.index.hashindex.local.ONullBucket<>(cacheEntry);
+    }
+  }, HASH_DIRECTORY_PAGE {
+    @Override
+    public ODurablePage pageInstance(OCacheEntry cacheEntry) {
+      return new ODirectoryPageV3(cacheEntry);
+    }
+  }, HASH_DIRECTORY_FIRST_PAGE {
+    @Override
+    public ODurablePage pageInstance(OCacheEntry cacheEntry) {
+      return new ODirectoryFirstPageV3(cacheEntry);
     }
   };
 

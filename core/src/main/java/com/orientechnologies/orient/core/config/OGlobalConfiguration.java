@@ -230,7 +230,7 @@ public enum OGlobalConfiguration {
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
-  WAL_MINIMAL_COMPRESED_RECORD_SIZE("storage.wal.minCompressedRecordSize",
+  WAL_MINIMAL_COMPRESSED_RECORD_SIZE("storage.wal.minCompressedRecordSize",
       "Minimal size of the record which is going to be compressed, -1 means no compression will be applied, "
           + "default value  is 1024", Integer.class, 1024),
 
@@ -248,7 +248,7 @@ public enum OGlobalConfiguration {
   WAL_SEGMENT_BUFFER_SIZE("storage.wal.segmentBufferSize",
       "Size of the buffer which contains WAL records in serialized format " + "in megabytes", Integer.class, 32),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, 2048),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, 1024),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk (in megabytes)", Integer.class, -1),
 

@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTabl
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OSHA256HashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.v2.OLocalHashTableV2;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.v3.OLocalHashTableV3;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -53,7 +54,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @since 15.07.13
  */
 public final class OHashTableIndexEngine implements OIndexEngine {
-  public static final int VERSION = 2;
+  public static final int VERSION = 3;
 
   public static final String METADATA_FILE_EXTENSION    = ".him";
   public static final String TREE_FILE_EXTENSION        = ".hit";
@@ -70,11 +71,16 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   public OHashTableIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
     this.version = version;
+
     if (version < 2) {
       throw new OStorageException("Not supported version of index " + version);
-    } else
-      hashTable = new OLocalHashTableV2<Object, Object>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+    } else if (version == 2) {
+      hashTable = new OLocalHashTableV2<>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, storage);
+    } else {
+      hashTable = new OLocalHashTableV3<>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+          NULL_BUCKET_FILE_EXTENSION, storage);
+    }
 
     this.name = name;
   }

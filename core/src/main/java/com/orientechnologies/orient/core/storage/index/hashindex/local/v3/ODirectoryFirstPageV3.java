@@ -23,13 +23,14 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.v3;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerializationType;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/14/14
  */
 public final class ODirectoryFirstPageV3 extends ODirectoryPageV3 {
-  private static final int TREE_SIZE_OFFSET = NEXT_FREE_POSITION;
+  private static final int TREE_SIZE_OFFSET = NODES_FILLED_END;
   private static final int TOMBSTONE_OFFSET = TREE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
   private static final int ITEMS_OFFSET = TOMBSTONE_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -37,7 +38,7 @@ public final class ODirectoryFirstPageV3 extends ODirectoryPageV3 {
   static final int NODES_PER_PAGE = (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET)
       / OHashTableDirectoryV3.BINARY_LEVEL_SIZE;
 
-  ODirectoryFirstPageV3(final OCacheEntry cacheEntry) {
+  public ODirectoryFirstPageV3(final OCacheEntry cacheEntry) {
     super(cacheEntry);
   }
 
@@ -62,5 +63,34 @@ public final class ODirectoryFirstPageV3 extends ODirectoryPageV3 {
   @Override
   protected int getItemsOffset() {
     return ITEMS_OFFSET;
+  }
+
+  @Override
+  protected byte[] serializePage() {
+    int size = ITEMS_OFFSET;
+    size += serializedNodesSize();
+
+    final byte[] page = new byte[size];
+    buffer.position(0);
+    buffer.get(page, 0, ITEMS_OFFSET);
+
+    serializeNodes(page, ITEMS_OFFSET);
+
+    return page;
+  }
+
+  @Override
+  protected void deserializePage(byte[] page) {
+    buffer.position(0);
+    buffer.put(page, 0, ITEMS_OFFSET);
+
+    deserializeNodes(page, ITEMS_OFFSET);
+
+    cacheEntry.markDirty();
+  }
+
+  @Override
+  protected PageSerializationType serializationType() {
+    return PageSerializationType.HASH_DIRECTORY_FIRST_PAGE;
   }
 }
