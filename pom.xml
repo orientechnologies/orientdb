@@ -286,7 +286,7 @@
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>3.0.1</version>
                     <configuration>
-                        <additionalparam>-Xdoclint:none</additionalparam>
+                        <doclint>none</doclint>
                         <maxmemory>2G</maxmemory>
                     </configuration>
                 </plugin>
@@ -525,7 +525,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
-
+                    <doclint>none</doclint>
                     <doclet>org.umlgraph.doclet.UmlGraphDoc</doclet>
 
                     <docletArtifact>
@@ -563,6 +563,7 @@
                         <artifactId>umlgraph</artifactId>
                         <version>5.6.6</version>
                     </docletArtifact>
+                    <doclint>none</doclint>
                     <additionalparam>-views -all</additionalparam>
                     <useStandardDocletOptions>true</useStandardDocletOptions>
 
