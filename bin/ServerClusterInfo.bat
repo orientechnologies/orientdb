@@ -8,28 +8,6 @@
         
 @if (@X)==(@Y) @end JScript comment */
 
-// used resources
-
-// update 12.10.15 
-// osvikvi(https://github.com/osvikvi) has nodited that the -password option is not set , so this is fixed
-
-//https://msdn.microsoft.com/en-us/library/windows/desktop/aa384058(v=vs.85).aspx 
-//https://msdn.microsoft.com/en-us/library/windows/desktop/aa384055(v=vs.85).aspx 
-//https://msdn.microsoft.com/en-us/library/windows/desktop/aa384059(v=vs.85).aspx 
-
-// global variables and constants 
-
-
-// ---------------------------------- 
-// -- asynch requests not included -- 
-// ---------------------------------- 
-
-
-//todo - save responceStream instead of responceBody !! 
-//todo - set all winthttp options ->//https://msdn.microsoft.com/en-us/library/windows/desktop/aa384108(v=vs.85).aspx 
-//todo - log all options 
-//todo - improve help message . eventual verbose option 
-
 
 var ARGS = WScript.Arguments;
 var scriptName = ARGS.Item(0);
@@ -220,7 +198,6 @@ function main() {
 	var isEnterpriseId = getFunctionId(responseText);
 	
 	var postFunctionUrl = url + "/function/" + database + "/auditInfo/" + baseUrl + "/" + basePort + "/" + user + "/" + pass + "/" + companyCode + "/" + database + "/" + databaseUser + "/" + databasePass;
-	WScript.Echo(postFunctionUrl);
 	postBody = 0;
 	response = request(postFunctionUrl);
 	response = extractMessage(response);
