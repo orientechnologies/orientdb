@@ -1,8 +1,8 @@
 Usage (same for linux sh script):
-test.bat <server_host> <listening_port> <server_uname> <server_password> <database> <database_uname> <database_password> <some_string_characteristic_for_customer>
+ServerClusterInfo.bat <server_host> <listening_port> <server_uname> <server_password> <database> <database_uname> <database_password> <some_string_characteristic_for_customer>
 
 Example:
-test.bat localhost 2480 root 000000 demodb admin admin some
+ServerClusterInfo.bat localhost 2480 root 000000 demodb admin admin some
 
 Output:
 --- OrientDB AUDIT - 2e�OD���sy��d9H���N��q���P�a� ---
