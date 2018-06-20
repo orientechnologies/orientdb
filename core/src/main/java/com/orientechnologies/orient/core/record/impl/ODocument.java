@@ -3322,7 +3322,7 @@ public class ODocument extends ORecordAbstract
       
       retVal.value = currentValue;
       retVal.type = UpdateDeltaValueType.UPDATE;      
-      return new TypeValue();
+      return retVal;
     }
     else{      
       ODocument docVal;
@@ -3376,7 +3376,7 @@ public class ODocument extends ORecordAbstract
         ODocument doc = new ODocument();
         doc.field("v", deltaValue.value);
         doc.field("t", UpdateDeltaValueType.getOrd(deltaValue.type));
-        updated.field(fieldName, deltaValue);
+        updated.field(fieldName, doc);
       }
     }
     return updated;

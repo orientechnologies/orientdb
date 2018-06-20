@@ -411,7 +411,8 @@ public class ODocumentTest {
 
       assertFalse(updatePart._fields.containsKey(constantFieldName));
       assertTrue(updatePart._fields.containsKey(fieldName));
-      assertEquals(updatePart.field(fieldName), testValue);
+      ODocument updatePartDoc = updatePart.field(fieldName);
+      assertEquals(updatePartDoc.field("v"), testValue);
 
       assertFalse(deletePart._fields.containsKey(constantFieldName));
       assertTrue(deletePart._fields.containsKey(removeField));    
@@ -460,9 +461,11 @@ public class ODocumentTest {
     assertTrue(dc._fields.containsKey(nestedDocField));        
     
     ODocument nestedDc = dc.field(nestedDocField);
+    nestedDc = nestedDc.field("v");
     assertFalse(nestedDc._fields.containsKey(constantFieldName));
     assertTrue(nestedDc._fields.containsKey(fieldName));
-    assertEquals(nestedDc.field(fieldName), testValue);
+    nestedDc = nestedDc.field(fieldName);
+    assertEquals(nestedDc.field("v"), testValue);
     
     }
     finally{
