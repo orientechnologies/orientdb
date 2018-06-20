@@ -1,9 +1,7 @@
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
-import com.sun.org.omg.SendingContext.CodeBasePackage.URLHelper;
 
 /**
  * A Pool of databases.
