@@ -1552,23 +1552,84 @@ public class ODocument extends ORecordAbstract
   }
   
   //process in depth first
-  private static void mergeUpdateTree(final ODocument to, final ODocument from){
-    for (Map.Entry<String, ODocumentEntry> field : from._fields.entrySet()){
-      final String fieldName = field.getKey();
-      final Object fieldVal = field.getValue().value;
-      if (!(fieldVal instanceof ODocument) ||
-          !to._fields.keySet().contains(fieldName) ||
-          !to._fields.get(fieldName).getClass().equals(fieldVal.getClass())){
-        to.field(fieldName, fieldVal);
-      }
-      else{
-        if (fieldVal instanceof ODocument){
-          final ODocument fromDocField = (ODocument)fieldVal;
-          final ODocument toDocField = (ODocument)to.field(fieldName);
-          mergeUpdateTree(fromDocField, toDocField);
+  private static Object mergeUpdateTree(Object toObj, final Object fromObj){
+    if (toObj instanceof ODocument && fromObj instanceof ODocument){      
+      ODocument to = (ODocument)toObj;
+      ODocument from = (ODocument)fromObj;
+      for (Map.Entry<String, ODocumentEntry> field : from._fields.entrySet()){
+        final String fieldName = field.getKey();
+        final ODocument updateDoc = from.field(fieldName);
+        Object deltaVal = updateDoc.field("v");
+        UpdateDeltaValueType deltaType = UpdateDeltaValueType.fromOrd(updateDoc.field("t"));
+        if (deltaType == UpdateDeltaValueType.UPDATE){
+          if (!(deltaVal instanceof ODocument) ||
+              !to._fields.keySet().contains(fieldName) ||
+              !to._fields.get(fieldName).getClass().equals(deltaVal.getClass())){
+            to.field(fieldName, deltaVal);
+          }                  
+          else{
+            final ODocument fromDocField = (ODocument)deltaVal;
+            final ODocument toDocField = (ODocument)to.field(fieldName);
+            mergeUpdateTree(toDocField, fromDocField);
+          }
         }
+        else if (deltaType == UpdateDeltaValueType.LIST_UPDATE){
+          List deltaList = (List)deltaVal;
+          List originalList = to.field(fieldName);
+          int removed = 0;
+          for (int i = 0; i < deltaList.size(); i++){
+            ODocument deltaUpdateListElement = (ODocument)deltaList.get(i);
+            UpdateDeltaValueType listElementUpdateType = UpdateDeltaValueType.fromOrd(deltaUpdateListElement.field("t"));
+            Object val;
+            int index;
+            switch (listElementUpdateType){            
+              case LIST_ELEMENT_ADD:
+                val = deltaUpdateListElement.field("v");
+                originalList.add(val);
+                break;
+              case LIST_ELEMENT_CHANGE:
+                val = deltaUpdateListElement.field("v");
+                index = deltaUpdateListElement.field("i");
+                originalList.set(index, val);
+                break;
+              case LIST_ELEMENT_REMOVE:
+                index = deltaUpdateListElement.field("i");
+                originalList.remove(index - removed++);
+                break;
+              case LIST_ELEMENT_UPDATE:
+                ODocument valDoc = deltaUpdateListElement.field("v");
+                index = deltaUpdateListElement.field("i");
+                Object originalVal = originalList.get(index);
+                UpdateDeltaValueType type = valDoc.field("t");
+                Object deltaDeltaVal = valDoc.field("v");                
+                Object merged = mergeUpdateTree(originalVal, deltaDeltaVal);
+                originalList.set(index, merged);
+                break;
+            }
+          }
+        }      
       }
     }
+    else if (fromObj instanceof List && toObj instanceof List){
+      List fromList = (List)fromObj; 
+      List toList = (List)toObj;
+      //fromList should always be same size as toList
+      for (int i = 0; i < fromList.size(); i++){
+        Object fromElement = fromList.get(i);
+        Object toElement = toList.get(i);
+        toElement = mergeUpdateTree(toElement, fromElement);
+        toList.set(i, toElement);
+      }      
+    }
+    else if (fromObj instanceof ODocument){
+      ODocument from = (ODocument)fromObj;
+      toObj = from.field("v");
+    }
+    else{
+      toObj = fromObj;
+    }
+    
+    return toObj;
   }
   
   public ODocument mergeUpdateDelta(final ODocument iOther){
@@ -3276,7 +3337,7 @@ public class ODocument extends ORecordAbstract
               ODocument deltaElement = new ODocument();
               deltaElement.field("t", UpdateDeltaValueType.getOrd(UpdateDeltaValueType.LIST_ELEMENT_ADD));              
               deltaElement.field("v", currentElement);
-              deltaElement.field("i", i);
+//              deltaElement.field("i", i);
               deltaList.add(deltaElement);
               continue;
             }
