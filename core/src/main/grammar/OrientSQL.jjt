@@ -1282,7 +1282,13 @@ OMatchStatement MatchStatement():
         lastMatchExpr = MatchExpression() { jjtThis.matchExpressions.add(lastMatchExpr); }
         (
             <COMMA>
-            lastMatchExpr = MatchExpression() { jjtThis.matchExpressions.add(lastMatchExpr); }
+            (
+               lastMatchExpr = MatchExpression() { jjtThis.matchExpressions.add(lastMatchExpr); }
+               |
+               (
+                  <NOT> lastMatchExpr = MatchExpression() { jjtThis.notMatchExpressions.add(lastMatchExpr); }
+               )
+            )
         )*
         <RETURN>
         (
