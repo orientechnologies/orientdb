@@ -1561,10 +1561,11 @@ public class ODocument extends ORecordAbstract
         final ODocument updateDoc = from.field(fieldName);
         Object deltaVal = updateDoc.field("v");
         UpdateDeltaValueType deltaType = UpdateDeltaValueType.fromOrd(updateDoc.field("t"));
+        
         if (deltaType == UpdateDeltaValueType.UPDATE){
           if (!(deltaVal instanceof ODocument) ||
               !to._fields.keySet().contains(fieldName) ||
-              !to._fields.get(fieldName).getClass().equals(deltaVal.getClass())){
+              !to._fields.get(fieldName).value.getClass().equals(deltaVal.getClass())){
             to.field(fieldName, deltaVal);
           }                  
           else{
@@ -3343,18 +3344,20 @@ public class ODocument extends ORecordAbstract
             }
             //these elements have pairs in original list, so we need to calculate deltas
             Object originalElement = previousList.get(i);
-            //check if can we go just we value change
+            //check if can we go just with value change
             if (!currentElement.getClass().equals(originalElement.getClass()) || 
                 !(currentElement instanceof ODocument) ||
                 !(currentElement instanceof List)){
-              ODocument deltaElement = new ODocument();
-              deltaElement.field("t", UpdateDeltaValueType.getOrd(UpdateDeltaValueType.LIST_ELEMENT_CHANGE));              
-              deltaElement.field("v", currentElement);
-              deltaElement.field("i", i);
-              deltaList.add(deltaElement);
+              if (!Objects.equals(currentElement, originalElement)){
+                ODocument deltaElement = new ODocument();
+                deltaElement.field("t", UpdateDeltaValueType.getOrd(UpdateDeltaValueType.LIST_ELEMENT_CHANGE));              
+                deltaElement.field("v", currentElement);
+                deltaElement.field("i", i);
+                deltaList.add(deltaElement);
+              }
             }
             else{              
-              if (!currentElement.equals(originalElement)){
+              if (!Objects.equals(currentElement, originalElement)){
                 //now we want to go in depth to get delta value
                 ODocument deltaElement = new ODocument();
                 deltaElement.field("t", UpdateDeltaValueType.getOrd(UpdateDeltaValueType.LIST_ELEMENT_UPDATE));

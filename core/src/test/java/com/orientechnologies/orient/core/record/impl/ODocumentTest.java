@@ -415,9 +415,13 @@ public class ODocumentTest {
       assertEquals(updatePartDoc.field("v"), testValue);
 
       assertFalse(deletePart._fields.containsKey(constantFieldName));
-      assertTrue(deletePart._fields.containsKey(removeField));    
-
-      doc = db.save(doc);    
+      assertTrue(deletePart._fields.containsKey(removeField));          
+      
+      doc.field(fieldName, originalValue);
+      doc = db.save(doc);
+      
+      doc.mergeUpdateDelta(updatePart);
+      assertEquals(testValue, doc.field(fieldName));
     }
     finally{
       if (db != null)
@@ -429,44 +433,102 @@ public class ODocumentTest {
   public void testGetDiffFromOriginalNested(){
     ODatabaseDocumentTx db = null;
     try{
-    db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
-    db.create();
-    
-    OClass claz = db.createClassIfNotExist("TestClass");
-    
-    ODocument doc = new ODocument(claz);
-    ODocument nestedDoc = new ODocument(claz);
-    String fieldName = "testField";
-    String constantFieldName = "constantField";
-    String originalValue = "orValue";
-    String testValue = "testValue";
-    String nestedDocField = "nestedField";
-    
-    nestedDoc.field(fieldName, originalValue);
-    nestedDoc.field(constantFieldName, "someValue1");
+      db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
+      db.create();
 
-    doc.field(constantFieldName, "someValue2");
-    doc.field(nestedDocField, nestedDoc);
-    
-    doc = db.save(doc);
-    
-    nestedDoc = doc.field(nestedDocField);
-    nestedDoc.field(fieldName, testValue);        
-    
-    doc.field(nestedDocField, nestedDoc);
-    
-    ODocument dc = doc.getDeltaFromOriginal();
-    dc = dc.field("u");
-    assertFalse(dc._fields.containsKey(constantFieldName));
-    assertTrue(dc._fields.containsKey(nestedDocField));        
-    
-    ODocument nestedDc = dc.field(nestedDocField);
-    nestedDc = nestedDc.field("v");
-    assertFalse(nestedDc._fields.containsKey(constantFieldName));
-    assertTrue(nestedDc._fields.containsKey(fieldName));
-    nestedDc = nestedDc.field(fieldName);
-    assertEquals(nestedDc.field("v"), testValue);
-    
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      ODocument nestedDoc = new ODocument(claz);
+      String fieldName = "testField";
+      String constantFieldName = "constantField";
+      String originalValue = "orValue";
+      String testValue = "testValue";
+      String nestedDocField = "nestedField";
+
+      nestedDoc.field(fieldName, originalValue);
+      nestedDoc.field(constantFieldName, "someValue1");
+
+      doc.field(constantFieldName, "someValue2");
+      doc.field(nestedDocField, nestedDoc);
+
+      doc = db.save(doc);
+
+      nestedDoc = doc.field(nestedDocField);
+      nestedDoc.field(fieldName, testValue);        
+
+      doc.field(nestedDocField, nestedDoc);
+
+      ODocument dc = doc.getDeltaFromOriginal();
+      dc = dc.field("u");
+      assertFalse(dc._fields.containsKey(constantFieldName));
+      assertTrue(dc._fields.containsKey(nestedDocField));        
+
+      ODocument nestedDc = dc.field(nestedDocField);
+      nestedDc = nestedDc.field("v");
+      assertFalse(nestedDc._fields.containsKey(constantFieldName));
+      assertTrue(nestedDc._fields.containsKey(fieldName));
+      nestedDc = nestedDc.field(fieldName);
+      assertEquals(nestedDc.field("v"), testValue);
+      
+      nestedDoc.field(fieldName, originalValue);
+      doc.field(nestedDocField, nestedDoc);
+      doc = db.save(doc);
+      
+      doc.mergeUpdateDelta(dc);
+      nestedDoc = doc.field(nestedDocField);
+      assertEquals(nestedDoc.field(fieldName), testValue);
+    }
+    finally{
+      if (db != null)
+        db.drop();
+    }
+  }
+  
+   @Test
+  public void testListDelta(){
+    ODatabaseDocumentTx db = null;
+    try{
+      db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
+      db.create();
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);      
+      String fieldName = "testField";
+      List<String> originalValue = new ArrayList<>();
+      originalValue.add("one"); originalValue.add("two");
+      
+      doc.field(fieldName, originalValue);
+
+      doc = db.save(doc);
+      ODocument originalDoc = doc.copy();
+
+      List<String> newArray = new ArrayList<>();
+      newArray.add("one"); newArray.add("three");
+      doc.field(fieldName, newArray);
+
+      ODocument delta = doc.getDeltaFromOriginal();
+      delta = delta.field("u");
+      
+      ODocument dc = delta.field(fieldName);
+      UpdateDeltaValueType deltaType = UpdateDeltaValueType.fromOrd(dc.field("t"));
+      assertEquals(deltaType, UpdateDeltaValueType.LIST_UPDATE);
+      
+      List deltaList = dc.field("v");
+      assertEquals(deltaList.size(), 1);
+      
+      ODocument deltaElement = (ODocument)deltaList.get(0);
+      int index = deltaElement.field("i");
+      assertEquals(index, 1);
+      UpdateDeltaValueType type = UpdateDeltaValueType.fromOrd(deltaElement.field("t"));
+      assertEquals(type, UpdateDeltaValueType.LIST_ELEMENT_CHANGE);
+      String value = deltaElement.field("v");
+      assertEquals(value, "three");
+      
+      originalDoc.mergeUpdateDelta(delta);
+      List checkList = originalDoc.field(fieldName);
+      assertEquals("three", checkList.get(1));
     }
     finally{
       if (db != null)
