@@ -32,6 +32,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -79,7 +80,7 @@ public class ORemoteServerChannel {
     remotePort = Integer.parseInt(iURL.substring(sepPos + 1));
 
     protocolVersion = currentProtocolVersion;
-    executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(10));
+    executor = new OThreadPoolExecutorWithLogging(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(10));
     connect();
 
   }

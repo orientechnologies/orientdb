@@ -118,17 +118,17 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   public static final String                  KEYWORD_MATCH           = "MATCH";
   // parsed data
-  protected           List<OMatchExpression>  matchExpressions        = new ArrayList<>();
-  protected           List<OMatchExpression>  notMatchExpressions     = new ArrayList<>();
-  protected           List<OExpression>       returnItems             = new ArrayList<>();
-  protected           List<OIdentifier>       returnAliases           = new ArrayList<>();
-  protected           List<ONestedProjection> returnNestedProjections = new ArrayList<>();
-  protected           boolean                 returnDistinct          = false;
-  protected OGroupBy groupBy;
-  protected OOrderBy orderBy;
-  protected OUnwind  unwind;
-  protected OSkip    skip;
-  protected OLimit   limit;
+  protected List<OMatchExpression>  matchExpressions        = new ArrayList<>();
+  protected List<OMatchExpression>  notMatchExpressions     = new ArrayList<>();
+  protected List<OExpression>       returnItems             = new ArrayList<>();
+  protected List<OIdentifier>       returnAliases           = new ArrayList<>();
+  protected List<ONestedProjection> returnNestedProjections = new ArrayList<>();
+  protected boolean                 returnDistinct          = false;
+  protected OGroupBy                groupBy;
+  protected OOrderBy                orderBy;
+  protected OUnwind                 unwind;
+  protected OSkip                   skip;
+  protected OLimit                  limit;
 
   // post-parsing generated data
   protected Pattern pattern;
