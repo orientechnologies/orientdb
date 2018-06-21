@@ -229,23 +229,11 @@ public class OConsoleCommandStream implements OCommandStream {
           break;
         case ESCAPING_STRING:
           if (symbol == Symbol.EOF) {
+            result.append('\\');
             return result.toString().trim();
           }
-          if (c == 'n') {
-            result.append("\n");
-          }
-          if (c == 'b') {
-            result.append("\b");
-          }
-          if (c == 't') {
-            result.append("\t");
-          }
-          if (c == 'r') {
-            result.append("\r");
-          }
-          if (c == '\\') {
-            result.append("\\");
-          }
+          result.append('\\');
+          result.append(c);
           state = State.TEXT;
           break;
         }

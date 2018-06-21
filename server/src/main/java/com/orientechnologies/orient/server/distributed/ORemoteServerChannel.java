@@ -61,6 +61,7 @@ public class ORemoteServerChannel {
   private              OToken                token;
   private              OContextConfiguration contextConfig = new OContextConfiguration();
   private              Date                  createdOn     = new Date();
+  private              ExecutorService       executor;
 
   private volatile     int totalConsecutiveErrors = 0;
   private final static int MAX_CONSECUTIVE_ERRORS = 10;
@@ -78,7 +79,7 @@ public class ORemoteServerChannel {
     remotePort = Integer.parseInt(iURL.substring(sepPos + 1));
 
     protocolVersion = currentProtocolVersion;
-
+    executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(10));
     connect();
 
   }
@@ -108,25 +109,28 @@ public class ORemoteServerChannel {
   }
 
   public void sendRequest(final ODistributedRequest request) {
-    checkReconnect();
-    networkOperation(OChannelBinaryProtocol.DISTRIBUTED_REQUEST, () -> {
-      request.toStream(channel.getDataOutput());
-      channel.flush();
-      return null;
-    }, "Cannot send distributed request " + request.getClass(), MAX_RETRY, true);
-    this.prevRequest = request;
-
+    executor.execute(() -> {
+      checkReconnect();
+      networkOperation(OChannelBinaryProtocol.DISTRIBUTED_REQUEST, () -> {
+        request.toStream(channel.getDataOutput());
+        channel.flush();
+        return null;
+      }, "Cannot send distributed request " + request.getClass(), MAX_RETRY, true);
+      this.prevRequest = request;
+    });
   }
 
   public void sendResponse(final ODistributedResponse response) {
-    checkReconnect();
-    networkOperation(OChannelBinaryProtocol.DISTRIBUTED_RESPONSE, () -> {
-          response.toStream(channel.getDataOutput());
-          channel.flush();
-          return null;
-        }, "Cannot send response back to the sender node '" + response.getSenderNodeName() + "' " + response.getClass(), MAX_RETRY,
-        true);
-    this.prevResponse = response;
+    executor.execute(() -> {
+      checkReconnect();
+      networkOperation(OChannelBinaryProtocol.DISTRIBUTED_RESPONSE, () -> {
+            response.toStream(channel.getDataOutput());
+            channel.flush();
+            return null;
+          }, "Cannot send response back to the sender node '" + response.getSenderNodeName() + "' " + response.getClass(), MAX_RETRY,
+          true);
+      this.prevResponse = response;
+    });
   }
 
   public void connect() throws IOException {
@@ -154,6 +158,7 @@ public class ORemoteServerChannel {
   }
 
   public void close() {
+    executor.shutdownNow();
     if (channel != null)
       channel.close();
     sessionId = -1;
