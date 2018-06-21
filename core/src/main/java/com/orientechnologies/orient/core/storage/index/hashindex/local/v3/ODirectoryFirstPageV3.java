@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerializationType;
 
+import java.nio.ByteBuffer;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/14/14
@@ -66,21 +68,29 @@ public final class ODirectoryFirstPageV3 extends ODirectoryPageV3 {
   }
 
   @Override
-  protected byte[] serializePage() {
+  public int serializedSize() {
     int size = ITEMS_OFFSET;
     size += serializedNodesSize();
 
-    final byte[] page = new byte[size];
-    buffer.position(0);
-    buffer.get(page, 0, ITEMS_OFFSET);
-
-    serializeNodes(page, ITEMS_OFFSET);
-
-    return page;
+    return size;
   }
 
   @Override
-  protected void deserializePage(byte[] page) {
+  public void serializePage(ByteBuffer recordBuffer) {
+    assert buffer.limit() == buffer.capacity();
+
+    this.buffer.position(0);
+    this.buffer.limit(ITEMS_OFFSET);
+    recordBuffer.put(this.buffer);
+    this.buffer.limit(this.buffer.capacity());
+
+    serializeNodes(recordBuffer);
+  }
+
+  @Override
+  public void deserializePage(byte[] page) {
+    assert buffer.limit() == buffer.capacity();
+
     buffer.position(0);
     buffer.put(page, 0, ITEMS_OFFSET);
 

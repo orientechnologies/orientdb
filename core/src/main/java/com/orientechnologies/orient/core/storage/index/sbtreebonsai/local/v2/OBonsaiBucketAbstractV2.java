@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerial
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 
+import java.nio.ByteBuffer;
+
 /**
  * A base class for bonsai buckets. Bonsai bucket size is usually less than page size and one page could contain multiple bonsai
  * buckets.
@@ -128,31 +130,45 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
   }
 
   @Override
-  protected final byte[] serializePage() {
-    final byte[] page;
-
+  public int serializedSize() {
     if (cacheEntry.getPageIndex() == OSBTreeBonsaiLocalV2.SYS_BUCKET.getPageIndex()) {
+
       final int sysDataEnd = FREE_LIST_LENGTH_OFFSET + OLongSerializer.LONG_SIZE;
       int size = serializedBucketsSize();
       size += sysDataEnd + OByteSerializer.BYTE_SIZE;
 
-      page = new byte[size];
-
-      buffer.position(0);
-      buffer.get(page, OByteSerializer.BYTE_SIZE, sysDataEnd);
-      serializeBuckets(page, sysDataEnd + OByteSerializer.BYTE_SIZE);
+      return size;
     } else {
-      final int size = serializedBucketsSize() + OByteSerializer.BYTE_SIZE;
-      page = new byte[size];
-      page[0] = 1;
-      serializeBuckets(page, OByteSerializer.BYTE_SIZE);
+      return serializedBucketsSize() + OByteSerializer.BYTE_SIZE;
     }
-
-    return page;
   }
 
   @Override
-  protected final void deserializePage(byte[] page) {
+  public final void serializePage(ByteBuffer recordBuffer) {
+    assert buffer.limit() == buffer.capacity();
+
+    if (cacheEntry.getPageIndex() == OSBTreeBonsaiLocalV2.SYS_BUCKET.getPageIndex()) {
+      final int sysDataEnd = FREE_LIST_LENGTH_OFFSET + OLongSerializer.LONG_SIZE;
+
+      recordBuffer.put((byte) 0);
+
+      this.buffer.position(OByteSerializer.BYTE_SIZE);
+      this.buffer.limit(sysDataEnd + OByteSerializer.BYTE_SIZE);
+      recordBuffer.put(this.buffer);
+      buffer.limit(buffer.capacity());
+
+      serializeBuckets(recordBuffer);
+    } else {
+      recordBuffer.put((byte) 1);
+
+      serializeBuckets(recordBuffer);
+    }
+  }
+
+  @Override
+  public final void deserializePage(byte[] page) {
+    assert buffer.limit() == buffer.capacity();
+
     if (page[0] == 0) {
       final int sysDataEnd = FREE_LIST_LENGTH_OFFSET + OLongSerializer.LONG_SIZE;
 
@@ -220,23 +236,23 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
     return size;
   }
 
-  private void serializeBuckets(final byte[] content, int dataOffset) {
-    final int startOffset = dataOffset;
+  private void serializeBuckets(final ByteBuffer recordBuffer) {
+    final byte[] fillBytes = new byte[BUCKETS_FILL_SIZE];
 
     buffer.position(CREATED_BUCKETS_OFFSET);
-    buffer.get(content, dataOffset, BUCKETS_FILL_SIZE);
-    dataOffset += BUCKETS_FILL_SIZE;
+    buffer.get(fillBytes);
+    recordBuffer.put(fillBytes);
 
     int bitCounter = 0;
     int byteCounter = 0;
 
-    byte fillByte = content[startOffset + byteCounter];
+    byte fillByte = fillBytes[byteCounter];
 
     for (int i = 0; i < AMOUNT_OF_BUCKETS; i++, bitCounter++) {
       if (bitCounter >= BITS_IN_BYTE) {
         byteCounter++;
         bitCounter = 0;
-        fillByte = content[startOffset + byteCounter];
+        fillByte = fillBytes[byteCounter];
       }
 
       if (fillByte != 0) {
@@ -250,16 +266,18 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
           final int headerSize = POSITIONS_ARRAY_OFFSET + positionsSize;
 
           buffer.position(offset);
-          buffer.get(content, dataOffset, headerSize);
-          dataOffset += headerSize;
+          buffer.limit(offset + headerSize);
+          recordBuffer.put(buffer);
+          buffer.limit(buffer.capacity());
 
           final int freePointer = buffer.getInt(offset + FREE_POINTER_OFFSET);
           final int dataSize = MAX_BUCKET_SIZE_BYTES - freePointer;
 
           if (dataSize > 0) {
             buffer.position(offset + freePointer);
-            buffer.get(content, dataOffset, dataSize);
-            dataOffset += dataSize;
+            buffer.limit(offset + freePointer + dataSize);
+            recordBuffer.put(buffer);
+            buffer.limit(buffer.capacity());
           }
 
           fillByte = (byte) (fillByte & (~bitMask));

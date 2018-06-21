@@ -258,29 +258,45 @@ public final class OClusterPage extends ODurablePage {
   }
 
   @Override
-  protected byte[] serializePage() {
-    final int indexesLength = buffer.getInt(PAGE_INDEXES_LENGTH_OFFSET);
+  public int serializedSize() {
+    final int indexesLength = this.buffer.getInt(PAGE_INDEXES_LENGTH_OFFSET);
     final int lastEntryIndexPosition = PAGE_INDEXES_OFFSET + indexesLength * INDEX_ITEM_SIZE;
     int size = lastEntryIndexPosition;
 
-    final int freePosition = buffer.getInt(FREE_POSITION_OFFSET);
+    final int freePosition = this.buffer.getInt(FREE_POSITION_OFFSET);
     final int dataSize = PAGE_SIZE - freePosition;
     size += dataSize;
-    final byte[] page = new byte[size];
 
-    buffer.position(0);
-    buffer.get(page, 0, lastEntryIndexPosition);
-
-    if (dataSize > 0) {
-      buffer.position(freePosition);
-      buffer.get(page, lastEntryIndexPosition, dataSize);
-    }
-
-    return page;
+    return size;
   }
 
   @Override
-  protected void deserializePage(final byte[] page) {
+  public void serializePage(ByteBuffer recordBuffer) {
+    assert buffer.limit() == buffer.capacity();
+
+    final int indexesLength = this.buffer.getInt(PAGE_INDEXES_LENGTH_OFFSET);
+    final int lastEntryIndexPosition = PAGE_INDEXES_OFFSET + indexesLength * INDEX_ITEM_SIZE;
+
+    this.buffer.position(0);
+    this.buffer.limit(lastEntryIndexPosition);
+    recordBuffer.put(this.buffer);
+    this.buffer.limit(this.buffer.capacity());
+
+    final int freePosition = this.buffer.getInt(FREE_POSITION_OFFSET);
+    final int dataSize = PAGE_SIZE - freePosition;
+
+    if (dataSize > 0) {
+      this.buffer.position(freePosition);
+      this.buffer.limit(freePosition + dataSize);
+      recordBuffer.put(this.buffer);
+      this.buffer.limit(this.buffer.capacity());
+    }
+  }
+
+  @Override
+  public void deserializePage(final byte[] page) {
+    assert buffer.limit() == buffer.capacity();
+
     buffer.position(0);
     buffer.put(page, 0, PAGE_INDEXES_OFFSET);
 

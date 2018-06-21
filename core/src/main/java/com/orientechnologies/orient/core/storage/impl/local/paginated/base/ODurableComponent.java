@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
@@ -34,6 +35,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
@@ -149,10 +151,16 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
       final OLogSequenceNumber recordLSN;
       if (pageLsn.getSegment() < end.getSegment()) {
-        final byte[] serializedPage = page.serializePage();
         try {
           final OUpdatePageRecord updatePageRecord = new OUpdatePageRecord(cacheEntry.getPageIndex(), cacheEntry.getFileId(),
-              atomicOperation.getOperationUnitId(), serializedPage, page.serializationType());
+              atomicOperation.getOperationUnitId(), page, page.serializationType());
+
+          //trick to avoid additional creation and copying of buffers because serialized page content
+          //typically quite big
+          final OPair<ByteBuffer, Long> serializedRecord = OWALRecordsFactory.toStream(updatePageRecord);
+          updatePageRecord.setBinaryContent(serializedRecord.key, serializedRecord.value);
+          updatePageRecord.clearRealPage();
+
           recordLSN = writeAheadLog.log(updatePageRecord);
         } catch (IOException e) {
           throw OException.wrapException(new OStorageException(

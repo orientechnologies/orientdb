@@ -149,20 +149,24 @@ public class ODurablePage {
     return buffer.duplicate().order(ByteOrder.nativeOrder());
   }
 
-  protected byte[] serializePage() {
+  public void serializePage(final ByteBuffer recordBuffer) {
+    assert buffer.limit() == buffer.capacity();
+
     buffer.position(0);
-
-    final byte[] page = new byte[buffer.limit()];
-    buffer.get(page);
-
-    return page;
+    recordBuffer.put(buffer);
   }
 
-  protected void deserializePage(final byte[] page) {
+  public void deserializePage(final byte[] page) {
+    assert buffer.limit() == buffer.capacity();
+
     buffer.position(0);
     buffer.put(page);
 
     cacheEntry.markDirty();
+  }
+
+  public int serializedSize() {
+    return buffer.capacity();
   }
 
   protected PageSerializationType serializationType() {

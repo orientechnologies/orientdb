@@ -11,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -118,7 +119,11 @@ public class OSBTreeBonsaiNonLeafBucketV2Test {
       };
 
       checker.accept(treeBucket);
-      assertSerialization(treeBucket.serializePage(), checker, pageOffset);
+
+      ByteBuffer bf = ByteBuffer.allocate(treeBucket.serializedSize()).order(ByteOrder.nativeOrder());
+      treeBucket.serializePage(bf);
+
+      assertSerialization(bf.array(), checker, pageOffset);
     }
 
     cacheEntry.releaseExclusiveLock();
@@ -220,7 +225,11 @@ public class OSBTreeBonsaiNonLeafBucketV2Test {
       };
 
       checker.accept(treeBucket);
-      assertSerialization(treeBucket.serializePage(), checker, pageOffset);
+
+      ByteBuffer bf = ByteBuffer.allocate(treeBucket.serializedSize()).order(ByteOrder.nativeOrder());
+      treeBucket.serializePage(bf);
+
+      assertSerialization(bf.array(), checker, pageOffset);
 
       Assert.assertEquals(addedKeys, keysToAdd);
     }

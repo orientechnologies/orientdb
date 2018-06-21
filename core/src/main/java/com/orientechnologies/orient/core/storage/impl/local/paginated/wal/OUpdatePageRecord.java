@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerializationType;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -32,7 +33,9 @@ import java.util.Objects;
  * @since 26.04.13
  */
 public final class OUpdatePageRecord extends OAbstractPageWALRecord {
-  private byte[] page;
+  private byte[]       page;
+  private ODurablePage realPage;
+  private int          pageSize;
 
   private PageSerializationType serializationType;
 
@@ -40,12 +43,18 @@ public final class OUpdatePageRecord extends OAbstractPageWALRecord {
   public OUpdatePageRecord() {
   }
 
-  public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId, final byte[] page,
-      final PageSerializationType serializationType) {
+  public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId,
+      final ODurablePage realPage, final PageSerializationType serializationType) {
     super(pageIndex, fileId, operationUnitId);
 
-    this.page = page;
+    this.realPage = realPage;
+    this.pageSize = realPage.serializedSize();
+
     this.serializationType = serializationType;
+  }
+
+  public void clearRealPage() {
+    this.realPage = null;
   }
 
   public byte[] getPage() {
@@ -59,7 +68,7 @@ public final class OUpdatePageRecord extends OAbstractPageWALRecord {
   @Override
   public int serializedSize() {
     int serializedSize = super.serializedSize();
-    serializedSize += page.length + OIntegerSerializer.INT_SIZE;
+    serializedSize += pageSize + OIntegerSerializer.INT_SIZE;
 
     serializedSize += OIntegerSerializer.INT_SIZE;
 
@@ -70,11 +79,13 @@ public final class OUpdatePageRecord extends OAbstractPageWALRecord {
   public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
-    OIntegerSerializer.INSTANCE.serializeNative(page.length, content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
+    OIntegerSerializer.INSTANCE.serializeNative(pageSize, content, offset);
 
-    System.arraycopy(page, 0, content, offset, page.length);
-    offset += page.length;
+    final ByteBuffer buffer = ByteBuffer.allocate(pageSize);
+    realPage.serializePage(buffer);
+
+    System.arraycopy(buffer.array(), 0, content, offset, pageSize);
+    offset += pageSize;
 
     OIntegerSerializer.INSTANCE.serializeNative(serializationType.ordinal(), content, offset);
     offset += OIntegerSerializer.INT_SIZE;
@@ -86,8 +97,9 @@ public final class OUpdatePageRecord extends OAbstractPageWALRecord {
   public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
 
-    buffer.putInt(page.length);
-    buffer.put(page);
+    buffer.putInt(pageSize);
+    realPage.serializePage(buffer);
+
     buffer.putInt(serializationType.ordinal());
   }
 

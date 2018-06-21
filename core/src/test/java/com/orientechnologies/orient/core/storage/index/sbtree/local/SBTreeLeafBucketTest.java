@@ -11,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -42,7 +43,11 @@ public class SBTreeLeafBucketTest {
       Assert.assertTrue(bucket.isLeaf());
     };
     checker.accept(treeBucket);
-    assertSerialization(treeBucket.serializePage(), checker);
+
+    ByteBuffer bf = ByteBuffer.allocate(treeBucket.serializedSize()).order(ByteOrder.nativeOrder());
+    treeBucket.serializePage(bf);
+
+    assertSerialization(bf.array(), checker);
 
     treeBucket = new OSBTreeBucket<>(cacheEntry, OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, null);
     checker = (bucket) -> {
@@ -52,7 +57,11 @@ public class SBTreeLeafBucketTest {
       Assert.assertEquals(bucket.getRightSibling(), -1);
     };
     checker.accept(treeBucket);
-    assertSerialization(treeBucket.serializePage(), checker);
+
+    bf = ByteBuffer.allocate(treeBucket.serializedSize()).order(ByteOrder.nativeOrder());
+    treeBucket.serializePage(bf);
+
+    assertSerialization(bf.array(), checker);
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
@@ -102,7 +111,11 @@ public class SBTreeLeafBucketTest {
       }
     };
     checker.accept(treeBucket);
-    assertSerialization(treeBucket.serializePage(), checker);
+
+    ByteBuffer bf = ByteBuffer.allocate(treeBucket.serializedSize()).order(ByteOrder.nativeOrder());
+    treeBucket.serializePage(bf);
+
+    assertSerialization(bf.array(), checker);
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
@@ -165,7 +178,10 @@ public class SBTreeLeafBucketTest {
     };
 
     checker.accept(treeBucket);
-    assertSerialization(treeBucket.serializePage(), checker);
+    ByteBuffer bf = ByteBuffer.allocate(treeBucket.serializedSize()).order(ByteOrder.nativeOrder());
+    treeBucket.serializePage(bf);
+
+    assertSerialization(bf.array(), checker);
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
@@ -254,7 +270,11 @@ public class SBTreeLeafBucketTest {
     };
 
     checker.accept(treeBucket);
-    assertSerialization(treeBucket.serializePage(), checker);
+
+    ByteBuffer bf = ByteBuffer.allocate(treeBucket.serializedSize()).order(ByteOrder.nativeOrder());
+    treeBucket.serializePage(bf);
+
+    assertSerialization(bf.array(), checker);
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
@@ -347,7 +367,11 @@ public class SBTreeLeafBucketTest {
     };
 
     checker.accept(treeBucket);
-    assertSerialization(treeBucket.serializePage(), checker);
+
+    ByteBuffer bf = ByteBuffer.allocate(treeBucket.serializedSize()).order(ByteOrder.nativeOrder());
+    treeBucket.serializePage(bf);
+
+    assertSerialization(bf.array(), checker);
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
@@ -371,7 +395,11 @@ public class SBTreeLeafBucketTest {
     Consumer<OSBTreeBucket<Long, OIdentifiable>> checker = (bucket) -> Assert.assertEquals(bucket.getLeftSibling(), 123);
 
     checker.accept(treeBucket);
-    assertSerialization(treeBucket.serializePage(), checker);
+
+    ByteBuffer bf = ByteBuffer.allocate(treeBucket.serializedSize()).order(ByteOrder.nativeOrder());
+    treeBucket.serializePage(bf);
+
+    assertSerialization(bf.array(), checker);
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
@@ -395,7 +423,11 @@ public class SBTreeLeafBucketTest {
     Consumer<OSBTreeBucket<Long, OIdentifiable>> checker = (bucket) -> Assert.assertEquals(bucket.getRightSibling(), 123);
 
     checker.accept(treeBucket);
-    assertSerialization(treeBucket.serializePage(), checker);
+
+    ByteBuffer bf = ByteBuffer.allocate(treeBucket.serializedSize()).order(ByteOrder.nativeOrder());
+    treeBucket.serializePage(bf);
+
+    assertSerialization(bf.array(), checker);
 
     cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();

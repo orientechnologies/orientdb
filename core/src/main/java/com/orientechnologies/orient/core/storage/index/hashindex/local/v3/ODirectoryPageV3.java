@@ -26,6 +26,8 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerializationType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
+import java.nio.ByteBuffer;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 5/14/14
@@ -120,7 +122,7 @@ public class ODirectoryPageV3 extends ODurablePage {
     return Integer.bitCount(buffer.getInt(NODES_FILLED_OFFSET)) * OHashTableDirectoryV3.BINARY_LEVEL_SIZE;
   }
 
-  final void serializeNodes(final byte[] page, int offset) {
+  final void serializeNodes(final ByteBuffer recordBuffer) {
     final int nodesStart = getItemsOffset();
 
     int fillFlags = buffer.getInt(NODES_FILLED_OFFSET);
@@ -131,9 +133,9 @@ public class ODirectoryPageV3 extends ODurablePage {
         final int nodeOffset = nodesStart + i * OHashTableDirectoryV3.BINARY_LEVEL_SIZE;
 
         buffer.position(nodeOffset);
-        buffer.get(page, offset, OHashTableDirectoryV3.BINARY_LEVEL_SIZE);
-
-        offset += OHashTableDirectoryV3.BINARY_LEVEL_SIZE;
+        buffer.limit(nodeOffset + OHashTableDirectoryV3.BINARY_LEVEL_SIZE);
+        recordBuffer.put(buffer);
+        buffer.limit(buffer.capacity());
       }
 
       fillFlags = fillFlags & (~mask);
@@ -167,21 +169,29 @@ public class ODirectoryPageV3 extends ODurablePage {
   }
 
   @Override
-  protected byte[] serializePage() {
+  public int serializedSize() {
     int size = NODES_FILLED_END;
     size += serializedNodesSize();
 
-    final byte[] page = new byte[size];
-    buffer.position(0);
-    buffer.get(page, 0, NODES_FILLED_END);
-
-    serializeNodes(page, NODES_FILLED_END);
-
-    return page;
+    return size;
   }
 
   @Override
-  protected void deserializePage(byte[] page) {
+  public void serializePage(ByteBuffer recordBuffer) {
+    assert buffer.limit() == buffer.capacity();
+
+    this.buffer.position(0);
+    this.buffer.limit(NODES_FILLED_END);
+    recordBuffer.put(this.buffer);
+    this.buffer.limit(this.buffer.capacity());
+
+    serializeNodes(recordBuffer);
+  }
+
+  @Override
+  public void deserializePage(byte[] page) {
+    assert buffer.limit() == buffer.capacity();
+
     buffer.position(0);
     buffer.put(page, 0, NODES_FILLED_END);
 

@@ -450,29 +450,45 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
   }
 
   @Override
-  protected byte[] serializePage() {
-    final int bucketSize = buffer.getInt(SIZE_OFFSET);
+  public int serializedSize() {
+    final int bucketSize = this.buffer.getInt(SIZE_OFFSET);
     final int positionsEndPointer = POSITIONS_ARRAY_OFFSET + bucketSize * OIntegerSerializer.INT_SIZE;
     int size = positionsEndPointer;
 
-    final int freePointer = buffer.getInt(FREE_POINTER_OFFSET);
+    final int freePointer = this.buffer.getInt(FREE_POINTER_OFFSET);
     final int entriesSize = PAGE_SIZE - freePointer;
     size += entriesSize;
 
-    final byte[] page = new byte[size];
-    buffer.position(0);
-    buffer.get(page, 0, positionsEndPointer);
-
-    if (entriesSize > 0) {
-      buffer.position(freePointer);
-      buffer.get(page, positionsEndPointer, entriesSize);
-    }
-
-    return page;
+    return size;
   }
 
   @Override
-  protected void deserializePage(final byte[] page) {
+  public void serializePage(ByteBuffer recordBuffer) {
+    assert buffer.limit() == buffer.capacity();
+
+    final int bucketSize = this.buffer.getInt(SIZE_OFFSET);
+    final int positionsEndPointer = POSITIONS_ARRAY_OFFSET + bucketSize * OIntegerSerializer.INT_SIZE;
+
+    final int freePointer = this.buffer.getInt(FREE_POINTER_OFFSET);
+    final int entriesSize = PAGE_SIZE - freePointer;
+
+    this.buffer.position(0);
+    this.buffer.limit(positionsEndPointer);
+    recordBuffer.put(this.buffer);
+    this.buffer.limit(this.buffer.capacity());
+
+    if (entriesSize > 0) {
+      this.buffer.position(freePointer);
+      this.buffer.limit(freePointer + entriesSize);
+      recordBuffer.put(this.buffer);
+      this.buffer.limit(this.buffer.capacity());
+    }
+  }
+
+  @Override
+  public void deserializePage(final byte[] page) {
+    assert buffer.limit() == buffer.capacity();
+
     buffer.position(0);
     buffer.put(page, 0, POSITIONS_ARRAY_OFFSET);
 

@@ -441,27 +441,41 @@ public final class OHashTableBucket<K, V> extends ODurablePage implements Iterab
   }
 
   @Override
-  protected byte[] serializePage() {
-    final int bucketSize = buffer.getInt(SIZE_OFFSET);
+  public int serializedSize() {
+    final int bucketSize = this.buffer.getInt(SIZE_OFFSET);
     final int positionsSize = bucketSize * OIntegerSerializer.INT_SIZE;
     final int headSize = POSITIONS_ARRAY_OFFSET + positionsSize;
-    final int freePointer = buffer.getInt(FREE_POINTER_OFFSET);
+    final int freePointer = this.buffer.getInt(FREE_POINTER_OFFSET);
     final int tailSize = PAGE_SIZE - freePointer;
     final int size = headSize + tailSize;
 
-    final byte[] page = new byte[size];
-
-    buffer.position(0);
-    buffer.get(page, 0, headSize);
-
-    buffer.position(freePointer);
-    buffer.get(page, headSize, tailSize);
-
-    return page;
+    return size;
   }
 
   @Override
-  protected void deserializePage(byte[] page) {
+  public void serializePage(ByteBuffer recordBuffer) {
+    assert buffer.limit() == buffer.capacity();
+
+    final int bucketSize = this.buffer.getInt(SIZE_OFFSET);
+    final int positionsSize = bucketSize * OIntegerSerializer.INT_SIZE;
+    final int headSize = POSITIONS_ARRAY_OFFSET + positionsSize;
+    final int freePointer = this.buffer.getInt(FREE_POINTER_OFFSET);
+
+    this.buffer.position(0);
+    this.buffer.limit(headSize);
+    recordBuffer.put(this.buffer);
+    this.buffer.limit(this.buffer.capacity());
+
+    this.buffer.position(freePointer);
+    this.buffer.limit(PAGE_SIZE);
+    recordBuffer.put(this.buffer);
+    this.buffer.limit(this.buffer.capacity());
+  }
+
+  @Override
+  public void deserializePage(byte[] page) {
+    assert buffer.limit() == buffer.capacity();
+
     buffer.position(0);
     buffer.put(page, 0, POSITIONS_ARRAY_OFFSET);
 

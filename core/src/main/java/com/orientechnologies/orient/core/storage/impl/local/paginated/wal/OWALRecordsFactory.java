@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
@@ -41,11 +42,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compon
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OCreateSBTreeBonsaiRawOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OSBTreeBonsaiPutOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OSBTreeBonsaiRemoveOperation;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
 
-import java.util.Arrays;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -93,39 +97,57 @@ public final class OWALRecordsFactory {
 
       getValueAsInteger();
 
-  public static byte[] toStream(final OWriteableWALRecord walRecord) {
+  public static OPair<ByteBuffer, Long> toStream(final OWriteableWALRecord walRecord) {
     final int contentSize = walRecord.serializedSize() + 1;
-    final byte[] content = new byte[contentSize];
-    content[0] = walRecord.getId();
 
-    walRecord.toStream(content, 1);
+    final long pointer;
+    final ByteBuffer content;
 
-    if (MIN_COMPRESSED_RECORD_SIZE > 0 && content.length < MIN_COMPRESSED_RECORD_SIZE) {
-      return content;
+    if (contentSize > 256) {
+      pointer = Native.malloc(contentSize);
+      content = new Pointer(pointer).getByteBuffer(0, contentSize);
+    } else {
+      content = ByteBuffer.allocate(contentSize).order(ByteOrder.nativeOrder());
+      pointer = -1;
+    }
+
+    final byte recordId = walRecord.getId();
+    content.put(recordId);
+    walRecord.toStream(content);
+
+    if (MIN_COMPRESSED_RECORD_SIZE > 0 && contentSize < MIN_COMPRESSED_RECORD_SIZE) {
+      return new OPair<>(content, pointer);
     }
 
     final LZ4Compressor compressor = factory.fastCompressor();
-    final int maxCompressedLength = compressor.maxCompressedLength(content.length - 1);
-    final byte[] compressed = new byte[maxCompressedLength + 5];
-    final int compressedLength = compressor.compress(content, 1, content.length - 1, compressed, 5, maxCompressedLength);
+    final int maxCompressedLength = compressor.maxCompressedLength(contentSize - 1);
 
-    if (compressedLength + 5 < content.length) {
-      compressed[0] = (byte) (-(content[0] + 1));
-      OIntegerSerializer.INSTANCE.serializeNative(content.length - 1, compressed, 1);
-      return Arrays.copyOf(compressed, compressedLength + 5);
+    final long compressedPointer = Native.malloc(maxCompressedLength + 5);
+    final ByteBuffer compressedContent = new Pointer(compressedPointer).
+        getByteBuffer(0, maxCompressedLength + 5).order(ByteOrder.nativeOrder());
 
+    content.position(1);
+    compressedContent.position(5);
+    final int compressedLength = compressor.compress(content, 1, contentSize - 1, compressedContent, 5, maxCompressedLength);
+
+    if (pointer > 0) {
+      Native.free(pointer);
     }
 
-    return content;
+    compressedContent.limit(compressedLength + 5);
+    compressedContent.put(0, (byte) (-(recordId + 1)));
+    compressedContent.putInt(1, contentSize);
+
+    return new OPair<>(compressedContent, compressedPointer);
   }
 
   public OWriteableWALRecord fromStream(byte[] content) {
     if (content[0] < 0) {
-      final int decompressedLength = OIntegerSerializer.INSTANCE.deserializeNative(content, 1);
-      final byte[] restored = new byte[decompressedLength + 1];
+      final int originalLen = OIntegerSerializer.INSTANCE.deserializeNative(content, 1);
+      final byte[] restored = new byte[originalLen];
 
       final LZ4FastDecompressor decompressor = factory.fastDecompressor();
-      decompressor.decompress(content, 5, restored, 1, decompressedLength);
+      decompressor.decompress(content, 5, restored, 1, restored.length - 1);
       restored[0] = (byte) (-content[0] - 1);
       content = restored;
     }

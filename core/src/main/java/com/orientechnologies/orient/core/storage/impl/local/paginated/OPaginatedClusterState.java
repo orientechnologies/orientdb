@@ -24,6 +24,8 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
+import java.nio.ByteBuffer;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 20.08.13
@@ -65,20 +67,30 @@ public final class OPaginatedClusterState extends ODurablePage {
   }
 
   @Override
-  protected byte[] serializePage() {
-    final int size =
-        FREE_LIST_OFFSET + OPaginatedCluster.FREE_LIST_SIZE * OLongSerializer.LONG_SIZE; // size of all free list elements
-
-    final byte[] page = new byte[size];
-    buffer.position(0);
-    buffer.get(page);
-    return page;
+  public int serializedSize() {
+    return FREE_LIST_OFFSET + OPaginatedCluster.FREE_LIST_SIZE * OLongSerializer.LONG_SIZE; // size of all free list elements
   }
 
   @Override
-  protected void deserializePage(final byte[] page) {
+  public void serializePage(ByteBuffer recordBuffer) {
+    assert buffer.limit() == buffer.capacity();
+
+    final int size =
+        FREE_LIST_OFFSET + OPaginatedCluster.FREE_LIST_SIZE * OLongSerializer.LONG_SIZE; // size of all free list elements
+
+    this.buffer.position(0);
+    this.buffer.limit(size);
+    recordBuffer.put(this.buffer);
+    this.buffer.limit(this.buffer.capacity());
+  }
+
+  @Override
+  public void deserializePage(final byte[] page) {
+    assert buffer.limit() == buffer.capacity();
+
     buffer.position(0);
     buffer.put(page);
+
     cacheEntry.markDirty();
   }
 

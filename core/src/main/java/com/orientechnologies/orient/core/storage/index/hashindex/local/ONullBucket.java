@@ -91,27 +91,42 @@ public final class ONullBucket<V> extends ODurablePage {
   }
 
   @Override
-  protected byte[] serializePage() {
-    if (buffer.get(NEXT_FREE_POSITION) == 0) {
-      final byte[] page = new byte[NEXT_FREE_POSITION];
-      buffer.position(0);
-      buffer.get(page);
-
-      return page;
+  public int serializedSize() {
+    if (this.buffer.get(NEXT_FREE_POSITION) == 0) {
+      return NEXT_FREE_POSITION + 1;
     }
 
-    buffer.position(NEXT_FREE_POSITION + 1);
-    final int valueLen = valueSerializer.getObjectSizeInByteBuffer(buffer);
+    this.buffer.position(NEXT_FREE_POSITION + 1);
+    final int valueLen = valueSerializer.getObjectSizeInByteBuffer(this.buffer);
 
-    final byte[] page = new byte[valueLen + NEXT_FREE_POSITION + 1];
-    buffer.position(0);
-    buffer.get(page);
-
-    return page;
+    return valueLen + NEXT_FREE_POSITION + 1;
   }
 
   @Override
-  protected void deserializePage(byte[] page) {
+  public void serializePage(ByteBuffer recordBuffer) {
+    assert buffer.limit() == buffer.capacity();
+
+    if (this.buffer.get(NEXT_FREE_POSITION) == 0) {
+      this.buffer.position(0);
+      this.buffer.limit(NEXT_FREE_POSITION + 1);
+      recordBuffer.put(this.buffer);
+      this.buffer.limit(this.buffer.capacity());
+      return;
+    }
+
+    this.buffer.position(NEXT_FREE_POSITION + 1);
+    final int valueLen = valueSerializer.getObjectSizeInByteBuffer(this.buffer);
+
+    this.buffer.position(0);
+    this.buffer.limit(valueLen + NEXT_FREE_POSITION + 1);
+    recordBuffer.put(this.buffer);
+    this.buffer.limit(this.buffer.capacity());
+  }
+
+  @Override
+  public void deserializePage(byte[] page) {
+    assert buffer.limit() == buffer.capacity();
+
     buffer.position(0);
     buffer.put(page);
 

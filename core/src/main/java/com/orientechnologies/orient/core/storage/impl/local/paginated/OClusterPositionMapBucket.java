@@ -232,19 +232,30 @@ public final class OClusterPositionMapBucket extends ODurablePage {
   }
 
   @Override
-  protected byte[] serializePage() {
-    final int positions = buffer.getInt(SIZE_OFFSET);
+  public int serializedSize() {
+    final int positions = this.buffer.getInt(SIZE_OFFSET);
     final int size = POSITIONS_OFFSET + positions * ENTRY_SIZE;
 
-    final byte[] page = new byte[size];
-    buffer.position(0);
-    buffer.get(page);
-
-    return page;
+    return size;
   }
 
   @Override
-  protected void deserializePage(final byte[] page) {
+  public void serializePage(ByteBuffer recordBuffer) {
+    assert buffer.limit() == buffer.capacity();
+
+    final int positions = this.buffer.getInt(SIZE_OFFSET);
+    final int size = POSITIONS_OFFSET + positions * ENTRY_SIZE;
+
+    this.buffer.position(0);
+    this.buffer.limit(size);
+    recordBuffer.put(this.buffer);
+    this.buffer.limit(this.buffer.capacity());
+  }
+
+  @Override
+  public void deserializePage(final byte[] page) {
+    assert buffer.limit() == buffer.capacity();
+
     buffer.position(0);
     buffer.put(page);
 

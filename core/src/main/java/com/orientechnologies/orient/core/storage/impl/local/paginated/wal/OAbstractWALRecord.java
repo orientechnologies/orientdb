@@ -21,6 +21,9 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
+import com.sun.jna.Native;
+
+import java.nio.ByteBuffer;
 
 /**
  * Abstract WAL record.
@@ -32,17 +35,15 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
   private int distance = 0;
   private int diskSize = 0;
 
-  private byte[] binaryContent;
+  private ByteBuffer binaryContent;
+  private int        binaryContentLen = -1;
+  private long       pointer;
 
   private boolean written;
 
   protected volatile OLogSequenceNumber lsn;
 
   protected OAbstractWALRecord() {
-  }
-
-  protected OAbstractWALRecord(final OLogSequenceNumber previousCheckpoint) {
-    this.lsn = previousCheckpoint;
   }
 
   @Override
@@ -71,17 +72,30 @@ public abstract class OAbstractWALRecord implements OWriteableWALRecord {
   }
 
   @Override
-  public void setBinaryContent(byte[] content) {
-    this.binaryContent = content;
+  public void setBinaryContent(ByteBuffer buffer, long pointer) {
+    this.binaryContent = buffer;
+    this.pointer = pointer;
+    this.binaryContentLen = buffer.limit();
   }
 
   @Override
-  public byte[] getBinaryContent() {
-    if (binaryContent == null) {
-      throw new IllegalStateException("Binary content is not set");
+  public ByteBuffer getBinaryContent() {
+    return binaryContent;
+  }
+
+  @Override
+  public void freeBinaryContent() {
+    if (pointer > 0) {
+      Native.free(pointer);
     }
 
-    return binaryContent;
+    this.pointer = 0;
+    this.binaryContent = null;
+  }
+
+  @Override
+  public int getBinaryContentLen() {
+    return this.binaryContentLen;
   }
 
   @Override

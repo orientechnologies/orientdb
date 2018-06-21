@@ -166,8 +166,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
   public OCASDiskWriteAheadLog(final String storageName, final Path storagePath, final Path walPath, final int maxPagesCacheSize,
       final int maxSegmentSize, final int commitDelay, final boolean filterWALFiles, final Locale locale,
-      final long walSizeHardLimit, final long freeSpaceLimit, final int fsyncInterval)
-      throws IOException {
+      final long walSizeHardLimit, final long freeSpaceLimit, final int fsyncInterval) throws IOException {
     commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
@@ -1180,7 +1179,11 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   private OLogSequenceNumber doLogRecord(final OWriteableWALRecord writeableRecord) {
-    writeableRecord.setBinaryContent(OWALRecordsFactory.toStream(writeableRecord));
+    if (writeableRecord.getBinaryContentLen() < 0) {
+      final OPair<ByteBuffer, Long> serializedRecord = OWALRecordsFactory.toStream(writeableRecord);
+      writeableRecord.setBinaryContent(serializedRecord.key, serializedRecord.value);
+    }
+
     writeableRecord.setLsn(new OLogSequenceNumber(currentSegment, -1));
 
     records.offer(writeableRecord);
@@ -1223,6 +1226,15 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     } catch (final InterruptedException e) {
       OLogManager.instance().errorNoDb(this, "Cannot shutdown background WAL commit thread", e);
+    }
+
+    OWALRecord record = records.poll();
+    while (record != null) {
+      if (record instanceof OWriteableWALRecord) {
+        ((OWriteableWALRecord) record).freeBinaryContent();
+      }
+
+      record = records.poll();
     }
 
     try {
@@ -1425,7 +1437,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         record.setDistance(0);
         record.setDiskSize(prevRecord.getDiskSize());
       } else {
-        final int recordLength = ((OWriteableWALRecord) record).getBinaryContent().length;
+        final int recordLength = ((OWriteableWALRecord) record).getBinaryContentLen();
         final int length = OCASWALPage.calculateSerializedSize(recordLength);
 
         final int pages = length / OCASWALPage.MAX_RECORD_SIZE;
@@ -1459,7 +1471,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       } else {
         //we always start from the begging of the page so no need to calculate page offset
         //record is written from the begging of page
-        final int recordLength = ((OWriteableWALRecord) record).getBinaryContent().length;
+        final int recordLength = ((OWriteableWALRecord) record).getBinaryContentLen();
         final int length = OCASWALPage.calculateSerializedSize(recordLength);
 
         final int pages = length / OCASWALPage.MAX_RECORD_SIZE;
@@ -1532,7 +1544,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     final int freeSpace = OCASWALPage.PAGE_SIZE - (int) (start % OCASWALPage.PAGE_SIZE);
     final int startOffset = OCASWALPage.PAGE_SIZE - freeSpace;
 
-    final int recordLength = ((OWriteableWALRecord) record).getBinaryContent().length;
+    final int recordLength = ((OWriteableWALRecord) record).getBinaryContentLen();
     int length = OCASWALPage.calculateSerializedSize(recordLength);
 
     if (length < freeSpace) {
@@ -1696,10 +1708,12 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
                 if (!writeableRecord.isWritten()) {
                   int written = 0;
-                  final int recordContentBinarySize = writeableRecord.getBinaryContent().length;
+                  final int recordContentBinarySize = writeableRecord.getBinaryContentLen();
                   final int bytesToWrite = OIntegerSerializer.INT_SIZE + recordContentBinarySize;
 
-                  final byte[] recordContent = writeableRecord.getBinaryContent();
+                  final ByteBuffer recordContent = writeableRecord.getBinaryContent();
+                  recordContent.position(0);
+
                   byte[] recordSize = null;
                   int recordSizeWritten = -1;
 
@@ -1762,7 +1776,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                       }
                     }
 
-                    writeBuffer.put(recordContent, written - OIntegerSerializer.INT_SIZE, chunkSize);
+                    recordContent.limit(recordContent.position() + chunkSize);
+                    writeBuffer.put(recordContent);
                     written += chunkSize;
                   }
 
@@ -1773,6 +1788,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
                   queueSize.addAndGet(-writeableRecord.getDiskSize());
                   writeableRecord.written();
+                  writeableRecord.freeBinaryContent();
                 }
 
                 if (lastRecord != record) {

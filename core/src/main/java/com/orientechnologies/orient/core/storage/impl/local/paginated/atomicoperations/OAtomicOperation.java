@@ -80,7 +80,7 @@ public class OAtomicOperation {
       if (totalSerializedSize > OPERATIONS_CACHE_LIMIT) {
         componentLSNs.add(operation.getLsn());
       } else {
-        totalSerializedSize += operation.getBinaryContent().length;
+        totalSerializedSize += operation.getBinaryContentLen();
 
         if (totalSerializedSize > OPERATIONS_CACHE_LIMIT) {
           for (OWriteableWALRecord record : componentRecords) {
