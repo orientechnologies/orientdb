@@ -1601,7 +1601,7 @@ public class ODocument extends ORecordAbstract
                 ODocument valDoc = deltaUpdateListElement.field("v");
                 index = deltaUpdateListElement.field("i");
                 Object originalVal = originalList.get(index);
-                UpdateDeltaValueType type = valDoc.field("t");
+//                UpdateDeltaValueType type = UpdateDeltaValueType.fromOrd(valDoc.field("t"));
                 Object deltaDeltaVal = valDoc.field("v");                
                 Object merged = mergeUpdateTree(originalVal, deltaDeltaVal);
                 originalList.set(index, merged);
@@ -1613,13 +1613,19 @@ public class ODocument extends ORecordAbstract
     }
     else if (fromObj instanceof List && toObj instanceof List){
       List fromList = (List)fromObj; 
-      List toList = (List)toObj;
-      //fromList should always be same size as toList
+      List toList = (List)toObj;      
       for (int i = 0; i < fromList.size(); i++){
         Object fromElement = fromList.get(i);
-        Object toElement = toList.get(i);
-        toElement = mergeUpdateTree(toElement, fromElement);
-        toList.set(i, toElement);
+        if (fromElement instanceof ODocument){
+          ODocument fromDoc = (ODocument)fromElement;
+          int index = fromDoc.field("i");
+          Object toElement = toList.get(index);
+          toElement = mergeUpdateTree(toElement, fromElement);
+          toList.set(index, toElement);
+        }
+        else{
+          //TODO should never happen handle this case
+        }
       }      
     }
     else if (fromObj instanceof ODocument){
@@ -3345,9 +3351,10 @@ public class ODocument extends ORecordAbstract
             //these elements have pairs in original list, so we need to calculate deltas
             Object originalElement = previousList.get(i);
             //check if can we go just with value change
-            if (!currentElement.getClass().equals(originalElement.getClass()) || 
-                !(currentElement instanceof ODocument) ||
-                !(currentElement instanceof List)){
+            OType currentElementType = OType.getTypeByClass(currentElement.getClass());
+            OType previousElementType = OType.getTypeByClass(originalElement.getClass());
+            if (currentElementType != previousElementType || 
+                (!(currentElement instanceof ODocument) && !(currentElement instanceof List))){                
               if (!Objects.equals(currentElement, originalElement)){
                 ODocument deltaElement = new ODocument();
                 deltaElement.field("t", UpdateDeltaValueType.getOrd(UpdateDeltaValueType.LIST_ELEMENT_CHANGE));              

@@ -485,7 +485,7 @@ public class ODocumentTest {
     }
   }
   
-   @Test
+  @Test
   public void testListDelta(){
     ODatabaseDocumentTx db = null;
     try{
@@ -529,6 +529,48 @@ public class ODocumentTest {
       originalDoc.mergeUpdateDelta(delta);
       List checkList = originalDoc.field(fieldName);
       assertEquals("three", checkList.get(1));
+    }
+    finally{
+      if (db != null)
+        db.drop();
+    }
+  }
+  
+  @Test
+  public void testListOfListsDelta(){
+    ODatabaseDocumentTx db = null;
+    try{
+      db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
+      db.create();
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);      
+      String fieldName = "testField";
+      List<List<String>> originalValue = new ArrayList<>();
+      for (int i = 0; i < 2; i++){
+        List<String> containedList = new ArrayList<>();
+        containedList.add("one"); containedList.add("two");
+        originalValue.add(containedList);
+      }
+      
+      doc.field(fieldName, originalValue);
+
+      doc = db.save(doc);
+      ODocument originalDoc = doc.copy();
+
+      List<String> newArray = new ArrayList<>();
+      newArray.add("one"); newArray.add("three");
+      originalValue.set(0, newArray);
+      doc.field(fieldName, originalValue);
+
+      ODocument delta = doc.getDeltaFromOriginal();
+      delta = delta.field("u");
+      
+      
+      originalDoc.mergeUpdateDelta(delta);
+      List<List> checkList = originalDoc.field(fieldName);
+      assertEquals("three", checkList.get(0).get(1));
     }
     finally{
       if (db != null)
