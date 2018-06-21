@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.sql.parser.OHaStatusStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
@@ -44,8 +45,8 @@ import java.util.Map;
  *
  * @author Luca Garulli
  */
-@SuppressWarnings("unchecked") public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract
-    implements OCommandDistributedReplicateRequest {
+@SuppressWarnings("unchecked")
+public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String NAME           = "HA STATUS";
   public static final String KEYWORD_HA     = "HA";
   public static final String KEYWORD_STATUS = "STATUS";
@@ -72,12 +73,12 @@ import java.util.Map;
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SERVER, "status", ORole.PERMISSION_READ);
 
-    final String dbUrl = database.getURL();
+    if (!(database instanceof ODatabaseDocumentDistributed)) {
+      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
+    }
 
-    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
-    final OServer serverInstance = OServer.getInstanceByPath(path);
-
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) serverInstance.getDistributedManager();
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getStorageDistributed()
+        .getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
@@ -107,15 +108,18 @@ import java.util.Map;
     return output;
   }
 
-  @Override public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+  @Override
+  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
-  @Override public QUORUM_TYPE getQuorumType() {
+  @Override
+  public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.NONE;
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "HA STATUS [-servers] [-db] [-latency] [-messages] [-all] [-output=text]";
   }
 }
