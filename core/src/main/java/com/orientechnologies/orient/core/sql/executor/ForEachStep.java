@@ -4,6 +4,8 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
+import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.Iterator;
@@ -37,6 +39,9 @@ public class ForEachStep extends AbstractExecutionStep {
     }
     init(ctx);
     while (iterator.hasNext()) {
+      if (OExecutionThreadLocal.isInterruptCurrentOperation()) {
+        throw new OCommandInterruptedException("The command has been interrupted");
+      }
       ctx.setVariable(loopVariable.getStringValue(), iterator.next());
       OScriptExecutionPlan plan = initPlan(ctx);
       OExecutionStepInternal result = plan.executeFull();
@@ -73,7 +78,7 @@ public class ForEachStep extends AbstractExecutionStep {
       if (stm instanceof OReturnStatement) {
         return true;
       }
-      if(stm instanceof OForEachBlock && ((OForEachBlock) stm).containsReturn()) {
+      if (stm instanceof OForEachBlock && ((OForEachBlock) stm).containsReturn()) {
         return true;
       }
       if (stm instanceof OIfStatement && ((OIfStatement) stm).containsReturn()) {

@@ -7,8 +7,10 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
@@ -88,6 +90,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       public OResult next() {
         if (!hasNext()) {
           throw new IllegalStateException();
+        }
+        if (localCount % 100 == 0 && OExecutionThreadLocal.isInterruptCurrentOperation()) {
+          throw new OCommandInterruptedException("The command has been interrupted");
         }
         long begin = profilingEnabled ? System.nanoTime() : 0;
         try {

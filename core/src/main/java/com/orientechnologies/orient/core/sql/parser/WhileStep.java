@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
+import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.sql.executor.*;
 
 import java.util.List;
@@ -27,6 +29,9 @@ public class WhileStep extends AbstractExecutionStep {
     }
 
     while (condition.evaluate(new OResultInternal(), ctx)) {
+      if (OExecutionThreadLocal.isInterruptCurrentOperation())
+        throw new OCommandInterruptedException("The command has been interrupted");
+
       OScriptExecutionPlan plan = initPlan(ctx);
       OExecutionStepInternal result = plan.executeFull();
       if (result != null) {
