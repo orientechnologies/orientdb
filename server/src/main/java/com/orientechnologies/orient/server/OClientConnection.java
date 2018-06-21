@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -325,5 +326,14 @@ public class OClientConnection {
 
   public OBinaryRequestExecutor getExecutor() {
     return executor;
+  }
+
+  public boolean tryAcquireForExpire() {
+    try {
+      return lock.tryLock(1, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    return false;
   }
 }
