@@ -59,9 +59,10 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   private volatile String lockName;
 
-  private volatile long       ts         = -1;
-  private final    AtomicLong totalPages = new AtomicLong();
-  private final    AtomicLong fullPages  = new AtomicLong();
+  private volatile   long       ts             = -1;
+  protected volatile boolean    trackFullPages = false;
+  private final      AtomicLong totalPages     = new AtomicLong();
+  private final      AtomicLong fullPages      = new AtomicLong();
 
   public ODurableComponent(OAbstractPaginatedStorage storage, String name, String extension, String lockName) {
     super(true);
@@ -191,22 +192,24 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
       ODurablePage.setLogSequenceNumber(buffer, recordLSN);
 
-      long oldTs = ts;
-      if (oldTs == -1) {
-        ts = System.nanoTime();
-      } else {
-        long fp = fullPages.get();
-        long tp = totalPages.get();
-        long newTs = System.nanoTime();
-        if (newTs - oldTs >= 10 * 1_000_000_000L) {
-          OLogManager.instance()
-              .warnNoDb(this, "Component " + getFullName() + " percent of full pages " + (int) Math.ceil((1.0 * fp) / tp * 100));
+      if (trackFullPages) {
+        long oldTs = ts;
+        if (oldTs == -1) {
+          ts = System.nanoTime();
+        } else {
+          long fp = fullPages.get();
+          long tp = totalPages.get();
+          long newTs = System.nanoTime();
+          if (newTs - oldTs >= 10 * 1_000_000_000L) {
+            OLogManager.instance()
+                .warnNoDb(this, "Component " + getFullName() + " percent of full pages " + (int) Math.ceil((1.0 * fp) / tp * 100));
 
-          fullPages.addAndGet(-fp);
-          totalPages.addAndGet(-tp);
-          ts = newTs;
+            fullPages.addAndGet(-fp);
+            totalPages.addAndGet(-tp);
+            ts = newTs;
+          }
+
         }
-
       }
     }
 

@@ -130,6 +130,7 @@ public final class OLocalHashTableV3<K, V> extends OLocalHashTableAbstract<K, V>
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
     this.nullBucketFileExtension = nullBucketFileExtension;
+    this.trackFullPages = true;
   }
 
   @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
