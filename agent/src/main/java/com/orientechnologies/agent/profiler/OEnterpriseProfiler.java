@@ -56,20 +56,20 @@ import java.util.concurrent.atomic.AtomicReference;
  * @copyrights Orient Technologies.com
  */
 public class OEnterpriseProfiler extends OAbstractProfiler implements ODistributedLifecycleListener {
-  protected final static Timer timer            = new Timer(true);
-  protected final static int   BUFFER_SIZE      = 2048;
-  public static final    int   KEEP_ALIVE       = 60 * 1000;
-  protected final        int   metricProcessors = Runtime.getRuntime().availableProcessors();
-  private OEnterpriseAgent agent;
-  protected       Date                           lastReset               = new Date();
-  protected       OProfilerData                  realTime                = new OProfilerData();
-  protected final AtomicReference<OProfilerData> lastSnapshot            = new AtomicReference<OProfilerData>();
-  protected       int                            elapsedToCreateSnapshot = 0;
-  protected TimerTask archiverTask;
-  protected TimerTask autoPause;
-  protected OServer   server;
-  protected AtomicBoolean paused    = new AtomicBoolean(false);
-  protected AtomicLong    timestamp = new AtomicLong(System.currentTimeMillis());
+  protected final static Timer                          timer                   = new Timer(true);
+  protected final static int                            BUFFER_SIZE             = 2048;
+  public static final    int                            KEEP_ALIVE              = 60 * 1000;
+  protected final        int                            metricProcessors        = Runtime.getRuntime().availableProcessors();
+  private                OEnterpriseAgent               agent;
+  protected              Date                           lastReset               = new Date();
+  protected              OProfilerData                  realTime                = new OProfilerData();
+  protected final        AtomicReference<OProfilerData> lastSnapshot            = new AtomicReference<OProfilerData>();
+  protected              int                            elapsedToCreateSnapshot = 0;
+  protected              TimerTask                      archiverTask;
+  protected              TimerTask                      autoPause;
+  protected              OServer                        server;
+  protected              AtomicBoolean                  paused                  = new AtomicBoolean(false);
+  protected              AtomicLong                     timestamp               = new AtomicLong(System.currentTimeMillis());
 
   protected Set<OEnterpriseProfilerListener> profilerListeners = Collections
       .newSetFromMap(new ConcurrentHashMap<OEnterpriseProfilerListener, Boolean>());
@@ -639,7 +639,11 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements ODistribut
     try {
 
       Method cpuMethod = operatingSystemMXBean.getClass().getDeclaredMethod("getProcessCpuLoad");
-      cpuMethod.setAccessible(true);
+      try {
+        cpuMethod.setAccessible(true);
+      } catch (RuntimeException e) {
+        //This fail in jdk9
+      }
       Double invoke = (Double) cpuMethod.invoke(operatingSystemMXBean);
       return invoke;
     } catch (NoSuchMethodException e) {
