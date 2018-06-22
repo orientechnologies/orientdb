@@ -181,11 +181,12 @@ public class OConsoleCommandStream implements OCommandStream {
           break;
         case SINGLE_LINE_COMMENT:
           if (symbol == Symbol.NEW_LINE || symbol == Symbol.EOF) {
+            state = State.TEXT;
             return result.toString();
           }
           break;
         case MULTI_LINE_COMMENT:
-          if (symbol == Symbol.NEW_LINE || symbol == Symbol.EOF) {
+          if (symbol == Symbol.EOF) {
             return result.toString();
           }
           if (symbol == Symbol.ASTERISK) {
@@ -270,8 +271,8 @@ public class OConsoleCommandStream implements OCommandStream {
       return Symbol.ASTERISK;
     if (c.equals(';'))
       return Symbol.SEPARATOR;
-    if (c.equals('\n'))
-      return Symbol.SEPARATOR;
+    if (c.equals('\n') || c.equals('\r'))
+      return Symbol.NEW_LINE;
 
     return Symbol.LETTER;
   }
