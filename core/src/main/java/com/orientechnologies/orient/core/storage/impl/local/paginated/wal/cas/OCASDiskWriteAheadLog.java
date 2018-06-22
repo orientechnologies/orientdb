@@ -97,7 +97,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
   private volatile long walSizeLimit;
 
-  private final int maxSegmentSize;
+  private final long maxSegmentSize;
 
   private final long freeSpaceLimit;
 
@@ -165,7 +165,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private OLogSequenceNumber checkPointLSN        = null;
 
   public OCASDiskWriteAheadLog(final String storageName, final Path storagePath, final Path walPath, final int maxPagesCacheSize,
-      final int maxSegmentSize, final int commitDelay, final boolean filterWALFiles, final Locale locale,
+      final long maxSegmentSize, final int commitDelay, final boolean filterWALFiles, final Locale locale,
       final long walSizeHardLimit, final long freeSpaceLimit, final int fsyncInterval) throws IOException {
     commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
