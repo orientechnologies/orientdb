@@ -286,7 +286,7 @@ public enum OGlobalConfiguration {
       Integer.class, 64),
 
   DISK_CACHE_WAL_SIZE_TO_START_FLUSH("storage.diskCache.walSizeToStartFlush",
-      "WAL size after which pages in write cache will be started to flush", Long.class, 6 * 1024L * 1024 * 1024),
+      "WAL size after which pages in write cache will be started to flush", Long.class, 10 * 1024L * 1024 * 1024),
 
   DISK_CACHE_EXCLUSIVE_FLUSH_BOUNDARY("storage.diskCache.exclusiveFlushBoundary",
       "If portion of exclusive pages into cache exceeds this value we start to flush only exclusive pages from disk cache",
