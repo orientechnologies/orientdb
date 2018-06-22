@@ -115,7 +115,7 @@ public final class OWALRecordsFactory {
     content.put(recordId);
     walRecord.toStream(content);
 
-    if (MIN_COMPRESSED_RECORD_SIZE > 0 && contentSize < MIN_COMPRESSED_RECORD_SIZE) {
+    if (MIN_COMPRESSED_RECORD_SIZE <= 0 || contentSize < MIN_COMPRESSED_RECORD_SIZE) {
       return new OPair<>(content, pointer);
     }
 
