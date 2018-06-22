@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local.v3;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OCommonConst;
@@ -32,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implementation of hash index which is based on <a href="http://en.wikipedia.org/wiki/Extendible_hashing">extendible hashing
@@ -119,9 +117,6 @@ public final class OLocalHashTableV3<K, V> extends OLocalHashTableAbstract<K, V>
 
   private OEncryption encryption;
 
-  private volatile long       ts           = -1;
-  private final    AtomicLong bucketSplits = new AtomicLong();
-
   public OLocalHashTableV3(final String name, final String metadataConfigurationFileExtension, final String treeStateFileExtension,
       final String bucketFileExtension, final String nullBucketFileExtension,
       final OAbstractPaginatedStorage abstractPaginatedStorage) {
@@ -130,7 +125,6 @@ public final class OLocalHashTableV3<K, V> extends OLocalHashTableAbstract<K, V>
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
     this.nullBucketFileExtension = nullBucketFileExtension;
-    this.trackFullPages = true;
   }
 
   @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
@@ -1839,19 +1833,7 @@ public final class OLocalHashTableV3<K, V> extends OLocalHashTableAbstract<K, V>
   private boolean doPut(final K key, final byte[] rawKey, V value, final OIndexEngine.Validator<K, V> validator,
       final OAtomicOperation atomicOperation, final long hashCode) throws IOException {
 
-    long oldTs = ts;
-    if (oldTs == -1) {
-      ts = System.nanoTime();
-    } else {
-      long bs = bucketSplits.get();
-      long newTs = System.nanoTime();
-      if (newTs - oldTs >= 10 * 1_000_000_000L) {
-        OLogManager.instance().warnNoDb(this, "Component " + getFullName() + " bucket splits " + bs);
-        bucketSplits.addAndGet(-bs);
-        ts = newTs;
-      }
 
-    }
     int sizeDiff = 0;
 
     if (key == null) {
@@ -1987,7 +1969,6 @@ public final class OLocalHashTableV3<K, V> extends OLocalHashTableAbstract<K, V>
           return true;
         }
 
-        bucketSplits.incrementAndGet();
         final OHashTable.BucketSplitResult splitResult = splitBucket(bucket, pageIndex, atomicOperation);
 
         final long updatedBucketPointer = splitResult.updatedBucketPointer;

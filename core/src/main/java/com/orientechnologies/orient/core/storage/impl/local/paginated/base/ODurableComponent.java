@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorag
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected final OAtomicOperationsManager  atomicOperationsManager;
@@ -59,10 +58,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   private volatile String lockName;
 
-  private volatile   long       ts             = -1;
-  protected volatile boolean    trackFullPages = false;
-  private final      AtomicLong totalPages     = new AtomicLong();
-  private final      AtomicLong fullPages      = new AtomicLong();
 
   public ODurableComponent(OAbstractPaginatedStorage storage, String name, String extension, String lockName) {
     super(true);
@@ -150,7 +145,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     assert page != null;
     final OCacheEntry cacheEntry = page.getCacheEntry();
     if (cacheEntry.isDirty() && storage instanceof OLocalPaginatedStorage) {
-      totalPages.incrementAndGet();
 
       final OLogSequenceNumber end = writeAheadLog.end();
       final OCachePointer cachePointer = cacheEntry.getCachePointer();
@@ -160,7 +154,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
       final OLogSequenceNumber recordLSN;
       if (pageLsn.getSegment() < end.getSegment()) {
         try {
-          fullPages.incrementAndGet();
           final OUpdatePageRecord updatePageRecord = new OUpdatePageRecord(cacheEntry.getPageIndex(), cacheEntry.getFileId(),
               atomicOperation.getOperationUnitId(), page, page.serializationType());
 
@@ -191,26 +184,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
       }
 
       ODurablePage.setLogSequenceNumber(buffer, recordLSN);
-
-      if (trackFullPages) {
-        long oldTs = ts;
-        if (oldTs == -1) {
-          ts = System.nanoTime();
-        } else {
-          long fp = fullPages.get();
-          long tp = totalPages.get();
-          long newTs = System.nanoTime();
-          if (newTs - oldTs >= 10 * 1_000_000_000L) {
-            OLogManager.instance()
-                .warnNoDb(this, "Component " + getFullName() + " percent of full pages " + (int) Math.ceil((1.0 * fp) / tp * 100));
-
-            fullPages.addAndGet(-fp);
-            totalPages.addAndGet(-tp);
-            ts = newTs;
-          }
-
-        }
-      }
     }
 
     readCache.releaseFromWrite(cacheEntry, writeCache);
