@@ -203,8 +203,9 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
           fullPages.addAndGet(-fp);
           totalPages.addAndGet(-tp);
+          ts = newTs;
         }
-        ts = newTs;
+
       }
     }
 

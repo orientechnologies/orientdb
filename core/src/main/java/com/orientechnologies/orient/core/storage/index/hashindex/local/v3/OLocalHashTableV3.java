@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implementation of hash index which is based on <a href="http://en.wikipedia.org/wiki/Extendible_hashing">extendible hashing
@@ -117,6 +118,9 @@ public final class OLocalHashTableV3<K, V> extends OLocalHashTableAbstract<K, V>
   private OHashTableDirectoryV3 directory;
 
   private OEncryption encryption;
+
+  private volatile long       ts           = -1;
+  private final    AtomicLong bucketSplits = new AtomicLong();
 
   public OLocalHashTableV3(final String name, final String metadataConfigurationFileExtension, final String treeStateFileExtension,
       final String bucketFileExtension, final String nullBucketFileExtension,
@@ -1833,6 +1837,20 @@ public final class OLocalHashTableV3<K, V> extends OLocalHashTableAbstract<K, V>
   @SuppressWarnings("unchecked")
   private boolean doPut(final K key, final byte[] rawKey, V value, final OIndexEngine.Validator<K, V> validator,
       final OAtomicOperation atomicOperation, final long hashCode) throws IOException {
+
+    long oldTs = ts;
+    if (oldTs == -1) {
+      ts = System.nanoTime();
+    } else {
+      long bs = bucketSplits.get();
+      long newTs = System.nanoTime();
+      if (newTs - oldTs >= 10 * 1_000_000_000L) {
+        OLogManager.instance().warnNoDb(this, "Component " + getFullName() + " bucket splits " + bs);
+        bucketSplits.addAndGet(-bs);
+        ts = newTs;
+      }
+
+    }
     int sizeDiff = 0;
 
     if (key == null) {
