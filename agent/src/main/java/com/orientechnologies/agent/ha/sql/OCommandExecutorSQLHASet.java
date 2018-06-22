@@ -32,6 +32,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.util.Arrays;
@@ -141,12 +142,12 @@ public class OCommandExecutorSQLHASet extends OCommandExecutorSQLAbstract implem
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SERVER, "status", ORole.PERMISSION_UPDATE);
 
-    final String dbUrl = database.getURL();
+    if (!(database instanceof ODatabaseDocumentDistributed)) {
+      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
+    }
 
-    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
-    final OServer serverInstance = OServer.getInstanceByPath(path);
-
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) serverInstance.getDistributedManager();
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getStorageDistributed()
+        .getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
