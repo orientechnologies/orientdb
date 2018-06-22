@@ -199,7 +199,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
         long tp = totalPages.get();
         long newTs = System.nanoTime();
         if (newTs - oldTs >= 10 * 1_000_000_000L) {
-          OLogManager.instance().warnNoDb(this, "Component " + getFullName() + "percent of full pages " + (fp / tp * 100));
+          OLogManager.instance().warnNoDb(this, "Component " + getFullName() + " percent of full pages " + (fp / tp * 100));
 
           fullPages.addAndGet(-fp);
           totalPages.addAndGet(-tp);

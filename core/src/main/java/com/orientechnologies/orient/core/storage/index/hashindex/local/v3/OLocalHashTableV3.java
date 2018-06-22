@@ -1986,7 +1986,7 @@ public final class OLocalHashTableV3<K, V> extends OLocalHashTableAbstract<K, V>
           return true;
         }
 
-        OLogManager.instance().warnNoDb(this, "Split bucket");
+        bucketSplits.incrementAndGet();
         final OHashTable.BucketSplitResult splitResult = splitBucket(bucket, pageIndex, atomicOperation);
 
         final long updatedBucketPointer = splitResult.updatedBucketPointer;
