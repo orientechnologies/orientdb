@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local.v3;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OCommonConst;
@@ -1967,6 +1968,7 @@ public final class OLocalHashTableV3<K, V> extends OLocalHashTableAbstract<K, V>
           return true;
         }
 
+        OLogManager.instance().warnNoDb(this, "Split bucket");
         final OHashTable.BucketSplitResult splitResult = splitBucket(bucket, pageIndex, atomicOperation);
 
         final long updatedBucketPointer = splitResult.updatedBucketPointer;
