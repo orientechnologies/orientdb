@@ -248,7 +248,7 @@ public enum OGlobalConfiguration {
   WAL_SEGMENT_BUFFER_SIZE("storage.wal.segmentBufferSize",
       "Size of the buffer which contains WAL records in serialized format " + "in megabytes", Integer.class, 32),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, 5 * 1024),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, 8 * 1024),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk (in megabytes)", Integer.class, -1),
 
@@ -302,8 +302,7 @@ public enum OGlobalConfiguration {
       "WAL size reaching which pages in write cache will be prevented from flush", Long.class, 2 * 1024L * 1024 * 1024),
 
   DISK_CACHE_FREE_SPACE_LIMIT("storage.diskCache.diskFreeSpaceLimit", "Minimum amount of space on disk, which, when exceeded, "
-      + "will cause the database to switch to read-only mode (in megabytes)", Long.class,
-      2 * WAL_MAX_SEGMENT_SIZE.getValueAsLong()),
+      + "will cause the database to switch to read-only mode (in megabytes)", Long.class, WAL_MAX_SEGMENT_SIZE.getValueAsLong()),
 
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound",
       "The least amount of free space (in kb) in a page, which is tracked in paginated storage", Integer.class, 16),
