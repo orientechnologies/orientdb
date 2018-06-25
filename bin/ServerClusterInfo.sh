@@ -89,4 +89,4 @@ command="curl -s -u ${uname}:${password} 'http://localhost:2480/document/${datab
 res="$(eval ${command})"
 
 command="curl -s -u ${uname}:${password} 'http://localhost:2480/document/${database}${getNodesNamesAndIPsID}' -X DELETE -H 'Accept: application/json, text/plain, */*'"
-#res="$(eval ${command})"
+res="$(eval ${command})"
