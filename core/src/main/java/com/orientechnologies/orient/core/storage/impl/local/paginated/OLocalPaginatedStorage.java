@@ -103,17 +103,17 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   private volatile OThreadPoolExecutorWithLogging segmentAdderExecutor;
   private final    AtomicReference<Future<Void>>  segmentAppender = new AtomicReference<>();
+  private final    long                           walMaxSegSize;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id, OReadCache readCache,
-      OClosableLinkedContainer<Long, OFileClassic> files) throws IOException {
+      OClosableLinkedContainer<Long, OFileClassic> files, final long walMaxSegSize) {
     super(name, filePath, mode, id);
 
     this.files = files;
     this.readCache = readCache;
+    this.walMaxSegSize = walMaxSegSize;
 
-    File f = new File(url);
-
-    String sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));    
+    String sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
 
     storagePath = Paths.get(OIOUtils.getPathFromDatabaseName(sp));
     variableParser = new OStorageVariableParser(storagePath);
@@ -127,7 +127,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  public void create(OContextConfiguration contextConfiguration) throws IOException {
+  public void create(OContextConfiguration contextConfiguration) {
     try {
       stateLock.acquireWriteLock();
       try {
@@ -195,7 +195,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   public List<String> backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
-      final OCommandOutputListener iOutput, final int compressionLevel, final int bufferSize) throws IOException {
+      final OCommandOutputListener iOutput, final int compressionLevel, final int bufferSize) {
     try {
       if (out == null)
         throw new IllegalArgumentException("Backup output is null");
@@ -253,7 +253,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable,
-      final OCommandOutputListener iListener) throws IOException {
+      final OCommandOutputListener iListener) {
     try {
       if (!isClosed())
         close(true, false);
@@ -267,7 +267,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             // DELETE ONLY THE SUPPORTED FILES
             for (String ext : ALL_FILE_EXTENSIONS)
               if (f.getPath().endsWith(ext)) {
-                f.delete();
+                if (!f.delete()) {
+                  OLogManager.instance().error(this, "Can not delete " + f, null);
+                }
                 break;
               }
           }
@@ -375,7 +377,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     final File walBackupFile = new File(directory, name);
     try (FileOutputStream outputStream = new FileOutputStream(walBackupFile)) {
       try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream)) {
-        while (true) {
+        do {
           while (bl < buffer.length && (rb = stream.read(buffer, bl, buffer.length - bl)) > -1) {
             bl += rb;
           }
@@ -383,10 +385,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           bufferedOutputStream.write(buffer, 0, bl);
           bl = 0;
 
-          if (rb < 0) {
-            break;
-          }
-        }
+        } while (rb >= 0);
       }
     }
   }
@@ -396,8 +395,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     final OCASDiskWriteAheadLog restoreWAL = new OCASDiskWriteAheadLog(name, storagePath, directory.toPath(),
         getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
         getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * 1024 * 1024L,
-        25,
-        true, getConfiguration().getLocaleInstance(), OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
+        25, true, getConfiguration().getLocaleInstance(), OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024,
         getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT));
 
@@ -523,9 +521,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       walPath = Paths.get(configWalPath);
     }
     final OCASDiskWriteAheadLog diskWriteAheadLog = new OCASDiskWriteAheadLog(name, storagePath, walPath,
-        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
-        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * 1024 * 1024L,
-        25,
+        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE), walMaxSegSize, 25,
         true, getConfiguration().getLocaleInstance(), OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024,
         getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT));

@@ -21,9 +21,22 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Queue;
+import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * @author Artem Loginov
@@ -60,7 +73,7 @@ public class ReadWriteCacheConcurrentTest {
       buildDirectory = ".";
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().getEngine("plocal")
-        .createStorage(buildDirectory + "/ReadWriteCacheConcurrentTest", null);
+        .createStorage(buildDirectory + "/ReadWriteCacheConcurrentTest", null, 4 * 1024 * 1024);
     //loadStorage("plocal:" + buildDirectory + "/ReadWriteCacheConcurrentTest");
     storageLocal.create(null);
 

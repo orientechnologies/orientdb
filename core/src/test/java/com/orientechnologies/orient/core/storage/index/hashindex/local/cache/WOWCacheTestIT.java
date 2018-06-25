@@ -15,7 +15,11 @@ import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +27,11 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Random;
+import java.util.TreeMap;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -39,7 +47,7 @@ public class WOWCacheTestIT {
   private static final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
 
   private static OWOWCache                                    wowCache;
-  private        OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<>(1024);
+  private final  OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<>(1024);
 
   @BeforeClass
   public static void beforeClass() throws IOException {
@@ -48,7 +56,7 @@ public class WOWCacheTestIT {
     String buildDirectory = System.getProperty("buildDirectory", ".");
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().getRunningEngine("plocal").
-        createStorage(buildDirectory + "/WOWCacheTest", null);
+        createStorage(buildDirectory + "/WOWCacheTest", null, 4 * 1024 * 1024);
     storageLocal.create(new OContextConfiguration());
 
     fileName = "wowCacheTest.tst";
@@ -109,8 +117,7 @@ public class WOWCacheTestIT {
     final Path storagePath = storageLocal.getStoragePath();
     Files.createDirectories(storagePath);
 
-    wowCache = new OWOWCache(pageSize, bufferPool, null, 10, 100, storageLocal, false, files, 1,
-        OChecksumMode.StoreAndVerify);
+    wowCache = new OWOWCache(pageSize, bufferPool, null, 10, 100, storageLocal, false, files, 1, OChecksumMode.StoreAndVerify);
     wowCache.loadRegisteredFiles();
   }
 
