@@ -298,8 +298,15 @@ public enum OGlobalConfiguration {
       "If portion of exclusive pages into cache exceeds this value we start to flush only exclusive pages from disk cache",
       Float.class, 0.9),
 
-  DISK_CACHE_CHUNK_SIZE("storage.diskCache.chunkSize",
-      "Maximum distance between two pages after which they are not treated as single continous chunk", Integer.class, 256),
+  DISK_CACHE_RING_FLUSH_INTERVAL("storage.diskCache.ringFlushInterval",
+      "Interval in ms. between two consecutive flushes of dirty pages in ring mode", Integer.class, 100),
+
+  DISK_CACHE_RING_CHUNK_SIZE("storage.diskCache.ringChunkSize",
+      "Maximum size of chunk which should be flushed by write cache background thread in ring and exclusive modes", Integer.class,
+      512),
+
+  DISK_CACHE_LSN_CHUNK_SIZE("storage.diskCache.ringChunkSize",
+      "Maximum size of chunk which should be flushed by write cache background thread in LSN mode", Integer.class, 16),
 
   DISK_CACHE_EXCLUSIVE_PAGES_BOUNDARY("storage.diskCache.exclusiveBoundary",
       "Portion of exclusive pages in write cache after which we will start to flush only exclusive pages", Float.class, 0.7),
