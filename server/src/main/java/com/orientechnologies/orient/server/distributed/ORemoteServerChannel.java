@@ -27,6 +27,8 @@ import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectRequest;
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectResponse;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
@@ -66,6 +68,7 @@ public class ORemoteServerChannel {
 
   private volatile     int totalConsecutiveErrors = 0;
   private final static int MAX_CONSECUTIVE_ERRORS = 10;
+  private              int expireOffset;
 
   public ORemoteServerChannel(final ODistributedServerManager manager, final String iServer, final String iURL, final String user,
       final String passwd, final int currentProtocolVersion) throws IOException {
@@ -83,12 +86,15 @@ public class ORemoteServerChannel {
     executor = new OThreadPoolExecutorWithLogging(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(10));
     connect();
 
+    // half way from expire re-negotiate session
+    expireOffset =
+        manager.getServerInstance().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT)
+            * 60000 / 2;
   }
 
   private synchronized void checkReconnect() {
     long now = System.currentTimeMillis();
-    // if is after 5 sec from expire re-negotiate session
-    if (token.getExpiry() - 5000 < now) {
+    if (token.getExpiry() - expireOffset < now) {
       try {
         connect();
       } catch (IOException e) {

@@ -236,15 +236,25 @@ public class OResultInternal implements OResult {
 
   @Override
   public boolean isElement() {
-    return this.element != null;
+    if (element == null) {
+      return false;
+    }
+    if (element instanceof OElement) {
+      return true;
+    }
+    if (element.getRecord() instanceof OElement) {
+      return true;
+    }
+    return false;
   }
 
   public Optional<OElement> getElement() {
     if (element == null || element instanceof OElement) {
       return Optional.ofNullable((OElement) element);
     }
-    if (element.getRecord() instanceof OElement) {
-      return Optional.ofNullable(element.getRecord());
+    ORecord rec = element.getRecord();
+    if (rec instanceof OElement) {
+      return Optional.ofNullable((OElement) rec);
     }
     return Optional.empty();
   }

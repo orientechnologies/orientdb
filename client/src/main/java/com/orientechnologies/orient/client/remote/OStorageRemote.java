@@ -583,11 +583,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         if (!iForce)
           return;
       }
+      if (!checkForClose(iForce))
+        return;
     }
 
     //In backward compatible code the context is missing check if is there.
     //we need to check the status closing here for avoid deadlocks (in future flow refactor this may be removed)
-    if (context != null && status != STATUS.CLOSING) {
+    if (context != null && status != STATUS.CLOSED && status != STATUS.CLOSING) {
       context.closeStorage(this);
     }
 
@@ -957,9 +959,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OQueryResponse response = networkOperation(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
-    stickToSession();
-    if (!response.isHasNextPage()) {
-      unstickToSession();
+    if (response.isHasNextPage()) {
+      stickToSession();
+    } else {
+      db.queryClosed(response.getQueryId());
     }
     return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
@@ -974,9 +977,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
-    stickToSession();
-    if (!response.isHasNextPage()) {
-      unstickToSession();
+    if (response.isHasNextPage()) {
+      stickToSession();
+    } else {
+      db.queryClosed(response.getQueryId());
     }
     return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
@@ -990,6 +994,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OQueryResponse response = networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
+    if (response.isHasNextPage()) {
+      stickToSession();
+    } else {
+      db.queryClosed(response.getQueryId());
+    }
     return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
@@ -1002,6 +1011,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OQueryResponse response = networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
+    if (response.isHasNextPage()) {
+      stickToSession();
+    } else {
+      db.queryClosed(response.getQueryId());
+    }
     return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
@@ -1014,6 +1028,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OQueryResponse response = networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
+
+    if (response.isHasNextPage()) {
+      stickToSession();
+    } else {
+      db.queryClosed(response.getQueryId());
+    }
+
     return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
@@ -1026,6 +1047,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OQueryResponse response = networkOperationNoRetry(request, "Error on executing command: " + query);
     ORemoteResultSet rs = new ORemoteResultSet(db, response.getQueryId(), response.getResult(), response.getExecutionPlan(),
         response.getQueryStats(), response.isHasNextPage());
+    if (response.isHasNextPage()) {
+      stickToSession();
+    } else {
+      db.queryClosed(response.getQueryId());
+    }
     return new ORemoteQueryResult(rs, response.isTxChanges(), response.isReloadMetadata());
   }
 
@@ -1044,6 +1070,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     OQueryResponse response = networkOperation(request, "Error on fetching next page for statment: " + rs.getQueryId());
 
     rs.fetched(response.getResult(), response.isHasNextPage(), response.getExecutionPlan(), response.getQueryStats());
+    if (!response.isHasNextPage()) {
+      unstickToSession();
+      database.queryClosed(response.getQueryId());
+    }
   }
 
   public List<ORecordOperation> commit(final OTransactionInternal iTx) {

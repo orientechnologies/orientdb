@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
@@ -56,6 +57,8 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         if (change.getRecord() instanceof ODocument) {
           ODocument doc = (ODocument) change.getRecord();
           ODocument original = database.load(doc.getIdentity());
+          if (original == null)
+            throw new ORecordNotFoundException(doc.getIdentity());
           original.merge(doc, false, false);
           doc = original;
           OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, database);

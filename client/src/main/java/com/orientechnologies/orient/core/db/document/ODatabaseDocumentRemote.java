@@ -430,13 +430,9 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   public void closeQuery(String queryId) {
     storage.closeQuery(this, queryId);
+    queryClosed(queryId);
   }
-
-  @Override
-  public void queryStarted(String id, OResultSet rs) {
-    //do nothing
-  }
-
+  
   public void fetchNextPage(ORemoteResultSet rs) {
     storage.fetchNextPage(this, rs);
   }
