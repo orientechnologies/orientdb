@@ -6,7 +6,12 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
-import com.orientechnologies.orient.core.sql.parser.*;
+import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OForEachBlock;
+import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OIfStatement;
+import com.orientechnologies.orient.core.sql.parser.OReturnStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
 
 import java.util.Iterator;
 import java.util.List;

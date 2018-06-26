@@ -1036,7 +1036,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeConnect(OConnectRequest request) {
     OBinaryProtocolHelper.checkProtocolVersion(this, request.getProtocolVersion());
     if (request.getProtocolVersion() > 36)
-      throw new OConfigurationException("You can use connect as first operation only for protocol  < 37 please use handshake for protocol >= 37");
+      throw new OConfigurationException(
+          "You can use connect as first operation only for protocol  < 37 please use handshake for protocol >= 37");
     connection.getData().driverName = request.getDriverName();
     connection.getData().driverVersion = request.getDriverVersion();
     connection.getData().protocolVersion = request.getProtocolVersion();
@@ -1048,8 +1049,6 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().collectStats = request.isCollectStats();
 
     connection.setServerUser(server.serverLogin(request.getUsername(), request.getPassword(), "server.connect"));
-
-
 
     if (connection.getServerUser() == null)
       throw new OSecurityAccessException("Wrong user/password to [connect] to the remote OrientDB Server instance");
@@ -1102,7 +1101,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeDatabaseOpen(OOpenRequest request) {
     OBinaryProtocolHelper.checkProtocolVersion(this, request.getProtocolVersion());
     if (request.getProtocolVersion() > 36)
-      throw new OConfigurationException("You can use open as first operation only for protocol  < 37 please use handshake for protocol >= 37");
+      throw new OConfigurationException(
+          "You can use open as first operation only for protocol  < 37 please use handshake for protocol >= 37");
     connection.getData().driverName = request.getDriverName();
     connection.getData().driverVersion = request.getDriverVersion();
     connection.getData().protocolVersion = request.getProtocolVersion();

@@ -28,7 +28,6 @@ import com.orientechnologies.orient.client.remote.message.ODistributedConnectReq
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectResponse;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 

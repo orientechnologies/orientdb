@@ -43,7 +43,11 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
@@ -102,7 +106,8 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
 
     try {
       if (this.parsedStatement.modeFull) {
-        return replaceCluster(dManager, database, dManager.getServerInstance(), databaseName, this.parsedStatement.clusterName.getStringValue());
+        return replaceCluster(dManager, database, dManager.getServerInstance(), databaseName,
+            this.parsedStatement.clusterName.getStringValue());
       }
       // else {
       // int merged = 0;

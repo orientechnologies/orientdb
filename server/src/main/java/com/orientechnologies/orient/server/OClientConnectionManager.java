@@ -40,8 +40,15 @@ import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -86,7 +93,7 @@ public class OClientConnectionManager {
     while (iterator.hasNext()) {
       final Entry<Integer, OClientConnection> entry = iterator.next();
 
-      if(entry.getValue().tryAcquireForExpire()) {
+      if (entry.getValue().tryAcquireForExpire()) {
         try {
 
           final Socket socket;
@@ -112,7 +119,8 @@ public class OClientConnectionManager {
             }
             iterator.remove();
           } else if (Boolean.TRUE.equals(entry.getValue().getTokenBased())) {
-            if (entry.getValue().getToken() != null && !entry.getValue().getToken().isNowValid() && !entry.getValue().getToken().getIsValid()) {
+            if (entry.getValue().getToken() != null && !entry.getValue().getToken().isNowValid() && !entry.getValue().getToken()
+                .getIsValid()) {
               // Close the current session but not the network because can be used by another session.
               removeConnectionFromSession(entry.getValue());
               entry.getValue().close();

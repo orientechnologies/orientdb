@@ -11,7 +11,14 @@ import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.sql.parser.*;
+import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
+import com.orientechnologies.orient.core.sql.parser.OBinaryCondition;
+import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
+import com.orientechnologies.orient.core.sql.parser.OGeOperator;
+import com.orientechnologies.orient.core.sql.parser.OGtOperator;
+import com.orientechnologies.orient.core.sql.parser.OLeOperator;
+import com.orientechnologies.orient.core.sql.parser.OLtOperator;
+import com.orientechnologies.orient.core.sql.parser.ORid;
 
 import java.util.Map;
 import java.util.Optional;
