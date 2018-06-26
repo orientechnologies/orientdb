@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -26,6 +27,9 @@ import static org.junit.Assert.*;
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class ODocumentTest {
+  private static final String dbName = ODocumentTest.class.getSimpleName();
+  private static final String defaultDbAdminCredentials = "admin";
+  
   @Test
   public void testCopyToCopiesEmptyFieldsTypesAndOwners() throws Exception {
     ODocument doc1 = new ODocument();
@@ -160,9 +164,13 @@ public class ODocumentTest {
 
   @Test
   public void testKeepSchemafullFieldTypeSerialization() throws Exception {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
-    db.create();
-    try {
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+      
       OClass clazz = db.getMetadata().getSchema().createClass("Test");
       clazz.createProperty("integer", OType.INTEGER);
       clazz.createProperty("link", OType.LINK);
@@ -188,7 +196,12 @@ public class ODocumentTest {
       assertEquals(doc.fieldType("binary"), OType.BINARY);
       assertEquals(doc.fieldType("link"), OType.LINK);
     } finally {
-      db.drop();
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
     }
   }
 
@@ -207,9 +220,12 @@ public class ODocumentTest {
 
   @Test
   public void testRemovingReadonlyField() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
-    db.create();
-    try {
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
 
       OSchema schema = db.getMetadata().getSchema();
       OClass classA = schema.createClass("TestRemovingField2");
@@ -232,7 +248,12 @@ public class ODocumentTest {
       doc.undo("property");// we decided undo readonly field
       doc.save();
     } finally {
-      db.drop();
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
     }
   }
 
@@ -268,9 +289,12 @@ public class ODocumentTest {
 
   @Test
   public void testUndo() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
-    db.create();
-    try {
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
 
       OSchema schema = db.getMetadata().getSchema();
       OClass classA = schema.createClass("TestUndo");
@@ -306,7 +330,12 @@ public class ODocumentTest {
       assertEquals(doc.field("name"), "My Name 4");
       assertEquals(doc.field("property"), "value1");
     } finally {
-      db.drop();
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
     }
   }
 
@@ -382,10 +411,12 @@ public class ODocumentTest {
   
   @Test
   public void testGetDiffFromOriginalSimple(){
-    ODatabaseDocumentTx db = null;
-    try{
-      db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
-      db.create();
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
 
       OClass claz = db.createClassIfNotExist("TestClass");
 
@@ -425,16 +456,22 @@ public class ODocumentTest {
     }
     finally{
       if (db != null)
-        db.drop();
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
     }
   }
   
   @Test
   public void testGetDiffFromOriginalNested(){
-    ODatabaseDocumentTx db = null;
-    try{
-      db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
-      db.create();
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
 
       OClass claz = db.createClassIfNotExist("TestClass");
 
@@ -481,16 +518,22 @@ public class ODocumentTest {
     }
     finally{
       if (db != null)
-        db.drop();
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
     }
   }
   
   @Test
   public void testListDelta(){
-    ODatabaseDocumentTx db = null;
-    try{
-      db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
-      db.create();
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
 
       OClass claz = db.createClassIfNotExist("TestClass");
 
@@ -532,16 +575,22 @@ public class ODocumentTest {
     }
     finally{
       if (db != null)
-        db.drop();
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
     }
   }
   
   @Test
   public void testListOfListsDelta(){
-    ODatabaseDocumentTx db = null;
-    try{
-      db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
-      db.create();
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
 
       OClass claz = db.createClassIfNotExist("TestClass");
 
@@ -574,16 +623,22 @@ public class ODocumentTest {
     }
     finally{
       if (db != null)
-        db.drop();
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
     }
   }
   
   @Test
   public void testListOfDocsDelta(){
-    ODatabaseDocumentTx db = null;
-    try{
-      db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
-      db.create();
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
 
       String fieldName = "testField";
       
@@ -624,8 +679,12 @@ public class ODocumentTest {
     }
     finally{
       if (db != null)
-        db.drop();
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
     }
-  }
-
+  } 
+  
 }

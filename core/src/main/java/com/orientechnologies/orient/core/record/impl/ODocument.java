@@ -1553,6 +1553,8 @@ public class ODocument extends ORecordAbstract
   
   //process in depth first
   private static Object mergeUpdateTree(Object toObj, final Object fromObj){
+    OType toType = OType.getTypeByClass(toObj.getClass());
+    OType fromType = OType.getTypeByClass(fromObj.getClass());
     if (toObj instanceof ODocument && fromObj instanceof ODocument){      
       ODocument to = (ODocument)toObj;
       ODocument from = (ODocument)fromObj;
@@ -1615,7 +1617,7 @@ public class ODocument extends ORecordAbstract
         }      
       }
     }
-    else if (fromObj instanceof List && toObj instanceof List){
+    else if (fromType.isList() && toType.isList()){
       List fromList = (List)fromObj; 
       List toList = (List)toObj;      
       for (int i = 0; i < fromList.size(); i++){
@@ -1627,8 +1629,9 @@ public class ODocument extends ORecordAbstract
           toElement = mergeUpdateTree(toElement, fromElement);
           toList.set(index, toElement);
         }
-        else{
-          //TODO should never happen handle this case
+        else{          
+          //this should never happend, this is invalid delta
+          throw new IllegalStateException("Inavlid delta");
         }
       }      
     }

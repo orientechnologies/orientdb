@@ -35,13 +35,13 @@ public enum UpdateDeltaValueType {
       case LIST_UPDATE:
         return 2;
       case LIST_ELEMENT_ADD:
-        return 4;
+        return 3;
       case LIST_ELEMENT_REMOVE:
-        return 8;
+        return 4;
       case LIST_ELEMENT_UPDATE:
-        return 16;
+        return 5;
       case LIST_ELEMENT_CHANGE:
-        return 32;
+        return 6;
       default:
         return 0;
     }
@@ -53,13 +53,13 @@ public enum UpdateDeltaValueType {
         return UPDATE;
       case 2:
         return LIST_UPDATE;
-      case 4: 
+      case 3: 
         return LIST_ELEMENT_ADD;
-      case 8:
+      case 4:
         return LIST_ELEMENT_REMOVE;
-      case 16:
+      case 5:
         return LIST_ELEMENT_UPDATE;
-      case 32:
+      case 6:
         return LIST_ELEMENT_CHANGE;
       case 0:
       default:
