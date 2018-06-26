@@ -97,6 +97,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
   private volatile long walSizeLimit;
 
+  private final long segmentsInterval;
+
   private final long maxSegmentSize;
 
   private final long freeSpaceLimit;
@@ -153,8 +155,9 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   //not volatile because used only inside of write thread.
   private          OLogSequenceNumber              writtenCheckpoint = null;
 
-  private       long lastFSyncTs = -1;
-  private final int  fsyncInterval;
+  private          long lastFSyncTs = -1;
+  private final    int  fsyncInterval;
+  private volatile long segmentAdditionTs;
 
   private long currentPosition = 0;
 
@@ -165,7 +168,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private OLogSequenceNumber checkPointLSN        = null;
 
   public OCASDiskWriteAheadLog(final String storageName, final Path storagePath, final Path walPath, final int maxPagesCacheSize,
-      final long maxSegmentSize, final int commitDelay, final boolean filterWALFiles, final Locale locale,
+      long segmentsInterval, final long maxSegmentSize, final int commitDelay, final boolean filterWALFiles, final Locale locale,
       final long walSizeHardLimit, final long freeSpaceLimit, final int fsyncInterval) throws IOException {
     commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
@@ -174,6 +177,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       return thread;
     });
+
+    this.segmentsInterval = segmentsInterval;
     commitExecutor.setMaximumPoolSize(1);
 
     writeExecutor = new OThreadPoolExecutorWithLogging(1, 1, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), r -> {
@@ -219,6 +224,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     currentSegment = nextSegmentId;
     this.maxSegmentSize = maxSegmentSize;
+    this.segmentAdditionTs = System.nanoTime();
 
     //we log empty record on open so end of WAL will always contain valid value
     final OStartWALRecord startRecord = new OStartWALRecord();
@@ -1074,6 +1080,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       segmentSize.set(0);
 
       logMilestoneRecord();
+
+      segmentAdditionTs = System.nanoTime();
     } finally {
       segmentLock.exclusiveUnlock();
     }
@@ -1096,6 +1104,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       segmentSize.set(0);
 
       logMilestoneRecord();
+
+      segmentAdditionTs = System.nanoTime();
     } finally {
       segmentLock.exclusiveUnlock();
     }
@@ -1811,6 +1821,12 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
             }
           } finally {
             fl.countDown();
+          }
+
+          if (qSize > 0 && ts - segmentAdditionTs >= segmentsInterval) {
+            for (final OSegmentOverflowListener listener : segmentOverflowListeners) {
+              listener.onSegmentOverflow(currentSegment);
+            }
           }
         }
 

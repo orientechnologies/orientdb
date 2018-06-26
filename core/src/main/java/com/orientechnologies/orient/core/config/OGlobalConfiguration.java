@@ -241,6 +241,9 @@ public enum OGlobalConfiguration {
       "Maximum size of WAL cache (in amount of WAL pages, each page is 4k) If set to 0, caching will be disabled", Integer.class,
       30_000),
 
+  WAL_SEGMENTS_INTERVAL("storage.wal.segmentsInterval",
+      "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 30),
+
   WAL_FILE_AUTOCLOSE_INTERVAL("storage.wal.fileAutoCloseInterval",
       "Interval in seconds after which WAL file will be closed if there is no "
           + "any IO operations on this file (in seconds), default value is 10", Integer.class, 10, false),
