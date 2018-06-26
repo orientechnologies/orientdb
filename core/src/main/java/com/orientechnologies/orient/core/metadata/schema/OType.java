@@ -776,6 +776,10 @@ public enum OType {
     return this == EMBEDDEDLIST || this == EMBEDDEDMAP || this == EMBEDDEDSET || this == LINKLIST || this == LINKMAP
         || this == LINKSET || this == LINKBAG;
   }
+  
+  public boolean isList(){
+    return this == EMBEDDEDLIST || this == LINKLIST;
+  }
 
   public boolean isLink() {
     return this == LINK || this == LINKSET || this == LINKLIST || this == LINKMAP || this == LINKBAG;

@@ -1602,7 +1602,11 @@ public class ODocument extends ORecordAbstract
                 index = deltaUpdateListElement.field("i");
                 Object originalVal = originalList.get(index);
 //                UpdateDeltaValueType type = UpdateDeltaValueType.fromOrd(valDoc.field("t"));
-                Object deltaDeltaVal = valDoc.field("v");                
+                Object deltaDeltaVal = valDoc.field("v");
+                //here deltaDeltaVal can be null, then we want to use valDoc. This is case with list of documents
+                if (deltaDeltaVal == null){
+                  deltaDeltaVal = valDoc;
+                }
                 Object merged = mergeUpdateTree(originalVal, deltaDeltaVal);
                 originalList.set(index, merged);
                 break;
@@ -3319,6 +3323,7 @@ public class ODocument extends ORecordAbstract
     UpdateDeltaValueType type;
   }
   
+  //this method is callen only for changed fields
   private TypeValue getUpdateDeltaValue(Object currentValue, Object previousValue, boolean changed){
     //TODO review this clause once again    
     if (changed || !(currentValue instanceof ODocument)){
@@ -3326,10 +3331,10 @@ public class ODocument extends ORecordAbstract
       TypeValue retVal = new TypeValue();
       //separate processing for embedded lists
       //if previous value is null we want to send whole list to reduce overhead
-      if (currentType == OType.EMBEDDEDLIST && previousValue != null){
+      if (currentType.isList() && previousValue != null){
         OType previousType = OType.getTypeByClass(previousValue.getClass());
         //if previous value differs in type we want to send whole list to reduce overhead
-        if (currentType == previousType){
+        if (previousType.isList()){
           retVal.type = UpdateDeltaValueType.LIST_UPDATE;
           List deltaList = new ArrayList();                    
           retVal.value = deltaList;
@@ -3389,6 +3394,29 @@ public class ODocument extends ORecordAbstract
           }
           return retVal;
         }
+      }
+      //this means that some list memeber document is changed
+      if (currentType.isList() && previousValue == null){
+        List currentList = (List)currentValue;
+        retVal.type = UpdateDeltaValueType.LIST_UPDATE;
+        List deltaList = new ArrayList();
+        retVal.value = deltaList;
+        for (int i = 0; i < currentList.size(); i++){
+          Object currentElement = currentList.get(i);
+          if (currentElement instanceof ODocument){
+            ODocument currentElementDoc = (ODocument)currentElement;
+            if (currentElementDoc.isChangedInDepth()){
+              ODocument listElementDelta = new ODocument();
+              listElementDelta.field("i", i);
+              listElementDelta.field("t", UpdateDeltaValueType.getOrd(UpdateDeltaValueType.LIST_ELEMENT_UPDATE));
+              ODocument deltaUpdate = currentElementDoc.getDeltaFromOriginalForUpdate();
+              listElementDelta.field("v", deltaUpdate);
+              deltaList.add(listElementDelta);
+            }            
+          }
+        }
+        
+        return retVal;
       }
       
       retVal.value = currentValue;
@@ -3482,5 +3510,15 @@ public class ODocument extends ORecordAbstract
     ret.setIdentity(id);
     
     return ret;
-  }  
+  }
+
+  public boolean isChangedInDepth(){
+    for (Map.Entry<String, ODocumentEntry> field : _fields.entrySet()){
+      if (field.getValue().isChangedTree()){
+        return true;
+      }
+    }
+    return false;
+  }
+  
 }

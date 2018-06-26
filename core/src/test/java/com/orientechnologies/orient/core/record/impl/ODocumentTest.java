@@ -577,5 +577,55 @@ public class ODocumentTest {
         db.drop();
     }
   }
+  
+  @Test
+  public void testListOfDocsDelta(){
+    ODatabaseDocumentTx db = null;
+    try{
+      db = new ODatabaseDocumentTx("memory:" + ODocumentTest.class.getSimpleName());
+      db.create();
+
+      String fieldName = "testField";
+      
+      OClass claz = db.createClassIfNotExist("TestClass");
+//      claz.createProperty(fieldName, OType.EMBEDDEDLIST);
+
+      ODocument doc = new ODocument(claz);      
+      
+      String constantField = "constField";
+      String constValue = "ConstValue";
+      String variableField = "varField";
+      List<ODocument> originalValue = new ArrayList<>();
+      for (int i = 0; i < 2; i++){
+        ODocument containedDoc = new ODocument();
+        containedDoc.field(constantField, constValue);
+        containedDoc.field(variableField, "one" + i);
+        originalValue.add(containedDoc);
+      }
+      
+      doc.field(fieldName, originalValue);
+
+      doc = db.save(doc);
+      ODocument originalDoc = doc.copy();
+
+      ODocument testDoc = originalValue.get(1);
+      testDoc.field(constantField, constValue);
+      testDoc.field(variableField, "two");      
+      originalValue.set(1, testDoc);
+      doc.field(fieldName, originalValue);
+      ODocument delta = doc.getDeltaFromOriginal();
+      delta = delta.field("u");
+      
+      originalDoc.mergeUpdateDelta(delta);
+      List<ODocument> checkList = originalDoc.field(fieldName);
+      ODocument checkDoc = checkList.get(1);
+      assertEquals(checkDoc.field(constantField), constValue);
+      assertEquals(checkDoc.field(variableField), "two");
+    }
+    finally{
+      if (db != null)
+        db.drop();
+    }
+  }
 
 }

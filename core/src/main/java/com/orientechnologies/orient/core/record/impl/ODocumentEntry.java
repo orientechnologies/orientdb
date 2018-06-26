@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.record.impl;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -57,9 +58,19 @@ public class ODocumentEntry {
     
     if (value instanceof ODocument){
       ODocument doc  = (ODocument)value;
-      for (Map.Entry<String, ODocumentEntry> field : doc._fields.entrySet()){
-        if (field.getValue().isChangedTree()){
-          return true;
+      return doc.isChangedInDepth();
+    }
+    
+    if (value instanceof List){
+      List list = (List)value;
+      for (Object element : list){
+        if (element instanceof ODocument){
+          ODocument doc = (ODocument)element;
+          for (Map.Entry<String, ODocumentEntry> field : doc._fields.entrySet()){
+            if (field.getValue().isChangedTree()){
+              return true;
+            }
+          }
         }
       }
     }
@@ -77,6 +88,20 @@ public class ODocumentEntry {
       for (Map.Entry<String, ODocumentEntry> field : doc._fields.entrySet()){
         if (field.getValue().hasNonExistingTree()){
           return true;
+        }
+      }
+    }
+    
+    if (value instanceof List){
+      List list = (List)value;
+      for (Object element : list){
+        if (element instanceof ODocument){
+          ODocument doc = (ODocument)element;
+          for (Map.Entry<String, ODocumentEntry> field : doc._fields.entrySet()){
+            if (field.getValue().hasNonExistingTree()){
+              return true;
+            }
+          }
         }
       }
     }
