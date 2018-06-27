@@ -67,13 +67,11 @@ public class ORemoteServerChannel {
   private static final boolean               COLLECT_STATS = false;
   private              int                   sessionId     = -1;
   private              byte[]                sessionToken;
-  private              OToken                token;
   private              OContextConfiguration contextConfig = new OContextConfiguration();
   private              Date                  createdOn     = new Date();
 
   private volatile     int totalConsecutiveErrors = 0;
   private final static int MAX_CONSECUTIVE_ERRORS = 10;
-  private              int expireOffset;
 
   public ORemoteServerChannel(final ODistributedServerManager manager, final String iServer, final String iURL, final String user,
       final String passwd, final int currentProtocolVersion) throws IOException {
@@ -90,26 +88,6 @@ public class ORemoteServerChannel {
     protocolVersion = currentProtocolVersion;
 
     connect();
-
-    // half way from expire re-negotiate session
-    expireOffset =
-        manager.getServerInstance().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT)
-            * 60000 / 2;
-  }
-
-  private synchronized void checkReconnect() {
-    long now = System.currentTimeMillis();
-    if (token.getExpiry() - expireOffset < now) {
-      try {
-        connect();
-      } catch (IOException e) {
-        handleNewError();
-
-        ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-            "Error on reconnecting to distributed node (%s)", e.toString());
-        throw OException.wrapException(new ODistributedException("Error reconnecting to remote node"), e);
-      }
-    }
   }
 
   public int getDistributedProtocolVersion() {
@@ -121,7 +99,6 @@ public class ORemoteServerChannel {
   }
 
   public void sendRequest(final ODistributedRequest request) {
-    checkReconnect();
     networkOperation(OChannelBinaryProtocol.DISTRIBUTED_REQUEST, () -> {
       request.toStream(channel.getDataOutput());
       channel.flush();
@@ -132,7 +109,6 @@ public class ORemoteServerChannel {
   }
 
   public void sendResponse(final ODistributedResponse response) {
-    checkReconnect();
     networkOperation(OChannelBinaryProtocol.DISTRIBUTED_RESPONSE, () -> {
           response.toStream(channel.getDataOutput());
           channel.flush();
@@ -163,7 +139,6 @@ public class ORemoteServerChannel {
 
       return null;
     }, "Cannot connect to the remote server '" + url + "'", MAX_RETRY, false);
-    token = manager.getServerInstance().getTokenHandler().parseNotVerifyBinaryToken(sessionToken);
   }
 
   public void close() {
