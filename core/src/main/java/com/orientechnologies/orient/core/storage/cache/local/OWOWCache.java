@@ -42,8 +42,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OWriteCacheException;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
@@ -54,7 +52,6 @@ import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
@@ -62,7 +59,6 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerforman
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
 import java.io.EOFException;
-import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
@@ -71,7 +67,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -239,8 +234,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private final FileStore fileStore;
 
-  private PageKey lastRingPage  = null;
-  private long    lastRingFlush = 0;
+  private PageKey lastRingPage    = null;
+  private long    lastRingFlushTs = 0;
 
   /**
    * Container of all files are managed by write cache. That is special type of container which ensures that only limited amount of
@@ -348,11 +343,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private final AtomicReference<CountDownLatch> exclusivePagesLimitLatch = new AtomicReference<>();
 
   /**
-   * Storage instance
-   */
-  private final OLocalPaginatedStorage storageLocal;
-
-  /**
    * We acquire lock managed by this manager in read mode if we need to read data from files, and in write mode if we
    * add/remove/truncate file.
    */
@@ -417,6 +407,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    */
   private final OByteBufferPool bufferPool;
 
+  private final String storageName;
+
   private volatile OChecksumMode checksumMode;
 
   /**
@@ -436,9 +428,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private final List<WeakReference<OBackgroundExceptionListener>> backgroundExceptionListeners = new CopyOnWriteArrayList<>();
 
   public OWOWCache(final int pageSize, final OByteBufferPool bufferPool, final OWriteAheadLog writeAheadLog,
-      final long pageFlushInterval, final long exclusiveWriteCacheMaxSize, final OLocalPaginatedStorage storageLocal,
-      final boolean checkMinSize, final OClosableLinkedContainer<Long, OFileClassic> files, final int id,
-      final OChecksumMode checksumMode) {
+      final long pageFlushInterval, final long exclusiveWriteCacheMaxSize, final boolean checkMinSize, Path storagePath,
+      OPerformanceStatisticManager performanceStatisticManager, String storageName, OBinarySerializer<String> stringSerializer,
+      final OClosableLinkedContainer<Long, OFileClassic> files, final int id, final OChecksumMode checksumMode) {
     filesLock.acquireWriteLock();
     try {
       this.id = id;
@@ -456,25 +448,22 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       this.exclusiveWriteCacheMaxSize = exclusiveWriteNormalizedSize;
 
-      this.storageLocal = storageLocal;
-
-      this.storagePath = storageLocal.getStoragePath();
+      this.storagePath = storagePath;
       try {
-        this.fileStore = Files.getFileStore(storagePath);
+        this.fileStore = Files.getFileStore(this.storagePath);
       } catch (final IOException e) {
         throw OException.wrapException(new OStorageException("Error during retrieving of file store"), e);
       }
 
-      this.performanceStatisticManager = storageLocal.getPerformanceStatisticManager();
+      this.performanceStatisticManager = performanceStatisticManager;
+      this.stringSerializer = stringSerializer;
+      this.storageName = storageName;
 
-      final OBinarySerializerFactory binarySerializerFactory = storageLocal.getComponentsFactory().binarySerializerFactory;
-      this.stringSerializer = binarySerializerFactory.getObjectSerializer(OType.STRING);
-
-      commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FlushThreadFactory(storageLocal.getName()));
+      commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FlushThreadFactory(storageName));
       commitExecutor.setMaximumPoolSize(1);
 
       cacheEventsPublisher = new OThreadPoolExecutorWithLogging(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
-          new SynchronousQueue<>(), new CacheEventsPublisherFactory(storageLocal.getName()));
+          new SynchronousQueue<>(), new CacheEventsPublisherFactory(storageName));
 
       if (pageFlushInterval > 0)
         commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
@@ -640,8 +629,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             try {
               listener.lowDiskSpace(information);
             } catch (final Exception e) {
-              OLogManager.instance()
-                  .error(this, "Error during notification of low disk space for storage " + storageLocal.getName(), e);
+              OLogManager.instance().error(this, "Error during notification of low disk space for storage " + storageName, e);
             }
         }
       }
@@ -658,8 +646,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             try {
               listener.pageIsBroken(fileName, pageIndex);
             } catch (final Exception e) {
-              OLogManager.instance()
-                  .error(this, "Error during notification of page is broken for storage " + storageLocal.getName(), e);
+              OLogManager.instance().error(this, "Error during notification of page is broken for storage " + storageName, e);
             }
         }
       }
@@ -734,7 +721,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       fileClassic = createFileInstance(fileName, fileId);
 
       if (!fileClassic.exists())
-        throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
+        throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageName);
       else {
         // REGISTER THE FILE
         OLogManager.instance().debug(this,
@@ -767,7 +754,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final OFileClassic fileClassic;
 
       if (fileId != null && fileId >= 0)
-        throw new OStorageException("File with name " + fileName + " already exists in storage " + storageLocal.getName());
+        throw new OStorageException("File with name " + fileName + " already exists in storage " + storageName);
 
       if (fileId == null) {
         ++nextInternalId;
@@ -859,8 +846,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       if (existingFileId != null && existingFileId >= 0) {
         if (existingFileId == intId)
-          throw new OStorageException(
-              "File with name '" + fileName + "'' already exists in storage '" + storageLocal.getName() + "'");
+          throw new OStorageException("File with name '" + fileName + "'' already exists in storage '" + storageName + "'");
         else
           throw new OStorageException(
               "File with given name '" + fileName + "' already exists but has different id " + existingFileId + " vs. proposed "
@@ -1714,10 +1700,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private void initNameIdMapping() throws IOException, InterruptedException {
     if (nameIdMapHolder == null) {
-      final Path storagePath = storageLocal.getStoragePath();
-
-      if (!Files.exists(storagePath))
+      if (!Files.exists(storagePath)) {
         Files.createDirectories(storagePath);
+      }
 
       final Path nameIdMapHolderV1 = storagePath.resolve(NAME_ID_MAP_V1);
       final Path nameIdMapHolderV2 = storagePath.resolve(NAME_ID_MAP_V2);
@@ -1856,10 +1841,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         final long externalId = composeFileId(id, nameIdEntry.getValue());
 
         if (files.get(externalId) == null) {
-          final String path = storageLocal.getVariableParser()
-              .resolveVariables(storageLocal.getStoragePath() + File.separator + idFileNameMap.get(nameIdEntry.getValue()));
-
-          final OFileClassic fileClassic = new OFileClassic(Paths.get(path));
+          final Path path = storagePath.resolve(idFileNameMap.get((nameIdEntry.getValue())));
+          final OFileClassic fileClassic = new OFileClassic(path);
 
           if (fileClassic.exists()) {
             fileClassic.open();
@@ -2116,8 +2099,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         final long firstPageEndPosition = firstPageStartPosition + pageSize;
 
         if (fileClassic.getFileSize() >= firstPageEndPosition) {
-          final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
-              .getSessionPerformanceStatistic();
+          final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic;
+
+          if (performanceStatisticManager == null) {
+            sessionStoragePerformanceStatistic = null;
+          } else {
+            sessionStoragePerformanceStatistic = performanceStatisticManager.getSessionPerformanceStatistic();
+          }
+
           if (sessionStoragePerformanceStatistic != null) {
             sessionStoragePerformanceStatistic.startPageReadFromFileTimer();
           }
@@ -2455,9 +2444,16 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         return;
       }
 
-      final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
-      if (statistic != null)
+      final OSessionStoragePerformanceStatistic statistic;
+      if (performanceStatisticManager != null) {
+        statistic = performanceStatisticManager.getSessionPerformanceStatistic();
+      } else {
+        statistic = null;
+      }
+
+      if (statistic != null) {
         statistic.startWriteCacheFlushTimer();
+      }
 
       int flushedPages = 0;
       try {
@@ -2534,12 +2530,12 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     private int flushWriteCacheByTheRing() throws IOException, InterruptedException {
       final long startTs = System.nanoTime();
 
-      if (lastRingFlush == 0) {
-        lastRingFlush = startTs;
+      if (lastRingFlushTs == 0) {
+        lastRingFlushTs = startTs;
         return 0;
       }
 
-      final long flushInterval = startTs - lastRingFlush;
+      final long flushInterval = startTs - lastRingFlushTs;
       if (flushInterval > 0 && flushInterval < RING_FLUSH_INTERVAL) {
         return 0;
       }
@@ -2579,6 +2575,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           if (!chunk.isEmpty()) {
             flushedPages += flushPagesChunk(chunk);
             releaseExclusiveLatch();
+
             endTs = System.nanoTime();
           }
 
@@ -2706,7 +2703,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
 
       lastRingPage = pageKey;
-      lastRingFlush = startTs;
+      lastRingFlushTs = startTs;
 
       return flushedPages;
     }
@@ -2837,10 +2834,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       if (firstMinLSNEntry != null) {
         final PageKey minPageKey = firstMinLSNEntry.getValue().iterator().next();
         pageIterator = writeCachePages.tailMap(minPageKey).entrySet().iterator();
-      } else
-        pageIterator = writeCachePages.entrySet().iterator();
-
-      if (!pageIterator.hasNext()) {
+      } else {
         pageIterator = writeCachePages.entrySet().iterator();
       }
 
@@ -2860,6 +2854,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         if ((iterationsCounter & 131_071) == 0) {
           endTs = System.nanoTime();
         }
+
         if (!pageIterator.hasNext()) {
           if (!chunk.isEmpty()) {
             flushedPages += flushPagesChunk(chunk);
@@ -2867,6 +2862,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
             endTs = System.nanoTime();
           }
+
           continue flushCycle;
         }
 
@@ -2874,7 +2870,26 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         final PageKey pageKey = cacheEntry.getKey();
 
         if (fileId == -1) {
+          if (!chunk.isEmpty()) {
+            throw new IllegalStateException("Chunk is not empty !");
+          }
+
           fileId = pageKey.fileId;
+        } else {
+          if (lastPageIndex == -1) {
+            throw new IllegalStateException("Last page index is -1");
+          }
+
+          if (fileId != pageKey.fileId || lastPageIndex != pageKey.pageIndex - 1) {
+            if (!chunk.isEmpty()) {
+              flushedPages += flushPagesChunk(chunk);
+              releaseExclusiveLatch();
+
+              endTs = System.nanoTime();
+
+              continue flushCycle;
+            }
+          }
         }
 
         final long version;
@@ -2909,27 +2924,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         copy.position(0);
 
-        if (chunk.isEmpty()) {
-          chunk.add(new OTriple<>(version, copy, pointer));
-        } else {
-          if (fileId != pointer.getFileId() || lastPageIndex != pointer.getPageIndex() - 1) {
-            if (!chunk.isEmpty()) {
-              flushedPages += flushPagesChunk(chunk);
-              releaseExclusiveLatch();
-
-              endTs = System.nanoTime();
-            }
-
-            if (pageKey.fileId != fileId) {
-              fileId = pageKey.fileId;
-            }
-
-            chunk.add(new OTriple<>(version, copy, pointer));
-          } else {
-            chunk.add(new OTriple<>(version, copy, pointer));
-          }
-        }
-
+        chunk.add(new OTriple<>(version, copy, pointer));
         lastPageIndex = pageKey.pageIndex;
       }
 

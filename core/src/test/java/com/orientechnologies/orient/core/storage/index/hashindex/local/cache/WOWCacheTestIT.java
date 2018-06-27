@@ -4,17 +4,16 @@ import com.orientechnologies.common.collection.closabledictionary.OClosableLinke
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Random;
@@ -41,61 +41,66 @@ public class WOWCacheTestIT {
   private static final int systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
   private static final int pageSize     = systemOffset + 8;
 
-  private static OLocalPaginatedStorage storageLocal;
-  private static String                 fileName;
+  private static String fileName;
 
   private static final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
 
-  private static OWOWCache                                    wowCache;
-  private final  OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<>(1024);
+  private static OWOWCache             wowCache;
+  private static OCASDiskWriteAheadLog writeAheadLog;
+  private static Path                  storagePath;
+  private static String                storageName;
+
+  private final OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<>(1024);
 
   @BeforeClass
-  public static void beforeClass() throws IOException {
+  public static void beforeClass() {
     OGlobalConfiguration.STORAGE_EXCLUSIVE_FILE_ACCESS.setValue(Boolean.FALSE);
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
+
     String buildDirectory = System.getProperty("buildDirectory", ".");
-
-    storageLocal = (OLocalPaginatedStorage) Orient.instance().getRunningEngine("plocal").
-        createStorage(buildDirectory + "/WOWCacheTest", null, 4 * 1024 * 1024);
-    storageLocal.create(new OContextConfiguration());
-
     fileName = "wowCacheTest.tst";
+
+    storageName = "WOWCacheTest";
+    storagePath = Paths.get(buildDirectory).resolve(storageName);
   }
 
   @Before
   public void beforeMethod() throws Exception {
-    closeCacheAndDeleteFile();
+    deleteCacheAndDeleteFile();
 
     initBuffer();
   }
 
-  private static void closeCacheAndDeleteFile() throws IOException {
+  private static void deleteCacheAndDeleteFile() throws IOException {
     String nativeFileName = null;
 
     if (wowCache != null) {
       long fileId = wowCache.fileIdByName(fileName);
       nativeFileName = wowCache.nativeFileNameById(fileId);
 
-      wowCache.close();
+      wowCache.delete();
       wowCache = null;
     }
 
-    storageLocal.delete();
+    if (writeAheadLog != null) {
+      writeAheadLog.delete();
+      writeAheadLog = null;
+    }
 
     if (nativeFileName != null) {
-      File testFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + nativeFileName);
+      File testFile = storagePath.resolve(nativeFileName).toFile();
 
       if (testFile.exists()) {
         Assert.assertTrue(testFile.delete());
       }
     }
 
-    File nameIdMapFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "name_id_map.cm");
+    File nameIdMapFile = storagePath.resolve("name_id_map.cm").toFile();
     if (nameIdMapFile.exists()) {
       Assert.assertTrue(nameIdMapFile.delete());
     }
 
-    nameIdMapFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "name_id_map_v2.cm");
+    nameIdMapFile = storagePath.resolve("name_id_map_v2.cm").toFile();
     if (nameIdMapFile.exists()) {
       Assert.assertTrue(nameIdMapFile.delete());
     }
@@ -103,21 +108,19 @@ public class WOWCacheTestIT {
 
   @AfterClass
   public static void afterClass() throws IOException {
-    closeCacheAndDeleteFile();
+    deleteCacheAndDeleteFile();
 
-    File file = new File(storageLocal.getConfiguration().getDirectory());
-    Assert.assertTrue(file.delete());
     bufferPool.clear();
-
-    OGlobalConfiguration.STORAGE_EXCLUSIVE_FILE_ACCESS.setValue(Boolean.TRUE);
-    OGlobalConfiguration.FILE_LOCK.setValue(Boolean.TRUE);
   }
 
   private void initBuffer() throws IOException, InterruptedException {
-    final Path storagePath = storageLocal.getStoragePath();
     Files.createDirectories(storagePath);
 
-    wowCache = new OWOWCache(pageSize, bufferPool, null, 10, 100, storageLocal, false, files, 1, OChecksumMode.StoreAndVerify);
+    writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, Integer.MAX_VALUE, Integer.MAX_VALUE,
+        25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000);
+    wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, 10, 100, false, storagePath, null, storageName,
+        OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify);
+
     wowCache.loadRegisteredFiles();
   }
 
@@ -261,7 +264,7 @@ public class WOWCacheTestIT {
     final String removedNativeFileName = wowCache.nativeFileNameById(fileId);
 
     wowCache.deleteFile(fileId);
-    File deletedFile = storageLocal.getStoragePath().resolve(removedNativeFileName).toFile();
+    File deletedFile = storagePath.resolve(removedNativeFileName).toFile();
     Assert.assertTrue(!deletedFile.exists());
 
     String fileName = wowCache.restoreFileById(fileId);
@@ -286,11 +289,12 @@ public class WOWCacheTestIT {
     final String removedNativeFileName = wowCache.nativeFileNameById(fileId);
 
     wowCache.deleteFile(fileId);
-    File deletedFile = storageLocal.getStoragePath().resolve(removedNativeFileName).toFile();
+    File deletedFile = storagePath.resolve(removedNativeFileName).toFile();
 
     Assert.assertTrue(!deletedFile.exists());
 
     wowCache.close();
+    writeAheadLog.close();
 
     initBuffer();
 
@@ -326,7 +330,7 @@ public class WOWCacheTestIT {
 
     wowCache.flush();
 
-    final Path path = storageLocal.getStoragePath().resolve(wowCache.nativeFileNameById(fileId));
+    final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
@@ -358,7 +362,7 @@ public class WOWCacheTestIT {
 
     wowCache.flush();
 
-    final Path path = storageLocal.getStoragePath().resolve(wowCache.nativeFileNameById(fileId));
+    final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
     file.writeByte(0, (byte) 1);
@@ -390,7 +394,7 @@ public class WOWCacheTestIT {
 
     wowCache.flush();
 
-    final Path path = storageLocal.getStoragePath().resolve(wowCache.nativeFileNameById(fileId));
+    final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
@@ -417,7 +421,7 @@ public class WOWCacheTestIT {
 
     wowCache.flush();
 
-    final Path path = storageLocal.getStoragePath().resolve(wowCache.nativeFileNameById(fileId));
+    final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
@@ -444,7 +448,7 @@ public class WOWCacheTestIT {
 
     wowCache.flush();
 
-    final Path path = storageLocal.getStoragePath().resolve(wowCache.nativeFileNameById(fileId));
+    final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
@@ -471,7 +475,7 @@ public class WOWCacheTestIT {
 
     wowCache.flush();
 
-    final Path path = storageLocal.getStoragePath().resolve(wowCache.nativeFileNameById(fileId));
+    final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
@@ -482,7 +486,7 @@ public class WOWCacheTestIT {
   }
 
   private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn, String fileName) throws IOException {
-    OFileClassic fileClassic = new OFileClassic(Paths.get(storageLocal.getConfiguration().getDirectory(), fileName));
+    OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName));
     fileClassic.open();
     byte[] content = new byte[8 + systemOffset];
     fileClassic.read(pageIndex * (8 + systemOffset), content, 8 + systemOffset);

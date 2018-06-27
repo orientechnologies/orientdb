@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
 import java.io.BufferedInputStream;
@@ -243,8 +244,14 @@ public final class O2QCache implements OReadCache {
           assert cacheEntry.getUsagesCount() >= 0;
 
           if (cacheEntry.getUsagesCount() == 0 && cacheEntry.isDirty()) {
-            final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = writeCache
-                .getPerformanceStatisticManager().getSessionPerformanceStatistic();
+            final OPerformanceStatisticManager performanceStatisticManager = writeCache.getPerformanceStatisticManager();
+            final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic;
+
+            if (performanceStatisticManager != null) {
+              sessionStoragePerformanceStatistic = performanceStatisticManager.getSessionPerformanceStatistic();
+            } else {
+              sessionStoragePerformanceStatistic = null;
+            }
 
             if (sessionStoragePerformanceStatistic != null) {
               sessionStoragePerformanceStatistic.startPageWriteInCacheTimer();
@@ -427,8 +434,14 @@ public final class O2QCache implements OReadCache {
 
   private OCacheEntry doLoad(long fileId, final long pageIndex, final boolean checkPinnedPages, final OWriteCache writeCache,
       final int pageCount, final boolean verifyChecksums) throws IOException {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = writeCache.getPerformanceStatisticManager()
-        .getSessionPerformanceStatistic();
+    final OPerformanceStatisticManager performanceStatisticManager = writeCache.getPerformanceStatisticManager();
+
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic;
+    if (performanceStatisticManager != null) {
+      sessionStoragePerformanceStatistic = performanceStatisticManager.getSessionPerformanceStatistic();
+    } else {
+      sessionStoragePerformanceStatistic = null;
+    }
 
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
@@ -534,8 +547,14 @@ public final class O2QCache implements OReadCache {
 
   @Override
   public OCacheEntry allocateNewPage(long fileId, final OWriteCache writeCache, final boolean verifyChecksums) throws IOException {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = writeCache.getPerformanceStatisticManager()
-        .getSessionPerformanceStatistic();
+    final OPerformanceStatisticManager performanceStatisticManager = writeCache.getPerformanceStatisticManager();
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic;
+
+    if (performanceStatisticManager != null) {
+      sessionStoragePerformanceStatistic = performanceStatisticManager.getSessionPerformanceStatistic();
+    } else {
+      sessionStoragePerformanceStatistic = null;
+    }
 
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
@@ -721,15 +740,17 @@ public final class O2QCache implements OReadCache {
    */
   @Override
   public void closeStorage(final OWriteCache writeCache) throws IOException {
-    if (writeCache == null)
+    if (writeCache == null) {
       return;
+    }
 
     cacheLock.acquireWriteLock();
     try {
       final long[] filesToClear = writeCache.close();
 
-      for (final long fileId : filesToClear)
+      for (final long fileId : filesToClear) {
         clearFile(fileId);
+      }
 
     } finally {
       cacheLock.releaseWriteLock();
@@ -809,8 +830,7 @@ public final class O2QCache implements OReadCache {
    * @param writeCache      Write cache is used to load data from disk if needed.
    */
   private void restoreQueue(final OWriteCache writeCache, final LRUList queue, final DataInputStream dataInputStream,
-      final boolean loadPages)
-      throws IOException {
+      final boolean loadPages) throws IOException {
     if (loadPages) {
       restoreQueueWithPageLoad(writeCache, queue, dataInputStream);
     } else {

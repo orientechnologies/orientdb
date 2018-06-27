@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHa
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -96,6 +97,7 @@ public class OLocalHashTableV2RestoreTestIT extends OLocalHashTableV2Base {
     OFileUtils.deleteRecursively(engineDirectory);
   }
 
+  @Test
   @Override
   public void testKeyPut() {
     super.testKeyPut();
@@ -194,6 +196,9 @@ public class OLocalHashTableV2RestoreTestIT extends OLocalHashTableV2Base {
         originalWowCache = (OWOWCache) originalRestoredStorage.getWriteCache();
       }
 
+      originalWowCache.flush();
+      restoredWowCache.flush();
+
       final long restoredImcFileId = restoredWowCache.fileIdByName(HASH_TABLE_NAME + ".imc");
       final String restoredImc = restoredWowCache.nativeFileNameById(restoredImcFileId);
 
@@ -230,6 +235,7 @@ public class OLocalHashTableV2RestoreTestIT extends OLocalHashTableV2Base {
 
       assertCompareFilesAreTheSame(originalStorageRoot.resolve(originalOBF).toFile(),
           restoredStorageRoot.resolve(restoredOBF).toFile());
+
       System.out.println("Stop data comparison");
     } catch (IOException e) {
       throw new IllegalStateException(e);
