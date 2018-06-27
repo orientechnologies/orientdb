@@ -26,10 +26,11 @@ public enum UpdateDeltaValueType {
   LIST_ELEMENT_REMOVE,
   LIST_ELEMENT_UPDATE,
   LIST_ELEMENT_CHANGE,
+  CHANGE,
   UNKNOWN;
   
-  public static byte getOrd(UpdateDeltaValueType type){
-    switch (type){
+  public byte getOrd(){
+    switch (this){
       case UPDATE:
         return 1;
       case LIST_UPDATE:
@@ -42,12 +43,17 @@ public enum UpdateDeltaValueType {
         return 5;
       case LIST_ELEMENT_CHANGE:
         return 6;
+      case CHANGE:
+        return 7;
       default:
         return 0;
     }
   }
   
-  public static UpdateDeltaValueType fromOrd(byte ordValue){
+  public static UpdateDeltaValueType fromOrd(Byte ordValue){
+    if (ordValue == null){
+      return UNKNOWN;
+    }
     switch (ordValue){      
       case 1:
         return UPDATE;
@@ -61,9 +67,15 @@ public enum UpdateDeltaValueType {
         return LIST_ELEMENT_UPDATE;
       case 6:
         return LIST_ELEMENT_CHANGE;
+      case 7:
+        return CHANGE;
       case 0:
       default:
         return UNKNOWN;
     }
+  }
+  
+  public boolean isListElementOperation(){
+    return this == LIST_ELEMENT_ADD || this == LIST_ELEMENT_CHANGE || this == LIST_ELEMENT_REMOVE || this == LIST_ELEMENT_UPDATE;
   }
 }
