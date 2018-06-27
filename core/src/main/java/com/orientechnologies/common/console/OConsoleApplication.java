@@ -306,7 +306,8 @@ public class OConsoleApplication {
     String[] commandWords;
     if (iCommand.toLowerCase().startsWith("load script") ||
         iCommand.toLowerCase().startsWith("create database") ||
-        iCommand.toLowerCase().startsWith("drop database")){
+        iCommand.toLowerCase().startsWith("drop database")||
+        iCommand.toLowerCase().startsWith("connect")){
       commandWords = iCommand.split(" ");
       for (int i = 2; i < commandWords.length; i++){
         boolean wrappedInQuotes = false;
