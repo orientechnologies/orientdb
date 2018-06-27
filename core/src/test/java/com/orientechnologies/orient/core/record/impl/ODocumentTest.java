@@ -802,4 +802,68 @@ public class ODocumentTest {
     }
   }
   
+  
+  @Test
+  public void testListOfDocsWithList(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      String fieldName = "testField";
+      
+      OClass claz = db.createClassIfNotExist("TestClass");
+//      claz.createProperty(fieldName, OType.EMBEDDEDLIST);
+
+      ODocument doc = new ODocument(claz);      
+      
+      String constantField = "constField";
+      String constValue = "ConstValue";
+      String variableField = "varField";
+      List<ODocument> originalValue = new ArrayList<>();
+      for (int i = 0; i < 2; i++){
+        ODocument containedDoc = new ODocument();
+        containedDoc.field(constantField, constValue);
+        List<String> listField = new ArrayList<>();
+        for (int j = 0; j < 2; j++){
+          listField.add("Some" + j);
+        }
+        containedDoc.field(variableField, listField);
+        originalValue.add(containedDoc);
+      }
+      
+      doc.field(fieldName, originalValue);
+
+      doc = db.save(doc);
+      ODocument originalDoc = doc.copy();
+
+      ODocument testDoc = originalValue.get(1);
+      testDoc.field(constantField, constValue);
+      List<String> currentList = testDoc.field(variableField);
+      List<String> newList = new ArrayList<>(currentList);
+      newList.set(0, "changed");
+      testDoc.field(variableField, newList);      
+      originalValue.set(1, testDoc);
+      doc.field(fieldName, originalValue);
+      ODocument delta = doc.getDeltaFromOriginal();
+      delta = delta.field("u");
+      
+      originalDoc.mergeUpdateDelta(delta);
+      List<ODocument> checkList = originalDoc.field(fieldName);
+      ODocument checkDoc = checkList.get(1);
+      List<String> checkInnerList = checkDoc.field(variableField);
+      assertEquals("changed", checkInnerList.get(0));      
+    }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
 }
