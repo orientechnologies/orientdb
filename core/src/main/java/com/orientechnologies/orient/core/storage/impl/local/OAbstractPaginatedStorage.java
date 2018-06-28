@@ -4150,7 +4150,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         fuzzySegment = endLSN.getSegment();
       }
 
-      if (beginLSN.getSegment() < endLSN.getSegment()) {
+      if (fuzzySegment > beginLSN.getSegment() && beginLSN.getSegment() < endLSN.getSegment()) {
         OLogManager.instance().infoNoDb(this, "Making fuzzy checkpoint");
         writeCache.makeFuzzyCheckpoint(fuzzySegment);
 
@@ -4159,7 +4159,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         OLogManager.instance().infoNoDb(this, "After fuzzy checkpoint: WAL begin is " + beginLSN + " WAL end is " + endLSN);
       } else {
-        OLogManager.instance().infoNoDb(this, "WAL is too short no reason to make fuzzy checkpoint");
+        OLogManager.instance().infoNoDb(this, "No reason to make fuzzy checkpoint");
       }
     } catch (IOException ioe) {
       throw OException.wrapException(new OIOException("Error during fuzzy checkpoint"), ioe);
