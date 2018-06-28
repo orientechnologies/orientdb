@@ -4135,6 +4135,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OLogSequenceNumber endLSN = writeAheadLog.end();
 
       final OLogSequenceNumber minLSN = writeCache.getMinimalNotFlushedLSN();
+      OLogManager.instance().infoNoDb(this, "Fuzzy checkpoint min LSN is" + minLSN);
       final long fuzzySegment;
 
       if (minLSN != null) {
