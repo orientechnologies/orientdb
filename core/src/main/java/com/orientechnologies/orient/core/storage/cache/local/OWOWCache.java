@@ -2842,7 +2842,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         final PageKey minPageKey = firstMinLSNEntry.getValue().iterator().next();
         pageIterator = writeCachePages.tailMap(minPageKey).entrySet().iterator();
       } else {
-        OLogManager.instance().infoNoDb(this, "LSN Flush : min LSN  is absent, stop flush, flushed pages " + flushedPages);
         break;
       }
 
@@ -2854,7 +2853,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           endTs = System.nanoTime();
         }
 
-        OLogManager.instance().infoNoDb(this, "LSN Flush : no more pages to iterate, flushed pages " + flushedPages);
         continue;
       }
 
@@ -2953,10 +2951,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     if (copiedPages != flushedPages) {
       throw new IllegalStateException("Copied pages (" + copiedPages + " ) != flushed pages (" + flushedPages + ")");
-    }
-
-    if (endTs - startTs > backgroundFlushInterval) {
-      OLogManager.instance().infoNoDb(this, "LSN Flush :stoped because flush period overdue, flushed pages " + flushedPages);
     }
 
     releaseExclusiveLatch();
