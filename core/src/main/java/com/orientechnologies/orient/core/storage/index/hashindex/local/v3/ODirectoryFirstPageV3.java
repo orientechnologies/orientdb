@@ -46,7 +46,6 @@ public final class ODirectoryFirstPageV3 extends ODirectoryPageV3 {
 
   void setTreeSize(final int treeSize) {
     buffer.putInt(TREE_SIZE_OFFSET, treeSize);
-    cacheEntry.markDirty();
   }
 
   int getTreeSize() {
@@ -55,7 +54,6 @@ public final class ODirectoryFirstPageV3 extends ODirectoryPageV3 {
 
   void setTombstone(final int tombstone) {
     buffer.putInt(TOMBSTONE_OFFSET, tombstone);
-    cacheEntry.markDirty();
   }
 
   int getTombstone() {
@@ -95,8 +93,6 @@ public final class ODirectoryFirstPageV3 extends ODirectoryPageV3 {
     buffer.put(page, 0, ITEMS_OFFSET);
 
     deserializeNodes(page, ITEMS_OFFSET);
-
-    cacheEntry.markDirty();
   }
 
   @Override

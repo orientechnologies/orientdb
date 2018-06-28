@@ -58,7 +58,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   private volatile String lockName;
 
-
   public ODurableComponent(OAbstractPaginatedStorage storage, String name, String extension, String lockName) {
     super(true);
 
@@ -144,8 +143,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected void releasePageFromWrite(ODurablePage page, OAtomicOperation atomicOperation) {
     assert page != null;
     final OCacheEntry cacheEntry = page.getCacheEntry();
-    if (cacheEntry.isDirty() && storage instanceof OLocalPaginatedStorage) {
-
+    if (storage instanceof OLocalPaginatedStorage) {
       final OLogSequenceNumber end = writeAheadLog.end();
       final OCachePointer cachePointer = cacheEntry.getCachePointer();
       final ByteBuffer buffer = cachePointer.getBufferDuplicate();

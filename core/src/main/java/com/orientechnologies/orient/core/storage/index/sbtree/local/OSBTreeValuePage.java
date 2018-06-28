@@ -64,7 +64,6 @@ public final class OSBTreeValuePage extends ODurablePage {
 
   void setNextPage(final long nextPage) {
     buffer.putLong(NEXT_VALUE_PAGE_OFFSET, nextPage);
-    cacheEntry.markDirty();
   }
 
   public int getSize() {
@@ -84,7 +83,6 @@ public final class OSBTreeValuePage extends ODurablePage {
     buffer.position(BINARY_CONTENT_OFFSET);
     buffer.put(pageValue);
 
-    cacheEntry.markDirty();
     return offset + maxSize;
   }
 
@@ -107,7 +105,6 @@ public final class OSBTreeValuePage extends ODurablePage {
 
   void setNextFreeListPage(final long pageIndex) {
     buffer.putLong(FREE_LIST_NEXT_PAGE_OFFSET, pageIndex);
-    cacheEntry.markDirty();
   }
 
   long getNextFreeListPage() {

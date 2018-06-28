@@ -2479,9 +2479,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           if (lsnEntry != null) {
             if (!flushMode.equals(FLUSH_MODE.LSN)) {//RING flush mode
               if (endSegment - startSegment > 0) {
-                OLogManager.instance()
-                    .infoNoDb(this, "Start LSN flush mode, end segment " + endSegment + " start segment " + startSegment);
-
                 flushMode = FLUSH_MODE.LSN;
 
                 flushedPages += flushWriteCacheFromMinLSN();
@@ -2494,8 +2491,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 lsnEntry = localDirtyPagesByLSN.firstEntry();
 
                 if (lsnEntry == null || endSegment - startSegment <= 0) {
-                  OLogManager.instance().infoNoDb(this, "Stop LSN flush mode");
-
                   flushMode = FLUSH_MODE.RING;
                 }
               } else {
@@ -2512,12 +2507,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               lsnEntry = localDirtyPagesByLSN.firstEntry();
 
               if (lsnEntry == null || endSegment - startSegment <= 0) {
-                OLogManager.instance().infoNoDb(this, "Stop LSN flush mode");
                 flushMode = FLUSH_MODE.RING;
               }
             }
           } else {
-            OLogManager.instance().infoNoDb(this, "Stop LSN flush mode");
             flushMode = FLUSH_MODE.RING;
 
             flushedPages += flushWriteCacheByTheRing();
@@ -2838,10 +2831,18 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       Iterator<Map.Entry<PageKey, OCachePointer>> pageIterator;
       final Map.Entry<OLogSequenceNumber, Set<PageKey>> firstMinLSNEntry = localDirtyPagesByLSN.firstEntry();
 
+      final PageKey minPageKey;
       if (firstMinLSNEntry != null) {
-        final PageKey minPageKey = firstMinLSNEntry.getValue().iterator().next();
+        minPageKey = firstMinLSNEntry.getValue().iterator().next();
         pageIterator = writeCachePages.tailMap(minPageKey).entrySet().iterator();
       } else {
+        if ((endTs - startTs < backgroundFlushInterval) && !dirtyPages.isEmpty()) {
+          convertSharedDirtyPagesToLocal();
+
+          endTs = System.nanoTime();
+          continue;
+        }
+
         break;
       }
 

@@ -24,7 +24,7 @@ public class SBTreeValuePageTest {
     OCachePointer cachePointerOne = new OCachePointer(bufferOne, bufferPool, 0, 0);
     cachePointerOne.incrementReferrer();
 
-    OCacheEntry cacheEntryOne = new OCacheEntry(0, 0, cachePointerOne, false);
+    OCacheEntry cacheEntryOne = new OCacheEntry(0, 0, cachePointerOne);
     cacheEntryOne.acquireExclusiveLock();
     OSBTreeValuePage valuePageOne = new OSBTreeValuePage(cacheEntryOne, true);
 
@@ -39,7 +39,7 @@ public class SBTreeValuePageTest {
     OCachePointer cachePointerTwo = new OCachePointer(bufferTwo, bufferPool,  0, 0);
     cachePointerTwo.incrementReferrer();
 
-    OCacheEntry cacheEntryTwo = new OCacheEntry(0, 0, cachePointerTwo, false);
+    OCacheEntry cacheEntryTwo = new OCacheEntry(0, 0, cachePointerTwo);
     cacheEntryTwo.acquireExclusiveLock();
 
     OSBTreeValuePage valuePageTwo = new OSBTreeValuePage(cacheEntryTwo, true);
@@ -74,7 +74,7 @@ public class SBTreeValuePageTest {
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
     OSBTreeValuePage valuePage = new OSBTreeValuePage(cacheEntry, true);

@@ -41,7 +41,6 @@ public final class OPaginatedClusterState extends ODurablePage {
 
   public void setSize(final long size) {
     buffer.putLong(SIZE_OFFSET, size);
-    cacheEntry.markDirty();
   }
 
   public long getSize() {
@@ -50,7 +49,6 @@ public final class OPaginatedClusterState extends ODurablePage {
 
   void setRecordsSize(final long recordsSize) {
     buffer.putLong(RECORDS_SIZE_OFFSET, recordsSize);
-    cacheEntry.markDirty();
   }
 
   public long getRecordsSize() {
@@ -59,7 +57,6 @@ public final class OPaginatedClusterState extends ODurablePage {
 
   void setFreeListPage(final int index, final long pageIndex) {
     buffer.putLong(FREE_LIST_OFFSET + index * OLongSerializer.LONG_SIZE, pageIndex);
-    cacheEntry.markDirty();
   }
 
   long getFreeListPage(final int index) {
@@ -90,8 +87,6 @@ public final class OPaginatedClusterState extends ODurablePage {
 
     buffer.position(0);
     buffer.put(page);
-
-    cacheEntry.markDirty();
   }
 
   @Override

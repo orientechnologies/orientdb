@@ -92,8 +92,6 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
   final void setBucketPointer(int pageOffset, OBonsaiBucketPointer value) {
     buffer.putInt(pageOffset, value.getPageIndex());
     buffer.putInt(pageOffset + OIntegerSerializer.INT_SIZE, value.getPageOffset());
-
-    cacheEntry.markDirty();
   }
 
   /**
@@ -121,8 +119,6 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
     fillByte = (byte) (~(1 << bitIndex) & fillByte);
 
     buffer.put(CREATED_BUCKETS_OFFSET + byteIndex, fillByte);
-
-    cacheEntry.markDirty();
   }
 
   boolean isDeleted(final int offset, @SuppressWarnings("SameParameterValue") final byte deletionFlag) {
@@ -181,8 +177,6 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
     } else {
       throw new IllegalStateException("Illegal page type " + page[0]);
     }
-
-    cacheEntry.markDirty();
   }
 
   @Override

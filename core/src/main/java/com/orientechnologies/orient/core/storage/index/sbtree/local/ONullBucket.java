@@ -53,7 +53,6 @@ public final class ONullBucket<V> extends ODurablePage {
 
     if (isNew) {
       buffer.put(NEXT_FREE_POSITION, (byte) 0);
-      cacheEntry.markDirty();
     }
   }
 
@@ -74,8 +73,6 @@ public final class ONullBucket<V> extends ODurablePage {
       buffer.position(NEXT_FREE_POSITION + 2);
       buffer.put(serializedValue);
     }
-
-    cacheEntry.markDirty();
   }
 
   void setRawValue(final byte[] rawValue) {
@@ -85,8 +82,6 @@ public final class ONullBucket<V> extends ODurablePage {
 
     buffer.position(NEXT_FREE_POSITION + 2);
     buffer.put(rawValue);
-
-    cacheEntry.markDirty();
   }
 
   public OSBTreeValue<V> getValue() {
@@ -123,7 +118,6 @@ public final class ONullBucket<V> extends ODurablePage {
 
   void removeValue() {
     buffer.put(NEXT_FREE_POSITION, (byte) 0);
-    cacheEntry.markDirty();
   }
 
   @Override
@@ -163,8 +157,6 @@ public final class ONullBucket<V> extends ODurablePage {
   public void deserializePage(final byte[] page) {
     buffer.position(0);
     buffer.put(page);
-
-    cacheEntry.markDirty();
   }
 
   @Override

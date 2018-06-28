@@ -91,7 +91,6 @@ public final class OHashTableBucket<K, V> extends ODurablePage implements Iterab
     buffer.put(DEPTH_OFFSET, (byte) depth);
     buffer.putInt(FREE_POINTER_OFFSET, MAX_BUCKET_SIZE_BYTES);
     buffer.putInt(SIZE_OFFSET, 0);
-    cacheEntry.markDirty();
   }
 
   public Entry<K, V> find(final K key, final long hashCode) {
@@ -323,8 +322,6 @@ public final class OHashTableBucket<K, V> extends ODurablePage implements Iterab
 
     buffer.position(entryPosition);
     buffer.put(value);
-
-    cacheEntry.markDirty();
   }
 
   public void deleteEntry(final int index) {
@@ -363,8 +360,6 @@ public final class OHashTableBucket<K, V> extends ODurablePage implements Iterab
 
     buffer.putInt(FREE_POINTER_OFFSET, freePointer + entrySize);
     buffer.putInt(SIZE_OFFSET, size - 1);
-
-    cacheEntry.markDirty();
   }
 
   public int entryInsertionIndex(final long hashCode, final K key, final int keyLen, final int valueLen) {
@@ -405,8 +400,6 @@ public final class OHashTableBucket<K, V> extends ODurablePage implements Iterab
 
     buffer.putInt(FREE_POINTER_OFFSET, entreePosition);
     buffer.putInt(SIZE_OFFSET, size + 1);
-
-    cacheEntry.markDirty();
   }
 
   public void appendEntry(final long hashCode, final byte[] key, final byte[] value) {
@@ -421,7 +414,6 @@ public final class OHashTableBucket<K, V> extends ODurablePage implements Iterab
 
     buffer.putInt(FREE_POINTER_OFFSET, freePointer - entreeSize);
     buffer.putInt(SIZE_OFFSET, size() + 1);
-    cacheEntry.markDirty();
   }
 
   private void serializeEntry(final long hashCode, final byte[] key, final byte[] value, final int entryOffset) {
@@ -437,7 +429,6 @@ public final class OHashTableBucket<K, V> extends ODurablePage implements Iterab
 
   public void setDepth(final int depth) {
     buffer.put(DEPTH_OFFSET, (byte) depth);
-    cacheEntry.markDirty();
   }
 
   @Override
@@ -493,8 +484,6 @@ public final class OHashTableBucket<K, V> extends ODurablePage implements Iterab
       buffer.position(freePointer);
       buffer.put(page, headSize, dataSize);
     }
-
-    cacheEntry.markDirty();
   }
 
   @Override

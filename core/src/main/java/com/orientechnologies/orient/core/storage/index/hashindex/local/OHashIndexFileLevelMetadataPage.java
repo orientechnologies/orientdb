@@ -52,7 +52,6 @@ public final class OHashIndexFileLevelMetadataPage extends ODurablePage {
 
   public void setRecordsCount(final long recordsCount) {
     buffer.putLong(RECORDS_COUNT_OFFSET, recordsCount);
-    cacheEntry.markDirty();
   }
 
   public long getRecordsCount() {
@@ -76,6 +75,5 @@ public final class OHashIndexFileLevelMetadataPage extends ODurablePage {
   public void remove(final int index) {
     final int offset = METADATA_ARRAY_OFFSET + index * ITEM_SIZE;
     buffer.put(offset, (byte) 0);
-    cacheEntry.markDirty();
   }
 }

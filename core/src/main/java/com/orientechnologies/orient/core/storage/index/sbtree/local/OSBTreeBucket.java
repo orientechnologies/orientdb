@@ -104,8 +104,6 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
 
     buffer.put(KEY_SERIALIZER_OFFSET, this.keySerializer.getId());
     buffer.put(VALUE_SERIALIZER_OFFSET, this.valueSerializer.getId());
-
-    cacheEntry.markDirty();
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
@@ -123,7 +121,6 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
 
   void setTreeSize(final long size) {
     buffer.putLong(TREE_SIZE_OFFSET, size);
-    cacheEntry.markDirty();
   }
 
   long getTreeSize() {
@@ -140,7 +137,6 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
 
   void setValuesFreeListFirstIndex(final long pageIndex) {
     buffer.putLong(FREE_VALUES_LIST_OFFSET, pageIndex);
-    cacheEntry.markDirty();
   }
 
   public int find(final K key) {
@@ -186,8 +182,6 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     } else {
       throw new IllegalStateException("Remove is applies to leaf buckets only");
     }
-
-    cacheEntry.markDirty();
 
     int size = buffer.getInt(SIZE_OFFSET);
     if (entryIndex < size - 1) {
@@ -420,8 +414,6 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
   }
 
   public void addAll(final List<byte[]> rawEntries) {
-    cacheEntry.markDirty();
-
     for (int i = 0; i < rawEntries.size(); i++) {
       appendRawEntry(i, rawEntries.get(i), buffer);
     }
@@ -430,8 +422,6 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
   }
 
   public void shrink(final int newSize) {
-    cacheEntry.markDirty();
-
     final List<byte[]> rawEntries = new ArrayList<>(newSize);
 
     for (int i = 0; i < newSize; i++) {
@@ -508,8 +498,6 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     }
 
     this.isLeaf = buffer.get(IS_LEAF_OFFSET) > 0;
-
-    cacheEntry.markDirty();
   }
 
   @Override
@@ -528,8 +516,6 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
       return false;
     }
-
-    cacheEntry.markDirty();
 
     if (index <= size - 1) {
       moveData(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE,
@@ -601,7 +587,6 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
       return false;
     }
 
-    cacheEntry.markDirty();
     if (index <= size - 1) {
       moveData(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE,
           POSITIONS_ARRAY_OFFSET + (index + 1) * OIntegerSerializer.INT_SIZE, (size - index) * OIntegerSerializer.INT_SIZE);
@@ -667,8 +652,6 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
   }
 
   void updateValue(final int index, final byte[] value) {
-    cacheEntry.markDirty();
-
     int entryPosition = buffer.getInt(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 
     if (encryption == null) {
@@ -689,7 +672,6 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
 
   void setLeftSibling(final long pageIndex) {
     buffer.putLong(LEFT_SIBLING_OFFSET, pageIndex);
-    cacheEntry.markDirty();
   }
 
   long getLeftSibling() {
@@ -698,7 +680,6 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
 
   void setRightSibling(final long pageIndex) {
     buffer.putLong(RIGHT_SIBLING_OFFSET, pageIndex);
-    cacheEntry.markDirty();
   }
 
   long getRightSibling() {

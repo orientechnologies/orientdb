@@ -52,8 +52,6 @@ public class ODirectoryPageV3 extends ODurablePage {
 
     final byte fillByte = (byte) (buffer.get(byteIndex + NODES_FILLED_OFFSET) | (1 << bitIndex));
     buffer.put(byteIndex + NODES_FILLED_OFFSET, fillByte);
-
-    cacheEntry.markDirty();
   }
 
   void markNodeAsDeleted(final int nodeIndex) {
@@ -62,14 +60,11 @@ public class ODirectoryPageV3 extends ODurablePage {
 
     final byte fillByte = (byte) (buffer.get(byteIndex + NODES_FILLED_OFFSET) & (~(1 << bitIndex)));
     buffer.put(byteIndex + NODES_FILLED_OFFSET, fillByte);
-
-    cacheEntry.markDirty();
   }
 
   void setMaxLeftChildDepth(final int localNodeIndex, final byte maxLeftChildDepth) {
     final int offset = getItemsOffset() + localNodeIndex * OHashTableDirectoryV3.BINARY_LEVEL_SIZE;
     buffer.put(offset, maxLeftChildDepth);
-    cacheEntry.markDirty();
   }
 
   byte getMaxLeftChildDepth(final int localNodeIndex) {
@@ -80,7 +75,6 @@ public class ODirectoryPageV3 extends ODurablePage {
   void setMaxRightChildDepth(final int localNodeIndex, final byte maxRightChildDepth) {
     final int offset = getItemsOffset() + localNodeIndex * OHashTableDirectoryV3.BINARY_LEVEL_SIZE + OByteSerializer.BYTE_SIZE;
     buffer.put(offset, maxRightChildDepth);
-    cacheEntry.markDirty();
   }
 
   byte getMaxRightChildDepth(final int localNodeIndex) {
@@ -91,7 +85,6 @@ public class ODirectoryPageV3 extends ODurablePage {
   void setNodeLocalDepth(final int localNodeIndex, final byte nodeLocalDepth) {
     final int offset = getItemsOffset() + localNodeIndex * OHashTableDirectoryV3.BINARY_LEVEL_SIZE + 2 * OByteSerializer.BYTE_SIZE;
     buffer.put(offset, nodeLocalDepth);
-    cacheEntry.markDirty();
   }
 
   byte getNodeLocalDepth(final int localNodeIndex) {
@@ -104,7 +97,6 @@ public class ODirectoryPageV3 extends ODurablePage {
         + index * OHashTableDirectoryV3.ITEM_SIZE;
 
     buffer.putLong(offset, pointer);
-    cacheEntry.markDirty();
   }
 
   public long getPointer(final int localNodeIndex, final int index) {
@@ -196,8 +188,6 @@ public class ODirectoryPageV3 extends ODurablePage {
     buffer.put(page, 0, NODES_FILLED_END);
 
     deserializeNodes(page, NODES_FILLED_END);
-
-    cacheEntry.markDirty();
   }
 
   @Override

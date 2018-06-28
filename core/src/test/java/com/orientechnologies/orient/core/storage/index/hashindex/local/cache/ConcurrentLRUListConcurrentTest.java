@@ -126,7 +126,7 @@ public class ConcurrentLRUListConcurrentTest {
         @Override
         public Integer call() {
           for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
-            list.putToMRU(new OCacheEntry(threadNumber, i, null, false));
+            list.putToMRU(new OCacheEntry(threadNumber, i, null));
           }
           return AMOUNT_OF_OPERATIONS;
         }
@@ -159,7 +159,7 @@ public class ConcurrentLRUListConcurrentTest {
       return () -> {
         Random r = new Random();
         for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
-          list.putToMRU(new OCacheEntry(0, r.nextInt(200), null, false));
+          list.putToMRU(new OCacheEntry(0, r.nextInt(200), null));
           consumeCPU(r.nextInt(500) + 1000);
         }
         return AMOUNT_OF_OPERATIONS;
@@ -174,7 +174,7 @@ public class ConcurrentLRUListConcurrentTest {
       return () -> {
         Random r = new Random();
         for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
-          list.putToMRU(new OCacheEntry(0, 0, null, false));
+          list.putToMRU(new OCacheEntry(0, 0, null));
           consumeCPU(r.nextInt(500) + 1000);
         }
         return AMOUNT_OF_OPERATIONS;

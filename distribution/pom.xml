@@ -166,6 +166,7 @@
                             <executable>${java.home}/bin/java</executable>
                             <workingDirectory>${project.basedir}</workingDirectory>
                             <arguments>
+                                <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005</argument>
                                 <argument>-Xmx${heapSize}</argument>
                                 <argument>-DridBag.embeddedToSbtreeBonsaiThreshold=10000000</argument>
                                 <argument>-classpath</argument>

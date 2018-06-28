@@ -42,7 +42,6 @@ public class ODirectoryPageV2 extends ODurablePage {
   void setMaxLeftChildDepth(final int localNodeIndex, final byte maxLeftChildDepth) {
     final int offset = getItemsOffset() + localNodeIndex * OHashTableDirectoryV2.BINARY_LEVEL_SIZE;
     buffer.put(offset, maxLeftChildDepth);
-    cacheEntry.markDirty();
   }
 
   byte getMaxLeftChildDepth(final int localNodeIndex) {
@@ -53,7 +52,6 @@ public class ODirectoryPageV2 extends ODurablePage {
   void setMaxRightChildDepth(final int localNodeIndex, final byte maxRightChildDepth) {
     final int offset = getItemsOffset() + localNodeIndex * OHashTableDirectoryV2.BINARY_LEVEL_SIZE + OByteSerializer.BYTE_SIZE;
     buffer.put(offset, maxRightChildDepth);
-    cacheEntry.markDirty();
   }
 
   byte getMaxRightChildDepth(final int localNodeIndex) {
@@ -64,7 +62,6 @@ public class ODirectoryPageV2 extends ODurablePage {
   void setNodeLocalDepth(final int localNodeIndex, final byte nodeLocalDepth) {
     final int offset = getItemsOffset() + localNodeIndex * OHashTableDirectoryV2.BINARY_LEVEL_SIZE + 2 * OByteSerializer.BYTE_SIZE;
     buffer.put(offset, nodeLocalDepth);
-    cacheEntry.markDirty();
   }
 
   byte getNodeLocalDepth(final int localNodeIndex) {
@@ -77,7 +74,6 @@ public class ODirectoryPageV2 extends ODurablePage {
         + index * OHashTableDirectoryV2.ITEM_SIZE;
 
     buffer.putLong(offset, pointer);
-    cacheEntry.markDirty();
   }
 
   public long getPointer(final int localNodeIndex, final int index) {

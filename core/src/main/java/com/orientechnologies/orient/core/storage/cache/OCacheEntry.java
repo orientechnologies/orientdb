@@ -10,27 +10,13 @@ public final class OCacheEntry {
   private final long          fileId;
   private final long          pageIndex;
 
-  private       boolean       dirty;
   private final AtomicInteger usagesCount = new AtomicInteger();
 
-  public OCacheEntry(final long fileId, final long pageIndex, final OCachePointer dataPointer, final boolean dirty) {
+  public OCacheEntry(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
     this.fileId = fileId;
     this.pageIndex = pageIndex;
 
     this.dataPointer = dataPointer;
-    this.dirty = dirty;
-  }
-
-  public void markDirty() {
-    this.dirty = true;
-  }
-
-  public void clearDirty() {
-    this.dirty = false;
-  }
-
-  public boolean isDirty() {
-    return dirty;
   }
 
   public OCachePointer getCachePointer() {
@@ -101,8 +87,6 @@ public final class OCacheEntry {
 
     if (fileId != that.fileId)
       return false;
-    if (dirty != that.dirty)
-      return false;
     if (pageIndex != that.pageIndex)
       return false;
     if (usagesCount.get() != that.usagesCount.get())
@@ -118,15 +102,14 @@ public final class OCacheEntry {
     int result = (int) (fileId ^ (fileId >>> 32));
     result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
     result = 31 * result + (dataPointer != null ? dataPointer.hashCode() : 0);
-    result = 31 * result + (dirty ? 1 : 0);
     result = 31 * result + usagesCount.get();
     return result;
   }
 
   @Override
   public String toString() {
-    return "OReadCacheEntry{" + "fileId=" + fileId + ", pageIndex=" + pageIndex + ", dataPointer=" + dataPointer + ", dirty="
-        + dirty + ", usagesCount=" + usagesCount + '}';
+    return "OReadCacheEntry{" + "fileId=" + fileId + ", pageIndex=" + pageIndex + ", dataPointer=" + dataPointer + ", usagesCount="
+        + usagesCount + '}';
   }
 
 }

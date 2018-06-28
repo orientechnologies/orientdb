@@ -25,12 +25,12 @@ public abstract class AbstractLRUListTestTemplate {
     final ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
-    lruList.putToMRU(new OCacheEntry(1, 10, cachePointer, false));
+    lruList.putToMRU(new OCacheEntry(1, 10, cachePointer));
 
     Iterator<OCacheEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, cachePointer, false));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, cachePointer));
     bufferPool.release(buffer);
     bufferPool.clear();
   }
@@ -45,16 +45,16 @@ public abstract class AbstractLRUListTestTemplate {
     OCachePointer cachePointerOne = new OCachePointer(bufferOne, bufferPool, 0, 0);
     OCachePointer cachePointerTwo = new OCachePointer(bufferTwo, bufferPool, 0, 0);
 
-    lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne, false));
-    lruList.putToMRU(new OCacheEntry(1, 20, cachePointerTwo, false));
+    lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne));
+    lruList.putToMRU(new OCacheEntry(1, 20, cachePointerTwo));
 
     Assert.assertEquals(lruList.size(), 2);
 
     Iterator<OCacheEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 20, cachePointerTwo, false));
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, cachePointerOne, false));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 20, cachePointerTwo));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, cachePointerOne));
 
     bufferPool.release(bufferOne);
     bufferPool.release(bufferTwo);
@@ -73,18 +73,18 @@ public abstract class AbstractLRUListTestTemplate {
     OCachePointer cachePointerTwo = new OCachePointer(bufferTwo, bufferPool, 0, 0);
     OCachePointer cachePointerThree = new OCachePointer(bufferThree, bufferPool, 0, 0);
 
-    lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne, false));
-    lruList.putToMRU(new OCacheEntry(1, 20, cachePointerTwo, false));
-    lruList.putToMRU(new OCacheEntry(3, 30, cachePointerThree, false));
+    lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne));
+    lruList.putToMRU(new OCacheEntry(1, 20, cachePointerTwo));
+    lruList.putToMRU(new OCacheEntry(3, 30, cachePointerThree));
 
     Assert.assertEquals(lruList.size(), 3);
 
     Iterator<OCacheEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(3, 30, cachePointerThree, false));
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 20, cachePointerTwo, false));
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, cachePointerOne, false));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(3, 30, cachePointerThree));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 20, cachePointerTwo));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, cachePointerOne));
 
     bufferPool.release(bufferOne);
     bufferPool.release(bufferTwo);
@@ -105,20 +105,20 @@ public abstract class AbstractLRUListTestTemplate {
     OCachePointer cachePointerTwo = new OCachePointer(bufferTwo, bufferPool, 0, 0);
     OCachePointer cachePointerThree = new OCachePointer(bufferThree, bufferPool, 0, 0);
 
-    lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne, false));
-    lruList.putToMRU(new OCacheEntry(1, 20, cachePointerTwo, false));
-    lruList.putToMRU(new OCacheEntry(3, 30, cachePointerThree, false));
+    lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne));
+    lruList.putToMRU(new OCacheEntry(1, 20, cachePointerTwo));
+    lruList.putToMRU(new OCacheEntry(3, 30, cachePointerThree));
 
-    lruList.putToMRU(new OCacheEntry(1, 20, cachePointerTwo, false));
+    lruList.putToMRU(new OCacheEntry(1, 20, cachePointerTwo));
 
     Assert.assertEquals(lruList.size(), 3);
 
     Iterator<OCacheEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 20, cachePointerTwo, false));
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(3, 30, cachePointerThree, false));
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, cachePointerOne, false));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 20, cachePointerTwo));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(3, 30, cachePointerThree));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, cachePointerOne));
 
     bufferPool.release(bufferOne);
     bufferPool.release(bufferTwo);
@@ -141,20 +141,20 @@ public abstract class AbstractLRUListTestTemplate {
     OCachePointer cachePointerThree = new OCachePointer(bufferThree, bufferPool, 0, 0);
     OCachePointer cachePointerFour = new OCachePointer(bufferFour, bufferPool, 0, 0);
 
-    lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne, false));
-    lruList.putToMRU(new OCacheEntry(1, 20, cachePointerTwo, false));
-    lruList.putToMRU(new OCacheEntry(3, 30, cachePointerThree, false));
+    lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne));
+    lruList.putToMRU(new OCacheEntry(1, 20, cachePointerTwo));
+    lruList.putToMRU(new OCacheEntry(3, 30, cachePointerThree));
 
-    lruList.putToMRU(new OCacheEntry(1, 20, cachePointerFour, false));
+    lruList.putToMRU(new OCacheEntry(1, 20, cachePointerFour));
 
     Assert.assertEquals(lruList.size(), 3);
 
     Iterator<OCacheEntry> entryIterator = lruList.iterator();
     Assert.assertTrue(entryIterator.hasNext());
 
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 20, cachePointerFour, false));
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(3, 30, cachePointerThree, false));
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, cachePointerOne, false));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 20, cachePointerFour));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(3, 30, cachePointerThree));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 10, cachePointerOne));
 
     bufferPool.release(bufferOne);
     bufferPool.release(bufferTwo);
@@ -174,24 +174,24 @@ public abstract class AbstractLRUListTestTemplate {
       ByteBuffer buffer = bufferPool.acquireDirect(true);
 
       cachePointers[i] = new OCachePointer(buffer, bufferPool,0, 0);
-      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i], false));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
-    lruList.putToMRU(new OCacheEntry(1, 50, cachePointers[5], false));
+    lruList.putToMRU(new OCacheEntry(1, 50, cachePointers[5]));
 
     Assert.assertEquals(lruList.size(), 11);
 
     Iterator<OCacheEntry> entryIterator = lruList.iterator();
 
     Assert.assertTrue(entryIterator.hasNext());
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 50, cachePointers[5], false));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 50, cachePointers[5]));
 
     for (int i = 10; i >= 0; i--) {
       if (i == 5)
         continue;
 
       Assert.assertTrue(entryIterator.hasNext());
-      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i], false));
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
     for (OCachePointer pointer : cachePointers) {
@@ -207,7 +207,7 @@ public abstract class AbstractLRUListTestTemplate {
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointerOne = new OCachePointer(buffer, bufferPool, 0, 0);
-    lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne, false));
+    lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne));
     lruList.removeLRU();
 
     Assert.assertEquals(lruList.size(), 0);
@@ -225,7 +225,7 @@ public abstract class AbstractLRUListTestTemplate {
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointerOne = new OCachePointer(buffer, bufferPool, 0, 0);
-    OCacheEntry cacheEntry = new OCacheEntry(1, 10, cachePointerOne, false);
+    OCacheEntry cacheEntry = new OCacheEntry(1, 10, cachePointerOne);
     lruList.putToMRU(cacheEntry);
     cacheEntry.incrementUsages();
 
@@ -247,7 +247,7 @@ public abstract class AbstractLRUListTestTemplate {
       ByteBuffer buffer = bufferPool.acquireDirect(true);
 
       cachePointers[i] = new OCachePointer(buffer, bufferPool, 0, 0);
-      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i], false));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
     lruList.removeLRU();
@@ -258,7 +258,7 @@ public abstract class AbstractLRUListTestTemplate {
 
     for (int i = 10; i > 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i], false));
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
     for (OCachePointer cachePointer : cachePointers) {
@@ -277,10 +277,10 @@ public abstract class AbstractLRUListTestTemplate {
       ByteBuffer buffer = bufferPool.acquireDirect(true);
 
       cachePointers[i] = new OCachePointer(buffer, bufferPool, 0, 0);
-      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i], false));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
-    Assert.assertEquals(lruList.remove(1, 50), new OCacheEntry(1, 50, cachePointers[5], false));
+    Assert.assertEquals(lruList.remove(1, 50), new OCacheEntry(1, 50, cachePointers[5]));
     Assert.assertNull(lruList.remove(1, 500));
 
     Assert.assertEquals(lruList.size(), 10);
@@ -291,7 +291,7 @@ public abstract class AbstractLRUListTestTemplate {
         continue;
 
       Assert.assertTrue(entryIterator.hasNext());
-      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i], false));
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
     for (OCachePointer cachePointer : cachePointers) {
@@ -310,11 +310,11 @@ public abstract class AbstractLRUListTestTemplate {
       ByteBuffer buffer = bufferPool.acquireDirect(true);
 
       cachePointers[i] = new OCachePointer(buffer, bufferPool, 0, 0);
-      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i], false));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
     Assert.assertTrue(lruList.contains(1, 50));
-    Assert.assertEquals(lruList.get(1, 50), new OCacheEntry(1, 50, cachePointers[5], false));
+    Assert.assertEquals(lruList.get(1, 50), new OCacheEntry(1, 50, cachePointers[5]));
 
     Assert.assertFalse(lruList.contains(2, 50));
 
@@ -323,7 +323,7 @@ public abstract class AbstractLRUListTestTemplate {
     Iterator<OCacheEntry> entryIterator = lruList.iterator();
     for (int i = 10; i >= 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i], false));
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
     for (OCachePointer cachePointer : cachePointers) {
@@ -340,7 +340,7 @@ public abstract class AbstractLRUListTestTemplate {
     for (int i = 0; i < 9128; i++) {
       ByteBuffer buffer = bufferPool.acquireDirect(true);
       cachePointers[i] = new OCachePointer(buffer, bufferPool, 0, 0);
-      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i], false));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
     Assert.assertEquals(lruList.size(), 9128);
@@ -348,7 +348,7 @@ public abstract class AbstractLRUListTestTemplate {
     Iterator<OCacheEntry> entryIterator = lruList.iterator();
     for (int i = 9127; i >= 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i], false));
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
     for (OCachePointer cachePointer : cachePointers) {
@@ -366,18 +366,18 @@ public abstract class AbstractLRUListTestTemplate {
     for (int i = 0; i < 9128; i++) {
       ByteBuffer buffer = bufferPool.acquireDirect(true);
       cachePointers[i] = new OCachePointer(buffer, bufferPool, 0, 0);
-      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i], false));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
     Assert.assertEquals(lruList.size(), 9128);
 
     for (int i = 0; i < 9128; i++)
-      Assert.assertEquals(lruList.get(1, i * 10), new OCacheEntry(1, i * 10, cachePointers[i], false));
+      Assert.assertEquals(lruList.get(1, i * 10), new OCacheEntry(1, i * 10, cachePointers[i]));
 
     Iterator<OCacheEntry> entryIterator = lruList.iterator();
     for (int i = 9127; i >= 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i], false));
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
     for (OCachePointer pointer : cachePointers) {
@@ -395,18 +395,18 @@ public abstract class AbstractLRUListTestTemplate {
     for (int i = 0; i < 9128; i++) {
       ByteBuffer buffer = bufferPool.acquireDirect(true);
       cachePointers[i] = new OCachePointer(buffer, bufferPool, 0, 0);
-      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i], false));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
     for (int i = 4564; i < 9128; i++)
-      Assert.assertEquals(lruList.remove(1, i * 10), new OCacheEntry(1, i * 10, cachePointers[i], false));
+      Assert.assertEquals(lruList.remove(1, i * 10), new OCacheEntry(1, i * 10, cachePointers[i]));
 
     Assert.assertEquals(lruList.size(), 4564);
 
     Iterator<OCacheEntry> entryIterator = lruList.iterator();
     for (int i = 4563; i >= 0; i--) {
       Assert.assertTrue(entryIterator.hasNext());
-      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i], false));
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
     for (OCachePointer cachePointer : cachePointers) {
@@ -425,25 +425,25 @@ public abstract class AbstractLRUListTestTemplate {
     for (int i = 0; i < 9128; i++) {
       ByteBuffer buffer = bufferPool.acquireDirect(true);
       cachePointers[i] = new OCachePointer(buffer, bufferPool, 0, 0);
-      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i], false));
+      lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
-    lruList.putToMRU(new OCacheEntry(1, 0, cachePointers[0], false));
-    lruList.putToMRU(new OCacheEntry(1, 4500 * 10, cachePointers[4500], false));
+    lruList.putToMRU(new OCacheEntry(1, 0, cachePointers[0]));
+    lruList.putToMRU(new OCacheEntry(1, 4500 * 10, cachePointers[4500]));
 
     Assert.assertEquals(lruList.size(), 9128);
     Iterator<OCacheEntry> entryIterator = lruList.iterator();
 
     Assert.assertTrue(entryIterator.hasNext());
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 4500 * 10, cachePointers[4500], false));
-    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 0, cachePointers[0], false));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 4500 * 10, cachePointers[4500]));
+    Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, 0, cachePointers[0]));
 
     for (int i = 9127; i >= 1; i--) {
       if (i == 4500)
         continue;
 
       Assert.assertTrue(entryIterator.hasNext());
-      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i], false));
+      Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i]));
     }
 
     for (OCachePointer cachePointer : cachePointers) {
@@ -458,7 +458,7 @@ public abstract class AbstractLRUListTestTemplate {
     final ArrayList<OCacheEntry> entries = new ArrayList<>();
 
     for (int i = 0; i < 10; i++) {
-      final OCacheEntry cacheEntry = new OCacheEntry(1, i, null, false);
+      final OCacheEntry cacheEntry = new OCacheEntry(1, i, null);
 
       entries.add(cacheEntry);
       lruList.putToMRU(cacheEntry);

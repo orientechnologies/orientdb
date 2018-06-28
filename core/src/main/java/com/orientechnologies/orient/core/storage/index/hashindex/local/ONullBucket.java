@@ -46,7 +46,6 @@ public final class ONullBucket<V> extends ODurablePage {
 
     if (isNew) {
       buffer.put(NEXT_FREE_POSITION, (byte) 0);
-      cacheEntry.markDirty();
     }
   }
 
@@ -54,8 +53,6 @@ public final class ONullBucket<V> extends ODurablePage {
     buffer.position(NEXT_FREE_POSITION);
     buffer.put((byte) 1);
     buffer.put(value);
-
-    cacheEntry.markDirty();
   }
 
   public V getValue() {
@@ -87,7 +84,6 @@ public final class ONullBucket<V> extends ODurablePage {
 
   public void removeValue() {
     buffer.put(NEXT_FREE_POSITION, (byte) 0);
-    cacheEntry.markDirty();
   }
 
   @Override
@@ -129,8 +125,6 @@ public final class ONullBucket<V> extends ODurablePage {
 
     buffer.position(0);
     buffer.put(page);
-
-    cacheEntry.markDirty();
   }
 
   @Override

@@ -48,8 +48,6 @@ class OBonsaiBucketAbstractV1 extends ODurablePage {
   void setBucketPointer(int pageOffset, OBonsaiBucketPointer value) {
     buffer.putLong(pageOffset, value.getPageIndex());
     buffer.putInt(pageOffset + OLongSerializer.LONG_SIZE, value.getPageOffset());
-
-    cacheEntry.markDirty();
   }
 
   /**

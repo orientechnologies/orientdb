@@ -67,7 +67,6 @@ public final class OSysBucketV2 extends OBonsaiBucketAbstractV2 {
 
   void setFreeListLength(final long length) {
     buffer.putLong(FREE_LIST_LENGTH_OFFSET, length);
-    cacheEntry.markDirty();
   }
 
   OBonsaiBucketPointer getFreeSpacePointer() {

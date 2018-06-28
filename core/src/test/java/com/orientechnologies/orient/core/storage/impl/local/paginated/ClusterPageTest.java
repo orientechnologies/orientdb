@@ -32,7 +32,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
@@ -62,7 +62,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       final OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
@@ -94,7 +94,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
 
     try {
@@ -127,7 +127,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
@@ -173,7 +173,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
 
     try {
@@ -214,7 +214,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
@@ -247,7 +247,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
 
     try {
@@ -281,7 +281,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
@@ -310,7 +310,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
@@ -347,7 +347,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
@@ -377,7 +377,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
 
     try {
@@ -409,7 +409,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
@@ -437,7 +437,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
@@ -468,7 +468,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
@@ -496,7 +496,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
@@ -543,7 +543,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
@@ -589,7 +589,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
 
     try {
@@ -654,7 +654,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
 
     try {
@@ -690,7 +690,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
 
     try {
@@ -752,7 +752,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
 
     try {
@@ -785,7 +785,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
 
     final long seed = System.currentTimeMillis();
@@ -841,7 +841,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
@@ -883,7 +883,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
 
     final long seed = System.currentTimeMillis();
@@ -939,7 +939,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage restoredPage = new OClusterPage(directCacheEntry, true);
@@ -978,7 +978,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
@@ -1000,7 +1000,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
@@ -1020,7 +1020,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
@@ -1041,7 +1041,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
@@ -1061,7 +1061,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
 
     try {
@@ -1095,7 +1095,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
 
     try {
@@ -1126,7 +1126,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
@@ -1160,7 +1160,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
@@ -1190,7 +1190,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
 
     try {
@@ -1224,7 +1224,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
 
     try {
@@ -1255,7 +1255,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
@@ -1285,7 +1285,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);
@@ -1316,7 +1316,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
@@ -1348,7 +1348,7 @@ public class ClusterPageTest {
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
-    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer, false);
+    OCacheEntry directCacheEntry = new OCacheEntry(0, 0, directCachePointer);
     directCacheEntry.acquireExclusiveLock();
     try {
       OClusterPage restoredPage = new OClusterPage(directCacheEntry, false);

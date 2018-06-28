@@ -170,8 +170,6 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
     buffer.put(offset + KEY_SERIALIZER_OFFSET, keySerializer.getId());
     buffer.put(offset + VALUE_SERIALIZER_OFFSET, valueSerializer.getId());
 
-    cacheEntry.markDirty();
-
     this.tree = tree;
   }
 
@@ -200,7 +198,6 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
 
   void setTreeSize(final long size) {
     buffer.putLong(offset + TREE_SIZE_OFFSET, size);
-    cacheEntry.markDirty();
   }
 
   public boolean isEmpty() {
@@ -238,7 +235,6 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
       throw new IllegalStateException("Remove is applies to leaf buckets only");
     }
 
-    cacheEntry.markDirty();
     int size = size();
     if (entryIndex < size - 1) {
       moveData(offset + POSITIONS_ARRAY_OFFSET + (entryIndex + 1) * OIntegerSerializer.INT_SIZE,
@@ -392,8 +388,6 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
   }
 
   public void addAll(final List<byte[]> entries) {
-    cacheEntry.markDirty();
-
     for (int i = 0; i < entries.size(); i++) {
       appendRawEntry(i, entries.get(i));
     }
@@ -402,8 +396,6 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
   }
 
   public void shrink(final int newSize) {
-    cacheEntry.markDirty();
-
     final List<byte[]> rawEntries = new ArrayList<>(newSize);
 
     for (int i = 0; i < newSize; i++) {
@@ -449,7 +441,6 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
                 + OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getKey() + "' parameter, or decrease 'key + value' size.", tree);
     }
 
-    cacheEntry.markDirty();
 
     if (index <= size - 1) {
       moveData(offset + POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE,
@@ -545,7 +536,6 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
       }
     }
 
-    cacheEntry.markDirty();
 
     if (index <= size - 1) {
       moveData(offset + POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE,
@@ -572,8 +562,6 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
 
     buffer.position(offset + entryPosition);
     buffer.put(rawValue);
-
-    cacheEntry.markDirty();
   }
 
   void updateValue(final int index, final V value) {
@@ -600,8 +588,6 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
 
     buffer.position(offset + entryPosition);
     buffer.put(serializedValue);
-
-    cacheEntry.markDirty();
   }
 
   OBonsaiBucketPointer getFreeListPointer() {
@@ -615,8 +601,6 @@ public final class OSBTreeBonsaiBucketV1<K, V> extends OBonsaiBucketAbstractV1 {
   void setDeleted() {
     final byte value = buffer.get(offset + FLAGS_OFFSET);
     buffer.put(offset + FLAGS_OFFSET, (byte) (value | DELETED));
-
-    cacheEntry.markDirty();
   }
 
   public boolean isDeleted() {

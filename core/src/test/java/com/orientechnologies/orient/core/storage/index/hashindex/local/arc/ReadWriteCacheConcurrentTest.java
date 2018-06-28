@@ -48,14 +48,14 @@ public class ReadWriteCacheConcurrentTest {
   private static final int                                  THREAD_COUNT    = 4;
   private static final int                                  PAGE_COUNT      = 20;
   private static final int                                  FILE_COUNT      = 8;
-  private final int                                  systemOffset    =
+  private final        int                                  systemOffset    =
       2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
-  private final ExecutorService                      executorService = Executors.newFixedThreadPool(THREAD_COUNT);
-  private final List<Future<Void>>                   futures         = new ArrayList<Future<Void>>(THREAD_COUNT);
-  private final AtomicReferenceArray<Queue<Integer>> pagesQueue      = new AtomicReferenceArray<Queue<Integer>>(FILE_COUNT);
-  private       O2QCache                             readBuffer;
-  private       OWOWCache                            writeBuffer;
-  private       OCASDiskWriteAheadLog                writeAheadLog;
+  private final        ExecutorService                      executorService = Executors.newFixedThreadPool(THREAD_COUNT);
+  private final        List<Future<Void>>                   futures         = new ArrayList<Future<Void>>(THREAD_COUNT);
+  private final        AtomicReferenceArray<Queue<Integer>> pagesQueue      = new AtomicReferenceArray<Queue<Integer>>(FILE_COUNT);
+  private              O2QCache                             readBuffer;
+  private              OWOWCache                            writeBuffer;
+  private              OCASDiskWriteAheadLog                writeAheadLog;
 
   private       String[]                                     fileNames;
   private       byte                                         seed;
@@ -274,7 +274,6 @@ public class ReadWriteCacheConcurrentTest {
       final ByteBuffer buffer = pointer.getBufferDuplicate();
       buffer.position(systemOffset);
       buffer.put(new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) });
-      cacheEntry.markDirty();
 
       readBuffer.releaseFromWrite(cacheEntry, writeBuffer);
     }

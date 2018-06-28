@@ -73,8 +73,6 @@ public final class OClusterPage extends ODurablePage {
 
       buffer.putInt(FREE_POSITION_OFFSET, PAGE_SIZE);
       buffer.putInt(FREE_SPACE_COUNTER_OFFSET, PAGE_SIZE - PAGE_INDEXES_OFFSET);
-
-      cacheEntry.markDirty();
     }
   }
 
@@ -90,8 +88,6 @@ public final class OClusterPage extends ODurablePage {
     if (!checkSpace(entrySize, freeListHeader, buffer)) {
       return -1;
     }
-
-    cacheEntry.markDirty();
 
     if (freeListHeader > 0) {
       if (freePosition - entrySize < lastEntryIndexPosition)
@@ -149,8 +145,6 @@ public final class OClusterPage extends ODurablePage {
   }
 
   int replaceRecord(final int entryIndex, final byte[] record, final int recordVersion) {
-    cacheEntry.markDirty();
-
     final int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
 
     if (recordVersion != -1) {
@@ -222,7 +216,6 @@ public final class OClusterPage extends ODurablePage {
       return false;
     }
 
-    cacheEntry.markDirty();
     final int entryPosition = entryPointer & POSITION_MASK;
 
     final int freeListHeader = buffer.getInt(FREELIST_HEADER_OFFSET);
@@ -313,8 +306,6 @@ public final class OClusterPage extends ODurablePage {
       buffer.position(freePosition);
       buffer.put(page, lastEntryIndexPosition, dataSize);
     }
-
-    cacheEntry.markDirty();
   }
 
   @Override
@@ -414,7 +405,6 @@ public final class OClusterPage extends ODurablePage {
 
   void setNextPage(final long nextPage) {
     buffer.putLong(NEXT_PAGE_OFFSET, nextPage);
-    cacheEntry.markDirty();
   }
 
   long getPrevPage() {
@@ -423,12 +413,9 @@ public final class OClusterPage extends ODurablePage {
 
   void setPrevPage(final long prevPage) {
     buffer.putLong(PREV_PAGE_OFFSET, prevPage);
-    cacheEntry.markDirty();
   }
 
   void setNextPagePointer(final int recordPosition, final long value) {
-    cacheEntry.markDirty();
-
     assert isPositionInsideInterval(recordPosition);
 
     final int entryIndexPosition = PAGE_INDEXES_OFFSET + recordPosition * INDEX_ITEM_SIZE;

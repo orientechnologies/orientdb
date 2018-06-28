@@ -66,7 +66,6 @@ public final class OClusterPositionMapBucket extends ODurablePage {
     buffer.putInt(position, recordPosition);
 
     buffer.putInt(SIZE_OFFSET, size + 1);
-    cacheEntry.markDirty();
 
     return size;
   }
@@ -78,8 +77,6 @@ public final class OClusterPositionMapBucket extends ODurablePage {
 
     buffer.put(position, ALLOCATED);
     buffer.putInt(SIZE_OFFSET, size + 1);
-
-    cacheEntry.markDirty();
 
     return size;
   }
@@ -115,8 +112,6 @@ public final class OClusterPositionMapBucket extends ODurablePage {
     }
 
     updateEntry(position, entry, buffer);
-
-    cacheEntry.markDirty();
   }
 
   void resurrect(final int index, final PositionEntry entry) {
@@ -135,7 +130,6 @@ public final class OClusterPositionMapBucket extends ODurablePage {
     }
 
     updateEntry(position, entry, buffer);
-    cacheEntry.markDirty();
   }
 
   void makeAvailable(final int index) {
@@ -157,8 +151,6 @@ public final class OClusterPositionMapBucket extends ODurablePage {
     if (index == size - 1) {
       buffer.putInt(SIZE_OFFSET, size - 1);
     }
-
-    cacheEntry.markDirty();
   }
 
   private static int entryPosition(final int index) {
@@ -187,7 +179,6 @@ public final class OClusterPositionMapBucket extends ODurablePage {
     }
 
     buffer.put(position, REMOVED);
-    cacheEntry.markDirty();
   }
 
   private static PositionEntry readEntry(int position, final ByteBuffer buffer) {
@@ -258,8 +249,6 @@ public final class OClusterPositionMapBucket extends ODurablePage {
 
     buffer.position(0);
     buffer.put(page);
-
-    cacheEntry.markDirty();
   }
 
   @Override

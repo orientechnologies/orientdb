@@ -141,8 +141,6 @@ public class ODurablePage {
 
     buffer.putLong(lsn.getSegment());
     buffer.putLong(lsn.getPosition());
-
-    cacheEntry.markDirty();
   }
 
   protected final ByteBuffer getBufferDuplicate() {
@@ -161,8 +159,6 @@ public class ODurablePage {
 
     buffer.position(0);
     buffer.put(page);
-
-    cacheEntry.markDirty();
   }
 
   public int serializedSize() {

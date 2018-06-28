@@ -43,7 +43,6 @@ public final class ODirectoryFirstPageV2 extends ODirectoryPageV2 {
 
   void setTreeSize(final int treeSize) {
     buffer.putInt(TREE_SIZE_OFFSET, treeSize);
-    cacheEntry.markDirty();
   }
 
   int getTreeSize() {
@@ -52,7 +51,6 @@ public final class ODirectoryFirstPageV2 extends ODirectoryPageV2 {
 
   void setTombstone(final int tombstone) {
     buffer.putInt(TOMBSTONE_OFFSET, tombstone);
-    cacheEntry.markDirty();
   }
 
   int getTombstone() {
