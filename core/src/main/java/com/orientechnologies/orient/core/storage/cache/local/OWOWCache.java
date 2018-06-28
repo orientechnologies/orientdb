@@ -2840,18 +2840,24 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       if (firstMinLSNEntry != null) {
         final PageKey minPageKey = firstMinLSNEntry.getValue().iterator().next();
+        OLogManager.instance()
+            .infoNoDb(this, "LSN Flush : min LSN  is " + firstMinLSNEntry.getKey() + "min LSN page is " + minPageKey);
+
         pageIterator = writeCachePages.tailMap(minPageKey).entrySet().iterator();
       } else {
-        pageIterator = writeCachePages.entrySet().iterator();
+        OLogManager.instance().infoNoDb(this, "LSN Flush : min LSN  is absent, stop flush");
+        break;
       }
 
       if (!pageIterator.hasNext()) {
         if (!chunk.isEmpty()) {
           flushedPages += flushPagesChunk(chunk);
           releaseExclusiveLatch();
+
+          endTs = System.nanoTime();
         }
 
-        break;
+        continue;
       }
 
       long fileId = -1;
@@ -2949,6 +2955,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     if (copiedPages != flushedPages) {
       throw new IllegalStateException("Copied pages (" + copiedPages + " ) != flushed pages (" + flushedPages + ")");
+    }
+
+    if (endTs - startTs > backgroundFlushInterval) {
+      OLogManager.instance().infoNoDb(this, "LSN Flush :stoped because flush period overdue");
     }
 
     releaseExclusiveLatch();
