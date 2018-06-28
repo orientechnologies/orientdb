@@ -194,6 +194,9 @@ public class OLocalHashTableV3RestoreTestIT extends OLocalHashTableV3Base {
         originalWowCache = (OWOWCache) originalRestoredStorage.getWriteCache();
       }
 
+      restoredWowCache.flush();
+      originalWowCache.flush();
+
       final long restoredImcFileId = restoredWowCache.fileIdByName(HASH_TABLE_NAME + ".imc");
       final String restoredImc = restoredWowCache.nativeFileNameById(restoredImcFileId);
 
