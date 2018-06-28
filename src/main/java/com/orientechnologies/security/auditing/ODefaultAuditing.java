@@ -1,17 +1,14 @@
 /**
  * Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
  * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS"
+ * BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
  * <p>
  * For more information: http://www.orientdb.com
  */
@@ -57,8 +54,8 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
 
   private OAuditingDistribConfig distribConfig;
 
-  private OSystemDBImporter systemDbImporter;
-  public static final String IMPORTER_FLAG = "AUDITING_IMPORTER";
+  private             OSystemDBImporter systemDbImporter;
+  public static final String            IMPORTER_FLAG = "AUDITING_IMPORTER";
 
   private class OAuditingDistribConfig extends OAuditingConfig {
     private boolean onNodeJoinedEnabled = false;
@@ -131,26 +128,34 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
 
     } else {
       final InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream(DEFAULT_FILE_AUDITING_DB_CONFIG);
+      try {
+        if (resourceAsStream == null)
+          OLogManager.instance().error(this, "defaultHook() resourceAsStream is null", null);
 
-      if (resourceAsStream == null)
-        OLogManager.instance().error(this, "defaultHook() resourceAsStream is null", null);
-
-      content = getString(resourceAsStream);
-      if (auditingFileConfig != null) {
-        try {
-          auditingFileConfig.getParentFile().mkdirs();
-          auditingFileConfig.createNewFile();
-
-          final FileOutputStream f = new FileOutputStream(auditingFileConfig);
+        content = getString(resourceAsStream);
+        if (auditingFileConfig != null) {
           try {
-            f.write(content.getBytes());
-            f.flush();
-          } finally {
-            f.close();
+            auditingFileConfig.getParentFile().mkdirs();
+            auditingFileConfig.createNewFile();
+
+            final FileOutputStream f = new FileOutputStream(auditingFileConfig);
+            try {
+              f.write(content.getBytes());
+              f.flush();
+            } finally {
+              f.close();
+            }
+          } catch (IOException e) {
+            content = "{}";
+            OLogManager.instance().error(this, "Cannot save auditing file configuration", e);
           }
+        }
+      } finally {
+        try {
+          if (resourceAsStream != null)
+            resourceAsStream.close();
         } catch (IOException e) {
-          content = "{}";
-          OLogManager.instance().error(this, "Cannot save auditing file configuration", e);
+          OLogManager.instance().error(this, "Cannot read auditing file configuration", e);
         }
       }
     }
@@ -171,6 +176,14 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
     } catch (Exception e) {
       content = "{}";
       OLogManager.instance().error(this, "Cannot get auditing file configuration", e);
+    } finally {
+      if (f != null) {
+        try {
+          f.close();
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Cannot get auditing file configuration", e);
+        }
+      }
     }
     return content;
   }
