@@ -4153,8 +4153,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       OLogManager.instance().infoNoDb(this,
-          "Before fuzzy checkpoint: min LSN is " + minLSN + ", WAL begin is " + beginLSN + " WAL end is " + endLSN
-              + " fuzzy segment is " + fuzzySegment);
+          "Before fuzzy checkpoint: min LSN is " + minLSN + ", WAL begin is " + beginLSN + ", WAL end is " + endLSN
+              + ", fuzzy segment is " + fuzzySegment);
 
       if (fuzzySegment > beginLSN.getSegment() && beginLSN.getSegment() < endLSN.getSegment()) {
         OLogManager.instance().infoNoDb(this, "Making fuzzy checkpoint");
