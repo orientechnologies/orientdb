@@ -432,27 +432,15 @@ public class ODocumentTest {
       doc.field(removeField, "removeVal");
 
       doc = db.save(doc);
+      ODocument originalDoc = doc.copy();
 
       doc.field(fieldName, testValue);
       doc.removeField(removeField);
       ODocument dc = doc.getDeltaFromOriginal();
-
-      ODocument updatePart = dc.field("u");
-      ODocument deletePart = dc.field("d");
-
-//      assertFalse(updatePart._fields.containsKey(constantFieldName));
-//      assertTrue(updatePart._fields.containsKey(fieldName));
-//      ODocument updatePartDoc = updatePart.field(fieldName);
-//      assertEquals(updatePartDoc.field("v"), testValue);
-//
-//      assertFalse(deletePart._fields.containsKey(constantFieldName));
-//      assertTrue(deletePart._fields.containsKey(removeField));          
-      
-      doc.field(fieldName, originalValue);
-      doc = db.save(doc);
-      
-      doc.mergeUpdateDelta(updatePart);
-      assertEquals(testValue, doc.field(fieldName));
+      ODocument updatePart = dc.field("u");              
+            
+      originalDoc.mergeUpdateDelta(updatePart);
+      assertEquals(testValue, originalDoc.field(fieldName));
     }
     finally{
       if (db != null)
@@ -855,6 +843,220 @@ public class ODocumentTest {
       ODocument checkDoc = checkList.get(1);
       List<String> checkInnerList = checkDoc.field(variableField);
       assertEquals("changed", checkInnerList.get(0));      
+    }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
+  @Test
+  public void testListAddDelta(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);      
+      String fieldName = "testField";
+      List<String> originalValue = new ArrayList<>();
+      originalValue.add("one"); originalValue.add("two");
+      
+      doc.field(fieldName, originalValue);
+
+      doc = db.save(doc);
+      ODocument originalDoc = doc.copy();
+
+      List<String> newArray = new ArrayList<>();
+      newArray.add("one"); newArray.add("two"); newArray.add("three");
+      doc.field(fieldName, newArray);
+
+      ODocument delta = doc.getDeltaFromOriginal();
+      delta = delta.field("u");      
+      
+      originalDoc.mergeUpdateDelta(delta);
+      List checkList = originalDoc.field(fieldName);
+      assertEquals(3, checkList.size());
+    }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
+  @Test
+  public void testListRemoveDelta(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);      
+      String fieldName = "testField";
+      List<String> originalValue = new ArrayList<>();
+      originalValue.add("one"); originalValue.add("two"); originalValue.add("three");
+      
+      doc.field(fieldName, originalValue);
+
+      doc = db.save(doc);
+      ODocument originalDoc = doc.copy();
+
+      List<String> newArray = new ArrayList<>();
+      newArray.add("one"); newArray.add("two");
+      doc.field(fieldName, newArray);
+
+      ODocument delta = doc.getDeltaFromOriginal();
+      delta = delta.field("u");      
+      
+      originalDoc.mergeUpdateDelta(delta);
+      List checkList = originalDoc.field(fieldName);
+      assertEquals(2, checkList.size());
+    }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
+  @Test
+  public void testAddDocFieldDelta(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      String fieldName = "testField";
+      String constantFieldName = "constantField";      
+      String testValue = "testValue";     
+
+      doc.field(constantFieldName + "1", "someValue1");
+      doc.field(constantFieldName, "someValue");      
+
+      doc = db.save(doc);
+      ODocument originaDoc = doc.copy();
+      
+      doc.field(fieldName, testValue);      
+      ODocument dc = doc.getDeltaFromOriginal();
+
+      ODocument updatePart = dc.field("u");      
+            
+      originaDoc.mergeUpdateDelta(updatePart);
+      assertEquals(testValue, originaDoc.field(fieldName));
+    }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
+  @Test
+  public void testRemoveDocFieldDelta(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      String fieldName = "testField";
+      String constantFieldName = "constantField";      
+      String testValue = "testValue";     
+
+      doc.field(fieldName, testValue);
+      doc.field(constantFieldName, "someValue");      
+
+      doc = db.save(doc);
+      ODocument originaDoc = doc.copy();
+      
+      doc.removeField(fieldName);
+      ODocument dc = doc.getDeltaFromOriginal();
+
+      ODocument deletePart = dc.field("d");
+            
+      originaDoc.mergeDeleteDelta(deletePart);
+      assertFalse(originaDoc.containsField(fieldName));
+    }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
+  @Test
+  public void testRemoveNestedDocFieldDelta(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      String nestedFieldName = "nested";
+      
+      OClass claz = db.createClassIfNotExist("TestClass");
+      claz.createProperty(nestedFieldName, OType.EMBEDDED);
+      
+      ODocument doc = new ODocument(claz);
+      String fieldName = "testField";
+      String constantFieldName = "constantField";      
+      String testValue = "testValue";     
+      
+
+      doc.field(fieldName, testValue);
+      doc.field(constantFieldName, "someValue");      
+
+      ODocument rootDoc = new ODocument(claz);
+      rootDoc.field(nestedFieldName, doc);
+      
+      rootDoc = db.save(rootDoc);
+      ODocument originaDoc = rootDoc.copy();
+      
+      doc = doc.copy();
+      doc.removeField(fieldName);
+      rootDoc.field(nestedFieldName, doc);
+      ODocument dc = rootDoc.getDeltaFromOriginal();
+
+      ODocument deletePart = dc.field("d");
+            
+      originaDoc.mergeDeleteDelta(deletePart);
+      ODocument nested = originaDoc.field(nestedFieldName);
+      assertFalse(nested.containsField(fieldName));
     }
     finally{
       if (db != null)
