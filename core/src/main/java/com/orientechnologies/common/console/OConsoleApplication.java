@@ -309,6 +309,7 @@ public class OConsoleApplication {
         iCommand.toLowerCase().startsWith("drop database")||
         iCommand.toLowerCase().startsWith("connect")){
       commandWords = iCommand.split(" ");
+      commandWords = Arrays.stream(commandWords).filter(s->s.length()>0).toArray(String[]::new);
       for (int i = 2; i < commandWords.length; i++){
         boolean wrappedInQuotes = false;
         if (commandWords[i].startsWith("'") && commandWords[i].endsWith("'")){
@@ -317,7 +318,7 @@ public class OConsoleApplication {
         else if (commandWords[i].startsWith("\"") && commandWords[i].endsWith("\"")){
           wrappedInQuotes = true;
         }
-        
+
         if (wrappedInQuotes){
           commandWords[i] = commandWords[i].substring(1, commandWords[i].length() - 1);
         }
