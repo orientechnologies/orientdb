@@ -2479,7 +2479,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           if (lsnEntry != null) {
             if (!flushMode.equals(FLUSH_MODE.LSN)) {//RING flush mode
               if (endSegment - startSegment > 0) {
-                OLogManager.instance().infoNoDb(this, "Start LSN flush mode");
+                OLogManager.instance()
+                    .infoNoDb(this, "Start LSN flush mode, end segment " + endSegment + " start segment " + startSegment);
 
                 flushMode = FLUSH_MODE.LSN;
 
