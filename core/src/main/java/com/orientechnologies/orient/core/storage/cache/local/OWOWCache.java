@@ -2956,7 +2956,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
 
     if (endTs - startTs > backgroundFlushInterval) {
-      OLogManager.instance().infoNoDb(this, "LSN Flush :stoped because flush period overdue");
+      OLogManager.instance().infoNoDb(this, "LSN Flush :stoped because flush period overdue, flushed pages " + flushedPages);
     }
 
     releaseExclusiveLatch();
