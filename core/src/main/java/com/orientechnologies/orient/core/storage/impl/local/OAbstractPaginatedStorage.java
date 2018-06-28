@@ -4119,36 +4119,42 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected void makeFuzzyCheckpoint() {
-    if (writeAheadLog == null)
+    if (writeAheadLog == null) {
       return;
+    }
 
     //check every 1 ms.
     while (!stateLock.tryAcquireReadLock(1_000_000)) {
-      if (status != STATUS.OPEN)
+      if (status != STATUS.OPEN) {
         return;
+      }
     }
 
     try {
-      if (status != STATUS.OPEN || writeAheadLog == null)
+      if (status != STATUS.OPEN || writeAheadLog == null) {
         return;
+      }
 
       OLogSequenceNumber beginLSN = writeAheadLog.begin();
       OLogSequenceNumber endLSN = writeAheadLog.end();
 
       final OLogSequenceNumber minLSN = writeCache.getMinimalNotFlushedLSN();
 
-      OLogManager.instance()
-          .infoNoDb(this, "Before fuzzy checkpoint: min LSN is" + minLSN + ", WAL begin is " + beginLSN + " WAL end is " + endLSN);
       final long fuzzySegment;
 
       if (minLSN != null) {
         fuzzySegment = minLSN.getSegment();
       } else {
-        if (endLSN == null)
+        if (endLSN == null) {
           return;
+        }
 
         fuzzySegment = endLSN.getSegment();
       }
+
+      OLogManager.instance().infoNoDb(this,
+          "Before fuzzy checkpoint: min LSN is " + minLSN + ", WAL begin is " + beginLSN + " WAL end is " + endLSN
+              + " fuzzy segment is " + fuzzySegment);
 
       if (fuzzySegment > beginLSN.getSegment() && beginLSN.getSegment() < endLSN.getSegment()) {
         OLogManager.instance().infoNoDb(this, "Making fuzzy checkpoint");
