@@ -497,6 +497,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
         ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(), dManager,
             getStorageDistributed().getLocalDistributedDatabase());
+        Set<String> otherNodesInQuorum = txManager
+            .getAvailableNodesButLocal(dbCfg, txManager.getInvolvedClusters(iTx.getRecordOperations()), getLocalNodeName());
+        List<String> online = dManager.getOnlineNodes(getName());
+        if (online.size() < ((otherNodesInQuorum.size() + 1) / 2) + 1) {
+          throw new ODistributedException("No enough nodes online to execute the operation, online nodes: " + online);
+        }
+
         ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(iTx);
 
         txManager.commit(this, iTx, getStorageDistributed().getEventListener());
