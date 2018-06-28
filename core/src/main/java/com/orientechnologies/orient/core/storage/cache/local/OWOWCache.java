@@ -2840,9 +2840,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       if (firstMinLSNEntry != null) {
         final PageKey minPageKey = firstMinLSNEntry.getValue().iterator().next();
-        OLogManager.instance()
-            .infoNoDb(this, "LSN Flush : min LSN  is " + firstMinLSNEntry.getKey() + "min LSN page is " + minPageKey);
-
         pageIterator = writeCachePages.tailMap(minPageKey).entrySet().iterator();
       } else {
         OLogManager.instance().infoNoDb(this, "LSN Flush : min LSN  is absent, stop flush, flushed pages " + flushedPages);
