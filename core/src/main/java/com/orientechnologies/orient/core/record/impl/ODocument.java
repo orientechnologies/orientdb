@@ -1598,7 +1598,7 @@ public class ODocument extends ORecordAbstract
                 break;
               case LIST_ELEMENT_REMOVE:
                 index = deltaUpdateListElement.field("i");
-                originalList.remove(index - removed++);
+                originalList.remove(index - removed++);                
                 break;
               case LIST_ELEMENT_UPDATE:
                 ODocument deltaValue = deltaUpdateListElement.field("v");
@@ -1618,17 +1618,28 @@ public class ODocument extends ORecordAbstract
         }      
       }
     }
+    //here processing nested lists
     else if (fromType.isList() && toType.isList()){
       //this case should only happen with list of documents
       List fromList = (List)fromObj; 
       List toList = (List)toObj;      
+      int removed = 0;
       for (int i = 0; i < fromList.size(); i++){
         Object fromElement = fromList.get(i);
         if (fromElement instanceof ODocument){
           ODocument fromDoc = (ODocument)fromElement;
-          int index = fromDoc.field("i");
-          Object toElement = toList.get(index);
           UpdateDeltaValueType type = UpdateDeltaValueType.fromOrd(fromDoc.field("t"));
+          if (type == UpdateDeltaValueType.LIST_ELEMENT_ADD){
+            Object addVal = fromDoc.field("v");
+            toList.add(addVal);
+            continue;
+          }
+          int index = fromDoc.field("i");
+          if (type == UpdateDeltaValueType.LIST_ELEMENT_REMOVE){
+            toList.remove(index - removed++);            
+            continue;
+          }
+          Object toElement = toList.get(index);          
           if (type == UpdateDeltaValueType.LIST_ELEMENT_UPDATE){
             fromElement = fromDoc.field("v");
           }

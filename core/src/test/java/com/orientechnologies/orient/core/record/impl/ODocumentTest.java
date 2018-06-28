@@ -897,6 +897,55 @@ public class ODocumentTest {
   }
   
   @Test
+  public void testListOfListAddDelta(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);      
+      String fieldName = "testField";
+      List<List<String>> originalList = new ArrayList<>();
+      for (int i = 0; i < 2; i++){
+        List<String> nestedList = new ArrayList<>();
+        nestedList.add("one"); nestedList.add("two");
+        originalList.add(nestedList);
+      }
+      
+      doc.field(fieldName, originalList);
+
+      doc = db.save(doc);
+      ODocument originalDoc = doc.copy();
+
+      List<String> newArray = new ArrayList<>();
+      newArray.add("one"); newArray.add("two"); newArray.add("three");      
+      originalList = new ArrayList<>(originalList);
+      originalList.set(0, newArray);
+      doc.field(fieldName, originalList);
+
+      ODocument delta = doc.getDeltaFromOriginal();
+      delta = delta.field("u");      
+      
+      originalDoc.mergeUpdateDelta(delta);
+      List<List<String>> rootList = originalDoc.field(fieldName);
+      List<String> checkList = rootList.get(0);
+      assertEquals(3, checkList.size());
+    }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
+  @Test
   public void testListRemoveDelta(){
     ODatabaseSession db = null;
     OrientDB odb = null;
@@ -918,7 +967,7 @@ public class ODocumentTest {
       ODocument originalDoc = doc.copy();
 
       List<String> newArray = new ArrayList<>();
-      newArray.add("one"); newArray.add("two");
+      newArray.add("one");
       doc.field(fieldName, newArray);
 
       ODocument delta = doc.getDeltaFromOriginal();
@@ -926,7 +975,7 @@ public class ODocumentTest {
       
       originalDoc.mergeUpdateDelta(delta);
       List checkList = originalDoc.field(fieldName);
-      assertEquals(2, checkList.size());
+      assertEquals(1, checkList.size());
     }
     finally{
       if (db != null)
