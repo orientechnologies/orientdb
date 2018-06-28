@@ -49,7 +49,7 @@ public class OETLProcessorTest extends OETLBaseTest {
         .parseConfigAndParameters(new String[] {
             "-dbURL=plocal:/tmp/testMain", baseDir + "/src/test/resources/comment.json" });
 
-    assertThat(processor.getContext().getVariable("dbURL")).isEqualTo("plocal:/tmp/testMain");
+    assertThat(processor.getContext().getVariable("dbURL")).isEqualTo("plocal:/tmp/etltest/testMain");
 
     OETLOrientDBLoader loader = (OETLOrientDBLoader) processor.getLoader();
     loader.getPool().close();
