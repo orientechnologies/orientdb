@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -60,12 +61,11 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
@@ -364,6 +364,23 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
+  public OResultSet indexQuery(String indexName, String query, Object... args) {
+    checkOpenness();
+
+    if (getTransaction().isActive()) {
+      OTransactionIndexChanges changes = getTransaction().getIndexChanges(indexName);
+      Set<String> changedIndexes = ((OTransactionOptimisticClient) getTransaction()).getIndexChanged();
+      if (changedIndexes.contains(indexName) || changes != null) {
+        checkAndSendTransaction();
+      }
+    }
+    ORemoteQueryResult result = storage.command(this, query, args);
+    if (result.isReloadMetadata())
+      reload();
+    return result.getResult();
+  }
+
+  @Override
   public OResultSet command(String query, Object... args) {
     checkOpenness();
     checkAndSendTransaction();
@@ -417,7 +434,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     storage.closeQuery(this, queryId);
     queryClosed(queryId);
   }
-  
+
   public void fetchNextPage(ORemoteResultSet rs) {
     storage.fetchNextPage(this, rs);
   }
@@ -778,14 +795,51 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   public void afterUpdateOperations(final OIdentifiable id) {
     callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null && getTransaction().isActive()) {
+        List<OClassIndexManager.IndexChange> indexChanges = new ArrayList<>();
+        OClassIndexManager.processIndexOnDelete(this, doc, indexChanges);
+        OTransactionOptimisticClient tx = (OTransactionOptimisticClient) getTransaction();
+        for (OClassIndexManager.IndexChange indexChange : indexChanges) {
+          tx.addIndexChanged(indexChange.index.getName());
+        }
+      }
+    }
   }
 
   public void afterCreateOperations(final OIdentifiable id) {
     callbackHooks(ORecordHook.TYPE.AFTER_CREATE, id);
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null && getTransaction().isActive()) {
+        List<OClassIndexManager.IndexChange> indexChanges = new ArrayList<>();
+        OClassIndexManager.processIndexOnCreate(this, doc, indexChanges);
+        OTransactionOptimisticClient tx = (OTransactionOptimisticClient) getTransaction();
+        for (OClassIndexManager.IndexChange indexChange : indexChanges) {
+          tx.addIndexChanged(indexChange.index.getName());
+        }
+
+      }
+    }
   }
 
   public void afterDeleteOperations(final OIdentifiable id) {
     callbackHooks(ORecordHook.TYPE.AFTER_DELETE, id);
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null && getTransaction().isActive()) {
+        List<OClassIndexManager.IndexChange> indexChanges = new ArrayList<>();
+        OClassIndexManager.processIndexOnDelete(this, doc, indexChanges);
+        OTransactionOptimisticClient tx = (OTransactionOptimisticClient) getTransaction();
+        for (OClassIndexManager.IndexChange indexChange : indexChanges) {
+          tx.addIndexChanged(indexChange.index.getName());
+        }
+      }
+    }
   }
 
   @Override

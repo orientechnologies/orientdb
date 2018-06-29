@@ -250,4 +250,7 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   void internalClose(boolean recycle);
 
+  default OResultSet indexQuery(String indexName, String query, Object... args) {
+    return command(query, args);
+  }
 }
