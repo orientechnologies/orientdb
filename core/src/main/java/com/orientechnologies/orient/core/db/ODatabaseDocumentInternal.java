@@ -249,4 +249,7 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   String getClusterName(final ORecord record);
 
+  default OResultSet indexQuery(String indexName, String query, Object... args) {
+    return command(query, args);
+  }
 }

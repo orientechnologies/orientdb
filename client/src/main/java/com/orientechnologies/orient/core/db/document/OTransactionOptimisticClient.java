@@ -27,6 +27,8 @@ import java.util.*;
  */
 public class OTransactionOptimisticClient extends OTransactionOptimistic {
 
+  private Set<String> indexChanged = new HashSet<>();
+
   public OTransactionOptimisticClient(ODatabaseDocumentInternal iDatabase) {
     super(iDatabase);
   }
@@ -217,8 +219,11 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
     }
   }
 
-//  public OTransactionIndexChanges getIndexChangesInternal(final String iIndexName) {
-//    return null;
-//  }
+  public Set<String> getIndexChanged() {
+    return indexChanged;
+  }
 
+  public void addIndexChanged(String indexName) {
+    indexChanged.add(indexName);
+  }
 }
