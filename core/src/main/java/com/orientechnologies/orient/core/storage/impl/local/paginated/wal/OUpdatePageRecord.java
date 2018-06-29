@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerial
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -81,7 +82,7 @@ public final class OUpdatePageRecord extends OAbstractPageWALRecord {
 
     OIntegerSerializer.INSTANCE.serializeNative(pageSize, content, offset);
 
-    final ByteBuffer buffer = ByteBuffer.allocate(pageSize);
+    final ByteBuffer buffer = ByteBuffer.allocate(pageSize).order(ByteOrder.nativeOrder());
     realPage.serializePage(buffer);
 
     System.arraycopy(buffer.array(), 0, content, offset, pageSize);
@@ -98,7 +99,9 @@ public final class OUpdatePageRecord extends OAbstractPageWALRecord {
     super.toStream(buffer);
 
     buffer.putInt(pageSize);
+    final int oldPos = buffer.position();
     realPage.serializePage(buffer);
+    buffer.position(oldPos + pageSize);
 
     buffer.putInt(serializationType.ordinal());
   }
