@@ -2478,7 +2478,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           if (lsnEntry != null) {
             if (!flushMode.equals(FLUSH_MODE.LSN)) {//RING flush mode
-              if (endSegment - startSegment > 0) {
+              //if (endSegment - startSegment > 0) {
                 flushMode = FLUSH_MODE.LSN;
 
                 flushedPages += flushWriteCacheFromMinLSN();
@@ -2490,12 +2490,12 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
                 lsnEntry = localDirtyPagesByLSN.firstEntry();
 
-                if (lsnEntry == null || endSegment - startSegment <= 0) {
+              if (lsnEntry == null /*|| endSegment - startSegment <= 0*/) {
                   flushMode = FLUSH_MODE.RING;
                 }
-              } else {
+              //} else {
                 //flushedPages += flushWriteCacheByTheRing();
-              }
+              //}
             } else {
               flushedPages += flushWriteCacheFromMinLSN();
 
@@ -2506,7 +2506,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               lsnEntry = localDirtyPagesByLSN.firstEntry();
 
-              if (lsnEntry == null || endSegment - startSegment <= 0) {
+              if (lsnEntry == null /*|| endSegment - startSegment <= 0*/) {
                 flushMode = FLUSH_MODE.RING;
               }
             }
