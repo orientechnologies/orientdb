@@ -2494,7 +2494,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                   flushMode = FLUSH_MODE.RING;
                 }
               } else {
-                flushedPages += flushWriteCacheByTheRing();
+                //flushedPages += flushWriteCacheByTheRing();
               }
             } else {
               flushedPages += flushWriteCacheFromMinLSN();
@@ -2513,7 +2513,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           } else {
             flushMode = FLUSH_MODE.RING;
 
-            flushedPages += flushWriteCacheByTheRing();
+            //flushedPages += flushWriteCacheByTheRing();
           }
         }
 
@@ -3064,6 +3064,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         if (!iterator.hasNext()) {
           flushedPages += flushPagesChunk(chunk);
           releaseExclusiveLatch();
+
+          lastFileId = -1;
+          lastPageIndex = -1;
 
           iterator = exclusiveWritePages.iterator();
         }
