@@ -127,7 +127,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       OGlobalConfiguration.DISK_CACHE_RING_FLUSH_INTERVAL.getValueAsLong() * 1_000_000;
   /**
    * If portion of exclusive pages in write cache is bigger than this value which we switch flush mode to {@link
-   * FLUSH_MODE#EXCLUSIVE} and back to {@link FLUSH_MODE#RING} if portion of exclusive pages less than this boundary
+   * FLUSH_MODE#EXCLUSIVE} and back to {@link FLUSH_MODE#IDLE} if portion of exclusive pages less than this boundary
    */
   private static final double EXCLUSIVE_PAGES_BOUNDARY = OGlobalConfiguration.DISK_CACHE_EXCLUSIVE_PAGES_BOUNDARY.getValueAsFloat();
 
@@ -236,6 +236,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private PageKey lastRingPage    = null;
   private long    lastRingFlushTs = 0;
+
+  private long lastLSNFlushTs = 0;
 
   /**
    * Container of all files are managed by write cache. That is special type of container which ensures that only limited amount of
@@ -414,7 +416,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   /**
    * Current mode of data flush in {@link PeriodicFlushTask}.
    */
-  private FLUSH_MODE flushMode = FLUSH_MODE.RING;
+  private FLUSH_MODE flushMode = FLUSH_MODE.IDLE;
 
   /**
    * Error thrown during data flush.
@@ -2416,7 +2418,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         return null;
       } finally {
-        flushMode = FLUSH_MODE.RING;
+        flushMode = FLUSH_MODE.IDLE;
       }
     }
 
@@ -2477,43 +2479,49 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           Map.Entry<OLogSequenceNumber, Set<PageKey>> lsnEntry = localDirtyPagesByLSN.firstEntry();
 
           if (lsnEntry != null) {
-            if (!flushMode.equals(FLUSH_MODE.LSN)) {//RING flush mode
-              //if (endSegment - startSegment > 0) {
-                flushMode = FLUSH_MODE.LSN;
+            if (!flushMode.equals(FLUSH_MODE.LSN)) {//IDLE flush mode
+              flushMode = FLUSH_MODE.LSN;
 
+              if (endSegment - startSegment > 2) {
                 flushedPages += flushWriteCacheFromMinLSN();
-
-                startSegment = writeAheadLog.begin().getSegment();
-                endSegment = writeAheadLog.end().getSegment();
-
-                convertSharedDirtyPagesToLocal();
-
-                lsnEntry = localDirtyPagesByLSN.firstEntry();
-
-              if (lsnEntry == null /*|| endSegment - startSegment <= 0*/) {
-                  flushMode = FLUSH_MODE.RING;
+              } else {
+                final long ts = System.nanoTime();
+                if (lastLSNFlushTs > 0 && ts - lastLSNFlushTs >= 100 * 1_000_000) {
+                  flushedPages += flushWriteCacheFromMinLSN();
                 }
-              //} else {
-                //flushedPages += flushWriteCacheByTheRing();
-              //}
-            } else {
-              flushedPages += flushWriteCacheFromMinLSN();
 
-              startSegment = writeAheadLog.begin().getSegment();
-              endSegment = writeAheadLog.end().getSegment();
+                lastLSNFlushTs = ts;
+              }
 
               convertSharedDirtyPagesToLocal();
 
               lsnEntry = localDirtyPagesByLSN.firstEntry();
 
-              if (lsnEntry == null /*|| endSegment - startSegment <= 0*/) {
-                flushMode = FLUSH_MODE.RING;
+              if (lsnEntry == null) {
+                flushMode = FLUSH_MODE.IDLE;
+              }
+            } else {
+              if (endSegment - startSegment > 2) {
+                flushedPages += flushWriteCacheFromMinLSN();
+              } else {
+                final long ts = System.nanoTime();
+                if (lastLSNFlushTs > 0 && ts - lastLSNFlushTs >= 100 * 1000_0000) {
+                  flushedPages += flushWriteCacheFromMinLSN();
+                }
+
+                lastLSNFlushTs = ts;
+              }
+
+              convertSharedDirtyPagesToLocal();
+
+              lsnEntry = localDirtyPagesByLSN.firstEntry();
+
+              if (lsnEntry == null) {
+                flushMode = FLUSH_MODE.IDLE;
               }
             }
           } else {
-            flushMode = FLUSH_MODE.RING;
-
-            //flushedPages += flushWriteCacheByTheRing();
+            flushMode = FLUSH_MODE.IDLE;
           }
         }
 
@@ -2724,7 +2732,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
 
           if (exclusiveWriteCacheThreshold <= EXCLUSIVE_PAGES_BOUNDARY) {
-            flushMode = FLUSH_MODE.RING;
+            flushMode = FLUSH_MODE.IDLE;
           }
         } else {
           flushedPages += flushExclusiveWriteCache();
@@ -2733,7 +2741,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
 
           if (exclusiveWriteCacheThreshold <= EXCLUSIVE_PAGES_BOUNDARY) {
-            flushMode = FLUSH_MODE.RING;
+            flushMode = FLUSH_MODE.IDLE;
           }
         }
       } else {
@@ -2907,6 +2915,17 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         final ByteBuffer copy = bufferPool.acquireDirect(false);
         final OCachePointer pointer = cacheEntry.getValue();
+
+        if (pointer.clearRecency()) {
+          if (!chunk.isEmpty()) {
+            flushedPages += flushPagesChunk(chunk);
+            releaseExclusiveLatch();
+
+            endTs = System.nanoTime();
+
+            continue flushCycle;
+          }
+        }
 
         pointer.acquireSharedLock();
         try {
@@ -3299,7 +3318,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     /**
      * No data are flushed
      */
-    RING,
+    IDLE,
 
     /**
      * Pages flushed starting from page with the smallest LSN in dirty pages {@link #dirtyPages} table.
