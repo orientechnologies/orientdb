@@ -56,8 +56,7 @@ public final class OCachePointer {
 
   private boolean fullContentLogged;
 
-  private final AtomicBoolean recency        = new AtomicBoolean();
-  private       int           recencyCounter = 0;
+  private final AtomicBoolean recency = new AtomicBoolean();
 
   public OCachePointer(final ByteBuffer buffer, final OByteBufferPool bufferPool, final long fileId, final long pageIndex) {
     assert buffer != null;
@@ -74,17 +73,8 @@ public final class OCachePointer {
 
   public boolean clearRecency() {
     final boolean rec = this.recency.get();
+
     this.recency.lazySet(false);
-
-    if (rec) {
-      recencyCounter++;
-
-      if (recencyCounter > 10) {
-        recencyCounter = 0;
-        return false;
-      }
-    }
-
     return rec;
   }
 
