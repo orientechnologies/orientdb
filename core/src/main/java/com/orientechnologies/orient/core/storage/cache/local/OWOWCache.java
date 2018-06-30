@@ -2483,7 +2483,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               flushMode = FLUSH_MODE.LSN;
 
               final long ts = System.nanoTime();
-              if (endSegment - startSegment > 2) {
+              if (endSegment - startSegment > 1) {
                 flushedPages += flushWriteCacheFromMinLSN(LSN_CHUNK_SIZE, true);
               } else {
                 if (lastLSNFlushTs > 0 && ts - lastLSNFlushTs >= 100 * 1_000_000) {
@@ -2503,7 +2503,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             } else {
               final long ts = System.nanoTime();
 
-              if (endSegment - startSegment > 2) {
+              if (endSegment - startSegment > 1) {
                 flushedPages += flushWriteCacheFromMinLSN(LSN_CHUNK_SIZE, true);
               } else {
                 if (lastLSNFlushTs > 0 && ts - lastLSNFlushTs >= 100 * 1_000_000) {

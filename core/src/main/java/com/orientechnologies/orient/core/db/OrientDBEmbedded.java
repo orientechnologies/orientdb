@@ -150,9 +150,27 @@ public class OrientDBEmbedded implements OrientDBInternal {
         throw new ODatabaseException("Invalid configuration settings. Can not set maximum size of WAL segment");
       }
 
-      final FileStore fileStore = Files.getFileStore(Paths.get(basePath));
+      String walPath;
+
+      if (configurations != null) {
+        final OContextConfiguration config = configurations.getConfigurations();
+
+        if (config != null) {
+          walPath = config.getValueAsString(OGlobalConfiguration.WAL_LOCATION);
+        } else {
+          walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
+        }
+      } else {
+        walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
+      }
+
+      if (walPath == null) {
+        walPath = basePath;
+      }
+
+      final FileStore fileStore = Files.getFileStore(Paths.get(walPath));
       final long freeSpace = fileStore.getUsableSpace();
-      final long filesSize = Files.walk(Paths.get(basePath)).mapToLong(p -> p.toFile().isFile() ? p.toFile().length() : 0).sum();
+      final long filesSize = Files.walk(Paths.get(walPath)).mapToLong(p -> p.toFile().isFile() ? p.toFile().length() : 0).sum();
 
       maxSegSize = (freeSpace + filesSize) / 100 * sizePercent;
     }
