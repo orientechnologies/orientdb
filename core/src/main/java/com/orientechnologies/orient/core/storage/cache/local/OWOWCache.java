@@ -2406,7 +2406,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         while (minDirtyLSN.getSegment() < segmentId) {
           flushExclusivePagesIfNeeded();
 
-          flushWriteCacheFromMinLSN(LSN_CHUNK_SIZE);
+          flushWriteCacheFromMinLSN(LSN_CHUNK_SIZE, true);
 
           firstEntry = localDirtyPagesByLSN.firstEntry();
 
@@ -2484,10 +2484,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               final long ts = System.nanoTime();
               if (endSegment - startSegment > 2) {
-                flushedPages += flushWriteCacheFromMinLSN(LSN_CHUNK_SIZE);
+                flushedPages += flushWriteCacheFromMinLSN(LSN_CHUNK_SIZE, true);
               } else {
-                if (lastLSNFlushTs > 0 && ts - lastLSNFlushTs >= 250 * 1_000_000) {
-                  flushedPages += flushWriteCacheFromMinLSN(RING_CHUNK_SIZE);
+                if (lastLSNFlushTs > 0 && ts - lastLSNFlushTs >= 100 * 1_000_000) {
+                  flushedPages += flushWriteCacheFromMinLSN(RING_CHUNK_SIZE, false);
                 }
               }
 
@@ -2504,10 +2504,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               final long ts = System.nanoTime();
 
               if (endSegment - startSegment > 2) {
-                flushedPages += flushWriteCacheFromMinLSN(LSN_CHUNK_SIZE);
+                flushedPages += flushWriteCacheFromMinLSN(LSN_CHUNK_SIZE, true);
               } else {
-                if (lastLSNFlushTs > 0 && ts - lastLSNFlushTs >= 250 * 1_000_000) {
-                  flushedPages += flushWriteCacheFromMinLSN(RING_CHUNK_SIZE);
+                if (lastLSNFlushTs > 0 && ts - lastLSNFlushTs >= 100 * 1_000_000) {
+                  flushedPages += flushWriteCacheFromMinLSN(RING_CHUNK_SIZE, false);
                 }
               }
 
@@ -2814,7 +2814,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private int flushWriteCacheFromMinLSN(int chunkSize) throws IOException, InterruptedException {
+  private int flushWriteCacheFromMinLSN(int chunkSize, boolean walOverflow) throws IOException, InterruptedException {
     //first we try to find page which contains the oldest not flushed changes
     //that is needed to allow to compact WAL as earlier as possible
     convertSharedDirtyPagesToLocal();
@@ -2905,9 +2905,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               releaseExclusiveLatch();
 
               endTs = System.nanoTime();
-
-              continue flushCycle;
             }
+
+            continue flushCycle;
           }
         }
 
@@ -2930,9 +2930,24 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         try {
           version = pointer.getVersion();
           fullContentLogged = pointer.isFullContentLogged();
-          pointer.setFullContentLogged(false);
 
           final ByteBuffer buffer = pointer.getBufferDuplicate();
+
+          if (fullContentLogged) {
+            final OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(buffer);
+            final OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLsn();
+
+            if (!walOverflow && lsn.compareTo(flushedLSN) > 0) {
+              if (!chunk.isEmpty()) {
+                flushedPages += flushPagesChunk(chunk);
+                releaseExclusiveLatch();
+              }
+
+              break flushCycle;
+            }
+          }
+
+          pointer.setFullContentLogged(false);
 
           buffer.position(0);
           copy.position(0);
