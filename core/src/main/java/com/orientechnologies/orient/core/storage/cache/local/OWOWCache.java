@@ -2917,7 +2917,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         final ByteBuffer copy = bufferPool.acquireDirect(false);
         final OCachePointer pointer = cacheEntry.getValue();
 
-        if (pointer.clearRecency() && !chunk.isEmpty()) {
+        if (!walOverflow && pointer.clearRecency() && !chunk.isEmpty()) {
           flushedPages += flushPagesChunk(chunk);
           releaseExclusiveLatch();
 
