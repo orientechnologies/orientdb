@@ -2513,7 +2513,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               lastLSNFlushTs = ts;
 
-
               convertSharedDirtyPagesToLocal();
 
               lsnEntry = localDirtyPagesByLSN.firstEntry();
@@ -2918,15 +2917,13 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         final ByteBuffer copy = bufferPool.acquireDirect(false);
         final OCachePointer pointer = cacheEntry.getValue();
 
-        if (pointer.clearRecency()) {
-          if (!chunk.isEmpty()) {
-            flushedPages += flushPagesChunk(chunk);
-            releaseExclusiveLatch();
+        if (pointer.clearRecency() && !chunk.isEmpty()) {
+          flushedPages += flushPagesChunk(chunk);
+          releaseExclusiveLatch();
 
-            endTs = System.nanoTime();
+          endTs = System.nanoTime();
 
-            continue flushCycle;
-          }
+          continue flushCycle;
         }
 
         pointer.acquireSharedLock();
