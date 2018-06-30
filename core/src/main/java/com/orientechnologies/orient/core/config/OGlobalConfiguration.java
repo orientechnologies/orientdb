@@ -306,10 +306,10 @@ public enum OGlobalConfiguration {
 
   DISK_CACHE_RING_CHUNK_SIZE("storage.diskCache.ringChunkSize",
       "Maximum size of chunk which should be flushed by write cache background thread in ring and exclusive modes", Integer.class,
-      16),
+      512),
 
   DISK_CACHE_LSN_CHUNK_SIZE("storage.diskCache.ringChunkSize",
-      "Maximum size of chunk which should be flushed by write cache background thread in LSN mode", Integer.class, 16),
+      "Maximum size of chunk which should be flushed by write cache background thread in LSN mode", Integer.class, 8),
 
   DISK_CACHE_EXCLUSIVE_PAGES_BOUNDARY("storage.diskCache.exclusiveBoundary",
       "Portion of exclusive pages in write cache after which we will start to flush only exclusive pages", Float.class, 0.7),
