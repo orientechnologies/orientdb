@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -54,7 +55,7 @@ public final class OCachePointer {
   private final long fileId;
   private final long pageIndex;
 
-  private boolean fullContentLogged;
+  private OLogSequenceNumber fullLogLSN;
 
   private final AtomicBoolean recency        = new AtomicBoolean();
   private       int           recencyCounter = 0;
@@ -86,12 +87,12 @@ public final class OCachePointer {
     return rec;
   }
 
-  public boolean isFullContentLogged() {
-    return fullContentLogged;
+  public OLogSequenceNumber getFullLogLSN() {
+    return fullLogLSN;
   }
 
-  public void setFullContentLogged(final boolean fullContentLogged) {
-    this.fullContentLogged = fullContentLogged;
+  public void setFullLogLSN(final OLogSequenceNumber fullLogLSN) {
+    this.fullLogLSN = fullLogLSN;
   }
 
   public void setWritersListener(final WritersListener writersListener) {

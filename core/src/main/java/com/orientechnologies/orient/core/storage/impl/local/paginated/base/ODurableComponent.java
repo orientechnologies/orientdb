@@ -168,7 +168,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
                   + storage.getName()), e);
         }
 
-        cachePointer.setFullContentLogged(true);
+        cachePointer.setFullLogLSN(recordLSN);
 
       } else {
         assert pageLsn.getSegment() == end.getSegment();

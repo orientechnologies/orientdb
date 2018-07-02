@@ -19,9 +19,52 @@
  */
 package com.orientechnologies.orient.core;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.listener.OListenerManger;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.common.profiler.OAbstractProfiler;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.common.profiler.OProfilerStub;
+import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
+import com.orientechnologies.common.util.OClassLoaderHelper;
+import com.orientechnologies.common.util.OUncaughtExceptionHandler;
+import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactory;
+import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactoryImpl;
+import com.orientechnologies.orient.core.command.script.OScriptManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.engine.OEngine;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.record.ORecordFactoryManager;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
+import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageAbstract;
+
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -34,55 +77,29 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.listener.OListenerManger;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.common.profiler.OAbstractProfiler;
-import com.orientechnologies.common.profiler.OProfiler;
-import com.orientechnologies.common.profiler.OProfilerStub;
-import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
-import com.orientechnologies.common.util.OClassLoaderHelper;
-import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactory;
-import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactoryImpl;
-import com.orientechnologies.orient.core.command.script.OScriptManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
-import com.orientechnologies.orient.core.db.OrientDBEmbedded;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.engine.OEngine;
-import com.orientechnologies.orient.core.record.ORecordFactoryManager;
-import com.orientechnologies.orient.core.security.OSecuritySystem;
-import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
-import com.orientechnologies.orient.core.storage.OStorage;
-
 public class Orient extends OListenerManger<OOrientListener> {
   public static final String ORIENTDB_HOME = "ORIENTDB_HOME";
   public static final String URL_SYNTAX    = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
   private static volatile Orient instance;
-  private static final Lock initLock = new ReentrantLock();
+  private static final    Lock   initLock = new ReentrantLock();
 
   private static volatile boolean registerDatabaseByPath = false;
 
   private final ConcurrentMap<String, OEngine> engines = new ConcurrentHashMap<String, OEngine>();
 
-  private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
-  private final OScriptManager                                                       scriptManager        = new OScriptManager();
-  private final ThreadGroup threadGroup;
-  private final ReadWriteLock                                        engineLock                    = new ReentrantReadWriteLock();
-  private final ORecordConflictStrategyFactory                       recordConflictStrategy        = new ORecordConflictStrategyFactory();
-  private final ReferenceQueue<OOrientStartupListener>               removedStartupListenersQueue  = new ReferenceQueue<OOrientStartupListener>();
-  private final ReferenceQueue<OOrientShutdownListener>              removedShutdownListenersQueue = new ReferenceQueue<OOrientShutdownListener>();
-  private final Set<OOrientStartupListener>                          startupListeners              = Collections
+  private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
+  private final OScriptManager                                                       scriptManager                 = new OScriptManager();
+  private final ThreadGroup                                                          threadGroup;
+  private final ReadWriteLock                                                        engineLock                    = new ReentrantReadWriteLock();
+  private final ORecordConflictStrategyFactory                                       recordConflictStrategy        = new ORecordConflictStrategyFactory();
+  private final ReferenceQueue<OOrientStartupListener>                               removedStartupListenersQueue  = new ReferenceQueue<OOrientStartupListener>();
+  private final ReferenceQueue<OOrientShutdownListener>                              removedShutdownListenersQueue = new ReferenceQueue<OOrientShutdownListener>();
+  private final Set<OOrientStartupListener>                                          startupListeners              = Collections
       .newSetFromMap(new ConcurrentHashMap<OOrientStartupListener, Boolean>());
-  private final Set<WeakHashSetValueHolder<OOrientStartupListener>>  weakStartupListeners          = Collections
+  private final Set<WeakHashSetValueHolder<OOrientStartupListener>>                  weakStartupListeners          = Collections
       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientStartupListener>, Boolean>());
-  private final Set<WeakHashSetValueHolder<OOrientShutdownListener>> weakShutdownListeners         = Collections
+  private final Set<WeakHashSetValueHolder<OOrientShutdownListener>>                 weakShutdownListeners         = Collections
       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
 
   private final PriorityQueue<OShutdownHandler> shutdownHandlers = new PriorityQueue<OShutdownHandler>(11,
@@ -107,16 +124,18 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   private final String os;
 
-  private volatile Timer timer;
-  private volatile ORecordFactoryManager recordFactoryManager = new ORecordFactoryManager();
+  private volatile OThreadPoolExecutorWithLogging writeExecutor;
+
+  private volatile Timer                       timer;
+  private volatile ORecordFactoryManager       recordFactoryManager = new ORecordFactoryManager();
   private          OrientShutdownHook          shutdownHook;
   private volatile OAbstractProfiler           profiler;
   private          ODatabaseThreadLocalFactory databaseThreadFactory;
-  private volatile boolean active = false;
-  private          ThreadPoolExecutor workers;
-  private          OSignalHandler     signalHandler;
-  private volatile OSecuritySystem    security;
-  private boolean runningDistributed = false;
+  private volatile boolean                     active               = false;
+  private          ThreadPoolExecutor          workers;
+  private          OSignalHandler              signalHandler;
+  private volatile OSecuritySystem             security;
+  private          boolean                     runningDistributed   = false;
 
   /**
    * Indicates that engine is initialized inside of web application container.
@@ -256,6 +275,14 @@ public class Orient extends OListenerManger<OOrientListener> {
       OByteBufferPool.instance().registerMBean();
       ODirectMemoryAllocator.instance().registerMBean();
 
+      writeExecutor = new OThreadPoolExecutorWithLogging(1, 1, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), r -> {
+        final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
+        thread.setDaemon(true);
+        thread.setName("OrientDB Write Task Thread)");
+        thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+        return thread;
+      });
+
       profiler = new OProfilerStub(false);
 
       shutdownHook = new OrientShutdownHook();
@@ -389,6 +416,16 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       shutdownHandlers.clear();
 
+      writeExecutor.shutdown();
+      try {
+        if (!writeExecutor.awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS)) {
+          throw new OStorageException("Write thread cannot be stopped");
+        }
+
+      } catch (final InterruptedException e) {
+        OLogManager.instance().errorNoDb(this, "Cannot shutdown write thread", e);
+      }
+
       OLogManager.instance().info(this, "Clearing byte buffer pool");
       OByteBufferPool.instance().clear();
 
@@ -413,6 +450,10 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
 
     return this;
+  }
+
+  public OThreadPoolExecutorWithLogging writeThread() {
+    return writeExecutor;
   }
 
   public void scheduleTask(final TimerTask task, final long delay, final long period) {
