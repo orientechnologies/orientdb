@@ -863,7 +863,7 @@ OInteger Integer():
 }
 {
 (
-    [ <MINUS> {sign = -1;} ] tokenVal = <INTEGER_LITERAL> {jjtThis.value = sign * Long.parseLong(tokenVal.image);}
+    [ <MINUS> {sign = -1;} ] tokenVal = <INTEGER_LITERAL> {jjtThis.value = Long.parseLong(sign >= 0 ? tokenVal.image : "-" + tokenVal.image);}
 ) { return jjtThis; }
 }
 
