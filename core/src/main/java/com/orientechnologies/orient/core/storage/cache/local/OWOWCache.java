@@ -2638,9 +2638,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         throw new IllegalStateException("Chunk is not empty !");
       }
 
-      final int pageBufferSize = 4 * chunkSize;
-      final List<PageKey> pageKeysToFlush = new ArrayList<>(pageBufferSize);
-
       if (localDirtyPagesBySegment.isEmpty()) {
         if (!dirtyPages.isEmpty()) {
           convertSharedDirtyPagesToLocal();
@@ -2653,6 +2650,13 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
 
       final TreeSet<PageKey> segmentPages = localDirtyPagesBySegment.get(currentSegment);
+      if (segmentPages == null) {
+        currentSegment++;
+        continue;
+      }
+
+      final int pageBufferSize = 4 * chunkSize;
+      final List<PageKey> pageKeysToFlush = new ArrayList<>(pageBufferSize);
       final Iterator<PageKey> pagesIterator = segmentPages.iterator();
 
       while (pagesIterator.hasNext() && pageKeysToFlush.size() < pageBufferSize) {
