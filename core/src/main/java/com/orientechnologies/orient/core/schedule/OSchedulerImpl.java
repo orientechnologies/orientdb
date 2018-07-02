@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since Mar 28, 2013
  */
 public class OSchedulerImpl implements OScheduler {
-  private ConcurrentHashMap<String, OScheduledEvent> events = new ConcurrentHashMap<String, OScheduledEvent>();
+  private static ConcurrentHashMap<String, OScheduledEvent> events = new ConcurrentHashMap<String, OScheduledEvent>();
 
   public OSchedulerImpl() {
   }
@@ -113,9 +113,7 @@ public class OSchedulerImpl implements OScheduler {
       final Iterable<ODocument> result = db.browseClass(OScheduledEvent.CLASS_NAME);
       for (ODocument d : result) {
         final OScheduledEvent event = new OScheduledEvent(d);
-
-        if (events.putIfAbsent(event.getName(), event) == null)
-          this.scheduleEvent(event);
+        scheduleEvent(event);
       }
     }
   }
