@@ -4138,12 +4138,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       OLogSequenceNumber beginLSN = writeAheadLog.begin();
       OLogSequenceNumber endLSN = writeAheadLog.end();
 
-      final OLogSequenceNumber minLSN = writeCache.getMinimalNotFlushedLSN();
+      final Long minLSNSegment = writeCache.getMinimalNotFlushedSegment();
 
       final long fuzzySegment;
 
-      if (minLSN != null) {
-        fuzzySegment = minLSN.getSegment();
+      if (minLSNSegment != null) {
+        fuzzySegment = minLSNSegment;
       } else {
         if (endLSN == null) {
           return;
@@ -4153,7 +4153,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       OLogManager.instance().infoNoDb(this,
-          "Before fuzzy checkpoint: min LSN is " + minLSN + ", WAL begin is " + beginLSN + ", WAL end is " + endLSN
+          "Before fuzzy checkpoint: min LSN segment is " + minLSNSegment + ", WAL begin is " + beginLSN + ", WAL end is " + endLSN
               + ", fuzzy segment is " + fuzzySegment);
 
       if (fuzzySegment > beginLSN.getSegment() && beginLSN.getSegment() < endLSN.getSegment()) {
@@ -5833,12 +5833,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           //we should take min lsn BEFORE min write cache LSN call
           //to avoid case when new data are changed before call
           OLogSequenceNumber endLSN = writeAheadLog.end();
-          OLogSequenceNumber minDirtyLSN = writeCache.getMinimalNotFlushedLSN();
+          Long minLSNSegment = writeCache.getMinimalNotFlushedSegment();
 
-          if (minDirtyLSN == null) {
+          if (minLSNSegment == null) {
             minDirtySegment = endLSN.getSegment();
           } else {
-            minDirtySegment = minDirtyLSN.getSegment();
+            minDirtySegment = minLSNSegment;
           }
         } while (minDirtySegment < flushTillSegmentId);
 

@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 
 import java.io.IOException;
@@ -212,7 +211,7 @@ public interface OWriteCache {
    */
   long externalFileId(int fileId);
 
-  OLogSequenceNumber getMinimalNotFlushedLSN();
+  Long getMinimalNotFlushedSegment();
 
   void updateDirtyPagesTable(OCachePointer pointer);
 

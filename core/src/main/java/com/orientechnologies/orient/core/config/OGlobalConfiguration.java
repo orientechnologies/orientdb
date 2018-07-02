@@ -254,7 +254,7 @@ public enum OGlobalConfiguration {
   WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, -1),
 
   WAL_MAX_SEGMENT_SIZE_PERCENT("storage.wal.maxSegmentSizePercent",
-      "Maximum size of single WAL segment in percent of initial free space", Integer.class, 5),
+      "Maximum size of single WAL segment in percent of initial free space", Integer.class, 10),
 
   WAL_MIN_SEG_SIZE("storage.wal.minSegSize", "Minimal value of maximum WAL segment size in MB", Integer.class, 512),
 
