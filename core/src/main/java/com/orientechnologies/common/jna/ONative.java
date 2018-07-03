@@ -38,10 +38,19 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.ByteBuffer;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ONative {
+  public static final int O_RDONLY = 00;
+  public static final int O_WRONLY = 01;
+  public static final int O_RDWR   = 02;
+  public static final int O_CREAT  = 0100;
+  public static final int O_TRUNC  = 01000;
+  public static final int O_DIRECT = 040000;
+  public static final int O_SYNC   = 04000000;
+
   private static volatile OCLibrary C_LIBRARY;
   private static final    String    DEFAULT_MEMORY_CGROUP_PATH = "/sys/fs/memory";
 
@@ -93,16 +102,15 @@ public class ONative {
       if (result == 0 && rlimit.rlim_cur > 0) {
         if (verbose) {
           OLogManager.instance().infoNoDb(this, "Detected limit of amount of simultaneously open files is %d, "
-              + " limit of open files for disk cache will be set to %d", rlimit.rlim_cur, rlimit.rlim_cur / 2 - 512);
+              + " limit of open files for disk cache will be set to %d", rlimit.rlim_cur, rlimit.rlim_cur - 512);
         }
 
         if (rlimit.rlim_cur < recommended) {
           OLogManager.instance()
-              .warnNoDb(this, "Value of limit of simultaneously open files is too small, recommended value is %d",
-                  recommended);
+              .warnNoDb(this, "Value of limit of simultaneously open files is too small, recommended value is %d", recommended);
         }
 
-        return (int) rlimit.rlim_cur / 2 - 512;
+        return (int) rlimit.rlim_cur - 512;
       } else {
         if (verbose) {
           OLogManager.instance().infoNoDb(this, "Can not detect value of limit of open files.");
@@ -210,12 +218,70 @@ public class ONative {
     return new MemoryLimitResult(memoryLimit, insideContainer);
   }
 
-  public int open(String path) throws LastErrorException {
+  public int open(String path, int flags) throws LastErrorException {
     return C_LIBRARY.open(path, 0x0002);
   }
 
   public int fallocate(int fd, long offset, long len) throws LastErrorException {
     return C_LIBRARY.fallocate(fd, 0, offset, len);
+  }
+
+  public long read(int fd, ByteBuffer buffer, int count) throws LastErrorException {
+    return C_LIBRARY.read(fd, buffer, count);
+  }
+
+  public long write(int fd, ByteBuffer buffer, int count) throws LastErrorException {
+    return C_LIBRARY.write(fd, buffer, count);
+  }
+
+  public long pwrite(int fd, ByteBuffer buffer, int count, long position) throws LastErrorException {
+    return C_LIBRARY.pwrite(fd, buffer, count, position);
+  }
+
+  public long pread(int fd, ByteBuffer buffer, int count, long position) throws LastErrorException {
+    return C_LIBRARY.pread(fd, buffer, count, position);
+  }
+
+  public int fsync(int fd) throws LastErrorException {
+    return C_LIBRARY.fsync(fd);
+  }
+
+  public long readv(int fd, ByteBuffer[] buffers, int index) throws LastErrorException {
+    final OCLibrary.iovec[] iovecs = convertToIovecs(buffers, index);
+    return C_LIBRARY.readv(fd, iovecs, iovecs.length);
+  }
+
+  public long writev(int fd, ByteBuffer[] buffers, int index) throws LastErrorException {
+    final OCLibrary.iovec[] iovecs = convertToIovecs(buffers, index);
+    return C_LIBRARY.writev(fd, iovecs, iovecs.length);
+  }
+
+  public long preadv(int fd, long offset, ByteBuffer[] buffers, int index) throws LastErrorException {
+    final OCLibrary.iovec[] iovecs = convertToIovecs(buffers, index);
+    return C_LIBRARY.preadv(fd, iovecs, iovecs.length, offset);
+  }
+
+  public long pwritev(int fd, long offset, ByteBuffer[] buffers, int index) throws LastErrorException {
+    final OCLibrary.iovec[] iovecs = convertToIovecs(buffers, index);
+    return C_LIBRARY.pwritev(fd, iovecs, iovecs.length, offset);
+  }
+
+  private OCLibrary.iovec[] convertToIovecs(ByteBuffer[] buffers, int index) {
+    final OCLibrary.iovec iovecs[] = new OCLibrary.iovec[buffers.length - index];
+
+    for (int i = 0; i < iovecs.length; i++) {
+      final OCLibrary.iovec iovec = new OCLibrary.iovec();
+      final ByteBuffer buffer = buffers[i + index];
+
+      iovec.iov_base = buffer;
+      iovec.iov_len = buffer.remaining();
+    }
+
+    return iovecs;
+  }
+
+  public int ftruncate(int fd, long len) throws LastErrorException {
+    return C_LIBRARY.ftruncate(fd, len);
   }
 
   public int close(int fd) throws LastErrorException {

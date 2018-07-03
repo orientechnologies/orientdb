@@ -455,10 +455,12 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       cacheEventsPublisher = new OThreadPoolExecutorWithLogging(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
           new SynchronousQueue<>(), new CacheEventsPublisherFactory(storageName));
 
-      commitExecutor
-          .scheduleWithFixedDelay(new PeriodicExclusiveFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
-      commitExecutor
-          .scheduleWithFixedDelay(new PeriodicFlushTask(), 8 * pageFlushInterval, 8 * pageFlushInterval, TimeUnit.MILLISECONDS);
+      if (pageFlushInterval > 0) {
+        commitExecutor
+            .scheduleWithFixedDelay(new PeriodicExclusiveFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
+        commitExecutor
+            .scheduleWithFixedDelay(new PeriodicFlushTask(), 8 * pageFlushInterval, 8 * pageFlushInterval, TimeUnit.MILLISECONDS);
+      }
 
     } finally {
       filesLock.releaseWriteLock();
@@ -2533,7 +2535,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             if (!flushMode.equals(FLUSH_MODE.LSN) && endSegment - startSegment >= 1) {//IDLE flush mode
               flushMode = FLUSH_MODE.LSN;
 
-              flushedPages += flushWriteCacheFromMinLSN(128, startSegment, endSegment);
+              flushedPages += flushWriteCacheFromMinLSN(512, startSegment, endSegment);
 
               convertSharedDirtyPagesToLocal();
 
@@ -2547,7 +2549,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               }
             } else {
               if (endSegment - startSegment >= 1) {
-                flushedPages += flushWriteCacheFromMinLSN(128, startSegment, endSegment);
+                flushedPages += flushWriteCacheFromMinLSN(512, startSegment, endSegment);
               }
 
               convertSharedDirtyPagesToLocal();

@@ -35,13 +35,13 @@ import com.sun.jna.Pointer;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.RandomAccessFile;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,9 +49,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.orientechnologies.common.io.OIOUtils.readByteBuffer;
-import static com.orientechnologies.common.io.OIOUtils.readByteBuffers;
-import static com.orientechnologies.common.io.OIOUtils.writeByteBuffer;
-import static com.orientechnologies.common.io.OIOUtils.writeByteBuffers;
 
 public class OFileClassic implements OFile, OClosableItem {
   public final static  String NAME            = "classic";
@@ -66,16 +63,16 @@ public class OFileClassic implements OFile, OClosableItem {
 
   private volatile Path osFile;
 
-  private          FileChannel      channel;
-  private          RandomAccessFile frnd;
-  private volatile boolean          dirty       = false;
-  private volatile boolean          headerDirty = false;
-  private          int              version;
+  private FileChannel channel;
+  private int         fd;
+
+  private volatile boolean dirty       = false;
+  private volatile boolean headerDirty = false;
+  private          int     version;
 
   private volatile long size;
 
   private AllocationMode allocationMode;
-  private int            fd;
 
   /**
    * Map which calculates which files are opened and how many users they have
@@ -101,7 +98,7 @@ public class OFileClassic implements OFile, OClosableItem {
     acquireWriteLock();
     try {
       final long currentSize = this.size;
-      assert channel.size() == currentSize + HEADER_SIZE;
+      assert Files.size(osFile) == currentSize + HEADER_SIZE;
 
       //noinspection NonAtomicOperationOnVolatileField
       this.size += size;
@@ -114,42 +111,25 @@ public class OFileClassic implements OFile, OClosableItem {
         try {
           final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, size);
           buffer.position(0);
-          OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
+
+          if (channel != null) {
+            OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
+          } else {
+            OIOUtils.writeByteBuffer(buffer, fd, currentSize + HEADER_SIZE);
+          }
+
         } finally {
           Native.free(ptr);
         }
       } else if (allocationMode == AllocationMode.DESCRIPTOR) {
         assert fd > 0;
-
-        try {
-          ONative.instance().fallocate(fd, currentSize + HEADER_SIZE, size);
-        } catch (LastErrorException e) {
-          OLogManager.instance().warnNoDb(this,
-              "Can not allocate space (error %d) for file %s using native Linux API, more slower methods will be used",
-              e.getErrorCode(), osFile.toAbsolutePath().toString());
-
-          allocationMode = AllocationMode.WRITE;
-
-          try {
-            ONative.instance().close(fd);
-          } catch (LastErrorException lee) {
-            OLogManager.instance()
-                .warnNoDb(this, "Can not close Linux descriptor of file %s, error %d", osFile.toAbsolutePath().toString(),
-                    lee.getErrorCode());
-          }
-
-          final long ptr = Native.malloc(size);
-          try {
-            final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, size);
-            buffer.position(0);
-            OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
-          } finally {
-            Native.free(ptr);
-          }
-        }
-
+        ONative.instance().fallocate(fd, currentSize + HEADER_SIZE, size);
       } else if (allocationMode == AllocationMode.LENGTH) {
-        frnd.setLength(this.size + HEADER_SIZE);
+        if (channel != null) {
+          OIOUtils.writeByteBuffer(ByteBuffer.allocate(1), channel, this.size + HEADER_SIZE - 1);
+        } else {
+          OIOUtils.writeByteBuffer(ByteBuffer.allocate(1), fd, this.size + HEADER_SIZE - 1);
+        }
       } else {
         throw new IllegalStateException("Unknown allocation mode");
       }
@@ -172,7 +152,13 @@ public class OFileClassic implements OFile, OClosableItem {
         acquireWriteLock();
         try {
           //noinspection resource
-          channel.truncate(HEADER_SIZE + size);
+          if (channel != null) {
+            channel.truncate(HEADER_SIZE + size);
+          } else {
+            assert fd > 0;
+            ONative.instance().ftruncate(fd, 0);
+          }
+
           this.size = size;
 
           assert this.size >= 0;
@@ -205,7 +191,12 @@ public class OFileClassic implements OFile, OClosableItem {
           offset = checkRegions(offset, iLength);
 
           final ByteBuffer buffer = ByteBuffer.wrap(iData, iArrayOffset, iLength);
-          readByteBuffer(buffer, channel, offset, true);
+
+          if (channel != null) {
+            readByteBuffer(buffer, channel, offset, true);
+          } else {
+            readByteBuffer(buffer, fd, offset, true);
+          }
           break;
 
         } finally {
@@ -228,7 +219,11 @@ public class OFileClassic implements OFile, OClosableItem {
         acquireReadLock();
         try {
           offset = checkRegions(offset, buffer.limit());
-          readByteBuffer(buffer, channel, offset, throwOnEof);
+          if (channel != null) {
+            readByteBuffer(buffer, channel, offset, throwOnEof);
+          } else {
+            readByteBuffer(buffer, fd, offset, throwOnEof);
+          }
 
           break;
 
@@ -253,9 +248,13 @@ public class OFileClassic implements OFile, OClosableItem {
         try {
           offset += HEADER_SIZE;
 
-          //noinspection resource
-          channel.position(offset);
-          readByteBuffers(buffers, channel, buffers.length * buffers[0].limit(), throwOnEof);
+          if (channel != null) {
+            //noinspection resource
+            channel.position(offset);
+            OIOUtils.readByteBuffers(buffers, channel, buffers.length * buffers[0].limit(), throwOnEof);
+          } else {
+            OIOUtils.readByteBuffers(buffers, fd, buffers.length * buffers[0].limit(), offset, throwOnEof);
+          }
           break;
 
         } finally {
@@ -279,7 +278,11 @@ public class OFileClassic implements OFile, OClosableItem {
         try {
           offset += HEADER_SIZE;
 
-          writeByteBuffer(buffer, channel, offset);
+          if (channel != null) {
+            OIOUtils.writeByteBuffer(buffer, channel, offset);
+          } else {
+            OIOUtils.writeByteBuffer(buffer, fd, offset);
+          }
           setDirty();
 
           break;
@@ -304,8 +307,12 @@ public class OFileClassic implements OFile, OClosableItem {
         try {
           offset += HEADER_SIZE;
           //noinspection resource
-          channel.position(offset);
-          writeByteBuffers(buffers, channel, buffers.length * buffers[0].limit());
+          if (channel != null) {
+            channel.position(offset);
+            OIOUtils.writeByteBuffers(buffers, channel, buffers.length * buffers[0].limit());
+          } else {
+            OIOUtils.writeByteBuffers(buffers, fd, offset, buffers.length * buffers[0].limit());
+          }
 
           setDirty();
 
@@ -346,7 +353,11 @@ public class OFileClassic implements OFile, OClosableItem {
     if (data != null) {
       offset += HEADER_SIZE;
       ByteBuffer byteBuffer = ByteBuffer.wrap(data, arrayOffset, size);
-      writeByteBuffer(byteBuffer, channel, offset);
+      if (channel != null) {
+        OIOUtils.writeByteBuffer(byteBuffer, channel, offset);
+      } else {
+        OIOUtils.writeByteBuffer(byteBuffer, fd, offset);
+      }
       setDirty();
     }
   }
@@ -522,7 +533,11 @@ public class OFileClassic implements OFile, OClosableItem {
       if (headerDirty || dirty) {
         headerDirty = dirty = false;
         try {
-          channel.force(false);
+          if (channel != null) {
+            channel.force(false);
+          } else {
+            ONative.instance().fsync(fd);
+          }
         } catch (IOException e) {
           OLogManager.instance()
               .warn(this, "Error during flush of file %s. Data may be lost in case of power failure", e, getName());
@@ -540,7 +555,7 @@ public class OFileClassic implements OFile, OClosableItem {
     try {
       acquireExclusiveAccess();
 
-      openChannel();
+      openChannelOrFD();
       init();
 
       setVersion(OFileClassic.CURRENT_VERSION);
@@ -557,18 +572,8 @@ public class OFileClassic implements OFile, OClosableItem {
       return;
     }
 
-    if (Platform.isLinux()) {
+    if (Platform.isLinux() && fd > 0) {
       allocationMode = AllocationMode.DESCRIPTOR;
-      int fd = 0;
-      try {
-        fd = ONative.instance().open(osFile.toAbsolutePath().toString());
-      } catch (LastErrorException e) {
-        OLogManager.instance().warnNoDb(this, "File %s can not be opened using Linux native API,"
-                + " more slower methods of allocation will be used. Error code : %d.", osFile.toAbsolutePath().toString(),
-            e.getErrorCode());
-        allocationMode = AllocationMode.WRITE;
-      }
-      this.fd = fd;
     } else if (Platform.isWindows()) {
       allocationMode = AllocationMode.LENGTH;
     } else {
@@ -596,14 +601,23 @@ public class OFileClassic implements OFile, OClosableItem {
 
   private ByteBuffer readData(final long iOffset, final int iSize) throws IOException {
     ByteBuffer buffer = ByteBuffer.allocate(iSize);
-    readByteBuffer(buffer, channel, iOffset, true);
+    if (channel != null) {
+      OIOUtils.readByteBuffer(buffer, channel, iOffset, true);
+    } else {
+      OIOUtils.readByteBuffer(buffer, fd, iOffset, true);
+    }
+
     buffer.rewind();
     return buffer;
   }
 
   private void writeBuffer(final ByteBuffer buffer, final long offset) throws IOException {
     buffer.rewind();
-    writeByteBuffer(buffer, channel, offset);
+    if (channel != null) {
+      OIOUtils.writeByteBuffer(buffer, channel, offset);
+    } else {
+      OIOUtils.writeByteBuffer(buffer, fd, offset);
+    }
   }
 
   @SuppressWarnings("SameParameterValue")
@@ -633,7 +647,7 @@ public class OFileClassic implements OFile, OClosableItem {
 
       acquireExclusiveAccess();
 
-      openChannel();
+      openChannelOrFD();
       init();
 
       OLogManager.instance().debug(this, "Checking file integrity of " + osFile.getFileName() + "...");
@@ -732,11 +746,6 @@ public class OFileClassic implements OFile, OClosableItem {
             channel = null;
           }
 
-          if (frnd != null) {
-            frnd.close();
-            frnd = null;
-          }
-
           closeFD();
         } finally {
           releaseWriteLock();
@@ -759,7 +768,7 @@ public class OFileClassic implements OFile, OClosableItem {
   }
 
   private void closeFD() {
-    if (allocationMode == AllocationMode.DESCRIPTOR && fd > 0) {
+    if (fd > 0) {
       try {
         ONative.instance().close(fd);
       } catch (LastErrorException e) {
@@ -768,7 +777,6 @@ public class OFileClassic implements OFile, OClosableItem {
                 e.getErrorCode());
       }
 
-      allocationMode = null;
       fd = 0;
     }
   }
@@ -804,29 +812,48 @@ public class OFileClassic implements OFile, OClosableItem {
 
   }
 
-  private void openChannel() throws IOException {
+  private void openChannelOrFD() throws IOException {
     acquireWriteLock();
     try {
-      for (int i = 0; i < OPEN_RETRY_MAX; ++i)
+      if (Platform.isLinux()) {
+        int fd = 0;
         try {
-          frnd = new RandomAccessFile(osFile.toFile(), "rw");
-          channel = frnd.getChannel();
-          break;
-        } catch (FileNotFoundException e) {
-          if (i == OPEN_RETRY_MAX - 1)
-            throw e;
-
-          // TRY TO RE-CREATE THE DIRECTORY (THIS HAPPENS ON WINDOWS AFTER A DELETE IS PENDING, USUALLY WHEN REOPEN THE DB VERY
-          // FREQUENTLY)
-          Files.createDirectories(osFile.getParent());
+          fd = ONative.instance().open(osFile.toAbsolutePath().toString(), ONative.O_RDWR | ONative.O_DIRECT | ONative.O_CREAT);
+        } catch (LastErrorException e) {
+          OLogManager.instance().warnNoDb(this, "File %s can not be opened using Linux native API," + ". Error code : %d.",
+              osFile.toAbsolutePath().toString(), e.getErrorCode());
         }
 
-      if (channel == null)
-        throw new FileNotFoundException(osFile.toString());
+        this.fd = fd;
+      }
 
-      if (channel.size() == 0) {
+      if (fd <= 0) {
+        for (int i = 0; i < OPEN_RETRY_MAX; ++i)
+          try {
+            channel = FileChannel.open(osFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ);
+            break;
+          } catch (FileNotFoundException e) {
+            if (i == OPEN_RETRY_MAX - 1)
+              throw e;
+
+            // TRY TO RE-CREATE THE DIRECTORY (THIS HAPPENS ON WINDOWS AFTER A DELETE IS PENDING, USUALLY WHEN REOPEN THE DB VERY
+            // FREQUENTLY)
+            Files.createDirectories(osFile.getParent());
+          }
+
+        if (channel == null) {
+          throw new FileNotFoundException(osFile.toString());
+        }
+      }
+
+      if (Files.size(osFile) == 0) {
         final ByteBuffer buffer = ByteBuffer.allocate(HEADER_SIZE);
-        OIOUtils.writeByteBuffer(buffer, channel, 0);
+
+        if (channel != null) {
+          OIOUtils.writeByteBuffer(buffer, channel, 0);
+        } else {
+          OIOUtils.writeByteBuffer(buffer, fd, 0);
+        }
       }
 
     } finally {
@@ -835,12 +862,16 @@ public class OFileClassic implements OFile, OClosableItem {
   }
 
   private void init() throws IOException {
-    size = channel.size() - HEADER_SIZE;
+    size = Files.size(osFile) - HEADER_SIZE;
     assert size >= 0;
 
     final ByteBuffer buffer = ByteBuffer.allocate(1);
 
-    channel.read(buffer, VERSION_OFFSET);
+    if (channel != null) {
+      OIOUtils.readByteBuffer(buffer, channel, VERSION_OFFSET, true);
+    } else {
+      OIOUtils.readByteBuffer(buffer, fd, VERSION_OFFSET, true);
+    }
 
     buffer.position(0);
     version = buffer.get();
@@ -855,7 +886,7 @@ public class OFileClassic implements OFile, OClosableItem {
   public boolean isOpen() {
     acquireReadLock();
     try {
-      return channel != null;
+      return channel != null || fd > 0;
     } finally {
       releaseReadLock();
     }
@@ -972,20 +1003,7 @@ public class OFileClassic implements OFile, OClosableItem {
    */
   @Override
   public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("File: ");
-    builder.append(osFile.getFileName());
-    if (channel != null) {
-      builder.append(" os-size=");
-      try {
-        builder.append(channel.size());
-      } catch (IOException ignore) {
-        builder.append("?");
-      }
-    }
-    builder.append(", stored=");
-    builder.append(getFileSize());
-    return builder.toString();
+    return "File: " + osFile.getFileName() + ", stored=" + getFileSize();
   }
 
   private void reopenFile(int attempt, IOException e) throws IOException {
@@ -995,23 +1013,20 @@ public class OFileClassic implements OFile, OClosableItem {
     acquireWriteLock();
     try {
       try {
-        channel.close();
-      } catch (IOException ioe) {
+        if (channel != null) {
+          channel.close();
+        } else {
+          closeFD();
+        }
+      } catch (IOException | LastErrorException ioe) {
         OLogManager.instance()
             .error(this, "Error during channel close for file '" + osFile + "', during IO exception handling", ioe);
       }
 
-      try {
-        frnd.close();
-      } catch (IOException ioe) {
-        OLogManager.instance()
-            .error(this, "Error during channel close for file '" + osFile + "', during IO exception handling", ioe);
-      }
-
-      frnd = null;
       channel = null;
+      fd = 0;
 
-      openChannel();
+      openChannelOrFD();
     } finally {
       releaseWriteLock();
     }

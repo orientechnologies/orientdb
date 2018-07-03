@@ -19,9 +19,20 @@
  */
 package com.orientechnologies.common.io;
 
+import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.util.OPatternConst;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -368,6 +379,26 @@ public class OIOUtils {
     }
   }
 
+  public static void readByteBuffer(ByteBuffer buffer, int fd, long position, boolean throwOnEof) throws IOException {
+    int bytesToRead = buffer.remaining();
+    int read = 0;
+
+    while (read < bytesToRead) {
+      buffer.position(read);
+
+      final int r = (int) ONative.instance().pread(fd, buffer, buffer.remaining(), position + read);
+      if (r == 0)
+        if (throwOnEof)
+          throw new EOFException("End of file is reached");
+        else {
+          buffer.put(new byte[buffer.remaining()]);
+          return;
+        }
+
+      read += r;
+    }
+  }
+
   public static void readByteBuffer(ByteBuffer buffer, FileChannel channel) throws IOException {
     int bytesToRead = buffer.limit();
 
@@ -395,6 +426,17 @@ public class OIOUtils {
     }
   }
 
+  public static void writeByteBuffer(ByteBuffer buffer, int fd, long position) {
+    int bytesToWrite = buffer.limit();
+
+    int written = 0;
+    while (written < bytesToWrite) {
+      buffer.position(written);
+
+      written += ONative.instance().pwrite(fd, buffer, bytesToWrite - written, position + written);
+    }
+  }
+
   public static void writeByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToWrite) throws IOException {
     long written = 0;
 
@@ -408,6 +450,25 @@ public class OIOUtils {
       final int bufferIndex = (int) written / bufferLimit;
 
       written += channel.write(buffers, bufferIndex, buffers.length - bufferIndex);
+    }
+  }
+
+  public static void writeByteBuffers(ByteBuffer[] buffers, int fd, long position, long bytesToWrite) throws IOException {
+    long written = 0;
+
+    for (ByteBuffer buffer : buffers) {
+      buffer.position(0);
+    }
+
+    final int bufferLimit = buffers[0].limit();
+
+    while (written < bytesToWrite) {
+      final int bufferIndex = (int) written / bufferLimit;
+      final ByteBuffer buffer = buffers[bufferIndex];
+      final int bufferOffset = (int) (written - bufferIndex * buffer.limit());
+      buffer.position(bufferOffset);
+
+      written += ONative.instance().pwritev(fd, position + written, buffers, bufferIndex);
     }
   }
 
@@ -425,6 +486,38 @@ public class OIOUtils {
       final int bufferIndex = (int) read / bufferLimit;
 
       final long r = channel.read(buffers, bufferIndex, buffers.length - bufferIndex);
+
+      if (r < 0)
+        if (throwOnEof)
+          throw new EOFException("End of file is reached");
+        else {
+          for (int i = bufferIndex; i < buffers.length; ++i)
+            buffers[i].put(new byte[buffers[i].remaining()]);
+          return;
+        }
+
+      read += r;
+    }
+  }
+
+  public static void readByteBuffers(ByteBuffer[] buffers, int fd, long bytesToRead, long position, boolean throwOnEof)
+      throws IOException {
+    long read = 0;
+
+    for (ByteBuffer buffer : buffers) {
+      buffer.position(0);
+    }
+
+    final int bufferLimit = buffers[0].limit();
+
+    while (read < bytesToRead) {
+      final int bufferIndex = (int) read / bufferLimit;
+
+      final ByteBuffer buffer = buffers[bufferIndex];
+      final int bufferOffset = (int) (read - bufferIndex * buffer.limit());
+      buffer.position(bufferOffset);
+
+      final long r = ONative.instance().preadv(fd, position + read, buffers, bufferIndex);
 
       if (r < 0)
         if (throwOnEof)
