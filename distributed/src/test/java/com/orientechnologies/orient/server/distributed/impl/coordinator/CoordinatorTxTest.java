@@ -32,7 +32,6 @@ public class CoordinatorTxTest {
   }
 
   @Test
-  @Ignore
   public void testTxCoordinator() throws InterruptedException {
     ExecutorSender sender = new ExecutorSender();
     ODistributedExecutor eOne = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(), sender,
