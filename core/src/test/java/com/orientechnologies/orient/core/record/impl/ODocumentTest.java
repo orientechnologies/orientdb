@@ -1117,4 +1117,58 @@ public class ODocumentTest {
     }
   }
   
+  @Test
+  public void testListOfDocsRemoveField(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      String fieldName = "testField";
+      
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);      
+      
+      String constantField = "constField";
+      String constValue = "ConstValue";
+      String variableField = "varField";
+      List<ODocument> originalValue = new ArrayList<>();
+      for (int i = 0; i < 2; i++){
+        ODocument containedDoc = new ODocument();
+        containedDoc.field(constantField, constValue);
+        containedDoc.field(variableField, "one" + i);
+        originalValue.add(containedDoc);
+      }
+      
+      doc.field(fieldName, originalValue);
+
+      doc = db.save(doc);
+      ODocument originalDoc = doc.copy();
+
+      ODocument testDoc = originalValue.get(1);
+      testDoc.removeField(variableField);
+      originalValue.set(1, testDoc);
+      doc.field(fieldName, originalValue);
+      ODocument delta = doc.getDeltaFromOriginal();
+      delta = delta.field("u");
+      
+      originalDoc.mergeUpdateDelta(delta);
+      List<ODocument> checkList = originalDoc.field(fieldName);
+      ODocument checkDoc = checkList.get(1);
+      assertEquals(checkDoc.field(constantField), constValue);
+      assertFalse(checkDoc.containsField(variableField));
+    }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
 }
