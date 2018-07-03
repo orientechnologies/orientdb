@@ -3354,7 +3354,7 @@ public class ODocument extends ORecordAbstract
   }
   
   //this method is callen only for changed fields
-  private TypeValue getUpdateDeltaValue(Object currentValue, Object previousValue, boolean changed){
+  private TypeValue getUpdateDeltaValue(Object currentValue, Object previousValue, boolean changed, ODocument parent){
     //TODO review this clause once again    
     if (changed || !(currentValue instanceof ODocument)){
       OType currentType = OType.getTypeByClass(currentValue.getClass());      
@@ -3381,6 +3381,8 @@ public class ODocument extends ORecordAbstract
               deltaElement.field("v", currentElement);
 //              deltaElement.field("i", i);
               deltaList.add(deltaElement);
+              //add owner to treat as embedded document
+              addOwnerToDoc(deltaElement, parent);
               continue;
             }
             //these elements have pairs in original list, so we need to calculate deltas
@@ -3396,6 +3398,7 @@ public class ODocument extends ORecordAbstract
                 deltaElement.field("v", currentElement);
                 deltaElement.field("i", i);
                 deltaList.add(deltaElement);
+                addOwnerToDoc(deltaElement, parent);
               }
             }
             else{              
@@ -3404,23 +3407,26 @@ public class ODocument extends ORecordAbstract
                 ODocument deltaElement = new ODocument();
                 deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd());
                 
-                TypeValue delta = getUpdateDeltaValue(currentElement, originalElement, true);
+                TypeValue delta = getUpdateDeltaValue(currentElement, originalElement, true, parent);
                 ODocument doc = new ODocument();
                 doc.field("t", delta.type.getOrd());
-                doc.field("v", delta.value);                
+                doc.field("v", delta.value);
+                addOwnerToDoc(doc, parent);
                 deltaElement.field("v", doc);
                 deltaElement.field("i", i);
                 deltaList.add(deltaElement);
+                addOwnerToDoc(deltaElement, parent);
               }
               //this means that elements are equal so nothig to do
             }
           }
           //these element are contained only in original list , so they should be removed
           for (int j = i; j < previousList.size(); j++){
-            ODocument deltaEelement = new ODocument();
-            deltaEelement.field("t", UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd());
-            deltaEelement.field("i", j);
-            deltaList.add(deltaEelement);
+            ODocument deltaElement = new ODocument();
+            deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd());
+            deltaElement.field("i", j);
+            deltaList.add(deltaElement);
+            addOwnerToDoc(deltaElement, parent);
           }
           return retVal;
         }
@@ -3439,9 +3445,11 @@ public class ODocument extends ORecordAbstract
               ODocument listElementDelta = new ODocument();
               listElementDelta.field("i", i);
               listElementDelta.field("t", UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd());
-              ODocument deltaUpdate = currentElementDoc.getDeltaFromOriginalForUpdate();
+              ODocument deltaUpdate = currentElementDoc.getDeltaFromOriginalForUpdate(parent);
               listElementDelta.field("v", deltaUpdate);
+              addOwnerToDoc(deltaUpdate, parent);
               deltaList.add(listElementDelta);
+              addOwnerToDoc(listElementDelta, parent);
             }            
           }
         }
@@ -3450,6 +3458,9 @@ public class ODocument extends ORecordAbstract
       }
       
       retVal.value = currentValue;
+      if (currentValue instanceof ODocument){
+        addOwnerToDoc((ODocument)currentValue, parent);
+      }
       retVal.type = UpdateDeltaValueType.CHANGE;      
       return retVal;
     }
@@ -3463,6 +3474,7 @@ public class ODocument extends ORecordAbstract
       }
       TypeValue retVal = new TypeValue();
       retVal.value = docVal.getDeltaFromOriginalForUpdate();
+      addOwnerToDoc(docVal, parent);
       retVal.type = UpdateDeltaValueType.UPDATE;
       return retVal;
     }    
@@ -3485,30 +3497,39 @@ public class ODocument extends ORecordAbstract
     }
   }
   
-  private void addThisAsOwnerToDoc(ODocument doc){
+  private void addOwnerToDoc(ODocument doc, ODocument owner){
     if (doc._owners == null){
       doc._owners = new LinkedList<>();
     }
-    WeakReference<ORecordElement> wrf = new WeakReference<>(this);
+    WeakReference<ORecordElement> wrf = new WeakReference<>(owner);
     doc._owners.add(wrf);
   }
   
-  private ODocument getDeltaFromOriginalForUpdate(){
+  private void addThisAsOwnerToDoc(ODocument doc){
+    addOwnerToDoc(doc, this);
+  }
+  
+  private ODocument getDeltaFromOriginalForUpdate(ODocument parent){
     ODocument updated = new ODocument();
-    addThisAsOwnerToDoc(updated);
+    addOwnerToDoc(updated, parent);
     //get updated and new records
     for (Map.Entry<String, ODocumentEntry> fieldVal : _fields.entrySet()){
       ODocumentEntry val = fieldVal.getValue();      
       if (val.isChangedTree()){        
         String fieldName = fieldVal.getKey();
-        TypeValue deltaValue = getUpdateDeltaValue(val.value, val.original, val.isChanged());
+        TypeValue deltaValue = getUpdateDeltaValue(val.value, val.original, val.isChanged(), parent);
         ODocument doc = new ODocument();
         doc.field("v", deltaValue.value);
         doc.field("t", deltaValue.type.getOrd());
+        addOwnerToDoc(doc, parent);
         updated.field(fieldName, doc);
       }
     }
     return updated;
+  }
+  
+  private ODocument getDeltaFromOriginalForUpdate(){
+    return getDeltaFromOriginalForUpdate(this);
   }
   
   private ODocument getDeltaFromOriginalForDelete(){
