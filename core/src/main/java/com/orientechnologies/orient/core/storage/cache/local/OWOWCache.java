@@ -2533,7 +2533,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             if (!flushMode.equals(FLUSH_MODE.LSN) && endSegment - startSegment >= 1) {//IDLE flush mode
               flushMode = FLUSH_MODE.LSN;
 
-              flushedPages += flushWriteCacheFromMinLSN(512, startSegment, endSegment);
+              flushedPages += flushWriteCacheFromMinLSN(128, startSegment, endSegment);
 
               convertSharedDirtyPagesToLocal();
 
@@ -2547,7 +2547,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               }
             } else {
               if (endSegment - startSegment >= 1) {
-                flushedPages += flushWriteCacheFromMinLSN(512, startSegment, endSegment);
+                flushedPages += flushWriteCacheFromMinLSN(128, startSegment, endSegment);
               }
 
               convertSharedDirtyPagesToLocal();
