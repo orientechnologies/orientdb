@@ -458,7 +458,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       commitExecutor
           .scheduleWithFixedDelay(new PeriodicExclusiveFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
       commitExecutor
-          .scheduleWithFixedDelay(new PeriodicFlushTask(), 4 * pageFlushInterval, 4 * pageFlushInterval, TimeUnit.MILLISECONDS);
+          .scheduleWithFixedDelay(new PeriodicFlushTask(), 8 * pageFlushInterval, 8 * pageFlushInterval, TimeUnit.MILLISECONDS);
 
     } finally {
       filesLock.releaseWriteLock();
