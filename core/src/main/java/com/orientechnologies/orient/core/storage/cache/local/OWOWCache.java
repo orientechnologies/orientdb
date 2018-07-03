@@ -455,8 +455,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       cacheEventsPublisher = new OThreadPoolExecutorWithLogging(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
           new SynchronousQueue<>(), new CacheEventsPublisherFactory(storageName));
 
-      if (pageFlushInterval > 0)
-        commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
+      commitExecutor
+          .scheduleWithFixedDelay(new PeriodicExclusiveFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
+      commitExecutor
+          .scheduleWithFixedDelay(new PeriodicFlushTask(), 4 * pageFlushInterval, 4 * pageFlushInterval, TimeUnit.MILLISECONDS);
 
     } finally {
       filesLock.releaseWriteLock();
@@ -1007,7 +1009,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         if (!exclusivePagesLimitLatch.compareAndSet(null, latch))
           latch = exclusivePagesLimitLatch.get();
 
-        commitExecutor.submit(new PeriodicFlushTask());
+        commitExecutor.submit(new PeriodicExclusiveFlushTask());
       }
 
     } finally {
@@ -2271,6 +2273,41 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     this.checksumMode = checksumMode;
   }
 
+  private int flushExclusivePagesIfNeeded(int flushedPages) throws InterruptedException, ExecutionException {
+    long ewcSize = exclusiveWriteCacheSize.get();
+
+    assert ewcSize >= 0;
+    double exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
+
+    if (exclusiveWriteCacheThreshold > EXCLUSIVE_PAGES_BOUNDARY) {
+      if (!flushMode.equals(FLUSH_MODE.EXCLUSIVE)) {
+        flushMode = FLUSH_MODE.EXCLUSIVE;
+
+        flushedPages += flushExclusiveWriteCache();
+
+        ewcSize = exclusiveWriteCacheSize.get();
+        exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
+
+        if (exclusiveWriteCacheThreshold <= EXCLUSIVE_PAGES_BOUNDARY) {
+          flushMode = FLUSH_MODE.IDLE;
+        }
+      } else {
+        flushedPages += flushExclusiveWriteCache();
+
+        ewcSize = exclusiveWriteCacheSize.get();
+        exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
+
+        if (exclusiveWriteCacheThreshold <= EXCLUSIVE_PAGES_BOUNDARY) {
+          flushMode = FLUSH_MODE.IDLE;
+        }
+      }
+    } else {
+      releaseExclusiveLatch();
+    }
+
+    return flushedPages;
+  }
+
   private static final class NameFileIdEntry {
     private final String name;
     private final int    fileId;
@@ -2426,6 +2463,31 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
+  private final class PeriodicExclusiveFlushTask implements Runnable {
+
+    @Override
+    public void run() {
+      if (flushError != null) {
+        OLogManager.instance()
+            .errorNoDb(this, "Can not flush data because of issue during data write, %s", null, flushError.getMessage());
+        return;
+      }
+
+      if (writeCachePages.isEmpty()) {
+        return;
+      }
+
+      try {
+        flushExclusivePagesIfNeeded(0);
+      } catch (final Error | Exception t) {
+        OLogManager.instance().error(this, "Exception during data flush", t);
+        OWOWCache.this.fireBackgroundDataFlushExceptionEvent(t);
+        flushError = t;
+      }
+
+    }
+  }
+
   private final class PeriodicFlushTask implements Runnable {
     @Override
     public void run() {
@@ -2514,40 +2576,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
     }
 
-    private int flushExclusivePagesIfNeeded(int flushedPages) throws InterruptedException, ExecutionException {
-      long ewcSize = exclusiveWriteCacheSize.get();
-
-      assert ewcSize >= 0;
-      double exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
-
-      if (exclusiveWriteCacheThreshold > EXCLUSIVE_PAGES_BOUNDARY) {
-        if (!flushMode.equals(FLUSH_MODE.EXCLUSIVE)) {
-          flushMode = FLUSH_MODE.EXCLUSIVE;
-
-          flushedPages += flushExclusiveWriteCache();
-
-          ewcSize = exclusiveWriteCacheSize.get();
-          exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
-
-          if (exclusiveWriteCacheThreshold <= EXCLUSIVE_PAGES_BOUNDARY) {
-            flushMode = FLUSH_MODE.IDLE;
-          }
-        } else {
-          flushedPages += flushExclusiveWriteCache();
-
-          ewcSize = exclusiveWriteCacheSize.get();
-          exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
-
-          if (exclusiveWriteCacheThreshold <= EXCLUSIVE_PAGES_BOUNDARY) {
-            flushMode = FLUSH_MODE.IDLE;
-          }
-        }
-      } else {
-        releaseExclusiveLatch();
-      }
-
-      return flushedPages;
-    }
   }
 
   final class FindMinDirtySegment implements Callable<Long> {
