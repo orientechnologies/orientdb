@@ -83,13 +83,13 @@ public interface OCLibrary extends Library {
 
   int close(int fd) throws LastErrorException;
 
-  long write(int fd, ByteBuffer buffer, int count) throws LastErrorException;
+  long write(int fd, ByteBuffer buffer, long count) throws LastErrorException;
 
-  long read(int fd, ByteBuffer buffer, int count) throws LastErrorException;
+  long read(int fd, ByteBuffer buffer, long count) throws LastErrorException;
 
-  long pwrite(int fd, ByteBuffer buffer, int count, long offset) throws LastErrorException;
+  long pwrite(int fd, ByteBuffer buffer, long count, long offset) throws LastErrorException;
 
-  long pread(int fd, ByteBuffer buffer, int count, long offset) throws LastErrorException;
+  long pread(int fd, ByteBuffer buffer, long count, long offset) throws LastErrorException;
 
   int fsync(int fd) throws LastErrorException;
 
