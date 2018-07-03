@@ -219,7 +219,7 @@ public class ONative {
   }
 
   public int open(String path, int flags) throws LastErrorException {
-    return C_LIBRARY.open(path, 0x0002);
+    return C_LIBRARY.open(path, flags);
   }
 
   public int fallocate(int fd, long offset, long len) throws LastErrorException {
