@@ -31,6 +31,8 @@ public interface OSchema {
 
   int countClasses();
 
+  int countViews();
+
   OClass createClass(String iClassName);
 
   OClass createClass(String iClassName, OClass iSuperClass);
@@ -78,6 +80,8 @@ public interface OSchema {
   OClass getOrCreateClass(String iClassName, OClass... superClasses);
 
   Collection<OClass> getClasses();
+
+  OView getView(String name);
 
   @Deprecated
   void create();
