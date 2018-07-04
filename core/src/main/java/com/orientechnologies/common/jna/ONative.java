@@ -289,6 +289,7 @@ public class ONative {
 
       iovec.iov_base = buffer;
       iovec.iov_len = buffer.remaining();
+      iovecs[i] = iovec;
     }
 
     return iovecs;
