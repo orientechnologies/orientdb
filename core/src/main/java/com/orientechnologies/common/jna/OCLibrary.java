@@ -79,7 +79,7 @@ public interface OCLibrary extends Library {
   // see man(2) rlimit
   int getrlimit(int resource, Rlimit rlim);
 
-  int open(String path, int flags) throws LastErrorException;
+  int open(String path, int flags, int mode) throws LastErrorException;
 
   int fallocate(int fd, int mode, long offset, long len) throws LastErrorException;
 
