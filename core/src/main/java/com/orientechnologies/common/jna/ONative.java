@@ -284,12 +284,10 @@ public class ONative {
     final OCLibrary.iovec iovecs[] = (OCLibrary.iovec[]) (new OCLibrary.iovec()).toArray(buffers.length - index);
 
     for (int i = 0; i < iovecs.length; i++) {
-      final OCLibrary.iovec iovec = iovecs[i];
       final ByteBuffer buffer = buffers[i + index];
 
-      iovec.iov_base = buffer;
-      iovec.iov_len = buffer.remaining();
-      iovecs[i] = iovec;
+      iovecs[i].iov_base = buffer;
+      iovecs[i].iov_len = buffer.remaining();
     }
 
     return iovecs;
