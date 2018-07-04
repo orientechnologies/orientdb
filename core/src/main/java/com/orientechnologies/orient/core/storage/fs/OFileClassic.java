@@ -339,8 +339,6 @@ public class OFileClassic implements OFile, OClosableItem {
       allowDirectIO = blockSize > 0 && headerSize % blockSize == 0;
 
       version = OFileClassic.CURRENT_VERSION;
-      size = Files.size(osFile) - headerSize;
-      assert size >= 0;
 
       openChannelOrFD();
       setVersion(OFileClassic.CURRENT_VERSION);
