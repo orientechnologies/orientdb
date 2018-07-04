@@ -1673,7 +1673,7 @@ public class ODocument extends ORecordAbstract
     return toObj;
   }
   
-  public ODocument mergeUpdateDelta(final ODocument iOther){
+  protected ODocument mergeUpdateDelta(final ODocument iOther){
     iOther.checkForLoading();
     iOther.checkForFields();
     
@@ -1713,7 +1713,7 @@ public class ODocument extends ORecordAbstract
     } 
   }
   
-  public ODocument mergeDeleteDelta(final ODocument iOther){
+  protected ODocument mergeDeleteDelta(final ODocument iOther){
     iOther.checkForLoading();
     iOther.checkForFields();
     
@@ -1725,6 +1725,14 @@ public class ODocument extends ORecordAbstract
     
     mergeDeleteTree(this, iOther);
     
+    return this;
+  }
+  
+  public ODocument mergeDelta(final ODocument delta){
+    ODocument updateDoc = delta.field("u");
+    ODocument deleteDoc = delta.field("d");
+    mergeUpdateDelta(updateDoc);
+    mergeDeleteDelta(deleteDoc);
     return this;
   }
 
