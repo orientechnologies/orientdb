@@ -19,7 +19,7 @@ public class SBTreeValuePageTest {
   @Test
   public void fillPageDataTest() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer bufferOne = bufferPool.acquireDirect(true);
+    ByteBuffer bufferOne = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointerOne = new OCachePointer(bufferOne, bufferPool, 0, 0);
     cachePointerOne.incrementReferrer();
@@ -35,7 +35,7 @@ public class SBTreeValuePageTest {
     int offset = valuePageOne.fillBinaryContent(data, 0);
     Assert.assertEquals(offset, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE);
 
-    ByteBuffer bufferTwo = bufferPool.acquireDirect(true);
+    ByteBuffer bufferTwo = bufferPool.acquireDirect(true, 0);
     OCachePointer cachePointerTwo = new OCachePointer(bufferTwo, bufferPool,  0, 0);
     cachePointerTwo.incrementReferrer();
 
@@ -69,7 +69,7 @@ public class SBTreeValuePageTest {
   @Test
   public void testFreeListPointer() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();

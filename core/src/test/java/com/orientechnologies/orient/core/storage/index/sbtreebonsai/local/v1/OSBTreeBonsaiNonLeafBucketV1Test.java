@@ -26,7 +26,7 @@ public class OSBTreeBonsaiNonLeafBucketV1Test {
   @Test
   public void testInitialization() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -61,7 +61,7 @@ public class OSBTreeBonsaiNonLeafBucketV1Test {
     }
 
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -128,7 +128,7 @@ public class OSBTreeBonsaiNonLeafBucketV1Test {
     }
 
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();

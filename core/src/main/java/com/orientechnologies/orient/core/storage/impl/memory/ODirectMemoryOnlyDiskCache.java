@@ -512,7 +512,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
           }
 
           final OByteBufferPool bufferPool = OByteBufferPool.instance();
-          final ByteBuffer buffer = bufferPool.acquireDirect(true);
+          final ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
           final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, id, index);
           cachePointer.incrementReferrer();

@@ -28,7 +28,7 @@ public class OSBTreeBonsaiLeafBucketV2Test {
   @Test
   public void testInitialization() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -65,7 +65,7 @@ public class OSBTreeBonsaiLeafBucketV2Test {
     }
 
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -123,7 +123,7 @@ public class OSBTreeBonsaiLeafBucketV2Test {
     }
 
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer);
@@ -221,7 +221,7 @@ public class OSBTreeBonsaiLeafBucketV2Test {
     }
 
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -313,7 +313,7 @@ public class OSBTreeBonsaiLeafBucketV2Test {
   @Test
   public void testSetLeftSibling() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -347,7 +347,7 @@ public class OSBTreeBonsaiLeafBucketV2Test {
   @Test
   public void testSetRightSibling() {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -381,7 +381,7 @@ public class OSBTreeBonsaiLeafBucketV2Test {
   private void assertSerialization(final byte[] serializedPage, Consumer<OSBTreeBonsaiBucketV2<Long, OIdentifiable>> consumer,
       int pageOffset) {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(false);
+    ByteBuffer buffer = bufferPool.acquireDirect(false, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();

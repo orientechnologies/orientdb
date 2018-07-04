@@ -21,6 +21,7 @@ package com.orientechnologies.common.io;
 
 import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.util.OPatternConst;
+import com.sun.jna.LastErrorException;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -386,7 +387,13 @@ public class OIOUtils {
     while (read < bytesToRead) {
       buffer.position(read);
 
-      final int r = (int) ONative.instance().pread(fd, buffer, buffer.remaining(), position + read);
+      final int r;
+      try {
+        r = (int) ONative.instance().pread(fd, buffer, buffer.remaining(), position + read);
+      } catch (LastErrorException e) {
+        throw new IOException("Error during call of pread", e);
+      }
+
       if (r == 0)
         if (throwOnEof)
           throw new EOFException("End of file is reached");
@@ -426,14 +433,18 @@ public class OIOUtils {
     }
   }
 
-  public static void writeByteBuffer(ByteBuffer buffer, int fd, long position) {
-    int bytesToWrite = buffer.limit();
+  public static void writeByteBuffer(ByteBuffer buffer, int fd, long position) throws IOException {
+    int bytesToWrite = buffer.remaining();
 
     int written = 0;
     while (written < bytesToWrite) {
       buffer.position(written);
 
-      written += ONative.instance().pwrite(fd, buffer, bytesToWrite - written, position + written);
+      try {
+        written += ONative.instance().pwrite(fd, buffer, bytesToWrite - written, position + written);
+      } catch (LastErrorException e) {
+        throw new IOException("Error during pwrite call", e);
+      }
     }
   }
 
@@ -468,7 +479,11 @@ public class OIOUtils {
       final int bufferOffset = (int) (written - bufferIndex * buffer.limit());
       buffer.position(bufferOffset);
 
-      written += ONative.instance().pwritev(fd, position + written, buffers, bufferIndex);
+      try {
+        written += ONative.instance().pwritev(fd, position + written, buffers, bufferIndex);
+      } catch (LastErrorException e) {
+        throw new IOException("Error during pwritev call", e);
+      }
     }
   }
 

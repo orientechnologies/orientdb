@@ -331,7 +331,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final OFileClassic file = new OFileClassic(path);
+    final OFileClassic file = new OFileClassic(path, 0);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
     file.close();
@@ -363,7 +363,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final OFileClassic file = new OFileClassic(path);
+    final OFileClassic file = new OFileClassic(path, 0);
     file.open();
     file.writeByte(0, (byte) 1);
     file.close();
@@ -395,7 +395,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final OFileClassic file = new OFileClassic(path);
+    final OFileClassic file = new OFileClassic(path, 0);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
     file.close();
@@ -422,7 +422,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final OFileClassic file = new OFileClassic(path);
+    final OFileClassic file = new OFileClassic(path, 0);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
     file.close();
@@ -449,7 +449,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final OFileClassic file = new OFileClassic(path);
+    final OFileClassic file = new OFileClassic(path, 0);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
     file.close();
@@ -476,7 +476,7 @@ public class WOWCacheTestIT {
     wowCache.flush();
 
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
-    final OFileClassic file = new OFileClassic(path);
+    final OFileClassic file = new OFileClassic(path, 0);
     file.open();
     file.writeByte(systemOffset, (byte) 1);
     file.close();
@@ -486,7 +486,7 @@ public class WOWCacheTestIT {
   }
 
   private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn, String fileName) throws IOException {
-    OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName));
+    OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName), 0);
     fileClassic.open();
     byte[] content = new byte[8 + systemOffset];
     fileClassic.read(pageIndex * (8 + systemOffset), content, 8 + systemOffset);

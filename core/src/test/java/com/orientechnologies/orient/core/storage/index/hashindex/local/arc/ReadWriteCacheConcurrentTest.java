@@ -227,7 +227,7 @@ public class ReadWriteCacheConcurrentTest {
     final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
     Path path = storagePath.resolve(nativeFileName);
 
-    OFileClassic fileClassic = new OFileClassic(path);
+    OFileClassic fileClassic = new OFileClassic(path, 0);
     fileClassic.open();
 
     for (int i = 0; i < PAGE_COUNT; i++) {

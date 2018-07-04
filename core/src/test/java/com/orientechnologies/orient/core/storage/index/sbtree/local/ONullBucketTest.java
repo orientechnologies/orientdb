@@ -17,7 +17,7 @@ public class ONullBucketTest {
   @Test
   public void testEmptyBucket() {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -36,7 +36,7 @@ public class ONullBucketTest {
   @Test
   public void testAddGetValue() {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -59,7 +59,7 @@ public class ONullBucketTest {
   @Test
   public void testAddRemoveValue() {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -83,7 +83,7 @@ public class ONullBucketTest {
   @Test
   public void testAddRemoveAddValue() {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();

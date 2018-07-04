@@ -22,7 +22,7 @@ public abstract class AbstractLRUListTestTemplate {
   @Test
   public void testSingleAdd() {
     final OByteBufferPool bufferPool = new OByteBufferPool(1);
-    final ByteBuffer buffer = bufferPool.acquireDirect(true);
+    final ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     lruList.putToMRU(new OCacheEntry(1, 10, cachePointer));
@@ -39,8 +39,8 @@ public abstract class AbstractLRUListTestTemplate {
   public void testAddTwo() {
     final OByteBufferPool bufferPool = new OByteBufferPool(1);
 
-    ByteBuffer bufferOne = bufferPool.acquireDirect(true);
-    ByteBuffer bufferTwo = bufferPool.acquireDirect(true);
+    ByteBuffer bufferOne = bufferPool.acquireDirect(true, 0);
+    ByteBuffer bufferTwo = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointerOne = new OCachePointer(bufferOne, bufferPool, 0, 0);
     OCachePointer cachePointerTwo = new OCachePointer(bufferTwo, bufferPool, 0, 0);
@@ -65,9 +65,9 @@ public abstract class AbstractLRUListTestTemplate {
   public void testAddThree() {
     final OByteBufferPool bufferPool = new OByteBufferPool(1);
 
-    ByteBuffer bufferOne = bufferPool.acquireDirect(true);
-    ByteBuffer bufferTwo = bufferPool.acquireDirect(true);
-    ByteBuffer bufferThree = bufferPool.acquireDirect(true);
+    ByteBuffer bufferOne = bufferPool.acquireDirect(true, 0);
+    ByteBuffer bufferTwo = bufferPool.acquireDirect(true, 0);
+    ByteBuffer bufferThree = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointerOne = new OCachePointer(bufferOne, bufferPool, 0, 0);
     OCachePointer cachePointerTwo = new OCachePointer(bufferTwo, bufferPool, 0, 0);
@@ -97,9 +97,9 @@ public abstract class AbstractLRUListTestTemplate {
   public void testAddThreePutMiddleToTop() {
     final OByteBufferPool bufferPool = new OByteBufferPool(1);
 
-    ByteBuffer bufferOne = bufferPool.acquireDirect(true);
-    ByteBuffer bufferTwo = bufferPool.acquireDirect(true);
-    ByteBuffer bufferThree = bufferPool.acquireDirect(true);
+    ByteBuffer bufferOne = bufferPool.acquireDirect(true, 0);
+    ByteBuffer bufferTwo = bufferPool.acquireDirect(true, 0);
+    ByteBuffer bufferThree = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointerOne = new OCachePointer(bufferOne, bufferPool, 0, 0);
     OCachePointer cachePointerTwo = new OCachePointer(bufferTwo, bufferPool, 0, 0);
@@ -131,10 +131,10 @@ public abstract class AbstractLRUListTestTemplate {
   public void testAddThreePutMiddleToTopChangePointer() {
     final OByteBufferPool bufferPool = new OByteBufferPool(1);
 
-    ByteBuffer bufferOne = bufferPool.acquireDirect(true);
-    ByteBuffer bufferTwo = bufferPool.acquireDirect(true);
-    ByteBuffer bufferThree = bufferPool.acquireDirect(true);
-    ByteBuffer bufferFour = bufferPool.acquireDirect(true);
+    ByteBuffer bufferOne = bufferPool.acquireDirect(true, 0);
+    ByteBuffer bufferTwo = bufferPool.acquireDirect(true, 0);
+    ByteBuffer bufferThree = bufferPool.acquireDirect(true, 0);
+    ByteBuffer bufferFour = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointerOne = new OCachePointer(bufferOne, bufferPool, 0, 0);
     OCachePointer cachePointerTwo = new OCachePointer(bufferTwo, bufferPool, 0, 0);
@@ -171,7 +171,7 @@ public abstract class AbstractLRUListTestTemplate {
     OCachePointer[] cachePointers = new OCachePointer[11];
 
     for (int i = 0; i < 11; i++) {
-      ByteBuffer buffer = bufferPool.acquireDirect(true);
+      ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
       cachePointers[i] = new OCachePointer(buffer, bufferPool,0, 0);
       lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
@@ -204,7 +204,7 @@ public abstract class AbstractLRUListTestTemplate {
   @Test
   public void testAddOneRemoveLRU() {
     final OByteBufferPool bufferPool = new OByteBufferPool(1);
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointerOne = new OCachePointer(buffer, bufferPool, 0, 0);
     lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne));
@@ -222,7 +222,7 @@ public abstract class AbstractLRUListTestTemplate {
   @Test
   public void testRemoveLRUShouldReturnNullIfAllRecordsAreUsed() {
     final OByteBufferPool bufferPool = new OByteBufferPool(1);
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
     OCachePointer cachePointerOne = new OCachePointer(buffer, bufferPool, 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(1, 10, cachePointerOne);
@@ -244,7 +244,7 @@ public abstract class AbstractLRUListTestTemplate {
     OCachePointer[] cachePointers = new OCachePointer[11];
 
     for (int i = 0; i < 11; i++) {
-      ByteBuffer buffer = bufferPool.acquireDirect(true);
+      ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
       cachePointers[i] = new OCachePointer(buffer, bufferPool, 0, 0);
       lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
@@ -274,7 +274,7 @@ public abstract class AbstractLRUListTestTemplate {
     OCachePointer[] cachePointers = new OCachePointer[11];
 
     for (int i = 0; i < 11; i++) {
-      ByteBuffer buffer = bufferPool.acquireDirect(true);
+      ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
       cachePointers[i] = new OCachePointer(buffer, bufferPool, 0, 0);
       lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
@@ -307,7 +307,7 @@ public abstract class AbstractLRUListTestTemplate {
     OCachePointer[] cachePointers = new OCachePointer[11];
 
     for (int i = 0; i < 11; i++) {
-      ByteBuffer buffer = bufferPool.acquireDirect(true);
+      ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
 
       cachePointers[i] = new OCachePointer(buffer, bufferPool, 0, 0);
       lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
@@ -338,7 +338,7 @@ public abstract class AbstractLRUListTestTemplate {
     OCachePointer[] cachePointers = new OCachePointer[9128];
 
     for (int i = 0; i < 9128; i++) {
-      ByteBuffer buffer = bufferPool.acquireDirect(true);
+      ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
       cachePointers[i] = new OCachePointer(buffer, bufferPool, 0, 0);
       lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
     }
@@ -364,7 +364,7 @@ public abstract class AbstractLRUListTestTemplate {
     OCachePointer[] cachePointers = new OCachePointer[9128];
 
     for (int i = 0; i < 9128; i++) {
-      ByteBuffer buffer = bufferPool.acquireDirect(true);
+      ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
       cachePointers[i] = new OCachePointer(buffer, bufferPool, 0, 0);
       lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
     }
@@ -393,7 +393,7 @@ public abstract class AbstractLRUListTestTemplate {
     OCachePointer[] cachePointers = new OCachePointer[9128];
 
     for (int i = 0; i < 9128; i++) {
-      ByteBuffer buffer = bufferPool.acquireDirect(true);
+      ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
       cachePointers[i] = new OCachePointer(buffer, bufferPool, 0, 0);
       lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
     }
@@ -423,7 +423,7 @@ public abstract class AbstractLRUListTestTemplate {
     OCachePointer[] cachePointers = new OCachePointer[9128];
 
     for (int i = 0; i < 9128; i++) {
-      ByteBuffer buffer = bufferPool.acquireDirect(true);
+      ByteBuffer buffer = bufferPool.acquireDirect(true, 0);
       cachePointers[i] = new OCachePointer(buffer, bufferPool, 0, 0);
       lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i]));
     }

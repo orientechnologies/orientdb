@@ -28,6 +28,7 @@ import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -58,6 +59,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
+import com.sun.jna.Platform;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -412,6 +414,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    */
   private Throwable flushError;
 
+  private final int blockSize;
+
   /**
    * Listeners which are called when exception in background data flush thread is happened.
    */
@@ -445,6 +449,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         throw OException.wrapException(new OStorageException("Error during retrieving of file store"), e);
       }
 
+      this.blockSize = calculateBlockSize(storagePath.toAbsolutePath().toString());
+
       this.performanceStatisticManager = performanceStatisticManager;
       this.stringSerializer = stringSerializer;
       this.storageName = storageName;
@@ -465,6 +471,63 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     } finally {
       filesLock.releaseWriteLock();
     }
+  }
+
+  private static int calculateBlockSize(String path) {
+    if (!Platform.isLinux()) {
+      return -1;
+    }
+
+    final int linuxVersion = 0;
+    final int majorRev = 1;
+    final int minorRev = 2;
+
+    List<Integer> versionNumbers = new ArrayList<Integer>();
+    for (String v : System.getProperty("os.version").split("[.\\-]")) {
+      if (v.matches("\\d")) {
+        versionNumbers.add(Integer.parseInt(v));
+      }
+    }
+
+    if (versionNumbers.get(linuxVersion) < 2) {
+      return -1;
+    } else if (versionNumbers.get(linuxVersion) == 2) {
+      if (versionNumbers.get(majorRev) <= 4) {
+        return -1;
+      } else if (versionNumbers.get(majorRev) == 4 && versionNumbers.get(minorRev) < 10) {
+        return -1;
+      }
+    }
+
+    final int _PC_REC_XFER_ALIGN = 0x11;
+
+    int fsBlockSize = ONative.instance().pathconf(path, _PC_REC_XFER_ALIGN);
+    int pageSize = ONative.instance().getpagesize();
+    fsBlockSize = lcm(fsBlockSize, pageSize);
+
+    // just being completely paranoid:
+    // (512 is the rule for 2.6+ kernels)
+    fsBlockSize = lcm(fsBlockSize, 512);
+
+    if (fsBlockSize <= 0 || ((fsBlockSize & (fsBlockSize - 1)) != 0)) {
+      return -1;
+    }
+
+    return fsBlockSize;
+  }
+
+  private static int lcm(long x, long y) {
+    long g = x; // will hold gcd
+    long yc = y;
+
+    // get the gcd first
+    while (yc != 0) {
+      long t = g;
+      g = yc;
+      yc = t % yc;
+    }
+
+    return (int) (x * y / g);
   }
 
   /**
@@ -1157,7 +1220,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               startAllocationIndex = fileSize / pageSize;
 
               for (long index = startAllocationIndex; index <= stopAllocationIndex; index++) {
-                final ByteBuffer buffer = bufferPool.acquireDirect(true);
+                final ByteBuffer buffer = bufferPool.acquireDirect(true, -1);
                 buffer.putLong(MAGIC_NUMBER_OFFSET, MAGIC_NUMBER_WITHOUT_CHECKSUM);
 
                 final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, fileId, index);
@@ -1766,7 +1829,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private OFileClassic createFileInstance(final String fileName, final int fileId) {
     final String internalFileName = createInternalFileName(fileName, fileId);
-    return new OFileClassic(storagePath.resolve(internalFileName));
+    return new OFileClassic(storagePath.resolve(internalFileName), blockSize);
   }
 
   private static String createInternalFileName(final String fileName, final int fileId) {
@@ -1842,7 +1905,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         if (files.get(externalId) == null) {
           final Path path = storagePath.resolve(idFileNameMap.get((nameIdEntry.getValue())));
-          final OFileClassic fileClassic = new OFileClassic(path);
+          final OFileClassic fileClassic = new OFileClassic(path, blockSize);
 
           if (fileClassic.exists()) {
             fileClassic.open();
@@ -1915,7 +1978,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         final long externalId = composeFileId(id, nameIdEntry.getValue());
 
         if (files.get(externalId) == null) {
-          final OFileClassic fileClassic = new OFileClassic(storagePath.resolve(nameIdEntry.getKey()));
+          final OFileClassic fileClassic = new OFileClassic(storagePath.resolve(nameIdEntry.getKey()), blockSize);
 
           if (fileClassic.exists()) {
             fileClassic.open();
@@ -2115,7 +2178,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           try {
             if (pageCount == 1) {
-              final ByteBuffer buffer = bufferPool.acquireDirect(false);
+              final ByteBuffer buffer = bufferPool.acquireDirect(false, -1);
               assert buffer.position() == 0;
               fileClassic.read(firstPageStartPosition, buffer, false);
 
@@ -2135,7 +2198,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
             final ByteBuffer[] buffers = new ByteBuffer[realPageCount];
             for (int i = 0; i < buffers.length; i++) {
-              buffers[i] = bufferPool.acquireDirect(false);
+              buffers[i] = bufferPool.acquireDirect(false, 0);
               assert buffers[i].position() == 0;
             }
 
@@ -2748,7 +2811,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
 
         final long version;
-        final ByteBuffer copy = bufferPool.acquireDirect(false);
+        final ByteBuffer copy = bufferPool.acquireDirect(false, blockSize);
         final OLogSequenceNumber fullLogLSN;
         pointer.acquireSharedLock();
         try {
@@ -2964,7 +3027,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           pointer.acquireSharedLock();
 
           final OLogSequenceNumber fullLSN;
-          final ByteBuffer copy = bufferPool.acquireDirect(false);
+          final ByteBuffer copy = bufferPool.acquireDirect(false, blockSize);
           try {
             version = pointer.getVersion();
             fullLSN = pointer.getFullLogLSN();

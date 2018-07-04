@@ -23,7 +23,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMemory;
 import com.sun.jna.LastErrorException;
 import com.sun.jna.Native;
+import com.sun.jna.NativeLong;
 import com.sun.jna.Platform;
+import com.sun.jna.ptr.PointerByReference;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -264,6 +266,18 @@ public class ONative {
   public long pwritev(int fd, long offset, ByteBuffer[] buffers, int index) throws LastErrorException {
     final OCLibrary.iovec[] iovecs = convertToIovecs(buffers, index);
     return C_LIBRARY.pwritev(fd, iovecs, iovecs.length, offset);
+  }
+
+  public void posix_memalign(PointerByReference memptr, NativeLong alignment, NativeLong size) throws LastErrorException {
+    C_LIBRARY.posix_memalign(memptr, alignment, size);
+  }
+
+  public int getpagesize() throws LastErrorException {
+    return C_LIBRARY.getpagesize();
+  }
+
+  public int pathconf(String path, int name) throws LastErrorException {
+    return C_LIBRARY.pathconf(path, name);
   }
 
   private OCLibrary.iovec[] convertToIovecs(ByteBuffer[] buffers, int index) {

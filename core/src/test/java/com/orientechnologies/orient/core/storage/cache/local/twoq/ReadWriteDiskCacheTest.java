@@ -1148,7 +1148,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   private void assertFile(long pageIndex, byte[] value, OLogSequenceNumber lsn, String fileName) throws IOException {
-    OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName));
+    OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName), 0);
     fileClassic.open();
     byte[] content = new byte[userDataSize + systemOffset];
     fileClassic.read(pageIndex * (userDataSize + systemOffset), content, userDataSize + systemOffset);

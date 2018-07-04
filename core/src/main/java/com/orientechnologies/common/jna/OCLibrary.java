@@ -2,7 +2,9 @@ package com.orientechnologies.common.jna;
 
 import com.sun.jna.LastErrorException;
 import com.sun.jna.Library;
+import com.sun.jna.NativeLong;
 import com.sun.jna.Structure;
+import com.sun.jna.ptr.PointerByReference;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -102,4 +104,10 @@ public interface OCLibrary extends Library {
   long pwritev(int fd, iovec[] buffers, int iovecCount, long offset) throws LastErrorException;
 
   int ftruncate(int fd, long len) throws LastErrorException;
+
+  int posix_memalign(PointerByReference memptr, NativeLong alignment, NativeLong size) throws LastErrorException;
+
+  int getpagesize() throws LastErrorException;
+
+  int pathconf(String path, int name) throws LastErrorException;
 }
