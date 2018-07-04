@@ -1151,7 +1151,9 @@ public class ReadWriteDiskCacheTest {
     OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName), 0);
     fileClassic.open();
     byte[] content = new byte[userDataSize + systemOffset];
-    fileClassic.read(pageIndex * (userDataSize + systemOffset), content, userDataSize + systemOffset);
+    final ByteBuffer byteBuffer = ByteBuffer.wrap(content);
+
+    fileClassic.read(pageIndex * (userDataSize + systemOffset), byteBuffer, true);
 
     Assertions.assertThat(Arrays.copyOfRange(content, systemOffset, userDataSize + systemOffset)).isEqualTo(value);
 

@@ -51,20 +51,6 @@ public interface OFile {
 
   void synch();
 
-  void read(long iOffset, byte[] iDestBuffer, int iLength) throws IOException;
-
-  int readInt(long iLogicalPosition) throws IOException;
-
-  long readLong(long iOffset) throws IOException;
-
-  void writeInt(long iOffset, int iValue) throws IOException;
-
-  void writeLong(long iOffset, long iValue) throws IOException;
-
-  void writeByte(long iOffset, byte iValue) throws IOException;
-
-  void write(long iOffset, byte[] iSourceBuffer) throws IOException;
-
   /**
    * Shrink the file content (filledUpTo attribute only)
    */
@@ -92,10 +78,6 @@ public interface OFile {
   boolean isOpen();
 
   boolean exists();
-
-  void read(long iOffset, byte[] iData, int iLength, int iArrayOffset) throws IOException;
-
-  void write(long iOffset, byte[] iData, int iSize, int iArrayOffset) throws IOException;
 
   void read(long offset, ByteBuffer buffer, boolean throwOnEof) throws IOException;
 

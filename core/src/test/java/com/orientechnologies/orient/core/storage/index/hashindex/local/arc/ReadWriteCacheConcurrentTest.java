@@ -232,7 +232,8 @@ public class ReadWriteCacheConcurrentTest {
 
     for (int i = 0; i < PAGE_COUNT; i++) {
       byte[] content = new byte[8];
-      fileClassic.read(i * (8 + systemOffset) + systemOffset, content, 8);
+      ByteBuffer byteBuffer = ByteBuffer.wrap(content);
+      fileClassic.read(i * (8 + systemOffset) + systemOffset, byteBuffer, true);
 
       Assert.assertEquals(content, new byte[] { version, 2, 3, seed, 5, 6, (byte) k, (byte) (i & 0xFF) });
     }

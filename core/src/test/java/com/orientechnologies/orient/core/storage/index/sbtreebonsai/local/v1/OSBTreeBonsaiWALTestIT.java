@@ -327,8 +327,8 @@ public class OSBTreeBonsaiWALTestIT extends OSBTreeBonsaiLocalV1TestIT {
 //    byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
 //    byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
 //
-//    fileOne.seek(OFileClassic.HEADER_SIZE);
-//    fileTwo.seek(OFileClassic.HEADER_SIZE);
+//    fileOne.seek(OFileClassic.HEADER_SIZE_V2);
+//    fileTwo.seek(OFileClassic.HEADER_SIZE_V2);
 //
 //    int bytesRead = fileOne.read(expectedContent);
 //    while (bytesRead >= 0) {

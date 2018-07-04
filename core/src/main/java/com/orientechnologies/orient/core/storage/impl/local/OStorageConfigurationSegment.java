@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.zip.CRC32;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -38,11 +29,18 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.zip.CRC32;
 
 /**
  * Handles the database configuration in one big record.
@@ -227,7 +225,7 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
     channel.force(true);
 
     byteBuffer.position(0);
-    OIOUtils.writeByteBuffer(byteBuffer, channel, OFileClassic.HEADER_SIZE);
+    OIOUtils.writeByteBuffer(byteBuffer, channel, OFileClassic.HEADER_SIZE_V2);
 
     channel.force(true);
   }
@@ -239,7 +237,7 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
 
     try (final FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
       //file header + size of content + at least one byte of content
-      if (channel.size() < OFileClassic.HEADER_SIZE + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE) {
+      if (channel.size() < OFileClassic.HEADER_SIZE_V2 + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE) {
         return false;
       }
 
@@ -258,8 +256,8 @@ public class OStorageConfigurationSegment extends OStorageConfigurationImpl {
         crc32content = 0;
       }
 
-      byteBuffer = ByteBuffer.allocate((int) channel.size() - OFileClassic.HEADER_SIZE);
-      OIOUtils.readByteBuffer(byteBuffer, channel, OFileClassic.HEADER_SIZE, true);
+      byteBuffer = ByteBuffer.allocate((int) channel.size() - OFileClassic.HEADER_SIZE_V2);
+      OIOUtils.readByteBuffer(byteBuffer, channel, OFileClassic.HEADER_SIZE_V2, true);
     }
 
     byteBuffer.position(0);

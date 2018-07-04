@@ -333,7 +333,11 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path, 0);
     file.open();
-    file.writeByte(systemOffset, (byte) 1);
+
+    final ByteBuffer byteBuffer = ByteBuffer.allocate(1);
+    byteBuffer.put((byte) 1);
+    byteBuffer.rewind();
+    file.write(systemOffset, byteBuffer);
     file.close();
 
     try {
@@ -365,7 +369,12 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path, 0);
     file.open();
-    file.writeByte(0, (byte) 1);
+
+    final ByteBuffer byteBuffer = ByteBuffer.allocate(1);
+    byteBuffer.put((byte) 1);
+    byteBuffer.rewind();
+
+    file.write(0, byteBuffer);
     file.close();
 
     try {
@@ -397,7 +406,12 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path, 0);
     file.open();
-    file.writeByte(systemOffset, (byte) 1);
+
+    final ByteBuffer byteBuffer = ByteBuffer.allocate(1);
+    byteBuffer.put((byte) 1);
+    byteBuffer.rewind();
+
+    file.write(systemOffset, byteBuffer);
     file.close();
 
     wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), false)[0].decrementReadersReferrer();
@@ -424,7 +438,12 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path, 0);
     file.open();
-    file.writeByte(systemOffset, (byte) 1);
+
+    final ByteBuffer byteBuffer = ByteBuffer.allocate(1);
+    byteBuffer.put((byte) 1);
+    byteBuffer.rewind();
+
+    file.write(systemOffset, byteBuffer);
     file.close();
 
     wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), true)[0].decrementReadersReferrer();
@@ -451,7 +470,12 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path, 0);
     file.open();
-    file.writeByte(systemOffset, (byte) 1);
+
+    final ByteBuffer byteBuffer = ByteBuffer.allocate(1);
+    byteBuffer.put((byte) 1);
+    byteBuffer.rewind();
+
+    file.write(systemOffset, byteBuffer);
     file.close();
 
     wowCache.load(fileId, 0, 1, true, new OModifiableBoolean(), true)[0].decrementReadersReferrer();
@@ -478,7 +502,12 @@ public class WOWCacheTestIT {
     final Path path = storagePath.resolve(wowCache.nativeFileNameById(fileId));
     final OFileClassic file = new OFileClassic(path, 0);
     file.open();
-    file.writeByte(systemOffset, (byte) 1);
+
+    final ByteBuffer byteBuffer = ByteBuffer.allocate(1);
+    byteBuffer.put((byte) 1);
+    byteBuffer.rewind();
+
+    file.write(systemOffset, byteBuffer);
     file.close();
 
     wowCache.setChecksumMode(OChecksumMode.StoreAndThrow);
@@ -489,7 +518,8 @@ public class WOWCacheTestIT {
     OFileClassic fileClassic = new OFileClassic(storagePath.resolve(fileName), 0);
     fileClassic.open();
     byte[] content = new byte[8 + systemOffset];
-    fileClassic.read(pageIndex * (8 + systemOffset), content, 8 + systemOffset);
+    ByteBuffer byteBuffer = ByteBuffer.wrap(content);
+    fileClassic.read(pageIndex * (8 + systemOffset), byteBuffer, true);
 
     Assert.assertArrayEquals(Arrays.copyOfRange(content, systemOffset, 8 + systemOffset), value);
 

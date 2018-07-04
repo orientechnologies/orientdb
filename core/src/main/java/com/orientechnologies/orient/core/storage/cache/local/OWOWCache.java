@@ -492,7 +492,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     if (versionNumbers.get(linuxVersion) < 2) {
       return -1;
     } else if (versionNumbers.get(linuxVersion) == 2) {
-      if (versionNumbers.get(majorRev) <= 4) {
+      if (versionNumbers.get(majorRev) < 4) {
         return -1;
       } else if (versionNumbers.get(majorRev) == 4 && versionNumbers.get(minorRev) < 10) {
         return -1;
@@ -1603,7 +1603,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         final byte[] data = new byte[pageSize];
 
-        fileClassic.read(pos, data, data.length);
+        ByteBuffer byteBuffer = bufferPool.acquireDirect(true, blockSize);
+        try {
+          fileClassic.read(pos, byteBuffer, true);
+          byteBuffer.rewind();
+          byteBuffer.get(data);
+        } finally {
+          bufferPool.release(byteBuffer);
+        }
 
         final long magicNumber = OLongSerializer.INSTANCE.deserializeNative(data, MAGIC_NUMBER_OFFSET);
 

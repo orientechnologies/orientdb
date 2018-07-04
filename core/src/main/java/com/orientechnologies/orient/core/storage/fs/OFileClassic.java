@@ -28,7 +28,6 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.sun.jna.LastErrorException;
 import com.sun.jna.Platform;
 
@@ -50,9 +49,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class OFileClassic implements OFile, OClosableItem {
   public final static  String NAME            = "classic";
-  private static final int    CURRENT_VERSION = 2;
+  private static final int    CURRENT_VERSION = 3;
 
-  public static final int HEADER_SIZE    = 1024;
+  public static final int HEADER_SIZE_V2 = 1024;
+  public static final int HEADER_SIZE_V3 = 64 * 1024;
+
   public static final int VERSION_OFFSET = 48;
 
   private static final int OPEN_RETRY_MAX = 10;
@@ -70,7 +71,9 @@ public class OFileClassic implements OFile, OClosableItem {
   private volatile boolean headerDirty = false;
   private          int     version;
 
-  private volatile long size;
+  private volatile long    size;
+  private          int     headerSize;
+  private          boolean allowDirectIO;
 
   private AllocationMode allocationMode;
 
@@ -96,10 +99,16 @@ public class OFileClassic implements OFile, OClosableItem {
 
   @Override
   public long allocateSpace(int size) throws IOException {
+    if (allowDirectIO && size % blockSize != 0) {
+      throw new IOException(
+          "Allocated size should by quantified by block size in direct IO mode ( block size: " + blockSize + ", size :" + size
+              + ")");
+    }
+
     acquireWriteLock();
     try {
       final long currentSize = this.size;
-      assert Files.size(osFile) == currentSize + HEADER_SIZE;
+      assert Files.size(osFile) == currentSize + headerSize;
 
       //noinspection NonAtomicOperationOnVolatileField
       this.size += size;
@@ -107,22 +116,23 @@ public class OFileClassic implements OFile, OClosableItem {
       assert this.size >= size;
 
       assert allocationMode != null;
+
       if (allocationMode == AllocationMode.WRITE) {
         try (ByteBufferHolder byteBufferHolder = allocateByteBuffer(size)) {
-          writeByteBuffer(byteBufferHolder.buffer(), currentSize + HEADER_SIZE);
+          writeByteBuffer(byteBufferHolder.buffer(), currentSize + headerSize);
         }
       } else if (allocationMode == AllocationMode.DESCRIPTOR) {
         assert fd > 0;
-        ONative.instance().fallocate(fd, currentSize + HEADER_SIZE, size);
+        ONative.instance().fallocate(fd, currentSize + headerSize, size);
       } else if (allocationMode == AllocationMode.LENGTH) {
         try (ByteBufferHolder byteBufferHolder = allocateByteBuffer(1)) {
-          writeByteBuffer(byteBufferHolder.buffer(), this.size + HEADER_SIZE - 1);
+          writeByteBuffer(byteBufferHolder.buffer(), this.size + headerSize - 1);
         }
       } else {
         throw new IllegalStateException("Unknown allocation mode");
       }
 
-      assert Files.size(osFile) == this.size + HEADER_SIZE;
+      assert Files.size(osFile) == this.size + headerSize;
       return currentSize;
     } finally
 
@@ -133,6 +143,12 @@ public class OFileClassic implements OFile, OClosableItem {
 
   @Override
   public void shrink(long size) throws IOException {
+    if (allowDirectIO && size % blockSize != 0) {
+      throw new IOException(
+          "Allocated size should by quantified by block size in direct IO mode ( block size: " + blockSize + ", size :" + size
+              + ")");
+    }
+
     int attempts = 0;
 
     while (true) {
@@ -141,10 +157,10 @@ public class OFileClassic implements OFile, OClosableItem {
         try {
           //noinspection resource
           if (channel != null) {
-            channel.truncate(HEADER_SIZE + size);
+            channel.truncate(headerSize + size);
           } else {
             assert fd > 0;
-            ONative.instance().ftruncate(fd, HEADER_SIZE + size);
+            ONative.instance().ftruncate(fd, headerSize + size);
           }
 
           this.size = size;
@@ -166,36 +182,6 @@ public class OFileClassic implements OFile, OClosableItem {
   @Override
   public long getFileSize() {
     return size;
-  }
-
-  @Override
-  public void read(long offset, byte[] data, int length, int arrayOffset) throws IOException {
-    int attempts = 0;
-
-    while (true) {
-      try {
-        acquireReadLock();
-        try {
-          offset = checkRegions(offset, length);
-
-          try (ByteBufferHolder byteBufferHolder = allocateByteBuffer(length)) {
-            final ByteBuffer buffer = byteBufferHolder.buffer();
-            readByteBuffer(buffer, offset, true);
-
-            buffer.position(0);
-            buffer.get(data, arrayOffset, length);
-          }
-          break;
-
-        } finally {
-          releaseReadLock();
-          attempts++;
-        }
-      } catch (IOException e) {
-        OLogManager.instance().error(this, "Error during data read for file '" + getName() + "' " + attempts + "-th attempt", e);
-        reopenFile(attempts, e);
-      }
-    }
   }
 
   @Override
@@ -223,13 +209,19 @@ public class OFileClassic implements OFile, OClosableItem {
 
   @Override
   public void read(long offset, ByteBuffer[] buffers, boolean throwOnEof) throws IOException {
+    if (buffers.length == 0) {
+      return;
+    }
+
     int attempts = 0;
+
+    checkRegions(offset, buffers.length * buffers[0].limit());
 
     while (true) {
       try {
         acquireWriteLock();
         try {
-          offset += HEADER_SIZE;
+          offset += headerSize;
 
           readByteBuffers(buffers, offset, throwOnEof);
           break;
@@ -249,11 +241,12 @@ public class OFileClassic implements OFile, OClosableItem {
   public void write(long offset, ByteBuffer buffer) throws IOException {
     int attempts = 0;
 
+    checkRegions(offset, buffer.limit());
     while (true) {
       try {
         acquireWriteLock();
         try {
-          offset += HEADER_SIZE;
+          offset += headerSize;
 
           writeByteBuffer(buffer, offset);
           setDirty();
@@ -272,13 +265,18 @@ public class OFileClassic implements OFile, OClosableItem {
 
   @Override
   public void write(long offset, ByteBuffer[] buffers) throws IOException {
+    if (buffers.length == 0) {
+      return;
+    }
+
     int attempts = 0;
 
+    checkRegions(offset, buffers.length * buffers[0].limit());
     while (true) {
       try {
         acquireWriteLock();
         try {
-          offset += HEADER_SIZE;
+          offset += headerSize;
           //noinspection resource
 
           writeByteBuffers(buffers, offset);
@@ -291,208 +289,6 @@ public class OFileClassic implements OFile, OClosableItem {
         }
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error during data write for file '" + getName() + "' " + attempts + "-th attempt", e);
-        reopenFile(attempts, e);
-      }
-    }
-  }
-
-  @Override
-  public void write(long iOffset, byte[] iData, int iSize, int iArrayOffset) throws IOException {
-    int attempts = 0;
-
-    while (true) {
-      try {
-        acquireWriteLock();
-        try {
-          writeInternal(iOffset, iData, iSize, iArrayOffset);
-          break;
-        } finally {
-          releaseWriteLock();
-          attempts++;
-        }
-      } catch (IOException e) {
-        OLogManager.instance().error(this, "Error during data write for file '" + getName() + "' " + attempts + "-th attempt", e);
-        reopenFile(attempts, e);
-      }
-    }
-  }
-
-  private void writeInternal(long offset, byte[] data, int size, int arrayOffset) throws IOException {
-    if (data != null) {
-      offset += HEADER_SIZE;
-
-      try (ByteBufferHolder byteBufferHolder = allocateByteBuffer(data, arrayOffset, size)) {
-        writeByteBuffer(byteBufferHolder.buffer(), offset);
-      }
-
-      setDirty();
-    }
-  }
-
-  @Override
-  public void read(long offset, byte[] destBuffer, int length) throws IOException {
-    read(offset, destBuffer, length, 0);
-  }
-
-  @Override
-  public int readInt(long offset) throws IOException {
-    int attempts = 0;
-    while (true) {
-      try {
-        acquireReadLock();
-        try {
-          offset = checkRegions(offset, OBinaryProtocol.SIZE_INT);
-
-          try (ByteBufferHolder byteBufferHolder = readData(offset, OBinaryProtocol.SIZE_INT)) {
-            return byteBufferHolder.buffer().getInt();
-          }
-
-        } finally {
-          releaseReadLock();
-          attempts++;
-        }
-      } catch (IOException e) {
-        OLogManager.instance()
-            .error(this, "Error during read of int data for file '" + getName() + "' " + attempts + "-th attempt", e);
-        reopenFile(attempts, e);
-      }
-    }
-  }
-
-  @Override
-  public long readLong(long offset) throws IOException {
-    int attempts = 0;
-
-    while (true) {
-      try {
-        acquireReadLock();
-        try {
-          offset = checkRegions(offset, OBinaryProtocol.SIZE_LONG);
-          try (ByteBufferHolder byteBufferHolder = readData(offset, OBinaryProtocol.SIZE_LONG)) {
-            return byteBufferHolder.buffer().getLong();
-          }
-        } finally {
-          releaseReadLock();
-          attempts++;
-        }
-      } catch (IOException e) {
-        OLogManager.instance()
-            .error(this, "Error during read of long data for file '" + getName() + "' " + attempts + "-th attempt", e);
-        reopenFile(attempts, e);
-      }
-    }
-  }
-
-  @Override
-  public void writeInt(long offset, final int value) throws IOException {
-    int attempts = 0;
-
-    while (true) {
-      try {
-        acquireWriteLock();
-        try {
-          offset += HEADER_SIZE;
-
-          try (ByteBufferHolder byteBufferHolder = allocateByteBuffer(OBinaryProtocol.SIZE_INT)) {
-            ByteBuffer buffer = byteBufferHolder.buffer();
-            buffer.putInt(value);
-            writeByteBuffer(buffer, offset);
-          }
-
-          setDirty();
-
-          break;
-        } finally {
-          releaseWriteLock();
-          attempts++;
-        }
-      } catch (IOException e) {
-        OLogManager.instance()
-            .error(this, "Error during write of int data for file '" + getName() + "' " + attempts + "-th attempt", e);
-        reopenFile(attempts, e);
-      }
-    }
-  }
-
-  @Override
-  public void writeLong(long offset, final long value) throws IOException {
-    int attempts = 0;
-
-    while (true) {
-      try {
-        acquireWriteLock();
-        try {
-          offset += HEADER_SIZE;
-
-          try (ByteBufferHolder byteArrayBufferHolder = allocateByteBuffer(OBinaryProtocol.SIZE_LONG)) {
-            final ByteBuffer buffer = byteArrayBufferHolder.buffer();
-            buffer.putLong(value);
-            writeByteBuffer(buffer, offset);
-          }
-
-          setDirty();
-          break;
-        } finally {
-          releaseWriteLock();
-          attempts++;
-        }
-      } catch (IOException e) {
-        OLogManager.instance()
-            .error(this, "Error during write of long data for file '" + getName() + "' " + attempts + "-th attempt", e);
-        reopenFile(attempts, e);
-      }
-    }
-  }
-
-  @Override
-  public void writeByte(long offset, final byte value) throws IOException {
-    int attempts = 0;
-    while (true) {
-      try {
-        acquireWriteLock();
-        try {
-          offset += HEADER_SIZE;
-
-          try (ByteBufferHolder byteBufferHolder = allocateByteBuffer(OBinaryProtocol.SIZE_BYTE)) {
-            final ByteBuffer buffer = byteBufferHolder.buffer();
-            buffer.put(value);
-            writeByteBuffer(buffer, offset);
-          }
-
-          setDirty();
-          break;
-        } finally {
-          releaseWriteLock();
-          attempts++;
-        }
-      } catch (IOException e) {
-        OLogManager.instance()
-            .error(this, "Error during write of byte data for file '" + getName() + "' " + attempts + "-th attempt", e);
-        reopenFile(attempts, e);
-      }
-    }
-
-  }
-
-  @Override
-  public void write(long offset, final byte[] sourceBuffer) throws IOException {
-    int attempts = 0;
-    while (true) {
-      try {
-        acquireWriteLock();
-        try {
-          if (sourceBuffer != null) {
-            writeInternal(offset, sourceBuffer, sourceBuffer.length, 0);
-            break;
-          }
-        } finally {
-          releaseWriteLock();
-          attempts++;
-        }
-
-      } catch (IOException e) {
-        OLogManager.instance()
-            .error(this, "Error during write of data for file '" + getName() + "' " + attempts + "-th attempt", e);
         reopenFile(attempts, e);
       }
     }
@@ -539,11 +335,15 @@ public class OFileClassic implements OFile, OClosableItem {
     try {
       acquireExclusiveAccess();
 
-      openChannelOrFD();
-      init();
+      headerSize = HEADER_SIZE_V3;
+      allowDirectIO = blockSize > 0 && headerSize % blockSize == 0;
 
-      setVersion(OFileClassic.CURRENT_VERSION);
       version = OFileClassic.CURRENT_VERSION;
+      size = Files.size(osFile) - headerSize;
+      assert size >= 0;
+
+      openChannelOrFD();
+      setVersion(OFileClassic.CURRENT_VERSION);
 
       initAllocationMode();
     } finally {
@@ -576,31 +376,29 @@ public class OFileClassic implements OFile, OClosableItem {
             "You cannot access outside the file size (" + size + " bytes). You have requested portion " + offset + "-" + (offset
                 + length) + " bytes. File: " + toString());
 
-      return offset + HEADER_SIZE;
+      if (allowDirectIO) {
+        if (offset % blockSize != 0 || length % blockSize != 0) {
+          throw new OIOException(
+              "In direct IO mode both offset and lenth of content " + "should be quantified to boloc size ( block size : "
+                  + blockSize + ", offset : " + offset + ", length : " + length + ")");
+        }
+      }
+
+      return offset + headerSize;
     } finally {
       releaseReadLock();
     }
 
   }
 
-  private ByteBufferHolder readData(final long offset, final int size) throws IOException {
-    final ByteBufferHolder byteBufferHolder = allocateByteBuffer(size);
-    final ByteBuffer buffer = byteBufferHolder.buffer();
-
-    readByteBuffer(buffer, offset, true);
-    buffer.rewind();
-
-    return byteBufferHolder;
-  }
-
   @SuppressWarnings("SameParameterValue")
   private void setVersion(int version) throws IOException {
     acquireWriteLock();
     try {
-      try (ByteBufferHolder byteBufferHolder = allocateByteBuffer(OBinaryProtocol.SIZE_BYTE)) {
+      try (ByteBufferHolder byteBufferHolder = allocateByteBuffer(headerSize)) {
         final ByteBuffer buffer = byteBufferHolder.buffer();
-        buffer.put((byte) version);
-        writeByteBuffer(buffer, VERSION_OFFSET);
+        buffer.put(VERSION_OFFSET, (byte) version);
+        writeByteBuffer(buffer, 0);
       }
 
       setHeaderDirty();
@@ -618,21 +416,32 @@ public class OFileClassic implements OFile, OClosableItem {
   public void open() {
     acquireWriteLock();
     try {
-      if (!Files.exists(osFile))
+      if (!Files.exists(osFile)) {
         throw new FileNotFoundException("File: " + osFile);
+      }
 
       acquireExclusiveAccess();
 
-      openChannelOrFD();
-      init();
+      try (FileChannel channel = FileChannel.open(osFile, StandardOpenOption.READ)) {
+        channel.position(VERSION_OFFSET);
 
-      OLogManager.instance().debug(this, "Checking file integrity of " + osFile.getFileName() + "...");
+        final ByteBuffer buffer = ByteBuffer.allocate(1);
+        OIOUtils.readByteBuffer(buffer, channel);
 
-      if (version < CURRENT_VERSION) {
-        setVersion(CURRENT_VERSION);
-        version = CURRENT_VERSION;
+        version = buffer.get(0);
+        if (version < 3) {
+          headerSize = HEADER_SIZE_V2;
+        } else {
+          headerSize = HEADER_SIZE_V3;
+        }
       }
 
+      size = Files.size(osFile) - headerSize;
+      assert size >= 0;
+
+      allowDirectIO = blockSize > 0 && headerSize % blockSize == 0;
+
+      openChannelOrFD();
       initAllocationMode();
     } catch (IOException e) {
       throw OException.wrapException(new OIOException("Error during file open"), e);
@@ -762,36 +571,12 @@ public class OFileClassic implements OFile, OClosableItem {
       return new ByteArrayBufferHolder(ByteBuffer.allocate(size));
     } else {
       final ODirectMemoryAllocator allocator = ODirectMemoryAllocator.instance();
-      if (size < blockSize) {
-        size = blockSize;
-      }
       final OPointer pointer = allocator.allocate(size, blockSize);
       final ByteBuffer buffer = pointer.getNativeByteBuffer();
-      buffer.limit(size);
 
       final byte[] zeros = new byte[size];
       buffer.put(zeros);
       buffer.rewind();
-      return new DirectByteBufferHolder(pointer, allocator, buffer);
-    }
-  }
-
-  private ByteBufferHolder allocateByteBuffer(byte[] data, int arrayOffset, int len) {
-    if (blockSize <= 0) {
-      return new ByteArrayBufferHolder(ByteBuffer.wrap(data, arrayOffset, len));
-    } else {
-      final ODirectMemoryAllocator allocator = ODirectMemoryAllocator.instance();
-      if (len < blockSize) {
-        len = blockSize;
-      }
-
-      final OPointer pointer = allocator.allocate(len, blockSize);
-      final ByteBuffer buffer = pointer.getNativeByteBuffer();
-      buffer.limit(len);
-
-      buffer.put(data, arrayOffset, len);
-      buffer.position(0);
-
       return new DirectByteBufferHolder(pointer, allocator, buffer);
     }
   }
@@ -830,10 +615,16 @@ public class OFileClassic implements OFile, OClosableItem {
   private void openChannelOrFD() throws IOException {
     acquireWriteLock();
     try {
-      if (Platform.isLinux() && blockSize > 0) {
+      if (Platform.isLinux()) {
         int fd = 0;
         try {
-          fd = ONative.instance().open(osFile.toAbsolutePath().toString(), ONative.O_RDWR | ONative.O_CREAT | ONative.O_DIRECT);
+          int flags = ONative.O_RDWR | ONative.O_CREAT;
+
+          if (allowDirectIO) {
+            flags = flags | ONative.O_DIRECT;
+          }
+
+          fd = ONative.instance().open(osFile.toAbsolutePath().toString(), flags);
         } catch (LastErrorException e) {
           OLogManager.instance().warnNoDb(this, "File %s can not be opened using Linux native API," + ". Error code : %d.",
               osFile.toAbsolutePath().toString(), e.getErrorCode());
@@ -862,24 +653,13 @@ public class OFileClassic implements OFile, OClosableItem {
       }
 
       if (Files.size(osFile) == 0) {
-        try (ByteBufferHolder byteBufferHolder = allocateByteBuffer(HEADER_SIZE)) {
+        try (ByteBufferHolder byteBufferHolder = allocateByteBuffer(headerSize)) {
           writeByteBuffer(byteBufferHolder.buffer(), 0);
         }
       }
 
     } finally {
       releaseWriteLock();
-    }
-  }
-
-  private void init() throws IOException {
-    size = Files.size(osFile) - HEADER_SIZE;
-    assert size >= 0;
-
-    try (ByteBufferHolder byteBufferHolder = allocateByteBuffer(1)) {
-      final ByteBuffer buffer = byteBufferHolder.buffer();
-      readByteBuffer(buffer, VERSION_OFFSET, true);
-      version = buffer.get();
     }
   }
 

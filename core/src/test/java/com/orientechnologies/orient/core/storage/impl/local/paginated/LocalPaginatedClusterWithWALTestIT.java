@@ -401,8 +401,8 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
 //    byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
 //    byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
 //
-//    datFileOne.seek(OFileClassic.HEADER_SIZE);
-//    datFileTwo.seek(OFileClassic.HEADER_SIZE);
+//    datFileOne.seek(OFileClassic.HEADER_SIZE_V2);
+//    datFileTwo.seek(OFileClassic.HEADER_SIZE_V2);
 //
 //    int bytesRead = datFileOne.read(expectedContent);
 //    while (bytesRead >= 0) {
