@@ -3130,7 +3130,16 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
             try {
               final ByteBuffer buffer = pagePointer.getBufferDuplicate();
-              flushPage(pageKey.fileId, pageKey.pageIndex, buffer);
+              final ByteBuffer copy = bufferPool.acquireDirect(false, blockSize);
+
+              try {
+                buffer.position(0);
+                copy.put(buffer);
+
+                flushPage(pageKey.fileId, pageKey.pageIndex, copy);
+              } finally {
+                bufferPool.release(copy);
+              }
 
               removeFromDirtyPages(pageKey);
             } finally {
