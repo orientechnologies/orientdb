@@ -822,7 +822,7 @@ public class OFileClassic implements OFile, OClosableItem {
       if (Platform.isLinux() && blockSize > 0) {
         int fd = 0;
         try {
-          fd = ONative.instance().open(osFile.toAbsolutePath().toString(), ONative.O_RDWR | ONative.O_CREAT);
+          fd = ONative.instance().open(osFile.toAbsolutePath().toString(), ONative.O_RDWR | ONative.O_CREAT | ONative.O_DIRECT);
         } catch (LastErrorException e) {
           OLogManager.instance().warnNoDb(this, "File %s can not be opened using Linux native API," + ". Error code : %d.",
               osFile.toAbsolutePath().toString(), e.getErrorCode());
