@@ -2200,7 +2200,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           try {
             if (pageCount == 1) {
-              final ByteBuffer buffer = bufferPool.acquireDirect(false, -1);
+              final ByteBuffer buffer = bufferPool.acquireDirect(false, blockSize);
               assert buffer.position() == 0;
               fileClassic.read(firstPageStartPosition, buffer, false);
 
@@ -2220,7 +2220,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
             final ByteBuffer[] buffers = new ByteBuffer[realPageCount];
             for (int i = 0; i < buffers.length; i++) {
-              buffers[i] = bufferPool.acquireDirect(false, 0);
+              buffers[i] = bufferPool.acquireDirect(false, blockSize);
               assert buffers[i].position() == 0;
             }
 
