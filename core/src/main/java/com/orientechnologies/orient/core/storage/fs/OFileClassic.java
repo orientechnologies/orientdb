@@ -762,8 +762,13 @@ public class OFileClassic implements OFile, OClosableItem {
       return new ByteArrayBufferHolder(ByteBuffer.allocate(size));
     } else {
       final ODirectMemoryAllocator allocator = ODirectMemoryAllocator.instance();
+      if (size < blockSize) {
+        size = blockSize;
+      }
       final OPointer pointer = allocator.allocate(size, blockSize);
       final ByteBuffer buffer = pointer.getNativeByteBuffer();
+      buffer.limit(size);
+
       final byte[] zeros = new byte[size];
       buffer.put(zeros);
       buffer.rewind();
@@ -776,8 +781,14 @@ public class OFileClassic implements OFile, OClosableItem {
       return new ByteArrayBufferHolder(ByteBuffer.wrap(data, arrayOffset, len));
     } else {
       final ODirectMemoryAllocator allocator = ODirectMemoryAllocator.instance();
+      if (len < blockSize) {
+        len = blockSize;
+      }
+
       final OPointer pointer = allocator.allocate(len, blockSize);
       final ByteBuffer buffer = pointer.getNativeByteBuffer();
+      buffer.limit(len);
+
       buffer.put(data, arrayOffset, len);
       buffer.position(0);
 
