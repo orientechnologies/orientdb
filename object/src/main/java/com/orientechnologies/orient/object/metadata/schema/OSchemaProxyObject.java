@@ -16,14 +16,6 @@
  */
 package com.orientechnologies.orient.object.metadata.schema;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
-import javassist.util.proxy.Proxy;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
@@ -39,6 +31,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+import javassist.util.proxy.Proxy;
+
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
@@ -59,6 +58,11 @@ public class OSchemaProxyObject implements OSchemaObject {
   @Override
   public int countClasses() {
     return underlying.countClasses();
+  }
+
+  @Override
+  public int countViews() {
+    return underlying.countViews();
   }
 
   @Override
@@ -161,6 +165,11 @@ public class OSchemaProxyObject implements OSchemaObject {
   @Override
   public Collection<OClass> getClasses() {
     return underlying.getClasses();
+  }
+
+  @Override
+  public OView getView(String name) {
+    return underlying.getView(name);
   }
 
   @Override

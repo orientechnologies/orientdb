@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -28,6 +29,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface ODatabaseLifecycleListener {
+
   enum PRIORITY {
     FIRST, EARLY, REGULAR, LATE, LAST
   }
@@ -51,6 +53,14 @@ public interface ODatabaseLifecycleListener {
 
   @Deprecated
   default void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
+
+  }
+
+  default void onCreateView(ODatabaseInternal database, OView view) {
+
+  }
+
+  default void onDropView(ODatabaseInternal database, OView cls) {
 
   }
 

@@ -57,6 +57,10 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     return delegate.countClasses(database);
   }
 
+  public int countViews() {
+    return delegate.countViews(database);
+  }
+
   public OClass createClass(final String iClassName) {
     return delegate.createClass(database, iClassName);
   }
@@ -151,6 +155,13 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 
     delegate.load(database);
 
+  }
+
+  public OView getView(final String name) {
+    if (name == null)
+      return null;
+
+    return delegate.getView(name);
   }
 
   public <RET extends ODocumentWrapper> RET reload() {
