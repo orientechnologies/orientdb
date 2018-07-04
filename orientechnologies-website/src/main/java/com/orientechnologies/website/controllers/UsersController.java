@@ -1,7 +1,11 @@
 package com.orientechnologies.website.controllers;
 
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.dto.Environment;
+import com.orientechnologies.website.model.schema.dto.UserRegistration;
+import com.orientechnologies.website.model.schema.dto.UserToken;
 import com.orientechnologies.website.model.schema.dto.web.UserDTO;
 import com.orientechnologies.website.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +40,8 @@ public class UsersController {
   }
 
   @RequestMapping(value = "users/{username}/environments/{id}", method = RequestMethod.DELETE)
-  public ResponseEntity<Environment> deleteUserEnvironments(@PathVariable("username") String username, @PathVariable("id") Long id) {
+  public ResponseEntity<Environment> deleteUserEnvironments(@PathVariable("username") String username,
+      @PathVariable("id") Long id) {
     userService.deregisterUserEnvironment(SecurityHelper.currentUser(), id);
     return new ResponseEntity<Environment>(HttpStatus.OK);
   }
@@ -51,7 +56,28 @@ public class UsersController {
   public com.orientechnologies.website.model.schema.dto.OUser patchUser(@PathVariable("username") String username,
       @RequestBody UserDTO user) {
 
-
     return userService.patchUser(SecurityHelper.currentUser(), user);
   }
+
+  @RequestMapping(value = "users", method = RequestMethod.POST)
+  public ResponseEntity<?> createUser(@RequestBody UserRegistration user) {
+
+    userService.registerUser(user);
+
+    return new ResponseEntity<>(HttpStatus.CREATED);
+  }
+
+  @RequestMapping(value = "login", method = RequestMethod.POST)
+  public ResponseEntity<UserToken> loginUser(@RequestBody UserRegistration user) {
+
+    return new ResponseEntity<>(userService.login(user),HttpStatus.OK);
+  }
+
+  @ExceptionHandler({ ORecordDuplicatedException.class })
+  public ResponseEntity<String> handleDuplicateException() {
+
+    return new ResponseEntity(ServiceException.create(400, "The username is taken. Please chose another.").toJson(),
+        HttpStatus.BAD_REQUEST);
+  }
+
 }

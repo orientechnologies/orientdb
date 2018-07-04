@@ -68,6 +68,26 @@ public class UserDTO extends OUser {
     return super.getCompany();
   }
 
+  @Override
+  public void setEmail(String email) {
+    super.setEmail(email);
+  }
+
+  @Override
+  public String getEmail() {
+    return super.getEmail();
+  }
+
+  @Override
+  public String getPassword() {
+    return super.getPassword();
+  }
+
+  @Override
+  public void setPassword(String password) {
+    super.setPassword(password);
+  }
+
   public void setRepositories(List<Repository> repositories) {
     this.repositories = repositories;
   }

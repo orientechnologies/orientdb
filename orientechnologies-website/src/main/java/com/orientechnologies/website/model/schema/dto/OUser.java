@@ -25,6 +25,11 @@ public class OUser implements UserDetails {
 
   private String  firstName;
 
+  @JsonIgnore
+  private String domain;
+
+  @JsonIgnore
+  private String password;
   private String  secondName;
   private String  company;
 
@@ -141,7 +146,7 @@ public class OUser implements UserDetails {
   @JsonIgnore
   @Override
   public String getPassword() {
-    return null;
+    return password;
   }
 
   @JsonIgnore
@@ -246,5 +251,17 @@ public class OUser implements UserDetails {
   @Override
   public String toString() {
     return getName();
+  }
+
+  public String getDomain() {
+    return domain;
+  }
+
+  public void setDomain(String domain) {
+    this.domain = domain;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
   }
 }

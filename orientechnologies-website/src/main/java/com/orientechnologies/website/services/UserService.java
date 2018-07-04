@@ -1,5 +1,6 @@
 package com.orientechnologies.website.services;
 
+import com.orientechnologies.website.model.schema.dto.UserRegistration;
 import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.UserDTO;
@@ -35,6 +36,10 @@ public interface UserService {
   public List<Environment> getUserEnvironments(OUser user);
 
   public OUser patchUser(OUser current, UserDTO user);
+
+  void registerUser(UserRegistration user);
+
+  UserToken login(UserRegistration user);
 
   public void profileIssue(OUser current, Issue issue, String organization);
 

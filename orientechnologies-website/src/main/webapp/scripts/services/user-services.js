@@ -1,20 +1,16 @@
-'use strict';
+"use strict";
 
-
-angular.module('webappApp').factory("User", function (Restangular, $q) {
-
-  var userService = Restangular.all('user');
-  var allUserService = Restangular.all('users');
+angular.module("webappApp").factory("User", function(Restangular, $q) {
+  var userService = Restangular.all("user");
+  var allUserService = Restangular.all("users");
+  var loginService = Restangular.all("login");
   return {
-
     current: {},
 
-    isClient: function (org) {
-
+    isClient: function(org) {
       var found = false;
       if (this.current.clientsOf) {
-
-        this.current.clientsOf.forEach(function (o) {
+        this.current.clientsOf.forEach(function(o) {
           if (org == o.name) {
             found = true;
           }
@@ -22,44 +18,43 @@ angular.module('webappApp').factory("User", function (Restangular, $q) {
       }
       return found;
     },
-    getClient: function (org) {
-
+    getClient: function(org) {
       if (this.current.clients) {
         return this.current.clients[0];
       }
       return null;
     },
 
-    allow: function (org, permission) {
-      return this.isMember(org)
+    allow: function(org, permission) {
+      return this.isMember(org);
     },
-    isMember: function (repo) {
-      var found = false
-      this.current.repositories.forEach(function (e) {
+    isMember: function(repo) {
+      var found = false;
+      this.current.repositories.forEach(function(e) {
         if (e.organization.name == repo) {
           found = true;
         }
-      })
+      });
       return found;
     },
-    isContributor: function (org) {
-      var found = false
-      this.current.contributorsOf.forEach(function (e) {
+    isContributor: function(org) {
+      var found = false;
+      this.current.contributorsOf.forEach(function(e) {
         if (e.name == org) {
           found = true;
         }
-      })
+      });
       return found;
     },
-    isSupport: function (org) {
+    isSupport: function(org) {
       var client = this.getClient(org);
       return this.isClient(org) && client.support;
     },
-    whoami: function () {
+    whoami: function() {
       var deferred = $q.defer();
       var self = this;
       if (!self.current.name) {
-        userService.customGET().then(function (data) {
+        userService.customGET().then(function(data) {
           self.current = data;
           deferred.resolve(data);
         });
@@ -68,58 +63,100 @@ angular.module('webappApp').factory("User", function (Restangular, $q) {
       }
       return deferred.promise;
     },
-    save: function (user) {
+
+    create: function(user) {
+      var deferred = $q.defer();
+      allUserService
+        .post(user)
+        .then(function(data) {
+          deferred.resolve(data);
+        })
+        .catch(deferred.reject);
+      return deferred.promise;
+    },
+
+    login: function(user) {
+      var deferred = $q.defer();
+      loginService
+        .post(user)
+        .then(function(data) {
+          deferred.resolve(data);
+        })
+        .catch(deferred.reject);
+      return deferred.promise;
+    },
+    save: function(user) {
       var deferred = $q.defer();
       var self = this;
-      allUserService.one(user.name).patch(user).then(function (data) {
-        self.current = data;
-        deferred.resolve(data);
-      });
+      allUserService
+        .one(user.name)
+        .patch(user)
+        .then(function(data) {
+          self.current = data;
+          deferred.resolve(data);
+        })
+        .catch(deferred.reject);
       return deferred.promise;
     },
-    environments: function () {
+    environments: function() {
       var deferred = $q.defer();
-      allUserService.one(this.current.name).all('environments').getList().then(function (data) {
-        deferred.resolve(data);
-      })
+      allUserService
+        .one(this.current.name)
+        .all("environments")
+        .getList()
+        .then(function(data) {
+          deferred.resolve(data);
+        });
       return deferred.promise;
     },
-    addEnvironment: function (env) {
+    addEnvironment: function(env) {
       var deferred = $q.defer();
-      allUserService.one(this.current.name).all('environments').post(env).then(function (data) {
-        deferred.resolve(data);
-      })
+      allUserService
+        .one(this.current.name)
+        .all("environments")
+        .post(env)
+        .then(function(data) {
+          deferred.resolve(data);
+        });
       return deferred.promise;
     },
-    deleteEnvironment: function (env) {
+    deleteEnvironment: function(env) {
       var deferred = $q.defer();
-      allUserService.one(this.current.name).all('environments').one(env.eid.toString()).remove().then(function (data) {
-        deferred.resolve(data);
-      })
+      allUserService
+        .one(this.current.name)
+        .all("environments")
+        .one(env.eid.toString())
+        .remove()
+        .then(function(data) {
+          deferred.resolve(data);
+        });
       return deferred.promise;
     },
-    changeEnvironment: function (env) {
+    changeEnvironment: function(env) {
       var deferred = $q.defer();
-      allUserService.one(this.current.name).all('environments').one(env.eid.toString()).patch(env).then(function (data) {
-        deferred.resolve(data);
-      })
+      allUserService
+        .one(this.current.name)
+        .all("environments")
+        .one(env.eid.toString())
+        .patch(env)
+        .then(function(data) {
+          deferred.resolve(data);
+        });
       return deferred.promise;
     }
-
-  }
+  };
 });
 
-angular.module('webappApp').service("AccessToken", function ($localStorage) {
-
+angular.module("webappApp").service("AccessToken", function($localStorage) {
   return {
-    get: function () {
+    get: function() {
       return $localStorage.token;
     },
-    set: function (token) {
+    set: function(token) {
       $localStorage.token = token;
     },
-    delete: function () {
-      delete  $localStorage.token;
+    delete: function() {
+      delete $localStorage.token;
     }
-  }
+  };
 });

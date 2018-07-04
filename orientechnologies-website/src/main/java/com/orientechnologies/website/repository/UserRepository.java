@@ -11,6 +11,8 @@ public interface UserRepository extends BaseRepository<OUser> {
 
   public OUser findUserByLogin(String login);
 
+  OUser findUserByLoginAndDomain(String login,String domain);
+
   public OUser findUserOrCreateByLogin(String login, Long id);
 
   public OUser findByGithubToken(String token);

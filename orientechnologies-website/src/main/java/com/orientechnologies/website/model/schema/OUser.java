@@ -3,7 +3,10 @@ package com.orientechnologies.website.model.schema;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+
+import java.util.UUID;
 
 /**
  * Created by Enrico Risa on 04/11/14.
@@ -15,8 +18,20 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
     public OType getType() {
       return OType.LONG;
     }
+  }, NAME("name") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
   },
-  NAME("name") {
+
+  PASSWORD("password1") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
+  },
+  DOMAIN("domain") {
     @Override
     public OType getType() {
       return OType.STRING;
@@ -28,68 +43,57 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
     public OType getType() {
       return OType.STRING;
     }
-  },
-  EMAIL("email") {
+  }, EMAIL("email") {
     @Override
     public OType getType() {
       return OType.STRING;
     }
-  },
-  CONFIRMED("confirmed") {
+  }, CONFIRMED("confirmed") {
     @Override
     public OType getType() {
       return OType.BOOLEAN;
     }
-  },
-  NOTIFICATION("notification") {
+  }, NOTIFICATION("notification") {
     @Override
     public OType getType() {
       return OType.BOOLEAN;
     }
-  },
-  WATCHING("watching") {
+  }, WATCHING("watching") {
     @Override
     public OType getType() {
       return OType.BOOLEAN;
     }
-  },
-  PUBLIC_MUTE("publicMute") {
+  }, PUBLIC_MUTE("publicMute") {
     @Override
     public OType getType() {
       return OType.BOOLEAN;
     }
-  },
-  INVITED("invited") {
+  }, INVITED("invited") {
     @Override
     public OType getType() {
       return OType.BOOLEAN;
     }
-  },
-  CHAT_NOTIFICATION("chatNotification") {
+  }, CHAT_NOTIFICATION("chatNotification") {
     @Override
     public OType getType() {
       return OType.BOOLEAN;
     }
-  },
-  FIRSTNAME("firstName") {
+  }, FIRSTNAME("firstName") {
     @Override
     public OType getType() {
       return OType.BOOLEAN;
     }
-  },
-  SECONDNAME("secondName") {
+  }, SECONDNAME("secondName") {
     @Override
     public OType getType() {
       return OType.BOOLEAN;
     }
-  },
-  WORKINGEMAIL("workingEmail") {
+  }, WORKINGEMAIL("workingEmail") {
     @Override
     public OType getType() {
       return OType.BOOLEAN;
     }
-  },
-  COMPANY("company") {
+  }, COMPANY("company") {
     @Override
     public OType getType() {
       return OType.BOOLEAN;
@@ -118,6 +122,8 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
     user.setWorkingEmail((String) doc.field(WORKINGEMAIL.toString()));
     user.setPublicMute((Boolean) doc.field(PUBLIC_MUTE.toString()));
     user.setConfirmed(confirmed != null ? confirmed : false);
+    user.setPassword(doc.field(PASSWORD.toString()));
+    user.setDomain(doc.field(DOMAIN.toString()));
 
     return user;
   }
@@ -148,8 +154,20 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
     doc.field(WATCHING.toString(), entity.getWatching());
     doc.field(PUBLIC_MUTE.toString(), entity.getPublicMute());
     doc.field(INVITED.toString(), entity.getInvited());
+    doc.field(DOMAIN.toString(), entity.getDomain());
     doc.field("status", "active");
-    doc.field("password", "test");
+
+    if (doc.field(PASSWORD.toString()) == null) {
+      String password = UUID.randomUUID().toString();
+      if (entity.getPassword() != null) {
+        password = entity.getPassword();
+      }
+      String s = OSecurityManager.instance().digest2String(password);
+      doc.field(PASSWORD.toString(), s);
+      doc.field("password", password);
+
+    }
+
     return doc;
   }
 

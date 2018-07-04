@@ -1,8 +1,10 @@
 package com.orientechnologies.website.services.impl;
 
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.configuration.GitHubConfiguration;
+import com.orientechnologies.website.model.schema.dto.UserRegistration;
 import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.github.GUser;
 import com.orientechnologies.website.github.GitHub;
@@ -27,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -36,28 +39,28 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
   @Autowired
-  private OrientDBFactory        dbFactory;
+  private OrientDBFactory dbFactory;
 
   @Autowired
-  private UserRepository         userRepository;
+  private UserRepository userRepository;
 
   @Autowired
-  private OrganizationService    organizationService;
+  private OrganizationService organizationService;
 
   @Autowired
   private OrganizationRepository organizationRepository;
 
   @Autowired
-  private EnvironmentRepository  environmentRepository;
+  private EnvironmentRepository environmentRepository;
 
   @Autowired
-  private RepositoryRepository   repositoryRepository;
+  private RepositoryRepository repositoryRepository;
 
   @Autowired
-  protected GitHubConfiguration  gitHubConfiguration;
+  protected GitHubConfiguration gitHubConfiguration;
 
   @Autowired
-  private OSecurityManager       securityManager;
+  private OSecurityManager securityManager;
 
   @Transactional
   @Override
@@ -227,6 +230,52 @@ public class UserServiceImpl implements UserService {
       return userRepository.save(user);
     }
     throw ServiceException.create(401);
+  }
+
+  @Override
+  public void registerUser(UserRegistration user) {
+
+    OUser persistentUser = new OUser();
+
+    persistentUser.setEmail(user.getEmail());
+    persistentUser.setWorkingEmail(user.getEmail());
+    persistentUser.setDomain("local");
+    persistentUser.setPassword(user.getPassword());
+    persistentUser.setName(user.getName());
+
+    try {
+      userRepository.save(persistentUser);
+    } catch (ORecordDuplicatedException e) {
+      throw ServiceException.create(400, String.format("Username not available"));
+    }
+  }
+
+  @Override
+  public UserToken login(UserRegistration user) {
+
+    OUser userByLogin = userRepository.findUserByLoginAndDomain(user.getName(), "local");
+
+    if (userByLogin == null) {
+      throw ServiceException.create(401, "Username/password not valid");
+    }
+
+    if (com.orientechnologies.orient.core.security.OSecurityManager.instance()
+        .check(user.getPassword(), userByLogin.getPassword())) {
+
+      if (Boolean.TRUE.equals(userByLogin.getConfirmed()) || Boolean.TRUE.equals(userByLogin.getInvited())) {
+        String login = UUID.randomUUID().toString();
+        login = com.orientechnologies.orient.core.security.OSecurityManager.instance().digest2String(login);
+        userByLogin.setToken(login);
+        userRepository.save(userByLogin);
+
+        return new UserToken(login);
+      } else {
+        throw ServiceException.create(400, "Account not active");
+      }
+    } else {
+      throw ServiceException.create(401, "Username/password not valid");
+    }
+
   }
 
   @Override

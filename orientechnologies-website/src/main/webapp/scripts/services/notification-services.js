@@ -1,13 +1,21 @@
-angular.module('webappApp').factory("Notification", function ($rootScope) {
-
-
+angular.module("webappApp").factory("Notification", function($rootScope) {
   return {
-    success: function (data) {
-      var jacked = humane.create({baseCls: 'humane-jackedup', addnCls: 'humane-jackedup-success', timeout: 3000})
+    success: function(data, timeout) {
+      var timeout = timeout || 3000;
+      var jacked = humane.create({
+        baseCls: "humane-jackedup",
+        addnCls: "humane-jackedup-success",
+        timeout: timeout
+      });
       jacked.log(data);
     },
-    error: function (data) {
-      var jacked = humane.create({baseCls: 'humane-jackedup', addnCls: 'humane-jackedup-error', timeout: 3000})
+    error: function(data, timeout) {
+      var timeout = timeout || 3000;
+      var jacked = humane.create({
+        baseCls: "humane-jackedup",
+        addnCls: "humane-jackedup-error",
+        timeout: timeout
+      });
       jacked.log(data);
     }
   };

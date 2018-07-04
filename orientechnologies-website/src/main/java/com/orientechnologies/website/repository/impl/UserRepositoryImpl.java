@@ -40,6 +40,21 @@ public class UserRepositoryImpl extends OrientBaseRepository<OUser> implements U
   }
 
   @Override
+  public OUser findUserByLoginAndDomain(String login, String domain) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String
+        .format("select from %s where name = '%s' and domain  = '%s' ", getEntityClass().getSimpleName(), login, domain);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+    try {
+      ODocument doc = vertices.iterator().next().getRecord();
+
+      return fromDoc(doc);
+    } catch (NoSuchElementException e) {
+      return null;
+    }
+  }
+
+  @Override
   public OUser findUserOrCreateByLogin(String login, Long id) {
 
     OUser user = findUserByLogin(login);
@@ -68,8 +83,9 @@ public class UserRepositoryImpl extends OrientBaseRepository<OUser> implements U
   @Override
   public List<com.orientechnologies.website.model.schema.dto.Repository> findMyRepositories(String username) {
     OrientGraph db = dbFactory.getGraph();
-    String query = String.format("select expand(in('HasMember')[@class = 'Repository']) from %s where name = '%s'",
-        getEntityClass().getSimpleName(), username);
+    String query = String
+        .format("select expand(in('HasMember')[@class = 'Repository']) from %s where name = '%s'", getEntityClass().getSimpleName(),
+            username);
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
 
     List<com.orientechnologies.website.model.schema.dto.Repository> repositories = new ArrayList<com.orientechnologies.website.model.schema.dto.Repository>();
@@ -124,10 +140,9 @@ public class UserRepositoryImpl extends OrientBaseRepository<OUser> implements U
   @Override
   public Client findMyClientMember(String username, String organization) {
     OrientGraph db = dbFactory.getGraph();
-    String query = String
-        .format(
-            "select from (select expand(in('HasMember')[@class = 'Client']) from %s where name = '%s') where in('HasClient').name CONTAINS '%s'",
-            getEntityClass().getSimpleName(), username, organization);
+    String query = String.format(
+        "select from (select expand(in('HasMember')[@class = 'Client']) from %s where name = '%s') where in('HasClient').name CONTAINS '%s'",
+        getEntityClass().getSimpleName(), username, organization);
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
     try {
       ODocument doc = vertices.iterator().next().getRecord();
@@ -153,8 +168,9 @@ public class UserRepositoryImpl extends OrientBaseRepository<OUser> implements U
   @Override
   public List<Environment> findMyEnvironment(OUser user) {
     OrientGraph db = dbFactory.getGraph();
-    String query = String.format("select from (select expand(out('HasEnvironment')) from %s where name = '%s')", getEntityClass()
-        .getSimpleName(), user.getName());
+    String query = String
+        .format("select from (select expand(out('HasEnvironment')) from %s where name = '%s')", getEntityClass().getSimpleName(),
+            user.getName());
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
     List<Environment> clients = new ArrayList<Environment>();
     for (OrientVertex v : vertices) {
