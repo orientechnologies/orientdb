@@ -416,6 +416,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private final int blockSize;
 
+  private final boolean allowDirectIO;
+
   /**
    * Listeners which are called when exception in background data flush thread is happened.
    */
@@ -424,9 +426,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   public OWOWCache(final int pageSize, final OByteBufferPool bufferPool, final OWriteAheadLog writeAheadLog,
       final long pageFlushInterval, final long exclusiveWriteCacheMaxSize, final boolean checkMinSize, Path storagePath,
       OPerformanceStatisticManager performanceStatisticManager, String storageName, OBinarySerializer<String> stringSerializer,
-      final OClosableLinkedContainer<Long, OFileClassic> files, final int id, final OChecksumMode checksumMode) {
+      final OClosableLinkedContainer<Long, OFileClassic> files, final int id, final OChecksumMode checksumMode,
+      boolean allowDirectIO) {
     filesLock.acquireWriteLock();
     try {
+      this.allowDirectIO = allowDirectIO;
       this.id = id;
       this.files = files;
 
@@ -449,7 +453,18 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         throw OException.wrapException(new OStorageException("Error during retrieving of file store"), e);
       }
 
-      this.blockSize = calculateBlockSize(storagePath.toAbsolutePath().toString());
+      if (allowDirectIO) {
+        this.blockSize = calculateBlockSize(storagePath.toAbsolutePath().toString());
+      } else {
+        blockSize = -1;
+      }
+
+      if (blockSize <= 0) {
+        OLogManager.instance().infoNoDb(this, "Direct IO is disabled for storage " + storagePath);
+      } else {
+        OLogManager.instance()
+            .infoNoDb(this, "Direct IO is enabled for storage " + storagePath + " with block size " + blockSize + " bytes.");
+      }
 
       this.performanceStatisticManager = performanceStatisticManager;
       this.stringSerializer = stringSerializer;
