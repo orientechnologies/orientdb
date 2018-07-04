@@ -128,7 +128,7 @@ public enum OGlobalConfiguration {
 
         @Override
         public void change(Object currentValue, Object newValue) {
-          final Orient orient = Orient.instance();
+          final Orient orient = Orient.rawInstance();
           if (orient != null) {
             final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) orient
                 .getEngineIfRunning(OEngineLocalPaginated.NAME);

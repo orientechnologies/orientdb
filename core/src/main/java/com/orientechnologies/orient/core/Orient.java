@@ -204,6 +204,10 @@ public class Orient extends OListenerManger<OOrientListener> {
     return startUp(false);
   }
 
+  public static Orient rawInstance() {
+    return instance;
+  }
+
   public static Orient startUp(boolean insideWebContainer) {
     initLock.lock();
     try {
