@@ -85,7 +85,14 @@ public class ORemoteServerChannel {
     remotePort = Integer.parseInt(iURL.substring(sepPos + 1));
 
     protocolVersion = currentProtocolVersion;
-    executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(10));
+    RejectedExecutionHandler reject = (task, executor) -> {
+      try {
+        executor.getQueue().put(task);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    };
+    executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(10), reject);
 
     connect();
   }
@@ -146,9 +153,15 @@ public class ORemoteServerChannel {
   }
 
   public void close() {
+    executor.shutdown();
+    try {
+      executor.awaitTermination(1, TimeUnit.MINUTES);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
     if (channel != null)
       channel.close();
-    executor.shutdown();
+
     sessionId = -1;
     sessionToken = null;
   }
