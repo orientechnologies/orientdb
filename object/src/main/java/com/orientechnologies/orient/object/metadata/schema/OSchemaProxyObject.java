@@ -19,6 +19,7 @@ package com.orientechnologies.orient.object.metadata.schema;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.entity.OEntityManager;
@@ -133,6 +134,11 @@ public class OSchemaProxyObject implements OSchemaObject {
   }
 
   @Override
+  public boolean existsView(String name) {
+    return underlying.existsView(name);
+  }
+
+  @Override
   public OClass getClass(Class<?> iClass) {
     return underlying.getClass(iClass);
   }
@@ -170,6 +176,10 @@ public class OSchemaProxyObject implements OSchemaObject {
   @Override
   public OView getView(String name) {
     return underlying.getView(name);
+  }
+
+  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable) {
+    return underlying.createView(database, viewName, statement, updatable);
   }
 
   @Override
