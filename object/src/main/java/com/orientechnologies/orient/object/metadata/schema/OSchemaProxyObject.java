@@ -139,6 +139,12 @@ public class OSchemaProxyObject implements OSchemaObject {
   }
 
   @Override
+  public void dropView(String name) {
+    underlying.dropView(name);
+  }
+
+
+  @Override
   public OClass getClass(Class<?> iClass) {
     return underlying.getClass(iClass);
   }

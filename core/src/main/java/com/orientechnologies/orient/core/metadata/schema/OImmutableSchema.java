@@ -291,4 +291,10 @@ public class OImmutableSchema implements OSchema {
   public boolean existsView(String name) {
     return views.containsKey(name.toLowerCase(Locale.ENGLISH));
   }
+
+  @Override
+  public void dropView(String name) {
+    throw new UnsupportedOperationException();
+  }
+
 }

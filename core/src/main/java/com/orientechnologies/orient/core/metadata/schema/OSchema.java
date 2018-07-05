@@ -88,6 +88,8 @@ public interface OSchema {
 
   boolean existsView(String name);
 
+  void dropView(String name);
+
   @Deprecated
   void create();
 
