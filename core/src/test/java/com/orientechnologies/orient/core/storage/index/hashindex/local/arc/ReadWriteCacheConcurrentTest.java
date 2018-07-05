@@ -120,7 +120,7 @@ public class ReadWriteCacheConcurrentTest {
 
   private void initBuffer() throws IOException, InterruptedException {
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12 * 1024, Integer.MAX_VALUE,
-        Integer.MAX_VALUE, 100, true, Locale.US, -1, 1024 * 1024 * 1024L, 1000);
+        Integer.MAX_VALUE, 100, true, Locale.US, -1, 1024 * 1024 * 1024L, 1000, true);
     writeBuffer = new OWOWCache(8 + systemOffset, bufferPool, writeAheadLog, -1, 15000 * (8 + systemOffset), true, storagePath,
         null, storageName, OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndThrow, false);
     writeBuffer.loadRegisteredFiles();

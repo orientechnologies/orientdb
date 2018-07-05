@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
@@ -97,7 +96,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   private final int DELETE_MAX_RETRIES;
   private final int DELETE_WAIT_TIME;
 
-  private final OStorageVariableParser     variableParser;
   private final OPaginatedStorageDirtyFlag dirtyFlag;
 
   private final Path                                         storagePath;
@@ -118,8 +116,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     String sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
 
     storagePath = Paths.get(OIOUtils.getPathFromDatabaseName(sp));
-    variableParser = new OStorageVariableParser(storagePath);
-
     configuration = new OStorageConfigurationSegment(this);
 
     DELETE_MAX_RETRIES = getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.FILE_DELETE_RETRY);
@@ -397,7 +393,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * 1024 * 1024L,
         25, true, getConfiguration().getLocaleInstance(), OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024,
-        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT));
+        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT), true);
 
     return restoreWAL;
   }
@@ -527,7 +523,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             * 1_000_000_000L, walMaxSegSize, 25, true, getConfiguration().getLocaleInstance(),
         OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024,
-        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT));
+        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT), true);
 
     diskWriteAheadLog.addLowDiskSpaceListener(this);
     writeAheadLog = diskWriteAheadLog;

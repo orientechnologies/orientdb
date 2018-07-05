@@ -49,9 +49,15 @@ public class ONative {
   public static final int O_WRONLY = 01;
   public static final int O_RDWR   = 02;
   public static final int O_CREAT  = 0100;
+  public static final int O_EXCL   = 0200;
+  public static final int O_APPEND = 02000;
   public static final int O_TRUNC  = 01000;
   public static final int O_DIRECT = 040000;
   public static final int O_SYNC   = 04000000;
+
+  public static final int SEEK_SET = 0;
+  public static final int SEEK_CUR = 1;
+  public static final int SEEK_END = 2;
 
   private static volatile OCLibrary C_LIBRARY;
   private static final    String    DEFAULT_MEMORY_CGROUP_PATH = "/sys/fs/memory";
@@ -237,15 +243,23 @@ public class ONative {
   }
 
   public long pwrite(int fd, ByteBuffer buffer, int count, long position) throws LastErrorException {
-    return C_LIBRARY.pwrite(fd, buffer, count, position);
+    return C_LIBRARY.pwrite64(fd, buffer, count, position);
   }
 
   public long pread(int fd, ByteBuffer buffer, int count, long position) throws LastErrorException {
-    return C_LIBRARY.pread(fd, buffer, count, position);
+    return C_LIBRARY.pread64(fd, buffer, count, position);
   }
 
-  public int fsync(int fd) throws LastErrorException {
-    return C_LIBRARY.fsync(fd);
+  public int fsync(int fd) throws IOException {
+    try {
+      return C_LIBRARY.fsync(fd);
+    } catch (LastErrorException e) {
+      throw new IOException("Can not fsync file", e);
+    }
+  }
+
+  public long lseek(int fd, long offset, int whence) throws LastErrorException {
+    return C_LIBRARY.lseek(fd, offset, whence);
   }
 
   public long readv(int fd, ByteBuffer[] buffers, int index) throws LastErrorException {

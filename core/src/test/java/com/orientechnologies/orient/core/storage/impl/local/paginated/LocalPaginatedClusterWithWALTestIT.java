@@ -398,8 +398,8 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
 //  private void assertFileContentIsTheSame(RandomAccessFile datFileOne, RandomAccessFile datFileTwo) throws IOException {
 //    Assert.assertEquals(datFileOne.length(), datFileTwo.length());
 //
-//    byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
-//    byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
+//    byte[] expectedContent = new byte[OClusterPage.DEFAULT_PAGE_SIZE];
+//    byte[] actualContent = new byte[OClusterPage.DEFAULT_PAGE_SIZE];
 //
 //    datFileOne.seek(OFileClassic.HEADER_SIZE_V2);
 //    datFileTwo.seek(OFileClassic.HEADER_SIZE_V2);
@@ -410,11 +410,11 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
 //
 //      //      Assert.assertEquals(expectedContent, actualContent);
 //
-//      assertThat(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.PAGE_SIZE))
-//          .isEqualTo(Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.PAGE_SIZE));
+//      assertThat(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.DEFAULT_PAGE_SIZE))
+//          .isEqualTo(Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.DEFAULT_PAGE_SIZE));
 //
-//      expectedContent = new byte[OClusterPage.PAGE_SIZE];
-//      actualContent = new byte[OClusterPage.PAGE_SIZE];
+//      expectedContent = new byte[OClusterPage.DEFAULT_PAGE_SIZE];
+//      actualContent = new byte[OClusterPage.DEFAULT_PAGE_SIZE];
 //      bytesRead = datFileOne.read(expectedContent);
 //    }
 //  }

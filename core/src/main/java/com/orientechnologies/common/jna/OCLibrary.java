@@ -89,9 +89,9 @@ public interface OCLibrary extends Library {
 
   long read(int fd, ByteBuffer buffer, long count) throws LastErrorException;
 
-  long pwrite(int fd, ByteBuffer buffer, long count, long offset) throws LastErrorException;
+  long pwrite64(int fd, ByteBuffer buffer, long count, long offset) throws LastErrorException;
 
-  long pread(int fd, ByteBuffer buffer, long count, long offset) throws LastErrorException;
+  long pread64(int fd, ByteBuffer buffer, long count, long offset) throws LastErrorException;
 
   int fsync(int fd) throws LastErrorException;
 
@@ -110,4 +110,6 @@ public interface OCLibrary extends Library {
   int getpagesize() throws LastErrorException;
 
   int pathconf(String path, int name) throws LastErrorException;
+
+  long lseek(int fd, long offset, int whence) throws LastErrorException;
 }

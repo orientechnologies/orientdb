@@ -391,7 +391,7 @@ public class OIOUtils {
       try {
         r = (int) ONative.instance().pread(fd, buffer, buffer.remaining(), position + read);
       } catch (LastErrorException e) {
-        throw new IOException("Error during call of pread", e);
+        throw new IOException("Error during call of pread64", e);
       }
 
       if (r == 0)
@@ -422,6 +422,30 @@ public class OIOUtils {
     }
   }
 
+  public static void readByteBuffer(ByteBuffer buffer, int fd) throws IOException {
+    int bytesToRead = buffer.limit();
+
+    int read = 0;
+
+    while (read < bytesToRead) {
+      buffer.position(read);
+
+      final int r;
+
+      try {
+        r = (int) ONative.instance().read(fd, buffer, buffer.remaining());
+      } catch (LastErrorException e) {
+        throw new IOException("Error during reading from file", e);
+      }
+
+      if (r < 0) {
+        throw new EOFException("End of file is reached");
+      }
+
+      read += r;
+    }
+  }
+
   public static void writeByteBuffer(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
     int bytesToWrite = buffer.limit();
 
@@ -443,7 +467,7 @@ public class OIOUtils {
       try {
         written += ONative.instance().pwrite(fd, buffer, bytesToWrite - written, position + written);
       } catch (LastErrorException e) {
-        throw new IOException("Error during pwrite call", e);
+        throw new IOException("Error during pwrite64 call", e);
       }
     }
   }

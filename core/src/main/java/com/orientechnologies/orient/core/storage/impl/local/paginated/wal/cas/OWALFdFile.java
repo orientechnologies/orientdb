@@ -1,0 +1,80 @@
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas;
+
+import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.jna.ONative;
+import com.sun.jna.LastErrorException;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+
+public class OWALFdFile implements OWALFile {
+  private final int fd;
+  private final int blockSize;
+
+  OWALFdFile(int fd, int blockSize) {
+    this.fd = fd;
+    this.blockSize = blockSize;
+  }
+
+  @Override
+  public void force(boolean forceMetadata) throws IOException {
+    ONative.instance().fsync(fd);
+  }
+
+  @Override
+  public int write(ByteBuffer buffer) throws IOException {
+    if (buffer.limit() % blockSize != 0) {
+      throw new IOException(
+          "In direct IO mode, size of the written buffers should be quantified by block size (block size : " + blockSize
+              + ", buffer size: " + buffer.limit() + " )");
+    }
+    try {
+      return (int) ONative.instance().write(fd, buffer, buffer.remaining());
+    } catch (LastErrorException e) {
+      throw new IOException("Error during writing of data to file", e);
+    }
+  }
+
+  @Override
+  public long position() throws IOException {
+    try {
+      return ONative.instance().lseek(fd, 0, ONative.SEEK_CUR);
+    } catch (LastErrorException e) {
+      throw new IOException("Can not retrieve position of file", e);
+    }
+  }
+
+  @Override
+  public void position(long position) throws IOException {
+    if (position % blockSize != 0) {
+      throw new IOException(
+          "In direct IO mode, position of the file should be quantified by block size (block size : " + blockSize + ", position : "
+              + position + " )");
+    }
+    try {
+      ONative.instance().lseek(fd, position, ONative.SEEK_SET);
+    } catch (LastErrorException e) {
+      throw new IOException("Can not set position of file", e);
+    }
+  }
+
+  @Override
+  public void readBuffer(ByteBuffer buffer) throws IOException {
+    if (buffer.limit() % blockSize != 0) {
+      throw new IOException(
+          "In direct IO mode, size of the written buffers should be quantified by block size (block size : " + blockSize
+              + ", buffer size: " + buffer.limit() + " )");
+    }
+
+    OIOUtils.readByteBuffer(buffer, fd);
+  }
+
+  @Override
+  public void close() throws IOException {
+    try {
+      ONative.instance().close(fd);
+    } catch (LastErrorException e) {
+      throw new IOException("Error during closing the file", e);
+    }
+  }
+}

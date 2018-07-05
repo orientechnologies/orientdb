@@ -320,8 +320,8 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
 //
 //    Assert.assertEquals(fileOne.length(), fileTwo.length());
 //
-//    byte[] expectedContent = new byte[OClusterPage.PAGE_SIZE];
-//    byte[] actualContent = new byte[OClusterPage.PAGE_SIZE];
+//    byte[] expectedContent = new byte[OClusterPage.DEFAULT_PAGE_SIZE];
+//    byte[] actualContent = new byte[OClusterPage.DEFAULT_PAGE_SIZE];
 //
 //    fileOne.seek(OFileClassic.HEADER_SIZE_V2);
 //    fileTwo.seek(OFileClassic.HEADER_SIZE_V2);
@@ -330,10 +330,10 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
 //    while (bytesRead >= 0) {
 //      fileTwo.readFully(actualContent, 0, bytesRead);
 //
-//      Assertions.assertThat(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.PAGE_SIZE))
-//          .isEqualTo(Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.PAGE_SIZE));
-//      expectedContent = new byte[OClusterPage.PAGE_SIZE];
-//      actualContent = new byte[OClusterPage.PAGE_SIZE];
+//      Assertions.assertThat(Arrays.copyOfRange(expectedContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.DEFAULT_PAGE_SIZE))
+//          .isEqualTo(Arrays.copyOfRange(actualContent, ODurablePage.NEXT_FREE_POSITION, ODurablePage.DEFAULT_PAGE_SIZE));
+//      expectedContent = new byte[OClusterPage.DEFAULT_PAGE_SIZE];
+//      actualContent = new byte[OClusterPage.DEFAULT_PAGE_SIZE];
 //      bytesRead = fileOne.read(expectedContent);
 //    }
 //

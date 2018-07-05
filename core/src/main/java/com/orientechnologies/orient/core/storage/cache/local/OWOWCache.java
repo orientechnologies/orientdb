@@ -416,8 +416,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private final int blockSize;
 
-  private final boolean allowDirectIO;
-
   /**
    * Listeners which are called when exception in background data flush thread is happened.
    */
@@ -430,7 +428,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       boolean allowDirectIO) {
     filesLock.acquireWriteLock();
     try {
-      this.allowDirectIO = allowDirectIO;
+      boolean allowDirectIO1 = allowDirectIO;
       this.id = id;
       this.files = files;
 
@@ -497,7 +495,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     final int majorRev = 1;
     final int minorRev = 2;
 
-    List<Integer> versionNumbers = new ArrayList<Integer>();
+    List<Integer> versionNumbers = new ArrayList<>();
     for (String v : System.getProperty("os.version").split("[.\\-]")) {
       if (v.matches("\\d")) {
         versionNumbers.add(Integer.parseInt(v));
