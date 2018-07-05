@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
@@ -22,11 +21,7 @@ public class ODatabaseDocumentDistributedPooled extends ODatabaseDocumentDistrib
   public void close() {
     if (isClosed())
       return;
-    closeActiveQueries();
-    rollback(true);
-    super.setStatus(STATUS.CLOSED);
-    ODatabaseRecordThreadLocal.instance().remove();
-    getLocalCache().clear();
+    internalClose(true);
     pool.release(this);
   }
 

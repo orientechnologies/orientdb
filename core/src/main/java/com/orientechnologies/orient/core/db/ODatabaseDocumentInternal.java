@@ -244,4 +244,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
     throw new UnsupportedOperationException();
   }
 
+  void internalClose(boolean recycle);
+
 }
