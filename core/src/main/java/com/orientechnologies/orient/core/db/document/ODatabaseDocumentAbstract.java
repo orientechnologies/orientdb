@@ -84,26 +84,26 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected final Map<String, Object> properties = new HashMap<String, Object>();
-  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
-  protected ORecordSerializer    serializer;
-  protected String               url;
-  protected STATUS               status;
-  protected OIntent              currentIntent;
-  protected ODatabaseInternal<?> databaseOwner;
-  protected OMetadataDefault     metadata;
-  protected OImmutableUser       user;
+  protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
+  protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
+  protected       ORecordSerializer                           serializer;
+  protected       String                                      url;
+  protected       STATUS                                      status;
+  protected       OIntent                                     currentIntent;
+  protected       ODatabaseInternal<?>                        databaseOwner;
+  protected       OMetadataDefault                            metadata;
+  protected       OImmutableUser                              user;
   protected final byte                                        recordType    = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
-  protected OLocalRecordCache                localCache;
-  protected OCurrentStorageComponentsFactory componentsFactory;
-  protected boolean initialized = false;
-  protected OTransaction currentTx;
+  protected       OLocalRecordCache                           localCache;
+  protected       OCurrentStorageComponentsFactory            componentsFactory;
+  protected       boolean                                     initialized   = false;
+  protected       OTransaction                                currentTx;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected OSharedContext sharedContext;
+  protected       OSharedContext  sharedContext;
 
   private boolean prefetchRecords;
 
@@ -796,13 +796,14 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return currentIntent;
   }
 
-  @Override
-  public void close() {
+  public void internalClose(boolean recycle) {
+    if (status != STATUS.OPEN)
+      return;
+
     checkIfActive();
 
     try {
       closeActiveQueries();
-
       localCache.shutdown();
 
       if (isClosed()) {
@@ -816,27 +817,31 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         OLogManager.instance().error(this, "Exception during commit of active transaction", e);
       }
 
-      if (status != STATUS.OPEN)
-        return;
-
       callOnCloseListeners();
 
       if (currentIntent != null) {
         currentIntent.end(this);
         currentIntent = null;
       }
-      sharedContext = null;
+
       status = STATUS.CLOSED;
+      if (!recycle) {
+        sharedContext = null;
 
-      localCache.clear();
-
-      if (getStorage() != null)
-        getStorage().close();
+        if (getStorage() != null)
+          getStorage().close();
+      }
 
     } finally {
       // ALWAYS RESET TL
       ODatabaseRecordThreadLocal.instance().remove();
     }
+
+  }
+
+  @Override
+  public void close() {
+    internalClose(false);
   }
 
   @Override
