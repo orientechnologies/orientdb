@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
@@ -82,6 +83,10 @@ public interface OSchema {
   Collection<OClass> getClasses();
 
   OView getView(String name);
+
+  OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable);
+
+  boolean existsView(String name);
 
   @Deprecated
   void create();

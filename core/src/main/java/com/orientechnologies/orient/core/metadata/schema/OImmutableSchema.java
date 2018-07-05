@@ -283,4 +283,12 @@ public class OImmutableSchema implements OSchema {
     return null;
   }
 
+  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean existsView(String name) {
+    return views.containsKey(name.toLowerCase(Locale.ENGLISH));
+  }
 }

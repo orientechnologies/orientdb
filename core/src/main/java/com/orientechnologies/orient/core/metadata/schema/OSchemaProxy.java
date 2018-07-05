@@ -132,6 +132,13 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     return delegate.existsClass(iClassName.toLowerCase(Locale.ENGLISH));
   }
 
+  public boolean existsView(final String name) {
+    if (name == null)
+      return false;
+
+    return delegate.existsView(name.toLowerCase(Locale.ENGLISH));
+  }
+
   public OClass getClass(final Class<?> iClass) {
     if (iClass == null)
       return null;
@@ -162,6 +169,10 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
       return null;
 
     return delegate.getView(name);
+  }
+
+  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable) {
+    return delegate.createView(database, viewName, statement, updatable);
   }
 
   public <RET extends ODocumentWrapper> RET reload() {

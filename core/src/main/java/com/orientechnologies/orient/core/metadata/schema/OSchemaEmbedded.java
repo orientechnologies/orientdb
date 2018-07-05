@@ -206,7 +206,7 @@ public class OSchemaEmbedded extends OSchemaShared {
   }
 
   @Override
-  public OClass createView(ODatabaseDocumentInternal database, String viewName, String statement, boolean updatable) {
+  public OView createView(ODatabaseDocumentInternal database, String viewName, String statement, boolean updatable) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(viewName);
     if (wrongCharacter != null)
       throw new OSchemaException(
