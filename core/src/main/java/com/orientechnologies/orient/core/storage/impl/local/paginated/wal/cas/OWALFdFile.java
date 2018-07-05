@@ -29,7 +29,9 @@ public class OWALFdFile implements OWALFile {
               + ", buffer size: " + buffer.limit() + " )");
     }
     try {
-      return (int) ONative.instance().write(fd, buffer, buffer.remaining());
+      final int written = (int) ONative.instance().write(fd, buffer, buffer.remaining());
+      buffer.position(buffer.position() + written);
+      return written;
     } catch (LastErrorException e) {
       throw new IOException("Error during writing of data to file", e);
     }

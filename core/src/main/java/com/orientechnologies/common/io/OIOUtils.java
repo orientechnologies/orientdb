@@ -444,6 +444,8 @@ public class OIOUtils {
 
       read += r;
     }
+
+    buffer.position(read);
   }
 
   public static void writeByteBuffer(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
@@ -470,6 +472,8 @@ public class OIOUtils {
         throw new IOException("Error during pwrite64 call", e);
       }
     }
+
+    buffer.position(written);
   }
 
   public static void writeByteBuffers(ByteBuffer[] buffers, FileChannel channel, long bytesToWrite) throws IOException {
