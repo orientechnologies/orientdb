@@ -139,6 +139,11 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     return delegate.existsView(name.toLowerCase(Locale.ENGLISH));
   }
 
+  public void dropView(final String name) {
+    delegate.dropView(database, name);
+  }
+
+
   public OClass getClass(final Class<?> iClass) {
     if (iClass == null)
       return null;
