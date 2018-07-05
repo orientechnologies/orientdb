@@ -4,7 +4,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.configuration.GitHubConfiguration;
-import com.orientechnologies.website.model.schema.dto.UserRegistration;
+import com.orientechnologies.website.events.AccountRestoreEvent;
+import com.orientechnologies.website.events.EventManager;
 import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.github.GUser;
 import com.orientechnologies.website.github.GitHub;
@@ -24,9 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -34,6 +33,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class UserServiceImpl implements UserService {
+
+  @Autowired
+  protected EventManager eventManager;
 
   @Autowired
   private OrientDBFactory dbFactory;
@@ -120,6 +122,7 @@ public class UserServiceImpl implements UserService {
     userDTO.setWatching(user.getWatching());
     userDTO.setChatNotification(user.getChatNotification());
     userDTO.setPublicMute(user.getPublicMute());
+    userDTO.setDomain(user.getDomain());
 
     return userDTO;
   }
@@ -251,6 +254,73 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  public UserToken validateToken(UserToken user) {
+
+    ResetToken byToken = resetTokenRepository.findByToken(user.getToken());
+
+    if (byToken == null) {
+      throw ServiceException.create(401, "Token not valid");
+    }
+    // check expire
+
+    Calendar cal = Calendar.getInstance();
+
+    if (byToken.getExpire().getTime() - cal.getTime().getTime() <= 0) {
+      resetTokenRepository.delete(byToken);
+      throw ServiceException.create(401, "Token expired");
+    }
+
+    OUser userByLogin = byToken.getUser();
+    String login = UUID.randomUUID().toString();
+    login = com.orientechnologies.orient.core.security.OSecurityManager.instance().digest2String(login);
+    userByLogin.setToken(login);
+    userRepository.save(userByLogin);
+
+    return new UserToken(login);
+  }
+
+  @Override
+  public void changePassword(OUser user, UserChangePassword pwd) {
+
+    if ("local".equalsIgnoreCase(user.getDomain())) {
+
+      String oldpwd = com.orientechnologies.orient.core.security.OSecurityManager.instance().digest2String(pwd.getOldPassword());
+
+      if (oldpwd.equalsIgnoreCase(user.getPassword())) {
+        user.setForcePassword(true);
+        user.setPassword(pwd.getPassword());
+        userRepository.save(user);
+      } else {
+        throw ServiceException.create(400, "Old password is not valid");
+      }
+
+    }
+  }
+
+  @Override
+  public void changePasswordWithToken(OUser user, UserChangePassword pwd) {
+    if ("local".equalsIgnoreCase(user.getDomain())) {
+
+      ResetToken byToken = resetTokenRepository.findByToken(pwd.getToken());
+
+      if (byToken == null) {
+        throw ServiceException.create(401, "Token not valid");
+      }
+      // check expire
+
+      Calendar cal = Calendar.getInstance();
+
+      if (byToken.getExpire().getTime() - cal.getTime().getTime() <= 0) {
+        resetTokenRepository.delete(byToken);
+        throw ServiceException.create(401, "Token expired");
+      }
+      user.setForcePassword(true);
+      user.setPassword(pwd.getPassword());
+      userRepository.save(user);
+    }
+  }
+
+  @Override
   public void resetPassword(UserRegistration user) {
     OUser userByLogin = userRepository.findUserByLoginAndDomain(user.getName(), "local");
 
@@ -262,9 +332,14 @@ public class UserServiceImpl implements UserService {
 
       ResetToken saved = resetTokenRepository.save(token);
 
-      // send email
+      Map<String, Object> params = new HashMap<String, Object>() {
+        {
+          put("user", userByLogin);
+          put("token", saved.getToken());
+        }
+      };
+      eventManager.pushInternalEvent(AccountRestoreEvent.EVENT, params);
 
-      userByLogin.getWorkingEmail();
     }
   }
 

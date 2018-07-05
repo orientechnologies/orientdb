@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.model.schema.dto.ResetToken;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
-import java.util.Date;
+import java.util.Calendar;
 import java.util.UUID;
 
 /**
@@ -47,6 +47,7 @@ public enum OResetToken implements OTypeHolder<ResetToken> {
   public ResetToken fromDoc(ODocument doc, OrientBaseGraph graph) {
 
     ResetToken token = new ResetToken();
+    token.setId(doc.getIdentity().toString());
     token.setExpire(doc.field(EXPIRE.toString()));
     token.setToken(doc.field(TOKEN.toString()));
 
@@ -64,7 +65,10 @@ public enum OResetToken implements OTypeHolder<ResetToken> {
     if (entity.getId() == null) {
       doc = new ODocument(entity.getClass().getSimpleName());
       doc.field(TOKEN.toString(), UUID.randomUUID().toString());
-      doc.field(EXPIRE.toString(), new Date());
+
+      Calendar cal = Calendar.getInstance();
+      cal.add(Calendar.MINUTE, 60 * 24);
+      doc.field(EXPIRE.toString(), cal.getTime());
       doc.field(USER.toString(), new ORecordId(entity.getUser().getRid()));
     } else {
       doc = graph.getRawGraph().load(new ORecordId(entity.getId()));

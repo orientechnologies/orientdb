@@ -43,9 +43,21 @@ angular
         templateUrl: "views/createAccount.html",
         controller: "CreateAccountCtrl"
       })
+      .when("/validate-token/:token", {
+        templateUrl: "views/validateToken.html",
+        controller: "ValidateTokenCtrl"
+      })
       .when("/restore-password", {
         templateUrl: "views/restorePassword.html",
         controller: "RestorePasswordCtrl"
+      })
+      .when("/change-password", {
+        templateUrl: "views/changePassword.html",
+        controller: "ChangePasswordCtrl"
+      })
+      .when("/change-password/:token", {
+        templateUrl: "views/changePassword.html",
+        controller: "ChangePasswordCtrl"
       })
       .when("/login", {
         templateUrl: "views/login.html",

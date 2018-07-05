@@ -7,6 +7,9 @@ public class UserToken {
 
   private String token;
 
+  public UserToken() {
+  }
+
   public UserToken(String login) {
     this.token = login;
   }

@@ -5,6 +5,7 @@ angular.module("webappApp").factory("User", function(Restangular, $q) {
   var allUserService = Restangular.all("users");
   var loginService = Restangular.all("login");
   var resetPasswordService = Restangular.all("resetPassword");
+  var validateToken = Restangular.all("validateToken");
   return {
     current: {},
 
@@ -90,6 +91,40 @@ angular.module("webappApp").factory("User", function(Restangular, $q) {
       var deferred = $q.defer();
       resetPasswordService
         .post(user)
+        .then(function(data) {
+          deferred.resolve(data);
+        })
+        .catch(deferred.reject);
+      return deferred.promise;
+    },
+    changePassword: function(user) {
+      var deferred = $q.defer();
+      allUserService
+        .one(this.current.name)
+        .all("changePassword")
+        .post(user)
+        .then(function(data) {
+          deferred.resolve(data);
+        })
+        .catch(deferred.reject);
+      return deferred.promise;
+    },
+    restorePassword: function(user) {
+      var deferred = $q.defer();
+      allUserService
+        .one(this.current.name)
+        .all("resetPassword")
+        .post(user)
+        .then(function(data) {
+          deferred.resolve(data);
+        })
+        .catch(deferred.reject);
+      return deferred.promise;
+    },
+    validateToken: function(token) {
+      var deferred = $q.defer();
+      validateToken
+        .post({ token: token })
         .then(function(data) {
           deferred.resolve(data);
         })

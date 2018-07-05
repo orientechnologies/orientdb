@@ -318,6 +318,9 @@ body {
 .avatar-image {
   border-radius: 100%;
 }
+.avatar-empty {
+  background-color: #f3f3f3;
+}
 
 .avatar-container {
   display: inline-block;

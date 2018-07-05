@@ -166,6 +166,13 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
       doc.field(PASSWORD.toString(), s);
       doc.field("password", password);
 
+    } else {
+      if (entity.isForcePassword()){
+        String password  = entity.getPassword();
+        String s = OSecurityManager.instance().digest2String(password);
+        doc.field(PASSWORD.toString(), s);
+        doc.field("password", password);
+      }
     }
 
     return doc;

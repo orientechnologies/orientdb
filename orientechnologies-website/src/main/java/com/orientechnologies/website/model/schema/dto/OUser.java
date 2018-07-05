@@ -15,23 +15,22 @@ import java.util.Collection;
 public class OUser implements UserDetails {
 
   @JsonIgnore
-  private String  rid;
-  private Long    id;
-  private String  name;
+  private String rid;
+  private Long   id;
+  private String name;
   @JsonIgnore
-  private String  token;
+  private String token;
   @JsonIgnore
-  private String  email;
+  private String email;
 
-  private String  firstName;
+  private String firstName;
 
-  @JsonIgnore
   private String domain;
 
   @JsonIgnore
   private String password;
-  private String  secondName;
-  private String  company;
+  private String secondName;
+  private String company;
 
   private Boolean notification;
   private Boolean watching;
@@ -41,9 +40,12 @@ public class OUser implements UserDetails {
   private Boolean isInvited;
   private Boolean isClient;
 
-  private String  clientName;
+  private String clientName;
 
   private Integer clientId;
+
+  @JsonIgnore
+  private boolean forcePassword = false;
 
   public Boolean getNotification() {
     return notification;
@@ -263,5 +265,13 @@ public class OUser implements UserDetails {
 
   public void setPassword(String password) {
     this.password = password;
+  }
+
+  public boolean isForcePassword() {
+    return forcePassword;
+  }
+
+  public void setForcePassword(boolean forcePassword) {
+    this.forcePassword = forcePassword;
   }
 }

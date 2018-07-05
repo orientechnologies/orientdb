@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.dto.Environment;
+import com.orientechnologies.website.model.schema.dto.UserChangePassword;
 import com.orientechnologies.website.model.schema.dto.UserRegistration;
 import com.orientechnologies.website.model.schema.dto.UserToken;
 import com.orientechnologies.website.model.schema.dto.web.UserDTO;
@@ -59,6 +60,18 @@ public class UsersController {
     return userService.patchUser(SecurityHelper.currentUser(), user);
   }
 
+  @RequestMapping(value = "users/{username}/changePassword", method = RequestMethod.POST)
+  public ResponseEntity<?> changePassword(@PathVariable("username") String username, @RequestBody UserChangePassword user) {
+    userService.changePassword(SecurityHelper.currentUser(), user);
+    return new ResponseEntity(HttpStatus.OK);
+  }
+
+  @RequestMapping(value = "users/{username}/resetPassword", method = RequestMethod.POST)
+  public ResponseEntity<?> resetPassword(@PathVariable("username") String username, @RequestBody UserChangePassword user) {
+    userService.changePasswordWithToken(SecurityHelper.currentUser(), user);
+    return new ResponseEntity(HttpStatus.OK);
+  }
+
   @RequestMapping(value = "users", method = RequestMethod.POST)
   public ResponseEntity<?> createUser(@RequestBody UserRegistration user) {
 
@@ -70,13 +83,20 @@ public class UsersController {
   @RequestMapping(value = "login", method = RequestMethod.POST)
   public ResponseEntity<UserToken> loginUser(@RequestBody UserRegistration user) {
 
-    return new ResponseEntity<>(userService.login(user),HttpStatus.OK);
+    return new ResponseEntity<>(userService.login(user), HttpStatus.OK);
   }
+
   @RequestMapping(value = "resetPassword", method = RequestMethod.POST)
   public ResponseEntity<?> resetPassword(@RequestBody UserRegistration user) {
 
     userService.resetPassword(user);
     return new ResponseEntity<>(HttpStatus.OK);
+  }
+
+  @RequestMapping(value = "validateToken", method = RequestMethod.POST)
+  public ResponseEntity<UserToken> validateToken(@RequestBody UserToken user) {
+
+    return new ResponseEntity<UserToken>(userService.validateToken(user), HttpStatus.OK);
   }
 
   @ExceptionHandler({ ORecordDuplicatedException.class })

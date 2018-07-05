@@ -7,6 +7,7 @@ angular
     BreadCrumb,
     $location,
     $route,
+    $routeParams,
     $rootScope,
     AccessToken,
     $window,
@@ -14,11 +15,14 @@ angular
   ) {
     $scope.menuClass = "";
     $scope.breadCrumb = BreadCrumb;
-    User.whoami().then(function(user) {
-      $scope.user = user;
-      $scope.member = User.isMember(ORGANIZATION);
-      $scope.isClient = User.isClient(ORGANIZATION);
-    });
+
+    if ($location.path().indexOf("validate-token") === -1 && !$routeParams.token) {      
+      User.whoami().then(function(user) {
+        $scope.user = user;
+        $scope.member = User.isMember(ORGANIZATION);
+        $scope.isClient = User.isClient(ORGANIZATION);
+      });
+    }
 
     $scope.closeMe = function() {
       $("#myNavmenu").offcanvas("toggle");
@@ -35,7 +39,11 @@ angular
       }, 100);
     };
     $rootScope.$on("$routeChangeSuccess", function(scope, next, current) {
-      if (next.$$route.originalPath.indexOf("/rooms") != -1) {
+      if (
+        next &&
+        next.$$route &&
+        next.$$route.originalPath.indexOf("/rooms") != -1
+      ) {
         $scope.isChat = true;
       } else {
         $scope.isChat = false;

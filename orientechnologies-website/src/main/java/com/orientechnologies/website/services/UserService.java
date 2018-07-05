@@ -47,5 +47,13 @@ public interface UserService {
 
   public void profileUser(OUser current, OUser toProfile, String organization);
 
+  @Transactional
   void resetPassword(UserRegistration user);
+
+
+  void changePassword(OUser user, UserChangePassword pwd);
+
+  void changePasswordWithToken(OUser user ,UserChangePassword pwd);
+
+  UserToken validateToken(UserToken user);
 }

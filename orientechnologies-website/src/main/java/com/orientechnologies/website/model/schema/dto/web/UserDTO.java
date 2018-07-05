@@ -44,6 +44,11 @@ public class UserDTO extends OUser {
   }
 
   @Override
+  public String getDomain() {
+    return super.getDomain();
+  }
+
+  @Override
   public Boolean getPublicMute() {
     return super.getPublicMute();
   }
