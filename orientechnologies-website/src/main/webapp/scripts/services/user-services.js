@@ -4,6 +4,7 @@ angular.module("webappApp").factory("User", function(Restangular, $q) {
   var userService = Restangular.all("user");
   var allUserService = Restangular.all("users");
   var loginService = Restangular.all("login");
+  var resetPasswordService = Restangular.all("resetPassword");
   return {
     current: {},
 
@@ -78,6 +79,16 @@ angular.module("webappApp").factory("User", function(Restangular, $q) {
     login: function(user) {
       var deferred = $q.defer();
       loginService
+        .post(user)
+        .then(function(data) {
+          deferred.resolve(data);
+        })
+        .catch(deferred.reject);
+      return deferred.promise;
+    },
+    resetPassword: function(user) {
+      var deferred = $q.defer();
+      resetPasswordService
         .post(user)
         .then(function(data) {
           deferred.resolve(data);

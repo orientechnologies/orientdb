@@ -72,6 +72,12 @@ public class UsersController {
 
     return new ResponseEntity<>(userService.login(user),HttpStatus.OK);
   }
+  @RequestMapping(value = "resetPassword", method = RequestMethod.POST)
+  public ResponseEntity<?> resetPassword(@RequestBody UserRegistration user) {
+
+    userService.resetPassword(user);
+    return new ResponseEntity<>(HttpStatus.OK);
+  }
 
   @ExceptionHandler({ ORecordDuplicatedException.class })
   public ResponseEntity<String> handleDuplicateException() {

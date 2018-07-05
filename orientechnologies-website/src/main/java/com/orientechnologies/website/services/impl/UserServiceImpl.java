@@ -12,10 +12,7 @@ import com.orientechnologies.website.model.schema.HasEnvironment;
 import com.orientechnologies.website.model.schema.HasVersion;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.UserDTO;
-import com.orientechnologies.website.repository.EnvironmentRepository;
-import com.orientechnologies.website.repository.OrganizationRepository;
-import com.orientechnologies.website.repository.RepositoryRepository;
-import com.orientechnologies.website.repository.UserRepository;
+import com.orientechnologies.website.repository.*;
 import com.orientechnologies.website.security.OSecurityManager;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.UserService;
@@ -43,6 +40,9 @@ public class UserServiceImpl implements UserService {
 
   @Autowired
   private UserRepository userRepository;
+
+  @Autowired
+  private ResetTokenRepository resetTokenRepository;
 
   @Autowired
   private OrganizationService organizationService;
@@ -247,6 +247,24 @@ public class UserServiceImpl implements UserService {
       userRepository.save(persistentUser);
     } catch (ORecordDuplicatedException e) {
       throw ServiceException.create(400, String.format("Username not available"));
+    }
+  }
+
+  @Override
+  public void resetPassword(UserRegistration user) {
+    OUser userByLogin = userRepository.findUserByLoginAndDomain(user.getName(), "local");
+
+    if (userByLogin != null) {
+
+      ResetToken token = new ResetToken();
+      token.setToken(UUID.randomUUID().toString());
+      token.setUser(userByLogin);
+
+      ResetToken saved = resetTokenRepository.save(token);
+
+      // send email
+
+      userByLogin.getWorkingEmail();
     }
   }
 

@@ -46,4 +46,6 @@ public interface UserService {
   public void profileEvent(OUser user, Event event, String organization);
 
   public void profileUser(OUser current, OUser toProfile, String organization);
+
+  void resetPassword(UserRegistration user);
 }

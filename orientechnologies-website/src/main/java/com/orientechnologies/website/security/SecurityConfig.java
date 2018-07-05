@@ -25,7 +25,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     http.csrf().disable();
 
     http.antMatcher("/api/v1/**").authorizeRequests().antMatchers("/api/v1/users").permitAll().antMatchers("/api/v1/login")
-        .permitAll().anyRequest().authenticated().and()
+        .permitAll().antMatchers("/api/v1/resetPassword").permitAll().anyRequest().authenticated().and()
         .addFilterBefore(new StatelessAuthenticationFilter(tokenAuthenticationService), UsernamePasswordAuthenticationFilter.class);
   }
 

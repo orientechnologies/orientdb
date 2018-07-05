@@ -43,6 +43,10 @@ angular
         templateUrl: "views/createAccount.html",
         controller: "CreateAccountCtrl"
       })
+      .when("/restore-password", {
+        templateUrl: "views/restorePassword.html",
+        controller: "RestorePasswordCtrl"
+      })
       .when("/login", {
         templateUrl: "views/login.html",
         controller: "LoginCtrl"
