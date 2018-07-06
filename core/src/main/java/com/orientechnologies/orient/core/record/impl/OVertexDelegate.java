@@ -107,7 +107,6 @@ public class OVertexDelegate implements OVertex {
       Object fieldValue = getProperty(fieldName);
 
       if (fieldValue != null) {
-        final OIdentifiable destinationVId = null;
 
         if (fieldValue instanceof OIdentifiable) {
           fieldValue = Collections.singleton(fieldValue);
@@ -410,15 +409,6 @@ public class OVertexDelegate implements OVertex {
         return iFieldName.substring(CONNECTION_IN_PREFIX.length());
     }
     return "E";//TODO constant
-  }
-
-  private boolean isSubclassOfAny(OClass clazz, String[] labels) {
-    for (String s : labels) {
-      if (clazz.isSubClassOf(s)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   protected Set<String> getEdgeFieldNames(final ODirection iDirection, String... iClassNames) {

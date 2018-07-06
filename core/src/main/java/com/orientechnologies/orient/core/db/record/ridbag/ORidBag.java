@@ -294,7 +294,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   public OStringBuilderSerializable toStream(StringBuilder output) throws OSerializationException {
     final BytesContainer container = new BytesContainer();
     toStream(container);
-    output.append(Base64.getEncoder().encode(container.fitBytes()));
+    output.append(Base64.getEncoder().encodeToString(container.fitBytes()));
     return this;
   }
 

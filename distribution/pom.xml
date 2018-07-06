@@ -17,7 +17,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>3.0.3-SNAPSHOT</version>
+        <version>3.1.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -33,12 +33,12 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>6.9.8</version>
-            <scope>test</scope>
-        </dependency>
+        <!--<dependency>-->
+        <!--<groupId>org.testng</groupId>-->
+        <!--<artifactId>testng</artifactId>-->
+        <!--<version>6.9.8</version>-->
+        <!--<scope>test</scope>-->
+        <!--</dependency>-->
 
 
         <dependency>
@@ -98,6 +98,41 @@
         </dependency>
 
 
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.5.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.11.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-jul</artifactId>
+            <version>2.11.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>2.11.0</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>
@@ -136,8 +171,13 @@
                                 <argument>-classpath</argument>
                                 <classpath/>
                                 <argument>com.orientechnologies.orient.console.OConsoleDatabaseApp</argument>
-                                <argument>CREATE DATABASE plocal:./target/databases/demodb;</argument>
-                                <argument>LOAD SCRIPT ./src/main/resources/demoDB.osql;</argument>
+                                <argument>CREATE DATABASE plocal:${basedir}/target/databases/demodb;</argument>
+                                <argument>CONNECT plocal:${basedir}/target/databases/demodb admin admin;</argument>
+                                <argument>LOAD SCRIPT ${basedir}/src/main/resources/demodb-1-schema.osql;</argument>
+                                <argument>LOAD SCRIPT ${basedir}/src/main/resources/demodb-2.osql;</argument>
+                                <argument>LOAD SCRIPT ${basedir}/src/main/resources/demodb-3.osql;</argument>
+                                <argument>LOAD SCRIPT ${basedir}/src/main/resources/demodb-4.osql;</argument>
+                                <argument>LOAD SCRIPT ${basedir}/src/main/resources/demodb-5.osql;</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -169,53 +209,44 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>com.spotify</groupId>
-                <artifactId>docker-maven-plugin</artifactId>
-                <version>0.4.13</version>
-                <configuration>
-                    <imageName>orientdb/orientdb</imageName>
-                    <imageTags>
-                        <imageTag>${project.version}</imageTag>
-                    </imageTags>
-                    <dockerDirectory>docker</dockerDirectory>
-                    <!-- copy the service's jar file from target into the root directory of the image -->
-                    <resources>
-                        <resource>
-                            <targetPath>/</targetPath>
-                            <directory>${project.build.directory}/</directory>
-                            <include>${project.build.finalName}.tar.gz</include>
-                        </resource>
-                    </resources>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <configuration>
-                    <systemPropertyVariables>
-                        <buildDirectory>${project.build.directory}</buildDirectory>
-                        <buildName>${project.build.finalName}</buildName>
-                        <loadScriptPath>${basedir}/src/main/resources/demoDB.osql</loadScriptPath>
-                    </systemPropertyVariables>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 
     <profiles>
         <profile>
             <id>qa</id>
+
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>com.spotify</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>1.1.1</version>
+                        <executions>
+                            <execution>
+                                <id>build-image</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <imageName>orientdb/orientdb</imageName>
+                            <imageTags>
+                                <imageTag>${project.version}</imageTag>
+                            </imageTags>
+                            <dockerDirectory>${project.basedir}/docker</dockerDirectory>
+                            <!-- copy the service's jar file from target into the root directory of the image -->
+                            <resources>
+                                <resource>
+                                    <targetPath>/</targetPath>
+                                    <directory>${project.build.directory}/</directory>
+                                    <include>${project.build.finalName}.tar.gz</include>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>
@@ -223,7 +254,6 @@
                             <systemPropertyVariables>
                                 <buildDirectory>${project.build.directory}</buildDirectory>
                                 <buildName>${project.build.finalName}</buildName>
-                                <loadScriptPath>${basedir}/src/main/resources/demoDB.osql</loadScriptPath>
                             </systemPropertyVariables>
                         </configuration>
                         <executions>

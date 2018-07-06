@@ -30,7 +30,7 @@ public class OInteger extends ONumber {
     if (stringValue.endsWith("L") || stringValue.endsWith("l")) {
       value = Long.parseLong(stringValue.substring(0, stringValue.length() - 1), radix) * sign;
     } else {
-      long longValue = Long.parseLong(stringValue, radix) * sign;
+      long longValue = Long.parseLong(sign > 0 ? stringValue : "-" + stringValue, radix);
       if (longValue > Integer.MAX_VALUE || longValue < Integer.MIN_VALUE) {
         value = longValue;
       } else {

@@ -4,8 +4,10 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -79,6 +81,9 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
 
         @Override
         public OResult next() {
+          if (nFetched % 100 == 0 && OExecutionThreadLocal.isInterruptCurrentOperation()) {
+            throw new OCommandInterruptedException("The command has been interrupted");
+          }
           long begin = profilingEnabled ? System.nanoTime() : 0;
           try {
             if (nFetched >= nRecords) {

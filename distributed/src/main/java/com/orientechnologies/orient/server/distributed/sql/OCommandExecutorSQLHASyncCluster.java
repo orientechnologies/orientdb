@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPo
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
@@ -59,13 +60,12 @@ import java.util.Map;
 
 /**
  * SQL HA SYNC CLUSTER command: synchronizes a cluster from distributed servers.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String    NAME            = "HA SYNC CLUSTER";
+  public static final String NAME = "HA SYNC CLUSTER";
 
   private OHaSyncClusterStatement parsedStatement;
 
@@ -89,20 +89,20 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.CLUSTER, "sync", ORole.PERMISSION_UPDATE);
 
-    final String dbUrl = database.getURL();
+    if (!(database instanceof ODatabaseDocumentDistributed)) {
+      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
+    }
 
-    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
-    final OServer serverInstance = OServer.getInstanceByPath(path);
-
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) serverInstance.getDistributedManager();
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getStorageDistributed()
+        .getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
     final String databaseName = database.getName();
 
     try {
-      if(this.parsedStatement.modeFull) {
-        return replaceCluster(dManager, database, serverInstance, databaseName, this.parsedStatement.clusterName.getStringValue());
+      if (this.parsedStatement.modeFull) {
+        return replaceCluster(dManager, database, dManager.getServerInstance(), databaseName, this.parsedStatement.clusterName.getStringValue());
       }
       // else {
       // int merged = 0;
@@ -136,8 +136,9 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
           "Cannot synchronize cluster '" + clusterName + "' because is not configured on any running nodes");
 
     final OSyncClusterTask task = new OSyncClusterTask(clusterName);
-    final ODistributedResponse response = dManager.sendRequest(databaseName, null, nodesWhereClusterIsCfg, task,
-        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+    final ODistributedResponse response = dManager
+        .sendRequest(databaseName, null, nodesWhereClusterIsCfg, task, dManager.getNextMessageIdCounter(),
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
     final Map<String, Object> results = (Map<String, Object>) response.getPayload();
 
@@ -159,8 +160,9 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
         if (value instanceof Boolean) {
           continue;
         } else if (value instanceof Throwable) {
-          ODistributedServerLog.error(null, nodeName, r.getKey(), ODistributedServerLog.DIRECTION.IN,
-              "error on installing cluster %s in %s", (Exception) value, databaseName, dbPath);
+          ODistributedServerLog
+              .error(null, nodeName, r.getKey(), ODistributedServerLog.DIRECTION.IN, "error on installing cluster %s in %s",
+                  (Exception) value, databaseName, dbPath);
         } else if (value instanceof ODistributedDatabaseChunk) {
           ODistributedDatabaseChunk chunk = (ODistributedDatabaseChunk) value;
 
@@ -242,8 +244,9 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
       return String.format("Cluster correctly replaced, transferred %d bytes", fileSize);
 
     } catch (Exception e) {
-      ODistributedServerLog.error(null, nodeName, null, ODistributedServerLog.DIRECTION.NONE,
-          "error on transferring database '%s' to '%s'", e, databaseName, tempFile);
+      ODistributedServerLog
+          .error(null, nodeName, null, ODistributedServerLog.DIRECTION.NONE, "error on transferring database '%s' to '%s'", e,
+              databaseName, tempFile);
       throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
     } finally {
       try {
@@ -279,8 +282,9 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
   protected static long writeDatabaseChunk(final String iNodeName, final int iChunkId, final ODistributedDatabaseChunk chunk,
       final FileOutputStream out) throws IOException {
 
-    ODistributedServerLog.warn(null, iNodeName, null, ODistributedServerLog.DIRECTION.NONE, "- writing chunk #%d offset=%d size=%s",
-        iChunkId, chunk.offset, OFileUtils.getSizeAsString(chunk.buffer.length));
+    ODistributedServerLog
+        .warn(null, iNodeName, null, ODistributedServerLog.DIRECTION.NONE, "- writing chunk #%d offset=%d size=%s", iChunkId,
+            chunk.offset, OFileUtils.getSizeAsString(chunk.buffer.length));
     out.write(chunk.buffer);
 
     return chunk.buffer.length;

@@ -1552,6 +1552,17 @@ public class ODocument extends ORecordAbstract
     return mergeMap(iOther._fields, iUpdateOnlyMode, iMergeSingleItemsOfMultiValueFields);
   }
   
+  private static boolean valuesDiffersInClass(Object val1, Object val2){
+    if (val1.getClass().equals(val2.getClass())){
+      return false;
+    }
+    if ((val1 instanceof ODocument && val2 instanceof ODocumentDelta) ||
+        (val1 instanceof ODocumentDelta && val2 instanceof ODocument))
+      return false;
+    
+    return true;
+  }
+  
   //process in depth first
   private static Object mergeUpdateTree(Object toObj, final Object fromObj){
     OType toType = OType.getTypeByClass(toObj.getClass());
@@ -1559,7 +1570,7 @@ public class ODocument extends ORecordAbstract
     if (toObj instanceof ODocument && fromObj instanceof ODocumentDelta){      
       ODocument to = (ODocument)toObj;
       ODocumentDelta from = (ODocumentDelta)fromObj;
-      for (Map.Entry<String, ODocumentEntry> field : from._fields.entrySet()){
+      for (Map.Entry<String, Object> field : from.fields.entrySet()){
         final String fieldName = field.getKey();
         final ODocumentDelta updateDoc = (ODocumentDelta)from.field(fieldName);
         Object deltaVal = updateDoc.field("v");
@@ -1569,7 +1580,7 @@ public class ODocument extends ORecordAbstract
           if (
               !(deltaVal instanceof ODocumentDelta) ||
               !to._fields.keySet().contains(fieldName) ||
-              !to._fields.get(fieldName).value.getClass().equals(deltaVal.getClass())){
+              valuesDiffersInClass(to._fields.get(fieldName).value, deltaVal)){
             to.field(fieldName, deltaVal);
           }                  
           else{
@@ -1627,7 +1638,7 @@ public class ODocument extends ORecordAbstract
       int removed = 0;
       for (int i = 0; i < fromList.size(); i++){
         Object fromElement = fromList.get(i);
-        if (fromElement instanceof ODocument){
+        if (fromElement instanceof ODocumentDelta){
           ODocumentDelta fromDoc = (ODocumentDelta)fromElement;
           UpdateDeltaValueType type = UpdateDeltaValueType.fromOrd((byte)fromDoc.field("t"));
           if (type == UpdateDeltaValueType.LIST_ELEMENT_ADD){
@@ -1636,6 +1647,11 @@ public class ODocument extends ORecordAbstract
             continue;
           }
           int index = (int)fromDoc.field("i");
+          if (type == UpdateDeltaValueType.LIST_ELEMENT_CHANGE){
+            Object val = fromDoc.field("v");
+            toList.set(index, val);
+            continue;
+          }
           if (type == UpdateDeltaValueType.LIST_ELEMENT_REMOVE){
             toList.remove(index - removed++);            
             continue;
@@ -1676,26 +1692,29 @@ public class ODocument extends ORecordAbstract
   
   protected ODocument mergeUpdateDelta(final ODocumentDelta iOther){
 
+    checkForLoading();
+    checkForFields();
+    
     mergeUpdateTree(this, iOther);
     
     return this;
   }
   
-  private static boolean isLeaf(ODocument doc){
-    return doc._fieldSize == 0;
+  private static boolean isLeaf(ODocumentDelta doc){
+    return doc.fields.size() == 0;
   }
   
-  private static void mergeDeleteTree(final ODocument to, final ODocument from){
-    for (Map.Entry<String, ODocumentEntry> field : from._fields.entrySet()){
+  private static void mergeDeleteTree(final ODocument to, final ODocumentDelta from){
+    for (Map.Entry<String, Object> field : from.fields.entrySet()){
       final String fieldName = field.getKey();
-      final Object fieldVal = field.getValue().value;
-      if (!(fieldVal instanceof ODocument) ||
-          isLeaf((ODocument)fieldVal)){
+      final Object fieldVal = field.getValue();
+      if (!(fieldVal instanceof ODocumentDelta) ||
+          isLeaf((ODocumentDelta)fieldVal)){
         to.removeField(fieldName);
       }
       else{
         if (to._fields.keySet().contains(fieldName)){
-          ODocument fromDoc = (ODocument)fieldVal;
+          ODocumentDelta fromDoc = (ODocumentDelta)fieldVal;
           Object toVal = to.field(fieldName);
           if (toVal instanceof ODocument){
             ODocument toDoc = (ODocument) toVal;
@@ -1706,15 +1725,15 @@ public class ODocument extends ORecordAbstract
     } 
   }
   
-  protected ODocument mergeDeleteDelta(final ODocument iOther){
-    iOther.checkForLoading();
-    iOther.checkForFields();
+  protected ODocument mergeDeleteDelta(final ODocumentDelta iOther){
+//    iOther.checkForLoading();
+//    iOther.checkForFields();
     
     checkForLoading();
     checkForFields();
 
-    if (_className == null && iOther.getImmutableSchemaClass() != null)
-      _className = iOther.getImmutableSchemaClass().getName();
+//    if (_className == null && iOther.getImmutableSchemaClass() != null)
+//      _className = iOther.getImmutableSchemaClass().getName();
     
     mergeDeleteTree(this, iOther);
     
@@ -3531,9 +3550,9 @@ public class ODocument extends ORecordAbstract
     return getDeltaFromOriginalForUpdate(this);
   }
   
-  private ODocument getDeltaFromOriginalForDelete(){
-    ODocument delete = new ODocument();
-    addThisAsOwnerToDoc(delete);
+  private ODocumentDelta getDeltaFromOriginalForDelete(){
+    ODocumentDelta delete = new ODocumentDelta();
+//    addThisAsOwnerToDoc(delete);
     //get updated and new records
     for (Map.Entry<String, ODocumentEntry> fieldVal : _fields.entrySet()){
       ODocumentEntry val = fieldVal.getValue();      

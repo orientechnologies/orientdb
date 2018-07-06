@@ -54,7 +54,7 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
 
   protected final static int           SERVERS                 = 3;
   protected static final int           CONCURRENCY_LEVEL       = 4;
-  protected static final int           TOTAL_CYCLES_PER_THREAD = 20000;
+  protected static final int           TOTAL_CYCLES_PER_THREAD = 100000;
   protected final        AtomicBoolean serverDown              = new AtomicBoolean(false);
   protected final        AtomicBoolean serverRestarting        = new AtomicBoolean(false);
   protected final        AtomicBoolean serverRestarted         = new AtomicBoolean(false);
@@ -67,7 +67,6 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
   private volatile long sleep = 0;
 
   @Test
-  @Ignore
   public void test() throws Exception {
     useTransactions = false;
     init(SERVERS);
@@ -129,7 +128,6 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
   }
 
   protected String getDatabaseURL(final ServerRun server) {
-//    return "plocal:" + server.getDatabasePath(getDatabaseName());
     return "remote:" + server.getDatabasePath(getDatabaseName());
   }
 
@@ -141,22 +139,15 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
   @Override
   public void executeTest() throws Exception {
 
-log("waitForEndOfTest()");
-
     waitForEndOfTest();
 
     if (task != null)
       task.cancel();
 
-log("Assert.assertEquals(serverDown.get(), true);");
-
     Assert.assertEquals(serverDown.get(), true);
-
-log("Assert.assertEquals(serverRestarting.get(), true);");
 
     Assert.assertEquals(serverRestarting.get(), true);
 
-log("waitFor");
     waitFor(20000, new OCallable<Boolean, Void>() {
       @Override
       public Boolean call(Void iArgument) {
@@ -347,7 +338,7 @@ System.out.println("\n\n ----------- startThread()");
     return th;
   }
 
-  private ODatabasePool getGraphFactory(final ServerRun server) {
+  protected ODatabasePool getGraphFactory(final ServerRun server) {
     if (graphReadFactory == null) {
 //      String dbUrl = getDatabaseURL(serverInstance.get(0));
 //      log("Datastore pool created with size : 10, db location: " + getDatabaseURL(server));

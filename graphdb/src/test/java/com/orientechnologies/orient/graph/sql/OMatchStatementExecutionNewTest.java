@@ -243,7 +243,7 @@ public class OMatchStatementExecutionNewTest {
     for (int i = 0; i < 6; i++) {
       OResult item = qResult.next();
       Assert.assertTrue(item.getPropertyNames().size() == 1);
-      OElement person = db.load((ORID)item.getProperty("person"));
+      OElement person = db.load((ORID) item.getProperty("person"));
 
       String name = person.getProperty("name");
       Assert.assertTrue(name.startsWith("n"));
@@ -258,7 +258,7 @@ public class OMatchStatementExecutionNewTest {
     for (int i = 0; i < 2; i++) {
       OResult item = qResult.next();
       Assert.assertTrue(item.getPropertyNames().size() == 1);
-      OElement personId = db.load((ORID)item.getProperty("person"));
+      OElement personId = db.load((ORID) item.getProperty("person"));
 
       ODocument person = personId.getRecord();
       String name = person.field("name");
@@ -306,7 +306,7 @@ public class OMatchStatementExecutionNewTest {
 
       OResult item = qResult.next();
       Assert.assertTrue(item.getPropertyNames().size() == 1);
-      OElement person = db.load((ORID)item.getProperty("person"));
+      OElement person = db.load((ORID) item.getProperty("person"));
 
       String name = person.getProperty("name");
       Assert.assertTrue(name.equals("n1") || name.equals("n2"));
@@ -1054,9 +1054,9 @@ public class OMatchStatementExecutionNewTest {
     printExecutionPlan(result);
     Assert.assertTrue(result.hasNext());
     OResult doc = result.next();
-    OElement friend1 = db.load((ORID)doc.getProperty("friend1"));
-    OElement friend2 = db.load((ORID)doc.getProperty("friend2"));
-    OElement friend3 = db.load((ORID)doc.getProperty("friend3"));
+    OElement friend1 = db.load((ORID) doc.getProperty("friend1"));
+    OElement friend2 = db.load((ORID) doc.getProperty("friend2"));
+    OElement friend3 = db.load((ORID) doc.getProperty("friend3"));
     Assert.assertEquals(0, friend1.<Object>getProperty("uid"));
     Assert.assertEquals(1, friend2.<Object>getProperty("uid"));
     Assert.assertEquals(2, friend3.<Object>getProperty("uid"));
@@ -1078,9 +1078,9 @@ public class OMatchStatementExecutionNewTest {
     Assert.assertTrue(result.hasNext());
     OResult doc = result.next();
     Assert.assertFalse(result.hasNext());
-    OElement friend1 = db.load((ORID)doc.getProperty("friend1"));
-    OElement friend2 = db.load((ORID)doc.getProperty("friend2"));
-    OElement friend3 = db.load((ORID)doc.getProperty("friend3"));
+    OElement friend1 = db.load((ORID) doc.getProperty("friend1"));
+    OElement friend2 = db.load((ORID) doc.getProperty("friend2"));
+    OElement friend3 = db.load((ORID) doc.getProperty("friend3"));
     Assert.assertEquals(0, friend1.<Object>getProperty("uid"));
     Assert.assertEquals(1, friend2.<Object>getProperty("uid"));
     Assert.assertEquals(2, friend3.<Object>getProperty("uid"));
@@ -1102,9 +1102,9 @@ public class OMatchStatementExecutionNewTest {
     Assert.assertTrue(result.hasNext());
     OResult doc = result.next();
     Assert.assertFalse(result.hasNext());
-    OElement friend1 = db.load((ORID)doc.getProperty("friend1"));
-    OElement friend2 = db.load((ORID)doc.getProperty("friend2"));
-    OElement friend3 = db.load((ORID)doc.getProperty("friend3"));
+    OElement friend1 = db.load((ORID) doc.getProperty("friend1"));
+    OElement friend2 = db.load((ORID) doc.getProperty("friend2"));
+    OElement friend3 = db.load((ORID) doc.getProperty("friend3"));
     Assert.assertEquals(0, friend1.<Object>getProperty("uid"));
     Assert.assertEquals(1, friend2.<Object>getProperty("uid"));
     Assert.assertEquals(2, friend3.<Object>getProperty("uid"));
@@ -1198,7 +1198,7 @@ public class OMatchStatementExecutionNewTest {
     for (int i = 0; i < 2; i++) {
       Assert.assertTrue(result.hasNext());
       OResult doc = result.next();
-      OElement friend1 = db.load((ORID)doc.getProperty("friend1"));
+      OElement friend1 = db.load((ORID) doc.getProperty("friend1"));
       Assert.assertEquals(friend1.<Object>getProperty("uid"), 1);
     }
     Assert.assertFalse(result.hasNext());
@@ -1256,7 +1256,7 @@ public class OMatchStatementExecutionNewTest {
     Assert.assertTrue(result.hasNext());
 
     OResult doc = result.next();
-    Object foo = db.load((ORID)doc.getProperty("foo"));
+    Object foo = db.load((ORID) doc.getProperty("foo"));
     Assert.assertNotNull(foo);
     Assert.assertTrue(foo instanceof OVertex);
     result.close();
@@ -1577,7 +1577,7 @@ public class OMatchStatementExecutionNewTest {
       Assert.assertTrue(qResult.hasNext());
       OResult doc = qResult.next();
       Assert.assertTrue(doc.getPropertyNames().size() == 2);
-      OElement person = db.load((ORID)doc.getProperty("person"));
+      OElement person = db.load((ORID) doc.getProperty("person"));
 
       String name = person.getProperty("name");
       Assert.assertTrue(name.startsWith("n"));
@@ -1593,7 +1593,7 @@ public class OMatchStatementExecutionNewTest {
       Assert.assertTrue(qResult.hasNext());
       OResult doc = qResult.next();
       Assert.assertTrue(doc.getPropertyNames().size() == 2);
-      OElement person = db.load((ORID)doc.getProperty("person"));
+      OElement person = db.load((ORID) doc.getProperty("person"));
 
       String name = person.getProperty("name");
       Assert.assertTrue(name.startsWith("n"));
@@ -1948,8 +1948,8 @@ public class OMatchStatementExecutionNewTest {
     v2.addEdge(v3).save();
     v1.addEdge(v3).save();
 
-    String query =
-        "MATCH { cluster: " + clazz.toLowerCase() + "_one, as:a} --> {as:b, cluster:" + clazz.toLowerCase() + "_two} RETURN a.name as aname, b.name as bname";
+    String query = "MATCH { cluster: " + clazz.toLowerCase() + "_one, as:a} --> {as:b, cluster:" + clazz.toLowerCase()
+        + "_two} RETURN a.name as aname, b.name as bname";
 
     OResultSet result = db.query(query);
 
@@ -1958,6 +1958,102 @@ public class OMatchStatementExecutionNewTest {
     Assert.assertEquals("one", item.getProperty("aname"));
     Assert.assertEquals("two", item.getProperty("bname"));
 
+    Assert.assertFalse(result.hasNext());
+
+    result.close();
+  }
+
+  @Test
+  public void testNegativePattern() {
+    String clazz = "testNegativePattern";
+    db.command("CREATE CLASS " + clazz + " EXTENDS V").close();
+
+    OVertex v1 = db.newVertex(clazz);
+    v1.setProperty("name", "a");
+    v1.save();
+
+    OVertex v2 = db.newVertex(clazz);
+    v2.setProperty("name", "b");
+    v2.save();
+
+    OVertex v3 = db.newVertex(clazz);
+    v3.setProperty("name", "c");
+    v3.save();
+
+    v1.addEdge(v2).save();
+    v2.addEdge(v3).save();
+
+    String query = "MATCH { class:" + clazz + ", as:a} --> {as:b} --> {as:c}, ";
+    query += " NOT {as:a} --> {as:c}";
+    query += " RETURN $patterns";
+
+    OResultSet result = db.query(query);
+    Assert.assertTrue(result.hasNext());
+    result.next();
+    Assert.assertFalse(result.hasNext());
+
+    result.close();
+  }
+
+  @Test
+  public void testNegativePattern2() {
+    String clazz = "testNegativePattern2";
+    db.command("CREATE CLASS " + clazz + " EXTENDS V").close();
+
+    OVertex v1 = db.newVertex(clazz);
+    v1.setProperty("name", "a");
+    v1.save();
+
+    OVertex v2 = db.newVertex(clazz);
+    v2.setProperty("name", "b");
+    v2.save();
+
+    OVertex v3 = db.newVertex(clazz);
+    v3.setProperty("name", "c");
+    v3.save();
+
+    v1.addEdge(v2).save();
+    v2.addEdge(v3).save();
+    v1.addEdge(v3).save();
+
+    String query = "MATCH { class:" + clazz + ", as:a} --> {as:b} --> {as:c}, ";
+    query += " NOT {as:a} --> {as:c}";
+    query += " RETURN $patterns";
+
+    OResultSet result = db.query(query);
+    Assert.assertFalse(result.hasNext());
+
+    result.close();
+  }
+
+  @Test
+  public void testNegativePattern3() {
+    String clazz = "testNegativePattern3";
+    db.command("CREATE CLASS " + clazz + " EXTENDS V").close();
+
+    OVertex v1 = db.newVertex(clazz);
+    v1.setProperty("name", "a");
+    v1.save();
+
+    OVertex v2 = db.newVertex(clazz);
+    v2.setProperty("name", "b");
+    v2.save();
+
+    OVertex v3 = db.newVertex(clazz);
+    v3.setProperty("name", "c");
+    v3.save();
+
+    v1.addEdge(v2).save();
+    v2.addEdge(v3).save();
+    v1.addEdge(v3).save();
+
+    String query = "MATCH { class:" + clazz + ", as:a} --> {as:b} --> {as:c}, ";
+    query += " NOT {as:a} --> {as:c, where:(name <> 'c')}";
+    query += " RETURN $patterns";
+
+    OResultSet result = db.query(query);
+    Assert.assertTrue(result.hasNext());
+    result.next();
     Assert.assertFalse(result.hasNext());
 
     result.close();

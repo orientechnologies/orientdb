@@ -172,7 +172,7 @@ public enum OGlobalConfiguration {
    */
   STORAGE_KEEP_DISK_CACHE_STATE("storage.diskCache.keepState",
       "Keep disk cache state between moment when storage is closed and moment when it is opened again. true by default",
-      Boolean.class, true),
+      Boolean.class, false),
 
   STORAGE_CHECKSUM_MODE("storage.diskCache.checksumMode", "Controls the per-page checksum storage and verification done by "
       + "the file cache. Possible modes: 'off' – checksums are completely off; 'store' – checksums are calculated and stored "

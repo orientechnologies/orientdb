@@ -33,7 +33,6 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
   private AtomicBoolean lastNodeIsUp = new AtomicBoolean(true);
 
   @Test
-  @Ignore
   public void test() throws Exception {
     OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.setValue(100);
     try {

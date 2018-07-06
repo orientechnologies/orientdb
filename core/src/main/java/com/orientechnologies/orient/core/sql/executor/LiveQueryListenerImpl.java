@@ -28,16 +28,16 @@ import java.util.Random;
  */
 public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
 
-  public static final String BEFORE_METADATA_KEY = "$$before$$";
-  private final OLiveQueryResultListener clientListener;
-  private       ODatabaseDocument        execDb;
+  public static final String                   BEFORE_METADATA_KEY = "$$before$$";
+  private final       OLiveQueryResultListener clientListener;
+  private             ODatabaseDocument        execDb;
 
   private final OSelectStatement statement;
   private       String           className;
 
   private final Map<Object, Object> params;
 
-  private int token;
+  private              int    token;
   private static final Random random = new Random();
 
   public LiveQueryListenerImpl(OLiveQueryResultListener clientListener, String query, ODatabaseDocument db, Object[] iArgs) {

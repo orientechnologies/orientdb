@@ -392,8 +392,7 @@ public class OSuffixIdentifier extends SimpleNode {
 
   public void deserialize(OResult fromResult) {
     if (fromResult.getProperty("identifier") != null) {
-      identifier = new OIdentifier(-1);
-      identifier.deserialize(fromResult.getProperty("identifier"));
+      identifier = OIdentifier.deserialize(fromResult.getProperty("identifier"));
     }
     if (fromResult.getProperty("recordAttribute") != null) {
       recordAttribute = new ORecordAttribute(-1);

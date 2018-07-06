@@ -203,12 +203,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public Map<String, Object> getHaStatus(boolean servers, boolean db, boolean latency, boolean messages) {
     checkSecurity(ORule.ResourceGeneric.SERVER, "status", ORole.PERMISSION_READ);
 
-    final String dbUrl = getURL();
-
-    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
-    final OServer serverInstance = OServer.getInstanceByPath(path);
-
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) serverInstance.getDistributedManager();
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) getStorageDistributed().getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
@@ -234,12 +229,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public boolean removeHaServer(String serverName) {
     checkSecurity(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE);
 
-    final String dbUrl = getURL();
-
-    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
-    final OServer serverInstance = OServer.getInstanceByPath(path);
-
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) serverInstance.getDistributedManager();
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) getStorageDistributed().getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
@@ -255,18 +245,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public Map<String, Object> syncCluster(String clusterName) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, "sync", ORole.PERMISSION_UPDATE);
 
-    final String dbUrl = getURL();
-
-    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
-    final OServer serverInstance = OServer.getInstanceByPath(path);
-
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) serverInstance.getDistributedManager();
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) getStorageDistributed().getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
     final String databaseName = getName();
 
     final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
+    OServer serverInstance = getStorageDistributed().getServer();
     final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
 
     final String nodeName = dManager.getLocalNodeName();
@@ -511,6 +497,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
         ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(), dManager,
             getStorageDistributed().getLocalDistributedDatabase());
+        Set<String> otherNodesInQuorum = txManager
+            .getAvailableNodesButLocal(dbCfg, txManager.getInvolvedClusters(iTx.getRecordOperations()), getLocalNodeName());
+        List<String> online = dManager.getOnlineNodes(getName());
+        if (online.size() < ((otherNodesInQuorum.size() + 1) / 2) + 1) {
+          throw new ODistributedException("No enough nodes online to execute the operation, online nodes: " + online);
+        }
+
         ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(iTx);
 
         txManager.commit(this, iTx, getStorageDistributed().getEventListener());

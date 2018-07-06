@@ -15,19 +15,19 @@ import java.util.concurrent.CountDownLatch;
 
 public class ONewDistributedResponseManager implements ODistributedResponseManager {
 
-  private final    OTransactionPhase1Task iRequest;
-  private final    Collection<String>     iNodes;
-  private final    Set<String>            nodesConcurToTheQuorum;
-  private final    int                    availableNodes;
-  private final    int                    expectedResponses;
-  private final    int                    quorum;
-  private final    long                   timeout;
-  private volatile int                    responseCount;
+  private final    OTransactionPhase1Task                        iRequest;
+  private final    Collection<String>                            iNodes;
+  private final    Set<String>                                   nodesConcurToTheQuorum;
+  private final    int                                           availableNodes;
+  private final    int                                           expectedResponses;
+  private final    int                                           quorum;
+  private final    long                                          timeout;
+  private volatile int                                           responseCount;
   private final    List<String>                                  debugNodeReplied = new ArrayList<>();
   private volatile Map<Integer, List<OTransactionResultPayload>> resultsByType    = new HashMap<>();
   private volatile boolean                                       finished         = false;
   private volatile boolean                                       quorumReached    = false;
-  private volatile Object finalResult;
+  private volatile Object                                        finalResult;
 
   public ONewDistributedResponseManager(OTransactionPhase1Task iRequest, Collection<String> iNodes,
       Set<String> nodesConcurToTheQuorum, int availableNodes, int expectedResponses, int quorum) {
@@ -63,10 +63,21 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public synchronized boolean waitForSynchronousResponses() throws InterruptedException {
-    if (!quorumReached) {
-      wait(timeout);
+    boolean interrupted = false;
+    while (true) {
+      try {
+        if (!quorumReached) {
+          wait(timeout);
+        }
+        if (interrupted) {
+          Thread.currentThread().interrupt();
+        }
+        return quorumReached;
+      } catch (InterruptedException e) {
+        //Let the operation finish anyway
+        interrupted = true;
+      }
     }
-    return quorumReached;
   }
 
   @Override
@@ -209,7 +220,6 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   public synchronized boolean isFinished() {
     return finished;
   }
-
 
   @Override
   public void timeout() {

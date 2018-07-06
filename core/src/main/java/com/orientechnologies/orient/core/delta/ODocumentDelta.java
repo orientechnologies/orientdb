@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.delta;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,7 +26,7 @@ import java.util.Map;
  */
 public class ODocumentDelta {
   
-  private Map<String, Object> fields = new HashMap<>();
+  public Map<String, Object> fields = new HashMap<>();
   
   public Object field(String name){
     return fields.get(name);
@@ -32,6 +34,14 @@ public class ODocumentDelta {
   
   public void field(String name, Object value){
     fields.put(name, value);
+  }
+  
+  public ORID getIdentity(){
+    throw new UnsupportedOperationException();
+  }
+  
+  public byte[] serialize(){
+    throw new UnsupportedOperationException();
   }
   
 }

@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -39,10 +40,10 @@ import java.util.Map;
 public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public static final int FACTORYID = 43;
 
-  private volatile boolean                       hasResponse;
-  private          OLogSequenceNumber            lastLSN;
-  private          List<ORecordOperation>        ops;
-  private          List<ORecordOperationRequest> operations;
+  private volatile  boolean                                         hasResponse;
+  private           OLogSequenceNumber                              lastLSN;
+  private           List<ORecordOperation>                          ops;
+  private           List<ORecordOperationRequest>                   operations;
   private           OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   private transient int                                             retryCount = 0;
 
@@ -102,8 +103,14 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
     convert(database);
-    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
-    OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
+    OTransactionResultPayload res1 = null;
+    try {
+      OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
+
+      res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
+    } catch (ORecordNotFoundException e) {
+      //Do nothing this will cause the transaction to re-enque and wait for the next operation that will insert the missing data.
+    }
     if (res1 == null) {
       retryCount++;
       ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()

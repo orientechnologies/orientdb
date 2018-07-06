@@ -33,6 +33,7 @@ import com.orientechnologies.orient.client.remote.message.ODistributedConnectReq
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectResponse;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -66,7 +67,6 @@ public class ORemoteServerChannel {
   private static final boolean               COLLECT_STATS = false;
   private              int                   sessionId     = -1;
   private              byte[]                sessionToken;
-  private              OToken                token;
   private              OContextConfiguration contextConfig = new OContextConfiguration();
   private              Date                  createdOn     = new Date();
 
@@ -88,23 +88,6 @@ public class ORemoteServerChannel {
     protocolVersion = currentProtocolVersion;
 
     connect();
-
-  }
-
-  private synchronized void checkReconnect() {
-    long now = System.currentTimeMillis();
-    // if is after 5 sec from expire re-negotiate session
-    if (token.getExpiry() - 5000 < now) {
-      try {
-        connect();
-      } catch (IOException e) {
-        handleNewError();
-
-        ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-            "Error on reconnecting to distributed node (%s)", e.toString());
-        throw OException.wrapException(new ODistributedException("Error reconnecting to remote node"), e);
-      }
-    }
   }
 
   public int getDistributedProtocolVersion() {
@@ -116,7 +99,6 @@ public class ORemoteServerChannel {
   }
 
   public void sendRequest(final ODistributedRequest request) {
-    checkReconnect();
     networkOperation(OChannelBinaryProtocol.DISTRIBUTED_REQUEST, () -> {
       request.toStream(channel.getDataOutput());
       channel.flush();
@@ -127,7 +109,6 @@ public class ORemoteServerChannel {
   }
 
   public void sendResponse(final ODistributedResponse response) {
-    checkReconnect();
     networkOperation(OChannelBinaryProtocol.DISTRIBUTED_RESPONSE, () -> {
           response.toStream(channel.getDataOutput());
           channel.flush();
@@ -158,7 +139,6 @@ public class ORemoteServerChannel {
 
       return null;
     }, "Cannot connect to the remote server '" + url + "'", MAX_RETRY, false);
-    token = manager.getServerInstance().getTokenHandler().parseNotVerifyBinaryToken(sessionToken);
   }
 
   public void close() {

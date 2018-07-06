@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -436,8 +437,8 @@ public class ODocumentTest {
 
       doc.field(fieldName, testValue);
       doc.removeField(removeField);
-      ODocument dc = doc.getDeltaFromOriginal();
-      ODocument updatePart = dc.field("u");              
+      ODocumentDelta dc = doc.getDeltaFromOriginal();
+      ODocumentDelta updatePart = (ODocumentDelta)dc.field("u");              
             
       originalDoc.mergeUpdateDelta(updatePart);
       assertEquals(testValue, originalDoc.field(fieldName));
@@ -484,21 +485,8 @@ public class ODocumentTest {
 
       doc.field(nestedDocField, nestedDoc);
 
-      ODocument dc = doc.getDeltaFromOriginal();
-      dc = dc.field("u");
-//      assertFalse(dc._fields.containsKey(constantFieldName));
-//      assertTrue(dc._fields.containsKey(nestedDocField));        
-//
-//      ODocument nestedDc = dc.field(nestedDocField);
-//      nestedDc = nestedDc.field("v");
-//      assertFalse(nestedDc._fields.containsKey(constantFieldName));
-//      assertTrue(nestedDc._fields.containsKey(fieldName));
-//      nestedDc = nestedDc.field(fieldName);
-//      assertEquals(nestedDc.field("v"), testValue);
-      
-//      nestedDoc.field(fieldName, originalValue);
-//      doc.field(nestedDocField, nestedDoc);
-//      doc = db.save(doc);
+      ODocumentDelta dc = doc.getDeltaFromOriginal();
+      dc = (ODocumentDelta)dc.field("u");
       
       doc.mergeUpdateDelta(dc);
       nestedDoc = doc.field(nestedDocField);
@@ -539,23 +527,8 @@ public class ODocumentTest {
       newArray.add("one"); newArray.add("three");
       doc.field(fieldName, newArray);
 
-      ODocument delta = doc.getDeltaFromOriginal();
-      delta = delta.field("u");
-      
-//      ODocument dc = delta.field(fieldName);
-//      UpdateDeltaValueType deltaType = UpdateDeltaValueType.fromOrd(dc.field("t"));
-//      assertEquals(deltaType, UpdateDeltaValueType.LIST_UPDATE);
-//      
-//      List deltaList = dc.field("v");
-//      assertEquals(deltaList.size(), 1);
-//      
-//      ODocument deltaElement = (ODocument)deltaList.get(0);
-//      int index = deltaElement.field("i");
-//      assertEquals(index, 1);
-//      UpdateDeltaValueType type = UpdateDeltaValueType.fromOrd(deltaElement.field("t"));
-//      assertEquals(type, UpdateDeltaValueType.LIST_ELEMENT_CHANGE);
-//      String value = deltaElement.field("v");
-//      assertEquals(value, "three");
+      ODocumentDelta delta = doc.getDeltaFromOriginal();
+      delta = (ODocumentDelta)delta.field("u");
       
       originalDoc.mergeUpdateDelta(delta);
       List checkList = originalDoc.field(fieldName);
@@ -601,9 +574,8 @@ public class ODocumentTest {
       originalValue.set(0, newArray);
       doc.field(fieldName, originalValue);
 
-      ODocument delta = doc.getDeltaFromOriginal();
-      delta = delta.field("u");
-      
+      ODocumentDelta delta = doc.getDeltaFromOriginal();
+      delta = (ODocumentDelta)delta.field("u");      
       
       originalDoc.mergeUpdateDelta(delta);
       List<List> checkList = originalDoc.field(fieldName);
@@ -656,8 +628,8 @@ public class ODocumentTest {
       testDoc.field(variableField, "two");      
       originalValue.set(1, testDoc);
       doc.field(fieldName, originalValue);
-      ODocument delta = doc.getDeltaFromOriginal();
-      delta = delta.field("u");
+      ODocumentDelta delta = doc.getDeltaFromOriginal();
+      delta = (ODocumentDelta)delta.field("u");
       
       originalDoc.mergeUpdateDelta(delta);
       List<ODocument> checkList = originalDoc.field(fieldName);
@@ -713,8 +685,8 @@ public class ODocumentTest {
       originalValue.set(0, newArray);
       doc.field(fieldName, originalValue);
 
-      ODocument delta = doc.getDeltaFromOriginal();
-      delta = delta.field("u");
+      ODocumentDelta delta = doc.getDeltaFromOriginal();
+      delta = (ODocumentDelta)delta.field("u");
       
       
       originalDoc.mergeUpdateDelta(delta);
@@ -772,8 +744,8 @@ public class ODocumentTest {
       newFirstLevelList.add(firstLevelList.get(1));
       doc.field(fieldName, newFirstLevelList);
 
-      ODocument delta = doc.getDeltaFromOriginal();
-      delta = delta.field("u");
+      ODocumentDelta delta = doc.getDeltaFromOriginal();
+      delta = (ODocumentDelta)delta.field("u");
       
       
       originalDoc.mergeUpdateDelta(delta);
@@ -835,8 +807,8 @@ public class ODocumentTest {
       testDoc.field(variableField, newList);      
       originalValue.set(1, testDoc);
       doc.field(fieldName, originalValue);
-      ODocument delta = doc.getDeltaFromOriginal();
-      delta = delta.field("u");
+      ODocumentDelta delta = doc.getDeltaFromOriginal();
+      delta = (ODocumentDelta)delta.field("u");
       
       originalDoc.mergeUpdateDelta(delta);
       List<ODocument> checkList = originalDoc.field(fieldName);
@@ -879,8 +851,8 @@ public class ODocumentTest {
       newArray.add("one"); newArray.add("two"); newArray.add("three");
       doc.field(fieldName, newArray);
 
-      ODocument delta = doc.getDeltaFromOriginal();
-      delta = delta.field("u");      
+      ODocumentDelta delta = doc.getDeltaFromOriginal();
+      delta = (ODocumentDelta)delta.field("u");      
       
       originalDoc.mergeUpdateDelta(delta);
       List checkList = originalDoc.field(fieldName);
@@ -927,8 +899,8 @@ public class ODocumentTest {
       originalList.set(0, newArray);
       doc.field(fieldName, originalList);
 
-      ODocument delta = doc.getDeltaFromOriginal();
-      delta = delta.field("u");      
+      ODocumentDelta delta = doc.getDeltaFromOriginal();
+      delta = (ODocumentDelta)delta.field("u");      
       
       originalDoc.mergeUpdateDelta(delta);
       List<List<String>> rootList = originalDoc.field(fieldName);
@@ -970,8 +942,8 @@ public class ODocumentTest {
       newArray.add("one");
       doc.field(fieldName, newArray);
 
-      ODocument delta = doc.getDeltaFromOriginal();
-      delta = delta.field("u");      
+      ODocumentDelta delta = doc.getDeltaFromOriginal();
+      delta = (ODocumentDelta)delta.field("u");      
       
       originalDoc.mergeUpdateDelta(delta);
       List checkList = originalDoc.field(fieldName);
@@ -1010,9 +982,9 @@ public class ODocumentTest {
       ODocument originaDoc = doc.copy();
       
       doc.field(fieldName, testValue);      
-      ODocument dc = doc.getDeltaFromOriginal();
+      ODocumentDelta dc = doc.getDeltaFromOriginal();
 
-      ODocument updatePart = dc.field("u");      
+      ODocumentDelta updatePart = (ODocumentDelta)dc.field("u");      
             
       originaDoc.mergeUpdateDelta(updatePart);
       assertEquals(testValue, originaDoc.field(fieldName));
@@ -1050,9 +1022,9 @@ public class ODocumentTest {
       ODocument originaDoc = doc.copy();
       
       doc.removeField(fieldName);
-      ODocument dc = doc.getDeltaFromOriginal();
+      ODocumentDelta dc = doc.getDeltaFromOriginal();
 
-      ODocument deletePart = dc.field("d");
+      ODocumentDelta deletePart = (ODocumentDelta)dc.field("d");
             
       originaDoc.mergeDeleteDelta(deletePart);
       assertFalse(originaDoc.containsField(fieldName));
@@ -1099,9 +1071,9 @@ public class ODocumentTest {
       doc = doc.copy();
       doc.removeField(fieldName);
       rootDoc.field(nestedFieldName, doc);
-      ODocument dc = rootDoc.getDeltaFromOriginal();
+      ODocumentDelta dc = rootDoc.getDeltaFromOriginal();
 
-      ODocument deletePart = dc.field("d");
+      ODocumentDelta deletePart = (ODocumentDelta)dc.field("d");
             
       originaDoc.mergeDeleteDelta(deletePart);
       ODocument nested = originaDoc.field(nestedFieldName);
@@ -1152,8 +1124,8 @@ public class ODocumentTest {
       testDoc.removeField(variableField);
       originalValue.set(1, testDoc);
       doc.field(fieldName, originalValue);
-      ODocument delta = doc.getDeltaFromOriginal();
-      delta = delta.field("u");
+      ODocumentDelta delta = doc.getDeltaFromOriginal();
+      delta = (ODocumentDelta)delta.field("u");
       
       originalDoc.mergeUpdateDelta(delta);
       List<ODocument> checkList = originalDoc.field(fieldName);

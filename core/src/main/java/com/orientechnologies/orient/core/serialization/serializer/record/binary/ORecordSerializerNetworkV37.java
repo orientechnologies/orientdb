@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -872,8 +873,8 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
         serialize(doc, container, false);
       }
       else{
-        ODocument deltaDoc = doc.getDeltaFromOriginal();
-        serialize(deltaDoc, container, false);
+        ODocumentDelta deltaDoc = doc.getDeltaFromOriginal();
+        return deltaDoc.serialize();
       }
 
       return container.fitBytes();

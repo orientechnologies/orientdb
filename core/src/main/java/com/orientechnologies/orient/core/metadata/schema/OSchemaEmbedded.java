@@ -56,11 +56,10 @@ public class OSchemaEmbedded extends OSchemaShared {
       throw new OSchemaException(
           "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '" + className + "'");
 
-    return doCreateClass(database, className, clusters, 1, superClasses);
+    return doCreateClass(database, className, clusters, superClasses);
   }
 
-  private OClass doCreateClass(ODatabaseDocumentInternal database, final String className, final int clusters, final int retry,
-      OClass... superClasses) {
+  private OClass doCreateClass(ODatabaseDocumentInternal database, final String className, final int clusters, OClass... superClasses) {
     OClass result;
 
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
@@ -70,7 +69,7 @@ public class OSchemaEmbedded extends OSchemaShared {
     try {
 
       final String key = className.toLowerCase(Locale.ENGLISH);
-      if (classes.containsKey(key) && retry == 0)
+      if (classes.containsKey(key))
         throw new OSchemaException("Class '" + className + "' already exists in current database");
 
       if (executeThroughDistributedStorage(database)) {

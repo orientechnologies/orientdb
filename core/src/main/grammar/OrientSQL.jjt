@@ -675,6 +675,8 @@ List<OStatement> parseScript() :
         |
         last = ForEachBlock() {result.add(last);}
         |
+        last = WhileBlock() {result.add(last);}
+        |
         <SEMICOLON>
     )*
 
@@ -1280,7 +1282,13 @@ OMatchStatement MatchStatement():
         lastMatchExpr = MatchExpression() { jjtThis.matchExpressions.add(lastMatchExpr); }
         (
             <COMMA>
-            lastMatchExpr = MatchExpression() { jjtThis.matchExpressions.add(lastMatchExpr); }
+            (
+               lastMatchExpr = MatchExpression() { jjtThis.matchExpressions.add(lastMatchExpr); }
+               |
+               (
+                  <NOT> lastMatchExpr = MatchExpression() { jjtThis.notMatchExpressions.add(lastMatchExpr); }
+               )
+            )
         )*
         <RETURN>
         (
@@ -4855,6 +4863,10 @@ OIfStatement IfStatement():
             |
             last = IfStatement() { jjtThis.statements.add(last); }
             |
+            last = WhileBlock() {jjtThis.statements.add(last); }
+            |
+            last = ForEachBlock() {jjtThis.statements.add(last); }
+            |
             <SEMICOLON>
         )*
         <RBRACE>
@@ -5030,6 +5042,34 @@ OForEachBlock ForEachBlock():
         lastStatement = IfStatement() {jjtThis.statements.add(lastStatement); }
         |
         lastStatement = ForEachBlock() {jjtThis.statements.add(lastStatement); }
+        |
+        lastStatement = WhileBlock() {jjtThis.statements.add(lastStatement); }
+        |
+        <SEMICOLON>
+    )*
+    <RBRACE>
+    { return jjtThis; }
+}
+
+
+OWhileBlock WhileBlock():
+{
+    OStatement lastStatement;
+}
+{
+    <WHILE> <LPAREN>
+    jjtThis.condition = OrBlock()
+    <RPAREN>
+    <LBRACE>
+    (
+        LOOKAHEAD(StatementSemicolon())
+        lastStatement = StatementSemicolon() {jjtThis.statements.add(lastStatement); }
+        |
+        lastStatement = IfStatement() {jjtThis.statements.add(lastStatement); }
+        |
+        lastStatement = ForEachBlock() {jjtThis.statements.add(lastStatement); }
+        |
+        lastStatement = WhileBlock() {jjtThis.statements.add(lastStatement); }
         |
         <SEMICOLON>
     )*

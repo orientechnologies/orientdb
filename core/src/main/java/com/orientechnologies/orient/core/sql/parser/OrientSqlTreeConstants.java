@@ -192,6 +192,7 @@ public interface OrientSqlTreeConstants
   public int JJTHASYNCDATABASESTATEMENT = 186;
   public int JJTHASYNCCLUSTERSTATEMENT = 187;
   public int JJTFOREACHBLOCK = 188;
+  public int JJTWHILEBLOCK = 189;
 
 
   public String[] jjtNodeName = {
@@ -384,6 +385,7 @@ public interface OrientSqlTreeConstants
     "HaSyncDatabaseStatement",
     "HaSyncClusterStatement",
     "ForEachBlock",
+    "WhileBlock",
   };
 }
-/* JavaCC - OriginalChecksum=5f5dbd050e29aa0475fb353c52f97418 (do not edit this line) */
+/* JavaCC - OriginalChecksum=3b35273c66d896d3eca161fa6b1dadf2 (do not edit this line) */

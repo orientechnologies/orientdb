@@ -30,8 +30,8 @@ public class SimpleLiveQueryDistributedIT {
     server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
     server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
     OrientDB remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
-    remote.create("test", ODatabaseType.PLOCAL);
-    ODatabaseSession session = remote.open("test", "admin", "admin");
+    remote.create(SimpleLiveQueryDistributedIT.class.getSimpleName(), ODatabaseType.PLOCAL);
+    ODatabaseSession session = remote.open(SimpleLiveQueryDistributedIT.class.getSimpleName(), "admin", "admin");
     session.createClass("test");
     session.close();
     remote.close();
@@ -40,13 +40,13 @@ public class SimpleLiveQueryDistributedIT {
   @Test
   public void testLiveQueryDifferentNode() throws InterruptedException {
     OrientDB remote1 = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
-    ODatabaseSession session = remote1.open("test", "admin", "admin");
+    ODatabaseSession session = remote1.open(SimpleLiveQueryDistributedIT.class.getSimpleName(), "admin", "admin");
 
     EventListener listener = new EventListener();
     OLiveQueryMonitor monitor = session.live("select from test", listener);
 
     OrientDB remote2 = new OrientDB("remote:localhost:2425", "root", "test", OrientDBConfig.defaultConfig());
-    ODatabaseSession session2 = remote1.open("test", "admin", "admin");
+    ODatabaseSession session2 = remote1.open(SimpleLiveQueryDistributedIT.class.getSimpleName(), "admin", "admin");
     OElement el = session2.save(session2.newElement("test"));
     el.setProperty("name", "name");
     session2.save(el);
@@ -68,7 +68,7 @@ public class SimpleLiveQueryDistributedIT {
   @After
   public void after() throws InterruptedException {
     OrientDB remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
-    remote.drop("test");
+    remote.drop(SimpleLiveQueryDistributedIT.class.getSimpleName());
     remote.close();
 
     server0.shutdown();

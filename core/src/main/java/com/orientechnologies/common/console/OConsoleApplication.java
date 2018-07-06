@@ -121,7 +121,7 @@ public class OConsoleApplication {
           if (consoleInput == null || consoleInput.length() == 0)
             continue;
 
-          if (!executeCommands(new ODFACommandStream(consoleInput), false))
+          if (!executeCommands(new OConsoleCommandStream(consoleInput), false))
             break;
         } catch (Exception e) {
           result = 1;
@@ -203,9 +203,9 @@ public class OConsoleApplication {
 
     OCommandStream scanner;
     try {
-      scanner = new ODFACommandStream(commandFile);
+      scanner = new OConsoleCommandStream(commandFile);
     } catch (FileNotFoundException ignore) {
-      scanner = new ODFACommandStream(commandLine);
+      scanner = new OConsoleCommandStream(commandLine);
     }
 
     return executeCommands(scanner, true);
@@ -304,8 +304,12 @@ public class OConsoleApplication {
       return RESULT.OK;
 
     String[] commandWords;
-    if (iCommand.toLowerCase().startsWith("load script")){
+    if (iCommand.toLowerCase().startsWith("load script") ||
+        iCommand.toLowerCase().startsWith("create database") ||
+        iCommand.toLowerCase().startsWith("drop database")||
+        iCommand.toLowerCase().startsWith("connect")){
       commandWords = iCommand.split(" ");
+      commandWords = Arrays.stream(commandWords).filter(s->s.length()>0).toArray(String[]::new);
       for (int i = 2; i < commandWords.length; i++){
         boolean wrappedInQuotes = false;
         if (commandWords[i].startsWith("'") && commandWords[i].endsWith("'")){
@@ -314,7 +318,7 @@ public class OConsoleApplication {
         else if (commandWords[i].startsWith("\"") && commandWords[i].endsWith("\"")){
           wrappedInQuotes = true;
         }
-        
+
         if (wrappedInQuotes){
           commandWords[i] = commandWords[i].substring(1, commandWords[i].length() - 1);
         }

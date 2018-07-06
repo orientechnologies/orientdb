@@ -115,8 +115,7 @@ public class OJsonItem {
 
   public void deserialize(OResult fromResult) {
     if (fromResult.getProperty("leftIdentifier") != null) {
-      leftIdentifier = new OIdentifier(-1);
-      leftIdentifier.deserialize(fromResult.getProperty("leftIdentifier"));
+      leftIdentifier = OIdentifier.deserialize(fromResult.getProperty("leftIdentifier"));
     }
     if (fromResult.getProperty("leftString") != null) {
       leftString = fromResult.getProperty("leftString");

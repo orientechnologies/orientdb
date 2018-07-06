@@ -49,6 +49,10 @@ public class OURLHelper {
   }
 
   static public OURLConnection parseNew(String url) {
+    if ((url.startsWith("'") && url.endsWith("'")) || (url.startsWith("\"") && url.endsWith("\""))) {
+      url = url.substring(1, url.length() - 1);
+    }
+
     if (url.endsWith("/"))
       url = url.substring(0, url.length() - 1);
     url = url.replace('\\', '/');

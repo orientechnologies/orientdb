@@ -88,7 +88,7 @@ public class OCreatePropertyAttributeStatement extends SimpleNode {
       } else if (attrName.equalsIgnoreCase("collate")) {
         internalProp.setCollate("" + attrValue);
       } else if (attrName.equalsIgnoreCase("regexp")) {
-        internalProp.setRegexp("" + attrName);
+        internalProp.setRegexp("" + attrValue);
       } else {
         throw new OCommandExecutionException("Invalid attribute definition: '" + attrName + "'");
       }

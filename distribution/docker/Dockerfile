@@ -12,10 +12,7 @@ RUN mkdir /orientdb
 COPY orientdb-community-*.tar.gz /orientdb-community.tar.gz
 
 RUN tar -xvzf orientdb-community.tar.gz -C /orientdb --strip-components=1\
-      && rm orientdb-community.tar.gz \
-      && rm -rf /orientdb/databases/*
-
-RUN rm -rf /orientdb/databases/*
+      && rm orientdb-community.tar.gz
 
 ENV PATH /orientdb/bin:$PATH
 
