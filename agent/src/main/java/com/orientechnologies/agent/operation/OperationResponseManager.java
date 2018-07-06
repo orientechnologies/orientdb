@@ -1,16 +1,14 @@
 package com.orientechnologies.agent.operation;
 
-import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.server.distributed.operation.NodeOperationResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
+import com.orientechnologies.orient.server.distributed.operation.NodeOperationResponse;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperationTaskResponse;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -77,30 +75,14 @@ public class OperationResponseManager implements ODistributedResponseManager {
     return responses.stream().map((a) -> a.getSenderNodeName()).collect(Collectors.toList());
   }
 
-  @Override
-  public Collection<String> getConflictServers() {
-    throw new UnsupportedOperationException();
-  }
+
 
   @Override
   public Set<String> getServersWithoutFollowup() {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public boolean addFollowupToServer(String node) {
-    throw new UnsupportedOperationException();
-  }
 
-  @Override
-  public boolean isSynchronousWaiting() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public ODistributedResponse getQuorumResponse() {
-    throw new UnsupportedOperationException();
-  }
 
   @Override
   public ODistributedRequestId getMessageId() {
@@ -112,20 +94,14 @@ public class OperationResponseManager implements ODistributedResponseManager {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public Object getResponseFromServer(String server) {
-    throw new UnsupportedOperationException();
-  }
+
 
   @Override
   public int getQuorum() {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public boolean executeInLock(OCallable<Boolean, ODistributedResponseManager> oCallable) {
-    throw new UnsupportedOperationException();
-  }
+  
 
   @Override
   public synchronized boolean collectResponse(ODistributedResponse response) {
