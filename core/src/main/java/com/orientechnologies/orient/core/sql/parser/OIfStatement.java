@@ -84,6 +84,9 @@ public class OIfStatement extends OStatement {
     OIfExecutionPlan executionPlan = createExecutionPlan(ctx, false);
 
     OExecutionStepInternal last = executionPlan.executeUntilReturn();
+    if (last == null) {
+      last = new EmptyStep(ctx, false);
+    }
     if (isIdempotent()) {
       OSelectExecutionPlan finalPlan = new OSelectExecutionPlan(ctx);
       finalPlan.chain(last);
