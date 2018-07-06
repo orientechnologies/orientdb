@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * Test class that creates and executes distributed operations against a cluster of servers created in the same JVM.
@@ -151,6 +152,12 @@ public abstract class AbstractEnterpriseServerClusterTest {
       banner("Shutting down nodes...");
       for (ServerRun server : serverInstance) {
         log("Shutting down node " + server.getServerId() + "...");
+
+        try {
+          deleteBackupConfig(getAgent(server.getNodeName()));
+        } catch (Exception e) {
+          log("Error removing backups: " + e.getMessage());
+        }
         if (terminateAtShutdown)
           server.terminateServer();
         else
@@ -426,6 +433,13 @@ public abstract class AbstractEnterpriseServerClusterTest {
         // IGNORE IT
       }
     }
+  }
+
+  protected void deleteBackupConfig(OEnterpriseAgent agent) {
+    ODocument configuration = agent.getBackupManager().getConfiguration();
+
+    configuration.<List<ODocument>>field("backups").stream().map(cfg -> cfg.<String>field("uuid")).collect(Collectors.toList())
+        .forEach((b) -> agent.getBackupManager().removeAndStopBackup(b));
   }
 
   protected String getDatabaseURL(ServerRun server) {

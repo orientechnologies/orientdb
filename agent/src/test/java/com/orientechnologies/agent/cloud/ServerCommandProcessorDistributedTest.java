@@ -13,7 +13,7 @@ import org.junit.Test;
  */
 public class ServerCommandProcessorDistributedTest extends AbstractEnterpriseServerClusterTest {
 
-  private final String DB_NAME = "backupDB";
+  private final String DB_NAME = "ServerCommandProcessorDistributedTest";
 
   @Test
   public void testListConnectionsCommand() throws Exception {

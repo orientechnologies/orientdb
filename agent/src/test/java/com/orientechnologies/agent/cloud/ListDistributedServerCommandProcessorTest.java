@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class ListDistributedServerCommandProcessorTest extends AbstractServerClusterTest {
 
-  private final String DB_NAME = "backupDB";
+  private final String DB_NAME = "ListDistributedServerCommandProcessorTest";
 
   private OEnterpriseAgent agent;
 

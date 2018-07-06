@@ -17,11 +17,9 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,17 +28,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseServerClusterTest {
 
-  private final String DB_NAME     = "backupDB";
+  private final String DB_NAME     = "BackupCommandProcessorDistributedTest";
   private final String NEW_DB_NAME = "newDB";
   private final String BACKUP_PATH =
       System.getProperty("buildDirectory", "target") + File.separator + "databases" + File.separator + DB_NAME;
 
-  private void deleteBackupConfig(OEnterpriseAgent agent) {
-    ODocument configuration = agent.getBackupManager().getConfiguration();
 
-    configuration.<List<ODocument>>field("backups").stream().map(cfg -> cfg.<String>field("uuid")).collect(Collectors.toList())
-        .forEach((b) -> agent.getBackupManager().removeAndStopBackup(b));
-  }
 
   @Test
   public void testBackupCommandProcessorEmptyBackups() throws Exception {

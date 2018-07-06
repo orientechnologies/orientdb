@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Assert;
-import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,7 +29,7 @@ public class StorageBackupMTTest {
   private OrientDB orientDB;
   private String   dbName;
 
-  @Test
+//  @Test
   public void testParallelBackup() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory", ".");
     dbName = StorageBackupMTTest.class.getSimpleName();

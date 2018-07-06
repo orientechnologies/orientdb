@@ -24,7 +24,7 @@ public class ListServerCommandProcessorTest {
 
   private OServer server;
 
-  private final String DB_NAME = "backupDB";
+  private final String DB_NAME = "ListServerCommandProcessorTest";
 
   private OEnterpriseAgent agent;
 

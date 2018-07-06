@@ -51,7 +51,7 @@ public class OBackupManagerTest {
 
   private OServer server;
 
-  private final String DB_NAME     = "backupDB";
+  private final String DB_NAME     = "backupDBTest";
   private final String BACKUP_PATH =
       System.getProperty("buildDirectory", "target") + File.separator + "databases" + File.separator + DB_NAME;
   private OBackupManager manager;
