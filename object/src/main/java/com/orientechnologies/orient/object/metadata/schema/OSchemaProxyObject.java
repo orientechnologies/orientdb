@@ -16,17 +16,10 @@
  */
 package com.orientechnologies.orient.object.metadata.schema;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
-import javassist.util.proxy.Proxy;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.entity.OEntityManager;
@@ -39,6 +32,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+import javassist.util.proxy.Proxy;
+
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
@@ -59,6 +59,11 @@ public class OSchemaProxyObject implements OSchemaObject {
   @Override
   public int countClasses() {
     return underlying.countClasses();
+  }
+
+  @Override
+  public int countViews() {
+    return underlying.countViews();
   }
 
   @Override
@@ -129,6 +134,17 @@ public class OSchemaProxyObject implements OSchemaObject {
   }
 
   @Override
+  public boolean existsView(String name) {
+    return underlying.existsView(name);
+  }
+
+  @Override
+  public void dropView(String name) {
+    underlying.dropView(name);
+  }
+
+
+  @Override
   public OClass getClass(Class<?> iClass) {
     return underlying.getClass(iClass);
   }
@@ -161,6 +177,15 @@ public class OSchemaProxyObject implements OSchemaObject {
   @Override
   public Collection<OClass> getClasses() {
     return underlying.getClasses();
+  }
+
+  @Override
+  public OView getView(String name) {
+    return underlying.getView(name);
+  }
+
+  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable) {
+    return underlying.createView(database, viewName, statement, updatable);
   }
 
   @Override

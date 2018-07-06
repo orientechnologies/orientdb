@@ -68,6 +68,9 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   protected final Map<String, OClass>  classes           = new HashMap<String, OClass>();
   protected final Map<Integer, OClass> clustersToClasses = new HashMap<Integer, OClass>();
 
+  protected final Map<String, OView> views           = new HashMap<String, OView>();
+  protected final Map<Integer, OView> clustersToViews = new HashMap<Integer, OView>();
+
   private final OClusterSelectionFactory clusterSelectionFactory = new OClusterSelectionFactory();
 
   private final    OModifiableInteger           modificationCounter  = new OModifiableInteger();
@@ -180,11 +183,26 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     }
   }
 
+  public int countViews(ODatabaseDocumentInternal database) {
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
+
+    acquireSchemaReadLock();
+    try {
+      return views.size();
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
   /**
    * Callback invoked when the schema is loaded, after all the initializations.
    */
   public void onPostIndexManagement() {
     for (OClass c : classes.values()) {
+      if (c instanceof OClassImpl)
+        ((OClassImpl) c).onPostIndexManagement();
+    }
+    for (OClass c : views.values()) {
       if (c instanceof OClassImpl)
         ((OClassImpl) c).onPostIndexManagement();
     }
@@ -235,6 +253,9 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   public abstract OClass createClass(ODatabaseDocumentInternal database, final String className, int clusters,
       OClass... superClasses);
 
+  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement,
+      boolean updatable);
+
   public abstract void checkEmbedded();
 
   void checkClusterCanBeAdded(int clusterId, OClass cls) {
@@ -252,6 +273,12 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
         throw new OSchemaException(
             "Cluster with id " + clusterId + " already belongs to the class '" + clustersToClasses.get(clusterId) + "'");
 
+      final OView existingView = clustersToViews.get(clusterId);
+
+      if (existingView != null && (cls == null || !cls.equals(existingCls)))
+        throw new OSchemaException(
+            "Cluster with id " + clusterId + " already belongs to the view '" + clustersToClasses.get(clusterId) + "'");
+
     } finally {
       releaseSchemaReadLock();
     }
@@ -266,12 +293,23 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     }
   }
 
+  public OView getViewyClusterId(int clusterId) {
+    acquireSchemaReadLock();
+    try {
+      return clustersToViews.get(clusterId);
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
   /*
    * (non-Javadoc)
    *
    * @see com.orientechnologies.orient.core.metadata.schema.OSchema#dropClass(java.lang.String)
    */
   public abstract void dropClass(ODatabaseDocumentInternal database, final String className);
+
+  public abstract void dropView(ODatabaseDocumentInternal database, final String viewName);
 
   /**
    * Reloads the schema inside a storage's shared lock.
@@ -295,6 +333,18 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     acquireSchemaReadLock();
     try {
       return classes.containsKey(iClassName.toLowerCase(Locale.ENGLISH));
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
+  public boolean existsView(final String viewName) {
+    if (viewName == null)
+      return false;
+
+    acquireSchemaReadLock();
+    try {
+      return views.containsKey(viewName.toLowerCase(Locale.ENGLISH));
     } finally {
       releaseSchemaReadLock();
     }
@@ -324,6 +374,18 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     acquireSchemaReadLock();
     try {
       return classes.get(iClassName.toLowerCase(Locale.ENGLISH));
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
+  public OView getView(final String viewName) {
+    if (viewName == null)
+      return null;
+
+    acquireSchemaReadLock();
+    try {
+      return views.get(viewName.toLowerCase(Locale.ENGLISH));
     } finally {
       releaseSchemaReadLock();
     }
@@ -385,13 +447,37 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     try {
       checkEmbedded();
 
-      if (newName != null && classes.containsKey(newName.toLowerCase(Locale.ENGLISH)))
+      if (newName != null && (classes.containsKey(newName.toLowerCase(Locale.ENGLISH)) || views
+          .containsKey(newName.toLowerCase(Locale.ENGLISH))))
         throw new IllegalArgumentException("Class '" + newName + "' is already present in schema");
 
       if (oldName != null)
         classes.remove(oldName.toLowerCase(Locale.ENGLISH));
       if (newName != null)
         classes.put(newName.toLowerCase(Locale.ENGLISH), cls);
+
+    } finally {
+      releaseSchemaWriteLock(database);
+    }
+  }
+
+  void changeViewName(ODatabaseDocumentInternal database, final String oldName, final String newName, final OView view) {
+
+    if (oldName != null && oldName.equalsIgnoreCase(newName))
+      throw new IllegalArgumentException("View '" + oldName + "' cannot be renamed with the same name");
+
+    acquireSchemaWriteLock(database);
+    try {
+      checkEmbedded();
+
+      if (newName != null && (classes.containsKey(newName.toLowerCase(Locale.ENGLISH)) || views
+          .containsKey(newName.toLowerCase(Locale.ENGLISH))))
+        throw new IllegalArgumentException("View '" + newName + "' is already present in schema");
+
+      if (oldName != null)
+        views.remove(oldName.toLowerCase(Locale.ENGLISH));
+      if (newName != null)
+        views.put(newName.toLowerCase(Locale.ENGLISH), view);
 
     } finally {
       releaseSchemaWriteLock(database);
@@ -436,32 +522,55 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       }
       // REGISTER ALL THE CLASSES
       clustersToClasses.clear();
+      clustersToViews.clear();
 
       final Map<String, OClass> newClasses = new HashMap<String, OClass>();
+      final Map<String, OView> newViews = new HashMap<String, OView>();
 
-      OClassImpl cls;
       Collection<ODocument> storedClasses = document.field("classes");
       for (ODocument c : storedClasses) {
 
         String name = c.field("name");
-        if (classes.containsKey(name.toLowerCase(Locale.ENGLISH))) {
-          cls = (OClassImpl) classes.get(name.toLowerCase(Locale.ENGLISH));
-          cls.fromStream(c);
+        if (Boolean.TRUE.equals(c.field("view"))) {
+          OViewImpl view;
+          if (views.containsKey(name.toLowerCase(Locale.ENGLISH))) {
+            view = (OViewImpl) views.get(name.toLowerCase(Locale.ENGLISH));
+            view.fromStream(c);
+          } else {
+            view = createViewInstance(c);
+            view.fromStream();
+          }
+
+          newViews.put(view.getName().toLowerCase(Locale.ENGLISH), view);
+
+          if (view.getShortName() != null)
+            newViews.put(view.getShortName().toLowerCase(Locale.ENGLISH), view);
+
+          addClusterViewMap(view);
         } else {
-          cls = createClassInstance(c);
-          cls.fromStream();
+          OClassImpl cls;
+          if (classes.containsKey(name.toLowerCase(Locale.ENGLISH))) {
+            cls = (OClassImpl) classes.get(name.toLowerCase(Locale.ENGLISH));
+            cls.fromStream(c);
+          } else {
+            cls = createClassInstance(c);
+            cls.fromStream();
+          }
+
+          newClasses.put(cls.getName().toLowerCase(Locale.ENGLISH), cls);
+
+          if (cls.getShortName() != null)
+            newClasses.put(cls.getShortName().toLowerCase(Locale.ENGLISH), cls);
+
+          addClusterClassMap(cls);
         }
-
-        newClasses.put(cls.getName().toLowerCase(Locale.ENGLISH), cls);
-
-        if (cls.getShortName() != null)
-          newClasses.put(cls.getShortName().toLowerCase(Locale.ENGLISH), cls);
-
-        addClusterClassMap(cls);
       }
 
       classes.clear();
       classes.putAll(newClasses);
+
+      views.clear();
+      views.putAll(newViews);
 
       // REBUILD THE INHERITANCE TREE
       Collection<String> superClassNames;
@@ -470,7 +579,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       OClass superClass;
 
       for (ODocument c : storedClasses) {
-
         superClassNames = c.field("superClasses");
         legacySuperClassName = c.field("superClass");
         if (superClassNames == null)
@@ -483,7 +591,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
         if (!superClassNames.isEmpty()) {
           // HAS A SUPER CLASS or CLASSES
-          cls = (OClassImpl) classes.get(((String) c.field("name")).toLowerCase(Locale.ENGLISH));
+          OClassImpl cls = (OClassImpl) classes.get(((String) c.field("name")).toLowerCase(Locale.ENGLISH));
           superClasses = new ArrayList<OClass>(superClassNames.size());
           for (String superClassName : superClassNames) {
 
@@ -516,6 +624,8 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   protected abstract OClassImpl createClassInstance(ODocument c);
 
+  protected abstract OViewImpl createViewInstance(ODocument c);
+
   /**
    * Binds POJO to ODocument.
    */
@@ -533,6 +643,12 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
           cc.add(((OClassImpl) c).toStream());
 
         document.field("classes", cc, OType.EMBEDDEDSET);
+
+        Set<ODocument> vv = new HashSet<ODocument>();
+        for (OView v : views.values())
+          vv.add(((OViewImpl) v).toStream());
+
+        document.field("views", vv, OType.EMBEDDEDSET);
 
         List<ODocument> globalProperties = new ArrayList<ODocument>();
         for (OGlobalProperty globalProperty : properties) {
@@ -561,6 +677,16 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     }
   }
 
+  public Collection<OView> getViews(ODatabaseDocumentInternal database) {
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
+    acquireSchemaReadLock();
+    try {
+      return new HashSet<OView>(views.values());
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
   public Set<OClass> getClassesRelyOnCluster(ODatabaseDocumentInternal database, final String clusterName) {
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
 
@@ -569,6 +695,24 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       final int clusterId = database.getClusterIdByName(clusterName);
       final Set<OClass> result = new HashSet<OClass>();
       for (OClass c : classes.values()) {
+        if (OArrays.contains(c.getPolymorphicClusterIds(), clusterId))
+          result.add(c);
+      }
+
+      return result;
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
+  public Set<OView> getViewsRelyOnCluster(ODatabaseDocumentInternal database, final String clusterName) {
+    database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
+
+    acquireSchemaReadLock();
+    try {
+      final int clusterId = database.getClusterIdByName(clusterName);
+      final Set<OView> result = new HashSet<OView>();
+      for (OView c : views.values()) {
         if (OArrays.contains(c.getPolymorphicClusterIds(), clusterId))
           result.add(c);
       }
@@ -727,7 +871,15 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
       clustersToClasses.put(clusterId, cls);
     }
+  }
 
+  protected void addClusterViewMap(final OView cls) {
+    for (int clusterId : cls.getClusterIds()) {
+      if (clusterId < 0)
+        continue;
+
+      clustersToViews.put(clusterId, cls);
+    }
   }
 
   private void ensurePropertiesSize(int size) {
