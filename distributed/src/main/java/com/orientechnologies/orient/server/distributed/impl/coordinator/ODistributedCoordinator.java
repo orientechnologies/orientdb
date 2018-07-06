@@ -1,8 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 
 public class ODistributedCoordinator implements AutoCloseable {
@@ -10,23 +8,17 @@ public class ODistributedCoordinator implements AutoCloseable {
   private ExecutorService                        requestExecutor;
   private OOperationLog                          operationLog;
   private ConcurrentMap<OLogId, ORequestContext> contexts = new ConcurrentHashMap<>();
-  private List<String>                           nodes    = Collections.synchronizedList(new ArrayList<>());
-  private OSender                                sender;
+  private Map<String, ODistributedMember>        members  = new ConcurrentHashMap<>();
 
-  public ODistributedCoordinator(ExecutorService requestExecutor, OOperationLog operationLog, OSender sender) {
+  public ODistributedCoordinator(ExecutorService requestExecutor, OOperationLog operationLog) {
     this.requestExecutor = requestExecutor;
     this.operationLog = operationLog;
-    this.sender = sender;
   }
 
-  public void submit(OSubmitRequest request) {
+  public void submit(ODistributedMember member, OSubmitRequest request) {
     requestExecutor.execute(() -> {
-      request.begin(this);
+      request.begin(member, this);
     });
-  }
-
-  public void reply(OSubmitResponse response) {
-    sender.sendResponse("one", response);
   }
 
   public void receive(OLogId relativeRequest, ONodeResponse response) {
@@ -41,16 +33,16 @@ public class ODistributedCoordinator implements AutoCloseable {
 
   public ORequestContext sendOperation(OSubmitRequest submitRequest, ONodeRequest nodeRequest, OResponseHandler handler) {
     OLogId id = log(nodeRequest);
-    ORequestContext context = new ORequestContext(this, submitRequest, nodeRequest, nodes.size() / 2 + 1, handler);
+    ORequestContext context = new ORequestContext(this, submitRequest, nodeRequest, members.size() / 2 + 1, handler);
     contexts.put(id, context);
-    for (String node : nodes) {
-      sender.sendTo(node, id, nodeRequest);
+    for (ODistributedMember member : members.values()) {
+      member.sendRequest(id, nodeRequest);
     }
     return context;
   }
 
-  public void join(String node) {
-    nodes.add(node);
+  public void join(ODistributedMember member) {
+    members.put(member.getName(), member);
   }
 
   @Override
