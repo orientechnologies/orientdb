@@ -48,8 +48,7 @@ public class AccountRestoreEvent extends EventInternal<Map<String, Object>> {
     fillContextVariable(context,token,user);
     String htmlContent = templateEngine.process("restoreMail.html", context);
     SimpleMailMessage mailMessage = new SimpleMailMessage();
-    mailMessage.setTo(config.escalateMil);
-    mailMessage.setCc(config.escalateMilcc);
+    mailMessage.setTo(user.getWorkingEmail());
     mailMessage.setFrom(user.getName());
     mailMessage.setSubject("Prjhub password recovery");
     mailMessage.setText(htmlContent);
@@ -59,7 +58,7 @@ public class AccountRestoreEvent extends EventInternal<Map<String, Object>> {
   }
 
   private void fillContextVariable(Context context, String token, OUser user) {
-    context.setVariable("link", config.endpoint + "/#validate-token/" + token);
+    context.setVariable("link", config.endpoint + "/#/validate-token/" + token);
     String body = "A reset password event on this account `" + user.getName()
         + "` has been triggered. Click the link below to recover the password.";
     context.setVariable("body", body);
