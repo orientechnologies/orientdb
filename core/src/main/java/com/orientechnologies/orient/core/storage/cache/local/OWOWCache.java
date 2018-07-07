@@ -90,7 +90,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -205,8 +204,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    */
   private final int backgroundFlushInterval =
       OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger() * 1000 * 1000;
-
-  private static final int PAGES_PER_SECOND = 512;
 
   /**
    * Listeners which are called once we detect that there is not enough space left on disk to work. Mostly used to put database in
@@ -402,8 +399,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    */
   private final OByteBufferPool bufferPool;
 
-  private final long pageFlushInterval;
-
   private final String storageName;
 
   private volatile OChecksumMode checksumMode;
@@ -420,10 +415,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private Throwable flushError;
 
   private final int blockSize;
-
-  private long delaySum      = 0;
-  private long delays        = 0;
-  private long delayReportTs = 0;
 
   /**
    * Listeners which are called when exception in background data flush thread is happened.
@@ -483,12 +474,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       cacheEventsPublisher = new OThreadPoolExecutorWithLogging(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
           new SynchronousQueue<>(), new CacheEventsPublisherFactory(storageName));
 
-      this.pageFlushInterval = pageFlushInterval;
-
       if (pageFlushInterval > 0) {
         commitExecutor
             .scheduleWithFixedDelay(new PeriodicExclusiveFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
-        commitExecutor.schedule(new PeriodicFlushTask(), pageFlushInterval, TimeUnit.MILLISECONDS);
+        commitExecutor
+            .scheduleWithFixedDelay(new PeriodicFlushTask(), 8 * pageFlushInterval, 8 * pageFlushInterval, TimeUnit.MILLISECONDS);
       }
 
     } finally {
@@ -2606,7 +2596,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       int flushedPages = 0;
       try {
         if (writeCachePages.isEmpty()) {
-          scheduleNextFlush(pageFlushInterval);
           return;
         }
 
@@ -2629,11 +2618,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             if (!flushMode.equals(FLUSH_MODE.LSN) && endSegment - startSegment >= 1) {//IDLE flush mode
               flushMode = FLUSH_MODE.LSN;
 
-              final long startTs = System.nanoTime();
-              final int pages = flushWriteCacheFromMinLSN(512, startSegment, endSegment);
-              final long endTs = System.nanoTime();
+              flushedPages += flushWriteCacheFromMinLSN(512, startSegment, endSegment);
 
-              flushedPages += pages;
               convertSharedDirtyPagesToLocal();
 
               lsnEntry = localDirtyPagesBySegment.firstEntry();
@@ -2643,23 +2629,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               if (lsnEntry == null || endSegment - startSegment < 1) {
                 flushMode = FLUSH_MODE.IDLE;
-                scheduleNextFlush(pageFlushInterval);
-              } else {
-                calculateNextFlushTime(startTs, pages, endTs);
               }
             } else {
-              boolean flushed = false;
-
-              long startTs = 0;
-              int pages = 0;
-              long endTs = 0;
-
               if (endSegment - startSegment >= 1) {
-                startTs = System.nanoTime();
-                pages = flushWriteCacheFromMinLSN(512, startSegment, endSegment);
-                endTs = System.nanoTime();
-
-                flushed = true;
+                flushedPages += flushWriteCacheFromMinLSN(512, startSegment, endSegment);
               }
 
               convertSharedDirtyPagesToLocal();
@@ -2671,18 +2644,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               if (lsnEntry == null || endSegment - startSegment < 1) {
                 flushMode = FLUSH_MODE.IDLE;
-                scheduleNextFlush(pageFlushInterval);
-              } else {
-                if (flushed) {
-                  calculateNextFlushTime(startTs, pages, endTs);
-                } else {
-                  scheduleNextFlush(pageFlushInterval);
-                }
               }
             }
           } else {
             flushMode = FLUSH_MODE.IDLE;
-            scheduleNextFlush(pageFlushInterval);
           }
         }
 
@@ -2696,63 +2661,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
     }
 
-    private void calculateNextFlushTime(long startTs, int pages, long endTs) {
-      if (pages <= 0) {
-        scheduleNextFlush(pageFlushInterval);
-        return;
-      }
-
-      final long commitInterval = endTs - startTs;
-      final long restToFlush = PAGES_PER_SECOND - pages;
-
-      if (restToFlush > 0) {
-        final long restInterval = 1_000_000_000 - commitInterval;
-        final long restIntervalInMs = restInterval / 1_000_000;
-
-        if (restIntervalInMs < pageFlushInterval) {
-          scheduleNextFlush(pageFlushInterval);
-        } else {
-          // (PAGES_PER_SECOND - pages + pages - 1) / pages : round to the biggest value if there is reminder to division
-          final int iterations = (PAGES_PER_SECOND - 1) / pages;
-          final long nextFlush = restInterval / iterations;
-          final long nextFlushInMs = nextFlush / 1_000_000;
-
-          if (nextFlushInMs < pageFlushInterval) {
-            scheduleNextFlush(pageFlushInterval);
-          } else {
-            scheduleNextFlush(nextFlushInMs);
-          }
-        }
-      } else {
-        scheduleNextFlush(1_000);
-      }
-    }
-
-    private void scheduleNextFlush(long delayInMs) {
-      final long ts = System.nanoTime();
-
-      if (!commitExecutor.isShutdown()) {
-        try {
-          commitExecutor.schedule(this, delayInMs, TimeUnit.MILLISECONDS);
-          delaySum += delayInMs;
-          delays++;
-
-          if (delayReportTs == 0) {
-            delayReportTs = ts;
-          } else if (ts - delayReportTs > 10 * 1_000_000_000L) {
-            OLogManager.instance().infoNoDb(this, "Average LSN flush delay is " + (delaySum / delays));
-            delaySum = 0;
-            delays = 0;
-
-            delayReportTs = ts;
-          }
-        } catch (RejectedExecutionException e) {
-          if (!commitExecutor.isShutdown()) {
-            throw e;
-          }
-        }
-      }
-    }
   }
 
   final class FindMinDirtySegment implements Callable<Long> {
