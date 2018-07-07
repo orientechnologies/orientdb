@@ -2729,7 +2729,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       if (!commitExecutor.isShutdown()) {
         try {
           commitExecutor.schedule(this, delayInMs, TimeUnit.MILLISECONDS);
-          delaySum = delayInMs;
+          delaySum += delayInMs;
           delays++;
 
           if (delayReportTs == 0) {
