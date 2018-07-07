@@ -90,6 +90,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -2586,7 +2587,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     @Override
     public void run() {
       if (flushError != null) {
-        OLogManager.instance().errorNoDb(this, "Can not flush data because of issue during data write, %s", null, flushError.getMessage());
+        OLogManager.instance()
+            .errorNoDb(this, "Can not flush data because of issue during data write, %s", null, flushError.getMessage());
         return;
       }
 
@@ -2724,19 +2726,28 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     private void scheduleNextFlush(long delayInMs) {
       final long ts = System.nanoTime();
 
-      commitExecutor.schedule(this, delayInMs, TimeUnit.MILLISECONDS);
-      delaySum = delayInMs;
-      delays++;
+      if (!commitExecutor.isShutdown()) {
+        try {
+          commitExecutor.schedule(this, delayInMs, TimeUnit.MILLISECONDS);
+          delaySum = delayInMs;
+          delays++;
 
-      if (delayReportTs == 0) {
-        delayReportTs = ts;
-      } else if (ts - delayReportTs > 10 * 1_000_000_000L) {
-        OLogManager.instance().infoNoDb(this, "Average LSN flush delay is " + (delaySum / delays));
-        delaySum = 0;
-        delays = 0;
+          if (delayReportTs == 0) {
+            delayReportTs = ts;
+          } else if (ts - delayReportTs > 10 * 1_000_000_000L) {
+            OLogManager.instance().infoNoDb(this, "Average LSN flush delay is " + (delaySum / delays));
+            delaySum = 0;
+            delays = 0;
+
+            delayReportTs = ts;
+          }
+        } catch (RejectedExecutionException e) {
+          if (!commitExecutor.isShutdown()) {
+            throw e;
+          }
+        }
       }
     }
-
   }
 
   final class FindMinDirtySegment implements Callable<Long> {
