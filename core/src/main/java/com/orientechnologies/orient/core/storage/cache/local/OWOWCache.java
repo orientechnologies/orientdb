@@ -2697,6 +2697,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
 
     private void calculateNextFlushTime(long startTs, int pages, long endTs) {
+      if (pages <= 0) {
+        scheduleNextFlush(pageFlushInterval);
+        return;
+      }
+
       final long commitInterval = endTs - startTs;
       final long restToFlush = PAGES_PER_SECOND - pages;
 
