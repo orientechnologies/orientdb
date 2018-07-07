@@ -18,7 +18,11 @@ public class OWALFdFile implements OWALFile {
 
   @Override
   public void force(boolean forceMetadata) throws IOException {
-    ONative.instance().fsync(fd);
+    try {
+      ONative.instance().fsync(fd);
+    } catch (LastErrorException e) {
+      throw new IOException("Can not perform force sync.", e);
+    }
   }
 
   @Override

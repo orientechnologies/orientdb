@@ -378,6 +378,8 @@ public class OIOUtils {
 
       read += r;
     }
+
+    buffer.position(read);
   }
 
   public static void readByteBuffer(ByteBuffer buffer, int fd, long position, boolean throwOnEof) throws IOException {
