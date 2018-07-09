@@ -542,7 +542,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           keys.add(new OPair<>(String.valueOf(changesPerKey.key), changesPerKey.key));
         }
         if (!change.getValue().nullKeyChanges.entries.isEmpty()) {
-          keys.add(new OPair<>(String.valueOf(null), null));
+          keys.add(new OPair<>("null", null));
         }
       }
     }
