@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * Created by Enrico Risa on 24/01/17.
  */
-public class MapTransformer implements OResultTransformer<Map<String, Object>> {
+public class MapTransformer implements OResultTransformer<Map<Object, Object>> {
 
   private OScriptTransformer transformer;
 
@@ -18,13 +18,13 @@ public class MapTransformer implements OResultTransformer<Map<String, Object>> {
   }
 
   @Override
-  public OResult transform(Map<String, Object> element) {
+  public OResult transform(Map<Object, Object> element) {
     OResultInternal internal = new OResultInternal();
     element.forEach((key, val) -> {
       if (transformer.doesHandleResult(val)) {
-        internal.setProperty(key, transformer.toResult(val));
+        internal.setProperty(key.toString(), transformer.toResult(val));
       } else {
-        internal.setProperty(key, val);
+        internal.setProperty(key.toString(), val);
       }
 
     });
