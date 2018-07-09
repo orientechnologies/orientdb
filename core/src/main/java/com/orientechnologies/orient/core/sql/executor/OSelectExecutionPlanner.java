@@ -296,6 +296,7 @@ public class OSelectExecutionPlanner {
     Map<String, Set<String>> result = new LinkedHashMap<>();
     Set<String> uncovered = new HashSet<>();
     uncovered.addAll(queryClusters);
+    uncovered = uncovered.stream().map(x -> x.toLowerCase(Locale.ENGLISH)).collect(Collectors.toSet());
 
     //try local node first
     Set<String> nextNodeClusters = new HashSet<>();

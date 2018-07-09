@@ -19,10 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.log.OLogFormatter;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
@@ -33,9 +30,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
@@ -65,8 +60,7 @@ public class ONewDistributedTransactionManager {
     this.localDistributedDatabase = iDDatabase;
   }
 
-  public List<ORecordOperation> commit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx,
-      final ODistributedStorageEventListener eventListener) {
+  public void commit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx) {
     final String localNodeName = dManager.getLocalNodeName();
 
     iTx.setStatus(OTransaction.TXSTATUS.BEGUN);
@@ -97,7 +91,7 @@ public class ONewDistributedTransactionManager {
     if (nodes.isEmpty()) {
       // NO FURTHER NODES TO INVOLVE
       localOk(requestId, database);
-      return null;
+      return;
     }
     //TODO:check the lsn
     txTask.setLastLSN(getLsn());
@@ -117,8 +111,7 @@ public class ONewDistributedTransactionManager {
     handleResponse(requestId, responseManager, involvedClusters, nodes, database);
 
     // OK, DISTRIBUTED COMMIT SUCCEED
-    //TODO:Get the list of result from local ok, if is needed otherwise remove the ruturn
-    return null;
+    return;
 
   }
 

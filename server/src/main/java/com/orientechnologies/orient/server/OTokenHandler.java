@@ -38,6 +38,8 @@ public interface OTokenHandler  {
 
   byte[] getSignedBinaryToken(ODatabaseDocumentInternal db, OSecurityUser user, ONetworkProtocolData data);
 
+  byte[] getDistributedToken(ONetworkProtocolData data);
+
   byte[] renewIfNeeded(OToken token);
 
   boolean isEnabled();

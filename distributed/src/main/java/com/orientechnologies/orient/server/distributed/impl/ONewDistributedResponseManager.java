@@ -1,9 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
@@ -11,23 +7,22 @@ import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTr
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
 
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 
 public class ONewDistributedResponseManager implements ODistributedResponseManager {
 
-  private final    OTransactionPhase1Task iRequest;
-  private final    Collection<String>     iNodes;
-  private final    Set<String>            nodesConcurToTheQuorum;
-  private final    int                    availableNodes;
-  private final    int                    expectedResponses;
-  private final    int                    quorum;
-  private final    long                   timeout;
-  private volatile int                    responseCount;
+  private final    OTransactionPhase1Task                        iRequest;
+  private final    Collection<String>                            iNodes;
+  private final    Set<String>                                   nodesConcurToTheQuorum;
+  private final    int                                           availableNodes;
+  private final    int                                           expectedResponses;
+  private final    int                                           quorum;
+  private final    long                                          timeout;
+  private volatile int                                           responseCount;
   private final    List<String>                                  debugNodeReplied = new ArrayList<>();
   private volatile Map<Integer, List<OTransactionResultPayload>> resultsByType    = new HashMap<>();
   private volatile boolean                                       finished         = false;
   private volatile boolean                                       quorumReached    = false;
-  private volatile Object finalResult;
+  private volatile Object                                        finalResult;
 
   public ONewDistributedResponseManager(OTransactionPhase1Task iRequest, Collection<String> iNodes,
       Set<String> nodesConcurToTheQuorum, int availableNodes, int expectedResponses, int quorum) {
@@ -63,10 +58,21 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
 
   @Override
   public synchronized boolean waitForSynchronousResponses() throws InterruptedException {
-    if (!quorumReached) {
-      wait(timeout);
+    boolean interrupted = false;
+    while (true) {
+      try {
+        if (!quorumReached) {
+          wait(timeout);
+        }
+        if (interrupted) {
+          Thread.currentThread().interrupt();
+        }
+        return quorumReached;
+      } catch (InterruptedException e) {
+        //Let the operation finish anyway
+        interrupted = true;
+      }
     }
-    return quorumReached;
   }
 
   @Override
@@ -90,27 +96,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   }
 
   @Override
-  public Collection<String> getConflictServers() {
-    return null;
-  }
-
-  @Override
   public Set<String> getServersWithoutFollowup() {
-    return null;
-  }
-
-  @Override
-  public boolean addFollowupToServer(String node) {
-    return false;
-  }
-
-  @Override
-  public boolean isSynchronousWaiting() {
-    return false;
-  }
-
-  @Override
-  public ODistributedResponse getQuorumResponse() {
     return null;
   }
 
@@ -125,18 +111,8 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   }
 
   @Override
-  public Object getResponseFromServer(String server) {
-    return null;
-  }
-
-  @Override
   public int getQuorum() {
     return 0;
-  }
-
-  @Override
-  public boolean executeInLock(OCallable<Boolean, ODistributedResponseManager> oCallable) {
-    return false;
   }
 
   public synchronized boolean collectResponse(OTransactionPhase1TaskResult response, String senderNodeName) {
@@ -209,7 +185,6 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   public synchronized boolean isFinished() {
     return finished;
   }
-
 
   @Override
   public void timeout() {

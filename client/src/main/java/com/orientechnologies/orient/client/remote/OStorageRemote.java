@@ -213,21 +213,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   private final OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote(this);
   private final List<String>                   serverURLs              = new ArrayList<String>();
   private final Map<String, OCluster>          clusterMap              = new ConcurrentHashMap<String, OCluster>();
-  private final ExecutorService asynchExecutor;
-  private final ODocument     clusterConfiguration = new ODocument();
-  private final AtomicInteger users                = new AtomicInteger(0);
-  private OContextConfiguration clientConfiguration;
-  private int                   connectionRetry;
-  private int                   connectionRetryDelay;
-  private OCluster[] clusters = OCommonConst.EMPTY_CLUSTER_ARRAY;
-  private int                      defaultClusterId;
-  public  ORemoteConnectionManager connectionManager;
-  private final Set<OStorageRemoteSession> sessions = Collections
+  private final ExecutorService                asynchExecutor;
+  private final ODocument                      clusterConfiguration    = new ODocument();
+  private final AtomicInteger                  users                   = new AtomicInteger(0);
+  private       OContextConfiguration          clientConfiguration;
+  private       int                            connectionRetry;
+  private       int                            connectionRetryDelay;
+  private       OCluster[]                     clusters                = OCommonConst.EMPTY_CLUSTER_ARRAY;
+  private       int                            defaultClusterId;
+  public        ORemoteConnectionManager       connectionManager;
+  private final Set<OStorageRemoteSession>     sessions                = Collections
       .newSetFromMap(new ConcurrentHashMap<OStorageRemoteSession, Boolean>());
 
-  private final Map<Integer, OLiveQueryClientListener> liveQueryListener = new ConcurrentHashMap<>();
-  private volatile OStorageRemotePushThread pushThread;
-  private final    OrientDBRemote           context;
+  private final    Map<Integer, OLiveQueryClientListener> liveQueryListener = new ConcurrentHashMap<>();
+  private volatile OStorageRemotePushThread               pushThread;
+  private final    OrientDBRemote                         context;
 
   public OStorageRemote(final String iURL, OrientDBRemote context, final String iMode, ORemoteConnectionManager connectionManager)
       throws IOException {
@@ -612,16 +612,19 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
       status = STATUS.CLOSING;
       super.close(true, false);
-
-      if (pushThread != null) {
-        pushThread.shutdown();
-        try {
-          pushThread.join();
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        }
+    } finally {
+      stateLock.releaseWriteLock();
+    }
+    if (pushThread != null) {
+      pushThread.shutdown();
+      try {
+        pushThread.join();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
-
+    }
+    stateLock.acquireWriteLock();
+    try {
       // CLOSE ALL THE SOCKET POOLS
       for (String url : serverURLs) {
         connectionManager.closePool(url);

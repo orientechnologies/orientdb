@@ -1411,7 +1411,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
   public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId rid, final byte[] content, final int recordVersion,
       final byte recordType, final int mode, final ORecordCallback<Long> callback) {
     try {

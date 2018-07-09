@@ -334,9 +334,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
         DatabaseDocumentTxPooled db = queue.poll();
         if (!db.isClosed()) {
           db.activateOnCurrentThread();
-          OStorage storage = db.getStorage();
-          storage.close();
-          ODatabaseRecordThreadLocal.instance().remove();
+          db.close();
         }
       }
     }
@@ -438,7 +436,12 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     }
 
     protected void internalOpen() {
-      super.open(userName, password);
+      if(internal == null ) {
+        super.open(userName, password);
+      }else {
+        internal.activateOnCurrentThread();
+        internal.setStatus(STATUS.OPEN);
+      }
       if (getMetadata().getSchema().countClasses() == 0)
         getMetadata().reload();
     }
@@ -465,7 +468,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
         //if connection is lost and storage is closed as result we should not put closed connection back to the pool
         if (!storage.isClosed()) {
           activateOnCurrentThread();
-          super.close();
+          super.internal.internalClose(true);
 
           data.acquiredDatabase = null;
 

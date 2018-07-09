@@ -139,26 +139,26 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected final Map<String, Object> properties = new HashMap<String, Object>();
-  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
-  protected ORecordSerializer    serializer;
-  protected String               url;
-  protected STATUS               status;
-  protected OIntent              currentIntent;
-  protected ODatabaseInternal<?> databaseOwner;
-  protected OMetadataDefault     metadata;
-  protected OImmutableUser       user;
+  protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
+  protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
+  protected       ORecordSerializer                           serializer;
+  protected       String                                      url;
+  protected       STATUS                                      status;
+  protected       OIntent                                     currentIntent;
+  protected       ODatabaseInternal<?>                        databaseOwner;
+  protected       OMetadataDefault                            metadata;
+  protected       OImmutableUser                              user;
   protected final byte                                        recordType    = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
-  protected OLocalRecordCache                localCache;
-  protected OCurrentStorageComponentsFactory componentsFactory;
-  protected boolean initialized = false;
-  protected OTransaction currentTx;
+  protected       OLocalRecordCache                           localCache;
+  protected       OCurrentStorageComponentsFactory            componentsFactory;
+  protected       boolean                                     initialized   = false;
+  protected       OTransaction                                currentTx;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected OSharedContext sharedContext;
+  protected       OSharedContext  sharedContext;
 
   private boolean prefetchRecords;
 
@@ -268,7 +268,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public ODatabaseDocumentInternal cleanOutRecord(final ORID iRecord, final int iVersion) {
-    executeDeleteRecord(iRecord, iVersion, true, OPERATION_MODE.SYNCHRONOUS, true);
+    delete(iRecord, iVersion);
     return this;
   }
 
@@ -851,13 +851,14 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return currentIntent;
   }
 
-  @Override
-  public void close() {
+  public void internalClose(boolean recycle) {
+    if (status != STATUS.OPEN)
+      return;
+
     checkIfActive();
 
     try {
       closeActiveQueries();
-
       localCache.shutdown();
 
       if (isClosed()) {
@@ -871,27 +872,31 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         OLogManager.instance().error(this, "Exception during commit of active transaction", e);
       }
 
-      if (status != STATUS.OPEN)
-        return;
-
       callOnCloseListeners();
 
       if (currentIntent != null) {
         currentIntent.end(this);
         currentIntent = null;
       }
-      sharedContext = null;
+
       status = STATUS.CLOSED;
+      if (!recycle) {
+        sharedContext = null;
 
-      localCache.clear();
-
-      if (getStorage() != null)
-        getStorage().close();
+        if (getStorage() != null)
+          getStorage().close();
+      }
 
     } finally {
       // ALWAYS RESET TL
       ODatabaseRecordThreadLocal.instance().remove();
     }
+
+  }
+
+  @Override
+  public void close() {
+    internalClose(false);
   }
 
   @Override
@@ -1475,33 +1480,45 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return rid.getClusterId();
   }
 
-  public <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName) {
-    ORecordId rid = (ORecordId) record.getIdentity();
-    assert rid.isNew();
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not use.
+   *
+   * @Internal
+   */
+  public boolean executeHideRecord(OIdentifiable record, final OPERATION_MODE iMode) {
+    checkOpenness();
+    checkIfActive();
 
-    ORecordInternal.onBeforeIdentityChanged(record);
-    int id = assignAndCheckCluster(record, clusterName);
-    clusterName = getClusterNameById(id);
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, clusterName);
+    final ORecordId rid = (ORecordId) record.getIdentity();
 
-    byte[] content = getSerializer().writeClassOnly(record);
+    if (rid == null)
+      throw new ODatabaseException(
+          "Cannot hide record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
 
-    final OStorageOperationResult<OPhysicalPosition> ppos = getStorage()
-        .createRecord(rid, content, record.getVersion(), recordType, OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
+    if (!rid.isValid())
+      return false;
 
-    ORecordInternal.setVersion(record, ppos.getResult().recordVersion);
-    ((ORecordId) record.getIdentity()).copyFrom(rid);
-    ORecordInternal.onAfterIdentityChanged(record);
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.getClusterId()));
 
-    return (RET) record;
+    getMetadata().makeThreadLocalSchemaSnapshot();
+    if (record instanceof ODocument)
+      ODocumentInternal.checkClass((ODocument) record, this);
+    ORecordSerializationContext.pushContext();
+    try {
+
+      final OStorageOperationResult<Boolean> operationResult;
+      operationResult = getStorage().hideRecord(rid, iMode.ordinal(), null);
+
+      // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
+      if (!operationResult.isMoved())
+        getLocalCache().deleteRecord(rid);
+
+      return operationResult.getResult();
+    } finally {
+      ORecordSerializationContext.pullContext();
+      getMetadata().clearThreadLocalSchemaSnapshot();
+    }
   }
-
-  public abstract <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
-      final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
-      ORecordCallback<Integer> recordUpdatedCallback);
-
-  public abstract void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired,
-      final OPERATION_MODE iMode, boolean prohibitTombstones);
 
   public ODatabaseDocumentAbstract begin() {
     return begin(OTransaction.TXTYPE.OPTIMISTIC);
@@ -2758,4 +2775,5 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       return true;
     return false;
   }
+
 }

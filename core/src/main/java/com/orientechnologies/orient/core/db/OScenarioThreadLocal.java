@@ -59,25 +59,6 @@ public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.RunCo
     setRunMode(RUN_MODE.DEFAULT);
   }
 
-  public static Object executeAsDistributed(final Callable<? extends Object> iCallback) {
-    final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.getRunMode();
-    if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
-      // ASSURE SCHEMA CHANGES ARE NEVER PROPAGATED ON CLUSTER
-      OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
-
-    try {
-      return iCallback.call();
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    } finally {
-      if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
-        // RESTORE PREVIOUS MODE
-        OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.DEFAULT);
-    }
-  }
-
   public static <T> Object executeAsDefault(final Callable<T> iCallback) {
     final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.getRunMode();
     if (currentDistributedMode == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
@@ -94,6 +75,25 @@ public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.RunCo
       if (currentDistributedMode == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
         // RESTORE PREVIOUS MODE
         OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+    }
+  }
+
+  public static Object executeAsDistributed(final Callable<? extends Object> iCallback) {
+    final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.getRunMode();
+    if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
+      // ASSURE SCHEMA CHANGES ARE NEVER PROPAGATED ON CLUSTER
+      OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+
+    try {
+      return iCallback.call();
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    } finally {
+      if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
+        // RESTORE PREVIOUS MODE
+        OScenarioThreadLocal.INSTANCE.setRunMode(OScenarioThreadLocal.RUN_MODE.DEFAULT);
     }
   }
 

@@ -154,7 +154,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
       if (targetClustersPerNode == 0 || (nodesLeft > 0 && (clusterNames.size() - clusterAssigned) % nodesLeft > 0))
         targetClustersPerNode++;
 
-      if (ownedClusters.size() > targetClustersPerNode) {
+      if (ownedClusters.size() > targetClustersPerNode && ownedClusters.size() > 0) {
         // REMOVE CLUSTERS IF THERE IS NO STATIC CFG OF THE OWNER
         while (ownedClusters.size() > targetClustersPerNode) {
           clustersOfClassToReassign.add(ownedClusters.remove(ownedClusters.size() - 1));

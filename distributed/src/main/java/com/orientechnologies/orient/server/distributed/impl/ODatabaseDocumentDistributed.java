@@ -15,25 +15,27 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
+import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
@@ -58,6 +60,8 @@ import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedCont
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OToLeaderTransactionTask;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OToLeaderTransactionTaskResponse;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
@@ -507,36 +511,76 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       //Exclusive for handling schema manipulation, remove after refactor for distributed schema
       super.internalCommit(iTx);
     } else {
-      //This is future may handle a retry
-      try {
-        for (ORecordOperation txEntry : iTx.getRecordOperations()) {
-          if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
-            final ORecord record = txEntry.getRecord();
-            if (record instanceof ODocument)
-              ((ODocument) record).validate();
-          }
-        }
-        final ODistributedConfiguration dbCfg = getStorageDistributed().getDistributedConfiguration();
+      //Disabled forward of transaction to make sure that tests run correctly, will be re-enabled when the rest of refactor is done
+      if (true) {
+        realCommit(iTx);
+      } else {
+        OToLeaderTransactionTask message = new OToLeaderTransactionTask(iTx.getRecordOperations());
         ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
-        final String localNodeName = dManager.getLocalNodeName();
-        getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
-        ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(), dManager,
-            getStorageDistributed().getLocalDistributedDatabase());
-        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(iTx);
-
-        txManager.commit(this, iTx, getStorageDistributed().getEventListener());
-        return;
-      } catch (OValidationException e) {
-        throw e;
-      } catch (HazelcastInstanceNotActiveException e) {
-        throw new OOfflineNodeException("Hazelcast instance is not available");
-
-      } catch (HazelcastException e) {
-        throw new OOfflineNodeException("Hazelcast instance is not available");
-      } catch (Exception e) {
-        getStorageDistributed().handleDistributedException("Cannot route TX operation against distributed node", e);
+        // SYNCHRONOUS CALL: REPLICATE IT
+        final Set<String> servers = new HashSet<String>();
+        servers.add(dManager.getLockManagerServer());
+        ODistributedResponse response = dManager.sendRequest(getName(), null, servers, message, dManager.getNextMessageIdCounter(),
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+        for (OToLeaderTransactionTaskResponse.OCreatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
+            .getPayload()).getCreated()) {
+          iTx.updateIdentityAfterCommit(entry.getCurrentRid(), entry.getCreatedRid());
+          ORecordInternal.setVersion(iTx.getRecordEntry(entry.getCurrentRid()).getRecord(), entry.getVersion());
+        }
+        for (OToLeaderTransactionTaskResponse.OUpdatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
+            .getPayload()).getUpdated()) {
+          ORecordInternal.setVersion(iTx.getRecordEntry(entry.getRid()).getRecord(), entry.getVersion());
+        }
+        for (OToLeaderTransactionTaskResponse.ODeletedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
+            .getPayload()).getDeleted()) {
+          this.getLocalCache().deleteRecord(entry.getRid());
+        }
+        for (OToLeaderTransactionTaskResponse.OUpdatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
+            .getPayload()).getUpdated()) {
+          ORecordInternal.setVersion(iTx.getRecordEntry(entry.getRid()).getRecord(), entry.getVersion());
+        }
       }
     }
+  }
+
+  public void realCommit(OTransactionInternal iTx) {
+    //This is future may handle a retry
+    try {
+      for (ORecordOperation txEntry : iTx.getRecordOperations()) {
+        if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+          final ORecord record = txEntry.getRecord();
+          if (record instanceof ODocument)
+            ((ODocument) record).validate();
+        }
+      }
+      final ODistributedConfiguration dbCfg = getStorageDistributed().getDistributedConfiguration();
+      ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
+      final String localNodeName = dManager.getLocalNodeName();
+      getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
+      ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(), dManager,
+          getStorageDistributed().getLocalDistributedDatabase());
+      Set<String> otherNodesInQuorum = txManager
+          .getAvailableNodesButLocal(dbCfg, txManager.getInvolvedClusters(iTx.getRecordOperations()), getLocalNodeName());
+      List<String> online = dManager.getOnlineNodes(getName());
+      if (online.size() < ((otherNodesInQuorum.size() + 1) / 2) + 1) {
+        throw new ODistributedException("No enough nodes online to execute the operation, online nodes: " + online);
+      }
+
+      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(iTx);
+
+      txManager.commit(this, iTx);
+      return;
+    } catch (OValidationException e) {
+      throw e;
+    } catch (HazelcastInstanceNotActiveException e) {
+      throw new OOfflineNodeException("Hazelcast instance is not available");
+
+    } catch (HazelcastException e) {
+      throw new OOfflineNodeException("Hazelcast instance is not available");
+    } catch (Exception e) {
+      getStorageDistributed().handleDistributedException("Cannot route TX operation against distributed node", e);
+    }
+
   }
 
   public void acquireLocksForTx(OTransactionInternal tx, ODistributedTxContext txContext) {
@@ -700,6 +744,85 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(txContext.getTransaction());
     }
 
+  }
+
+  public void afterCreateOperations(final OIdentifiable id) {
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        OClassIndexManager.checkIndexesAfterCreate(doc, this);
+        if (clazz.isFunction()) {
+          this.getSharedContext().getFunctionLibrary().createdFunction(doc);
+          Orient.instance().getScriptManager().close(this.getName());
+        }
+        if (clazz.isOuser() || clazz.isOrole()) {
+          getMetadata().getSecurity().incrementVersion();
+        }
+        if (clazz.isSequence()) {
+          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceCreated(this, doc);
+        }
+        if (clazz.isScheduler()) {
+          getMetadata().getScheduler().scheduleEvent(new OScheduledEvent(doc));
+        }
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordAfterCreate(doc, this);
+        }
+      }
+    }
+    callbackHooks(ORecordHook.TYPE.AFTER_CREATE, id);
+  }
+
+  public void afterUpdateOperations(final OIdentifiable id) {
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        OClassIndexManager.checkIndexesAfterUpdate((ODocument) id, this);
+        if (clazz.isFunction()) {
+          this.getSharedContext().getFunctionLibrary().updatedFunction(doc);
+          Orient.instance().getScriptManager().close(this.getName());
+        }
+        if (clazz.isOuser() || clazz.isOrole()) {
+          getMetadata().getSecurity().incrementVersion();
+        }
+        if (clazz.isSequence()) {
+          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(this, doc);
+        }
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordAfterUpdate(doc, this);
+        }
+      }
+    }
+    callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
+  }
+
+  public void afterDeleteOperations(final OIdentifiable id) {
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        OClassIndexManager.checkIndexesAfterDelete(doc, this);
+        if (clazz.isFunction()) {
+          this.getSharedContext().getFunctionLibrary().droppedFunction(doc);
+          Orient.instance().getScriptManager().close(this.getName());
+        }
+        if (clazz.isOuser() || clazz.isOrole()) {
+          getMetadata().getSecurity().incrementVersion();
+        }
+        if (clazz.isSequence()) {
+          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceDropped(this, doc);
+        }
+        if (clazz.isScheduler()) {
+          final String eventName = doc.field(OScheduledEvent.PROP_NAME);
+          getSharedContext().getScheduler().removeEventInternal(eventName);
+        }
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordAfterDelete(doc, this);
+        }
+      }
+    }
+    callbackHooks(ORecordHook.TYPE.AFTER_DELETE, id);
   }
 
 }

@@ -90,51 +90,6 @@ public abstract class OAbstract2pcTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public ORemoteTask getFixTask(final ODistributedRequest iRequest, final ORemoteTask iOriginalTask, final Object iBadResponse,
-      final Object iGoodResponse, final String executorNodeName, final ODistributedServerManager dManager) {
-    if (!(iGoodResponse instanceof OTxTaskResult)) {
-      // TODO: MANAGE ERROR ON LOCAL NODE
-      ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
-          "Error on creating fix-task for request: '%s' because good response is not expected type: %s", iRequest, iBadResponse);
-      return null;
-    }
-
-    final OCompleted2pcTask fixTask = (OCompleted2pcTask) dManager.getTaskFactoryManager().getFactoryByServerName(executorNodeName)
-        .createTask(OCompleted2pcTask.FACTORYID);
-    fixTask.init(iRequest.getId(), false, getPartitionKey());
-
-    for (int i = 0; i < tasks.size(); ++i) {
-      final OAbstractRecordReplicatedTask t = tasks.get(i);
-
-      final Object badResult = iBadResponse == null ?
-          null :
-          iBadResponse instanceof Throwable ? iBadResponse : ((OTxTaskResult) iBadResponse).results.get(i);
-      final Object goodResult = ((OTxTaskResult) iGoodResponse).results.get(i);
-
-      final ORemoteTask undoTask = t.getFixTask(iRequest, t, badResult, goodResult, executorNodeName, dManager);
-      if (undoTask == null)
-        return null;
-
-      fixTask.addFixTask(undoTask);
-    }
-
-    return fixTask;
-  }
-
-  @Override
-  public ORemoteTask getUndoTask(ODistributedServerManager dManager, final ODistributedRequestId reqId,
-      final List<String> servers) {
-    final OCompleted2pcTask fixTask = (OCompleted2pcTask) dManager.getTaskFactoryManager().getFactoryByServerNames(servers)
-        .createTask(OCompleted2pcTask.FACTORYID);
-    fixTask.init(reqId, false, getPartitionKey());
-
-    for (ORemoteTask undoTask : localUndoTasks)
-      fixTask.addFixTask(undoTask);
-
-    return fixTask;
-  }
-
-  @Override
   public void toStream(final DataOutput out) throws IOException {
     out.writeInt(tasks.size());
     for (OAbstractRecordReplicatedTask task : tasks) {

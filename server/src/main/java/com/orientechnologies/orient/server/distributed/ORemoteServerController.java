@@ -36,7 +36,7 @@ public class ORemoteServerController {
   private volatile int responseChannelIndex = 0;
 
   private             int protocolVersion          = -1;
-  public final static int CURRENT_PROTOCOL_VERSION = 1;
+  public final static int CURRENT_PROTOCOL_VERSION = 2;
 
   public ORemoteServerController(final ODistributedServerManager manager, final String iServer, final String iURL,
       final String user, final String passwd) throws IOException {

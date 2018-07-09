@@ -1178,40 +1178,12 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     byte[] token = null;
 
-    if (Boolean.TRUE.equals(connection.getTokenBased())) {
-      token = server.getTokenHandler()
-          .getSignedBinaryToken(connection.getDatabase(), connection.getDatabase().getUser(), connection.getData());
-      // TODO: do not use the parse split getSignedBinaryToken in two methods.
-      server.getClientConnectionManager().connect(connection.getProtocol(), connection, token, server.getTokenHandler());
-    }
+    token = server.getTokenHandler()
+        .getSignedBinaryToken(connection.getDatabase(), connection.getDatabase().getUser(), connection.getData());
+    // TODO: do not use the parse split getSignedBinaryToken in two methods.
+    server.getClientConnectionManager().connect(connection.getProtocol(), connection, token, server.getTokenHandler());
 
-    if (connection.getDatabase().getStorage() instanceof OStorageProxy) {
-      connection.getDatabase().getMetadata().getSecurity().authenticate(request.getUserName(), request.getUserPassword());
-    }
-
-    final Collection<? extends OCluster> clusters = connection.getDatabase().getStorage().getClusterInstances();
-    final byte[] tokenToSend;
-    if (Boolean.TRUE.equals(connection.getTokenBased())) {
-      tokenToSend = token;
-    } else
-      tokenToSend = OCommonConst.EMPTY_BYTE_ARRAY;
-
-    final OServerPlugin plugin = server.getPlugin("cluster");
-    byte[] distriConf = null;
-    ODocument distributedCfg = null;
-    if (plugin != null && plugin instanceof ODistributedServerManager) {
-      distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
-
-      final ODistributedConfiguration dbCfg = ((ODistributedServerManager) plugin)
-          .getDatabaseConfiguration(connection.getDatabase().getName());
-      if (dbCfg != null) {
-        // ENHANCE SERVER CFG WITH DATABASE CFG
-        distributedCfg.field("database", dbCfg.getDocument(), OType.EMBEDDED);
-      }
-      distriConf = getRecordBytes(connection, distributedCfg);
-    }
-
-    return new OOpen37Response(connection.getId(), tokenToSend);
+    return new OOpen37Response(connection.getId(), token);
   }
 
   @Override
@@ -1538,7 +1510,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.setServerUser(serverUser);
     connection.getData().serverUsername = serverUser.name;
     connection.getData().serverUser = true;
-    byte[] token = server.getTokenHandler().getSignedBinaryToken(null, null, connection.getData());
+    byte[] token = server.getTokenHandler().getDistributedToken(connection.getData());
 
     return new ODistributedConnectResponse(connection.getId(), token, chosenProtocolVersion);
   }

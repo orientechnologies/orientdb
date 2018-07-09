@@ -102,11 +102,6 @@ public class StorageNamingTests {
 
     }
 
-    @Override
-    public OStorageOperationResult<OPhysicalPosition> createRecord(ORecordId iRecordId, byte[] iContent, int iRecordVersion,
-        byte iRecordType, int iMode, ORecordCallback<Long> iCallback) {
-      return null;
-    }
 
     @Override
     public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,

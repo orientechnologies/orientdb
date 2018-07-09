@@ -86,7 +86,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     }
 
     this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, keyProvider.getKeys(),
-        new String[] { this.algorithm }, new String[] { "OrientDB" });
+        new String[] { this.algorithm }, new String[] { "OrientDB", "node" });
   }
 
   protected OTokenHandlerImpl() {
@@ -148,7 +148,6 @@ public class OTokenHandlerImpl implements OTokenHandler {
     if (token.getDatabase().equalsIgnoreCase(database) && token.isNowValid()) {
       valid = true;
     }
-    // TODO: Other validations... (e.g. check audience, etc.)
     token.setIsValid(valid);
     return valid;
   }
@@ -156,12 +155,16 @@ public class OTokenHandlerImpl implements OTokenHandler {
   @Override
   public boolean validateBinaryToken(final OToken token) {
     boolean valid = false;
-    final long curTime = System.currentTimeMillis();
-    if (token.getExpiry() > curTime && (token.getExpiry() - (sessionInMills + 1)) < curTime) {
+    if (token instanceof OBinaryToken && "node".equals(((OBinaryToken) token).getHeader().getType())) {
       valid = true;
+    } else {
+      final long curTime = System.currentTimeMillis();
+      if (token.getExpiry() > curTime && (token.getExpiry() - (sessionInMills + 1)) < curTime) {
+        valid = true;
+      }
     }
-    // TODO: Other validations... (e.g. check audience, etc.)
     token.setIsValid(valid);
+
     return valid;
   }
 
@@ -189,6 +192,32 @@ public class OTokenHandlerImpl implements OTokenHandler {
     }
 
     return tokenByteOS.toByteArray();
+  }
+
+  @Override
+  public byte[] getDistributedToken(ONetworkProtocolData data) {
+    try {
+
+      final OBinaryToken token = new OBinaryToken();
+      final OrientJwtHeader header = new OrientJwtHeader();
+      header.setAlgorithm(algorithm);
+      header.setKeyId(keyProvider.getDefaultKey());
+      header.setType("node");
+      token.setHeader(header);
+      token.setServerUser(true);
+      token.setUserName(data.serverUsername);
+      token.setExpiry(0);
+      token.setProtocolVersion(data.protocolVersion);
+      token.setSerializer(data.getSerializationImpl());
+      token.setDriverName(data.driverName);
+      token.setDriverVersion(data.driverVersion);
+
+      return serializeSignedToken(token);
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw OException.wrapException(new OSystemException("Error on token parsing"), e);
+    }
   }
 
   public byte[] getSignedBinaryToken(final ODatabaseDocumentInternal db, final OSecurityUser user,

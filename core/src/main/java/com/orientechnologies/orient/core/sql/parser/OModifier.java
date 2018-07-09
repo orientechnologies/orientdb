@@ -69,6 +69,9 @@ public class OModifier extends SimpleNode {
   }
 
   public Object execute(OIdentifiable iCurrentRecord, Object result, OCommandContext ctx) {
+    if (ctx.getVariable("$current") == null) {
+      ctx.setVariable("$current", iCurrentRecord);
+    }
     if (methodCall != null) {
       result = methodCall.execute(result, ctx);
     } else if (suffix != null) {
@@ -89,6 +92,9 @@ public class OModifier extends SimpleNode {
   }
 
   public Object execute(OResult iCurrentRecord, Object result, OCommandContext ctx) {
+    if (ctx.getVariable("$current") == null) {
+      ctx.setVariable("$current", iCurrentRecord);
+    }
     if (methodCall != null) {
       result = methodCall.execute(result, ctx);
     } else if (suffix != null) {

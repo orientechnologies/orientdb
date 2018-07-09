@@ -46,12 +46,12 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcDbPerClassTemplate
     assertEquals("OrientDB", metaData.getDatabaseProductName());
     assertEquals(OConstants.getVersion(), metaData.getDatabaseProductVersion());
     assertEquals(3, metaData.getDatabaseMajorVersion());
-    assertEquals(0, metaData.getDatabaseMinorVersion());
+    assertEquals(1, metaData.getDatabaseMinorVersion());
 
     assertEquals("OrientDB JDBC Driver", metaData.getDriverName());
     assertEquals("OrientDB " + OConstants.getVersion() + " JDBC Driver", metaData.getDriverVersion());
     assertEquals(3, metaData.getDriverMajorVersion());
-    assertEquals(0, metaData.getDriverMinorVersion());
+    assertEquals(1, metaData.getDriverMinorVersion());
 
   }
 

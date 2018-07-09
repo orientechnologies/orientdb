@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
@@ -30,6 +31,8 @@ import java.util.Set;
 public interface OSchema {
 
   int countClasses();
+
+  int countViews();
 
   OClass createClass(String iClassName);
 
@@ -78,6 +81,14 @@ public interface OSchema {
   OClass getOrCreateClass(String iClassName, OClass... superClasses);
 
   Collection<OClass> getClasses();
+
+  OView getView(String name);
+
+  OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable);
+
+  boolean existsView(String name);
+
+  void dropView(String name);
 
   @Deprecated
   void create();
