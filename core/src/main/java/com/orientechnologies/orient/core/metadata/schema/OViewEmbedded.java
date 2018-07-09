@@ -18,12 +18,9 @@ import java.util.*;
 import java.util.concurrent.Callable;
 
 public class OViewEmbedded extends OViewImpl {
-  protected OViewEmbedded(OSchemaShared iOwner, String iName) {
-    super(iOwner, iName);
-  }
 
-  protected OViewEmbedded(OSchemaShared iOwner, String iName, int[] iClusterIds) {
-    super(iOwner, iName, iClusterIds);
+  protected OViewEmbedded(OSchemaShared iOwner, String iName, OViewConfig cfg, int[] iClusterIds) {
+    super(iOwner, iName, cfg, iClusterIds);
   }
 
   protected OViewEmbedded(OSchemaShared iOwner, ODocument iDocument, String iName) {

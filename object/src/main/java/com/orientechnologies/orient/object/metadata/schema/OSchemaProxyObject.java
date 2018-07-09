@@ -193,6 +193,11 @@ public class OSchemaProxyObject implements OSchemaObject {
   }
 
   @Override
+  public OView createView(OViewConfig config) {
+    return underlying.createView(config);
+  }
+
+  @Override
   public void create() {
     underlying.create();
   }

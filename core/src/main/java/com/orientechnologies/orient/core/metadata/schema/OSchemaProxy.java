@@ -184,6 +184,11 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     return delegate.createView(database, viewName, statement, updatable);
   }
 
+  @Override
+  public OView createView(OViewConfig config) {
+    return delegate.createView(database, config);
+  }
+
   public <RET extends ODocumentWrapper> RET reload() {
 
     delegate.reload();

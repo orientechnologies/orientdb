@@ -88,6 +88,8 @@ public interface OSchema {
 
   OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable);
 
+  OView createView(OViewConfig config);
+
   boolean existsView(String name);
 
   void dropView(String name);

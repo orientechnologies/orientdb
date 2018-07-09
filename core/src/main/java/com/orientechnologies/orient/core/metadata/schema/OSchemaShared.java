@@ -255,6 +255,8 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable);
 
+  public abstract OView createView(ODatabaseDocumentInternal database, OViewConfig cfg);
+
   public abstract void checkEmbedded();
 
   void checkClusterCanBeAdded(int clusterId, OClass cls) {

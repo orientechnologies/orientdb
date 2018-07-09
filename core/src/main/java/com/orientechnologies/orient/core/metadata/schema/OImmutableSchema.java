@@ -293,6 +293,11 @@ public class OImmutableSchema implements OSchema {
   }
 
   @Override
+  public OView createView(OViewConfig config) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean existsView(String name) {
     return views.containsKey(name.toLowerCase(Locale.ENGLISH));
   }
