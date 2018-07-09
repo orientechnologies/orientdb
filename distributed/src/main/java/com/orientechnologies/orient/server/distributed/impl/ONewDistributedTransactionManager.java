@@ -21,7 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -31,14 +31,28 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.impl.task.*;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
-import com.orientechnologies.orient.server.distributed.task.*;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
+import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase2Task;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentModification;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxLockTimeout;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxUniqueIndex;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Distributed transaction manager.

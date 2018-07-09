@@ -1,7 +1,10 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class ODistributedCoordinator implements AutoCloseable {
 

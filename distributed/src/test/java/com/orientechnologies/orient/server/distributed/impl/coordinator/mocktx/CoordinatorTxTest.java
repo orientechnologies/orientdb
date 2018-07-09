@@ -3,7 +3,15 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.mocktx;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.MockOperationLog;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedChannel;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedCoordinator;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedExecutor;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeRequest;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeResponse;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitResponse;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,7 +22,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class CoordinatorTxTest {
 

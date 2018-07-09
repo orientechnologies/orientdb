@@ -436,9 +436,9 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     }
 
     protected void internalOpen() {
-      if(internal == null ) {
+      if (internal == null) {
         super.open(userName, password);
-      }else {
+      } else {
         internal.activateOnCurrentThread();
         internal.setStatus(STATUS.OPEN);
       }

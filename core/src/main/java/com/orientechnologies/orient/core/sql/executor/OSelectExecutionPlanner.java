@@ -62,6 +62,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -294,8 +295,7 @@ public class OSelectExecutionPlanner {
       Set<String> queryClusters) {
     //approximate algorithm, the problem is NP-complete
     Map<String, Set<String>> result = new LinkedHashMap<>();
-    Set<String> uncovered = new HashSet<>();
-    uncovered.addAll(queryClusters);
+    Set<String> uncovered = new HashSet<>(queryClusters);
     uncovered = uncovered.stream().map(x -> x.toLowerCase(Locale.ENGLISH)).collect(Collectors.toSet());
 
     //try local node first
@@ -312,8 +312,7 @@ public class OSelectExecutionPlanner {
 
     while (uncovered.size() > 0) {
       String nextNode = findItemThatCoversMore(uncovered, clusterMap);
-      nextNodeClusters = new HashSet<>();
-      nextNodeClusters.addAll(clusterMap.get(nextNode));
+      nextNodeClusters = new HashSet<>(clusterMap.get(nextNode));
       nextNodeClusters.retainAll(uncovered);
       if (nextNodeClusters.size() == 0) {
         throw new OCommandExecutionException(
@@ -332,8 +331,7 @@ public class OSelectExecutionPlanner {
     String lastFound = null;
     int lastSize = -1;
     for (Map.Entry<String, Set<String>> nodeConfig : clusterMap.entrySet()) {
-      Set<String> current = new HashSet<>();
-      current.addAll(nodeConfig.getValue());
+      Set<String> current = new HashSet<>(nodeConfig.getValue());
       current.retainAll(uncovered);
       int thisSize = current.size();
       if (lastFound == null || thisSize > lastSize) {

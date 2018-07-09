@@ -19,16 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectRequest;
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectResponse;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 import java.io.IOException;

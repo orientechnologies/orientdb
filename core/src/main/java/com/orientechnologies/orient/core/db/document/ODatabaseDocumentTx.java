@@ -1536,7 +1536,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public void internalClose(boolean recycle) {
     internal.internalClose(true);
   }
-  
+
   public ORecord saveAll(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
     return internal.saveAll(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);

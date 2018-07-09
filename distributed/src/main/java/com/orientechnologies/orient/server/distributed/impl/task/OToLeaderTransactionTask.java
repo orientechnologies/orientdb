@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -23,7 +22,9 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class OToLeaderTransactionTask extends OAbstractRemoteTask {
   public static final int                           FACTORYID = 30;
@@ -80,7 +81,7 @@ public class OToLeaderTransactionTask extends OAbstractRemoteTask {
     OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, new ArrayList<>(ops));
     ((ODatabaseDocumentDistributed) database).realCommit(tx);
 
-    return new OToLeaderTransactionTaskResponse(tx.getCreatedRecords(),tx.getUpdatedRecords(),tx.getDeletedRecord());
+    return new OToLeaderTransactionTaskResponse(tx.getCreatedRecords(), tx.getUpdatedRecords(), tx.getDeletedRecord());
   }
 
   @Override

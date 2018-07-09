@@ -46,7 +46,15 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
@@ -68,7 +76,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   protected final Map<String, OClass>  classes           = new HashMap<String, OClass>();
   protected final Map<Integer, OClass> clustersToClasses = new HashMap<Integer, OClass>();
 
-  protected final Map<String, OView> views           = new HashMap<String, OView>();
+  protected final Map<String, OView>  views           = new HashMap<String, OView>();
   protected final Map<Integer, OView> clustersToViews = new HashMap<Integer, OView>();
 
   private final OClusterSelectionFactory clusterSelectionFactory = new OClusterSelectionFactory();
@@ -253,8 +261,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   public abstract OClass createClass(ODatabaseDocumentInternal database, final String className, int clusters,
       OClass... superClasses);
 
-  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement,
-      boolean updatable);
+  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable);
 
   public abstract void checkEmbedded();
 

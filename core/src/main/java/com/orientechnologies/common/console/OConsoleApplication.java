@@ -37,6 +37,7 @@ import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -317,13 +318,11 @@ public class OConsoleApplication {
       return RESULT.OK;
 
     String[] commandWords;
-    if (iCommand.toLowerCase().startsWith("load script") ||
-        iCommand.toLowerCase().startsWith("create database") ||
-        iCommand.toLowerCase().startsWith("drop database")||
-        iCommand.toLowerCase().startsWith("connect")){
+    if (iCommand.toLowerCase().startsWith("load script") || iCommand.toLowerCase().startsWith("create database") || iCommand
+        .toLowerCase().startsWith("drop database") || iCommand.toLowerCase().startsWith("connect")) {
       commandWords = iCommand.split(" ");
-      commandWords = Arrays.stream(commandWords).filter(s->s.length()>0).toArray(String[]::new);
-      for (int i = 2; i < commandWords.length; i++){
+      commandWords = Arrays.stream(commandWords).filter(s -> s.length() > 0).toArray(String[]::new);
+      for (int i = 2; i < commandWords.length; i++) {
         boolean wrappedInQuotes = false;
         if (commandWords[i].startsWith("'") && commandWords[i].endsWith("'")) {
           wrappedInQuotes = true;
@@ -331,7 +330,7 @@ public class OConsoleApplication {
           wrappedInQuotes = true;
         }
 
-        if (wrappedInQuotes){
+        if (wrappedInQuotes) {
           commandWords[i] = commandWords[i].substring(1, commandWords[i].length() - 1);
         }
       }

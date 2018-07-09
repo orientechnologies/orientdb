@@ -98,7 +98,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
@@ -1478,46 +1477,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       }
     }
     return rid.getClusterId();
-  }
-
-  /**
-   * This method is internal, it can be subject to signature change or be removed, do not use.
-   *
-   * @Internal
-   */
-  public boolean executeHideRecord(OIdentifiable record, final OPERATION_MODE iMode) {
-    checkOpenness();
-    checkIfActive();
-
-    final ORecordId rid = (ORecordId) record.getIdentity();
-
-    if (rid == null)
-      throw new ODatabaseException(
-          "Cannot hide record because it has no identity. Probably was created from scratch or contains projections of fields rather than a full record");
-
-    if (!rid.isValid())
-      return false;
-
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.getClusterId()));
-
-    getMetadata().makeThreadLocalSchemaSnapshot();
-    if (record instanceof ODocument)
-      ODocumentInternal.checkClass((ODocument) record, this);
-    ORecordSerializationContext.pushContext();
-    try {
-
-      final OStorageOperationResult<Boolean> operationResult;
-      operationResult = getStorage().hideRecord(rid, iMode.ordinal(), null);
-
-      // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
-      if (!operationResult.isMoved())
-        getLocalCache().deleteRecord(rid);
-
-      return operationResult.getResult();
-    } finally {
-      ORecordSerializationContext.pullContext();
-      getMetadata().clearThreadLocalSchemaSnapshot();
-    }
   }
 
   public ODatabaseDocumentAbstract begin() {

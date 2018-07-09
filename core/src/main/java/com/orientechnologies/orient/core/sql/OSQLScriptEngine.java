@@ -29,7 +29,12 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OBasicLegacyResultSet;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 
-import javax.script.*;
+import javax.script.Bindings;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
+import javax.script.ScriptException;
+import javax.script.SimpleBindings;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;

@@ -37,7 +37,7 @@ public class OConsoleCommandStream implements OCommandStream {
 
   private Character nextCharacter;
   private State     state;
-  private int nestingLevel = 0;
+  private int       nestingLevel = 0;
 
   private enum State {
     TEXT, SINGLE_QUOTE_STRING, DOUBLE_QUOTE_STRING, SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT, HYPHEN, SLASH, CLOSING_ASTERISK, ESCAPING_STRING

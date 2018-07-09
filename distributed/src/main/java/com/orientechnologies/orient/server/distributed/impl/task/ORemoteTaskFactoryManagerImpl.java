@@ -21,7 +21,11 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteServerController;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -33,7 +37,7 @@ import java.util.Collection;
  */
 public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager {
   private final ODistributedServerManager dManager;
-  private ORemoteTaskFactory[] factories = new ODefaultRemoteTaskFactoryV0[3];
+  private       ORemoteTaskFactory[]      factories = new ODefaultRemoteTaskFactoryV0[3];
 
   public ORemoteTaskFactoryManagerImpl(final ODistributedServerManager dManager) {
     this.dManager = dManager;
