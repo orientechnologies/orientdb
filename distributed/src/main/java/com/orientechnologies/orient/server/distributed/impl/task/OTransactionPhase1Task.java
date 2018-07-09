@@ -75,10 +75,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         }
         break;
       case ORecordOperation.UPDATED:        
-        byte[] deltaRec = ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), true);
-        ORecord tmp = ORecordSerializerNetworkV37.INSTANCE.fromStream(deltaRec, null, null);
-        
-        
+        byte[] deltaRec = ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), true);                       
         request.setRecord(deltaRec);
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;

@@ -16,10 +16,7 @@
 package com.orientechnologies.orient.core.delta;
 
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,7 +26,12 @@ import java.util.Map;
  */
 public class ODocumentDelta {
   
-  public Map<String, Object> fields = new HashMap<>();
+  protected Map<String, Object> fields = new HashMap<>();
+  private final ODocumentDeltaSerializer serializer;
+  
+  public ODocumentDelta(){
+    this.serializer = new ODocumentDeltaSerializerV1();
+  }
   
   public <T> T field(String name){
     return (T)fields.get(name);
@@ -45,42 +47,11 @@ public class ODocumentDelta {
   
   public void setIdentity(ORID identity){
     field("i", identity);
-  }
-  
-  private void serializeString(BytesContainer bytes, String value){
-    byte[] stringBytes = HelperClasses.bytesFromString(value);
-    OVarIntSerializer.write(bytes, stringBytes.length);
-    int start = bytes.offset;
-    bytes.alloc(stringBytes.length);
-    System.arraycopy(stringBytes, 0, bytes.bytes, start, stringBytes.length);
-  }
-  
-  private String deserializeString(BytesContainer bytes){
-    int stringLength = OVarIntSerializer.readAsInteger(bytes);
-    byte[] stringBytes = new byte[stringLength];
-    System.arraycopy(bytes.bytes, stringLength, stringBytes, 0, stringLength);
-    String retValue = HelperClasses.stringFromBytes(stringBytes, 0, stringLength);
-    bytes.offset += stringLength;
-    return retValue;
-  }
-  
-  private void serializeValue(Object value, BytesContainer bytes){
-    
-  }
+  }        
   
   public byte[] serialize(){
-    BytesContainer bytes = new BytesContainer();
-    for (Map.Entry<String, Object> entry : fields.entrySet()){
-      String fieldName = entry.getKey();
-      Object fieldValue = entry.getValue();      
-      serializeString(bytes, fieldName);
-      OType type = OType.getTypeByClass(fieldValue.getClass());
-      OVarIntSerializer.write(bytes, type.getId());
-      serializeValue(fieldValue, bytes);
-    }
-    
-    return bytes.fitBytes();
-  }
+    return serializer.toStream(this);        
+  }   
   
   public void deserialize(BytesContainer bytes){
     

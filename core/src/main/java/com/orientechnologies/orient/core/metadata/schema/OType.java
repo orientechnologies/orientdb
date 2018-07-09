@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -108,13 +109,15 @@ public enum OType {
 
   LINKBAG("LinkBag", 22, ORidBag.class, new Class<?>[] { ORidBag.class }),
 
-  ANY("Any", 23, null, new Class<?>[] {});
+  ANY("Any", 23, null, new Class<?>[] {}),
+  
+  DELTA_RECORD("DeltaRecord", 24, ODocumentDelta.class, new Class<?>[] { ODocumentDelta.class });
 
   // Don't change the order, the type discover get broken if you change the order.
   protected static final OType[] TYPES = new OType[] { EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, CUSTOM, EMBEDDED, STRING,
       DATETIME };
 
-  protected static final OType[]              TYPES_BY_ID    = new OType[24];
+  protected static final OType[]              TYPES_BY_ID    = new OType[25];
   // Values previosly stored in javaTypes
   protected static final Map<Class<?>, OType> TYPES_BY_CLASS = new HashMap<Class<?>, OType>();
 
@@ -153,6 +156,7 @@ public enum OType {
     TYPES_BY_CLASS.put(ORecordLazyList.class, LINKLIST);
     TYPES_BY_CLASS.put(OTrackedMap.class, EMBEDDEDMAP);
     TYPES_BY_CLASS.put(ORecordLazyMap.class, LINKMAP);
+    TYPES_BY_CLASS.put(ODocumentDelta.class, DELTA_RECORD);
     BYTE.castable.add(BOOLEAN);
     SHORT.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE }));
     INTEGER.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE, SHORT }));
