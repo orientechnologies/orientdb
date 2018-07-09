@@ -141,7 +141,7 @@ public class HelperClasses {
       return new ORecordId(clusterId, clusterPos);
   }
 
-  protected static String stringFromBytes(final byte[] bytes, final int offset, final int len) {
+  public static String stringFromBytes(final byte[] bytes, final int offset, final int len) {
     try {
       return new String(bytes, offset, len, CHARSET_UTF_8);
     } catch (UnsupportedEncodingException e) {
@@ -149,7 +149,7 @@ public class HelperClasses {
     }
   }
 
-  protected static byte[] bytesFromString(final String toWrite) {
+  public static byte[] bytesFromString(final String toWrite) {
     try {
       return toWrite.getBytes(CHARSET_UTF_8);
     } catch (UnsupportedEncodingException e) {

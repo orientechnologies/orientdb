@@ -1572,9 +1572,9 @@ public class ODocument extends ORecordAbstract
       ODocumentDelta from = (ODocumentDelta)fromObj;
       for (Map.Entry<String, Object> field : from.fields.entrySet()){
         final String fieldName = field.getKey();
-        final ODocumentDelta updateDoc = (ODocumentDelta)from.field(fieldName);
+        final ODocumentDelta updateDoc = from.field(fieldName);
         Object deltaVal = updateDoc.field("v");
-        UpdateDeltaValueType deltaType = UpdateDeltaValueType.fromOrd((Byte)updateDoc.field("t"));
+        UpdateDeltaValueType deltaType = UpdateDeltaValueType.fromOrd(updateDoc.field("t"));
         
         if (deltaType == UpdateDeltaValueType.UPDATE || deltaType == UpdateDeltaValueType.CHANGE){
           if (
@@ -1595,7 +1595,7 @@ public class ODocument extends ORecordAbstract
           int removed = 0;
           for (int i = 0; i < deltaList.size(); i++){
             ODocumentDelta deltaUpdateListElement = (ODocumentDelta)deltaList.get(i);
-            UpdateDeltaValueType listElementUpdateType = UpdateDeltaValueType.fromOrd((Byte)deltaUpdateListElement.field("t"));
+            UpdateDeltaValueType listElementUpdateType = UpdateDeltaValueType.fromOrd(deltaUpdateListElement.field("t"));
             Object val;
             int index;
             switch (listElementUpdateType){            
@@ -1605,19 +1605,19 @@ public class ODocument extends ORecordAbstract
                 break;
               case LIST_ELEMENT_CHANGE:
                 val = deltaUpdateListElement.field("v");
-                index = (int)deltaUpdateListElement.field("i");
+                index = deltaUpdateListElement.field("i");
                 originalList.set(index, val);
                 break;
               case LIST_ELEMENT_REMOVE:
-                index = (int)deltaUpdateListElement.field("i");
+                index = deltaUpdateListElement.field("i");
                 originalList.remove(index - removed++);                
                 break;
               case LIST_ELEMENT_UPDATE:
-                ODocumentDelta deltaValue = (ODocumentDelta)deltaUpdateListElement.field("v");
-                index = (int)deltaUpdateListElement.field("i");
+                ODocumentDelta deltaValue = deltaUpdateListElement.field("v");
+                index = deltaUpdateListElement.field("i");
                 Object originalVal = originalList.get(index);                                
                 //here deltaDeltaVal can be null, then we want to use valDoc. This is case with list of documents
-                UpdateDeltaValueType deltaValueType = UpdateDeltaValueType.fromOrd((Byte)deltaValue.field("t"));
+                UpdateDeltaValueType deltaValueType = UpdateDeltaValueType.fromOrd(deltaValue.field("t"));
                 Object deltaPassObject = deltaValue;
                 if (deltaValueType == UpdateDeltaValueType.LIST_UPDATE){
                   deltaPassObject = deltaValue.field("v");
@@ -1640,13 +1640,13 @@ public class ODocument extends ORecordAbstract
         Object fromElement = fromList.get(i);
         if (fromElement instanceof ODocumentDelta){
           ODocumentDelta fromDoc = (ODocumentDelta)fromElement;
-          UpdateDeltaValueType type = UpdateDeltaValueType.fromOrd((byte)fromDoc.field("t"));
+          UpdateDeltaValueType type = UpdateDeltaValueType.fromOrd(fromDoc.field("t"));
           if (type == UpdateDeltaValueType.LIST_ELEMENT_ADD){
             Object addVal = fromDoc.field("v");
             toList.add(addVal);
             continue;
           }
-          int index = (int)fromDoc.field("i");
+          int index = fromDoc.field("i");
           if (type == UpdateDeltaValueType.LIST_ELEMENT_CHANGE){
             Object val = fromDoc.field("v");
             toList.set(index, val);
@@ -1661,7 +1661,7 @@ public class ODocument extends ORecordAbstract
             fromElement = fromDoc.field("v");
           }
           fromDoc = (ODocumentDelta)fromElement;
-          type = UpdateDeltaValueType.fromOrd((byte)fromDoc.field("t"));
+          type = UpdateDeltaValueType.fromOrd(fromDoc.field("t"));
           if (type == UpdateDeltaValueType.CHANGE){
             toElement = fromDoc.field("v");
           }
@@ -1741,8 +1741,8 @@ public class ODocument extends ORecordAbstract
   }
   
   public ODocument mergeDelta(final ODocumentDelta delta){
-    ODocumentDelta updateDoc = (ODocumentDelta)delta.field("u");
-    ODocumentDelta deleteDoc = (ODocumentDelta)delta.field("d");
+    ODocumentDelta updateDoc = delta.field("u");
+    ODocumentDelta deleteDoc = delta.field("d");
     mergeUpdateDelta(updateDoc);
     mergeDeleteDelta(deleteDoc);
     return this;
@@ -3575,6 +3575,7 @@ public class ODocument extends ORecordAbstract
     ret.field("d", deleted);    
     
     ORecordId id = (ORecordId)getIdentity();
+    ret.setIdentity(id);
     
     return ret;
   }
