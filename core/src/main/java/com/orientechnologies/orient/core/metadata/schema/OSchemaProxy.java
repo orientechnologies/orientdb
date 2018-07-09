@@ -143,7 +143,6 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     delegate.dropView(database, name);
   }
 
-
   public OClass getClass(final Class<?> iClass) {
     if (iClass == null)
       return null;
@@ -174,6 +173,11 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
       return null;
 
     return delegate.getView(name);
+  }
+
+  @Override
+  public OView createView(String viewName, String statement) {
+    return createView(database, viewName, statement, false);
   }
 
   public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable) {

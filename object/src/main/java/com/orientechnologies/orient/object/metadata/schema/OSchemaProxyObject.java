@@ -143,7 +143,6 @@ public class OSchemaProxyObject implements OSchemaObject {
     underlying.dropView(name);
   }
 
-
   @Override
   public OClass getClass(Class<?> iClass) {
     return underlying.getClass(iClass);
@@ -182,6 +181,11 @@ public class OSchemaProxyObject implements OSchemaObject {
   @Override
   public OView getView(String name) {
     return underlying.getView(name);
+  }
+
+  @Override
+  public OView createView(String viewName, String statement) {
+    return underlying.createView(viewName, statement);
   }
 
   public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable) {
