@@ -68,7 +68,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   protected final Map<String, OClass>  classes           = new HashMap<String, OClass>();
   protected final Map<Integer, OClass> clustersToClasses = new HashMap<Integer, OClass>();
 
-  protected final Map<String, OView> views           = new HashMap<String, OView>();
+  protected final Map<String, OView>  views           = new HashMap<String, OView>();
   protected final Map<Integer, OView> clustersToViews = new HashMap<Integer, OView>();
 
   private final OClusterSelectionFactory clusterSelectionFactory = new OClusterSelectionFactory();
@@ -253,8 +253,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   public abstract OClass createClass(ODatabaseDocumentInternal database, final String className, int clusters,
       OClass... superClasses);
 
-  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement,
-      boolean updatable);
+  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable);
 
   public abstract void checkEmbedded();
 
@@ -522,55 +521,33 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       }
       // REGISTER ALL THE CLASSES
       clustersToClasses.clear();
-      clustersToViews.clear();
 
       final Map<String, OClass> newClasses = new HashMap<String, OClass>();
       final Map<String, OView> newViews = new HashMap<String, OView>();
 
       Collection<ODocument> storedClasses = document.field("classes");
       for (ODocument c : storedClasses) {
-
         String name = c.field("name");
-        if (Boolean.TRUE.equals(c.field("view"))) {
-          OViewImpl view;
-          if (views.containsKey(name.toLowerCase(Locale.ENGLISH))) {
-            view = (OViewImpl) views.get(name.toLowerCase(Locale.ENGLISH));
-            view.fromStream(c);
-          } else {
-            view = createViewInstance(c);
-            view.fromStream();
-          }
 
-          newViews.put(view.getName().toLowerCase(Locale.ENGLISH), view);
-
-          if (view.getShortName() != null)
-            newViews.put(view.getShortName().toLowerCase(Locale.ENGLISH), view);
-
-          addClusterViewMap(view);
+        OClassImpl cls;
+        if (classes.containsKey(name.toLowerCase(Locale.ENGLISH))) {
+          cls = (OClassImpl) classes.get(name.toLowerCase(Locale.ENGLISH));
+          cls.fromStream(c);
         } else {
-          OClassImpl cls;
-          if (classes.containsKey(name.toLowerCase(Locale.ENGLISH))) {
-            cls = (OClassImpl) classes.get(name.toLowerCase(Locale.ENGLISH));
-            cls.fromStream(c);
-          } else {
-            cls = createClassInstance(c);
-            cls.fromStream();
-          }
-
-          newClasses.put(cls.getName().toLowerCase(Locale.ENGLISH), cls);
-
-          if (cls.getShortName() != null)
-            newClasses.put(cls.getShortName().toLowerCase(Locale.ENGLISH), cls);
-
-          addClusterClassMap(cls);
+          cls = createClassInstance(c);
+          cls.fromStream();
         }
+
+        newClasses.put(cls.getName().toLowerCase(Locale.ENGLISH), cls);
+
+        if (cls.getShortName() != null)
+          newClasses.put(cls.getShortName().toLowerCase(Locale.ENGLISH), cls);
+
+        addClusterClassMap(cls);
       }
 
       classes.clear();
       classes.putAll(newClasses);
-
-      views.clear();
-      views.putAll(newViews);
 
       // REBUILD THE INHERITANCE TREE
       Collection<String> superClassNames;
@@ -605,6 +582,35 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
           cls.setSuperClassesInternal(superClasses);
         }
       }
+
+      //VIEWS
+
+      clustersToViews.clear();
+      Collection<ODocument> storedViews = document.field("views");
+      for (ODocument v : storedViews) {
+
+        String name = v.field("name");
+
+        OViewImpl view;
+        if (views.containsKey(name.toLowerCase(Locale.ENGLISH))) {
+          view = (OViewImpl) views.get(name.toLowerCase(Locale.ENGLISH));
+          view.fromStream(v);
+        } else {
+          view = createViewInstance(v);
+          view.fromStream();
+        }
+
+        newViews.put(view.getName().toLowerCase(Locale.ENGLISH), view);
+
+        if (view.getShortName() != null)
+          newViews.put(view.getShortName().toLowerCase(Locale.ENGLISH), view);
+
+        addClusterViewMap(view);
+
+      }
+
+      views.clear();
+      views.putAll(newViews);
 
       if (document.containsField("blobClusters"))
         blobClusters = document.field("blobClusters");
