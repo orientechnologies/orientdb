@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
@@ -101,6 +102,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
       res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
     } catch (ORecordNotFoundException e) {
+      OLogManager.instance().info(this, "Update of not yet existing record: %s re-enqueuing first phase", e.getRid());
+
       //Do nothing this will cause the transaction to re-enque and wait for the next operation that will insert the missing data.
     }
     if (res1 == null) {

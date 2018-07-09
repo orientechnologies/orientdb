@@ -6,6 +6,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
@@ -560,6 +561,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (OConcurrentCreateException ex) {
       if (retryCount >= 0 || retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
+          OLogManager.instance().info(this, "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue request",
+              ex.getExpectedRid().getClusterId(), ex.getActualRid().getClusterPosition());
           return false;
         }
       }
@@ -567,6 +570,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (OConcurrentModificationException ex) {
       if (retryCount >= 0 || retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getEnhancedRecordVersion() > ex.getEnhancedDatabaseVersion()) {
+          OLogManager.instance()
+              .info(this, "Persistent version not match, record:%s expected:%s actual:%s waiting for re-enqueue request",
+                  ex.getRid(), ex.getEnhancedRecordVersion(), ex.getEnhancedDatabaseVersion());
           return false;
         }
       }
@@ -604,7 +610,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return false;
   }
 
-  public void rollback2pc(ODistributedRequestId transactionId) {
+  public boolean rollback2pc(ODistributedRequestId transactionId) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
     if (txContext != null) {
@@ -613,7 +619,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
       OLiveQueryHook.removePendingDatabaseOps(this);
       OLiveQueryHookV2.removePendingDatabaseOps(this);
+      return true;
     }
+    return false;
   }
 
   public void internalCommit2pc(ONewDistributedTxContextImpl txContext) {
