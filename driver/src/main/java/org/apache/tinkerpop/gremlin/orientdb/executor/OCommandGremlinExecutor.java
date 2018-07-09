@@ -127,7 +127,8 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
             } else {
                 OInternalResultSet resultSet = new OInternalResultSet();
                 OResultInternal item = new OResultInternal();
-                item.setProperty("value", eval);
+                item.setProperty("value", this.transformer.toResult(eval));
+                resultSet.add(item);
                 return resultSet;
             }
 
