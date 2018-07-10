@@ -166,6 +166,12 @@ public class ONewDistributedTransactionManager {
         sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
         throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId, 0);
       }
+
+      for (OTransactionResultPayload result : responseManager.getAllResponses()) {
+        if (result.getResponseType() == OTxException.ID) {
+          OLogManager.instance().warn(this, "One node on error", ((OTxException) result).getException());
+        }
+      }
     } else {
       List<OTransactionResultPayload> results = responseManager.getAllResponses();
       //If quorum is not reached is enough on a Lock timeout to trigger a deadlock retry.
