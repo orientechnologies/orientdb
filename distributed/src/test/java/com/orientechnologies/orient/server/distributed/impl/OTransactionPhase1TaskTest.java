@@ -6,8 +6,10 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -138,6 +140,7 @@ public class OTransactionPhase1TaskTest {
     doc.field("one", "value");
     session.save(doc);
     ODocument doc1 = new ODocument("TestClassInd");
+    ORecordInternal.setIdentity(doc1, new ORecordId(session.getClass("TestClassInd").getDefaultClusterId(), 1));
     doc1.field("one", "value");
 
     List<ORecordOperation> operations = new ArrayList<>();

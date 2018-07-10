@@ -105,6 +105,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
         hasResponse = true;
     } else {
       if (!((ODatabaseDocumentDistributed) database).rollback2pc(transactionId)) {
+        retryCount++;
         if (retryCount < database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
           OLogManager.instance()
               .info(OTransactionPhase2Task.this, "Received second phase but not yet first phase, re-enqueue second phase");
