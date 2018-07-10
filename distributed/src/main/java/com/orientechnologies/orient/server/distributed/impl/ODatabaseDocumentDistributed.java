@@ -566,6 +566,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           return false;
         }
       }
+      localDistributedDatabase.registerTxContext(requestId, txContext);
       throw ex;
     } catch (OConcurrentModificationException ex) {
       if (retryCount >= 0 || retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
@@ -576,6 +577,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           return false;
         }
       }
+      localDistributedDatabase.registerTxContext(requestId, txContext);
       throw ex;
     }
     localDistributedDatabase.registerTxContext(requestId, txContext);
@@ -638,6 +640,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     getStorageDistributed().resetLastValidBackup();
     acquireLocksForTx(txContext.getTransaction(), txContext);
 
+    //This is moved before checks because also the coordinator first node allocate before checks
+    if (!local) {
+      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(txContext.getTransaction());
+    }
+
     for (Map.Entry<String, OTransactionIndexChanges> change : txContext.getTransaction().getIndexOperations().entrySet()) {
       OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
@@ -683,11 +690,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           throw new OConcurrentModificationException(entry.getRID(), persistentVersion, changeVersion, entry.getType());
         }
       }
-    }
-
-    //This has to be the last one because does persistent opertations
-    if (!local) {
-      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(txContext.getTransaction());
     }
 
   }
