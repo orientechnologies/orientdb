@@ -1570,7 +1570,7 @@ public class ODocument extends ORecordAbstract
     if (toObj instanceof ODocument && fromObj instanceof ODocumentDelta){      
       ODocument to = (ODocument)toObj;
       ODocumentDelta from = (ODocumentDelta)fromObj;
-      for (Map.Entry<String, Object> field : from.fields.entrySet()){
+      for (Map.Entry<String, Object> field : from.fields()){
         final String fieldName = field.getKey();
         final ODocumentDelta updateDoc = from.field(fieldName);
         Object deltaVal = updateDoc.field("v");
@@ -1698,18 +1698,14 @@ public class ODocument extends ORecordAbstract
     mergeUpdateTree(this, iOther);
     
     return this;
-  }
-  
-  private static boolean isLeaf(ODocumentDelta doc){
-    return doc.fields.size() == 0;
-  }
+  }    
   
   private static void mergeDeleteTree(final ODocument to, final ODocumentDelta from){
-    for (Map.Entry<String, Object> field : from.fields.entrySet()){
+    for (Map.Entry<String, Object> field : from.fields()){
       final String fieldName = field.getKey();
       final Object fieldVal = field.getValue();
       if (!(fieldVal instanceof ODocumentDelta) ||
-          isLeaf((ODocumentDelta)fieldVal)){
+          ((ODocumentDelta)fieldVal).isLeaf()){
         to.removeField(fieldName);
       }
       else{

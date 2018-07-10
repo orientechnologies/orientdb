@@ -7,6 +7,8 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.delta.ODocumentDelta;
+import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializer;
+import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializerV1;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -14,6 +16,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
@@ -438,6 +441,14 @@ public class ODocumentTest {
       doc.field(fieldName, testValue);
       doc.removeField(removeField);
       ODocumentDelta dc = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(dc);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(dc, dcCopy);
+      
       ODocumentDelta updatePart = dc.field("u");              
             
       originalDoc.mergeUpdateDelta(updatePart);
@@ -486,6 +497,14 @@ public class ODocumentTest {
       doc.field(nestedDocField, nestedDoc);
 
       ODocumentDelta dc = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(dc);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(dc, dcCopy);
+      
       dc = dc.field("u");
       
       doc.mergeUpdateDelta(dc);
@@ -528,6 +547,14 @@ public class ODocumentTest {
       doc.field(fieldName, newArray);
 
       ODocumentDelta delta = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(delta);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(delta, dcCopy);
+      
       delta = delta.field("u");
       
       originalDoc.mergeUpdateDelta(delta);
@@ -575,6 +602,14 @@ public class ODocumentTest {
       doc.field(fieldName, originalValue);
 
       ODocumentDelta delta = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(delta);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(delta, dcCopy);
+      
       delta = delta.field("u");      
       
       originalDoc.mergeUpdateDelta(delta);
@@ -629,6 +664,14 @@ public class ODocumentTest {
       originalValue.set(1, testDoc);
       doc.field(fieldName, originalValue);
       ODocumentDelta delta = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(delta);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(delta, dcCopy);
+      
       delta = delta.field("u");
       
       originalDoc.mergeUpdateDelta(delta);
@@ -686,12 +729,23 @@ public class ODocumentTest {
       doc.field(fieldName, originalValue);
 
       ODocumentDelta delta = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(delta);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(delta, dcCopy);
+      
       delta = delta.field("u");
-      
-      
+            
       originalDoc.mergeUpdateDelta(delta);
       List<List<ODocument>> checkList = originalDoc.field(fieldName);
       assertEquals("two", checkList.get(0).get(0).field(variableField));
+    }
+    catch (Exception e){
+      e.printStackTrace();
+      assertNotNull(null);
     }
     finally{
       if (db != null)
@@ -745,6 +799,14 @@ public class ODocumentTest {
       doc.field(fieldName, newFirstLevelList);
 
       ODocumentDelta delta = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(delta);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(delta, dcCopy);
+      
       delta = delta.field("u");
       
       
@@ -808,6 +870,14 @@ public class ODocumentTest {
       originalValue.set(1, testDoc);
       doc.field(fieldName, originalValue);
       ODocumentDelta delta = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(delta);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(delta, dcCopy);
+      
       delta = delta.field("u");
       
       originalDoc.mergeUpdateDelta(delta);
@@ -852,6 +922,14 @@ public class ODocumentTest {
       doc.field(fieldName, newArray);
 
       ODocumentDelta delta = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(delta);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(delta, dcCopy);
+      
       delta = delta.field("u");      
       
       originalDoc.mergeUpdateDelta(delta);
@@ -900,6 +978,14 @@ public class ODocumentTest {
       doc.field(fieldName, originalList);
 
       ODocumentDelta delta = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(delta);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(delta, dcCopy);
+      
       delta = delta.field("u");      
       
       originalDoc.mergeUpdateDelta(delta);
@@ -943,6 +1029,14 @@ public class ODocumentTest {
       doc.field(fieldName, newArray);
 
       ODocumentDelta delta = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(delta);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(delta, dcCopy);
+      
       delta = delta.field("u");      
       
       originalDoc.mergeUpdateDelta(delta);
@@ -983,6 +1077,13 @@ public class ODocumentTest {
       
       doc.field(fieldName, testValue);      
       ODocumentDelta dc = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(dc);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(dc, dcCopy);
 
       ODocumentDelta updatePart = dc.field("u");      
             
@@ -1023,6 +1124,13 @@ public class ODocumentTest {
       
       doc.removeField(fieldName);
       ODocumentDelta dc = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(dc);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(dc, dcCopy);
 
       ODocumentDelta deletePart = dc.field("d");
             
@@ -1072,6 +1180,13 @@ public class ODocumentTest {
       doc.removeField(fieldName);
       rootDoc.field(nestedFieldName, doc);
       ODocumentDelta dc = rootDoc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(dc);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(dc, dcCopy);
 
       ODocumentDelta deletePart = dc.field("d");
             
@@ -1125,6 +1240,14 @@ public class ODocumentTest {
       originalValue.set(1, testDoc);
       doc.field(fieldName, originalValue);
       ODocumentDelta delta = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      byte[] stream = ddSer.toStream(delta);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(delta, dcCopy);
+      
       delta = delta.field("u");
       
       originalDoc.mergeUpdateDelta(delta);

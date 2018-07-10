@@ -708,6 +708,35 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return clazz;
   }  
 
+  protected int writeLinkMap(final BytesContainer bytes, final Map<Object, OIdentifiable> map) {
+    final boolean disabledAutoConversion =
+        map instanceof ORecordLazyMultiValue && ((ORecordLazyMultiValue) map).isAutoConvertToRecord();
+
+    if (disabledAutoConversion)
+      // AVOID TO FETCH RECORD
+      ((ORecordLazyMultiValue) map).setAutoConvertToRecord(false);
+
+    try {
+      final int fullPos = OVarIntSerializer.write(bytes, map.size());
+      for (Map.Entry<Object, OIdentifiable> entry : map.entrySet()) {
+        // TODO:check skip of complex types
+        // FIXME: changed to support only string key on map
+        final OType type = OType.STRING;
+        writeOType(bytes, bytes.alloc(1), type);
+        writeString(bytes, entry.getKey().toString());
+        if (entry.getValue() == null)
+          writeNullLink(bytes);
+        else
+          writeOptimizedLink(bytes, entry.getValue());
+      }
+      return fullPos;
+
+    } finally {
+      if (disabledAutoConversion)
+        ((ORecordLazyMultiValue) map).setAutoConvertToRecord(true);
+    }
+  }
+  
   protected Map<Object, OIdentifiable> readLinkMap(final BytesContainer bytes, final ODocument document, boolean justRunThrough) {
     int size = OVarIntSerializer.readAsInteger(bytes);
     ORecordLazyMap result = null;
