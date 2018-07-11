@@ -20,13 +20,12 @@ import java.util.Set;
 
 public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
-  private final ODistributedDatabaseImpl shared;
-  private final ODistributedRequestId    id;
-  private final OTransactionInternal     tx;
-  private final long                     startedOn;
-  private final    List<ORID>   lockedRids = new ArrayList<>();
-  private final    List<Object> lockedKeys = new ArrayList<>();
-  private volatile boolean      began      = true;
+  private final    ODistributedDatabaseImpl shared;
+  private final    ODistributedRequestId    id;
+  private final    OTransactionInternal     tx;
+  private final    long                     startedOn;
+  private final    List<ORID>               lockedRids = new ArrayList<>();
+  private final    List<Object>             lockedKeys = new ArrayList<>();
 
   public ONewDistributedTxContextImpl(ODistributedDatabaseImpl shared, ODistributedRequestId reqId, OTransactionInternal tx) {
     this.shared = shared;
@@ -67,20 +66,11 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public synchronized void begin(ODatabaseDocumentInternal database, boolean local) {
-    try {
-      ((ODatabaseDocumentDistributed) database).internalBegin2pc(this, local);
-      began = true;
-    } catch (RuntimeException e) {
-      began = false;
-      throw e;
-    }
+    ((ODatabaseDocumentDistributed) database).internalBegin2pc(this, local);
   }
 
   @Override
   public synchronized void commit(ODatabaseDocumentInternal database) {
-    if (!began) {
-      begin(database, false);
-    }
     ((ODatabaseDocumentDistributed) database).internalCommit2pc(this);
   }
 
