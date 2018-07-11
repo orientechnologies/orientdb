@@ -603,8 +603,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (OConcurrentCreateException ex) {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
-          OLogManager.instance().info(this, "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue request",
-              ex.getExpectedRid(), ex.getActualRid());
+          OLogManager.instance()
+              .info(this, "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue request", ex.getExpectedRid(),
+                  ex.getActualRid());
           txContext.unlock();
           return false;
         }
@@ -623,6 +624,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
       localDistributedDatabase.registerTxContext(requestId, txContext);
       throw ex;
+    } catch (RuntimeException r) {
+      localDistributedDatabase.registerTxContext(requestId, txContext);
+      throw r;
     }
     localDistributedDatabase.registerTxContext(requestId, txContext);
     return true;
