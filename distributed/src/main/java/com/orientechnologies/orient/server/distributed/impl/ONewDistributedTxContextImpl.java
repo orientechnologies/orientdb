@@ -72,7 +72,6 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
       began = true;
     } catch (RuntimeException e) {
       began = false;
-      unlock();
       throw e;
     }
   }

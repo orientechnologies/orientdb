@@ -109,7 +109,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     if (res1 == null) {
       retryCount++;
       ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
-          .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this);
+          .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this, retryCount);
       hasResponse = false;
       return null;
     }
