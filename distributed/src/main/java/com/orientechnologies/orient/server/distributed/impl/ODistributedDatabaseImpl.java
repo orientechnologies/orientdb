@@ -20,8 +20,6 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
-import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.concur.lock.OSimpleLockManager;
 import com.orientechnologies.common.concur.lock.OSimpleLockManagerImpl;
 import com.orientechnologies.common.exception.OException;
@@ -40,9 +38,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -75,20 +70,21 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DIST
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedDatabaseImpl implements ODistributedDatabase {
-  public static final  String           DISTRIBUTED_SYNC_JSON_FILENAME = "distributed-sync.json";
-  private static final HashSet<Integer> ALL_QUEUES                     = new HashSet<Integer>();
-  protected final ODistributedAbstractPlugin     manager;
-  protected final ODistributedMessageServiceImpl msgService;
-  protected final String                         databaseName;
-  protected       ODistributedDatabaseRepairer   repairer;
-  protected       ODistributedSyncConfiguration  syncConfiguration;
-  protected ConcurrentHashMap<ORID, ODistributedLock> lockManager = new ConcurrentHashMap<ORID, ODistributedLock>(256);
+  public static final  String                                    DISTRIBUTED_SYNC_JSON_FILENAME = "distributed-sync.json";
+  private static final HashSet<Integer>                          ALL_QUEUES                     = new HashSet<Integer>();
+  protected final      ODistributedAbstractPlugin                manager;
+  protected final      ODistributedMessageServiceImpl            msgService;
+  protected final      String                                    databaseName;
+  protected            ODistributedDatabaseRepairer              repairer;
+  protected            ODistributedSyncConfiguration             syncConfiguration;
+  protected            ConcurrentHashMap<ORID, ODistributedLock> lockManager                    = new ConcurrentHashMap<ORID, ODistributedLock>(
+      256);
 
   protected       ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> activeTxContexts = new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext>(
       64);
   protected final List<ODistributedWorker>                                        workerThreads    = new ArrayList<ODistributedWorker>();
-  protected ODistributedWorker lockThread;
-  protected ODistributedWorker nowaitThread;
+  protected       ODistributedWorker                                              lockThread;
+  protected       ODistributedWorker                                              nowaitThread;
 
   private          AtomicLong                            totalSentRequests     = new AtomicLong();
   private          AtomicLong                            totalReceivedRequests = new AtomicLong();
@@ -211,10 +207,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
-  public void reEnqueue(final int senderNodeId, final long msgSequence, final String databaseName, final ORemoteTask payload) {
-    Orient.instance().submit(() -> {
-      processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false);
-    });
+  public void reEnqueue(final int senderNodeId, final long msgSequence, final String databaseName, final ORemoteTask payload,
+      int retryCount) {
+
+    Orient.instance().scheduleTask(new TimerTask() {
+      @Override
+      public void run() {
+        processRequest(new ODistributedRequest(getManager(), senderNodeId, msgSequence, databaseName, payload), false);
+      }
+    }, 10 * retryCount, 0);
   }
 
   /**
@@ -1134,7 +1135,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             currentResponseMgr.getExpectedNodes(), currentResponseMgr.getRespondingNodes(), iRequest);
       }
     }
-
 
     return currentResponseMgr.getFinalResponse();
   }
