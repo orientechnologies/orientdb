@@ -16,13 +16,16 @@
 package com.orientechnologies.orient.core.delta;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OSerializableWrapper;
+import com.orientechnologies.orient.core.storage.OStorage;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,13 +41,13 @@ import java.util.Set;
  *
  * @author marko
  */
-public class ODocumentDelta {
+public class ODocumentDelta implements OIdentifiable{
   
   protected Map<String, Object> fields = new HashMap<>();
-  private final ODocumentDeltaSerializer serializer;
+  private final ODocumentDeltaSerializerI serializer;
   
   public ODocumentDelta(){
-    this.serializer = new ODocumentDeltaSerializerV1();
+    this.serializer = ODocumentDeltaSerializer.getActiveSerializer();
   }
   
   public <T> T field(String name){
@@ -54,7 +57,8 @@ public class ODocumentDelta {
   public void field(String name, Object value){
     fields.put(name, value);
   }
-  
+    
+  @Override
   public ORID getIdentity(){
     return field("i");
   }
@@ -329,7 +333,53 @@ public class ODocumentDelta {
     hash = 67 * hash + Objects.hashCode(this.fields);
     return hash;
   }
-  
-  
-  
+
+  @Override
+  public int compareTo(OIdentifiable iOther) {
+    if (iOther == this)
+      return 0;
+
+    if (iOther == null)
+      return 1;
+
+    final int clusterId = getIdentity().getClusterId();
+    final int otherClusterId = iOther.getIdentity().getClusterId();
+    if (clusterId == otherClusterId) {
+      final long clusterPosition = getIdentity().getClusterPosition();
+      final long otherClusterPos = iOther.getIdentity().getClusterPosition();
+
+      return (clusterPosition < otherClusterPos) ? -1 : ((clusterPosition == otherClusterPos) ? 0 : 1);
+    } else if (clusterId > otherClusterId)
+      return 1;
+
+    return -1;
+  }
+
+  @Override
+  public int compare(OIdentifiable o1, OIdentifiable o2) {
+    return o1.compareTo(o2);
+  }
+
+  @Override
+  public <T extends ORecord> T getRecord() {
+    return null;
+  }
+
+  @Override
+  public void lock(boolean iExclusive) {    
+  }
+
+  @Override
+  public boolean isLocked() {
+    return false;
+  }
+
+  @Override
+  public OStorage.LOCKING_STRATEGY lockingStrategy() {
+    return OStorage.LOCKING_STRATEGY.NONE;
+  }
+
+  @Override
+  public void unlock() {    
+  }  
 }

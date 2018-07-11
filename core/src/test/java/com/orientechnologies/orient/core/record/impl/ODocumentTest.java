@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
+import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializerI;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -443,7 +444,7 @@ public class ODocumentTest {
       ODocumentDelta dc = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(dc);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
@@ -499,7 +500,7 @@ public class ODocumentTest {
       ODocumentDelta dc = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(dc);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
@@ -549,7 +550,7 @@ public class ODocumentTest {
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(delta);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
@@ -604,7 +605,7 @@ public class ODocumentTest {
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(delta);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
@@ -666,7 +667,7 @@ public class ODocumentTest {
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(delta);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
@@ -731,7 +732,7 @@ public class ODocumentTest {
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(delta);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
@@ -801,7 +802,7 @@ public class ODocumentTest {
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(delta);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
@@ -872,7 +873,7 @@ public class ODocumentTest {
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(delta);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
@@ -924,7 +925,7 @@ public class ODocumentTest {
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(delta);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
@@ -980,7 +981,7 @@ public class ODocumentTest {
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(delta);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
@@ -1031,7 +1032,7 @@ public class ODocumentTest {
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(delta);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
@@ -1079,7 +1080,7 @@ public class ODocumentTest {
       ODocumentDelta dc = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(dc);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
@@ -1126,7 +1127,7 @@ public class ODocumentTest {
       ODocumentDelta dc = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(dc);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
@@ -1182,7 +1183,7 @@ public class ODocumentTest {
       ODocumentDelta dc = rootDoc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(dc);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
@@ -1242,7 +1243,7 @@ public class ODocumentTest {
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
-      ODocumentDeltaSerializer ddSer = new ODocumentDeltaSerializerV1();
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
       byte[] stream = ddSer.toStream(delta);
       BytesContainer bytes = new BytesContainer(stream);
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);

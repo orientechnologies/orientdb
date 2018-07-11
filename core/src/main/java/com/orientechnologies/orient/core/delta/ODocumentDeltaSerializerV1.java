@@ -66,9 +66,13 @@ import java.util.TimeZone;
  *
  * @author mdjurovi
  */
-public class ODocumentDeltaSerializerV1 implements ODocumentDeltaSerializer{
+public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer{
 
 //  private ORecordSerializerBinaryV1 documentSerializer = new ORecordSerializerBinaryV1();
+  
+  protected ODocumentDeltaSerializerV1(){
+    
+  }
   
   @Override
   public byte[] toStream(ODocumentDelta delta) {

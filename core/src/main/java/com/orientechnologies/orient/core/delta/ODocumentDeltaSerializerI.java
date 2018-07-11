@@ -15,14 +15,15 @@
  */
 package com.orientechnologies.orient.core.delta;
 
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
+
 /**
  *
  * @author mdjurovi
  */
-public abstract class ODocumentDeltaSerializer implements ODocumentDeltaSerializerI{
+public interface ODocumentDeltaSerializerI {
   
-  public static ODocumentDeltaSerializerI getActiveSerializer(){
-    return new ODocumentDeltaSerializerV1();
-  }
+  byte[] toStream(ODocumentDelta delta);    
   
+  ODocumentDelta fromStream(BytesContainer bytes);
 }

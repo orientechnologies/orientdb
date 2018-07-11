@@ -28,9 +28,11 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
   }
 
   private void resolveTracking(ORecordOperation change) {
+    boolean detectedChange = false;
+    List<OClassIndexManager.IndexChange> changes = new ArrayList<>();
     if (change.getRecord() instanceof ODocument) {
-      ODocument rec = (ODocument) change.getRecord();
-      List<OClassIndexManager.IndexChange> changes = new ArrayList<>();
+      detectedChange = true;
+      ODocument rec = (ODocument) change.getRecord();      
       switch (change.getType()) {
       case ORecordOperation.CREATED:
 
@@ -56,7 +58,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         break;
       case ORecordOperation.UPDATED:
         if (change.getRecord() instanceof ODocument) {
-          ODocumentDelta deltaRecord = (ODocumentDelta) change.getRecord();
+          ODocumentDelta deltaRecord = (ODocumentDelta) change.getRecordContainer();
           ODocument original = database.load(deltaRecord.getIdentity());
           if (original == null)
             throw new ORecordNotFoundException(deltaRecord.getIdentity());
@@ -104,11 +106,41 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         break;
       default:
         break;
+      }      
+    }
+    else if (change.getRecordContainer() instanceof ODocumentDelta){
+      detectedChange = true;
+      switch (change.getType()) {
+      case ORecordOperation.UPDATED:
+        
+        ODocumentDelta deltaRecord = (ODocumentDelta) change.getRecordContainer();
+        ODocument original = database.load(deltaRecord.getIdentity());
+        if (original == null)
+          throw new ORecordNotFoundException(deltaRecord.getIdentity());
+        original = original.mergeDelta(deltaRecord);
+
+        ODocument updateDoc = original;
+        OLiveQueryHook.addOp(updateDoc, ORecordOperation.UPDATED, database);
+        OLiveQueryHookV2.addOp(updateDoc, ORecordOperation.UPDATED, database);
+        OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
+        if (clazz != null) {
+          OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
+          if (clazz.isFunction()) {
+            database.getSharedContext().getFunctionLibrary().updatedFunction(updateDoc);
+            Orient.instance().getScriptManager().close(database.getName());
+          }
+          if (clazz.isSequence()) {
+            ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(database, updateDoc);
+          }
+        }       
+        break;
       }
+    }
+    
+    if (detectedChange){
       for (OClassIndexManager.IndexChange indexChange : changes) {
         addIndexEntry(indexChange.index, indexChange.index.getName(), indexChange.operation, indexChange.key, indexChange.value);
       }
-
     }
   }
 }

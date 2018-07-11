@@ -7,11 +7,15 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.delta.ODocumentDelta;
+import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializer;
+import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializerI;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -174,8 +178,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         }
         break;
       case ORecordOperation.UPDATED: {
-          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
-          ORecordInternal.setRecordSerializer(record, database.getSerializer());
+          ODocumentDeltaSerializerI serializer = ODocumentDeltaSerializer.getActiveSerializer();
+          ODocumentDelta delta = serializer.fromStream(new BytesContainer(req.getRecord()));          
+          ORecordOperation op = new ORecordOperation(delta, type);
+          ops.add(op);
         }
         break;
       case ORecordOperation.DELETED:
@@ -186,10 +192,12 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         }
         break;
       }
-      ORecordInternal.setIdentity(record, (ORecordId) req.getId());
-      ORecordInternal.setVersion(record, req.getVersion());
-      ORecordOperation op = new ORecordOperation(record, type);
-      ops.add(op);
+      if (type == ORecordOperation.CREATED || type == ORecordOperation.DELETED){
+        ORecordInternal.setIdentity(record, (ORecordId) req.getId());
+        ORecordInternal.setVersion(record, req.getVersion());
+        ORecordOperation op = new ORecordOperation(record, type);
+        ops.add(op);
+      }
     }
     operations.clear();
   }

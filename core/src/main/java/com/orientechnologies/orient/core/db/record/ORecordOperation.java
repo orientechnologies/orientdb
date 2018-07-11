@@ -81,6 +81,10 @@ public class ORecordOperation implements Comparable {
   public ORecord getRecord() {
     return record != null ? record.getRecord() : null;
   }
+  
+  public OIdentifiable getRecordContainer(){
+    return record;
+  }
 
   public ORID getRID() {
     return record != null ? record.getIdentity() : null;
