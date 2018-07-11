@@ -5,8 +5,11 @@ import org.apache.tinkerpop.gremlin.LoadGraphWith;
 import org.apache.tinkerpop.gremlin.orientdb.OrientFactory;
 import org.apache.tinkerpop.gremlin.orientdb.OrientStandardGraph;
 import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.GraphTest;
 import org.apache.tinkerpop.gremlin.structure.TransactionTest;
+import org.apache.tinkerpop.gremlin.structure.VertexTest;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import static org.apache.tinkerpop.gremlin.orientdb.OrientGraph.CONFIG_TRANSACTIONAL;
@@ -16,6 +19,9 @@ public class OrientStandardGraphProvider extends OrientGraphProvider {
 
   static {
     IGNORED_TESTS.put(TransactionTest.class, asList("shouldExecuteWithCompetingThreads"));
+
+    IGNORED_TESTS.put(GraphTest.class, Arrays.asList("shouldRemoveVertices"));
+    IGNORED_TESTS.put(VertexTest.BasicVertexTest.class, Arrays.asList("shouldNotGetConcurrentModificationException"));
   }
 
   @Override

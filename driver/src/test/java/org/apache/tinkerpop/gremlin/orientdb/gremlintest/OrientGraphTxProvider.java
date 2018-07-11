@@ -1,7 +1,9 @@
 package org.apache.tinkerpop.gremlin.orientdb.gremlintest;
 
 import org.apache.tinkerpop.gremlin.LoadGraphWith;
+import org.apache.tinkerpop.gremlin.structure.GraphTest;
 import org.apache.tinkerpop.gremlin.structure.TransactionTest;
+import org.apache.tinkerpop.gremlin.structure.VertexTest;
 
 import java.util.Map;
 
@@ -17,6 +19,9 @@ public class OrientGraphTxProvider extends OrientGraphProvider {
             "shouldNotShareTransactionReadWriteConsumersAcrossThreads", "shouldNotShareTransactionCloseConsumersAcrossThreads",
             "shouldNotifyTransactionListenersInSameThreadOnlyOnCommitSuccess",
             "shouldNotifyTransactionListenersInSameThreadOnlyOnRollbackSuccess"));
+
+    IGNORED_TESTS.put(GraphTest.class, asList("shouldRemoveVertices"));
+    IGNORED_TESTS.put(VertexTest.BasicVertexTest.class, asList("shouldNotGetConcurrentModificationException"));
   }
 
   @Override

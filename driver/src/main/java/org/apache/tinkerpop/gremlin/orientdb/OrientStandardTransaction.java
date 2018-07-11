@@ -1,5 +1,7 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.util.AbstractTransaction;
 import org.apache.tinkerpop.gremlin.structure.util.TransactionException;
@@ -26,11 +28,19 @@ public class OrientStandardTransaction extends AbstractTransaction {
   @Override
   protected void doCommit() throws TransactionException {
     tx().doCommit();
+    ODatabaseDocumentEmbedded db = (ODatabaseDocumentEmbedded) g.graph().getRawDatabase();
+    db.internalClose(true);
+    db.activateOnCurrentThread();
+    db.setStatus(ODatabase.STATUS.OPEN);
   }
 
   @Override
   protected void doRollback() throws TransactionException {
     tx().doRollback();
+    ODatabaseDocumentEmbedded db = (ODatabaseDocumentEmbedded) g.graph().getRawDatabase();
+    db.internalClose(true);
+    db.activateOnCurrentThread();
+    db.setStatus(ODatabase.STATUS.OPEN);
 
   }
 
