@@ -2031,7 +2031,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
       final long expectedPosition = currentPosition;
 
-      writeFuture = CompletableFuture.runAsync(() -> {
+      writeFuture = Orient.instance().writeThread().submit((Callable<?>) () -> {
         try {
           assert buffer.position() == 0;
           assert file.position() % pageSize == 0;
@@ -2067,10 +2067,12 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
           }
         } catch (final IOException e) {
           OLogManager.instance().errorNoDb(this, "Error during WAL data write", e);
-          throw new IllegalStateException(e);
+          throw e;
         } finally {
           allocator.deallocate(pointer);
         }
+        
+        return null;
       });
     }
   }
