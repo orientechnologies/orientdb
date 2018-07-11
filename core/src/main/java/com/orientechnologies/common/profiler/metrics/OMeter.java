@@ -5,9 +5,15 @@ package com.orientechnologies.common.profiler.metrics;
  */
 public interface OMeter extends OMetric {
 
-  void mark();
+  default  void mark() {
 
-  void mark(long n);
+  }
 
-  long getCount();
+  default void mark(long n) {
+
+  }
+
+  default long getCount() {
+    return 0;
+  }
 }
