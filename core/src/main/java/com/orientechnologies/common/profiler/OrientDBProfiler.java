@@ -10,9 +10,13 @@ import java.util.function.Supplier;
  */
 public interface OrientDBProfiler {
 
-  String name(String name, String... names);
+  default String name(String name, String... names) {
+    return name.join(".", names);
+  }
 
-  String name(Class<?> klass, String... names);
+  default String name(Class<?> klass, String... names) {
+    return klass.getName().join(".", names);
+  }
 
   OCounter counter(String name, String description);
 
