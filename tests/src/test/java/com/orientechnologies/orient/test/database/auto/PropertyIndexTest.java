@@ -86,7 +86,6 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     Assert.assertEquals(indexDefinition.getTypes().length, 1);
     Assert.assertEquals(indexDefinition.getTypes()[0], OType.STRING);
 
-    schema.save();
   }
 
   @Test(dependsOnMethods = { "testCreateUniqueIndex" })
@@ -100,7 +99,6 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     oClass.createIndex("propOne3", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"prop2", "prop3"});
     oClass.createIndex("propOne4", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"prop2", "prop1"});
 
-    schema.save();
   }
 
   @Test(dependsOnMethods = "createAdditionalSchemas")

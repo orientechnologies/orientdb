@@ -83,7 +83,6 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     oSuperClass.createProperty("fNine", OType.INTEGER);
     oClass.setSuperClass(oSuperClass);
 
-    schema.save();
     database.close();
   }
 

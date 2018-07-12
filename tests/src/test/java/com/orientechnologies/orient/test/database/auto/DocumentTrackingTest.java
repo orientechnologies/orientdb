@@ -35,7 +35,6 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
       trackedClass.createProperty("linklist", OType.LINKLIST);
       trackedClass.createProperty("linkmap", OType.LINKMAP);
 
-      database.getMetadata().getSchema().save();
     }
   }
 

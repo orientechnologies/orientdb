@@ -196,7 +196,6 @@ public class LocalPaginatedStorageMixCrashRestoreCT {
 
       testClass.createIndex("idIndex", OClass.INDEX_TYPE.UNIQUE, "id");
 
-      schema.save();
     }
   }
 

@@ -664,7 +664,6 @@ public class OObjectEntitySerializer {
       }
     }
     if (reloadSchema) {
-      oSchema.save();
       oSchema.reload();
     }
   }

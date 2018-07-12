@@ -48,23 +48,24 @@ import java.util.*;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public abstract class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty {
+public abstract class OPropertyImpl implements OProperty {
   protected final   OClassImpl owner;
   protected         OType      linkedType;
   protected         OClass     linkedClass;
   transient private String     linkedClassName;
 
-  protected String  description;
-  protected boolean mandatory;
-  protected boolean notNull = false;
+  protected String              description;
+  protected boolean             mandatory;
+  protected boolean             notNull = false;
   protected String              min;
   protected String              max;
   protected String              defaultValue;
   protected String              regexp;
   protected boolean             readonly;
   protected Map<String, String> customFields;
-  protected OCollate collate = new ODefaultCollate();
-  protected OGlobalProperty globalRef;
+  protected OCollate            collate = new ODefaultCollate();
+  protected OGlobalProperty     globalRef;
+  protected ODocument           document;
 
   private volatile int hashCode;
 
@@ -622,7 +623,6 @@ public abstract class OPropertyImpl extends ODocumentWrapperNoClass implements O
   }
 
   @SuppressWarnings("unchecked")
-  @Override
   public void fromStream() {
 
     String name = document.field("name");
@@ -673,7 +673,6 @@ public abstract class OPropertyImpl extends ODocumentWrapperNoClass implements O
     }
   }
 
-  @Override
   public ODocument toStream() {
     document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
@@ -765,4 +764,8 @@ public abstract class OPropertyImpl extends ODocumentWrapperNoClass implements O
     return globalRef.getId();
   }
 
+  public void fromStream(ODocument document) {
+    this.document = document;
+    fromStream();
+  }
 }

@@ -189,17 +189,9 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     return delegate.createView(database, config);
   }
 
-  public <RET extends ODocumentWrapper> RET reload() {
-
+  public OSchema reload() {
     delegate.reload(database);
-
-    return (RET) delegate;
-  }
-
-  @Deprecated
-  public <RET extends ODocumentWrapper> RET save() {
-
-    return (RET) delegate.save();
+    return this;
   }
 
   public int getVersion() {

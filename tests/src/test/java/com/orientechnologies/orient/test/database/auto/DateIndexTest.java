@@ -63,7 +63,6 @@ public class DateIndexTest  extends DocumentDBBaseTest {
     dateIndexTest.createIndex("DateIndexTestValueDateTimeListHashIndex", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "value",
         "dateTimeList");
 
-    schema.save();
   }
 
   public void testDateIndexes() {

@@ -123,7 +123,7 @@ public class OSchemaRemote extends OSchemaShared {
       }
 
       database.command(cmd.toString()).close();
-      reload();
+      reload(database);
 
       result = classes.get(className.toLowerCase(Locale.ENGLISH));
 
@@ -189,7 +189,7 @@ public class OSchemaRemote extends OSchemaShared {
       }
 
       database.command(cmd.toString()).close();
-      reload();
+      reload(database);
       result = classes.get(className.toLowerCase(Locale.ENGLISH));
 
       // WAKE UP DB LIFECYCLE LISTENER
@@ -234,7 +234,7 @@ public class OSchemaRemote extends OSchemaShared {
       //TODO indexes
 
       database.command(cmd.toString()).close();
-      reload();
+      reload(database);
       result = views.get(cfg.getName().toLowerCase(Locale.ENGLISH));
 
       // WAKE UP DB LIFECYCLE LISTENER
@@ -278,7 +278,7 @@ public class OSchemaRemote extends OSchemaShared {
       }
 
       database.command(cmd.toString()).close();
-      reload();
+      reload(database);
       result = views.get(name.toLowerCase(Locale.ENGLISH));
 
       // WAKE UP DB LIFECYCLE LISTENER
@@ -336,7 +336,7 @@ public class OSchemaRemote extends OSchemaShared {
       cmd.append(className);
       cmd.append(" unsafe");
       database.command(cmd.toString()).close();
-      reload();
+      reload(database);
 
       // FREE THE RECORD CACHE
       database.getLocalCache().freeCluster(cls.getDefaultClusterId());
@@ -373,7 +373,7 @@ public class OSchemaRemote extends OSchemaShared {
       cmd.append(name);
       cmd.append(" unsafe");
       database.command(cmd.toString()).close();
-      reload();
+      reload(database);
 
       // FREE THE RECORD CACHE
       database.getLocalCache().freeCluster(cls.getDefaultClusterId());
@@ -400,7 +400,8 @@ public class OSchemaRemote extends OSchemaShared {
 
   public void update(ODocument schema) {
     if (!skipPush.get()) {
-      super.fromStream(schema);
+      this.document = schema;
+      super.fromStream();
     }
   }
 

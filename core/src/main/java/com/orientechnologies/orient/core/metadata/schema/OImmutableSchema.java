@@ -150,7 +150,7 @@ public class OImmutableSchema implements OSchema {
   }
 
   @Override
-  public <RET extends ODocumentWrapper> RET reload() {
+  public OSchema reload() {
     throw new UnsupportedOperationException();
   }
 
@@ -213,11 +213,6 @@ public class OImmutableSchema implements OSchema {
   @Override
   public ORID getIdentity() {
     return new ORecordId(identity);
-  }
-
-  @Override
-  public <RET extends ODocumentWrapper> RET save() {
-    throw new UnsupportedOperationException();
   }
 
   @Override

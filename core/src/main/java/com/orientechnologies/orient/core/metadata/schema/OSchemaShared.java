@@ -56,7 +56,7 @@ import java.util.concurrent.Callable;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public abstract class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable {
+public abstract class OSchemaShared implements OCloseable {
   private static final int  NOT_EXISTENT_CLUSTER_ID = -1;
   public static final  int  CURRENT_VERSION_NUMBER  = 4;
   public static final  int  VERSION_NUMBER_V4       = 4;
@@ -74,13 +74,14 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   private final OClusterSelectionFactory clusterSelectionFactory = new OClusterSelectionFactory();
 
-  private final    OModifiableInteger           modificationCounter  = new OModifiableInteger();
-  private final    List<OGlobalProperty>        properties           = new ArrayList<OGlobalProperty>();
-  private final    Map<String, OGlobalProperty> propertiesByNameType = new HashMap<String, OGlobalProperty>();
-  private          Set<Integer>                 blobClusters         = new HashSet<Integer>();
-  private volatile int                          version              = 0;
-  private volatile boolean                      acquiredDistributed  = false;
-  private volatile OImmutableSchema             snapshot;
+  private final      OModifiableInteger           modificationCounter  = new OModifiableInteger();
+  private final      List<OGlobalProperty>        properties           = new ArrayList<OGlobalProperty>();
+  private final      Map<String, OGlobalProperty> propertiesByNameType = new HashMap<String, OGlobalProperty>();
+  private            Set<Integer>                 blobClusters         = new HashSet<Integer>();
+  private volatile   int                          version              = 0;
+  private volatile   boolean                      acquiredDistributed  = false;
+  private volatile   OImmutableSchema             snapshot;
+  protected volatile ODocument                    document;
 
   protected static Set<String> internalClasses = new HashSet<String>();
 
@@ -95,11 +96,12 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     internalClasses.add("orids");
   }
 
+
   static final class ClusterIdsAreEmptyException extends Exception {
   }
 
   public OSchemaShared() {
-    super(new ODocument().setTrackingChanges(false));
+    document = new ODocument().setTrackingChanges(false);
 
   }
 
@@ -318,12 +320,12 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   /**
    * Reloads the schema inside a storage's shared lock.
    */
-  public <RET extends ODocumentWrapper> RET reload(ODatabaseDocumentInternal database) {
+  public void reload(ODatabaseDocumentInternal database) {
     rwSpinLock.acquireWriteLock();
     try {
-      super.reload();
+      this.document = database.reload(this.document, null, true, true);
+      fromStream();
       forceSnapshot(database);
-      return (RET) this;
     } finally {
       rwSpinLock.releaseWriteLock();
     }
@@ -490,7 +492,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   /**
    * Binds ODocument to POJO.
    */
-  @Override
   public void fromStream() {
     rwSpinLock.acquireWriteLock();
     modificationCounter.increment();
@@ -639,7 +640,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   /**
    * Binds POJO to ODocument.
    */
-  @Override
   public ODocument toStream() {
     rwSpinLock.acquireReadLock();
     try {
@@ -741,7 +741,8 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
         throw new OSchemaNotCreatedException("Schema is not created and cannot be loaded");
 
       ((ORecordId) document.getIdentity()).fromString(database.getStorage().getConfiguration().getSchemaRecordId());
-      reload("*:-1 index:0");
+      document = database.reload(document, "*:-1 index:0", true);
+      fromStream();
 
       return this;
     } finally {
@@ -752,7 +753,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   public void create(final ODatabaseDocumentInternal database) {
     rwSpinLock.acquireWriteLock();
     try {
-      super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
+      document = database.save(document, OMetadataDefault.CLUSTER_INTERNAL_NAME);
       database.getStorage().setSchemaRecordId(document.getIdentity().toString());
       snapshot = new OImmutableSchema(this, database);
     } finally {
@@ -776,22 +777,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     } finally {
       releaseSchemaReadLock();
     }
-  }
-
-  /**
-   * Avoid to handle this by user API.
-   */
-  @Override
-  public <RET extends ODocumentWrapper> RET save() {
-    return (RET) this;
-  }
-
-  /**
-   * Avoid to handle this by user API.
-   */
-  @Override
-  public <RET extends ODocumentWrapper> RET save(final String iClusterName) {
-    return (RET) this;
   }
 
   public OSchemaShared setDirty() {
@@ -847,7 +832,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   private void saveInternal(ODatabaseDocumentInternal database) {
 
     if (database.getTransaction().isActive()) {
-      reload(null, true);
+      document = database.reload(document, null, true);
       throw new OSchemaException("Cannot change the schema while a transaction is active. Schema changes are not transactional");
     }
 
@@ -860,7 +845,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
           toStream();
           document.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
         } catch (OConcurrentModificationException e) {
-          reload(null, true);
+          OSchemaShared.this.document = database.reload(OSchemaShared.this.document, null, true);
           throw e;
         }
         return null;
@@ -948,4 +933,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     return Collections.unmodifiableSet(blobClusters);
   }
 
+  public ODocument getDocument() {
+    return document;
+  }
 }

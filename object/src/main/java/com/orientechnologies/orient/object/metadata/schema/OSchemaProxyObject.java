@@ -124,7 +124,7 @@ public class OSchemaProxyObject implements OSchemaObject {
   }
 
   @Override
-  public <RET extends ODocumentWrapper> RET reload() {
+  public OSchema reload() {
     return underlying.reload();
   }
 
@@ -211,11 +211,6 @@ public class OSchemaProxyObject implements OSchemaObject {
   @Override
   public ORID getIdentity() {
     return underlying.getIdentity();
-  }
-
-  @Override
-  public <RET extends ODocumentWrapper> RET save() {
-    return underlying.save();
   }
 
   @Override
@@ -422,7 +417,6 @@ public class OSchemaProxyObject implements OSchemaObject {
       }
     }
     if (database != null && !database.isClosed() && reloadSchema) {
-      database.getMetadata().getSchema().save();
       database.getMetadata().getSchema().reload();
     }
   }
@@ -458,7 +452,6 @@ public class OSchemaProxyObject implements OSchemaObject {
       }
     }
     if (reloadSchema) {
-      database.getMetadata().getSchema().save();
       database.getMetadata().getSchema().reload();
     }
   }

@@ -72,7 +72,6 @@ public class OViewRemote extends OViewImpl {
         cmd.append(" unsafe ");
 
       database.command(cmd.toString()).close();
-      reload();
 
       return getProperty(propertyName);
     } finally {
