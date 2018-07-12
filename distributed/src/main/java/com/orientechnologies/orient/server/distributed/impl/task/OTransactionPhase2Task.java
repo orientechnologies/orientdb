@@ -86,7 +86,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
         retryCount++;
         if (retryCount < database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
           OLogManager.instance()
-              .info(OTransactionPhase2Task.this, "Received second phase but not yet first phase, re-enqueue second phase");
+              .debug(OTransactionPhase2Task.this, "Received second phase but not yet first phase, re-enqueue second phase");
           ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
               .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this, retryCount);
           hasResponse = false;
@@ -107,7 +107,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
         retryCount++;
         if (retryCount < database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
           OLogManager.instance()
-              .info(OTransactionPhase2Task.this, "Received second phase but not yet first phase, re-enqueue second phase");
+              .debug(OTransactionPhase2Task.this, "Received second phase but not yet first phase, re-enqueue second phase");
           ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
               .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this, retryCount);
           hasResponse = false;

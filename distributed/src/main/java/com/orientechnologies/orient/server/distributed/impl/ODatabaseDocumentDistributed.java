@@ -562,7 +562,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
           OLogManager.instance()
-              .info(this, "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue request", ex.getExpectedRid(),
+              .debug(this, "cAllocation of rid not match, expected:%s actual:%s waiting for re-enqueue request", ex.getExpectedRid(),
                   ex.getActualRid());
           txContext.unlock();
           return false;
@@ -574,7 +574,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getEnhancedRecordVersion() > ex.getEnhancedDatabaseVersion()) {
           OLogManager.instance()
-              .info(this, "Persistent version not match, record:%s expected:%s actual:%s waiting for re-enqueue request",
+              .debug(this, "Persistent version not match, record:%s expected:%s actual:%s waiting for re-enqueue request",
                   ex.getRid(), ex.getEnhancedRecordVersion(), ex.getEnhancedDatabaseVersion());
           txContext.unlock();
           return false;
