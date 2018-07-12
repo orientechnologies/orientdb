@@ -27,9 +27,12 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerializationType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageOperation;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Base page class for all durable data structures, that is data structures state of which can be consistently restored after system
@@ -58,8 +61,9 @@ public class ODurablePage {
 
   public static final int NEXT_FREE_POSITION = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
 
-  protected final OCacheEntry cacheEntry;
-  protected final ByteBuffer  buffer;
+  protected final OCacheEntry          cacheEntry;
+  protected final ByteBuffer           buffer;
+  protected       List<OPageOperation> pageOperations = new ArrayList<>();
 
   public ODurablePage(final OCacheEntry cacheEntry) {
     assert cacheEntry != null;
@@ -117,6 +121,10 @@ public class ODurablePage {
 
   public OCacheEntry getCacheEntry() {
     return cacheEntry;
+  }
+
+  public List<OPageOperation> getPageOperations() {
+    return pageOperations;
   }
 
   protected final void moveData(final int from, final int to, final int len) {

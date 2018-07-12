@@ -32,6 +32,11 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compon
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OMakePositionAvailableOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.ORecycleRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.OUpdateRecordOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageAddRecordOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageDeleteRecordOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageReplaceRecordOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageSetNextPagePointerRecordOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageSetPrevPageRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OCreateHashTableOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OHashTablePutOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OHashTableRemoveOperation;
@@ -57,6 +62,12 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.ATOMIC_UNIT_END_RECORD;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.ATOMIC_UNIT_START_RECORD;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CHECKPOINT_END_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_ADD_RECORD_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_DELETER_RECORD_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_REPLACE_RECORD_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_SET_NEXT_PAGE_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_SET_NEXT_PAGE_POINTER_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_SET_PREV_PAGE_OPERATION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CREATE_CLUSTER_OPERATION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CREATE_HASH_TABLE_OPERATION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CREATE_RECORD_OPERATION;
@@ -103,7 +114,7 @@ public final class OWALRecordsFactory {
     final long pointer;
     final ByteBuffer content;
 
-    if (contentSize > 256) {
+    if (contentSize >= MIN_COMPRESSED_RECORD_SIZE) {
       pointer = Native.malloc(contentSize);
       content = new Pointer(pointer).getByteBuffer(0, contentSize);
     } else {
@@ -240,6 +251,24 @@ public final class OWALRecordsFactory {
       break;
     case MAKE_POSITION_AVAILABLE_OPERATION:
       walRecord = new OMakePositionAvailableOperation();
+      break;
+    case CLUSTER_PAGE_ADD_RECORD_OPERATION:
+      walRecord = new OClusterPageAddRecordOperation();
+      break;
+    case CLUSTER_PAGE_DELETER_RECORD_OPERATION:
+      walRecord = new OClusterPageDeleteRecordOperation();
+      break;
+    case CLUSTER_PAGE_REPLACE_RECORD_OPERATION:
+      walRecord = new OClusterPageReplaceRecordOperation();
+      break;
+    case CLUSTER_PAGE_SET_NEXT_PAGE_OPERATION:
+      walRecord = new OClusterPageSetNextPagePointerRecordOperation();
+      break;
+    case CLUSTER_PAGE_SET_NEXT_PAGE_POINTER_OPERATION:
+      walRecord = new OClusterPageSetNextPagePointerRecordOperation();
+      break;
+    case CLUSTER_PAGE_SET_PREV_PAGE_OPERATION:
+      walRecord = new OClusterPageSetPrevPageRecordOperation();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

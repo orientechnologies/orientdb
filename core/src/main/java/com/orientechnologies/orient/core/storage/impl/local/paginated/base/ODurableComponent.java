@@ -23,7 +23,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
@@ -34,8 +33,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
@@ -43,6 +41,7 @@ import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorag
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected final OAtomicOperationsManager  atomicOperationsManager;
@@ -144,42 +143,27 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     assert page != null;
     final OCacheEntry cacheEntry = page.getCacheEntry();
     if (storage instanceof OLocalPaginatedStorage) {
-      final OLogSequenceNumber end = writeAheadLog.end();
       final OCachePointer cachePointer = cacheEntry.getCachePointer();
       final ByteBuffer buffer = cachePointer.getBufferDuplicate();
-      final OLogSequenceNumber pageLsn = ODurablePage.getLogSequenceNumberFromPage(buffer);
 
-      final OLogSequenceNumber recordLSN;
-      if (pageLsn.getSegment() < end.getSegment()) {
-        try {
-          final OUpdatePageRecord updatePageRecord = new OUpdatePageRecord(cacheEntry.getPageIndex(), cacheEntry.getFileId(),
-              atomicOperation.getOperationUnitId(), page, page.serializationType());
+      List<OPageOperation> pageOperations = page.getPageOperations();
+      OLogSequenceNumber recordLSN = null;
 
-          //trick to avoid additional creation and copying of buffers because serialized page content
-          //typically quite big
-          final OPair<ByteBuffer, Long> serializedRecord = OWALRecordsFactory.toStream(updatePageRecord);
-          updatePageRecord.setBinaryContent(serializedRecord.key, serializedRecord.value);
-          updatePageRecord.clearRealPage();
-
-          recordLSN = writeAheadLog.log(updatePageRecord);
-        } catch (IOException e) {
-          throw OException.wrapException(new OStorageException(
-              "Error during logging of changes of page " + cacheEntry.getFileId() + ":" + cacheEntry.getPageIndex() + " in storage "
-                  + storage.getName()), e);
-        }
-
-        cachePointer.setFullLogLSN(recordLSN);
-
-      } else {
-        assert pageLsn.getSegment() == end.getSegment();
-        try {
+      try {
+        if (pageOperations.isEmpty()) {
           recordLSN = writeAheadLog.log(new OEmptyWALRecord());
-        } catch (IOException e) {
-          throw OException.wrapException(new OStorageException(
-              "Error during generation of LSN for page " + cacheEntry.getFileId() + ":" + cacheEntry.getPageIndex() + " in storage "
-                  + storage.getName()), e);
+        } else {
+          for (OPageOperation operation : pageOperations) {
+            recordLSN = writeAheadLog.log(operation);
+          }
         }
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException(
+            "Error during generation of LSN for page " + cacheEntry.getFileId() + ":" + cacheEntry.getPageIndex() + " in storage "
+                + storage.getName()), e);
       }
+
+      assert recordLSN != null;
 
       ODurablePage.setLogSequenceNumber(buffer, recordLSN);
     }
