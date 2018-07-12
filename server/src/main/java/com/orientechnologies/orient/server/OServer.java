@@ -28,6 +28,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
+import com.orientechnologies.common.profiler.OrientDBProfiler;
+import com.orientechnologies.common.profiler.OrientDBProfilerStub;
+import com.orientechnologies.common.util.OClassLoaderHelper;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -50,6 +53,7 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
+import com.orientechnologies.orient.server.profiler.ProfilerFactory;
 import com.orientechnologies.orient.server.security.ODefaultServerSecurity;
 import com.orientechnologies.orient.server.security.OServerSecurity;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
@@ -102,6 +106,7 @@ public class OServer {
   private OrientDB                 context;
   private OrientDBInternal         databases;
   protected Date startedOn = new Date();
+  private volatile  OrientDBProfiler profiler = new OrientDBProfilerStub();
 
   public OServer()
       throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
@@ -377,9 +382,18 @@ public class OServer {
         databases = OrientDBInternal.embedded(this.databaseDirectory, config);
       }
     }
+
+    Iterator<ProfilerFactory> iterator = OClassLoaderHelper.lookupProviderWithOrientClassLoader(ProfilerFactory.class);
+
+    if (iterator.hasNext()) {
+      profiler = iterator.next().createProfilerFor(this);
+    }
+    databases.setProfiler(profiler);
+
     if (databases instanceof OServerAware) {
       ((OServerAware) databases).init(this);
     }
+
     context = databases.newOrientDB();
 
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
@@ -687,7 +701,6 @@ public class OServer {
    *
    * @param iUserName Username to authenticate
    * @param iPassword Password in clear
-   *
    * @return true if authentication is ok, otherwise false
    */
   public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
@@ -725,7 +738,6 @@ public class OServer {
    * Checks if a server user is allowed to operate with a resource.
    *
    * @param iUserName Username to authenticate
-   *
    * @return true if authentication is ok, otherwise false
    */
   public boolean isAllowed(final String iUserName, final String iResourceToCheck) {
