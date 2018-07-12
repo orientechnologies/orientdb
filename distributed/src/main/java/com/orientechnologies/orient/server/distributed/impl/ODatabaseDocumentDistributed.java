@@ -585,10 +585,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     commit2pc(transactionId);
   }
 
-  public boolean commit2pc(ODistributedRequestId transactionId) {
+  public Collection<ORecordOperation> commit2pc(ODistributedRequestId transactionId) {
     getStorageDistributed().resetLastValidBackup();
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.getTxContext(transactionId);
+    Collection<ORecordOperation> operations = txContext.getTransaction().getRecordOperations();
     if (txContext != null) {
       try {
         txContext.commit(this);
@@ -599,9 +600,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         OLiveQueryHook.removePendingDatabaseOps(this);
         OLiveQueryHookV2.removePendingDatabaseOps(this);
       }
-      return true;
+      return operations;
     }
-    return false;
+    return null;
   }
 
   public void rollback2pc(ODistributedRequestId transactionId) {

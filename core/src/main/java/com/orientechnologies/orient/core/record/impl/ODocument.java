@@ -3573,6 +3573,9 @@ public class ODocument extends ORecordAbstract
     ORecordId id = (ORecordId)getIdentity();
     ret.setIdentity(id);
     
+    int version = getVersion();
+    ret.setVersion(version);
+    
     return ret;
   }
 

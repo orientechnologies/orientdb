@@ -4939,6 +4939,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         final OStorageOperationResult<Integer> updateRes = doUpdateRecord(rid, ORecordInternal.isContentChanged(rec), stream,
             rec.getVersion(), ORecordInternal.getRecordType(rec), null, cluster);
+        txEntry.setResultData(updateRes.getResult());
         ORecordInternal.setVersion(rec, updateRes.getResult());
         if (updateRes.getModifiedRecordContent() != null)
           ORecordInternal.fill(rec, rid, updateRes.getResult(), updateRes.getModifiedRecordContent(), false);

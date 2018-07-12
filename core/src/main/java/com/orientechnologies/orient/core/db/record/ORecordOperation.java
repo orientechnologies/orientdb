@@ -44,10 +44,12 @@ public class ORecordOperation implements Comparable {
 
   public ORecordCallback<Long>    createdCallback = null;
   public ORecordCallback<Integer> updatedCallback = null;
+  
+  private Object resultData;
 
   public ORecordOperation() {
-  }
-
+  }  
+  
   public ORecordOperation(final OIdentifiable iRecord, final byte iStatus) {
     // CLONE RECORD AND CONTENT
     this.record = iRecord;
@@ -131,4 +133,13 @@ public class ORecordOperation implements Comparable {
   public int compareTo(Object o) {
     return record.compareTo(((ORecordOperation) o).record);
   }
+
+  public Object getResultData() {
+    return resultData;
+  }
+
+  public void setResultData(Object resultData) {
+    this.resultData = resultData;
+  }
+  
 }

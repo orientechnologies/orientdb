@@ -16,10 +16,13 @@
 package com.orientechnologies.orient.core.delta;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -69,7 +72,15 @@ public class ODocumentDelta implements OIdentifiable{
   
   public byte[] serialize(){
     return serializer.toStream(this);        
-  }   
+  }
+  
+  public void setVersion(int version){
+    field("r", version);
+  }
+  
+  private Integer getVersion(){
+    return field("r");
+  }
   
   public void deserialize(BytesContainer bytes){
     
@@ -362,8 +373,19 @@ public class ODocumentDelta implements OIdentifiable{
 
   @Override
   public <T extends ORecord> T getRecord() {
-    return null;
+    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
+    ORecord rec = database.getRecord(getIdentity());
+    if (rec instanceof ORecordAbstract){
+      rec = rec.copy();
+      ((ORecordAbstract)rec).setVersion(getVersion());
+    }
+    return (T)rec;
   }
+    
+//  public <T extends ORecord> T getRecord(ODatabaseDocumentInternal database) {
+//    ORecord rec = database.getRecord(getIdentity());
+//    return (T)rec;
+//  }
 
   @Override
   public void lock(boolean iExclusive) {    

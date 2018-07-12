@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
@@ -30,7 +31,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
   private void resolveTracking(ORecordOperation change) {
     boolean detectedChange = false;
     List<OClassIndexManager.IndexChange> changes = new ArrayList<>();
-    if (change.getRecord() instanceof ODocument) {
+    if (change.getRecordContainer() instanceof ORecord && change.getRecord() instanceof ODocument) {
       detectedChange = true;
       ODocument rec = (ODocument) change.getRecord();      
       switch (change.getType()) {
