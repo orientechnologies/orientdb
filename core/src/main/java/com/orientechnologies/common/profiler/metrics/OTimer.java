@@ -14,7 +14,7 @@ public interface OTimer {
   }
 
   default OContext time() {
-    return null;
+    return () -> 0;
   }
 
   interface OContext {
