@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OrientDBProfiler;
+import com.orientechnologies.common.profiler.OrientDBProfilerStub;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
@@ -56,6 +58,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
   protected final Orient         orient;
   private volatile boolean                          open    = true;
   private volatile OEmbeddedDatabaseInstanceFactory factory = new ODefaultEmbeddedDatabaseInstanceFactory();
+
+  private volatile OrientDBProfiler profiler = new OrientDBProfilerStub();
 
   public OrientDBEmbedded(String directoryPath, OrientDBConfig configurations, Orient orient) {
     super();
@@ -460,4 +464,13 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return true;
   }
 
+  @Override
+  public OrientDBProfiler getProfiler() {
+    return profiler;
+  }
+
+  @Override
+  public void setProfiler(OrientDBProfiler profiler) {
+    this.profiler = profiler;
+  }
 }

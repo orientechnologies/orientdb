@@ -21,12 +21,11 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.profiler.OrientDBProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -285,5 +284,9 @@ public interface OrientDBInternal extends AutoCloseable {
   void replaceFactory(OEmbeddedDatabaseInstanceFactory instanceFactory);
 
   OEmbeddedDatabaseInstanceFactory getFactory();
+
+  OrientDBProfiler getProfiler();
+
+  void setProfiler(OrientDBProfiler profiler);
 
 }
