@@ -478,7 +478,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         commitExecutor
             .scheduleWithFixedDelay(new PeriodicExclusiveFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
         commitExecutor
-            .scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
+            .scheduleWithFixedDelay(new PeriodicFlushTask(), 8 * pageFlushInterval, 8 * pageFlushInterval, TimeUnit.MILLISECONDS);
       }
 
     } finally {
@@ -2608,14 +2608,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         flushedPages = flushExclusivePagesIfNeeded(flushedPages);
 
         if (!flushMode.equals(FLUSH_MODE.EXCLUSIVE)) {
-          long startSegment = writeAheadLog.begin().getSegment();
-          long endSegment = writeAheadLog.end().getSegment();
-
           convertSharedDirtyPagesToLocal();
           Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
 
           if (lsnEntry != null) {
-            if (!flushMode.equals(FLUSH_MODE.LSN) && endSegment - startSegment >= 1) {//IDLE flush mode
+            if (!flushMode.equals(FLUSH_MODE.LSN)) {//IDLE flush mode
               flushMode = FLUSH_MODE.LSN;
 
               flushedPages += flushWriteCacheFromMinLSN(512, startSegment, endSegment);
@@ -2624,25 +2621,17 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               lsnEntry = localDirtyPagesBySegment.firstEntry();
 
-              startSegment = writeAheadLog.begin().getSegment();
-              endSegment = writeAheadLog.end().getSegment();
-
-              if (lsnEntry == null || endSegment - startSegment < 1) {
+              if (lsnEntry == null) {
                 flushMode = FLUSH_MODE.IDLE;
               }
             } else {
-              if (endSegment - startSegment >= 1) {
-                flushedPages += flushWriteCacheFromMinLSN(512, startSegment, endSegment);
-              }
-
+              flushedPages += flushWriteCacheFromMinLSN(512, startSegment, endSegment);
+              
               convertSharedDirtyPagesToLocal();
 
               lsnEntry = localDirtyPagesBySegment.firstEntry();
 
-              startSegment = writeAheadLog.begin().getSegment();
-              endSegment = writeAheadLog.end().getSegment();
-
-              if (lsnEntry == null || endSegment - startSegment < 1) {
+              if (lsnEntry == null) {
                 flushMode = FLUSH_MODE.IDLE;
               }
             }
@@ -2746,7 +2735,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     long currentSegment = segStart;
 
     flushCycle:
-    while (endTs - startTs < backgroundFlushInterval && currentSegment < segEnd) {
+    while (endTs - startTs < backgroundFlushInterval && currentSegment <= segEnd) {
       if (!chunk.isEmpty()) {
         throw new IllegalStateException("Chunk is not empty !");
       }
