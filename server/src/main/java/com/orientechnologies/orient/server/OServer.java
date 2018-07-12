@@ -106,7 +106,7 @@ public class OServer {
   private OrientDB                 context;
   private OrientDBInternal         databases;
   protected Date startedOn = new Date();
-  private volatile  OrientDBProfiler profiler = new OrientDBProfilerStub();
+
 
   public OServer()
       throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
@@ -386,9 +386,10 @@ public class OServer {
     Iterator<ProfilerFactory> iterator = OClassLoaderHelper.lookupProviderWithOrientClassLoader(ProfilerFactory.class);
 
     if (iterator.hasNext()) {
-      profiler = iterator.next().createProfilerFor(this);
+      OrientDBProfiler profiler = iterator.next().createProfilerFor(this);
+      databases.setProfiler(profiler);
     }
-    databases.setProfiler(profiler);
+
 
     if (databases instanceof OServerAware) {
       ((OServerAware) databases).init(this);
