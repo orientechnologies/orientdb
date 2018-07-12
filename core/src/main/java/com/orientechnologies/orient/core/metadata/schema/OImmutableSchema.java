@@ -49,9 +49,8 @@ public class OImmutableSchema implements OSchema {
   private final List<OGlobalProperty>    properties;
   private final OClusterSelectionFactory clusterSelectionFactory;
 
-  public OImmutableSchema(OSchemaShared schemaShared) {
-    ODatabaseDocumentInternal database = getDatabase();
-    assert database.getSharedContext().getSchema().getDocument().getInternalStatus() == ORecordElement.STATUS.LOADED;
+  public OImmutableSchema(OSchemaShared schemaShared, ODatabaseDocumentInternal database) {
+    assert schemaShared.getDocument().getInternalStatus() == ORecordElement.STATUS.LOADED;
     assert database.getSharedContext().getIndexManager().getDocument().getInternalStatus() == ORecordElement.STATUS.LOADED;
 
     version = schemaShared.getVersion();

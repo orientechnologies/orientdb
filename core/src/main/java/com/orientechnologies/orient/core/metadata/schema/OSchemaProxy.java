@@ -46,7 +46,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 
   @Override
   public OImmutableSchema makeSnapshot() {
-    return delegate.makeSnapshot();
+    return delegate.makeSnapshot(database);
   }
 
   public void create() {
@@ -191,7 +191,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 
   public <RET extends ODocumentWrapper> RET reload() {
 
-    delegate.reload();
+    delegate.reload(database);
 
     return (RET) delegate;
   }

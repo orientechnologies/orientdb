@@ -64,7 +64,7 @@ public class OSharedContextEmbedded extends OSharedContext {
         schema.load(database);
         indexManager.load(database);
         //The Immutable snapshot should be after index and schema that require and before everything else that use it
-        schema.forceSnapshot();
+        schema.forceSnapshot(database);
         security.load();
         functionLibrary.load(database);
         scheduler.load(database);
@@ -96,10 +96,10 @@ public class OSharedContextEmbedded extends OSharedContext {
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
-    schema.reload();
+    schema.reload(database);
     indexManager.reload();
     //The Immutable snapshot should be after index and schema that require and before everything else that use it
-    schema.forceSnapshot();
+    schema.forceSnapshot(database);
     security.load();
     functionLibrary.load(database);
     sequenceLibrary.load(database);
@@ -115,7 +115,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     sequenceLibrary.create(database);
     security.createClassTrigger();
     scheduler.create(database);
-    schema.forceSnapshot();
+    schema.forceSnapshot(database);
 
     // CREATE BASE VERTEX AND EDGE CLASSES
     schema.createClass(database, "V");
