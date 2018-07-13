@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public abstract class AbstractTraverseStep extends AbstractExecutionStep {
   protected final OWhereClause                  whileClause;
   protected final List<OTraverseProjectionItem> projections;
-  protected final   OInteger                      maxDepth;
+  protected final OInteger                      maxDepth;
 
   protected List<OResult> entryPoints = null;
   protected List<OResult> results     = new ArrayList<>();
@@ -125,5 +125,10 @@ public abstract class AbstractTraverseStep extends AbstractExecutionStep {
   @Override
   public long getCost() {
     return cost;
+  }
+
+  @Override
+  public String toString() {
+    return prettyPrint(0, 2);
   }
 }
