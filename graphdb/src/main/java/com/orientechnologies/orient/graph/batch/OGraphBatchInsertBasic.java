@@ -103,10 +103,6 @@ public class OGraphBatchInsertBasic implements Closeable {
     @Override
     public void run() {
       try (ODatabaseDocumentInternal perThreadDbInstance = (ODatabaseDocumentInternal) orientDB.open(dbUrlConnection.getDbName(), userName, password)){
-        // The URL we receive here is a full URL, including the database, like memory:mydb or plocal:/path/do/db
-        // To deprecate ODatabaseDocumentTx, we need to separate the "url" from the database name
-        //OrientDB orientDB = new OrientDB(dbGroupUrl, OrientDBConfig.defaultConfig());
-        //orientDB.createIfNotExists(dbUrlConnection.getDbName(), dbType);
         perThreadDbInstance.declareIntent(new OIntentMassiveInsert());
         int clusterId = clusterIds[mod];
 
@@ -175,6 +171,8 @@ public class OGraphBatchInsertBasic implements Closeable {
    */
   public OGraphBatchInsertBasic(String iDbURL, String iUserName, String iPassword) {
     this.fullUrl = iDbURL;
+    // The URL we receive here is a full URL, including the database, like memory:mydb or plocal:/path/do/db
+    // To deprecate ODatabaseDocumentTx, we need to separate the "url" from the database name
     this.dbUrlConnection = OURLHelper.parseNew(fullUrl);
     this.dbType = dbUrlConnection.getDbType().orElse(ODatabaseType.MEMORY);
     String dbGroupUrl = dbUrlConnection.getType() + ":"  + dbUrlConnection.getPath();
