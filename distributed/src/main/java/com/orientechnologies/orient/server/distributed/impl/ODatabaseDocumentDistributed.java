@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginated
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
@@ -561,9 +562,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (OConcurrentCreateException ex) {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
-          OLogManager.instance()
-              .debug(this, "cAllocation of rid not match, expected:%s actual:%s waiting for re-enqueue request", ex.getExpectedRid(),
-                  ex.getActualRid());
+          OLogManager.instance().debug(this, "cAllocation of rid not match, expected:%s actual:%s waiting for re-enqueue request",
+              ex.getExpectedRid(), ex.getActualRid());
           txContext.unlock();
           return false;
         }
@@ -582,6 +582,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
       localDistributedDatabase.registerTxContext(requestId, txContext);
       throw ex;
+    } catch (ORecordNotFoundException e) {
+      if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
+        txContext.unlock();
+        return false;
+      }
+      localDistributedDatabase.registerTxContext(requestId, txContext);
+      throw e;
     } catch (RuntimeException r) {
       localDistributedDatabase.registerTxContext(requestId, txContext);
       throw r;
@@ -644,14 +651,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean local) {
     getStorageDistributed().resetLastValidBackup();
-    acquireLocksForTx(txContext.getTransaction(), txContext);
+    OTransactionInternal transaction = txContext.getTransaction();
+    acquireLocksForTx(transaction, txContext);
 
     //This is moved before checks because also the coordinator first node allocate before checks
     if (!local) {
-      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(txContext.getTransaction());
+      ((OTransactionOptimistic) transaction).begin();
+      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
     }
 
-    for (Map.Entry<String, OTransactionIndexChanges> change : txContext.getTransaction().getIndexOperations().entrySet()) {
+    for (Map.Entry<String, OTransactionIndexChanges> change : transaction.getIndexOperations().entrySet()) {
       OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
           .equals(index.getType())) {
@@ -679,7 +688,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
     }
 
-    for (ORecordOperation entry : txContext.getTransaction().getRecordOperations()) {
+    for (ORecordOperation entry : transaction.getRecordOperations()) {
       if (entry.getType() != ORecordOperation.CREATED) {
         int changeVersion = entry.getRecord().getVersion();
         ORecordMetadata metadata = getStorage().getRecordMetadata(entry.getRID());

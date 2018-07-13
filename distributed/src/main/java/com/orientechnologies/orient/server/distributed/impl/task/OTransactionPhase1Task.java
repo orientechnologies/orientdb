@@ -96,16 +96,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
     convert(database);
-    OTransactionResultPayload res1 = null;
-    try {
-      OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
-
-      res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
-    } catch (ORecordNotFoundException e) {
-      OLogManager.instance().info(this, "Update of not yet existing record: %s re-enqueuing first phase", e.getRid());
-
-      //Do nothing this will cause the transaction to re-enque and wait for the next operation that will insert the missing data.
-    }
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
+    OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
     if (res1 == null) {
       retryCount++;
       ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
