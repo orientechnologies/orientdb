@@ -25,11 +25,10 @@ public class ODistributedCoordinatorTest {
       @Override
       public void begin(ODistributedMember member, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
-        coordinator.sendOperation(this, nodeRequest, (coordinator1, context, response, status) -> {
+        coordinator.sendOperation(this, nodeRequest, (coordinator1, context, response) -> {
           if (context.getResponses().size() == 1) {
             responseReceived.countDown();
           }
-          return status;
         });
       }
 
@@ -55,22 +54,20 @@ public class ODistributedCoordinatorTest {
       @Override
       public void begin(ODistributedMember member, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
-        coordinator.sendOperation(this, nodeRequest, (coordinator1, context, response, status) -> {
+        coordinator.sendOperation(this, nodeRequest, (coordinator1, context, response) -> {
           if (context.getResponses().size() == 1) {
             coordinator1.sendOperation(this, new ONodeRequest() {
               @Override
               public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor) {
                 return null;
               }
-            }, (coordinator2, context1, response1, status1) -> {
+            }, (coordinator2, context1, response1) -> {
               if (context.getResponses().size() == 1) {
                 member.reply(new OSubmitResponse() {
                 });
               }
-              return status1;
             });
           }
-          return status;
         });
       }
     });

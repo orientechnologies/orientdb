@@ -33,7 +33,7 @@ public class ODistributedCoordinator implements AutoCloseable {
 
   public ORequestContext sendOperation(OSubmitRequest submitRequest, ONodeRequest nodeRequest, OResponseHandler handler) {
     OLogId id = log(nodeRequest);
-    ORequestContext context = new ORequestContext(this, submitRequest, nodeRequest, members.size() / 2 + 1, handler);
+    ORequestContext context = new ORequestContext(this, submitRequest, nodeRequest, members.values(), handler);
     contexts.put(id, context);
     for (ODistributedMember member : members.values()) {
       member.sendRequest(id, nodeRequest);
