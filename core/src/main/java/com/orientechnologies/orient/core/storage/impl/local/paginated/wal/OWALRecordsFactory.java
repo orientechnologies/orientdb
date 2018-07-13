@@ -35,8 +35,17 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.compon
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageAddRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageDeleteRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageReplaceRecordOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageSetNextPagePointerRecordOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageSetPrevPageRecordOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageSetNextPagePointerOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageSetPrevPageOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpositionmapbucket.OClusterPositionMapBucketAddOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpositionmapbucket.OClusterPositionMapBucketAllocateOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpositionmapbucket.OClusterPositionMapBucketMakeAvailableOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpositionmapbucket.OClusterPositionMapBucketRemoveOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpositionmapbucket.OClusterPositionMapBucketResurrectOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpositionmapbucket.OClusterPositionMapBucketSetOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.paginatedclusterstate.OPaginatedClusterStateSetFreeListPageOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.paginatedclusterstate.OPaginatedClusterStateSetRecordSizeOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.paginatedclusterstate.OPaginatedClusterStateSetSizeOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OCreateHashTableOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OHashTablePutOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.localhashtable.OHashTableRemoveOperation;
@@ -68,6 +77,12 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_SET_NEXT_PAGE_OPERATION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_SET_NEXT_PAGE_POINTER_OPERATION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_PAGE_SET_PREV_PAGE_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_POSITION_MAP_BUCKET_ADD_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_POSITION_MAP_BUCKET_ALLOCATE_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_POSITION_MAP_BUCKET_MAKE_AVAILABLE_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_POSITION_MAP_BUCKET_REMOVE_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_POSITION_MAP_BUCKET_RESURRECT_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CLUSTER_POSITION_MAP_BUCKET_SET_OPERATION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CREATE_CLUSTER_OPERATION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CREATE_HASH_TABLE_OPERATION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CREATE_RECORD_OPERATION;
@@ -86,6 +101,9 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.HASH_TABLE_REMOVE_OPERATION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.MAKE_POSITION_AVAILABLE_OPERATION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.NON_TX_OPERATION_PERFORMED_WAL_RECORD;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.PAGINATED_CLUSTER_STATE_SET_FREE_LIST_PAGE_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.PAGINATED_CLUSTER_STATE_SET_RECORD_SIZE_OPERATION;
+import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.PAGINATED_CLUSTER_STATE_SET_SIZE_OPERATION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.RECYCLE_RECORD_OPERATION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.SBTREE_BONSAI_PUT_OPERATION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.SBTREE_BONSAI_REMOVE_OPERATION;
@@ -262,14 +280,50 @@ public final class OWALRecordsFactory {
       walRecord = new OClusterPageReplaceRecordOperation();
       break;
     case CLUSTER_PAGE_SET_NEXT_PAGE_OPERATION:
-      walRecord = new OClusterPageSetNextPagePointerRecordOperation();
+      walRecord = new OClusterPageSetNextPagePointerOperation();
       break;
     case CLUSTER_PAGE_SET_NEXT_PAGE_POINTER_OPERATION:
-      walRecord = new OClusterPageSetNextPagePointerRecordOperation();
+      walRecord = new OClusterPageSetNextPagePointerOperation();
       break;
     case CLUSTER_PAGE_SET_PREV_PAGE_OPERATION:
-      walRecord = new OClusterPageSetPrevPageRecordOperation();
+      walRecord = new OClusterPageSetPrevPageOperation();
       break;
+    case CLUSTER_POSITION_MAP_BUCKET_ADD_OPERATION:
+      walRecord = new OClusterPositionMapBucketAddOperation();
+      break;
+
+    case CLUSTER_POSITION_MAP_BUCKET_ALLOCATE_OPERATION:
+      walRecord = new OClusterPositionMapBucketAllocateOperation();
+      break;
+
+    case CLUSTER_POSITION_MAP_BUCKET_SET_OPERATION:
+      walRecord = new OClusterPositionMapBucketSetOperation();
+      break;
+
+    case CLUSTER_POSITION_MAP_BUCKET_RESURRECT_OPERATION:
+      walRecord = new OClusterPositionMapBucketResurrectOperation();
+      break;
+
+    case CLUSTER_POSITION_MAP_BUCKET_MAKE_AVAILABLE_OPERATION:
+      walRecord = new OClusterPositionMapBucketMakeAvailableOperation();
+      break;
+
+    case CLUSTER_POSITION_MAP_BUCKET_REMOVE_OPERATION:
+      walRecord = new OClusterPositionMapBucketRemoveOperation();
+      break;
+
+    case PAGINATED_CLUSTER_STATE_SET_SIZE_OPERATION:
+      walRecord = new OPaginatedClusterStateSetSizeOperation();
+      break;
+
+    case PAGINATED_CLUSTER_STATE_SET_RECORD_SIZE_OPERATION:
+      walRecord = new OPaginatedClusterStateSetRecordSizeOperation();
+      break;
+
+    case PAGINATED_CLUSTER_STATE_SET_FREE_LIST_PAGE_OPERATION:
+      walRecord = new OPaginatedClusterStateSetFreeListPageOperation();
+      break;
+
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {

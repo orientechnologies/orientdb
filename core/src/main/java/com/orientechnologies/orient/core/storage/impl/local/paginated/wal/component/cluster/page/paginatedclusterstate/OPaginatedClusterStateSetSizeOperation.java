@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.paginatedclusterstate;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -7,20 +7,20 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRec
 
 import java.nio.ByteBuffer;
 
-public class OClusterPageSetNextPagePointerRecordOperation extends OPageOperation {
-  private long nextPagePointer;
+public class OPaginatedClusterStateSetSizeOperation extends OPageOperation {
+  private long size;
 
-  public OClusterPageSetNextPagePointerRecordOperation() {
+  public OPaginatedClusterStateSetSizeOperation() {
   }
 
-  public OClusterPageSetNextPagePointerRecordOperation(OLogSequenceNumber lsn, long fileId, long pageIndex, long nextPagePointer) {
-    super(lsn, fileId, pageIndex);
-    this.nextPagePointer = nextPagePointer;
+  public OPaginatedClusterStateSetSizeOperation(OLogSequenceNumber pageLSN, long fileId, long pageIndex, long size) {
+    super(pageLSN, fileId, pageIndex);
+    this.size = size;
   }
 
   @Override
   public byte getId() {
-    return WALRecordTypes.CLUSTER_PAGE_SET_NEXT_PAGE_POINTER_OPERATION;
+    return WALRecordTypes.PAGINATED_CLUSTER_STATE_SET_SIZE_OPERATION;
   }
 
   @Override
@@ -32,7 +32,7 @@ public class OClusterPageSetNextPagePointerRecordOperation extends OPageOperatio
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
-    OLongSerializer.INSTANCE.serializeNative(nextPagePointer, content, offset);
+    OLongSerializer.INSTANCE.serializeNative(size, content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
     return offset;
@@ -42,20 +42,20 @@ public class OClusterPageSetNextPagePointerRecordOperation extends OPageOperatio
   public void toStream(ByteBuffer buffer) {
     super.toStream(buffer);
 
-    buffer.putLong(nextPagePointer);
+    buffer.putLong(size);
   }
 
   @Override
   public int fromStream(byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
-    nextPagePointer = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    size = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
     return offset;
   }
 
-  public long getNextPagePointer() {
-    return nextPagePointer;
+  public long getSize() {
+    return size;
   }
 }

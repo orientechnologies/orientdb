@@ -23,6 +23,9 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.paginatedclusterstate.OPaginatedClusterStateSetFreeListPageOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.paginatedclusterstate.OPaginatedClusterStateSetRecordSizeOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.paginatedclusterstate.OPaginatedClusterStateSetSizeOperation;
 
 import java.nio.ByteBuffer;
 
@@ -40,7 +43,11 @@ public final class OPaginatedClusterState extends ODurablePage {
   }
 
   public void setSize(final long size) {
+    final long oldSize = buffer.getLong(SIZE_OFFSET);
+
     buffer.putLong(SIZE_OFFSET, size);
+    pageOperations.add(new OPaginatedClusterStateSetSizeOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), oldSize));
   }
 
   public long getSize() {
@@ -48,7 +55,13 @@ public final class OPaginatedClusterState extends ODurablePage {
   }
 
   void setRecordsSize(final long recordsSize) {
+    final long oldRecordSize = buffer.getLong(RECORDS_SIZE_OFFSET);
+
     buffer.putLong(RECORDS_SIZE_OFFSET, recordsSize);
+
+    pageOperations.add(
+        new OPaginatedClusterStateSetRecordSizeOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+            cacheEntry.getPageIndex(), oldRecordSize));
   }
 
   public long getRecordsSize() {
@@ -56,7 +69,12 @@ public final class OPaginatedClusterState extends ODurablePage {
   }
 
   void setFreeListPage(final int index, final long pageIndex) {
+    final long oldPageIndex = buffer.getLong(FREE_LIST_OFFSET + index * OLongSerializer.LONG_SIZE);
+
     buffer.putLong(FREE_LIST_OFFSET + index * OLongSerializer.LONG_SIZE, pageIndex);
+    pageOperations.add(
+        new OPaginatedClusterStateSetFreeListPageOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+            cacheEntry.getPageIndex(), index, oldPageIndex));
   }
 
   long getFreeListPage(final int index) {

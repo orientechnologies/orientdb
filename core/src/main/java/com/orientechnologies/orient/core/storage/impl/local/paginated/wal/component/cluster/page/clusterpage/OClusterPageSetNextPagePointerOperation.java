@@ -7,20 +7,20 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRec
 
 import java.nio.ByteBuffer;
 
-public class OClusterPageSetNextPageRecordOperation extends OPageOperation {
-  private long nextPage;
+public class OClusterPageSetNextPagePointerOperation extends OPageOperation {
+  private long nextPagePointer;
 
-  public OClusterPageSetNextPageRecordOperation() {
+  public OClusterPageSetNextPagePointerOperation() {
   }
 
-  public OClusterPageSetNextPageRecordOperation(OLogSequenceNumber lsn, long fileId, long pageIndex, long nextPage) {
+  public OClusterPageSetNextPagePointerOperation(OLogSequenceNumber lsn, long fileId, long pageIndex, long nextPagePointer) {
     super(lsn, fileId, pageIndex);
-    this.nextPage = nextPage;
+    this.nextPagePointer = nextPagePointer;
   }
 
   @Override
   public byte getId() {
-    return WALRecordTypes.CLUSTER_PAGE_SET_NEXT_PAGE_OPERATION;
+    return WALRecordTypes.CLUSTER_PAGE_SET_NEXT_PAGE_POINTER_OPERATION;
   }
 
   @Override
@@ -32,7 +32,7 @@ public class OClusterPageSetNextPageRecordOperation extends OPageOperation {
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
-    OLongSerializer.INSTANCE.serializeNative(nextPage, content, offset);
+    OLongSerializer.INSTANCE.serializeNative(nextPagePointer, content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
     return offset;
@@ -42,20 +42,20 @@ public class OClusterPageSetNextPageRecordOperation extends OPageOperation {
   public void toStream(ByteBuffer buffer) {
     super.toStream(buffer);
 
-    buffer.putLong(nextPage);
+    buffer.putLong(nextPagePointer);
   }
 
   @Override
   public int fromStream(byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
-    nextPage = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    nextPagePointer = OLongSerializer.INSTANCE.deserializeNative(content, offset);
     offset += OLongSerializer.LONG_SIZE;
 
     return offset;
   }
 
-  public long getNextPage() {
-    return nextPage;
+  public long getNextPagePointer() {
+    return nextPagePointer;
   }
 }

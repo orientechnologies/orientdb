@@ -7,13 +7,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRec
 
 import java.nio.ByteBuffer;
 
-public class OClusterPageSetPrevPageRecordOperation extends OPageOperation {
+public class OClusterPageSetPrevPageOperation extends OPageOperation {
   private long prevPage;
 
-  public OClusterPageSetPrevPageRecordOperation() {
+  public OClusterPageSetPrevPageOperation() {
   }
 
-  public OClusterPageSetPrevPageRecordOperation(OLogSequenceNumber lsn, long fileId, long pageIndex, long prevPage) {
+  public OClusterPageSetPrevPageOperation(OLogSequenceNumber lsn, long fileId, long pageIndex, long prevPage) {
     super(lsn, fileId, pageIndex);
     this.prevPage = prevPage;
   }

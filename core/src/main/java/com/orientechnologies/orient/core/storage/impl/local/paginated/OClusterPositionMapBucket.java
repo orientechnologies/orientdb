@@ -26,6 +26,12 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpositionmapbucket.OClusterPositionMapBucketAddOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpositionmapbucket.OClusterPositionMapBucketAllocateOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpositionmapbucket.OClusterPositionMapBucketMakeAvailableOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpositionmapbucket.OClusterPositionMapBucketRemoveOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpositionmapbucket.OClusterPositionMapBucketResurrectOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpositionmapbucket.OClusterPositionMapBucketSetOperation;
 
 import java.nio.ByteBuffer;
 
@@ -67,6 +73,9 @@ public final class OClusterPositionMapBucket extends ODurablePage {
 
     buffer.putInt(SIZE_OFFSET, size + 1);
 
+    pageOperations.add(new OClusterPositionMapBucketAddOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), size));
+
     return size;
   }
 
@@ -77,6 +86,9 @@ public final class OClusterPositionMapBucket extends ODurablePage {
 
     buffer.put(position, ALLOCATED);
     buffer.putInt(SIZE_OFFSET, size + 1);
+
+    pageOperations.add(new OClusterPositionMapBucketAllocateOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), size));
 
     return size;
   }
@@ -105,13 +117,20 @@ public final class OClusterPositionMapBucket extends ODurablePage {
 
     final int position = entryPosition(index);
     final byte flag = buffer.get(position);
+
     if (flag == ALLOCATED) {
       buffer.put(position, FILLED);
     } else if (flag != FILLED) {
       throw new OStorageException("Provided index " + index + " points to removed entry");
     }
 
+    final long recordPageIndex = buffer.getLong(position + OByteSerializer.BYTE_SIZE);
+    final int recordPosition = buffer.getInt(position + OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE);
+
     updateEntry(position, entry, buffer);
+
+    pageOperations.add(new OClusterPositionMapBucketSetOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), index, flag, recordPageIndex, recordPosition));
   }
 
   void resurrect(final int index, final PositionEntry entry) {
@@ -123,6 +142,7 @@ public final class OClusterPositionMapBucket extends ODurablePage {
 
     final int position = entryPosition(index);
     final byte flag = buffer.get(position);
+
     if (flag == REMOVED) {
       buffer.put(position, FILLED);
     } else {
@@ -130,6 +150,9 @@ public final class OClusterPositionMapBucket extends ODurablePage {
     }
 
     updateEntry(position, entry, buffer);
+
+    pageOperations.add(new OClusterPositionMapBucketResurrectOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), index));
   }
 
   void makeAvailable(final int index) {
@@ -148,9 +171,15 @@ public final class OClusterPositionMapBucket extends ODurablePage {
       throw new OStorageException("Cannot make available index " + index + ", it points to a non removed entry");
     }
 
+    int oldSize = -1;
     if (index == size - 1) {
+      oldSize = size;
       buffer.putInt(SIZE_OFFSET, size - 1);
     }
+
+    pageOperations.add(
+        new OClusterPositionMapBucketMakeAvailableOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+            cacheEntry.getPageIndex(), index, oldSize));
   }
 
   private static int entryPosition(final int index) {
@@ -179,6 +208,13 @@ public final class OClusterPositionMapBucket extends ODurablePage {
     }
 
     buffer.put(position, REMOVED);
+
+    final long recordPageIndex = buffer.getLong(position + OByteSerializer.BYTE_SIZE);
+    final int recordPosition = buffer.getInt(position + OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE);
+
+    //we can log only record index, but because removes are very rare lets log whole information
+    pageOperations.add(new OClusterPositionMapBucketRemoveOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), index, recordPosition, recordPageIndex));
   }
 
   private static PositionEntry readEntry(int position, final ByteBuffer buffer) {

@@ -30,9 +30,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageAddRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageDeleteRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageReplaceRecordOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageSetNextPagePointerRecordOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageSetNextPageRecordOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageSetPrevPageRecordOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageSetNextPageOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageSetNextPagePointerOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster.page.clusterpage.OClusterPageSetPrevPageOperation;
 
 import java.nio.ByteBuffer;
 
@@ -429,7 +429,7 @@ public final class OClusterPage extends ODurablePage {
     final long oldNextPage = buffer.getLong(NEXT_PAGE_OFFSET);
 
     buffer.putLong(NEXT_PAGE_OFFSET, nextPage);
-    pageOperations.add(new OClusterPageSetNextPageRecordOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+    pageOperations.add(new OClusterPageSetNextPageOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
         cacheEntry.getPageIndex(), oldNextPage));
   }
 
@@ -441,7 +441,7 @@ public final class OClusterPage extends ODurablePage {
     final long oldPrevPage = buffer.getLong(PREV_PAGE_OFFSET);
 
     buffer.putLong(PREV_PAGE_OFFSET, prevPage);
-    pageOperations.add(new OClusterPageSetPrevPageRecordOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+    pageOperations.add(new OClusterPageSetPrevPageOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
         cacheEntry.getPageIndex(), oldPrevPage));
   }
 
@@ -459,8 +459,7 @@ public final class OClusterPage extends ODurablePage {
     final long prevNextPagePointer = buffer.getLong(pointerPosition);
     buffer.putLong(pointerPosition, value);
 
-    pageOperations.add(
-        new OClusterPageSetNextPagePointerRecordOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+    pageOperations.add(new OClusterPageSetNextPagePointerOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
             cacheEntry.getPageIndex(), prevNextPagePointer));
   }
 

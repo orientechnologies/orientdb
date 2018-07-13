@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
 import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 
@@ -150,12 +149,8 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
       OLogSequenceNumber recordLSN = null;
 
       try {
-        if (pageOperations.isEmpty()) {
-          recordLSN = writeAheadLog.log(new OEmptyWALRecord());
-        } else {
-          for (OPageOperation operation : pageOperations) {
-            recordLSN = writeAheadLog.log(operation);
-          }
+        for (OPageOperation operation : pageOperations) {
+          recordLSN = writeAheadLog.log(operation);
         }
       } catch (IOException e) {
         throw OException.wrapException(new OStorageException(
@@ -163,9 +158,9 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
                 + storage.getName()), e);
       }
 
-      assert recordLSN != null;
-
-      ODurablePage.setLogSequenceNumber(buffer, recordLSN);
+      if (recordLSN != null) {
+        ODurablePage.setLogSequenceNumber(buffer, recordLSN);
+      }
     }
 
     readCache.releaseFromWrite(cacheEntry, writeCache);
