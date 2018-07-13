@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -83,7 +84,7 @@ public class ODocumentDelta implements OIdentifiable{
   }
   
   public void deserialize(BytesContainer bytes){
-    
+    serializer.fromStream(this, bytes);
   }
   
   public boolean isLeaf(){
@@ -377,7 +378,7 @@ public class ODocumentDelta implements OIdentifiable{
     ORecord rec = database.getRecord(getIdentity());
     if (rec instanceof ORecordAbstract){
       rec = rec.copy();
-      ((ORecordAbstract)rec).setVersion(getVersion());
+      ORecordInternal.setVersion(rec, getVersion());
     }
     return (T)rec;
   }

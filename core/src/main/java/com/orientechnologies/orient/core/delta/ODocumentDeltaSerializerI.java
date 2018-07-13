@@ -26,4 +26,6 @@ public interface ODocumentDeltaSerializerI {
   byte[] toStream(ODocumentDelta delta);    
   
   ODocumentDelta fromStream(BytesContainer bytes);
+  
+  void fromStream(ODocumentDelta delta, BytesContainer bytes);
 }

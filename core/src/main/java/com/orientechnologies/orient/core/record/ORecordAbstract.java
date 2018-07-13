@@ -207,7 +207,7 @@ public abstract class ORecordAbstract implements ORecord {
     return _recordVersion;
   }
 
-  public void setVersion(final int iVersion) {
+  protected void setVersion(final int iVersion) {
     _recordVersion = iVersion;
   }
 

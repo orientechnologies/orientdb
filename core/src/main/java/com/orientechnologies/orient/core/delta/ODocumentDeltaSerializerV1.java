@@ -108,8 +108,7 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer{
     serializeValue(bytes, -1, OType.INTEGER);
   }
   
-  private ODocumentDelta deserialize(BytesContainer bytes){    
-    ODocumentDelta ret = new ODocumentDelta();
+  private void deserialize(ODocumentDelta delta, BytesContainer bytes){
     boolean endReached = false;    
     while (!endReached){
       int fieldNameLength = OVarIntSerializer.readAsInteger(bytes);
@@ -119,17 +118,22 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer{
           bytes.offset += fieldNameLength;
           OType type = HelperClasses.readType(bytes);
           if (type == null){
-            ret.field(fieldName, null);
+            delta.field(fieldName, null);
             continue;
           }
           Object value = deserializeValue(bytes, type, null);
-          ret.field(fieldName, value);
+          delta.field(fieldName, value);
         }        
       }
       else{
         endReached = true;
       }
     }
+  }
+  
+  private ODocumentDelta deserialize(BytesContainer bytes){    
+    ODocumentDelta ret = new ODocumentDelta();
+    deserialize(ret, bytes);
     return ret;
   }
   
@@ -545,7 +549,10 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer{
     return (T)value;
   }
     
-
+  public void fromStream(ODocumentDelta delta, BytesContainer bytes){
+    
+  }
+  
   @Override
   public ODocumentDelta fromStream(BytesContainer bytes) {
     return deserialize(bytes);
