@@ -26,6 +26,7 @@ public class OStorageRemotePushThread extends Thread {
   private volatile OBinaryRequest                    currentRequest;
 
   public OStorageRemotePushThread(ORemotePushHandler storage, String host, int retryDelay, long requestTimeout) {
+    setDaemon(true);
     this.pushHandler = storage;
     this.host = host;
     network = storage.getNetwork(this.host);
