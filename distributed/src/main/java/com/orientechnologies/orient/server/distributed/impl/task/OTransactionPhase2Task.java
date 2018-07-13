@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
@@ -105,9 +106,8 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
               ODocumentDelta deltaRecord = (ODocumentDelta) operationRecord;
               ORID id = deltaRecord.getIdentity();
               ORecord rec = cache.findRecord(id);
-              if (rec != null && rec instanceof ORecordAbstract){
-                ORecordAbstract record = (ORecordAbstract)rec;
-                record.setVersion(version);
+              if (rec != null && rec instanceof ORecordAbstract){                
+                ORecordInternal.setVersion(rec, version);
               }
             }
           }
