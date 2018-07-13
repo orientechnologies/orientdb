@@ -6,10 +6,12 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.jmx.JmxReporter;
 import com.orientechnologies.agent.profiler.metrics.dropwizard.*;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OrientDBProfiler;
 import com.orientechnologies.common.profiler.metrics.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,6 +51,7 @@ public class OrientDBEnterpriseProfiler implements OrientDBProfiler {
     }
     jmxReporter = configureJMXReporter(getORDefault(reporters.field("jmx")));
     consoleReporter = configureConsoleReporter(getORDefault(reporters.field("console")));
+    csvReporter = configureCsvReporter(getORDefault(reporters.field("csv")));
   }
 
   private ODocument getORDefault(ODocument config) {
@@ -89,6 +92,29 @@ public class OrientDBEnterpriseProfiler implements OrientDBProfiler {
 
     }
     return jmxReporter;
+
+  }
+
+  private CsvReporter configureCsvReporter(ODocument csvConfig) {
+
+    Boolean enabled = Boolean.TRUE.equals(csvConfig.field("enabled"));
+    Number interval = csvConfig.field("interval");
+    String directory = csvConfig.field("directory");
+
+    CsvReporter.Builder builder = CsvReporter.forRegistry(registry);
+    CsvReporter csvReporter = null;
+    if (enabled && interval != null && directory != null) {
+      File outputDir = new File(directory);
+      if (!outputDir.exists()) {
+        if (!outputDir.mkdirs()) {
+          OLogManager.instance().warn(this, "Failed to create CSV metrics dir {}", outputDir);
+        } else {
+          csvReporter = builder.build(new File(directory));
+          csvReporter.start(interval.longValue(), TimeUnit.MILLISECONDS);
+        }
+      }
+    }
+    return csvReporter;
 
   }
 
