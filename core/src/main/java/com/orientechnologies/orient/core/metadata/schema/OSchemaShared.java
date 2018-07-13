@@ -592,26 +592,28 @@ public abstract class OSchemaShared implements OCloseable {
 
       clustersToViews.clear();
       Collection<ODocument> storedViews = document.field("views");
-      for (ODocument v : storedViews) {
+      if (storedViews != null){
+        for (ODocument v : storedViews) {
 
-        String name = v.field("name");
+          String name = v.field("name");
 
-        OViewImpl view;
-        if (views.containsKey(name.toLowerCase(Locale.ENGLISH))) {
-          view = (OViewImpl) views.get(name.toLowerCase(Locale.ENGLISH));
-          view.fromStream(v);
-        } else {
-          view = createViewInstance(v);
-          view.fromStream();
+          OViewImpl view;
+          if (views.containsKey(name.toLowerCase(Locale.ENGLISH))) {
+            view = (OViewImpl) views.get(name.toLowerCase(Locale.ENGLISH));
+            view.fromStream(v);
+          } else {
+            view = createViewInstance(v);
+            view.fromStream();
+          }
+
+          newViews.put(view.getName().toLowerCase(Locale.ENGLISH), view);
+
+          if (view.getShortName() != null)
+            newViews.put(view.getShortName().toLowerCase(Locale.ENGLISH), view);
+
+          addClusterViewMap(view);
+
         }
-
-        newViews.put(view.getName().toLowerCase(Locale.ENGLISH), view);
-
-        if (view.getShortName() != null)
-          newViews.put(view.getShortName().toLowerCase(Locale.ENGLISH), view);
-
-        addClusterViewMap(view);
-
       }
 
       views.clear();
