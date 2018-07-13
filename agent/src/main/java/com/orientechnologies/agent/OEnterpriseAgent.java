@@ -305,6 +305,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       profiler.startRecording();
 
     currentProfiler.shutdown();
+
   }
 
   public void registerListener(OEnterpriseProfilerListener listener) {
@@ -363,7 +364,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       if (enterpriseVersion == null || enterpriseVersion.isEmpty()) {
         throw new IllegalArgumentException("Cannot read the agent version from the agent config file");
       }
-    }finally {
+    } finally {
       if (inputStream != null) {
         try {
           inputStream.close();
