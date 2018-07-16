@@ -164,7 +164,7 @@ public class SBTreeLeafBucketTest {
       final byte[] rawValue = new byte[OLinkSerializer.RID_SIZE];
 
       OLinkSerializer.INSTANCE.serializeNativeObject(new ORecordId(i + 5, i + 5), rawValue, 0);
-      treeBucket.updateValue(i, rawValue);
+      treeBucket.updateValue(i, rawValue, new byte[] { 1 });
     }
 
     Consumer<OSBTreeBucket<Long, OIdentifiable>> checker = (bucket) -> {
@@ -318,7 +318,7 @@ public class SBTreeLeafBucketTest {
 
     int itemsToDelete = originalSize / 2;
     for (int i = 0; i < itemsToDelete; i++) {
-      treeBucket.remove(treeBucket.size() - 1);
+      treeBucket.remove(treeBucket.size() - 1, new byte[] { 1 }, new byte[] { 2 });
     }
 
     Assert.assertEquals(treeBucket.size(), originalSize - itemsToDelete);
