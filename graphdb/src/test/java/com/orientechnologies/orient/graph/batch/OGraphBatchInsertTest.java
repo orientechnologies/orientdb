@@ -1,39 +1,65 @@
 package com.orientechnologies.orient.graph.batch;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.server.AbstractRemoteTest;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import junit.framework.TestCase;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.*;
+
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) (l.dellaquila-at-orientdb.com)
  */
 
-public class OGraphBatchInsertTest extends TestCase {
+public class OGraphBatchInsertTest {
 
   @Test
   public void test1() {
     String dbUrl = "memory:batchinsert_test1";
-    OGraphBatchInsertBasic batch = new OGraphBatchInsertBasic(dbUrl, "admin", "admin");
-    batch.begin();
+    OGraphBatchInsertBasic batch = new OGraphBatchInsertBasic(dbUrl);
+    OrientDB orientDB = batch.begin();
 
     batch.createEdge(0L, 1L);
     batch.createEdge(0L, 2L);
     batch.end();
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
-    db.open("admin", "admin");
-    List<?> result = db.query(new OSQLSynchQuery<Object>("select from V"));
+    ODatabaseSession db = orientDB.open("batchinsert_test1", "admin", "admin");
+    OResultSet rs = db.query("select from V");
 
-    assertEquals(3, result.size());
+    assertEquals(3, rs.stream().count());
 
-    db.close();
+    batch.close();
+  }
+
+  @Test
+  public void testBatchInsertRemote() throws Exception{
+    AbstractRemoteTest abstractRemoteTest = new AbstractRemoteTest();
+    abstractRemoteTest.setup();
+
+    String url = "remote:localhost/batchinsert_remote";
+    OGraphBatchInsertBasic batch = new OGraphBatchInsertBasic(url, "root", "root");
+    OrientDB orientDB = batch.begin();
+
+    batch.createEdge(0L, 1L);
+    batch.createEdge(0L, 2L);
+    batch.end();
+    ODatabaseSession db = orientDB.open("batchinsert_remote", "admin", "admin");
+    OResultSet rs = db.query("select from V");
+
+    assertEquals(3, rs.stream().count());
+
+    batch.close();
+
+    abstractRemoteTest.teardown();
   }
 
   @Test

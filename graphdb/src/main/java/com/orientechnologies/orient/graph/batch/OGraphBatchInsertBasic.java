@@ -2,17 +2,21 @@ package com.orientechnologies.orient.graph.batch;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.util.OURLConnection;
+import com.orientechnologies.orient.core.util.OURLHelper;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,11 +59,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 2.0 M3
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) (l.dellaquila-at-orientdb.com)
  */
-public class OGraphBatchInsertBasic {
+public class OGraphBatchInsertBasic implements Closeable {
 
   private final String              userName;
-  private final String              dbUrl;
+  private final String              fullUrl;
   private final String              password;
+  private final OURLConnection      dbUrlConnection;
+  private final ODatabaseType       dbType;
+  private final OrientDB            orientDB;
   Map<Long, List<Long>>             out                      = new HashMap<Long, List<Long>>();
   Map<Long, List<Long>>             in                       = new HashMap<Long, List<Long>>();
   private String                    idPropertyName           = "uid";
@@ -77,6 +84,12 @@ public class OGraphBatchInsertBasic {
   private int                       parallel                 = 4;
   private AtomicInteger             runningThreads;
 
+  @Override
+  public void close() {
+    db.close();
+    orientDB.close();
+  }
+
   class BatchImporterJob extends Thread {
 
     private final int mod;
@@ -89,16 +102,14 @@ public class OGraphBatchInsertBasic {
 
     @Override
     public void run() {
-      try {
-        ODatabaseDocumentInternal db = new ODatabaseDocumentTx(dbUrl);
-        db.open(userName, password);
-        db.declareIntent(new OIntentMassiveInsert());
+      try (ODatabaseDocumentInternal perThreadDbInstance = (ODatabaseDocumentInternal) orientDB.open(dbUrlConnection.getDbName(), userName, password)){
+        perThreadDbInstance.declareIntent(new OIntentMassiveInsert());
         int clusterId = clusterIds[mod];
 
         final String outField = OrientEdgeType.CLASS_NAME.equals(edgeClass) ? "out_" : ("out_" + edgeClass);
         final String inField = OrientEdgeType.CLASS_NAME.equals(edgeClass) ? "in_" : ("in_" + edgeClass);
 
-        String clusterName = db.getStorage().getClusterById(clusterId).getName();
+        String clusterName = perThreadDbInstance.getStorage().getClusterById(clusterId).getName();
         // long firstAvailableClusterPosition = lastClusterPositions[mod] + 1;
 
         for (long i = mod; i <= last; i += parallel) {
@@ -106,7 +117,7 @@ public class OGraphBatchInsertBasic {
           final List<Long> inIds = in.get(i);
           final ODocument doc = new ODocument(vClass);
           if (outIds == null && inIds == null) {
-            db.save(doc, clusterName).delete();
+            perThreadDbInstance.save(doc, clusterName).delete();
           } else {
             doc.field(idPropertyName, i);
             if (outIds != null) {
@@ -125,7 +136,7 @@ public class OGraphBatchInsertBasic {
               }
               doc.field(inField, inBag);
             }
-            db.save(doc, clusterName);
+            perThreadDbInstance.save(doc, clusterName);
           }
         }
       } finally {
@@ -133,9 +144,6 @@ public class OGraphBatchInsertBasic {
         synchronized (runningThreads) {
           runningThreads.notifyAll();
         }
-        db.activateOnCurrentThread();
-        db.declareIntent(null);
-        db.close();
       }
     }
   }
@@ -148,9 +156,7 @@ public class OGraphBatchInsertBasic {
    *          db connection URL (plocal:/your/db/path)
    */
   public OGraphBatchInsertBasic(String iDbURL) {
-    this.dbUrl = iDbURL;
-    this.userName = "admin";
-    this.password = "admin";
+    this(iDbURL, "admin", "admin");
   }
 
   /**
@@ -164,9 +170,15 @@ public class OGraphBatchInsertBasic {
    *          db password (use admin for new db)
    */
   public OGraphBatchInsertBasic(String iDbURL, String iUserName, String iPassword) {
-    this.dbUrl = iDbURL;
+    this.fullUrl = iDbURL;
+    // The URL we receive here is a full URL, including the database, like memory:mydb or plocal:/path/do/db
+    // To deprecate ODatabaseDocumentTx, we need to separate the "url" from the database name
+    this.dbUrlConnection = OURLHelper.parseNew(fullUrl);
+    this.dbType = dbUrlConnection.getDbType().orElse(ODatabaseType.MEMORY);
+    String dbGroupUrl = dbUrlConnection.getType() + ":"  + dbUrlConnection.getPath();
     this.userName = iUserName;
     this.password = iPassword;
+    this.orientDB = new OrientDB(dbGroupUrl, userName, password, OrientDBConfig.defaultConfig());
   }
 
   /**
@@ -174,7 +186,7 @@ public class OGraphBatchInsertBasic {
    * vertices and edges.
    *
    */
-  public void begin() {
+  public OrientDB begin() {
     walActive =  OGlobalConfiguration.USE_WAL.getValueAsBoolean();
     if (walActive)
       OGlobalConfiguration.USE_WAL.setValue(false);
@@ -183,12 +195,10 @@ public class OGraphBatchInsertBasic {
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(bonsaiThreshold);
     }
 
-    db = new ODatabaseDocumentTx(dbUrl);
-    if (db.exists()) {
-      db.open(userName, password);
-    } else {
-      db.create();
-    }
+    //OrientDB orientDB = new OrientDB(dbGroupUrl, OrientDBConfig.defaultConfig());
+    orientDB.createIfNotExists(dbUrlConnection.getDbName(), dbType);
+    db = (ODatabaseDocumentInternal) orientDB.open(dbUrlConnection.getDbName(), userName, password);
+
     createBaseSchema();
 
     out = estimatedEntries > 0 ? new HashMap<Long, List<Long>>(estimatedEntries) : new HashMap<Long, List<Long>>();
@@ -211,6 +221,8 @@ public class OGraphBatchInsertBasic {
         throw new RuntimeException(e);
       }
     }
+
+    return orientDB;
   }
 
   /**

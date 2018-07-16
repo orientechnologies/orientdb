@@ -88,6 +88,13 @@
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-server</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-tools</artifactId>
             <version>${project.version}</version>
         </dependency>
