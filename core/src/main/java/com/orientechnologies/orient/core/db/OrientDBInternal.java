@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.profiler.OrientDBProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -285,8 +284,5 @@ public interface OrientDBInternal extends AutoCloseable {
 
   OEmbeddedDatabaseInstanceFactory getFactory();
 
-  OrientDBProfiler getProfiler();
-
-  void setProfiler(OrientDBProfiler profiler);
 
 }

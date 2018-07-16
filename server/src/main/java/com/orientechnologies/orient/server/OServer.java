@@ -28,9 +28,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
-import com.orientechnologies.common.profiler.OrientDBProfiler;
-import com.orientechnologies.common.profiler.OrientDBProfilerStub;
-import com.orientechnologies.common.util.OClassLoaderHelper;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -53,7 +50,6 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
-import com.orientechnologies.orient.server.profiler.ProfilerFactory;
 import com.orientechnologies.orient.server.security.ODefaultServerSecurity;
 import com.orientechnologies.orient.server.security.OServerSecurity;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
@@ -381,13 +377,6 @@ public class OServer {
       } catch (ODatabaseException ex) {
         databases = OrientDBInternal.embedded(this.databaseDirectory, config);
       }
-    }
-
-    Iterator<ProfilerFactory> iterator = OClassLoaderHelper.lookupProviderWithOrientClassLoader(ProfilerFactory.class);
-
-    if (iterator.hasNext()) {
-      OrientDBProfiler profiler = iterator.next().createProfilerFor(this);
-      databases.setProfiler(profiler);
     }
 
 
