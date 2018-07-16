@@ -20,8 +20,9 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -33,12 +34,17 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.impl.task.*;
+import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
+import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase2Task;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
-import com.orientechnologies.orient.server.distributed.task.*;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Distributed transaction manager.
@@ -108,7 +114,7 @@ public class ONewDistributedTransactionManager {
               return responseManager;
             }));
 
-    handleResponse(requestId, responseManager, involvedClusters, nodes, database);
+    handleResponse(requestId, responseManager, involvedClusters, nodes, database, iTx);
 
     // OK, DISTRIBUTED COMMIT SUCCEED
     return;
@@ -120,7 +126,7 @@ public class ONewDistributedTransactionManager {
   }
 
   private void handleResponse(ODistributedRequestId requestId, ONewDistributedResponseManager responseManager,
-      Set<String> involvedClusters, Set<String> nodes, ODatabaseDocumentDistributed database) {
+      Set<String> involvedClusters, Set<String> nodes, ODatabaseDocumentDistributed database, OTransactionInternal iTx) {
 
     int[] involvedClustersIds = new int[involvedClusters.size()];
     int i = 0;
@@ -164,7 +170,7 @@ public class ONewDistributedTransactionManager {
       }
       case OTxLockTimeout.ID:
         sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
-        throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId, 0);
+        throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId, database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
       }
 
       for (OTransactionResultPayload result : responseManager.getAllResponses()) {
@@ -181,13 +187,15 @@ public class ONewDistributedTransactionManager {
         switch (result.getResponseType()) {
         case OTxLockTimeout.ID:
           sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
-          throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId, 0);
+          throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId, database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
         case OTxSuccess.ID:
           messages.add("success");
           break;
         case OTxConcurrentModification.ID:
-          messages.add(String.format("concurrent modification record: %s database version: %d",
-              ((OTxConcurrentModification) result).getRecordId().toString(), ((OTxConcurrentModification) result).getVersion()));
+          ORecordId recordId = ((OTxConcurrentModification) result).getRecordId();
+          messages.add(String
+              .format("concurrent modification record: %s database version: %d transaction version: %d", recordId.toString(),
+                  ((OTxConcurrentModification) result).getVersion(), iTx.getRecordEntry(recordId).getRecord().getVersion()));
           break;
         case OTxException.ID:
           exceptions.add(((OTxException) result).getException());

@@ -4,6 +4,7 @@ import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OOfflineNodeException;
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -24,7 +25,8 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
@@ -52,6 +54,7 @@ import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecut
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OToLeaderTransactionTask;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OToLeaderTransactionTaskResponse;
+import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
@@ -63,6 +66,8 @@ import java.util.*;
 import java.util.concurrent.Callable;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
+import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.FAILED;
+import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.SUCCESS;
 
 /**
  * Created by tglman on 30/03/17.
@@ -597,10 +602,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local, int retryCount) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
-    ODistributedTxContext txContext = new ONewDistributedTxContextImpl((ODistributedDatabaseImpl) localDistributedDatabase,
+    ONewDistributedTxContextImpl txContext = new ONewDistributedTxContextImpl((ODistributedDatabaseImpl) localDistributedDatabase,
         requestId, tx);
     try {
-      txContext.begin(this, local);
+      internalBegin2pc(txContext, local);
+      txContext.setStatus(SUCCESS);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
     } catch (OConcurrentCreateException ex) {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
@@ -610,7 +617,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           return false;
         }
       }
-      localDistributedDatabase.registerTxContext(requestId, txContext);
+      txContext.setStatus(FAILED);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
       throw ex;
     } catch (OConcurrentModificationException ex) {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
@@ -622,20 +630,29 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           return false;
         }
       }
-      localDistributedDatabase.registerTxContext(requestId, txContext);
+      txContext.setStatus(FAILED);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
       throw ex;
     } catch (ORecordNotFoundException e) {
+      // This error can happen only in deserialization before locks happen, no need to unlock
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
-        txContext.unlock();
         return false;
       }
-      localDistributedDatabase.registerTxContext(requestId, txContext);
+      txContext.setStatus(FAILED);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
       throw e;
-    } catch (RuntimeException r) {
-      localDistributedDatabase.registerTxContext(requestId, txContext);
-      throw r;
+    } catch (ODistributedLockException | OLockException ex) {
+      txContext.unlock();
+      /// ?? do i've to save this state as well ?
+      //xContext.setStatus(FAILED);
+      //getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      throw ex;
+    } catch (ORecordDuplicatedException ex) {
+      txContext.setStatus(FAILED);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      throw ex;
     }
-    localDistributedDatabase.registerTxContext(requestId, txContext);
+    getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
     return true;
   }
 
@@ -651,18 +668,26 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public boolean commit2pc(ODistributedRequestId transactionId) {
     getStorageDistributed().resetLastValidBackup();
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
-    ODistributedTxContext txContext = localDistributedDatabase.getTxContext(transactionId);
+    ODistributedServerManager manager = getStorageDistributed().getDistributedManager();
+    ONewDistributedTxContextImpl txContext = (ONewDistributedTxContextImpl) localDistributedDatabase.getTxContext(transactionId);
     if (txContext != null) {
-      try {
-        txContext.commit(this);
-        localDistributedDatabase.popTxContext(transactionId);
-        OLiveQueryHook.notifyForTxChanges(this);
-        OLiveQueryHookV2.notifyForTxChanges(this);
-      } finally {
-        OLiveQueryHook.removePendingDatabaseOps(this);
-        OLiveQueryHookV2.removePendingDatabaseOps(this);
+      if (SUCCESS.equals(txContext.getStatus())) {
+        try {
+          txContext.commit(this);
+          localDistributedDatabase.popTxContext(transactionId);
+          OLiveQueryHook.notifyForTxChanges(this);
+          OLiveQueryHookV2.notifyForTxChanges(this);
+        } finally {
+          OLiveQueryHook.removePendingDatabaseOps(this);
+          OLiveQueryHookV2.removePendingDatabaseOps(this);
+        }
+        return true;
+      } else {
+        Orient.instance().submit(() -> {
+          OLogManager.instance().warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install", transactionId);
+          manager.installDatabase(false, ODatabaseDocumentDistributed.this.getName(), true, true);
+        });
       }
-      return true;
     }
     return false;
   }
@@ -694,11 +719,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean local) {
     getStorageDistributed().resetLastValidBackup();
     OTransactionInternal transaction = txContext.getTransaction();
-    acquireLocksForTx(transaction, txContext);
-
     //This is moved before checks because also the coordinator first node allocate before checks
     if (!local) {
       ((OTransactionOptimistic) transaction).begin();
+    }
+
+    acquireLocksForTx(transaction, txContext);
+
+    if (!local) {
       ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
     }
 
