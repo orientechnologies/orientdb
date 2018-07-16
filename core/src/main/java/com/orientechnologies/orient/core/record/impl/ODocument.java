@@ -1666,7 +1666,7 @@ public class ODocument extends ORecordAbstract
             toElement = fromDoc.field("v");
           }
           else{
-            if (type == UpdateDeltaValueType.LIST_UPDATE){
+            if (type == UpdateDeltaValueType.LIST_UPDATE || type == UpdateDeltaValueType.UPDATE){
               fromElement = fromDoc.field("v");
             }
             toElement = mergeUpdateTree(toElement, fromElement);
@@ -2962,6 +2962,97 @@ public class ODocument extends ORecordAbstract
     }
   }
 
+  private Object convertMultivalueToTrackedVersion(Object fieldValue, OType fieldType, Map.Entry<String, ODocumentEntry> referentEntry){    
+      
+    if (fieldValue instanceof ORidBag) {
+      ((ORidBag) fieldValue).checkAndConvert();
+    }
+    if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>) && !(fieldValue instanceof ODocument))
+      return null;
+    if (referentEntry != null){
+      if (addCollectionChangeListener(referentEntry.getValue())) {
+        if (referentEntry.getValue().timeLine != null && !referentEntry.getValue().timeLine.getMultiValueChangeEvents().isEmpty()) {
+          checkTimelineTrackable(referentEntry.getValue().timeLine, (OTrackedMultiValue) referentEntry.getValue().value);
+        }
+        return null;
+      }
+    }
+
+    if (fieldValue instanceof ODocument && ((ODocument) fieldValue).isEmbedded()) {
+      ((ODocument) fieldValue).convertAllMultiValuesToTrackedVersions();
+      return null;
+    }    
+
+    Object newValue = null;
+    switch (fieldType) {
+    case EMBEDDEDLIST:
+      if (fieldValue instanceof List<?>) {
+        newValue = new OTrackedList<>(this);
+        fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
+      }
+      break;
+    case EMBEDDEDSET:
+      if (fieldValue instanceof Set<?>) {
+        newValue = new OTrackedSet<>(this);
+        fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
+      }
+      break;
+    case EMBEDDEDMAP:
+      if (fieldValue instanceof Map<?, ?>) {
+        newValue = new OTrackedMap<>(this);
+        fillTrackedMap((Map<Object, Object>) newValue, (Map<Object, Object>) fieldValue);
+      }
+      break;
+    case LINKLIST:
+      if (fieldValue instanceof List<?>)
+        newValue = new ORecordLazyList(this, (Collection<OIdentifiable>) fieldValue);
+      break;
+    case LINKSET:
+      if (fieldValue instanceof Set<?>)
+        newValue = new ORecordLazySet(this, (Collection<OIdentifiable>) fieldValue);
+      break;
+    case LINKMAP:
+      if (fieldValue instanceof Map<?, ?>)
+        newValue = new ORecordLazyMap(this, (Map<Object, OIdentifiable>) fieldValue);
+      break;
+    case LINKBAG:
+      if (fieldValue instanceof Collection<?>) {
+        ORidBag bag = new ORidBag();
+        bag.setOwner(this);
+        bag.addAll((Collection<OIdentifiable>) fieldValue);
+        newValue = bag;
+      }
+      break;
+    default:
+      break;
+    }
+
+    if (newValue != null) {
+      if (referentEntry != null){
+        addCollectionChangeListener(referentEntry.getValue());
+        referentEntry.getValue().value = newValue;
+      }
+      if (fieldType == OType.LINKSET || fieldType == OType.LINKLIST) {
+        boolean pre = ((OAutoConvertToRecord) newValue).isAutoConvertToRecord();
+        ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(false);
+        for (OIdentifiable rec : (Collection<OIdentifiable>) newValue) {
+          if (rec instanceof ODocument)
+            ((ODocument) rec).convertAllMultiValuesToTrackedVersions();
+        }
+        ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(pre);
+      } else if (fieldType == OType.LINKMAP) {
+        boolean pre = ((OAutoConvertToRecord) newValue).isAutoConvertToRecord();
+        ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(false);
+        for (OIdentifiable rec : (Collection<OIdentifiable>) ((Map<?, ?>) newValue).values()) {
+          if (rec instanceof ODocument)
+            ((ODocument) rec).convertAllMultiValuesToTrackedVersions();
+        }
+        ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(pre);
+      }
+    }
+    return newValue;
+  }
+  
   /**
    * Converts all non-tracked collections implementations contained in document fields to tracked ones.
    *
@@ -2972,23 +3063,7 @@ public class ODocument extends ORecordAbstract
       return;
     for (Map.Entry<String, ODocumentEntry> fieldEntry : _fields.entrySet()) {
       final Object fieldValue = fieldEntry.getValue().value;
-      if (fieldValue instanceof ORidBag) {
-        ((ORidBag) fieldValue).checkAndConvert();
-      }
-      if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>) && !(fieldValue instanceof ODocument))
-        continue;
-      if (addCollectionChangeListener(fieldEntry.getValue())) {
-        if (fieldEntry.getValue().timeLine != null && !fieldEntry.getValue().timeLine.getMultiValueChangeEvents().isEmpty()) {
-          checkTimelineTrackable(fieldEntry.getValue().timeLine, (OTrackedMultiValue) fieldEntry.getValue().value);
-        }
-        continue;
-      }
-
-      if (fieldValue instanceof ODocument && ((ODocument) fieldValue).isEmbedded()) {
-        ((ODocument) fieldValue).convertAllMultiValuesToTrackedVersions();
-        continue;
-      }
-
+      
       OType fieldType = fieldEntry.getValue().type;
       if (fieldType == null) {
         OClass _clazz = getImmutableSchemaClass();
@@ -2999,72 +3074,8 @@ public class ODocument extends ORecordAbstract
       }
       if (fieldType == null)
         fieldType = OType.getTypeByValue(fieldValue);
-
-      Object newValue = null;
-      switch (fieldType) {
-      case EMBEDDEDLIST:
-        if (fieldValue instanceof List<?>) {
-          newValue = new OTrackedList<>(this);
-          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
-        }
-        break;
-      case EMBEDDEDSET:
-        if (fieldValue instanceof Set<?>) {
-          newValue = new OTrackedSet<>(this);
-          fillTrackedCollection((Collection<Object>) newValue, (Collection<Object>) fieldValue);
-        }
-        break;
-      case EMBEDDEDMAP:
-        if (fieldValue instanceof Map<?, ?>) {
-          newValue = new OTrackedMap<>(this);
-          fillTrackedMap((Map<Object, Object>) newValue, (Map<Object, Object>) fieldValue);
-        }
-        break;
-      case LINKLIST:
-        if (fieldValue instanceof List<?>)
-          newValue = new ORecordLazyList(this, (Collection<OIdentifiable>) fieldValue);
-        break;
-      case LINKSET:
-        if (fieldValue instanceof Set<?>)
-          newValue = new ORecordLazySet(this, (Collection<OIdentifiable>) fieldValue);
-        break;
-      case LINKMAP:
-        if (fieldValue instanceof Map<?, ?>)
-          newValue = new ORecordLazyMap(this, (Map<Object, OIdentifiable>) fieldValue);
-        break;
-      case LINKBAG:
-        if (fieldValue instanceof Collection<?>) {
-          ORidBag bag = new ORidBag();
-          bag.setOwner(this);
-          bag.addAll((Collection<OIdentifiable>) fieldValue);
-          newValue = bag;
-        }
-        break;
-      default:
-        break;
-      }
-
-      if (newValue != null) {
-        addCollectionChangeListener(fieldEntry.getValue());
-        fieldEntry.getValue().value = newValue;
-        if (fieldType == OType.LINKSET || fieldType == OType.LINKLIST) {
-          boolean pre = ((OAutoConvertToRecord) newValue).isAutoConvertToRecord();
-          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(false);
-          for (OIdentifiable rec : (Collection<OIdentifiable>) newValue) {
-            if (rec instanceof ODocument)
-              ((ODocument) rec).convertAllMultiValuesToTrackedVersions();
-          }
-          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(pre);
-        } else if (fieldType == OType.LINKMAP) {
-          boolean pre = ((OAutoConvertToRecord) newValue).isAutoConvertToRecord();
-          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(false);
-          for (OIdentifiable rec : (Collection<OIdentifiable>) ((Map<?, ?>) newValue).values()) {
-            if (rec instanceof ODocument)
-              ((ODocument) rec).convertAllMultiValuesToTrackedVersions();
-          }
-          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(pre);
-        }
-      }
+      
+      convertMultivalueToTrackedVersion(fieldValue, fieldType, fieldEntry);
     }
 
   }
@@ -3096,8 +3107,15 @@ public class ODocument extends ORecordAbstract
       if (cur instanceof ODocument)
         ((ODocument) cur).convertAllMultiValuesToTrackedVersions();
       else if (cur instanceof List) {
-        List<Object> newList = new OTrackedList<>(this);
-        fillTrackedCollection(newList, (Collection<Object>) cur);
+        OType currValueType = OType.getTypeByValue(cur);
+        Object newList;
+        if (currValueType == OType.LINKLIST){
+          newList = convertMultivalueToTrackedVersion(cur, currValueType, null);
+        }
+        else{
+          newList = new OTrackedList<>(this);
+          fillTrackedCollection((Collection)newList, (Collection<Object>) cur);
+        }
         cur = newList;
       } else if (cur instanceof Set) {
         Set<Object> newSet = new OTrackedSet<>(this);
@@ -3406,7 +3424,7 @@ public class ODocument extends ORecordAbstract
             //check if can we go just with value change
             OType currentElementType = OType.getTypeByClass(currentElement.getClass());
             OType previousElementType = OType.getTypeByClass(originalElement.getClass());
-            if (currentElementType != previousElementType || 
+            if ((currentElementType != previousElementType && currentElementType.isList() != previousElementType.isList())|| 
                 (!(currentElement instanceof ODocument) && !(currentElement instanceof List))){                
               if (!Objects.equals(currentElement, originalElement)){
                 ODocumentDelta deltaElement = new ODocumentDelta();
@@ -3473,6 +3491,23 @@ public class ODocument extends ORecordAbstract
         return retVal;
       }
       
+      OType previousType = null;
+      if (previousValue != null){
+        previousType = OType.getTypeByValue(previousValue);
+      }
+      if (currentType == OType.LINK && previousType != null && previousType == OType.LINK){
+        ODocument docVal;
+        if (currentValue instanceof ODocumentSerializable){
+          docVal = ((ODocumentSerializable)currentValue).toDocument();          
+        }
+        else{
+          docVal = (ODocument)currentValue;
+        }        
+        retVal.value = docVal.getDeltaFromOriginalForUpdate();  
+        retVal.type = UpdateDeltaValueType.UPDATE;
+        return retVal;
+      }
+      
       retVal.value = currentValue;
 //      if (currentValue instanceof ODocument){
 //        addOwnerToDoc((ODocument)currentValue, parent);
@@ -3524,7 +3559,7 @@ public class ODocument extends ORecordAbstract
 //  private void addThisAsOwnerToDoc(ODocument doc){
 //    addOwnerToDoc(doc, this);
 //  }
-  
+    
   private ODocumentDelta getDeltaFromOriginalForUpdate(ODocument parent){
     ODocumentDelta updated = new ODocumentDelta();
     //get updated and new records

@@ -23,7 +23,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
@@ -48,7 +47,6 @@ import static com.orientechnologies.orient.core.serialization.serializer.record.
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.getTypeFromValueEmbedded;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readByte;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readOType;
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeOType;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeString;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OSerializableWrapper;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;

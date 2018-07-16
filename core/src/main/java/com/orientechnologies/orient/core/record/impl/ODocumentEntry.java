@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.List;
@@ -50,7 +51,7 @@ public class ODocumentEntry {
   public boolean isChanged() {
     return changed;
   }
-  
+      
   public boolean isChangedTree(){
     if (changed && exist){
       return true;
@@ -71,7 +72,13 @@ public class ODocumentEntry {
               return true;
             }
           }
-        }
+        }        
+      }      
+    }
+    
+    if (timeLine != null){
+      if (!timeLine.getMultiValueChangeEvents().isEmpty()){
+        return true;
       }
     }
     
