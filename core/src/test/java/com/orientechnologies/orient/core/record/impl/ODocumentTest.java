@@ -691,7 +691,7 @@ public class ODocumentTest {
   }
   
   @Test
-  public void testRemoveFieldListOfDocs(){
+  public void testRemoveFieldListOfDocsDelta(){
     ODatabaseSession db = null;
     OrientDB odb = null;
     try{      
