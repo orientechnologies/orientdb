@@ -688,7 +688,68 @@ public class ODocumentTest {
         odb.close();
       }
     }
-  } 
+  }
+  
+  @Test
+  public void testRemoveFieldListOfDocs(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      String fieldName = "testField";
+      
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);      
+      
+      String constantField = "constField";
+      String constValue = "ConstValue";
+      String variableField = "varField";
+      List<ODocument> originalValue = new ArrayList<>();
+      for (int i = 0; i < 2; i++){
+        ODocument containedDoc = new ODocument();
+        containedDoc.field(constantField, constValue);
+        containedDoc.field(variableField, "one" + i);
+        originalValue.add(containedDoc);
+      }
+      
+      doc.field(fieldName, originalValue);
+
+      doc = db.save(doc);
+      ODocument originalDoc = doc.copy();
+
+      ODocument testDoc = originalValue.get(1).copy();
+      testDoc.removeField(variableField);
+      ((List)doc.field(fieldName)).set(1, testDoc);      
+      
+      ODocumentDelta delta = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
+      byte[] stream = ddSer.toStream(delta);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(delta, dcCopy);
+      
+      delta = delta.field("d");
+      
+      originalDoc.mergeDeleteDelta(delta);
+      List<ODocument> checkList = originalDoc.field(fieldName);
+      ODocument checkDoc = checkList.get(1);
+      assertFalse(checkDoc.containsField(fieldName));      
+    }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
   
   @Test
   public void testListOfListsOfDocumentDelta(){

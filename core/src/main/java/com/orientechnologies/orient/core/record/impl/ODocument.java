@@ -1704,11 +1704,28 @@ public class ODocument extends ORecordAbstract
     for (Map.Entry<String, Object> field : from.fields()){
       final String fieldName = field.getKey();
       final Object fieldVal = field.getValue();
-      if (!(fieldVal instanceof ODocumentDelta) ||
-          ((ODocumentDelta)fieldVal).isLeaf()){
+      if ((!(fieldVal instanceof ODocumentDelta) && !(fieldVal instanceof List)) ||
+          (fieldVal instanceof ODocumentDelta && ((ODocumentDelta)fieldVal).isLeaf())){
         to.removeField(fieldName);
       }
+      else if (fieldVal instanceof List){
+        int a = 0;
+        ++a;
+        List<ODocumentDelta> fieldList = (List<ODocumentDelta>)fieldVal;
+        List toFieldList = to.field(fieldName);
+        for (ODocumentDelta deltaElement : fieldList){
+          int index = deltaElement.field("i");
+          if (toFieldList.size() > index){
+            Object toElement = toFieldList.get(index);
+            if (toElement instanceof ODocument){
+              ODocumentDelta fromElement = deltaElement.field("v");
+              mergeDeleteTree((ODocument)toElement, fromElement);
+            }
+          }
+        }
+      }
       else{
+        //then it is ODocumentDelta
         if (to._fields.keySet().contains(fieldName)){
           ODocumentDelta fromDoc = (ODocumentDelta)fieldVal;
           Object toVal = to.field(fieldName);
@@ -3477,6 +3494,20 @@ public class ODocument extends ORecordAbstract
               deltaList.add(listElementDelta);
             }            
           }
+          else if (currentElement instanceof List){
+            List currentElementAsList = (List)currentElement;
+            if (ODocumentEntry.isChangedList(currentElementAsList)){
+              ODocumentDelta listElementDelta = new ODocumentDelta();
+              listElementDelta.field("i", i);
+              listElementDelta.field("t", UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd());
+              TypeValue deltaUpdate = getUpdateDeltaValue(currentElementAsList, null, false, parent);
+              ODocumentDelta deltaValue = new ODocumentDelta();
+              deltaValue.field("t", deltaUpdate.type.getOrd());
+              deltaValue.field("v", deltaUpdate.value);
+              listElementDelta.field("v", deltaValue);
+              deltaList.add(listElementDelta);
+            }
+          }
         }
         
         return retVal;
@@ -3520,10 +3551,11 @@ public class ODocument extends ORecordAbstract
   
   private Object getDeleteDeltaValue(Object currentValue, boolean exist){
     //TODO review this clause once again
-    if (!exist || !(currentValue instanceof ODocument)){
+    if (!exist || 
+        (!(currentValue instanceof ODocument) && !(currentValue instanceof List))){
       return currentValue;
     }
-    else{      
+    else if (currentValue instanceof ODocument){      
       ODocument docVal;
       if (currentValue instanceof ODocumentSerializable){
         docVal = ((ODocumentSerializable)currentValue).toDocument();          
@@ -3533,6 +3565,25 @@ public class ODocument extends ORecordAbstract
       }
       return docVal.getDeltaFromOriginalForDelete();      
     }
+    else if (currentValue instanceof List){
+      //want to detect all elements where in depth some field is deleted
+      List currentList = (List)currentValue;
+      List<ODocumentDelta> deltaList = new ArrayList<>();
+      for (int i = 0; i < currentList.size(); i++){
+        Object element = currentList.get(i);
+        Object innerDelta = getDeleteDeltaValue(element, true);
+        if (innerDelta != null){
+          ODocumentDelta deltaDoc = new ODocumentDelta();
+          deltaDoc.field("i", i);
+          deltaDoc.field("v", innerDelta);
+          deltaList.add(deltaDoc);
+        }
+      }
+      if (!deltaList.isEmpty()){
+        return deltaList;
+      }
+    }
+    return null;
   }
   
   private ODocumentDelta getDeltaFromOriginalForUpdate(ODocument parent){
@@ -3567,6 +3618,9 @@ public class ODocument extends ORecordAbstract
         delete.field(fieldName, deltaValue);
       }
     }
+    if (delete.fields().isEmpty()){
+      return null;
+    }
     return delete;
   }
   
@@ -3591,6 +3645,15 @@ public class ODocument extends ORecordAbstract
   public boolean isChangedInDepth(){
     for (Map.Entry<String, ODocumentEntry> field : _fields.entrySet()){
       if (field.getValue().isChangedTree()){
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  public boolean hasNonExistingInDepth(){
+    for (Map.Entry<String, ODocumentEntry> field : _fields.entrySet()){
+      if (field.getValue().hasNonExistingTree()){
         return true;
       }
     }

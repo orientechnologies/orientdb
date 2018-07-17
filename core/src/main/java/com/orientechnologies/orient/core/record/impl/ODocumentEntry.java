@@ -53,7 +53,7 @@ public class ODocumentEntry {
     return changed;
   }
   
-  private static boolean isChangedList(List list){
+  public static boolean isChangedList(List list){
     for (Object element : list){
       if (element instanceof ODocument){
         if (((ODocument)element).isChangedInDepth()){
@@ -62,6 +62,22 @@ public class ODocumentEntry {
       }
       else if (element instanceof List){
         if (isChangedList((List)element)){
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  
+  private static boolean hasNonExistingInList(List list){
+    for (Object element : list){
+      if (element instanceof ODocument){
+        if (((ODocument)element).hasNonExistingInDepth()){
+          return true;
+        }
+      }
+      else if (element instanceof List){
+        if (hasNonExistingInList((List)element)){
           return true;
         }
       }
@@ -137,6 +153,11 @@ public class ODocumentEntry {
             if (field.getValue().hasNonExistingTree()){
               return true;
             }
+          }
+        }
+        else if (element instanceof List){
+          if (hasNonExistingInList((List)element)){
+            return true;
           }
         }
       }
