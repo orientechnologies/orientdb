@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server;
 
+import java.util.List;
+
 /**
  * Created by tglman on 17/02/16.
  */
@@ -13,6 +15,7 @@ public class OClientConnectionStats {
   public String              lastDatabase              = null;
   public String              lastUser                  = null;
   public long                totalCommandExecutionTime = 0;
+  public List<String> activeQueries;
 
 
 }

@@ -149,6 +149,10 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
     throw new UnsupportedOperationException();
   }
 
+  default Map<String, OResultSet> getActiveQueries() {
+    throw new UnsupportedOperationException();
+  }
+
   boolean isUseLightweightEdges();
 
   OEdge newLightweightEdge(String iClassName, OVertex from, OVertex to);
