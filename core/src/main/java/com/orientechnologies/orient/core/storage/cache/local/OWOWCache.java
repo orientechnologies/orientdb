@@ -90,6 +90,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -2596,7 +2597,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       try {
         if (writeCachePages.isEmpty()) {
-          commitExecutor.schedule(this, pagesFlushLimit, TimeUnit.MILLISECONDS);
+          scheduleNextRun(pagesFlushLimit);
           return;
         }
 
@@ -2610,7 +2611,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         flushedPages = flushExclusivePagesIfNeeded(flushedPages);
 
         if (flushedPages >= pagesFlushLimit) {
-          commitExecutor.schedule(this, pagesFlushLimit, TimeUnit.MILLISECONDS);
+          scheduleNextRun(pagesFlushLimit);
           return;
         }
 
@@ -2656,17 +2657,17 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
 
         if (flushedPages == 0 || flushMode.equals(FLUSH_MODE.EXCLUSIVE)) {
-          commitExecutor.schedule(this, pagesFlushLimit, TimeUnit.MILLISECONDS);
+          scheduleNextRun(pagesFlushLimit);
         } else {
           if (endSegment - startSegment > 1) {
-            commitExecutor.schedule(this, pagesFlushLimit, TimeUnit.MILLISECONDS);
+            scheduleNextRun(pagesFlushLimit);
           } else {
             final long endTs = System.nanoTime();
             //20% of disk write capacity is occupied by write of
             //data pages if we have less than 2 WAL segments
             final long intervalInMs = 5 * (endTs - startTs) / 1_000_000;
 
-            commitExecutor.schedule(this, intervalInMs, TimeUnit.MILLISECONDS);
+            scheduleNextRun(intervalInMs);
           }
         }
 
@@ -2677,6 +2678,16 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       } finally {
         if (statistic != null) {
           statistic.stopWriteCacheFlushTimer(flushedPages);
+        }
+      }
+    }
+
+    private void scheduleNextRun(long millis) {
+      try {
+        commitExecutor.schedule(this, millis, TimeUnit.MILLISECONDS);
+      } catch (RejectedExecutionException e) {
+        if (!commitExecutor.isShutdown()) {
+          throw e;
         }
       }
     }

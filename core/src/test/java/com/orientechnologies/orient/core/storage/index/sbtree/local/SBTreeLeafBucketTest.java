@@ -318,7 +318,10 @@ public class SBTreeLeafBucketTest {
 
     int itemsToDelete = originalSize / 2;
     for (int i = 0; i < itemsToDelete; i++) {
-      treeBucket.remove(treeBucket.size() - 1, new byte[] { 1 }, new byte[] { 2 });
+      final byte[] rawKey = treeBucket.getRawKey(i);
+      final byte[] rawValue = treeBucket.getRawValue(i);
+
+      treeBucket.remove(treeBucket.size() - 1, rawKey, rawValue);
     }
 
     Assert.assertEquals(treeBucket.size(), originalSize - itemsToDelete);

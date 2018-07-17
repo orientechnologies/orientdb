@@ -424,6 +424,33 @@ public final class OSBTreeBucket<K, V> extends ODurablePage {
     return rawValue;
   }
 
+  byte[] getRawKey(final int entryIndex) {
+    assert isLeaf;
+
+    int entryPosition = buffer.getInt(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
+
+    final ByteBuffer buffer = getBufferDuplicate();
+
+    byte[] rawKey;
+    if (encryption == null) {
+      buffer.position(entryPosition);
+
+      final int keySize = keySerializer.getObjectSizeInByteBuffer(buffer);
+      buffer.position(entryPosition);
+
+      rawKey = new byte[keySize];
+      buffer.get(rawKey);
+    } else {
+      final int encryptedSize = buffer.getInt(entryPosition);
+
+      rawKey = new byte[OIntegerSerializer.INT_SIZE + encryptedSize];
+      buffer.position(entryPosition);
+      buffer.get(rawKey);
+    }
+
+    return rawKey;
+  }
+
   public K getKey(final int index) {
     int entryPosition = buffer.getInt(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 

@@ -59,4 +59,15 @@ public final class WALRecordTypes {
   public static final byte SBTREE_BUCKET_UPDATE_VALUE_OPERATION                    = 53;
   public static final byte SBTREE_BUCKET_SET_LEFT_SIBLING_OPERATION                = 54;
   public static final byte SBTREE_BUCKET_SET_RIGHT_SIBLING_OPERATION               = 55;
+
+  public static final byte SBTREE_BONSAI_BUCKET_SET_SIZE_OPERATION              = 56;
+  public static final byte SBTREE_BONSAI_BUCKET_REMOVE_OPERATION                = 57;
+  public static final byte SBTREE_BONSAI_BUCKET_ADD_ALL_OPERATION               = 58;
+  public static final byte SBTREE_BONSAI_BUCKET_SHRINK_OPERATION                = 59;
+  public static final byte SBTREE_BONSAI_BUCKET_ADD_ENTRY_OPERATION             = 60;
+  public static final byte SBTREE_BONSAI_BUCKET_UPDATE_VALUE_OPERATION          = 61;
+  public static final byte SBTREE_BONSAI_BUCKET_SET_FREE_LIST_POINTER_OPERATION = 62;
+  public static final byte SBTREE_BONSAI_BUCKET_SET_DELETED_OPERATION           = 63;
+  public static final byte SBTREE_BONSAI_BUCKET_SET_LEFT_SIBLING_OPERATION      = 64;
+  public static final byte SBTREE_BONSAI_BUCKET_SET_RIGHT_SIBLING_OPERATION     = 65;
 }

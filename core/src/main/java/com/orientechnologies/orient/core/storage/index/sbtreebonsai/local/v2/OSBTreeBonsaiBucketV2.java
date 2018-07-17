@@ -26,6 +26,16 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSBTreeBonsaiLocalException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.page.sbtreebonsaibucket.OSBTreeBonsaiBucketAddAllOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.page.sbtreebonsaibucket.OSBTreeBonsaiBucketAddEntryOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.page.sbtreebonsaibucket.OSBTreeBonsaiBucketRemoveOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.page.sbtreebonsaibucket.OSBTreeBonsaiBucketSetDeletedOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.page.sbtreebonsaibucket.OSBTreeBonsaiBucketSetFreeListPointerOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.page.sbtreebonsaibucket.OSBTreeBonsaiBucketSetLeftSiblingOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.page.sbtreebonsaibucket.OSBTreeBonsaiBucketSetRightSiblingOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.page.sbtreebonsaibucket.OSBTreeBonsaiBucketSetTreeSizeOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.page.sbtreebonsaibucket.OSBTreeBonsaiBucketShrinkOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.page.sbtreebonsaibucket.OSBTreeBonsaiBucketUpdateValueOperation;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
 
 import java.nio.ByteBuffer;
@@ -186,7 +196,12 @@ public final class OSBTreeBonsaiBucketV2<K, V> extends OBonsaiBucketAbstractV2 {
   }
 
   void setTreeSize(final long size) {
+    long currentSize = buffer.getInt(offset + TREE_SIZE_OFFSET);
+
     buffer.putLong(offset + TREE_SIZE_OFFSET, size);
+
+    pageOperations.add(new OSBTreeBonsaiBucketSetTreeSizeOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), offset, currentSize));
   }
 
   public boolean isEmpty() {
@@ -212,15 +227,12 @@ public final class OSBTreeBonsaiBucketV2<K, V> extends OBonsaiBucketAbstractV2 {
     return -(low + 1); // key not found.
   }
 
-  public void remove(final int entryIndex) {
+  public void remove(final int entryIndex, byte[] rawKey, byte[] rawValue) {
     final int entryPosition = buffer.getInt(offset + POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
 
     buffer.position(offset + entryPosition);
-    int entrySize = keySerializer.getObjectSizeInByteBuffer(buffer);
-    if (isLeaf) {
-      assert valueSerializer.isFixedLength();
-      entrySize += valueSerializer.getFixedLength();
-    } else {
+    int entrySize = rawKey.length + rawValue.length;
+    if (!isLeaf) {
       throw new IllegalStateException("Remove is applies to leaf buckets only");
     }
 
@@ -249,6 +261,10 @@ public final class OSBTreeBonsaiBucketV2<K, V> extends OBonsaiBucketAbstractV2 {
       }
       currentPositionOffset += OIntegerSerializer.INT_SIZE;
     }
+
+    pageOperations.add(new OSBTreeBonsaiBucketRemoveOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), offset, rawKey, rawValue, entryIndex));
+
   }
 
   public int size() {
@@ -382,13 +398,24 @@ public final class OSBTreeBonsaiBucketV2<K, V> extends OBonsaiBucketAbstractV2 {
     }
 
     buffer.putInt(offset + SIZE_OFFSET, entries.size());
+
+    pageOperations.add(new OSBTreeBonsaiBucketAddAllOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), offset));
   }
 
   public void shrink(final int newSize) {
     final List<byte[]> rawEntries = new ArrayList<>(newSize);
 
+    final int oldSize = buffer.getInt(offset + SIZE_OFFSET);
+
     for (int i = 0; i < newSize; i++) {
       rawEntries.add(getRawEntry(i));
+    }
+
+    final List<byte[]> removedEntries = new ArrayList<>();
+
+    for (int i = newSize; i < oldSize; i++) {
+      removedEntries.add(getRawEntry(i));
     }
 
     buffer.putInt(offset + FREE_POINTER_OFFSET, MAX_BUCKET_SIZE_BYTES);
@@ -400,6 +427,9 @@ public final class OSBTreeBonsaiBucketV2<K, V> extends OBonsaiBucketAbstractV2 {
     }
 
     buffer.putInt(offset + SIZE_OFFSET, newSize);
+
+    pageOperations.add(new OSBTreeBonsaiBucketShrinkOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), offset, removedEntries));
   }
 
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")
@@ -482,6 +512,9 @@ public final class OSBTreeBonsaiBucketV2<K, V> extends OBonsaiBucketAbstractV2 {
       }
     }
 
+    pageOperations.add(new OSBTreeBonsaiBucketAddEntryOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), offset, index));
+
     return true;
   }
 
@@ -540,15 +573,21 @@ public final class OSBTreeBonsaiBucketV2<K, V> extends OBonsaiBucketAbstractV2 {
     buffer.put(serializedKey);
     buffer.put(serializedValue);
 
+    pageOperations.add(new OSBTreeBonsaiBucketAddEntryOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), offset, index));
+
     return true;
   }
 
-  void updateRawValue(final int index, final int keySize, final byte[] rawValue) {
+  void updateRawValue(final int index, final int keySize, final byte[] rawValue, final byte[] oldValue) {
     int entryPosition = buffer.getInt(offset + index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     entryPosition += keySize;
 
     buffer.position(offset + entryPosition);
     buffer.put(rawValue);
+
+    pageOperations.add(new OSBTreeBonsaiBucketUpdateValueOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), offset, index, oldValue));
   }
 
   OBonsaiBucketPointer getFreeListPointer() {
@@ -556,11 +595,21 @@ public final class OSBTreeBonsaiBucketV2<K, V> extends OBonsaiBucketAbstractV2 {
   }
 
   void setFreeListPointer(final OBonsaiBucketPointer pointer) {
+    OBonsaiBucketPointer bucketPointer = getBucketPointer(offset + FREE_LIST_POINTER_OFFSET);
+
     setBucketPointer(offset + FREE_LIST_POINTER_OFFSET, pointer);
+
+    pageOperations.add(
+        new OSBTreeBonsaiBucketSetFreeListPointerOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+            cacheEntry.getPageIndex(), offset, bucketPointer));
   }
 
   void setDeleted() {
+    boolean oldDeleted = isDeleted(offset, DELETED);
+
     setDeleted(offset, DELETED);
+    pageOperations.add(new OSBTreeBonsaiBucketSetDeletedOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), offset, oldDeleted));
   }
 
   public boolean isDeleted() {
@@ -572,7 +621,11 @@ public final class OSBTreeBonsaiBucketV2<K, V> extends OBonsaiBucketAbstractV2 {
   }
 
   void setLeftSibling(final OBonsaiBucketPointer pointer) {
+    OBonsaiBucketPointer oldPointer = getBucketPointer(offset + LEFT_SIBLING_OFFSET);
+
     setBucketPointer(offset + LEFT_SIBLING_OFFSET, pointer);
+    pageOperations.add(new OSBTreeBonsaiBucketSetLeftSiblingOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), offset, oldPointer));
   }
 
   OBonsaiBucketPointer getRightSibling() {
@@ -580,7 +633,11 @@ public final class OSBTreeBonsaiBucketV2<K, V> extends OBonsaiBucketAbstractV2 {
   }
 
   void setRightSibling(final OBonsaiBucketPointer pointer) {
+    OBonsaiBucketPointer oldPointer = getBucketPointer(offset + RIGHT_SIBLING_OFFSET);
     setBucketPointer(offset + RIGHT_SIBLING_OFFSET, pointer);
+
+    pageOperations.add(new OSBTreeBonsaiBucketSetRightSiblingOperation(getLogSequenceNumberFromPage(buffer), cacheEntry.getFileId(),
+        cacheEntry.getPageIndex(), offset, oldPointer));
   }
 
   private void checkEntreeSize(final int entreeSize) {

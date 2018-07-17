@@ -249,7 +249,9 @@ public class OSBTreeBonsaiLeafBucketV2Test {
 
       int itemsToDelete = originalSize / 2;
       for (int i = 0; i < itemsToDelete; i++) {
-        treeBucket.remove(treeBucket.size() - 1);
+        final byte[][] entry = treeBucket.getRawLeafEntry(i);
+
+        treeBucket.remove(treeBucket.size() - 1, entry[0], entry[1]);
       }
 
       Assert.assertEquals(treeBucket.size(), originalSize - itemsToDelete);

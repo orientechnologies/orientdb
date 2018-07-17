@@ -227,7 +227,7 @@ public final class OSBTreeBonsaiLocalV2<K, V> extends OSBTreeBonsaiAbstract<K, V
       final OSBTreeBonsaiPutOperation putOperation;
       if (itemFound) {
         final byte[] prevRawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex, keyLength);
-        keyBucket.updateRawValue(bucketSearchResult.itemIndex, keyLength, rawValue);
+        keyBucket.updateRawValue(bucketSearchResult.itemIndex, keyLength, rawValue, prevRawValue);
 
         putOperation = new OSBTreeBonsaiPutOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, rawKey,
             rawValue, prevRawValue);
@@ -288,7 +288,7 @@ public final class OSBTreeBonsaiLocalV2<K, V> extends OSBTreeBonsaiAbstract<K, V
       final OSBTreeBonsaiPutOperation putOperation;
       if (itemFound) {
         final byte[] prevRawValue = keyBucket.getRawValue(bucketSearchResult.itemIndex, rawKey.length);
-        keyBucket.updateRawValue(bucketSearchResult.itemIndex, rawKey.length, rawValue);
+        keyBucket.updateRawValue(bucketSearchResult.itemIndex, rawKey.length, rawValue, prevRawValue);
 
         putOperation = new OSBTreeBonsaiPutOperation(atomicOperation.getOperationUnitId(), fileId, rootBucketPointer, rawKey,
             rawValue, prevRawValue);
@@ -608,7 +608,7 @@ public final class OSBTreeBonsaiLocalV2<K, V> extends OSBTreeBonsaiAbstract<K, V
         rawEntry = keyBucket.getRawLeafEntry(bucketSearchResult.itemIndex);
         removed = valueSerializer.deserializeNativeObject(rawEntry[1], 0);
 
-        keyBucket.remove(bucketSearchResult.itemIndex);
+        keyBucket.remove(bucketSearchResult.itemIndex, rawEntry[0], rawEntry[1]);
       } finally {
         releasePageFromWrite(keyBucket, atomicOperation);
       }
@@ -652,7 +652,7 @@ public final class OSBTreeBonsaiLocalV2<K, V> extends OSBTreeBonsaiAbstract<K, V
 
         rawEntry = keyBucket.getRawLeafEntry(bucketSearchResult.itemIndex);
 
-        keyBucket.remove(bucketSearchResult.itemIndex);
+        keyBucket.remove(bucketSearchResult.itemIndex, rawEntry[0], rawEntry[1]);
       } finally {
         releasePageFromWrite(keyBucket, atomicOperation);
       }
