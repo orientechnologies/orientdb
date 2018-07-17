@@ -3413,10 +3413,7 @@ public class ODocument extends ORecordAbstract
               ODocumentDelta deltaElement = new ODocumentDelta();
               deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd());              
               deltaElement.field("v", currentElement);
-//              deltaElement.field("i", i);
               deltaList.add(deltaElement);
-              //add owner to treat as embedded document
-//              addOwnerToDoc(deltaElement, parent);
               continue;
             }
             //these elements have pairs in original list, so we need to calculate deltas
@@ -3432,7 +3429,6 @@ public class ODocument extends ORecordAbstract
                 deltaElement.field("v", currentElement);
                 deltaElement.field("i", i);
                 deltaList.add(deltaElement);
-//                addOwnerToDoc(deltaElement, parent);
               }
             }
             else{              
@@ -3445,11 +3441,9 @@ public class ODocument extends ORecordAbstract
                 ODocumentDelta doc = new ODocumentDelta();
                 doc.field("t", delta.type.getOrd());
                 doc.field("v", delta.value);
-//                addOwnerToDoc(doc, parent);
                 deltaElement.field("v", doc);
                 deltaElement.field("i", i);
                 deltaList.add(deltaElement);
-//                addOwnerToDoc(deltaElement, parent);
               }
               //this means that elements are equal so nothig to do
             }
@@ -3460,7 +3454,6 @@ public class ODocument extends ORecordAbstract
             deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd());
             deltaElement.field("i", j);
             deltaList.add(deltaElement);
-//            addOwnerToDoc(deltaElement, parent);
           }
           return retVal;
         }
@@ -3481,9 +3474,7 @@ public class ODocument extends ORecordAbstract
               listElementDelta.field("t", UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd());
               ODocumentDelta deltaUpdate = currentElementDoc.getDeltaFromOriginalForUpdate(parent);
               listElementDelta.field("v", deltaUpdate);
-//              addOwnerToDoc(deltaUpdate, parent);
               deltaList.add(listElementDelta);
-//              addOwnerToDoc(listElementDelta, parent);
             }            
           }
         }
@@ -3509,9 +3500,6 @@ public class ODocument extends ORecordAbstract
       }
       
       retVal.value = currentValue;
-//      if (currentValue instanceof ODocument){
-//        addOwnerToDoc((ODocument)currentValue, parent);
-//      }
       retVal.type = UpdateDeltaValueType.CHANGE;      
       return retVal;
     }
@@ -3525,7 +3513,6 @@ public class ODocument extends ORecordAbstract
       }
       TypeValue retVal = new TypeValue();
       retVal.value = docVal.getDeltaFromOriginalForUpdate();
-//      addOwnerToDoc(docVal, parent);
       retVal.type = UpdateDeltaValueType.UPDATE;
       return retVal;
     }    
@@ -3548,18 +3535,6 @@ public class ODocument extends ORecordAbstract
     }
   }
   
-//  private void addOwnerToDoc(ODocument doc, ODocument owner){
-//    if (doc._owners == null){
-//      doc._owners = new LinkedList<>();
-//    }
-//    WeakReference<ORecordElement> wrf = new WeakReference<>(owner);
-//    doc._owners.add(wrf);
-//  }
-//  
-//  private void addThisAsOwnerToDoc(ODocument doc){
-//    addOwnerToDoc(doc, this);
-//  }
-    
   private ODocumentDelta getDeltaFromOriginalForUpdate(ODocument parent){
     ODocumentDelta updated = new ODocumentDelta();
     //get updated and new records
@@ -3583,7 +3558,6 @@ public class ODocument extends ORecordAbstract
   
   private ODocumentDelta getDeltaFromOriginalForDelete(){
     ODocumentDelta delete = new ODocumentDelta();
-//    addThisAsOwnerToDoc(delete);
     //get updated and new records
     for (Map.Entry<String, ODocumentEntry> fieldVal : _fields.entrySet()){
       ODocumentEntry val = fieldVal.getValue();      

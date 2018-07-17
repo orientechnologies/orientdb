@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -51,7 +52,23 @@ public class ODocumentEntry {
   public boolean isChanged() {
     return changed;
   }
-      
+  
+  private static boolean isChangedList(List list){
+    for (Object element : list){
+      if (element instanceof ODocument){
+        if (((ODocument)element).isChangedInDepth()){
+          return true;
+        }
+      }
+      else if (element instanceof List){
+        if (isChangedList((List)element)){
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  
   public boolean isChangedTree(){
     if (changed && exist){
       return true;
@@ -72,13 +89,25 @@ public class ODocumentEntry {
               return true;
             }
           }
-        }        
+        }
+        else if (element instanceof List){
+          if (isChangedList((List)element)){
+            return true;
+          }
+        }
       }      
     }
     
     if (timeLine != null){
-      if (!timeLine.getMultiValueChangeEvents().isEmpty()){
-        return true;
+      List<OMultiValueChangeEvent<Object, Object>> timeline = timeLine.getMultiValueChangeEvents();
+      if (timeline != null){
+        for (OMultiValueChangeEvent<Object, Object> event : timeline){
+          if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD ||
+              event.getChangeType() == OMultiValueChangeEvent.OChangeType.NESTED ||
+              event.getChangeType() == OMultiValueChangeEvent.OChangeType.UPDATE){
+            return true;
+          }
+        }
       }
     }
     
@@ -111,7 +140,7 @@ public class ODocumentEntry {
           }
         }
       }
-    }
+    }        
     
     return false;
   }

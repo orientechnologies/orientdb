@@ -639,7 +639,6 @@ public class ODocumentTest {
       String fieldName = "testField";
       
       OClass claz = db.createClassIfNotExist("TestClass");
-//      claz.createProperty(fieldName, OType.EMBEDDEDLIST);
 
       ODocument doc = new ODocument(claz);      
       
@@ -662,8 +661,8 @@ public class ODocumentTest {
       ODocument testDoc = originalValue.get(1);
       testDoc.field(constantField, constValue);
       testDoc.field(variableField, "two");      
-      originalValue.set(1, testDoc);
-      doc.field(fieldName, originalValue);
+      ((List)doc.field(fieldName)).set(1, testDoc);      
+      
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
@@ -722,13 +721,10 @@ public class ODocumentTest {
       doc = db.save(doc);
       ODocument originalDoc = doc.copy();
 
-      List<ODocument> newArray = new ArrayList<>();
-      ODocument d1 = new ODocument(); d1.field(constantField, constValue); d1.field(variableField, "two");
-      ODocument d2 = new ODocument(); d2.field(constantField, constValue);
-      newArray.add(d1); newArray.add(d2);
-      originalValue.set(0, newArray);
-      doc.field(fieldName, originalValue);
-
+      ODocument d1 = originalValue.get(0).get(0);
+      d1.field(constantField, constValue); d1.field(variableField, "two");
+      ((List)((List)doc.field(fieldName)).get(0)).set(0, d1);
+      
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
@@ -787,6 +783,10 @@ public class ODocumentTest {
 
       doc = db.save(doc);
       ODocument originalDoc = doc.copy();
+      
+//      ((List)((List)((List)doc.field(fieldName)).get(0)).get(0)).set(0, "mmm");
+//      boolean changed = doc.isChangedInDepth();
+//      assertTrue(changed);
 
       List<String> innerList = new ArrayList<>();
       innerList.add("changed");
