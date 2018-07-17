@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.client.remote.message;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -12,6 +14,11 @@ import java.util.Map;
  * Created by luigidellaquila on 14/12/16.
  */
 public class OQueryRequestTest {
+
+  @Before
+  public void before() {
+    ODatabaseRecordThreadLocal.instance().remove();
+  }
 
   @Test
   public void testWithPositionalParams() throws IOException {
