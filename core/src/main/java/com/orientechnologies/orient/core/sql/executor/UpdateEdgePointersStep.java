@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
@@ -82,6 +83,16 @@ public class UpdateEdgePointersStep extends AbstractExecutionStep {
 
     Object prevOut = record.getOriginalValue("out");
     Object prevIn = record.getOriginalValue("in");
+
+    // to manage subqueries
+    if (currentOut instanceof Collection && ((Collection) currentOut).size() == 1) {
+      currentOut = ((Collection) currentOut).iterator().next();
+      record.setProperty("out", currentOut);
+    }
+    if (currentIn instanceof Collection && ((Collection) currentIn).size() == 1) {
+      currentIn = ((Collection) currentIn).iterator().next();
+      record.setProperty("in", currentIn);
+    }
 
     validateOutInForEdge(record, currentOut, currentIn);
 
