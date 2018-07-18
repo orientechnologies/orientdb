@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.List;
@@ -53,19 +52,104 @@ public class ODocumentEntry {
     return changed;
   }
   
-  public static boolean isChangedList(List list){
+  private static boolean isNestedValueChanged(ONestedMultiValueChangeEvent event, Object value, List<Object> ownersTrace, int ownersTraceOffset, Object valueIndentifier){
+    if (event.getTimeLine() != null){
+      List<OMultiValueChangeEvent<Object, Object>> events = event.getTimeLine().getMultiValueChangeEvents();
+      if (events != null){
+        for (OMultiValueChangeEvent<Object, Object> nestedEvent : events){
+          if (ownersTraceOffset < ownersTrace.size() &&
+              nestedEvent.getKey() == ownersTrace.get(ownersTraceOffset) &&
+              nestedEvent instanceof ONestedMultiValueChangeEvent){
+            ONestedMultiValueChangeEvent ne = (ONestedMultiValueChangeEvent)nestedEvent;
+            if (isNestedValueChanged(ne, value, ownersTrace, ownersTraceOffset + 1, valueIndentifier)){
+              return true;
+            }
+          }
+          else{
+            if (nestedEvent.getKey().equals(valueIndentifier) && nestedEvent.getValue() == value && ownersTraceOffset == ownersTrace.size()){
+              return true;
+            }
+          }
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  public static boolean isNestedValueChanged(ODocumentEntry entry, Object value, List<Object> ownersTrace, int ownersTraceOffset, Object valueIndentifier){
+    if (entry.timeLine != null){
+      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
+      if (timeline != null){
+        for (OMultiValueChangeEvent<Object, Object> event : timeline){          
+          if (event.getKey() == ownersTrace.get(ownersTraceOffset) && 
+              event instanceof ONestedMultiValueChangeEvent){          
+            ONestedMultiValueChangeEvent nestedEvent = (ONestedMultiValueChangeEvent)event;
+            if (isNestedValueChanged(nestedEvent, value, ownersTrace, ownersTraceOffset + 1, valueIndentifier)){
+              return true;
+            }
+          }          
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  private static boolean isInNestedEvent(ONestedMultiValueChangeEvent event, List list){
+    if (event.getKey() == list){
+      return true;
+    }
+    if (event.getTimeLine() != null){
+      List<OMultiValueChangeEvent<Object, Object>> timeline = event.getTimeLine().getMultiValueChangeEvents();
+      for (OMultiValueChangeEvent<Object, Object> nestedEvent : timeline){
+        if (!(nestedEvent instanceof ONestedMultiValueChangeEvent)){
+          if (nestedEvent.getKey() == list){
+            return true;
+          }
+        }
+        else{
+          if (isInNestedEvent((ONestedMultiValueChangeEvent)nestedEvent, list)){
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+  
+  public static boolean isChangedList(List list, ODocumentEntry entry){        
     for (Object element : list){
       if (element instanceof ODocument){
         if (((ODocument)element).isChangedInDepth()){
           return true;
         }
       }
-      else if (element instanceof List){
-        if (isChangedList((List)element)){
+      else if (element instanceof List){        
+        if (isChangedList((List)element, entry)){
           return true;
+        }
+      }      
+    }
+    
+    if (entry.timeLine != null){
+      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
+      if (timeline != null){
+        for (OMultiValueChangeEvent<Object, Object> event : timeline){
+          Object key = event.getKey();
+          if (key == list){
+            return true;
+          }
+          if (event instanceof ONestedMultiValueChangeEvent){
+            ONestedMultiValueChangeEvent nestedEvent = (ONestedMultiValueChangeEvent)event;
+            if (isInNestedEvent(nestedEvent, list)){
+              return true;
+            }
+          }
         }
       }
     }
+    
     return false;
   }
   
@@ -107,7 +191,7 @@ public class ODocumentEntry {
           }
         }
         else if (element instanceof List){
-          if (isChangedList((List)element)){
+          if (isChangedList((List)element, this)){
             return true;
           }
         }
@@ -117,7 +201,7 @@ public class ODocumentEntry {
     if (timeLine != null){
       List<OMultiValueChangeEvent<Object, Object>> timeline = timeLine.getMultiValueChangeEvents();
       if (timeline != null){
-        for (OMultiValueChangeEvent<Object, Object> event : timeline){
+        for (OMultiValueChangeEvent<Object, Object> event : timeline){          
           if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD ||
               event.getChangeType() == OMultiValueChangeEvent.OChangeType.NESTED ||
               event.getChangeType() == OMultiValueChangeEvent.OChangeType.UPDATE){
