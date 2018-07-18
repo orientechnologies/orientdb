@@ -226,4 +226,9 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     else
       return ops.stream().mapToInt((x) -> x.getRID().getClusterId()).toArray();
   }
+
+  @Override
+  public long getDistributedTimeout() {
+    return super.getDistributedTimeout() + (operations.size() / 10);
+  }
 }
