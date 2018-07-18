@@ -5,11 +5,13 @@ import com.codahale.metrics.CsvReporter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.jmx.JmxReporter;
+import com.orientechnologies.agent.profiler.metrics.*;
 import com.orientechnologies.agent.profiler.metrics.dropwizard.*;
+import com.orientechnologies.agent.services.metrics.OrientDBMetricsSettings;
+import com.orientechnologies.agent.services.metrics.reporters.CSVReporter;
+import com.orientechnologies.agent.services.metrics.reporters.ConsoleReporterConfig;
+import com.orientechnologies.agent.services.metrics.reporters.JMXReporter;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OrientDBProfiler;
-import com.orientechnologies.common.profiler.metrics.*;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.File;
 import java.util.Collections;
@@ -23,7 +25,7 @@ import java.util.function.Supplier;
 /**
  * Created by Enrico Risa on 09/07/2018.
  */
-public class OrientDBEnterpriseProfiler implements OrientDBProfiler {
+public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
   private final MetricRegistry                 registry         = new MetricRegistry();
   private       ConcurrentMap<String, OMetric> metrics          = new ConcurrentHashMap<>();
@@ -31,46 +33,35 @@ public class OrientDBEnterpriseProfiler implements OrientDBProfiler {
   private       CsvReporter                    csvReporter      = null;
   private       JmxReporter                    jmxReporter      = null;
   private       GraphiteReporter               graphiteReporter = null;
-  private ODocument config;
+  private OrientDBMetricsSettings settings;
 
-  public OrientDBEnterpriseProfiler() {
-    this(new ODocument().field("enabled", true));
+  public ODropWizardMetricsRegistry() {
+    this(new OrientDBMetricsSettings());
   }
 
-  public OrientDBEnterpriseProfiler(ODocument config) {
-    this.config = config;
+  public ODropWizardMetricsRegistry(OrientDBMetricsSettings settings) {
+    this.settings = settings;
 
-    configureProfiler(config);
+    configureProfiler(settings);
   }
 
-  private void configureProfiler(ODocument config) {
+  private void configureProfiler(OrientDBMetricsSettings settings) {
 
-    ODocument reporters = config.field("reporters");
-    if (reporters == null) {
-      reporters = new ODocument();
-    }
-    jmxReporter = configureJMXReporter(getORDefault(reporters.field("jmx")));
-    consoleReporter = configureConsoleReporter(getORDefault(reporters.field("console")));
-    csvReporter = configureCsvReporter(getORDefault(reporters.field("csv")));
+    jmxReporter = configureJMXReporter(settings.reporters.jmx);
+    consoleReporter = configureConsoleReporter(settings.reporters.console);
+    csvReporter = configureCsvReporter(settings.reporters.csv);
   }
 
-  private ODocument getORDefault(ODocument config) {
-    return config != null ? config : new ODocument().field("enabled", false);
-  }
-
-  private JmxReporter configureJMXReporter(ODocument jmxConfig) {
-
-    Boolean enabled = Boolean.TRUE.equals(jmxConfig.field("enabled"));
-    String domain = jmxConfig.field("domain");
+  private JmxReporter configureJMXReporter(JMXReporter jmxConfig) {
 
     JmxReporter.Builder builder = JmxReporter.forRegistry(registry);
 
-    if (domain != null) {
-      builder.inDomain(domain);
+    if (jmxConfig.domain != null) {
+      builder.inDomain(jmxConfig.domain);
     }
     JmxReporter jmxReporter = builder.build();
 
-    if (enabled) {
+    if (jmxConfig.enabled) {
       jmxReporter.start();
 
     }
@@ -78,10 +69,10 @@ public class OrientDBEnterpriseProfiler implements OrientDBProfiler {
 
   }
 
-  private ConsoleReporter configureConsoleReporter(ODocument consoleConfig) {
+  private ConsoleReporter configureConsoleReporter(ConsoleReporterConfig consoleConfig) {
 
-    Boolean enabled = Boolean.TRUE.equals(consoleConfig.field("enabled"));
-    Number interval = consoleConfig.field("interval");
+    Boolean enabled = consoleConfig.enabled;
+    Number interval = consoleConfig.interval;
 
     ConsoleReporter.Builder builder = ConsoleReporter.forRegistry(registry);
 
@@ -95,11 +86,11 @@ public class OrientDBEnterpriseProfiler implements OrientDBProfiler {
 
   }
 
-  private CsvReporter configureCsvReporter(ODocument csvConfig) {
+  private CsvReporter configureCsvReporter(CSVReporter csvConfig) {
 
-    Boolean enabled = Boolean.TRUE.equals(csvConfig.field("enabled"));
-    Number interval = csvConfig.field("interval");
-    String directory = csvConfig.field("directory");
+    Boolean enabled = csvConfig.enabled;
+    Number interval = csvConfig.interval;
+    String directory = csvConfig.directory;
 
     CsvReporter.Builder builder = CsvReporter.forRegistry(registry);
     CsvReporter csvReporter = null;
@@ -108,11 +99,10 @@ public class OrientDBEnterpriseProfiler implements OrientDBProfiler {
       if (!outputDir.exists()) {
         if (!outputDir.mkdirs()) {
           OLogManager.instance().warn(this, "Failed to create CSV metrics dir {}", outputDir);
-        } else {
-          csvReporter = builder.build(new File(directory));
-          csvReporter.start(interval.longValue(), TimeUnit.MILLISECONDS);
         }
       }
+      csvReporter = builder.build(outputDir);
+      csvReporter.start(interval.longValue(), TimeUnit.MILLISECONDS);
     }
     return csvReporter;
 
@@ -164,4 +154,8 @@ public class OrientDBEnterpriseProfiler implements OrientDBProfiler {
     return (T) metrics.computeIfAbsent(name, metric);
   }
 
+  public boolean remove(String name) {
+    metrics.remove(name);
+    return registry.remove(name);
+  }
 }

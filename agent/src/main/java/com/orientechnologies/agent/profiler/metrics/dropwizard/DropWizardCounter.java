@@ -1,7 +1,7 @@
 package com.orientechnologies.agent.profiler.metrics.dropwizard;
 
 import com.codahale.metrics.Counter;
-import com.orientechnologies.common.profiler.metrics.OCounter;
+import com.orientechnologies.agent.profiler.metrics.OCounter;
 
 /**
  * Created by Enrico Risa on 11/07/2018.

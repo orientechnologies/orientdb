@@ -1,8 +1,8 @@
 package com.orientechnologies.agent.profiler.metrics.dropwizard;
 
 import com.codahale.metrics.Histogram;
-import com.orientechnologies.common.profiler.metrics.OHistogram;
-import com.orientechnologies.common.profiler.metrics.OSnapshot;
+import com.orientechnologies.agent.profiler.metrics.OHistogram;
+import com.orientechnologies.agent.profiler.metrics.OSnapshot;
 
 /**
  * Created by Enrico Risa on 11/07/2018.

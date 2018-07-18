@@ -1,7 +1,6 @@
 package com.orientechnologies.agent.profiler;
 
-import com.orientechnologies.common.profiler.OrientDBProfiler;
-import com.orientechnologies.common.profiler.metrics.*;
+import com.orientechnologies.agent.profiler.metrics.*;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -20,7 +19,7 @@ public class OrientDBEnterpriseProfilerTest {
   @Test
   public void profilerCounterTest() {
 
-    OrientDBProfiler profiler = new OrientDBEnterpriseProfiler();
+    OMetricsRegistry profiler = new ODropWizardMetricsRegistry();
 
     OCounter counter = profiler.counter("test", "Test description");
 
@@ -52,7 +51,7 @@ public class OrientDBEnterpriseProfilerTest {
   @Test
   public void profilerMeterTest() {
 
-    OrientDBProfiler profiler = new OrientDBEnterpriseProfiler();
+    OMetricsRegistry profiler = new ODropWizardMetricsRegistry();
 
     OMeter meter = profiler.meter("test", "Test description");
 
@@ -75,7 +74,7 @@ public class OrientDBEnterpriseProfilerTest {
   @Test
   public void profilerGaugeTest() {
 
-    OrientDBProfiler profiler = new OrientDBEnterpriseProfiler();
+    OMetricsRegistry profiler = new ODropWizardMetricsRegistry();
 
     List<String> values = new ArrayList<>();
 
@@ -91,7 +90,7 @@ public class OrientDBEnterpriseProfilerTest {
   @Test
   public void profilerHistogramTest() {
 
-    OrientDBProfiler profiler = new OrientDBEnterpriseProfiler();
+    OMetricsRegistry profiler = new ODropWizardMetricsRegistry();
 
     OHistogram histogram = profiler.histogram("test", "Test description");
 
@@ -116,7 +115,7 @@ public class OrientDBEnterpriseProfilerTest {
   @Test
   public void profilerTimerTest() throws InterruptedException {
 
-    OrientDBProfiler profiler = new OrientDBEnterpriseProfiler();
+    OMetricsRegistry profiler = new ODropWizardMetricsRegistry();
 
     OTimer timer = profiler.timer("test", "Test description");
 

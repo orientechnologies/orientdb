@@ -1,1 +1,1 @@
-com.orientechnologies.agent.profiler.OEnterpriseProfilerFactory
+com.orientechnologies.agent.profiler.OMetricsRegistryFactory

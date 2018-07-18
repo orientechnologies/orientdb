@@ -1,7 +1,7 @@
 package com.orientechnologies.agent.profiler.metrics.dropwizard;
 
 import com.codahale.metrics.Gauge;
-import com.orientechnologies.common.profiler.metrics.OGauge;
+import com.orientechnologies.agent.profiler.metrics.OGauge;
 
 /**
  * Created by Enrico Risa on 11/07/2018.
