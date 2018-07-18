@@ -52,7 +52,7 @@ public class ODocumentEntry {
     return changed;
   }
   
-  private static boolean isNestedValueChanged(ONestedMultiValueChangeEvent event, Object value, List<Object> ownersTrace, int ownersTraceOffset, Object valueIndentifier){
+  private static OMultiValueChangeEvent.OChangeType isNestedValueChanged(ONestedMultiValueChangeEvent event, Object value, List<Object> ownersTrace, int ownersTraceOffset, Object valueIdentifier){
     if (event.getTimeLine() != null){
       List<OMultiValueChangeEvent<Object, Object>> events = event.getTimeLine().getMultiValueChangeEvents();
       if (events != null){
@@ -61,39 +61,45 @@ public class ODocumentEntry {
               nestedEvent.getKey() == ownersTrace.get(ownersTraceOffset) &&
               nestedEvent instanceof ONestedMultiValueChangeEvent){
             ONestedMultiValueChangeEvent ne = (ONestedMultiValueChangeEvent)nestedEvent;
-            if (isNestedValueChanged(ne, value, ownersTrace, ownersTraceOffset + 1, valueIndentifier)){
-              return true;
+            OMultiValueChangeEvent.OChangeType ret = isNestedValueChanged(ne, value, ownersTrace, ownersTraceOffset + 1, valueIdentifier);
+            if (ret != null){
+              return ret;
             }
           }
           else{
-            if (nestedEvent.getKey().equals(valueIndentifier) && nestedEvent.getValue() == value && ownersTraceOffset == ownersTrace.size()){
-              return true;
+            if (nestedEvent.getKey().equals(valueIdentifier) && nestedEvent.getValue() == value && ownersTraceOffset == ownersTrace.size()){
+              return nestedEvent.getChangeType();
             }
           }
         }
       }
     }
     
-    return false;
+    return null;
   }
   
-  public static boolean isNestedValueChanged(ODocumentEntry entry, Object value, List<Object> ownersTrace, int ownersTraceOffset, Object valueIndentifier){
+  public static OMultiValueChangeEvent.OChangeType isNestedValueChanged(ODocumentEntry entry, Object value, List<Object> ownersTrace, int ownersTraceOffset, Object valueIdentifier){
     if (entry.timeLine != null){
       List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
       if (timeline != null){
-        for (OMultiValueChangeEvent<Object, Object> event : timeline){          
-          if (event.getKey() == ownersTrace.get(ownersTraceOffset) && 
-              event instanceof ONestedMultiValueChangeEvent){          
+        for (OMultiValueChangeEvent<Object, Object> event : timeline){
+          if (ownersTraceOffset < ownersTrace.size() &&
+              event.getKey() == ownersTrace.get(ownersTraceOffset) && 
+              event instanceof ONestedMultiValueChangeEvent){
             ONestedMultiValueChangeEvent nestedEvent = (ONestedMultiValueChangeEvent)event;
-            if (isNestedValueChanged(nestedEvent, value, ownersTrace, ownersTraceOffset + 1, valueIndentifier)){
-              return true;
+            OMultiValueChangeEvent.OChangeType ret = isNestedValueChanged(nestedEvent, value, ownersTrace, ownersTraceOffset + 1, valueIdentifier);
+            if (ret != null){
+              return ret;
             }
-          }          
+          }
+          else if (event.getKey().equals(valueIdentifier) && event.getValue() == value && ownersTraceOffset == ownersTrace.size()){
+            return event.getChangeType();
+          }
         }
       }
     }
     
-    return false;
+    return null;
   }
   
   private static boolean isInNestedEvent(ONestedMultiValueChangeEvent event, List list){

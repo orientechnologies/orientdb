@@ -3509,11 +3509,25 @@ public class ODocument extends ORecordAbstract
           }
           else{
             //element
-            if (ODocumentEntry.isNestedValueChanged(parent, currentElement, ownersTrace, 1, i)){
-              ODocumentDelta deltaElement = new ODocumentDelta();
-              deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd());
+            OMultiValueChangeEvent.OChangeType changeType = ODocumentEntry.isNestedValueChanged(parent, currentElement, ownersTrace, 1, i);
+            if (changeType != null){
+              ODocumentDelta deltaElement = new ODocumentDelta();              
               deltaElement.field("v", currentElement);
               deltaElement.field("i", i);
+              switch(changeType){
+                case ADD:
+                  deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd());
+                  break;
+                case UPDATE:
+                  deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd());
+                  break;
+                case NESTED:
+                  deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd());
+                  break;
+                case REMOVE:
+                  deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd());
+                  break;
+              }
               deltaList.add(deltaElement);
             }
           }

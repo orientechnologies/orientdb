@@ -909,38 +909,40 @@ public class ODocumentTest {
       String fieldName = "testField";
       
       OClass claz = db.createClassIfNotExist("TestClass");
-//      claz.createProperty(fieldName, OType.EMBEDDEDLIST);
 
-      ODocument doc = new ODocument(claz);      
+      ODocument doc = new ODocument(claz);
+      ODocument originalDoc = new ODocument(claz);
       
       String constantField = "constField";
       String constValue = "ConstValue";
       String variableField = "varField";
       List<ODocument> originalValue = new ArrayList<>();
+      List<ODocument> copyValue = new ArrayList<>();
       for (int i = 0; i < 2; i++){
         ODocument containedDoc = new ODocument();
         containedDoc.field(constantField, constValue);
-        List<String> listField = new ArrayList<>();
+        List<String> listField = new ArrayList<>();        
         for (int j = 0; j < 2; j++){
           listField.add("Some" + j);
-        }
+        }        
         containedDoc.field(variableField, listField);
         originalValue.add(containedDoc);
+        
+        List<String> copyListField = new ArrayList<>(listField);
+        ODocument copyContainedDoc = new ODocument();
+        copyContainedDoc.field(variableField, copyListField);
+        copyValue.add(copyContainedDoc);
       }
       
       doc.field(fieldName, originalValue);
+      originalDoc.field(fieldName, copyValue);
 
-      doc = db.save(doc);
-      ODocument originalDoc = doc.copy();
+      doc = db.save(doc);      
 
-      ODocument testDoc = originalValue.get(1);
-      testDoc.field(constantField, constValue);
-      List<String> currentList = testDoc.field(variableField);
-      List<String> newList = new ArrayList<>(currentList);
-      newList.set(0, "changed");
-      testDoc.field(variableField, newList);      
-      originalValue.set(1, testDoc);
-      doc.field(fieldName, originalValue);
+      ODocument testDoc = (ODocument)((List)doc.field(fieldName)).get(1);        
+      List<String> currentList = testDoc.field(variableField);      
+      currentList.set(0, "changed");
+      
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
@@ -979,19 +981,21 @@ public class ODocumentTest {
 
       OClass claz = db.createClassIfNotExist("TestClass");
 
-      ODocument doc = new ODocument(claz);      
+      ODocument doc = new ODocument(claz);
+      ODocument originalDoc = new ODocument(claz);
+      
       String fieldName = "testField";
-      List<String> originalValue = new ArrayList<>();
+      List<String> originalValue = new ArrayList<>();      
       originalValue.add("one"); originalValue.add("two");
+      List<String> copyValue = new ArrayList<>(originalValue);
       
       doc.field(fieldName, originalValue);
+      originalDoc.field(fieldName, copyValue);
+      
+      doc = db.save(doc);      
 
-      doc = db.save(doc);
-      ODocument originalDoc = doc.copy();
-
-      List<String> newArray = new ArrayList<>();
-      newArray.add("one"); newArray.add("two"); newArray.add("three");
-      doc.field(fieldName, newArray);
+      List<String> newArray = doc.field(fieldName);
+      newArray.add("three");      
 
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
