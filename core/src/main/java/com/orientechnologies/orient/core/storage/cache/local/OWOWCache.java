@@ -2687,8 +2687,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             if (!flushMode.equals(FLUSH_MODE.LSN)) {//IDLE flush mode
               if (dirtyPagesPercent > 80) {
                 flushMode = FLUSH_MODE.LSN;
-                int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages,
-                    dirtyPagesPercent > 85);
+                int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages, false);
                 flushedPages += lsnPages;
 
                 lsnPagesSum += lsnPages;
@@ -2709,8 +2708,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 }
               }
             } else {
-              int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages,
-                  dirtyPagesPercent > 85);
+              int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages, false);
               flushedPages += lsnPages;
 
               lsnPagesSum += lsnPages;
@@ -2844,7 +2842,12 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       convertSharedDirtyPagesToLocal();
     }
 
-    if (segStart != lsnPagesIteratorSegment) {
+    if (!skipRecencyBit) {
+      if (lsnPagesIteratorSegment < segStart || lsnPagesIteratorSegment >= segEnd) {
+        lsnPagesIterator = null;
+        lsnPagesIteratorSegment = -1;
+      }
+    } else {
       lsnPagesIterator = null;
       lsnPagesIteratorSegment = -1;
     }
