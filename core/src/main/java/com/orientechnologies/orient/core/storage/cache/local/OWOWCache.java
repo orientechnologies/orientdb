@@ -2768,6 +2768,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     long currentSegment = segStart;
 
+    Iterator<PageKey> pagesIterator = null;
+
     flushCycle:
     while (flushedPages < pagesFlushLimit && currentSegment < segEnd) {
       if (!chunk.isEmpty()) {
@@ -2777,20 +2779,26 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       if (localDirtyPagesBySegment.isEmpty()) {
         if (!dirtyPages.isEmpty()) {
           convertSharedDirtyPagesToLocal();
+          pagesIterator = null;
+
           continue;
         } else {
           break;
         }
       }
 
-      final TreeSet<PageKey> segmentPages = localDirtyPagesBySegment.get(currentSegment);
-      if (segmentPages == null) {
-        currentSegment++;
-        continue;
+      if (pagesIterator == null || !pagesIterator.hasNext()) {
+        final TreeSet<PageKey> segmentPages = localDirtyPagesBySegment.get(currentSegment);
+
+        if (segmentPages == null) {
+          currentSegment++;
+          continue;
+        }
+
+        pagesIterator = segmentPages.iterator();
       }
 
       final List<PageKey> pageKeysToFlush = new ArrayList<>(pagesFlushLimit);
-      final Iterator<PageKey> pagesIterator = segmentPages.iterator();
 
       while (pagesIterator.hasNext() && pageKeysToFlush.size() < pagesFlushLimit - flushedPages) {
         final PageKey pageKey = pagesIterator.next();
