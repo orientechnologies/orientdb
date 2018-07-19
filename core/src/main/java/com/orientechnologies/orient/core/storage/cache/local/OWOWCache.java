@@ -2736,7 +2736,15 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         if (flushedPages > 0) {
           final long endTs = System.nanoTime();
           final long timeInMS = (endTs - startTs) / 1_000_000;
-          scheduleNextRun(timeInMS);
+
+          if (dirtyPagesPercent < 90) {
+            scheduleNextRun(Math.max(timeInMS, pagesFlushInterval));
+          } else if (dirtyPagesPercent < 95) {
+            scheduleNextRun(Math.max(timeInMS / 2, pagesFlushInterval));
+          } else {
+            scheduleNextRun(pagesFlushInterval);
+          }
+
         } else {
           scheduleNextRun(pagesFlushInterval);
         }
