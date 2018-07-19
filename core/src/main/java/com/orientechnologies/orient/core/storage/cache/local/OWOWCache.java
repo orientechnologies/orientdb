@@ -2685,7 +2685,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           if (lsnEntry != null && endSegment - startSegment >= 1) {
             if (!flushMode.equals(FLUSH_MODE.LSN)) {//IDLE flush mode
-              if (dirtyPagesPercent > 80) {
+              if (dirtyPagesPercent >= 50) {
                 flushMode = FLUSH_MODE.LSN;
                 int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages, false);
                 flushedPages += lsnPages;
@@ -2703,7 +2703,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
                 dirtyPagesPercent = (int) (100 * writeCacheSize.get() / maxCacheSize);
 
-                if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 65) {
+                if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 25) {
                   flushMode = FLUSH_MODE.IDLE;
                 }
               }
@@ -2724,7 +2724,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               dirtyPagesPercent = (int) (100 * writeCacheSize.get() / maxCacheSize);
 
-              if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 65) {
+              if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 25) {
                 flushMode = FLUSH_MODE.IDLE;
               }
             }
