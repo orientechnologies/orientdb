@@ -2779,6 +2779,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       if (localDirtyPagesBySegment.isEmpty()) {
         if (!dirtyPages.isEmpty()) {
           convertSharedDirtyPagesToLocal();
+          currentSegment = segStart;
           pagesIterator = null;
 
           continue;
