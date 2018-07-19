@@ -2378,10 +2378,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           dirtyPagesPercentCount = 1;
         }
 
+        Map.Entry<Long, TreeSet<PageKey>> entry = localDirtyPagesBySegment.firstEntry();
+
         System.out.printf(
-            "Avg. percent of dirty pages %d, count of flushed lsn pages %d, avg. count of flushed of exclusive pages %d, avg. "
-                + " lsn flush interval %d\n", dirtyPagesPercentSum / dirtyPagesPercentCount, lsnPagesSum, exclusivePagesSum,
-            lsnIntervalSum / lsnIntervalCount);
+            "Avg. percent of dirty pages %d, count of flushed lsn pages %d, count of flushed of exclusive pages %d, avg. "
+                + " lsn flush interval %d, first dirty pages segment index %d, first dirty pages segment size %d, "
+                + "amount of exclusive pages %d \n", dirtyPagesPercentSum / dirtyPagesPercentCount, lsnPagesSum, exclusivePagesSum,
+            lsnIntervalSum / lsnIntervalCount, entry == null ? -1 : entry.getKey().intValue(),
+            entry == null ? -1 : entry.getValue().size(), exclusiveWriteCacheSize.get());
 
         reportTs = ts;
 
