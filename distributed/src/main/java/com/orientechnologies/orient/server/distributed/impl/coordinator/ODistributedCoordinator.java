@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.*;
 
 public class ODistributedCoordinator implements AutoCloseable {
@@ -9,10 +11,12 @@ public class ODistributedCoordinator implements AutoCloseable {
   private OOperationLog                          operationLog;
   private ConcurrentMap<OLogId, ORequestContext> contexts = new ConcurrentHashMap<>();
   private Map<String, ODistributedMember>        members  = new ConcurrentHashMap<>();
+  private Timer                                  timer;
 
   public ODistributedCoordinator(ExecutorService requestExecutor, OOperationLog operationLog) {
     this.requestExecutor = requestExecutor;
     this.operationLog = operationLog;
+    this.timer = new Timer(true);
   }
 
   public void submit(ODistributedMember member, OSubmitRequest request) {
@@ -38,6 +42,8 @@ public class ODistributedCoordinator implements AutoCloseable {
     for (ODistributedMember member : members.values()) {
       member.sendRequest(id, nodeRequest);
     }
+    //Get the timeout from the configuration
+    timer.schedule(context.getTimerTask(), 1000, 1000);
     return context;
   }
 
@@ -47,6 +53,7 @@ public class ODistributedCoordinator implements AutoCloseable {
 
   @Override
   public void close() {
+    timer.cancel();
     requestExecutor.shutdown();
     try {
       requestExecutor.awaitTermination(1, TimeUnit.HOURS);
@@ -54,5 +61,9 @@ public class ODistributedCoordinator implements AutoCloseable {
       Thread.currentThread().interrupt();
     }
 
+  }
+
+  protected void executeOperation(Runnable runnable) {
+    requestExecutor.execute(runnable);
   }
 }

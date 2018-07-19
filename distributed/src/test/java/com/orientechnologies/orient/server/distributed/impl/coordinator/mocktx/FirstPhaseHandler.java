@@ -2,7 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.mocktx;
 
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
-class FirstPhaseHandler implements OResponseHandler {
+public class FirstPhaseHandler implements OResponseHandler {
   private       OSubmitTx          submitTx;
   private final ODistributedMember member;
   private       boolean            done;
@@ -19,6 +19,11 @@ class FirstPhaseHandler implements OResponseHandler {
       submitTx.firstPhase = true;
       coordinator1.sendOperation(submitTx, new OPhase2Tx(), new SecondPhaseResponseHandler(submitTx, member));
     }
+  }
+
+  @Override
+  public void timeout(ODistributedCoordinator coordinator, ORequestContext context) {
+
   }
 
 }

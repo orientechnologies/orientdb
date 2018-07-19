@@ -21,4 +21,9 @@ public class SecondPhaseResponseHandler implements OResponseHandler {
       });
     }
   }
+
+  @Override
+  public void timeout(ODistributedCoordinator coordinator, ORequestContext context) {
+
+  }
 }

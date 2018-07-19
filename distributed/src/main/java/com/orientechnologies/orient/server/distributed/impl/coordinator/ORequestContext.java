@@ -1,9 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class ORequestContext {
 
@@ -18,6 +15,7 @@ public class ORequestContext {
   private ODistributedCoordinator        coordinator;
   private int                            quorum;
   private OResponseHandler               handler;
+  private TimerTask                      timerTask;
 
   public ORequestContext(ODistributedCoordinator coordinator, OSubmitRequest submitRequest, ONodeRequest nodeRequest,
       Collection<ODistributedMember> involvedMembers, OResponseHandler handler) {
@@ -27,6 +25,17 @@ public class ORequestContext {
     this.involvedMembers = involvedMembers;
     this.handler = handler;
     this.quorum = (involvedMembers.size() / 2) + 1;
+
+    timerTask = new TimerTask() {
+      @Override
+      public void run() {
+        coordinator.executeOperation(() -> {
+          handler.timeout(coordinator, ORequestContext.this);
+          //TODO:Cancel the task depending on the timeout action.
+        });
+      }
+    };
+
   }
 
   public void receive(ONodeResponse response) {
@@ -40,5 +49,9 @@ public class ORequestContext {
 
   public int getQuorum() {
     return quorum;
+  }
+
+  public TimerTask getTimerTask() {
+    return timerTask;
   }
 }

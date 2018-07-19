@@ -25,9 +25,17 @@ public class ODistributedCoordinatorTest {
       @Override
       public void begin(ODistributedMember member, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
-        coordinator.sendOperation(this, nodeRequest, (coordinator1, context, response) -> {
-          if (context.getResponses().size() == 1) {
-            responseReceived.countDown();
+        coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
+          @Override
+          public void receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeResponse response) {
+            if (context.getResponses().size() == 1) {
+              responseReceived.countDown();
+            }
+          }
+
+          @Override
+          public void timeout(ODistributedCoordinator coordinator, ORequestContext context) {
+
           }
         });
       }
@@ -54,19 +62,35 @@ public class ODistributedCoordinatorTest {
       @Override
       public void begin(ODistributedMember member, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
-        coordinator.sendOperation(this, nodeRequest, (coordinator1, context, response) -> {
-          if (context.getResponses().size() == 1) {
-            coordinator1.sendOperation(this, new ONodeRequest() {
-              @Override
-              public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor) {
-                return null;
-              }
-            }, (coordinator2, context1, response1) -> {
-              if (context.getResponses().size() == 1) {
-                member.reply(new OSubmitResponse() {
-                });
-              }
-            });
+        coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
+          @Override
+          public void receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeResponse response) {
+            if (context.getResponses().size() == 1) {
+              coordinator.sendOperation(null, new ONodeRequest() {
+                @Override
+                public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor) {
+                  return null;
+                }
+              }, new OResponseHandler() {
+                @Override
+                public void receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeResponse response) {
+                  if (context.getResponses().size() == 1) {
+                    member.reply(new OSubmitResponse() {
+                    });
+                  }
+                }
+
+                @Override
+                public void timeout(ODistributedCoordinator coordinator, ORequestContext context) {
+
+                }
+              });
+            }
+          }
+
+          @Override
+          public void timeout(ODistributedCoordinator coordinator, ORequestContext context) {
+
           }
         });
       }
