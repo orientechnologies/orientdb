@@ -3003,7 +3003,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     final long pagesToFlush = Math.max((long) Math.ceil(flushThreshold * exclusiveWriteCacheMaxSize), 1);
 
-    final ArrayList<OTriple<Long, ByteBuffer, OCachePointer>> chunk = new ArrayList<>(512);
+    final ArrayList<OTriple<Long, ByteBuffer, OCachePointer>> chunk = new ArrayList<>(128);
 
     OLogSequenceNumber maxFullLogLSN = null;
 
@@ -3012,7 +3012,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       long lastFileId = -1;
       long lastPageIndex = -1;
 
-      while (chunk.size() < 512 && flushedPages < pagesToFlush) {
+      while (chunk.size() < 128 && chunk.size() < pagesToFlush && flushedPages < pagesToFlush) {
         if (!iterator.hasNext()) {
           flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
           releaseExclusiveLatch();

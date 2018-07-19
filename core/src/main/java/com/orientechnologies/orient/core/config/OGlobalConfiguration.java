@@ -139,7 +139,7 @@ public enum OGlobalConfiguration {
       }),
 
   DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percentage of disk cache, which is used as write cache", Integer.class,
-      5),
+      20),
 
   DISK_WRITE_CACHE_PAGE_TTL("storage.diskCache.writeCachePageTTL",
       "Max time until a page will be flushed from write cache (in seconds)", Long.class, 24 * 60 * 60),
