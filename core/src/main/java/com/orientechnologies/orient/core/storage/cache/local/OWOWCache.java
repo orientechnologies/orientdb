@@ -2383,9 +2383,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         System.out.printf(
             "Avg. percent of dirty pages %d, count of flushed lsn pages %d, count of flushed of exclusive pages %d, avg. "
                 + " lsn flush interval %d, first dirty pages segment index %d, first dirty pages segment size %d, "
-                + "amount of exclusive pages %d \n", dirtyPagesPercentSum / dirtyPagesPercentCount, lsnPagesSum, exclusivePagesSum,
-            lsnIntervalSum / lsnIntervalCount, entry == null ? -1 : entry.getKey().intValue(),
-            entry == null ? -1 : entry.getValue().size(), exclusiveWriteCacheSize.get());
+                + "amount of exclusive pages %d, current segment of LSN pages iterator %d\n",
+            dirtyPagesPercentSum / dirtyPagesPercentCount, lsnPagesSum, exclusivePagesSum, lsnIntervalSum / lsnIntervalCount,
+            entry == null ? -1 : entry.getKey().intValue(), entry == null ? -1 : entry.getValue().size(),
+            exclusiveWriteCacheSize.get(), lsnPagesIteratorSegment);
 
         reportTs = ts;
 
@@ -2682,28 +2683,30 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
 
-          if (lsnEntry != null && endSegment - startSegment >= 1 && dirtyPagesPercent > 65) {
+          if (lsnEntry != null && endSegment - startSegment >= 1) {
             if (!flushMode.equals(FLUSH_MODE.LSN)) {//IDLE flush mode
-              flushMode = FLUSH_MODE.LSN;
-              int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages,
-                  dirtyPagesPercent > 85);
-              flushedPages += lsnPages;
+              if (dirtyPagesPercent > 80) {
+                flushMode = FLUSH_MODE.LSN;
+                int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages,
+                    dirtyPagesPercent > 85);
+                flushedPages += lsnPages;
 
-              lsnPagesSum += lsnPages;
+                lsnPagesSum += lsnPages;
 
-              if (localDirtyPages.isEmpty() && !dirtyPages.isEmpty()) {
-                convertSharedDirtyPagesToLocal();
-              }
+                if (localDirtyPages.isEmpty() && !dirtyPages.isEmpty()) {
+                  convertSharedDirtyPagesToLocal();
+                }
 
-              lsnEntry = localDirtyPagesBySegment.firstEntry();
+                lsnEntry = localDirtyPagesBySegment.firstEntry();
 
-              startSegment = writeAheadLog.begin().getSegment();
-              endSegment = writeAheadLog.end().getSegment();
+                startSegment = writeAheadLog.begin().getSegment();
+                endSegment = writeAheadLog.end().getSegment();
 
-              dirtyPagesPercent = (int) (100 * writeCacheSize.get() / maxCacheSize);
+                dirtyPagesPercent = (int) (100 * writeCacheSize.get() / maxCacheSize);
 
-              if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 65) {
-                flushMode = FLUSH_MODE.IDLE;
+                if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 65) {
+                  flushMode = FLUSH_MODE.IDLE;
+                }
               }
             } else {
               int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages,
