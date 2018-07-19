@@ -264,7 +264,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     // No need to close
     final ODatabaseDocumentEmbedded embedded = factory.newInstance(storage);
     embedded.setSerializer(serializer);
-    embedded.internalCreate(config);
+    embedded.internalCreate(config, () -> openNoAuthorization(storage.getName()));
     return embedded;
   }
 

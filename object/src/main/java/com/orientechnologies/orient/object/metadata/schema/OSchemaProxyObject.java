@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import javassist.util.proxy.Proxy;
@@ -176,6 +175,10 @@ public class OSchemaProxyObject implements OSchemaObject {
   @Override
   public Collection<OClass> getClasses() {
     return underlying.getClasses();
+  }
+
+  public Collection<OView> getViews() {
+    return underlying.getViews();
   }
 
   @Override

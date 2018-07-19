@@ -12,7 +12,7 @@ import java.util.List;
  * Created by tglman on 14/06/17.
  */
 public class OViewRemote extends OViewImpl {
-  
+
   protected OViewRemote(OSchemaShared iOwner, ODocument iDocument, String iName) {
     super(iOwner, iDocument, iName);
   }

@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 import java.util.Collection;
 import java.util.List;
@@ -159,6 +158,10 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 
   public Collection<OClass> getClasses() {
     return delegate.getClasses(database);
+  }
+
+  public Collection<OView> getViews() {
+    return delegate.getViews(database);
   }
 
   @Deprecated

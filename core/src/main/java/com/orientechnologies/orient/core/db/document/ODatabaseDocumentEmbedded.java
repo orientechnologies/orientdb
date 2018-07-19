@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheHook;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -34,7 +33,10 @@ import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -54,17 +56,14 @@ import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
-import com.orientechnologies.orient.core.schedule.OScheduler;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 
@@ -72,6 +71,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 /**
  * Created by tglman on 27/06/16.
@@ -214,14 +214,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   /**
    * {@inheritDoc}
    */
-  public void internalCreate(OrientDBConfig config) {
+  public void internalCreate(OrientDBConfig config, Supplier<ODatabaseDocument> adminDbSupplier) {
     this.status = STATUS.OPEN;
     // THIS IF SHOULDN'T BE NEEDED, CREATE HAPPEN ONLY IN EMBEDDED
     applyAttributes(config);
     applyListeners(config);
     metadata = new OMetadataDefault(this);
     installHooksEmbedded();
-    createMetadata();
+    createMetadata(adminDbSupplier);
 
     if (this.getMetadata().getCommandCache().isEnabled())
       registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
@@ -240,12 +240,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       }
   }
 
-  protected void createMetadata() {
+  protected void createMetadata(Supplier<ODatabaseDocument> adminDbSupplier) {
     // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
     OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
       @Override
       public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextEmbedded(getStorage());
+        OSharedContext shared = new OSharedContextEmbedded(getStorage(), adminDbSupplier);
         return shared;
       }
     });
@@ -255,11 +255,16 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   protected void loadMetadata() {
+    loadMetadata(() -> this.copy());
+  }
+
+  @Override
+  protected void loadMetadata(Supplier<ODatabaseDocument> adminDbSupplier) {
     metadata = new OMetadataDefault(this);
     sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
       @Override
       public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextEmbedded(getStorage());
+        OSharedContext shared = new OSharedContextEmbedded(getStorage(), adminDbSupplier);
         return shared;
       }
     });

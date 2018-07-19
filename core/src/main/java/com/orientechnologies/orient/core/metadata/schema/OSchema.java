@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 import java.util.Collection;
 import java.util.List;
@@ -81,6 +80,8 @@ public interface OSchema {
   OClass getOrCreateClass(String iClassName, OClass... superClasses);
 
   Collection<OClass> getClasses();
+
+  Collection<OView> getViews();
 
   OView getView(String name);
 

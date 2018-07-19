@@ -12,6 +12,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -64,6 +65,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.FAILED;
@@ -138,11 +140,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   protected void loadMetadata() {
+    loadMetadata(() -> this.copy());
+  }
+
+  @Override
+  protected void loadMetadata(Supplier<ODatabaseDocument> adminDbSupplier) {
     metadata = new OMetadataDefault(this);
     sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
       @Override
       public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextDistributed(getStorage());
+        OSharedContext shared = new OSharedContextDistributed(getStorage(), adminDbSupplier);
         return shared;
       }
     });
@@ -438,12 +445,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     });
   }
 
-  protected void createMetadata() {
+  protected void createMetadata(Supplier<ODatabaseDocument> adminDbSupplier) {
     // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
     OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
       @Override
       public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextDistributed(getStorage());
+        OSharedContext shared = new OSharedContextDistributed(getStorage(), adminDbSupplier);
         return shared;
       }
     });

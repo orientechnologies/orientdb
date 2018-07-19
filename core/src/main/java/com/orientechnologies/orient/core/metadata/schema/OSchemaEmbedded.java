@@ -776,6 +776,25 @@ public class OSchemaEmbedded extends OSchemaShared {
     }
   }
 
+  void addClusterForView(ODatabaseDocumentInternal database, final int clusterId, final OView view) {
+    acquireSchemaWriteLock(database);
+    try {
+      if (clusterId < 0)
+        return;
+
+      checkEmbedded();
+
+      final OView existingView = clustersToViews.get(clusterId);
+      if (existingView != null && !view.equals(existingView))
+        throw new OSchemaException(
+            "Cluster with id " + clusterId + " already belongs to view " + clustersToViews.get(clusterId));
+
+      clustersToViews.put(clusterId, view);
+    } finally {
+      releaseSchemaWriteLock(database);
+    }
+  }
+
   void removeClusterForClass(ODatabaseDocumentInternal database, int clusterId, OClass cls) {
     acquireSchemaWriteLock(database);
     try {

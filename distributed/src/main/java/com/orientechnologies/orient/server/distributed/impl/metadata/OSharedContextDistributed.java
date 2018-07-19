@@ -2,10 +2,9 @@ package com.orientechnologies.orient.server.distributed.impl.metadata;
 
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexes;
@@ -21,12 +20,16 @@ import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.function.Supplier;
+
 /**
  * Created by tglman on 22/06/17.
  */
 public class OSharedContextDistributed extends OSharedContext {
 
-  public OSharedContextDistributed(OStorage storage) {
+  private ViewManager viewManager;
+
+  public OSharedContextDistributed(OStorage storage, Supplier<ODatabaseDocument> adminDbSupplier) {
     schema = new OSchemaDistributed(this);
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerDistributed(storage);
@@ -44,6 +47,9 @@ public class OSharedContextDistributed extends OSharedContext {
     this.registerListener(executionPlanCache);
 
     queryStats = new OQueryStats();
+
+    this.viewManager = new ViewManager(adminDbSupplier);
+    this.viewManager.start();
 
   }
 
@@ -74,6 +80,7 @@ public class OSharedContextDistributed extends OSharedContext {
 
   @Override
   public synchronized void close() {
+    viewManager.close();
     schema.close();
     security.close(false);
     indexManager.close();

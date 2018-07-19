@@ -503,7 +503,7 @@ public class OViewEmbedded extends OViewImpl {
       if (defaultClusterId == NOT_EXISTENT_CLUSTER_ID)
         defaultClusterId = clusterId;
 
-      ((OSchemaEmbedded) owner).addClusterForClass(database, clusterId, this);
+      ((OSchemaEmbedded) owner).addClusterForView(database, clusterId, this);
       return this;
     } finally {
       releaseSchemaWriteLock();

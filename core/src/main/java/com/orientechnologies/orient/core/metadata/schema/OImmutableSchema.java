@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 import java.util.*;
 
@@ -198,6 +197,12 @@ public class OImmutableSchema implements OSchema {
   public Collection<OClass> getClasses() {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
     return new HashSet<OClass>(classes.values());
+  }
+
+  @Override
+  public Collection<OView> getViews() {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
+    return new HashSet<OView>(views.values());
   }
 
   @Override

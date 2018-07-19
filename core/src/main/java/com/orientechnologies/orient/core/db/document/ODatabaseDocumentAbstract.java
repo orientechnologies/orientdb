@@ -75,6 +75,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 /**
  * Document API entrypoint.
@@ -147,6 +148,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   protected abstract void loadMetadata();
+
+  protected abstract void loadMetadata(Supplier<ODatabaseDocument> adminDbSupplier);
 
   public void callOnCloseListeners() {
     // WAKE UP DB LIFECYCLE LISTENER

@@ -50,4 +50,10 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     result.setProperty("indexes", indexes);
     return result;
   }
+
+  @Override
+  public String getQuery() {
+    return cfg.getQuery();
+  }
+
 }

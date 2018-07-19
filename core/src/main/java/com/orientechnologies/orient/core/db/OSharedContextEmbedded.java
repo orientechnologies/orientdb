@@ -2,6 +2,8 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
@@ -22,6 +24,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Created by tglman on 13/06/17.
@@ -30,7 +33,9 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   private Map<String, DistributedQueryContext> activeDistributedQueries;
 
-  public OSharedContextEmbedded(OStorage storage) {
+  private ViewManager viewManager;
+
+  public OSharedContextEmbedded(OStorage storage, Supplier<ODatabaseDocument> adminDbSupplier) {
     schema = new OSchemaEmbedded(this);
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerShared(storage);
@@ -54,6 +59,9 @@ public class OSharedContextEmbedded extends OSharedContext {
         listener.onStorageConfigurationUpdate(storage.getName(), update);
       }
     });
+
+    this.viewManager = new ViewManager(adminDbSupplier);
+    this.viewManager.start();
   }
 
   public synchronized void load(ODatabaseDocumentInternal database) {
@@ -81,6 +89,7 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   @Override
   public synchronized void close() {
+    viewManager.close();
     schema.close();
     security.close(false);
     indexManager.close();
