@@ -192,7 +192,8 @@ public class ReadWriteDiskCacheTest {
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, Integer.MAX_VALUE, Integer.MAX_VALUE,
         25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true);
 
-    writeBuffer = new OWOWCache(PAGE_SIZE, BUFFER_POOL, null, -1, WRITE_CACHE_MAX_SIZE, false, storagePath, null, storageName,
+    writeBuffer = new OWOWCache(PAGE_SIZE, BUFFER_POOL, null, -1, WRITE_CACHE_MAX_SIZE, READ_CACHE_MAX_MEMORY, false, storagePath,
+        null, storageName,
         OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndThrow, false);
     writeBuffer.loadRegisteredFiles();
 
