@@ -2880,6 +2880,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         if (segmentPages == null) {
           currentSegment++;
+
+          if (currentSegment >= segEnd) {
+            currentSegment = segStart;
+          }
+
           continue;
         }
 
@@ -2912,6 +2917,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       if (!lsnPagesIterator.hasNext()) {
         currentSegment++;
+
+        if (currentSegment >= segEnd) {
+          currentSegment = segStart;
+        }
 
         lsnPagesIterator = null;
         lsnPagesIteratorSegment = -1;
