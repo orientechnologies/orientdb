@@ -1033,26 +1033,30 @@ public class ODocumentTest {
 
       OClass claz = db.createClassIfNotExist("TestClass");
 
-      ODocument doc = new ODocument(claz);      
+      ODocument doc = new ODocument(claz);
+      ODocument originalDoc = new ODocument(claz);
+      
       String fieldName = "testField";
       List<List<String>> originalList = new ArrayList<>();
+      List<List<String>> copyList = new ArrayList<>();
       for (int i = 0; i < 2; i++){
         List<String> nestedList = new ArrayList<>();
         nestedList.add("one"); nestedList.add("two");
         originalList.add(nestedList);
+        
+        List<String> copyNestedList = new ArrayList<>(nestedList);
+        copyList.add(copyNestedList);
       }
       
       doc.field(fieldName, originalList);
+      originalDoc.field(fieldName, copyList);
 
       doc = db.save(doc);
-      ODocument originalDoc = doc.copy();
+      
 
-      List<String> newArray = new ArrayList<>();
-      newArray.add("one"); newArray.add("two"); newArray.add("three");      
-      originalList = new ArrayList<>(originalList);
-      originalList.set(0, newArray);
-      doc.field(fieldName, originalList);
-
+      List<String> newArray = (List<String>)((List)doc.field(fieldName)).get(0);
+      newArray.add("three");
+      
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
@@ -1080,6 +1084,73 @@ public class ODocumentTest {
   }
   
   @Test
+  public void testListOfListAddDeltaWithCopy(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      ODocument originalDoc = new ODocument(claz);
+      
+      String fieldName = "testField";
+      List<List<String>> originalList = new ArrayList<>();
+      List<List<String>> copyList = new ArrayList<>();
+      for (int i = 0; i < 2; i++){
+        List<String> nestedList = new ArrayList<>();
+        nestedList.add("one"); nestedList.add("two");
+        originalList.add(nestedList);
+        
+        List<String> copyNestedList = new ArrayList<>(nestedList);
+        copyList.add(copyNestedList);
+      }
+      
+      doc.field(fieldName, originalList);
+      originalDoc.field(fieldName, copyList);
+      
+      doc = db.save(doc);
+
+      List<String> newArray = new ArrayList<>();
+      newArray.add("one"); newArray.add("two"); newArray.add("three");      
+      originalList = new ArrayList<>(originalList);
+      originalList.set(0, newArray);
+      doc.field(fieldName, originalList);
+
+      ODocumentDelta delta = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
+      byte[] stream = ddSer.toStream(delta);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(delta, dcCopy);
+      
+      delta = delta.field("u");      
+      
+      originalDoc.mergeUpdateDelta(delta);
+      List<List<String>> rootList = originalDoc.field(fieldName);
+      List<String> checkList = rootList.get(0);
+      assertEquals(3, checkList.size());
+    }
+    catch (Exception e){
+      e.printStackTrace();
+      assertTrue(false);
+    }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
+  @Test
   public void testListRemoveDelta(){
     ODatabaseSession db = null;
     OrientDB odb = null;
@@ -1090,15 +1161,70 @@ public class ODocumentTest {
 
       OClass claz = db.createClassIfNotExist("TestClass");
 
-      ODocument doc = new ODocument(claz);      
+      ODocument doc = new ODocument(claz);
+      ODocument originalDoc = new ODocument(claz);
+      
       String fieldName = "testField";
       List<String> originalValue = new ArrayList<>();
       originalValue.add("one"); originalValue.add("two"); originalValue.add("three");
+      List<String> copyValue = new ArrayList<>(originalValue);
       
       doc.field(fieldName, originalValue);
+      originalDoc.field(fieldName, copyValue);
 
-      doc = db.save(doc);
-      ODocument originalDoc = doc.copy();
+      doc = db.save(doc);      
+
+      List<String> newArray = (List<String>)doc.field(fieldName);
+      newArray.remove(0); newArray.remove(0);      
+
+      ODocumentDelta delta = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
+      byte[] stream = ddSer.toStream(delta);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(delta, dcCopy);
+      
+      delta = delta.field("u");      
+      
+      originalDoc.mergeUpdateDelta(delta);
+      List checkList = originalDoc.field(fieldName);
+      assertEquals("three", checkList.get(0));
+    }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
+  @Test
+  public void testListRemoveDeltaWithCopy(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      ODocument originalDoc = new ODocument(claz);
+      
+      String fieldName = "testField";
+      List<String> originalValue = new ArrayList<>();
+      originalValue.add("one"); originalValue.add("two"); originalValue.add("three");
+      List<String> copyValue = new ArrayList<>(originalValue);
+      
+      doc.field(fieldName, originalValue);
+      originalDoc.field(fieldName, copyValue);
+
+      doc = db.save(doc); 
 
       List<String> newArray = new ArrayList<>();
       newArray.add("one");
@@ -1248,13 +1374,14 @@ public class ODocumentTest {
 
       ODocument rootDoc = new ODocument(claz);
       rootDoc.field(nestedFieldName, doc);
+      ODocument originalDoc = new ODocument(claz);
+      originalDoc.field(nestedFieldName, doc.copy());
       
       rootDoc = db.save(rootDoc);
       ODocument originaDoc = rootDoc.copy();
-      
-      doc = doc.copy();
+            
       doc.removeField(fieldName);
-      rootDoc.field(nestedFieldName, doc);
+      
       ODocumentDelta dc = rootDoc.getDeltaFromOriginal();
       
       //test serialization/deserialization
@@ -1293,28 +1420,30 @@ public class ODocumentTest {
       
       OClass claz = db.createClassIfNotExist("TestClass");
 
-      ODocument doc = new ODocument(claz);      
+      ODocument doc = new ODocument(claz);
+      ODocument originalDoc = new ODocument(claz);
       
       String constantField = "constField";
       String constValue = "ConstValue";
       String variableField = "varField";
       List<ODocument> originalValue = new ArrayList<>();
+      List<ODocument> copyValue = new ArrayList<>();
       for (int i = 0; i < 2; i++){
         ODocument containedDoc = new ODocument();
         containedDoc.field(constantField, constValue);
         containedDoc.field(variableField, "one" + i);
         originalValue.add(containedDoc);
+        copyValue.add(containedDoc.copy());
       }
       
       doc.field(fieldName, originalValue);
+      originalDoc.field(fieldName, copyValue);
 
-      doc = db.save(doc);
-      ODocument originalDoc = doc.copy();
+      doc = db.save(doc);      
 
-      ODocument testDoc = originalValue.get(1);
+      ODocument testDoc = (ODocument)((List)doc.field(fieldName)).get(1);
       testDoc.removeField(variableField);
-      originalValue.set(1, testDoc);
-      doc.field(fieldName, originalValue);
+      
       ODocumentDelta delta = doc.getDeltaFromOriginal();
       
       //test serialization/deserialization
@@ -1324,9 +1453,76 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
       
-      delta = delta.field("u");
+      delta = delta.field("d");
       
-      originalDoc.mergeUpdateDelta(delta);
+      originalDoc.mergeDeleteDelta(delta);
+      List<ODocument> checkList = originalDoc.field(fieldName);
+      ODocument checkDoc = checkList.get(1);
+      assertEquals(checkDoc.field(constantField), constValue);
+      assertFalse(checkDoc.containsField(variableField));
+    }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
+  @Test
+  public void testListOfDocsRemoveFieldWithCopy(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      String fieldName = "testField";
+      
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      ODocument originalDoc = new ODocument(claz);
+      
+      String constantField = "constField";
+      String constValue = "ConstValue";
+      String variableField = "varField";
+      List<ODocument> originalValue = new ArrayList<>();
+      List<ODocument> copyValue = new ArrayList<>();
+      for (int i = 0; i < 2; i++){
+        ODocument containedDoc = new ODocument();
+        containedDoc.field(constantField, constValue);
+        containedDoc.field(variableField, "one" + i);
+        originalValue.add(containedDoc);
+        copyValue.add(containedDoc.copy());
+      }
+      
+      doc.field(fieldName, originalValue);
+      originalDoc.field(fieldName, copyValue);
+
+      doc = db.save(doc);      
+
+      ODocument testDoc = originalValue.get(1);
+      testDoc.removeField(variableField);
+      originalValue = new ArrayList<>(originalValue);
+      originalValue.set(1, testDoc);
+      doc.field(fieldName, originalValue);
+      
+      ODocumentDelta delta = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
+      byte[] stream = ddSer.toStream(delta);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(delta, dcCopy);
+      
+      delta = delta.field("d");
+      
+      originalDoc.mergeDeleteDelta(delta);
       List<ODocument> checkList = originalDoc.field(fieldName);
       ODocument checkDoc = checkList.get(1);
       assertEquals(checkDoc.field(constantField), constValue);

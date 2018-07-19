@@ -210,7 +210,8 @@ public class ODocumentEntry {
         for (OMultiValueChangeEvent<Object, Object> event : timeline){          
           if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD ||
               event.getChangeType() == OMultiValueChangeEvent.OChangeType.NESTED ||
-              event.getChangeType() == OMultiValueChangeEvent.OChangeType.UPDATE){
+              event.getChangeType() == OMultiValueChangeEvent.OChangeType.UPDATE ||
+              event.getChangeType() == OMultiValueChangeEvent.OChangeType.REMOVE){
             return true;
           }
         }

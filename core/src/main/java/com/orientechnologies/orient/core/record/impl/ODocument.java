@@ -3478,7 +3478,7 @@ public class ODocument extends ORecordAbstract
       if (currentType.isList() && previousValue == null){
         List currentList = (List)currentValue;
         retVal.type = UpdateDeltaValueType.LIST_UPDATE;
-        List deltaList = new ArrayList();
+        List<ODocumentDelta> deltaList = new ArrayList<>();
         retVal.value = deltaList;
         for (int i = 0; i < currentList.size(); i++){
           Object currentElement = currentList.get(i);
@@ -3520,19 +3520,28 @@ public class ODocument extends ORecordAbstract
                   break;
                 case UPDATE:
                   deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd());
-                  break;
-                case NESTED:
-                  deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd());
-                  break;
-                case REMOVE:
-                  deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd());
-                  break;
+                  break;                
+                  //can never happen
+//                case NESTED:
+//                  deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd());
+//                  break;
+                  //can never happen
+//                case REMOVE:
+//                  deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd());
+//                  break;
               }
               deltaList.add(deltaElement);
             }
           }
         }
-        
+        List<Integer> indexesToRemove = getRemovedIndexes(parent, currentList, ownersTrace, 1);
+        int counter = 0;
+        for (Integer index : indexesToRemove){
+          ODocumentDelta removeDleta = new ODocumentDelta();
+          removeDleta.field("t", UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd());
+          removeDleta.field("i", index + counter++);
+          deltaList.add(removeDleta);
+        }
         return retVal;
       }
       
@@ -3570,6 +3579,61 @@ public class ODocument extends ORecordAbstract
       retVal.type = UpdateDeltaValueType.UPDATE;
       return retVal;
     }    
+  }
+  
+   private static List<Integer> isNestedValueChanged(ONestedMultiValueChangeEvent event, List list, List<Object> ownersTrace, int ownersTraceOffset) {
+    List<Integer> retList = new ArrayList<>();
+    if (event.getTimeLine() != null) {
+      List<OMultiValueChangeEvent<Object, Object>> events = event.getTimeLine().getMultiValueChangeEvents();
+      if (events != null) {
+        for (OMultiValueChangeEvent<Object, Object> nestedEvent : events) {
+          if (ownersTraceOffset < ownersTrace.size()
+                  && nestedEvent.getKey() == ownersTrace.get(ownersTraceOffset)
+                  && nestedEvent instanceof ONestedMultiValueChangeEvent) {
+            ONestedMultiValueChangeEvent ne = (ONestedMultiValueChangeEvent) nestedEvent;
+            List<Integer> ret = isNestedValueChanged(ne, list, ownersTrace, ownersTraceOffset + 1);
+            if (ret != null) {
+              return ret;
+            }
+          } else if (ownersTraceOffset == ownersTrace.size()) {
+            if (nestedEvent.getChangeType() == OMultiValueChangeEvent.OChangeType.REMOVE
+                    && nestedEvent.getKey() instanceof Integer) {
+              retList.add((Integer) nestedEvent.getKey());
+            }
+          }
+        }
+      }
+    }
+
+    return retList;
+  }
+  
+  public static List<Integer> getRemovedIndexes(ODocumentEntry entry, List list, List<Object> ownersTrace, int ownersTraceOffset){
+    List<Integer> retList = new ArrayList<>();
+    if (entry.timeLine != null){
+      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
+      if (timeline != null){
+        for (OMultiValueChangeEvent<Object, Object> event : timeline){
+          if (ownersTraceOffset < ownersTrace.size() &&
+              event.getKey() == ownersTrace.get(ownersTraceOffset) && 
+              event instanceof ONestedMultiValueChangeEvent){
+            ONestedMultiValueChangeEvent nestedEvent = (ONestedMultiValueChangeEvent)event;
+            List<Integer> ret = isNestedValueChanged(nestedEvent, list, ownersTrace, ownersTraceOffset + 1);
+            if (ret != null){
+              retList.addAll(ret);
+            }
+          }
+          else if (ownersTraceOffset == ownersTrace.size()){
+            if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.REMOVE && 
+                event.getKey() instanceof Integer){
+              retList.add((Integer)event.getKey());
+            }
+          }
+        }
+      }
+    }
+    
+    return retList;
   }
   
   private Object getDeleteDeltaValue(Object currentValue, boolean exist){
