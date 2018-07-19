@@ -32,7 +32,7 @@ public class OrientDBMetricsService implements OEnterpriseService {
     this.server = server;
     String configFile = OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/profiler.json");
     this.settings = loadConfig(configFile);
-    registry = OMetricsRegistryFactory.createProfilerFor(server, this.settings);
+    registry = OMetricsRegistryFactory.createRegistryFor(server, this.settings);
 
   }
 

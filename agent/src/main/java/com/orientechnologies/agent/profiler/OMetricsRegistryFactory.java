@@ -8,7 +8,7 @@ import com.orientechnologies.enterprise.server.OEnterpriseServer;
  */
 public class OMetricsRegistryFactory {
 
-  public static OMetricsRegistry createProfilerFor(OEnterpriseServer server, OrientDBMetricsSettings settings) {
+  public static OMetricsRegistry createRegistryFor(OEnterpriseServer server, OrientDBMetricsSettings settings) {
 
     return new ODropWizardMetricsRegistry(settings);
   }

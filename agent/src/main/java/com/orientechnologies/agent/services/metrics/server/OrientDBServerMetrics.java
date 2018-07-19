@@ -5,6 +5,7 @@ import com.orientechnologies.agent.services.metrics.OrientDBMetric;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricSupport;
 import com.orientechnologies.agent.services.metrics.server.info.OrientDBServerInfoMetrics;
 import com.orientechnologies.agent.services.metrics.server.network.OrientDBServerNetworkMetrics;
+import com.orientechnologies.agent.services.metrics.server.resources.OrientDBServerResourcesMetrics;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 
 /**
@@ -22,6 +23,7 @@ public class OrientDBServerMetrics implements OrientDBMetric {
     this.registry = registry;
     metricSupport.add(new OrientDBServerNetworkMetrics(server, registry));
     metricSupport.add(new OrientDBServerInfoMetrics(server, registry));
+    metricSupport.add(new OrientDBServerResourcesMetrics(server, registry));
   }
 
   @Override

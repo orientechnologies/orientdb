@@ -30,5 +30,7 @@ public interface OMetricsRegistry {
 
   Map<String, OMetric> getMetrics();
 
+  <T extends OMetric> T register(String name, String description, Class<T> klass);
+
   boolean remove(String name);
 }

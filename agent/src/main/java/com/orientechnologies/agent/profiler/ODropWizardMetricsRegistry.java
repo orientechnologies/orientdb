@@ -2,9 +2,13 @@ package com.orientechnologies.agent.profiler;
 
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.CsvReporter;
+import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.jmx.JmxReporter;
+import com.codahale.metrics.jvm.CachedThreadStatesGaugeSet;
+import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
+import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.orientechnologies.agent.profiler.metrics.*;
 import com.orientechnologies.agent.profiler.metrics.dropwizard.*;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsSettings;
@@ -15,6 +19,7 @@ import com.orientechnologies.common.log.OLogManager;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -34,6 +39,7 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
   private       JmxReporter                    jmxReporter      = null;
   private       GraphiteReporter               graphiteReporter = null;
   private OrientDBMetricsSettings settings;
+  private Map<Class<? extends OMetric>, Function<String, Metric>> metricFactory = new HashMap<>();
 
   public ODropWizardMetricsRegistry() {
     this(new OrientDBMetricsSettings());
@@ -43,6 +49,14 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     this.settings = settings;
 
     configureProfiler(settings);
+
+    initFactories(settings);
+  }
+
+  private void initFactories(OrientDBMetricsSettings settings) {
+    metricFactory.put(GCMetric.class, (s) -> registry.register(s, new GarbageCollectorMetricSet()));
+    metricFactory.put(ThreadsMetric.class, (s) -> registry.register(s, new CachedThreadStatesGaugeSet(10, TimeUnit.SECONDS)));
+    metricFactory.put(MemoryMetric.class, (s) -> registry.register(s, new MemoryUsageGaugeSet()));
   }
 
   private void configureProfiler(OrientDBMetricsSettings settings) {
@@ -152,6 +166,19 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
   private <T extends OMetric> T registerOrGetMetric(String name, Function<String, OMetric> metric) {
     return (T) metrics.computeIfAbsent(name, metric);
+  }
+
+  @Override
+  public <T extends OMetric> T register(String name, String description, Class<T> klass) {
+    return registerOrGetMetric(name, (k) -> {
+
+      Function<String, Metric> function = metricFactory.get(klass);
+      if (function != null) {
+        return new DropWizardGeneric(function.apply(k), k, description);
+      } else {
+        return null;
+      }
+    });
   }
 
   public boolean remove(String name) {
