@@ -76,7 +76,7 @@ public final class OCachePointer {
     this.recency.lazySet(false);
     if (rec) {
       recencyCounter++;
-      if (recencyCounter > 10) {
+      if (recencyCounter > 5) {
         recencyCounter = 0;
         return false;
       }

@@ -2514,7 +2514,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         while (minDirtySegment < segmentId) {
           flushExclusivePagesIfNeeded();
 
-          flushWriteCacheFromMinLSN(writeAheadLog.begin().getSegment(), segmentId, 512 * 8);
+          flushWriteCacheFromMinLSN(writeAheadLog.begin().getSegment(), segmentId, 512 * 8, true);
 
           firstEntry = localDirtyPagesBySegment.firstEntry();
 
@@ -2625,7 +2625,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           if (lsnEntry != null && endSegment - startSegment >= 1 && dirtyPagesPercent > 65) {
             if (!flushMode.equals(FLUSH_MODE.LSN)) {//IDLE flush mode
               flushMode = FLUSH_MODE.LSN;
-              flushedPages += flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages);
+              flushedPages += flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages,
+                  dirtyPagesPercent > 90);
 
               convertSharedDirtyPagesToLocal();
 
@@ -2640,7 +2641,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 flushMode = FLUSH_MODE.IDLE;
               }
             } else {
-              flushedPages += flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages);
+              flushedPages += flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages,
+                  dirtyPagesPercent > 90);
 
               convertSharedDirtyPagesToLocal();
 
@@ -2755,7 +2757,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private int flushWriteCacheFromMinLSN(long segStart, long segEnd, int pagesFlushLimit) throws InterruptedException, IOException {
+  private int flushWriteCacheFromMinLSN(long segStart, long segEnd, int pagesFlushLimit, boolean skipRecencyBit)
+      throws InterruptedException, IOException {
     //first we try to find page which contains the oldest not flushed changes
     //that is needed to allow to compact WAL as earlier as possible
     convertSharedDirtyPagesToLocal();
@@ -2821,9 +2824,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             if (!chunk.isEmpty()) {
               flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
               releaseExclusiveLatch();
-
-              maxFullLogLSN = null;
             }
+
+            maxFullLogLSN = null;
           }
         }
 
@@ -2839,6 +2842,20 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           }
 
           break flushCycle;
+        }
+
+        if (!skipRecencyBit && pointer.clearRecency()) {
+          if (!chunk.isEmpty()) {
+            flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
+            releaseExclusiveLatch();
+          }
+
+          maxFullLogLSN = null;
+
+          lastPageIndex = -1;
+          lastFileId = -1;
+
+          continue;
         }
 
         final long version;
