@@ -1103,8 +1103,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   private void doPutInCache(final OCachePointer dataPointer, final PageKey pageKey) {
-    dataPointer.setRecency();
-
     writeCachePages.put(pageKey, dataPointer);
 
     writeCacheSize.incrementAndGet();
