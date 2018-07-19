@@ -1,10 +1,10 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
-import com.orientechnologies.orient.server.OServerLifecycleListener;
-import com.orientechnologies.orient.server.OSystemDatabase;
+import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 /**
@@ -32,4 +32,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
     return plugin;
   }
+
+  protected OSharedContext createSharedContext(OAbstractPaginatedStorage storage) {
+    return new OSharedContextDistributed(storage, this);
+  }
+
 }

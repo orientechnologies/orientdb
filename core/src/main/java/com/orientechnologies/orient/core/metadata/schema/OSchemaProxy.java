@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 
@@ -190,6 +191,10 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   @Override
   public OView createView(OViewConfig config) {
     return delegate.createView(database, config);
+  }
+
+  public OView createView(OViewConfig config, ViewCreationListener listener) {
+    return delegate.createView(database, config, listener);
   }
 
   public OSchema reload() {

@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
 
@@ -1455,8 +1456,18 @@ public class OSelectExecutionPlanner {
     } else if (isOrderByRidDesc(info)) {
       orderByRidAsc = false;
     }
-    FetchFromClassExecutionStep fetcher = new FetchFromClassExecutionStep(identifier.getStringValue(), filterClusters, info, ctx,
-        orderByRidAsc, profilingEnabled);
+    String className = identifier.getStringValue();
+    OSchema schema = ctx.getDatabase().getMetadata().getSchema();
+
+    AbstractExecutionStep fetcher;
+    if (schema.getClass(className) != null) {
+      fetcher = new FetchFromClassExecutionStep(className, filterClusters, info, ctx, orderByRidAsc, profilingEnabled);
+    } else if (schema.getView(className) != null) {
+      fetcher = new FetchFromViewExecutionStep(className, filterClusters, info, ctx, orderByRidAsc, profilingEnabled);
+    } else {
+      throw new OCommandExecutionException("Class or View not present in the schema: " + className);
+    }
+
     if (orderByRidAsc != null && info.serverToClusters.size() == 1) {
       info.orderApplied = true;
     }
@@ -1468,9 +1479,13 @@ public class OSelectExecutionPlanner {
     if (queryTarget == null) {
       return false;
     }
-    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(queryTarget.getStringValue());
+    OSchema schema = ctx.getDatabase().getMetadata().getSchema();
+    OClass clazz = schema.getClass(queryTarget.getStringValue());
     if (clazz == null) {
-      throw new OCommandExecutionException("Class not found: " + queryTarget);
+      clazz = schema.getView(queryTarget.getStringValue());
+      if (clazz == null) {
+        throw new OCommandExecutionException("Class not found: " + queryTarget);
+      }
     }
     if (info.flattenedWhereClause == null || info.flattenedWhereClause.size() == 0) {
       return false;
@@ -1617,10 +1632,13 @@ public class OSelectExecutionPlanner {
 
   private boolean handleClassWithIndexForSortOnly(OSelectExecutionPlan plan, OIdentifier queryTarget, Set<String> filterClusters,
       QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
-
-    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(queryTarget.getStringValue());
+    OSchema schema = ctx.getDatabase().getMetadata().getSchema();
+    OClass clazz = schema.getClass(queryTarget.getStringValue());
     if (clazz == null) {
-      throw new OCommandExecutionException("Class not found: " + queryTarget.getStringValue());
+      clazz = schema.getView(queryTarget.getStringValue());
+      if (clazz == null) {
+        throw new OCommandExecutionException("Class not found: " + queryTarget);
+      }
     }
 
     for (OIndex idx : clazz.getIndexes().stream().filter(i -> i.supportsOrderedIterations()).filter(i -> i.getDefinition() != null)
@@ -1675,9 +1693,13 @@ public class OSelectExecutionPlanner {
       info.flattenedWhereClause = null;
       return true;
     }
-    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass.getStringValue());
+    OSchema schema = ctx.getDatabase().getMetadata().getSchema();
+    OClass clazz = schema.getClass(targetClass.getStringValue());
     if (clazz == null) {
-      throw new OCommandExecutionException("Cannot find class " + targetClass);
+      clazz = schema.getView(targetClass.getStringValue());
+      if (clazz == null) {
+        throw new OCommandExecutionException("Class not found: " + targetClass);
+      }
     }
     if (clazz.count(false) != 0 || clazz.getSubclasses().size() == 0 || isDiamondHierarchy(clazz)) {
       return false;

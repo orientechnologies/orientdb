@@ -3,24 +3,20 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 
@@ -517,7 +513,7 @@ public class OSelectStatementExecutionTest {
     elem.save();
 
     try {
-      OResultSet result = db.query("select count(*) from " + className+" where name = 'foo'");
+      OResultSet result = db.query("select count(*) from " + className + " where name = 'foo'");
       printExecutionPlan(result);
       Assert.assertNotNull(result);
       Assert.assertTrue(result.hasNext());
@@ -3694,6 +3690,40 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
     }
+  }
+
+  @Test
+  @Ignore
+  public void testQueryView() throws InterruptedException {
+    String className = "testQueryView_Class";
+    String viewName = "testQueryView_View";
+    db.createClass(className);
+    for (int i = 0; i < 10; i++) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("counter", i);
+      elem.save();
+    }
+
+    OViewConfig cfg = new OViewConfig(viewName, "SELECT FROM " + className);
+    final CountDownLatch latch = new CountDownLatch(1);
+    db.getMetadata().getSchema().createView(cfg, new ViewCreationListener() {
+
+      @Override
+      public void afterCreate(String viewName) {
+        latch.countDown();
+      }
+
+      @Override
+      public void onError(String viewName, Exception exception) {
+      }
+    });
+
+    latch.await();
+
+    OResultSet result = db.query("SELECT FROM " + viewName);
+    int count = result.stream().map(x -> (Integer) x.getProperty("counter")).reduce((x, y) -> x + y).get();
+    Assert.assertEquals(45, count);
+    result.close();
   }
 
 }

@@ -12,7 +12,6 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -64,8 +63,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.function.Supplier;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.FAILED;
@@ -141,19 +138,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   protected void loadMetadata() {
-    loadMetadata(() -> this.copy());
+    loadMetadata(this.getSharedContext());
   }
 
   @Override
-  protected void loadMetadata(Supplier<ODatabaseDocument> adminDbSupplier) {
+  protected void loadMetadata(OSharedContext ctx) {
     metadata = new OMetadataDefault(this);
-    sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextDistributed(getStorage(), adminDbSupplier);
-        return shared;
-      }
-    });
+    sharedContext = ctx;
     metadata.init(sharedContext);
     sharedContext.load(this);
   }
@@ -198,7 +189,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentDistributed database = new ODatabaseDocumentDistributed(getStorage(), hazelcastPlugin);
-    database.init(getConfig());
+    database.init(getConfig(), getSharedContext());
     database.internalOpen(getUser().getName(), null, false);
     database.callOnOpenListeners();
     this.activateOnCurrentThread();
@@ -439,22 +430,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   @Override
-  public void init(OrientDBConfig config) {
+  public void init(OrientDBConfig config, OSharedContext sharedContext) {
     OScenarioThreadLocal.executeAsDistributed(() -> {
-      super.init(config);
+      super.init(config, sharedContext);
       return null;
     });
   }
 
-  protected void createMetadata(Supplier<ODatabaseDocument> adminDbSupplier) {
+  protected void createMetadata(OSharedContext ctx) {
     // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
-    OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextDistributed(getStorage(), adminDbSupplier);
-        return shared;
-      }
-    });
+    OSharedContext shared = ctx;
     metadata.init(shared);
     ((OSharedContextDistributed) shared).create(this);
   }
@@ -619,8 +604,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (OConcurrentCreateException ex) {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
-          OLogManager.instance().debug(this, "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue request",
-              ex.getExpectedRid(), ex.getActualRid());
+          OLogManager.instance()
+              .debug(this, "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue request", ex.getExpectedRid(),
+                  ex.getActualRid());
           txContext.unlock();
           return false;
         }

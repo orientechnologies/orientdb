@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -204,6 +205,11 @@ public class OSchemaRemote extends OSchemaShared {
     }
 
     return result;
+  }
+
+  public OView createView(ODatabaseDocumentInternal database, OViewConfig cfg, ViewCreationListener listener)
+      throws UnsupportedOperationException {
+    throw new UnsupportedOperationException();
   }
 
   @Override

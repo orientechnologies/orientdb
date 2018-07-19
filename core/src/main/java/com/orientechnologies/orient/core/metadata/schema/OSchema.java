@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 
@@ -90,6 +91,8 @@ public interface OSchema {
   OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable);
 
   OView createView(OViewConfig config);
+
+  OView createView(OViewConfig config, ViewCreationListener listener);
 
   boolean existsView(String name);
 

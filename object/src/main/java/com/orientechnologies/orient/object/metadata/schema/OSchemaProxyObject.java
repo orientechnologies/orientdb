@@ -22,6 +22,7 @@ import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -197,6 +198,11 @@ public class OSchemaProxyObject implements OSchemaObject {
 
   @Override
   public OView createView(OViewConfig config) {
+    return underlying.createView(config);
+  }
+
+  @Override
+  public OView createView(OViewConfig config, ViewCreationListener listener) {
     return underlying.createView(config);
   }
 

@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.*;
@@ -75,7 +76,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.function.Supplier;
 
 /**
  * Document API entrypoint.
@@ -149,7 +149,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   protected abstract void loadMetadata();
 
-  protected abstract void loadMetadata(Supplier<ODatabaseDocument> adminDbSupplier);
+  protected abstract void loadMetadata(OSharedContext ctx);
 
   public void callOnCloseListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
@@ -2117,6 +2117,17 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   /**
    * Returns the number of the records of the class iClassName.
    */
+  public long countView(final String viewName) {
+    final OView cls = getMetadata().getImmutableSchemaSnapshot().getView(viewName);
+    if (cls == null)
+      throw new IllegalArgumentException("View '" + cls + "' not found in database");
+
+    return countClass(cls, false);
+  }
+
+  /**
+   * Returns the number of the records of the class iClassName.
+   */
   public long countClass(final String iClassName) {
     return countClass(iClassName, true);
   }
@@ -2126,14 +2137,19 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   public long countClass(final String iClassName, final boolean iPolymorphic) {
     final OClass cls = getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
-
     if (cls == null)
-      throw new IllegalArgumentException("Class '" + iClassName + "' not found in database");
+      throw new IllegalArgumentException("Class '" + cls + "' not found in database");
+
+    return countClass(cls, iPolymorphic);
+  }
+  
+  protected long countClass(final OClass cls, final boolean iPolymorphic) {
 
     long totalOnDb = cls.count(iPolymorphic);
 
     long deletedInTx = 0;
     long addedInTx = 0;
+    String className = cls.getName();
     if (getTransaction().isActive())
       for (ORecordOperation op : getTransaction().getRecordOperations()) {
         if (op.type == ORecordOperation.DELETED) {
@@ -2141,10 +2157,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
           if (rec != null && rec instanceof ODocument) {
             OClass schemaClass = ((ODocument) rec).getSchemaClass();
             if (iPolymorphic) {
-              if (schemaClass.isSubClassOf(iClassName))
+              if (schemaClass.isSubClassOf(className))
                 deletedInTx++;
             } else {
-              if (iClassName.equals(schemaClass.getName()) || iClassName.equals(schemaClass.getShortName()))
+              if (className.equals(schemaClass.getName()) || className.equals(schemaClass.getShortName()))
                 deletedInTx++;
             }
           }
@@ -2155,10 +2171,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
             OClass schemaClass = ((ODocument) rec).getSchemaClass();
             if (schemaClass != null) {
               if (iPolymorphic) {
-                if (schemaClass.isSubClassOf(iClassName))
+                if (schemaClass.isSubClassOf(className))
                   addedInTx++;
               } else {
-                if (iClassName.equals(schemaClass.getName()) || iClassName.equals(schemaClass.getShortName()))
+                if (className.equals(schemaClass.getName()) || className.equals(schemaClass.getShortName()))
                   addedInTx++;
               }
             }

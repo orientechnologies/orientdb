@@ -2,10 +2,8 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
@@ -214,15 +212,19 @@ public class OSchemaEmbedded extends OSchemaShared {
 
   @Override
   public OView createView(ODatabaseDocumentInternal database, OViewConfig cfg) {
+    return createView(database, cfg, null);
+  }
+
+  public OView createView(ODatabaseDocumentInternal database, OViewConfig cfg, ViewCreationListener listener) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(cfg.getName());
     if (wrongCharacter != null)
       throw new OSchemaException(
           "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in view name '" + cfg.getName() + "'");
 
-    return doCreateView(database, cfg);
+    return doCreateView(database, cfg, listener);
   }
 
-  private OView doCreateView(ODatabaseDocumentInternal database, final OViewConfig config) {
+  private OView doCreateView(ODatabaseDocumentInternal database, final OViewConfig config, ViewCreationListener listener) {
     OView result;
 
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
@@ -272,6 +274,8 @@ public class OSchemaEmbedded extends OSchemaShared {
 
       for (Iterator<ODatabaseListener> it = database.getListeners().iterator(); it.hasNext(); )
         it.next().onCreateView(database, result);
+
+      ((OSharedContextEmbedded) database.getSharedContext()).getViewManager().updateViewAsync(result.getName(), listener);
 
     } catch (ClusterIdsAreEmptyException e) {
       throw OException.wrapException(new OSchemaException("Cannot create view '" + config.getName() + "'"), e);
@@ -786,8 +790,7 @@ public class OSchemaEmbedded extends OSchemaShared {
 
       final OView existingView = clustersToViews.get(clusterId);
       if (existingView != null && !view.equals(existingView))
-        throw new OSchemaException(
-            "Cluster with id " + clusterId + " already belongs to view " + clustersToViews.get(clusterId));
+        throw new OSchemaException("Cluster with id " + clusterId + " already belongs to view " + clustersToViews.get(clusterId));
 
       clustersToViews.put(clusterId, view);
     } finally {

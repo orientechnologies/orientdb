@@ -4,10 +4,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
@@ -27,6 +24,7 @@ public class OCreateViewStatementExecutionTest {
   }
 
   @Test
+  @Ignore
   public void testPlain() {
     String className = "testPlain";
     OResultSet result = db.command("create view " + className + "  FROM (SELECT FROM V)");

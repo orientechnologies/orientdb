@@ -27,6 +27,7 @@ import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -301,7 +302,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
       document = database.load(new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()));
 
-      Runnable recreateIndexesTask = new RecreateIndexesTask(database.getStorage());
+      Runnable recreateIndexesTask = new RecreateIndexesTask(database.getSharedContext());
       recreateIndexesThread = new Thread(recreateIndexesTask, "OrientDB rebuild indexes");
       recreateIndexesThread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       recreateIndexesThread.start();
@@ -507,20 +508,20 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   }
 
   private class RecreateIndexesTask implements Runnable {
-    private final OStorage storage;
+    private final OSharedContext ctx;
     private       int      ok;
     private       int      errors;
 
-    public RecreateIndexesTask(OStorage storage) {
-      this.storage = storage;
+    public RecreateIndexesTask(OSharedContext ctx) {
+      this.ctx = ctx;
     }
 
     @Override
     public void run() {
       try {
-        final ODatabaseDocumentEmbedded newDb = new ODatabaseDocumentEmbedded(storage);
+        final ODatabaseDocumentEmbedded newDb = new ODatabaseDocumentEmbedded(ctx.getStorage());
         newDb.activateOnCurrentThread();
-        newDb.init(null);
+        newDb.init(null, ctx);
         newDb.internalOpen("admin", "nopass", false);
 
         final Collection<ODocument> indexesToRebuild;

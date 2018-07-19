@@ -73,4 +73,13 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     return cfg.getQuery();
   }
 
+  public long count(final boolean isPolymorphic) {
+    acquireSchemaReadLock();
+    try {
+      return getDatabase().countView(getName());
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
 }

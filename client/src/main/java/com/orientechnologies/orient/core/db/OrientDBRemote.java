@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
+import com.orientechnologies.orient.core.db.document.OSharedContextRemote;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -46,13 +47,14 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETW
  * Created by tglman on 08/04/16.
  */
 public class OrientDBRemote implements OrientDBInternal {
-  private final      Map<String, OStorageRemote> storages = new HashMap<>();
-  private final      Set<ODatabasePoolInternal>  pools    = new HashSet<>();
-  private final      String[]                    hosts;
-  private final      OrientDBConfig              configurations;
-  private final      Orient                      orient;
-  protected volatile ORemoteConnectionManager    connectionManager;
-  private volatile   boolean                     open     = true;
+  protected final Map<String, OSharedContext> sharedContexts = new HashMap<>();
+  private final   Map<String, OStorageRemote> storages       = new HashMap<>();
+  private final   Set<ODatabasePoolInternal>  pools          = new HashSet<>();
+  private final      String[]                 hosts;
+  private final      OrientDBConfig           configurations;
+  private final      Orient                   orient;
+  protected volatile ORemoteConnectionManager connectionManager;
+  private volatile boolean open = true;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
@@ -82,7 +84,7 @@ public class OrientDBRemote implements OrientDBInternal {
         storages.put(name, storage);
       }
       ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
-      db.internalOpen(user, password, solveConfig(config));
+      db.internalOpen(user, password, solveConfig(config), getOrCreateSharedContext(storage));
       return db;
     } catch (Exception e) {
       throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
@@ -120,7 +122,7 @@ public class OrientDBRemote implements OrientDBInternal {
       }
     }
     ODatabaseDocumentRemotePooled db = new ODatabaseDocumentRemotePooled(pool, storage);
-    db.internalOpen(user, password, pool.getConfig());
+    db.internalOpen(user, password, pool.getConfig(), getOrCreateSharedContext(storage));
     return db;
   }
 
@@ -253,10 +255,12 @@ public class OrientDBRemote implements OrientDBInternal {
   public void internalClose() {
     if (!open)
       return;
+
     final List<OStorageRemote> storagesCopy;
     synchronized (this) {
       // SHUTDOWN ENGINES AVOID OTHER OPENS
       open = false;
+      this.sharedContexts.values().forEach(x -> x.close());
       storagesCopy = new ArrayList<>(storages.values());
     }
 
@@ -273,6 +277,7 @@ public class OrientDBRemote implements OrientDBInternal {
       }
     }
     synchronized (this) {
+      this.sharedContexts.clear();
       storages.clear();
 
       connectionManager.close();
@@ -347,8 +352,6 @@ public class OrientDBRemote implements OrientDBInternal {
     throw new UnsupportedOperationException("instance factory is not supported in remote");
   }
 
-
-
   @Override
   public void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
       OCommandOutputListener iListener) {
@@ -358,6 +361,23 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public ODatabaseDocumentInternal openNoAuthorization(String name) {
     throw new UnsupportedOperationException("impossible skip authentication and authorization in remote");
+  }
+
+  protected synchronized OSharedContext getOrCreateSharedContext(OStorage storage) {
+
+    OSharedContext result = sharedContexts.get(storage.getName());
+    if (result == null) {
+      result = createSharedContext(storage);
+      sharedContexts.put(storage.getName(), result);
+    }
+    return result;
+  }
+
+  private OSharedContext createSharedContext(OStorage storage) {
+    OSharedContextRemote result = new OSharedContextRemote(storage, this);
+    storage.getResource(OSharedContext.class.getName(), () -> result);
+    return result;
+
   }
 
 }

@@ -1,24 +1,23 @@
 package com.orientechnologies.orient.core.encryption.impl;
 
-import java.io.File;
-import java.util.List;
-
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.OStorage;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OStorage;
+import java.io.File;
+import java.util.List;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_ENCRYPTION_KEY;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD;
@@ -176,9 +175,11 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
       db.open("admin", "admin");
       OStorage storage = ((ODatabaseDocumentInternal) db).getStorage();
 
+      OrientDBInternal orientDB = ((ODatabaseDocumentTx) db).getSharedContext().getOrientDB();
       db.close();
 
-      storage.close(true, false);
+      orientDB.forceDatabaseClose(db.getName());
+//      storage.close(true, false);
 
       db.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
       db.open("admin", "admin");
@@ -187,7 +188,8 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
       storage = ((ODatabaseDocumentInternal) db).getStorage();
       db.close();
 
-      storage.close(true, false);
+//      storage.close(true, false);
+      orientDB.forceDatabaseClose(db.getName());
 
       db.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "invalidPassword");
       OSecurityException exception = null;
@@ -201,7 +203,8 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
         exception = e;
       } finally {
         db.close();
-        storage.close(true, false);
+//        storage.close(true, false);
+        orientDB.forceDatabaseClose(db.getName());
         assertNotNull(exception);
       }
 
@@ -216,7 +219,8 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
       } finally {
         db.activateOnCurrentThread();
         db.close();
-        storage.close(true, false);
+//        storage.close(true, false);
+        orientDB.forceDatabaseClose(db.getName());
         assertNotNull(exception);
       }
 

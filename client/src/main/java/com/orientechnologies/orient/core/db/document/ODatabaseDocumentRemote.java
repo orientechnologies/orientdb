@@ -57,8 +57,6 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.function.Supplier;
 
 /**
  * Created by tglman on 30/06/16.
@@ -177,7 +175,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     database.storage.addUser();
     database.status = STATUS.OPEN;
     database.applyAttributes(config);
-    database.initAtFirstOpen();
+    database.initAtFirstOpen(this.getSharedContext());
     database.user = this.user;
     this.activateOnCurrentThread();
     return database;
@@ -188,7 +186,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     throw new UnsupportedOperationException("use OrientDB");
   }
 
-  public void internalOpen(String user, String password, OrientDBConfig config) {
+  public void internalOpen(String user, String password, OrientDBConfig config, OSharedContext ctx) {
     this.config = config;
     applyAttributes(config);
     applyListeners(config);
@@ -198,7 +196,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
       status = STATUS.OPEN;
 
-      initAtFirstOpen();
+      initAtFirstOpen(ctx);
       this.user = new OImmutableUser(-1,
           new OUser(user, password).addRole(new ORole("passthrough", null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
 
@@ -220,7 +218,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     }
   }
 
-  private void initAtFirstOpen() {
+  private void initAtFirstOpen(OSharedContext ctx) {
     if (initialized)
       return;
 
@@ -230,25 +228,19 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     componentsFactory = getStorage().getComponentsFactory();
     user = null;
 
-    loadMetadata();
+    loadMetadata(ctx);
 
     initialized = true;
   }
 
   @Override
   protected void loadMetadata() {
-    loadMetadata(() -> this.copy());
+    loadMetadata(this.getSharedContext());
   }
 
-  protected void loadMetadata(Supplier<ODatabaseDocument> adminDbSupplier) {
+  protected void loadMetadata(OSharedContext ctx) {
     metadata = new OMetadataDefault(this);
-    sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextRemote(getStorage());
-        return shared;
-      }
-    });
+    sharedContext = ctx;
     metadata.init(sharedContext);
     sharedContext.load(this);
   }
@@ -447,46 +439,29 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   public static void updateSchema(OStorageRemote storage, ODocument schema) {
 //    storage.get
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextRemote(storage);
-        return shared;
-      }
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> {
+      throw new IllegalStateException("No shared context set on remote storage!");
     });
     ((OSchemaRemote) shared.getSchema()).update(schema);
   }
 
   public static void updateIndexManager(OStorageRemote storage, ODocument indexManager) {
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextRemote(storage);
-        return shared;
-      }
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> {
+      throw new IllegalStateException("No shared context set on remote storage!");
     });
     ((OIndexManagerRemote) shared.getIndexManager()).update(indexManager);
   }
 
   public static void updateFunction(OStorageRemote storage) {
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextRemote(storage);
-        return shared;
-      }
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> {
+      throw new IllegalStateException("No shared context set on remote storage!");
     });
     (shared.getFunctionLibrary()).update();
-
   }
 
   public static void updateSequences(OStorageRemote storage) {
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextRemote(storage);
-        return shared;
-      }
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> {
+      throw new IllegalStateException("No shared context set on remote storage!");
     });
     (shared.getSequenceLibrary()).update();
   }

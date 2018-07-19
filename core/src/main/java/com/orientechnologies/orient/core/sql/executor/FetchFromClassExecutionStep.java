@@ -14,10 +14,10 @@ import java.util.stream.Collectors;
  */
 public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
-  private String className;
-  private boolean              orderByRidAsc  = false;
-  private boolean              orderByRidDesc = false;
-  private List<OExecutionStep> subSteps       = new ArrayList<>();
+  protected String className;
+  protected boolean              orderByRidAsc  = false;
+  protected boolean              orderByRidDesc = false;
+  protected List<OExecutionStep> subSteps       = new ArrayList<>();
 
   OResultSet currentResultSet;
   int currentStep = 0;
@@ -50,10 +50,7 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     } else if (Boolean.FALSE.equals(ridOrder)) {
       orderByRidDesc = true;
     }
-    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(className);
-    if (clazz == null) {
-      throw new OCommandExecutionException("Class " + className + " not found");
-    }
+    OClass clazz = loadClassFromSchema(className, ctx);
     int[] classClusters = clazz.getPolymorphicClusterIds();
     List<Integer> filteredClassClusters = new ArrayList<>();
     for (int clusterId : classClusters) {
@@ -90,6 +87,14 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
         getSubSteps().add(step);
       }
     }
+  }
+
+  protected OClass loadClassFromSchema(String className, OCommandContext ctx) {
+    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(className);
+    if (clazz == null) {
+      throw new OCommandExecutionException("Class " + className + " not found");
+    }
+    return clazz;
   }
 
   private void sortClusers(int[] clusterIds) {

@@ -28,8 +28,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -44,8 +44,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -95,7 +93,6 @@ public abstract class OSchemaShared implements OCloseable {
     internalClasses.add("oschedule");
     internalClasses.add("orids");
   }
-
 
   static final class ClusterIdsAreEmptyException extends Exception {
   }
@@ -261,6 +258,9 @@ public abstract class OSchemaShared implements OCloseable {
   public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable);
 
   public abstract OView createView(ODatabaseDocumentInternal database, OViewConfig cfg);
+
+  public abstract OView createView(ODatabaseDocumentInternal database, OViewConfig cfg, ViewCreationListener listener)
+      throws UnsupportedOperationException;
 
   public abstract void checkEmbedded();
 
@@ -592,7 +592,7 @@ public abstract class OSchemaShared implements OCloseable {
 
       clustersToViews.clear();
       Collection<ODocument> storedViews = document.field("views");
-      if (storedViews != null){
+      if (storedViews != null) {
         for (ODocument v : storedViews) {
 
           String name = v.field("name");
