@@ -1619,7 +1619,7 @@ public class ODocument extends ORecordAbstract
                 //here deltaDeltaVal can be null, then we want to use valDoc. This is case with list of documents
                 UpdateDeltaValueType deltaValueType = UpdateDeltaValueType.fromOrd(deltaValue.field("t"));
                 Object deltaPassObject = deltaValue;
-                if (deltaValueType == UpdateDeltaValueType.LIST_UPDATE){
+                if (deltaValueType == UpdateDeltaValueType.LIST_UPDATE || deltaValueType == UpdateDeltaValueType.UPDATE){
                   deltaPassObject = deltaValue.field("v");
                 }
                 Object merged = mergeUpdateTree(originalVal, deltaPassObject);
