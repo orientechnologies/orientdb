@@ -2322,8 +2322,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private void flushPage(final int fileId, final long pageIndex, final ByteBuffer buffer)
-      throws InterruptedException, ExecutionException {
+  private void flushPage(final int fileId, final long pageIndex, final ByteBuffer buffer) throws InterruptedException, IOException {
     if (writeAheadLog != null) {
       final OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(buffer);
       OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLsn();
@@ -2341,13 +2340,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       addMagicAndChecksum(buffer);
       buffer.position(0);
-
-      final Future<?> writeFuture = Orient.instance().writeThread().submit((Callable<?>) () -> {
-        fileClassic.write(pageIndex * pageSize, buffer);
-        return null;
-      });
-
-      writeFuture.get();
+      fileClassic.write(pageIndex * pageSize, buffer);
     } finally {
       files.release(entry);
     }
@@ -2357,7 +2350,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     this.checksumMode = checksumMode;
   }
 
-  private int flushExclusivePagesIfNeeded(int flushedPages) throws InterruptedException, ExecutionException {
+  private int flushExclusivePagesIfNeeded(int flushedPages) throws InterruptedException, IOException {
     long ewcSize = exclusiveWriteCacheSize.get();
 
     assert ewcSize >= 0;
@@ -2532,7 +2525,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
     }
 
-    private void flushExclusivePagesIfNeeded() throws InterruptedException, ExecutionException {
+    private void flushExclusivePagesIfNeeded() throws InterruptedException, IOException {
       final long ewcSize = exclusiveWriteCacheSize.get();
 
       assert ewcSize >= 0;
@@ -2759,8 +2752,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private int flushWriteCacheFromMinLSN(long segStart, long segEnd, int pagesFlushLimit)
-      throws InterruptedException, ExecutionException {
+  private int flushWriteCacheFromMinLSN(long segStart, long segEnd, int pagesFlushLimit) throws InterruptedException, IOException {
     //first we try to find page which contains the oldest not flushed changes
     //that is needed to allow to compact WAL as earlier as possible
     convertSharedDirtyPagesToLocal();
@@ -2922,7 +2914,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   private int flushPagesChunk(final ArrayList<OTriple<Long, ByteBuffer, OCachePointer>> chunk, OLogSequenceNumber fullLogLSN)
-      throws InterruptedException, ExecutionException {
+      throws InterruptedException, IOException {
     if (chunk.isEmpty()) {
       return 0;
     }
@@ -2955,13 +2947,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     final OClosableEntry<Long, OFileClassic> fileEntry = files.acquire(firstFileId);
     try {
       final OFileClassic file = fileEntry.get();
-
-      final Future<?> writeFuture = Orient.instance().writeThread().submit((Callable<?>) () -> {
-        file.write(firstPageIndex * pageSize, buffers);
-        return null;
-      });
-
-      writeFuture.get();
+      file.write(firstPageIndex * pageSize, buffers);
     } finally {
       files.release(fileEntry);
     }
@@ -3004,7 +2990,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     return flushedPages;
   }
 
-  private int flushExclusiveWriteCache() throws InterruptedException, ExecutionException {
+  private int flushExclusiveWriteCache() throws InterruptedException, IOException {
     Iterator<PageKey> iterator = exclusiveWritePages.iterator();
 
     int flushedPages = 0;
