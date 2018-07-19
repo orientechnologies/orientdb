@@ -2663,9 +2663,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             scheduleNextRun(pagesFlushLimit);
           } else {
             final long endTs = System.nanoTime();
-            //20% of disk write capacity is occupied by write of
+            //33% of disk write capacity is occupied by write of
             //data pages if we have less than 2 WAL segments
-            final long intervalInMs = 5 * (endTs - startTs) / 1_000_000;
+            final long intervalInMs = 3 * (endTs - startTs) / 1_000_000;
 
             scheduleNextRun(intervalInMs);
           }

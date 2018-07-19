@@ -60,7 +60,6 @@ import java.util.NavigableSet;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -1387,7 +1386,9 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       return;
 
     if (walSizeHardLimit < 0 && freeSpace > freeSpaceLimit) {
-      walSizeLimit = logSize.get() + freeSpace / 2;
+      //(free space occupied by WAL + the rest of free space) / 2
+      //so if WAL is empty we will consume half of free space provided to database
+      walSizeLimit = (logSize.get() + freeSpace) / 2;
     }
 
     if (freeSpace < freeSpaceLimit) {
