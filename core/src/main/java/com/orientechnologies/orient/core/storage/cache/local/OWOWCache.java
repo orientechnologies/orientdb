@@ -441,7 +441,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       this.bufferPool = bufferPool;
 
       this.checksumMode = checksumMode;
-      this.maxCacheSize = maxCacheSize;
+      this.maxCacheSize = normalizeMemory(maxCacheSize, pageSize);
 
       int exclusiveWriteNormalizedSize = normalizeMemory(exclusiveWriteCacheMaxSize, pageSize);
       if (checkMinSize && exclusiveWriteNormalizedSize < MIN_CACHE_SIZE)
