@@ -7,6 +7,7 @@ import org.apache.tinkerpop.gremlin.process.traversal.step.util.HasContainer;
 import org.apache.tinkerpop.gremlin.structure.T;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -69,15 +70,18 @@ public class OrientGraphQueryBuilder {
     if (params.size() > 0) {
       whereBuilder.append(" WHERE ");
       boolean first[] = { true };
+
+      AtomicInteger paramNum = new AtomicInteger();
       params.entrySet().forEach((e) -> {
-        String cond = formatCondition(e.getKey(), e.getValue());
+        String param = "param" + paramNum.getAndIncrement();
+        String cond = formatCondition(e.getKey(), param, e.getValue());
         if (first[0]) {
           whereBuilder.append(" " + cond);
           first[0] = false;
         } else {
           whereBuilder.append(" AND " + cond);
         }
-        parameters.put(e.getKey(), e.getValue().getValue());
+        parameters.put(param, e.getValue().getValue());
       });
     }
     return whereBuilder.toString();
@@ -107,8 +111,14 @@ public class OrientGraphQueryBuilder {
     return String.format("SELECT FROM `%s` %s", clazz, whereCondition);
   }
 
-  private String formatCondition(String field, P<?> predicate) {
-    return String.format(" `%s` %s :%s", field, formatPredicate(predicate), field);
+  private String formatCondition(String field, String param, P<?> predicate) {
+
+    if (T.id.getAccessor().equalsIgnoreCase(field)) {
+      return String.format(" %s %s :%s", "@rid", formatPredicate(predicate), param);
+    } else {
+      return String.format(" `%s` %s :%s", field, formatPredicate(predicate), param);
+    }
+
   }
 
   private String formatPredicate(P<?> cond) {

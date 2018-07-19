@@ -1,5 +1,6 @@
-package org.apache.tinkerpop.gremlin.orientdb;
+package com.orientechnologies.tinkerpop;
 
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Assert;
@@ -8,7 +9,7 @@ import org.junit.Test;
 /**
  * Created by Enrico Risa on 11/08/2017.
  */
-public class OrientGraphQueryTest extends OrientGraphBaseTest {
+public class OrientGraphQueryTest extends AbstractRemoteGraphFactoryTest {
 
   @Test
   public void shouldCountVerticesEdges() {
