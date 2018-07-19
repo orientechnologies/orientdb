@@ -2902,6 +2902,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       if (!lsnPagesIterator.hasNext()) {
         currentSegment++;
+
+        lsnPagesIterator = null;
+        lsnPagesIteratorSegment = -1;
       }
 
       long lastPageIndex = -1;
@@ -2989,6 +2992,18 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       if (!chunk.isEmpty()) {
         flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
         releaseExclusiveLatch();
+      }
+
+      if (lsnPagesIterator != null) {
+        final TreeSet<PageKey> segmentPages = localDirtyPagesBySegment.get(lsnPagesIteratorSegment);
+
+        if (segmentPages == null) {
+          lsnPagesIterator = null;
+          lsnPagesIteratorSegment = -1;
+        } else {
+          lsnPagesIterator = segmentPages.tailSet(pageKeysToFlush.get(pageKeysToFlush.size() - 1), false).iterator();
+          assert lsnPagesIterator.hasNext();
+        }
       }
     }
 
