@@ -3201,6 +3201,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             copy.put(buffer);
 
             removeFromDirtyPages(pageKey);
+
+            lsnPagesIteratorSegment = -1;
+            lsnPagesIterator = null;
+
             copiedPages++;
           } finally {
             pointer.releaseSharedLock();
@@ -3293,6 +3297,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               }
 
               removeFromDirtyPages(pageKey);
+
+              lsnPagesIteratorSegment = -1;
+              lsnPagesIterator = null;
             } finally {
               pagePointer.releaseSharedLock();
             }
@@ -3346,6 +3353,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               writeCacheSize.decrementAndGet();
 
               removeFromDirtyPages(pageKey);
+
+              lsnPagesIteratorSegment = -1;
+              lsnPagesIterator = null;
             } finally {
               pagePointer.releaseExclusiveLock();
             }
