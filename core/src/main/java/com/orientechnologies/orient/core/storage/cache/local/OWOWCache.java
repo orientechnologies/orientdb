@@ -2794,9 +2794,25 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final List<PageKey> pageKeysToFlush = new ArrayList<>(pagesFlushLimit);
       final Iterator<PageKey> pagesIterator = segmentPages.iterator();
 
-      while (pagesIterator.hasNext() && pageKeysToFlush.size() < pagesFlushLimit) {
+      while (pagesIterator.hasNext() && pageKeysToFlush.size() < pagesFlushLimit - flushedPages) {
         final PageKey pageKey = pagesIterator.next();
-        pageKeysToFlush.add(pageKey);
+
+        if (!skipRecencyBit) {
+          final OCachePointer pointer = writeCachePages.get(pageKey);
+
+          if (pointer == null) {
+            OLogManager.instance()
+                .errorNoDb(this, "Page " + pageKey + " for segment " + currentSegment + " is absent in write cache.", null);
+
+            break flushCycle;
+          }
+
+          if (!pointer.clearRecency()) {
+            pageKeysToFlush.add(pageKey);
+          }
+        } else {
+          pageKeysToFlush.add(pageKey);
+        }
       }
 
       if (!pagesIterator.hasNext()) {
@@ -2807,10 +2823,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       long lastFileId = -1;
       OLogSequenceNumber maxFullLogLSN = null;
 
-      final Iterator<PageKey> pageKeys = pageKeysToFlush.iterator();
-      while (pageKeys.hasNext() && flushedPages < pagesFlushLimit) {
-        final PageKey pageKey = pageKeys.next();
-
+      for (PageKey pageKey : pageKeysToFlush) {
         if (lastFileId == -1) {
           if (!chunk.isEmpty()) {
             throw new IllegalStateException("Chunk is not empty !");
@@ -2842,20 +2855,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           }
 
           break flushCycle;
-        }
-
-        if (!skipRecencyBit && pointer.clearRecency()) {
-          if (!chunk.isEmpty()) {
-            flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
-            releaseExclusiveLatch();
-          }
-
-          maxFullLogLSN = null;
-
-          lastPageIndex = -1;
-          lastFileId = -1;
-
-          continue;
         }
 
         final long version;
