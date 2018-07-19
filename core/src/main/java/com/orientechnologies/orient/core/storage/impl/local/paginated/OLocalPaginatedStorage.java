@@ -556,7 +556,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     final OBinarySerializerFactory binarySerializerFactory = getComponentsFactory().binarySerializerFactory;
     final OWOWCache wowCache = new OWOWCache(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
         OByteBufferPool.instance(), writeAheadLog, OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(),
-        writeCacheSize, true, getStoragePath(), getPerformanceStatisticManager(), getName(),
+        writeCacheSize, diskCacheSize, true, getStoragePath(), getPerformanceStatisticManager(), getName(),
         binarySerializerFactory.getObjectSerializer(OType.STRING), files, getId(),
         contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), true);
 
