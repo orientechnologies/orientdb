@@ -417,6 +417,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private final int blockSize;
 
+  private final long pagesFlushInterval;
+
   /**
    * Listeners which are called when exception in background data flush thread is happened.
    */
@@ -474,6 +476,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       cacheEventsPublisher = new OThreadPoolExecutorWithLogging(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
           new SynchronousQueue<>(), new CacheEventsPublisherFactory(storageName));
 
+      this.pagesFlushInterval = pageFlushInterval;
       if (pageFlushInterval > 0) {
         commitExecutor.schedule(new PeriodicFlushTask(), pageFlushInterval, TimeUnit.MILLISECONDS);
         commitExecutor
@@ -2590,7 +2593,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       try {
         if (writeCachePages.isEmpty()) {
-          scheduleNextRun(pagesFlushLimit);
+          scheduleNextRun(pagesFlushInterval);
           return;
         }
 
@@ -2604,7 +2607,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         flushedPages = flushExclusivePagesIfNeeded(flushedPages);
 
         if (flushedPages >= pagesFlushLimit) {
-          scheduleNextRun(pagesFlushLimit);
+          scheduleNextRun(pagesFlushInterval);
           return;
         }
 
@@ -2649,21 +2652,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           }
         }
 
-        if (flushedPages == 0 || flushMode.equals(FLUSH_MODE.EXCLUSIVE)) {
-          scheduleNextRun(pagesFlushLimit);
-        } else {
-          if (endSegment - startSegment > 1) {
-            scheduleNextRun(pagesFlushLimit);
-          } else {
-            final long endTs = System.nanoTime();
-            //33% of disk write capacity is occupied by write of
-            //data pages if we have less than 2 WAL segments
-            final long intervalInMs = 2 * (endTs - startTs) / 1_000_000;
-
-            scheduleNextRun(intervalInMs);
-          }
-        }
-
+        scheduleNextRun(4 * pagesFlushInterval);
       } catch (final Error | Exception t) {
         OLogManager.instance().error(this, "Exception during data flush", t);
         OWOWCache.this.fireBackgroundDataFlushExceptionEvent(t);
