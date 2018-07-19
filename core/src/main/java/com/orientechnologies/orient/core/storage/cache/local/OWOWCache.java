@@ -2652,7 +2652,13 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           }
         }
 
-        scheduleNextRun(4 * pagesFlushInterval);
+        if (flushedPages > 0) {
+          final long endTs = System.nanoTime();
+          final long timeInMS = (endTs - startTs) / 1_000_000;
+          scheduleNextRun(timeInMS);
+        } else {
+          scheduleNextRun(pagesFlushInterval);
+        }
       } catch (final Error | Exception t) {
         OLogManager.instance().error(this, "Exception during data flush", t);
         OWOWCache.this.fireBackgroundDataFlushExceptionEvent(t);
