@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser.STATUSE
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
@@ -610,21 +611,20 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   @Override
   public OUser getUser(final String iUserName) {
-    List<ODocument> result = getDatabase().<OCommandRequest>command(
-        new OSQLSynchQuery<ODocument>("select from OUser where name = ? limit 1").setFetchPlan("roles:1")).execute(iUserName);
+    try (OResultSet result = getDatabase().query("select from OUser where name = ? limit 1", iUserName)) {
+      if (result.hasNext())
+        return new OUser((ODocument) result.next().getElement().get());
 
-    if (result != null && !result.isEmpty())
-      return new OUser(result.get(0));
-
+    }
     return null;
   }
 
   public ORID getUserRID(final String iUserName) {
-    List<ODocument> result = getDatabase().<OCommandRequest>command(
-        new OSQLSynchQuery<ODocument>("select rid from index:OUser.name where key = ? limit 1")).execute(iUserName);
+    try (OResultSet result = getDatabase().query("select rid from index:OUser.name where key = ? limit 1", iUserName)) {
 
-    if (result != null && !result.isEmpty())
-      return result.get(0).rawField("rid");
+      if (result.hasNext())
+        return result.next().getProperty("rid");
+    }
 
     return null;
   }
