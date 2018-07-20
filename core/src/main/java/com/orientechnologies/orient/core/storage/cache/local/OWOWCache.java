@@ -2649,7 +2649,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               //flush at least once in 1s. to minimize WAL vacuum overhead
               if (dirtyPagesPercent >= 80 || lsnFlushInterval >= 1_000_000_000L) {
                 flushMode = FLUSH_MODE.LSN;
-                int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages, false);
+                int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages, true);
 
                 lsnFlushIntervalSum += lsnFlushInterval;
                 lsnFlushIntervalCount++;
@@ -2678,7 +2678,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 }
               }
             } else {
-              int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages, false);
+              int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages, true);
 
               lsnFlushIntervalSum += lsnFlushInterval;
               lsnFlushIntervalCount++;
