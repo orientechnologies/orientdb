@@ -1,6 +1,7 @@
 package com.orientechnologies.enterprise.server;
 
 import com.orientechnologies.enterprise.server.listener.OEnterpriseConnectionListener;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -53,6 +54,11 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin {
   @Override
   public void shutdown() {
     listeners.clear();
+  }
+
+  @Override
+  public OrientDBInternal getDatabases() {
+    return server.getDatabases();
   }
 
   @Override

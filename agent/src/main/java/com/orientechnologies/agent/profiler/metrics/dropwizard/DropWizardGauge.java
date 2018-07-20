@@ -6,18 +6,15 @@ import com.orientechnologies.agent.profiler.metrics.OGauge;
 /**
  * Created by Enrico Risa on 11/07/2018.
  */
-public class DropWizardGauge<T> extends DropWizardBase implements OGauge<T> {
-
-  private Gauge<T> meter;
+public class DropWizardGauge<T> extends DropWizardGeneric<Gauge<T>> implements OGauge<T> {
 
   public DropWizardGauge(Gauge<T> gauge, String name, String description) {
-    super(name, description);
-    this.meter = gauge;
+    super(gauge, name, description);
 
   }
 
   @Override
   public T getValue() {
-    return meter.getValue();
+    return metric.getValue();
   }
 }

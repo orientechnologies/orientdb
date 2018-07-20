@@ -1,18 +1,21 @@
 package com.orientechnologies.agent.services.metrics.server.resources;
 
 import com.orientechnologies.agent.profiler.OMetricsRegistry;
-import com.orientechnologies.agent.profiler.metrics.GCMetric;
-import com.orientechnologies.agent.profiler.metrics.MemoryMetric;
-import com.orientechnologies.agent.profiler.metrics.ThreadsMetric;
+import com.orientechnologies.agent.profiler.metrics.*;
 import com.orientechnologies.agent.services.metrics.OGlobalMetrics;
 import com.orientechnologies.agent.services.metrics.OrientDBMetric;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.sun.management.OperatingSystemMXBean;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Enrico Risa on 19/07/2018.
@@ -37,6 +40,52 @@ public class OrientDBServerResourcesMetrics implements OrientDBMetric {
         ThreadsMetric.class);
 
     this.registry.gauge(OGlobalMetrics.SERVER_RUNTIME_CPU.name, OGlobalMetrics.SERVER_RUNTIME_CPU.description, this::cpuUsage);
+
+    this.registry.registerAll(OGlobalMetrics.SERVER_RUNTIME_DISK_CACHE.name, new OMetricSet() {
+      @Override
+      public Map<String, OMetric> getMetrics() {
+
+        Map<String, OMetric> metrics = new HashMap<>();
+        metrics
+            .put("total", registry.newGauge("total", "Total disk cache", OrientDBServerResourcesMetrics.this::getDiskCacheTotal));
+        metrics
+            .put("used", registry.newGauge("used", "Total used disk cache", OrientDBServerResourcesMetrics.this::getDiskCacheUsed));
+        return metrics;
+      }
+
+      @Override
+      public String getName() {
+        return OGlobalMetrics.SERVER_RUNTIME_DISK_CACHE.name;
+      }
+
+      @Override
+      public String getDescription() {
+        return OGlobalMetrics.SERVER_RUNTIME_DISK_CACHE.description;
+      }
+    });
+  }
+
+  protected long getDiskCacheTotal() {
+    long diskCacheTotal = 0;
+    for (OStorage stg : server.getDatabases().getStorages()) {
+      if (stg instanceof OLocalPaginatedStorage) {
+        diskCacheTotal += OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
+        break;
+      }
+    }
+    return diskCacheTotal;
+  }
+
+  public long getDiskCacheUsed() {
+    long diskCacheUsed = 0;
+    for (OStorage stg : server.getDatabases().getStorages()) {
+      if (stg instanceof OLocalPaginatedStorage) {
+        diskCacheUsed += ((OLocalPaginatedStorage) stg).getReadCache().getUsedMemory();
+        break;
+      }
+    }
+
+    return diskCacheUsed;
   }
 
   @Override

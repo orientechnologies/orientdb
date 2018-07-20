@@ -24,6 +24,8 @@ public interface OMetricsRegistry {
 
   <T> OGauge<T> gauge(String name, String description, Supplier<T> valueFunction);
 
+  <T> OGauge<T> newGauge(String name, String description, Supplier<T> valueFunction);
+
   OHistogram histogram(String name, String description);
 
   OTimer timer(String name, String description);
@@ -31,6 +33,12 @@ public interface OMetricsRegistry {
   Map<String, OMetric> getMetrics();
 
   <T extends OMetric> T register(String name, String description, Class<T> klass);
+
+  <T extends OMetric> T register(String name, T metric);
+
+  void registerAll(OMetricSet metricSet);
+
+  void registerAll(String prefix, OMetricSet metricSet);
 
   boolean remove(String name);
 }

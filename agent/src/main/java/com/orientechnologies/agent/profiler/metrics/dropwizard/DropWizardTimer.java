@@ -7,29 +7,26 @@ import com.orientechnologies.agent.profiler.metrics.OTimer;
 /**
  * Created by Enrico Risa on 11/07/2018.
  */
-public class DropWizardTimer extends DropWizardBase implements OTimer {
-
-  private Timer timer;
+public class DropWizardTimer extends DropWizardGeneric<Timer> implements OTimer {
 
   public DropWizardTimer(Timer timer, String name, String description) {
-    super(name, description);
-    this.timer = timer;
+    super(timer, name, description);
 
   }
 
   public long getCount() {
-    return timer.getCount();
+    return metric.getCount();
   }
 
   @Override
   public OSnapshot getSnapshot() {
-    timer.time();
-    return new DropWizardSnapshot(timer.getSnapshot());
+    metric.time();
+    return new DropWizardSnapshot(metric.getSnapshot());
   }
 
   @Override
   public OContext time() {
-    return new DropWizardTimerContext(timer.time());
+    return new DropWizardTimerContext(metric.time());
   }
 
   class DropWizardTimerContext implements OTimer.OContext {

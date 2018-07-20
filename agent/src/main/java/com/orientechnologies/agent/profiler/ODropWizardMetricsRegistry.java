@@ -1,9 +1,6 @@
 package com.orientechnologies.agent.profiler;
 
-import com.codahale.metrics.ConsoleReporter;
-import com.codahale.metrics.CsvReporter;
-import com.codahale.metrics.Metric;
-import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.*;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.jmx.JmxReporter;
 import com.codahale.metrics.jvm.CachedThreadStatesGaugeSet;
@@ -150,6 +147,11 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
   }
 
   @Override
+  public <T> OGauge<T> newGauge(String name, String description, Supplier<T> valueFunction) {
+    return new DropWizardGauge<T>(valueFunction::get, name, description);
+  }
+
+  @Override
   public OHistogram histogram(String name, String description) {
     return registerOrGetMetric(name, (k) -> new DropWizardHistogram(registry.histogram(k), k, description));
   }
@@ -179,6 +181,33 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
         return null;
       }
     });
+  }
+
+  @Override
+  public <T extends OMetric> T register(String name, T metric) {
+
+    if (metric instanceof DropWizardGeneric) {
+      Metric m = ((DropWizardGeneric) metric).getMetric();
+      registry.register(name, m);
+    }
+    return registerOrGetMetric(name, (k) -> metric);
+  }
+
+  @Override
+  public void registerAll(OMetricSet metricSet) {
+    registerAll(null, metricSet);
+  }
+
+  @Override
+  public void registerAll(String prefix, OMetricSet metricSet) {
+
+    for (Map.Entry<String, OMetric> entry : metricSet.getMetrics().entrySet()) {
+      if (entry.getValue() instanceof OMetricSet) {
+        registerAll(name(prefix, entry.getKey()), (OMetricSet) entry.getValue());
+      } else {
+        register(name(prefix, entry.getKey()), entry.getValue());
+      }
+    }
   }
 
   public boolean remove(String name) {

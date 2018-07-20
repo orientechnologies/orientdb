@@ -7,30 +7,27 @@ import com.orientechnologies.agent.profiler.metrics.OSnapshot;
 /**
  * Created by Enrico Risa on 11/07/2018.
  */
-public class DropWizardHistogram extends DropWizardBase implements OHistogram {
-
-  private Histogram histogram;
+public class DropWizardHistogram extends DropWizardGeneric<Histogram> implements OHistogram {
 
   public DropWizardHistogram(Histogram histogram, String name, String description) {
-    super(name, description);
-    this.histogram = histogram;
+    super(histogram, name, description);
 
   }
 
   public void update(int value) {
-    histogram.update(value);
+    metric.update(value);
   }
 
   public void update(long value) {
-    histogram.update(value);
+    metric.update(value);
   }
 
   public long getCount() {
-    return histogram.getCount();
+    return metric.getCount();
   }
 
   @Override
   public OSnapshot getSnapshot() {
-    return new DropWizardSnapshot(histogram.getSnapshot());
+    return new DropWizardSnapshot(metric.getSnapshot());
   }
 }

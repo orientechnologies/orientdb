@@ -1,6 +1,7 @@
 package com.orientechnologies.enterprise.server;
 
 import com.orientechnologies.enterprise.server.listener.OEnterpriseConnectionListener;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 
 import java.util.Collections;
 import java.util.Map;
@@ -19,4 +20,6 @@ public interface OEnterpriseServer {
   }
 
   void shutdown();
+
+  OrientDBInternal getDatabases();
 }
