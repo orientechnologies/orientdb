@@ -1585,7 +1585,7 @@ public class ODocumentHelper {
     return null;
   }
   
-  private static boolean isInNestedEvent(ONestedMultiValueChangeEvent event, List list){
+  private static boolean isInNestedEvent(ONestedMultiValueChangeEvent event, List list, List<Object> ownersTrace, int ownersTraceOffset){
     if (event.getKey() == list){
       return true;
     }
@@ -1598,7 +1598,8 @@ public class ODocumentHelper {
           }
         }
         else{
-          if (isInNestedEvent((ONestedMultiValueChangeEvent)nestedEvent, list)){
+          if (event.getKey() == ownersTrace.get(ownersTraceOffset) &&
+              isInNestedEvent((ONestedMultiValueChangeEvent)nestedEvent, list, ownersTrace, ownersTraceOffset + 1)){
             return true;
           }
         }
@@ -1607,7 +1608,8 @@ public class ODocumentHelper {
     return false;
   }
   
-  public static boolean isChangedList(List list, ODocumentEntry entry){        
+  public static boolean isChangedList(List list, ODocumentEntry entry, List<Object> ownersTrace, int ownersTraceOffset){        
+    ownersTrace.add(list);
     for (Object element : list){
       if (element instanceof ODocument){
         if (((ODocument)element).isChangedInDepth()){
@@ -1615,7 +1617,7 @@ public class ODocumentHelper {
         }
       }
       else if (element instanceof List){        
-        if (isChangedList((List)element, entry)){
+        if (isChangedList((List)element, entry, ownersTrace, ownersTraceOffset + 1)){
           return true;
         }
       }      
@@ -1629,9 +1631,10 @@ public class ODocumentHelper {
           if (key == list){
             return true;
           }
-          if (event instanceof ONestedMultiValueChangeEvent){
+          if (event instanceof ONestedMultiValueChangeEvent &&
+              event.getKey() == ownersTrace.get(ownersTraceOffset)){
             ONestedMultiValueChangeEvent nestedEvent = (ONestedMultiValueChangeEvent)event;
-            if (isInNestedEvent(nestedEvent, list)){
+            if (isInNestedEvent(nestedEvent, list, ownersTrace, ownersTraceOffset + 1)){
               return true;
             }
           }

@@ -3495,7 +3495,7 @@ public class ODocument extends ORecordAbstract
           }
           else if (currentElement instanceof List){
             List currentElementAsList = (List)currentElement;
-            if (ODocumentHelper.isChangedList(currentElementAsList, parent)){
+            if (ODocumentHelper.isChangedList(currentElementAsList, parent, ownersTrace, 1)){
               ODocumentDelta listElementDelta = new ODocumentDelta();
               listElementDelta.field("i", i);
               listElementDelta.field("t", UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd());
@@ -3679,7 +3679,7 @@ public class ODocument extends ORecordAbstract
     //get updated and new records
     for (Map.Entry<String, ODocumentEntry> fieldVal : _fields.entrySet()){
       ODocumentEntry val = fieldVal.getValue();      
-      if (val.isChangedTree()){        
+      if (val.isChangedTree(ownersTrace)){        
         String fieldName = fieldVal.getKey();
         TypeValue deltaValue = getUpdateDeltaValue(val.value, val.original, val.isChanged(), val, ownersTrace);
         ODocumentDelta doc = new ODocumentDelta();
@@ -3728,7 +3728,7 @@ public class ODocument extends ORecordAbstract
 
   public boolean isChangedInDepth(){
     for (Map.Entry<String, ODocumentEntry> field : _fields.entrySet()){
-      if (field.getValue().isChangedTree()){
+      if (field.getValue().isChangedTree(new ArrayList<>())){
         return true;
       }
     }

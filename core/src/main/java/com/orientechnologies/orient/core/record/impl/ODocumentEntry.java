@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -52,10 +53,12 @@ public class ODocumentEntry {
     return changed;
   }    
   
-  public boolean isChangedTree(){
+  public boolean isChangedTree(List<Object> ownersTrace){
     if (changed && exist){
       return true;
     }
+    
+    ownersTrace.add(value);
     
     if (value instanceof ODocument){
       ODocument doc  = (ODocument)value;
@@ -68,13 +71,13 @@ public class ODocumentEntry {
         if (element instanceof ODocument){
           ODocument doc = (ODocument)element;
           for (Map.Entry<String, ODocumentEntry> field : doc._fields.entrySet()){
-            if (field.getValue().isChangedTree()){
+            if (field.getValue().isChangedTree(new ArrayList<>())){
               return true;
             }
           }
         }
         else if (element instanceof List){
-          if (ODocumentHelper.isChangedList((List)element, this)){
+          if (ODocumentHelper.isChangedList((List)element, this, ownersTrace, 1)){
             return true;
           }
         }
