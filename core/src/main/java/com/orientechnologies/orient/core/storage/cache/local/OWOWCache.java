@@ -2675,7 +2675,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           if (lsnEntry != null && endSegment - startSegment >= 1) {
             if (!flushMode.equals(FLUSH_MODE.LSN)) {//IDLE flush mode
-              if (dirtyPagesPercent >= 50) {
+              if (dirtyPagesPercent >= 40) {
                 flushMode = FLUSH_MODE.LSN;
                 int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages, false);
                 flushedPages += lsnPages;
@@ -2693,7 +2693,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
                 dirtyPagesPercent = (int) (100 * writeCacheSize.get() / maxCacheSize);
 
-                if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 25) {
+                if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 20) {
                   flushMode = FLUSH_MODE.IDLE;
                 }
               }
@@ -2714,7 +2714,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               dirtyPagesPercent = (int) (100 * writeCacheSize.get() / maxCacheSize);
 
-              if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 25) {
+              if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 20) {
                 flushMode = FLUSH_MODE.IDLE;
               }
             }
@@ -2728,11 +2728,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           final long timeInMS = (endTs - startTs) / 1_000_000;
 
           if (dirtyPagesPercent < 80) {
-            scheduleNextRun(Math.max(timeInMS, pagesFlushInterval));
+            scheduleNextRun(timeInMS);
           } else if (dirtyPagesPercent < 90) {
-            scheduleNextRun(Math.max(timeInMS / 2, pagesFlushInterval));
+            scheduleNextRun(timeInMS / 2);
           } else {
-            scheduleNextRun(pagesFlushInterval);
+            scheduleNextRun(timeInMS / 3);
           }
 
         } else {
@@ -2858,7 +2858,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     long currentSegment = segStart;
 
     flushCycle:
-    while (flushedPages < pagesFlushLimit && currentSegment < segEnd) {
+    while (flushedPages < pagesFlushLimit) {
       if (!chunk.isEmpty()) {
         throw new IllegalStateException("Chunk is not empty !");
       }
@@ -2880,7 +2880,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           currentSegment++;
 
           if (currentSegment >= segEnd) {
-            currentSegment = segStart;
+            //we flush the last segment only if we have no other choice
+            if (localDirtyPagesBySegment.size() <= 1) {
+              if (currentSegment > segEnd) {
+                currentSegment = segStart;
+              }
+            } else {
+              currentSegment = segStart;
+            }
           }
 
           continue;
@@ -2899,9 +2906,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           final OCachePointer pointer = writeCachePages.get(pageKey);
 
           if (pointer == null) {
-            OLogManager.instance()
-                .errorNoDb(this, "Page " + pageKey + " for segment " + currentSegment + " is absent in write cache.", null);
-
+            //we marked page as dirty but did not put it in cache yet
             break flushCycle;
           }
 
@@ -2917,7 +2922,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         currentSegment++;
 
         if (currentSegment >= segEnd) {
-          currentSegment = segStart;
+          //we flush the last segment only if we have no other choice
+          if (localDirtyPagesBySegment.size() <= 1 && pageKeysToFlush.size() + pagesFlushLimit < flushedPages) {
+            if (currentSegment > segEnd) {
+              currentSegment = segStart;
+            }
+          } else {
+            currentSegment = segStart;
+          }
         }
 
         lsnPagesIterator = null;
@@ -2951,9 +2963,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         final OCachePointer pointer = writeCachePages.get(pageKey);
 
         if (pointer == null) {
-          OLogManager.instance()
-              .errorNoDb(this, "Page " + pageKey + " for segment " + currentSegment + " is absent in write cache.", null);
-
+          //we marked page as dirty but did not put it in cache yet
           if (!chunk.isEmpty()) {
             flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
             releaseExclusiveLatch();
@@ -3022,6 +3032,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           assert lsnPagesIterator.hasNext();
         }
       }
+
     }
 
     if (!chunk.isEmpty()) {
