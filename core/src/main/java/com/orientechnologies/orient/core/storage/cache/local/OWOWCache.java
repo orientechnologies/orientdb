@@ -431,9 +431,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private long lsnIntervalSum   = 0;
   private long lsnIntervalCount = 0;
 
+  private long lsnFlushIntervalSum   = 0;
+  private long lsnFlushIntervalCount = 0;
+
   private long reportTs = -1;
 
   private long lastTsLSNFlush = -1;
+
+  private long localDirtyPagesRebuildTS = -1;
 
   /**
    * Listeners which are called when exception in background data flush thread is happened.
@@ -2380,15 +2385,21 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           dirtyPagesPercentCount = 1;
         }
 
+        if (lsnFlushIntervalCount == 0) {
+          lsnFlushIntervalCount = 1;
+        }
+
         Map.Entry<Long, TreeSet<PageKey>> entry = localDirtyPagesBySegment.firstEntry();
 
         System.out.printf(
             "Avg. percent of dirty pages %d, count of flushed lsn pages %d, count of flushed of exclusive pages %d, avg. "
-                + " lsn flush interval %d, first dirty pages segment index %d, first dirty pages segment size %d, "
-                + "amount of exclusive pages %d, exclusive write cache max size %d, current segment of LSN pages iterator %d, last LSN Flush TS %d\n",
+                + " lsn flush delay interval %d, first dirty pages segment index %d, first dirty pages segment size %d, "
+                + "amount of exclusive pages %d, exclusive write cache max size %d, "
+                + "current segment of LSN pages iterator %d, last LSN Flush TS %d, avg. LSN flush interval %d\n",
             dirtyPagesPercentSum / dirtyPagesPercentCount, lsnPagesSum, exclusivePagesSum, lsnIntervalSum / lsnIntervalCount,
             entry == null ? -1 : entry.getKey().intValue(), entry == null ? -1 : entry.getValue().size(),
-            exclusiveWriteCacheSize.get(), exclusiveWriteCacheMaxSize, lsnPagesIteratorSegment, lastTsLSNFlush);
+            exclusiveWriteCacheSize.get(), exclusiveWriteCacheMaxSize, lsnPagesIteratorSegment, lastTsLSNFlush,
+            lsnFlushIntervalSum / lsnFlushIntervalCount);
 
         reportTs = ts;
 
@@ -2400,6 +2411,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         lsnIntervalSum = 0;
         lsnIntervalCount = 0;
+
+        lsnFlushIntervalCount = 0;
+        lsnFlushIntervalSum = 0;
       }
 
     }
@@ -2676,14 +2690,27 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           lastTsLSNFlush = startTs;
           lsnFlushInterval = 0;
         } else {
-          lsnFlushInterval = lastTsLSNFlush - startTs;
+          lsnFlushInterval = startTs - lastTsLSNFlush;
         }
+
+        lsnFlushIntervalSum += lsnFlushInterval;
+        lsnIntervalCount++;
 
         long startSegment = writeAheadLog.begin().getSegment();
         long endSegment = writeAheadLog.end().getSegment();
 
         if (!flushMode.equals(FLUSH_MODE.EXCLUSIVE)) {
-          if (localDirtyPages.isEmpty() && !dirtyPages.isEmpty()) {
+          long localDirtyPagesRebuildInterval;
+
+          if (localDirtyPagesRebuildTS == -1) {
+            localDirtyPagesRebuildInterval = 0;
+          } else {
+            localDirtyPagesRebuildInterval = startTs - localDirtyPagesRebuildTS;
+          }
+
+          localDirtyPagesRebuildTS = startTs;
+          //rebuild every 5s
+          if ((localDirtyPages.isEmpty() || localDirtyPagesRebuildInterval >= 5 * 1_000_000_000L) && !dirtyPages.isEmpty()) {
             convertSharedDirtyPagesToLocal();
           }
 
