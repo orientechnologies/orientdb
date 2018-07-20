@@ -2385,10 +2385,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         System.out.printf(
             "Avg. percent of dirty pages %d, count of flushed lsn pages %d, count of flushed of exclusive pages %d, avg. "
                 + " lsn flush interval %d, first dirty pages segment index %d, first dirty pages segment size %d, "
-                + "amount of exclusive pages %d, exclusive write cache max size %d, current segment of LSN pages iterator %d\n",
+                + "amount of exclusive pages %d, exclusive write cache max size %d, current segment of LSN pages iterator %d, last LSN Flush TS %d\n",
             dirtyPagesPercentSum / dirtyPagesPercentCount, lsnPagesSum, exclusivePagesSum, lsnIntervalSum / lsnIntervalCount,
             entry == null ? -1 : entry.getKey().intValue(), entry == null ? -1 : entry.getValue().size(),
-            exclusiveWriteCacheSize.get(), exclusiveWriteCacheMaxSize, lsnPagesIteratorSegment);
+            exclusiveWriteCacheSize.get(), exclusiveWriteCacheMaxSize, lsnPagesIteratorSegment, lastTsLSNFlush);
 
         reportTs = ts;
 
@@ -2647,7 +2647,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       dirtyPagesPercentSum += dirtyPagesPercent;
       dirtyPagesPercentCount++;
 
-
       int flushedPages = 0;
       final int pagesFlushLimit = 512;
       final long startTs = System.nanoTime();
@@ -2674,6 +2673,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         long lsnFlushInterval;
         if (lastTsLSNFlush == -1) {
+          lastTsLSNFlush = startTs;
           lsnFlushInterval = 0;
         } else {
           lsnFlushInterval = lastTsLSNFlush - startTs;
