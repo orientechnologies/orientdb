@@ -833,7 +833,7 @@ public class ReadWriteDiskCacheTest {
 
     //move page 4 to pinned pages
     cacheEntry = readBuffer.loadForRead(fileId, 4, false, writeBuffer, 1, true);
-    readBuffer.pinPage(cacheEntry);
+    readBuffer.pinPage(cacheEntry, writeBuffer);
     readBuffer.releaseFromRead(cacheEntry, writeBuffer);
 
     Assert.assertEquals(am.size(), 1); //page 1

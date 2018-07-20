@@ -90,7 +90,9 @@ public interface OWriteCache {
 
   boolean exists(long fileId);
 
-  CountDownLatch store(long fileId, long pageIndex, OCachePointer dataPointer);
+  void store(long fileId, long pageIndex, OCachePointer dataPointer);
+
+  CountDownLatch checkCacheOverflow();
 
   OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
       boolean verifyChecksums) throws IOException;

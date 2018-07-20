@@ -124,7 +124,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected void pinPage(OCacheEntry cacheEntry) {
-    readCache.pinPage(cacheEntry);
+    readCache.pinPage(cacheEntry, writeCache);
   }
 
   protected OCacheEntry addPage(long fileId) throws IOException {

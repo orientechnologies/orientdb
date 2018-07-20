@@ -158,6 +158,11 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
+  public CountDownLatch checkCacheOverflow() {
+    return null;
+  }
+
+  @Override
   public long addFile(final String fileName, final long fileId, final OWriteCache writeCache) {
     final int intId = extractFileId(fileId);
 
@@ -237,7 +242,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void pinPage(final OCacheEntry cacheEntry) {
+  public void pinPage(final OCacheEntry cacheEntry, OWriteCache writeCache) {
   }
 
   @Override
@@ -640,7 +645,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public CountDownLatch store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
+  public void store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
     throw new UnsupportedOperationException();
   }
 

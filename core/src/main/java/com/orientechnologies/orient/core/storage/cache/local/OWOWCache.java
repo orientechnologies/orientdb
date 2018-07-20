@@ -1063,10 +1063,30 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   @Override
-  public CountDownLatch store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
+  public CountDownLatch checkCacheOverflow() {
+    CountDownLatch latch = exclusivePagesLimitLatch.get();
+    if (latch != null) {
+      return latch;
+    }
+
+    if (exclusiveWriteCacheSize.get() >= exclusiveWriteCacheMaxSize / 2) {
+      cacheOverflowCount.increment();
+
+      latch = new CountDownLatch(1);
+      if (!exclusivePagesLimitLatch.compareAndSet(null, latch)) {
+        latch = exclusivePagesLimitLatch.get();
+      }
+
+      commitExecutor.submit(new PeriodicExclusiveFlushTask());
+    }
+
+    return latch;
+  }
+
+  @Override
+  public void store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
     final int intId = extractFileId(fileId);
 
-    CountDownLatch latch;
     filesLock.acquireReadLock();
     try {
       final PageKey pageKey = new PageKey(intId, pageIndex);
@@ -1086,26 +1106,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         groupLock.unlock();
       }
 
-      latch = exclusivePagesLimitLatch.get();
-      if (latch != null) {
-        return latch;
-      }
-
-      if (exclusiveWriteCacheSize.get() >= exclusiveWriteCacheMaxSize / 2) {
-        cacheOverflowCount.increment();
-
-        latch = new CountDownLatch(1);
-        if (!exclusivePagesLimitLatch.compareAndSet(null, latch))
-          latch = exclusivePagesLimitLatch.get();
-
-        commitExecutor.submit(new PeriodicExclusiveFlushTask());
-      }
-
     } finally {
       filesLock.releaseReadLock();
     }
-
-    return latch;
   }
 
   private void doPutInCache(final OCachePointer dataPointer, final PageKey pageKey) {
@@ -2404,27 +2407,24 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     long ewcSize = exclusiveWriteCacheSize.get();
 
     assert ewcSize >= 0;
-    double exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
 
-    if (exclusiveWriteCacheThreshold > EXCLUSIVE_PAGES_BOUNDARY) {
+    if (ewcSize >= exclusiveWriteCacheMaxSize / 2) {
       if (!flushMode.equals(FLUSH_MODE.EXCLUSIVE)) {
         flushMode = FLUSH_MODE.EXCLUSIVE;
 
         flushedPages += flushExclusiveWriteCache();
 
         ewcSize = exclusiveWriteCacheSize.get();
-        exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
 
-        if (exclusiveWriteCacheThreshold <= EXCLUSIVE_PAGES_BOUNDARY) {
+        if (ewcSize <= 0) {
           flushMode = FLUSH_MODE.IDLE;
         }
       } else {
         flushedPages += flushExclusiveWriteCache();
 
         ewcSize = exclusiveWriteCacheSize.get();
-        exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
 
-        if (exclusiveWriteCacheThreshold <= EXCLUSIVE_PAGES_BOUNDARY) {
+        if (ewcSize <= 0) {
           flushMode = FLUSH_MODE.IDLE;
         }
       }
@@ -2675,7 +2675,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           if (lsnEntry != null && endSegment - startSegment >= 1) {
             if (!flushMode.equals(FLUSH_MODE.LSN)) {//IDLE flush mode
-              if (dirtyPagesPercent >= 40) {
+              if (dirtyPagesPercent >= 60) {
                 flushMode = FLUSH_MODE.LSN;
                 int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages, false);
                 flushedPages += lsnPages;
@@ -2693,7 +2693,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
                 dirtyPagesPercent = (int) (100 * writeCacheSize.get() / maxCacheSize);
 
-                if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 20) {
+                if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 30) {
                   flushMode = FLUSH_MODE.IDLE;
                 }
               }
@@ -2714,7 +2714,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               dirtyPagesPercent = (int) (100 * writeCacheSize.get() / maxCacheSize);
 
-              if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 20) {
+              if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 30) {
                 flushMode = FLUSH_MODE.IDLE;
               }
             }
