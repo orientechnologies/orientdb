@@ -549,16 +549,15 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       }
     });
 
+    int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB;
     long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
-    long writeCacheSize = (long) Math
-        .floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0) * diskCacheSize);
+    long writeCacheSize = diskCacheSize * 256 * pageSize;
 
     final OBinarySerializerFactory binarySerializerFactory = getComponentsFactory().binarySerializerFactory;
-    final OWOWCache wowCache = new OWOWCache(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
-        OByteBufferPool.instance(), writeAheadLog, OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(),
-        writeCacheSize, diskCacheSize, true, getStoragePath(), getPerformanceStatisticManager(), getName(),
-        binarySerializerFactory.getObjectSerializer(OType.STRING), files, getId(),
-        contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), true);
+    final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(), writeAheadLog,
+        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, diskCacheSize, true,
+        getStoragePath(), getPerformanceStatisticManager(), getName(), binarySerializerFactory.getObjectSerializer(OType.STRING),
+        files, getId(), contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), true);
 
     wowCache.addLowDiskSpaceListener(this);
     wowCache.loadRegisteredFiles();

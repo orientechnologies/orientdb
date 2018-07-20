@@ -38,7 +38,6 @@ import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OTriple;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -87,7 +86,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
@@ -997,13 +995,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
           try {
             final OFileClassic fileClassic = entry.get();
-            final Future<?> writeFuture = Orient.instance().writeThread().submit(fileClassic::synch);
-
-            try {
-              writeFuture.get();
-            } catch (ExecutionException e) {
-              throw OException.wrapException(new OStorageException("Can not fsync data file"), e);
-            }
+            fileClassic.synch();
           } finally {
             files.release(entry);
           }
@@ -1099,7 +1091,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         return latch;
       }
 
-      if (exclusiveWriteCacheSize.get() > exclusiveWriteCacheMaxSize) {
+      if (exclusiveWriteCacheSize.get() >= exclusiveWriteCacheMaxSize / 2) {
         cacheOverflowCount.increment();
 
         latch = new CountDownLatch(1);
@@ -2585,11 +2577,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     private void flushExclusivePagesIfNeeded() throws InterruptedException, IOException {
       final long ewcSize = exclusiveWriteCacheSize.get();
-
       assert ewcSize >= 0;
-      final double exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
 
-      if (exclusiveWriteCacheThreshold > EXCLUSIVE_PAGES_BOUNDARY) {
+      if (ewcSize >= exclusiveWriteCacheMaxSize / 2) {
         exclusivePagesSum += flushExclusiveWriteCache();
       } else {
         releaseExclusiveLatch();
@@ -3047,9 +3037,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private void releaseExclusiveLatch() {
     final long ewcSize = exclusiveWriteCacheSize.get();
-    final double exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
 
-    if (exclusiveWriteCacheThreshold <= EXCLUSIVE_BOUNDARY_UNLOCK_LIMIT) {
+    if (ewcSize == 0) {
       final CountDownLatch latch = exclusivePagesLimitLatch.get();
       if (latch != null) {
         latch.countDown();
@@ -3143,11 +3132,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     int copiedPages = 0;
 
     final long ewcSize = exclusiveWriteCacheSize.get();
-    final double exclusiveWriteCacheThreshold = ((double) ewcSize) / exclusiveWriteCacheMaxSize;
-
-    final double flushThreshold = exclusiveWriteCacheThreshold - EXCLUSIVE_PAGES_BOUNDARY;
-
-    final long pagesToFlush = Math.max((long) Math.ceil(flushThreshold * exclusiveWriteCacheMaxSize), 1);
+    final long pagesToFlush = ewcSize;
 
     final ArrayList<OTriple<Long, ByteBuffer, OCachePointer>> chunk = new ArrayList<>(128);
 
@@ -3160,8 +3145,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       while (chunk.size() < 128 && chunk.size() < pagesToFlush && flushedPages < pagesToFlush) {
         if (!iterator.hasNext()) {
-          flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
-          releaseExclusiveLatch();
+          if (!chunk.isEmpty()) {
+            flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
+            releaseExclusiveLatch();
+          }
 
           lastFileId = -1;
           lastPageIndex = -1;
@@ -3171,8 +3158,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
 
         if (!iterator.hasNext()) {
-          flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
-          releaseExclusiveLatch();
+          if (!chunk.isEmpty()) {
+            flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
+            releaseExclusiveLatch();
+          }
 
           break flushCycle;
         }
@@ -3220,8 +3209,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             chunk.add(new OTriple<>(version, copy, pointer));
           } else {
             if (lastFileId != pointer.getFileId() || lastPageIndex != pointer.getPageIndex() - 1) {
-              flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
-              releaseExclusiveLatch();
+              if (!chunk.isEmpty()) {
+                flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
+                releaseExclusiveLatch();
+              }
 
               maxFullLogLSN = null;
 
@@ -3236,10 +3227,12 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
       }
 
-      flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
-      maxFullLogLSN = null;
+      if (!chunk.isEmpty()) {
+        flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
+        releaseExclusiveLatch();
+      }
 
-      releaseExclusiveLatch();
+      maxFullLogLSN = null;
     }
 
     releaseExclusiveLatch();
