@@ -2721,7 +2721,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages, false);
 
                 lsnFlushIntervalSum += lsnFlushInterval;
-                lsnIntervalCount++;
+                lsnFlushIntervalCount++;
 
                 lastTsLSNFlush = startTs;
                 flushedPages += lsnPages;
@@ -2750,7 +2750,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages, false);
 
               lsnFlushIntervalSum += lsnFlushInterval;
-              lsnIntervalCount++;
+              lsnFlushIntervalCount++;
 
               lastTsLSNFlush = startTs;
               flushedPages += lsnPages;
