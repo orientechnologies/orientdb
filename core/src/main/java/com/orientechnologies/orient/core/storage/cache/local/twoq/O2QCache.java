@@ -599,6 +599,7 @@ public final class O2QCache implements OReadCache {
 
       if (cacheEntry != null) {
         cacheEntry.acquireExclusiveLock();
+        cacheEntry.setDirty();
         writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer());
       }
 
