@@ -157,8 +157,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void checkCacheOverflow() throws InterruptedException {
-    return null;
+  public void checkCacheOverflow() {
   }
 
   @Override
