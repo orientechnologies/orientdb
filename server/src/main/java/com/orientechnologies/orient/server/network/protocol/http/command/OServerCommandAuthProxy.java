@@ -65,9 +65,9 @@ public class OServerCommandAuthProxy extends OServerCommandPatternAbstract {
 
     // CHECK THE SESSION VALIDITY
     if (iRequest.sessionId == null || OServerCommandAuthenticatedDbAbstract.SESSIONID_LOGOUT.equals(iRequest.sessionId)
-        || iRequest.sessionId.length() > 1 && OHttpSessionManager.getInstance().getSession(iRequest.sessionId) == null)
+        || iRequest.sessionId.length() > 1 && server.getHttpSessionManager().getSession(iRequest.sessionId) == null)
       // AUTHENTICATED: CREATE THE SESSION
-      iRequest.sessionId = OHttpSessionManager.getInstance().createSession(databaseName, userName, userPassword);
+      iRequest.sessionId = server.getHttpSessionManager().createSession(databaseName, userName, userPassword);
 
     return true;
   }
