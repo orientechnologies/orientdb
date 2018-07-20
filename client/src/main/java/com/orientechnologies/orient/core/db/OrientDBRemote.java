@@ -127,6 +127,11 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   public synchronized void closeStorage(OStorageRemote remote) {
+    OSharedContext ctx = sharedContexts.get(remote.getName());
+    if (ctx != null) {
+      ctx.close();
+      sharedContexts.remove(remote.getName());
+    }
     ODatabaseDocumentRemote.deInit(remote);
     storages.remove(remote.getName());
     remote.shutdown();
@@ -209,6 +214,13 @@ public class OrientDBRemote implements OrientDBInternal {
       // TODO: check for memory cases
       return admin.dropDatabase(name, null);
     });
+
+    OSharedContext ctx = sharedContexts.get(name);
+    if (ctx != null) {
+      ctx.close();
+      sharedContexts.remove(name);
+    }
+    storages.remove(name);
   }
 
   @Override
