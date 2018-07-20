@@ -2639,7 +2639,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           localDirtyPagesRebuildTS = startTs;
           //rebuild every 5s
           //if ((localDirtyPages.isEmpty() || localDirtyPagesRebuildInterval >= 5 * 1_000_000_000L) && !dirtyPages.isEmpty()) {
-            convertSharedDirtyPagesToLocal();
+          convertSharedDirtyPagesToLocal();
           //}
 
           Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
@@ -2660,7 +2660,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 lsnPagesSum += lsnPages;
 
                 //if (localDirtyPages.isEmpty() && !dirtyPages.isEmpty()) {
-                  convertSharedDirtyPagesToLocal();
+                convertSharedDirtyPagesToLocal();
                 //}
 
                 lsnEntry = localDirtyPagesBySegment.firstEntry();
@@ -2689,7 +2689,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               lsnPagesSum += lsnPages;
 
               //if (localDirtyPages.isEmpty() && !dirtyPages.isEmpty()) {
-                convertSharedDirtyPagesToLocal();
+              convertSharedDirtyPagesToLocal();
               //}
 
               lsnEntry = localDirtyPagesBySegment.firstEntry();
@@ -2825,7 +2825,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     //first we try to find page which contains the oldest not flushed changes
     //that is needed to allow to compact WAL as earlier as possible
     //if (localDirtyPages.isEmpty() && !dirtyPages.isEmpty()) {
-      convertSharedDirtyPagesToLocal();
+    convertSharedDirtyPagesToLocal();
     //}
 
     if (!skipRecencyBit) {
@@ -2958,45 +2958,56 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           break flushCycle;
         }
 
-        final long version;
-        final ByteBuffer copy = bufferPool.acquireDirect(false, blockSize);
-        final OLogSequenceNumber fullLogLSN;
-        pointer.acquireSharedLock();
-        try {
-          version = pointer.getVersion();
-          final ByteBuffer buffer = pointer.getBufferDuplicate();
+        if (pointer.tryAcquireSharedLock()) {
+          final long version;
+          final OLogSequenceNumber fullLogLSN;
 
-          fullLogLSN = ODurablePage.getLogSequenceNumberFromPage(buffer);
+          final ByteBuffer copy = bufferPool.acquireDirect(false, blockSize);
+          try {
+            version = pointer.getVersion();
+            final ByteBuffer buffer = pointer.getBufferDuplicate();
 
-          buffer.position(0);
+            fullLogLSN = ODurablePage.getLogSequenceNumberFromPage(buffer);
+
+            buffer.position(0);
+            copy.position(0);
+
+            copy.put(buffer);
+
+            removeFromDirtyPages(pageKey);
+
+            copiedPages++;
+          } finally {
+            pointer.releaseSharedLock();
+          }
+
+          if (maxFullLogLSN == null || fullLogLSN.compareTo(maxFullLogLSN) > 0) {
+            maxFullLogLSN = fullLogLSN;
+          }
+
           copy.position(0);
 
-          copy.put(buffer);
+          chunk.add(new OTriple<>(version, copy, pointer));
 
-          removeFromDirtyPages(pageKey);
+          if (chunk.size() >= pagesFlushLimit) {
+            flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
+            maxFullLogLSN = null;
 
-          copiedPages++;
-        } finally {
-          pointer.releaseSharedLock();
-        }
+            lastPageIndex = -1;
+            lastFileId = -1;
+          } else {
+            lastPageIndex = pageKey.pageIndex;
+            lastFileId = pageKey.fileId;
+          }
+        } else {
+          if (!chunk.isEmpty()) {
+            flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
+          }
 
-        if (maxFullLogLSN == null || fullLogLSN.compareTo(maxFullLogLSN) > 0) {
-          maxFullLogLSN = fullLogLSN;
-        }
-
-        copy.position(0);
-
-        chunk.add(new OTriple<>(version, copy, pointer));
-
-        if (chunk.size() >= pagesFlushLimit) {
-          flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
           maxFullLogLSN = null;
 
           lastPageIndex = -1;
           lastFileId = -1;
-        } else {
-          lastPageIndex = pageKey.pageIndex;
-          lastFileId = pageKey.fileId;
         }
       }
 
@@ -3153,55 +3164,64 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         if (pointer == null) {
           iterator.remove();
         } else {
-          pointer.acquireSharedLock();
+          if (pointer.tryAcquireSharedLock()) {
+            final OLogSequenceNumber fullLSN;
+            final ByteBuffer copy = bufferPool.acquireDirect(false, blockSize);
+            try {
+              version = pointer.getVersion();
+              final ByteBuffer buffer = pointer.getBufferDuplicate();
 
-          final OLogSequenceNumber fullLSN;
-          final ByteBuffer copy = bufferPool.acquireDirect(false, blockSize);
-          try {
-            version = pointer.getVersion();
-            final ByteBuffer buffer = pointer.getBufferDuplicate();
+              fullLSN = ODurablePage.getLogSequenceNumberFromPage(buffer);
 
-            fullLSN = ODurablePage.getLogSequenceNumberFromPage(buffer);
+              buffer.position(0);
+              copy.position(0);
 
-            buffer.position(0);
+              copy.put(buffer);
+
+              removeFromDirtyPages(pageKey);
+
+              lsnPagesIteratorSegment = -1;
+              lsnPagesIterator = null;
+
+              copiedPages++;
+            } finally {
+              pointer.releaseSharedLock();
+            }
+
+            if (maxFullLogLSN == null || maxFullLogLSN.compareTo(fullLSN) < 0) {
+              maxFullLogLSN = fullLSN;
+            }
+
             copy.position(0);
 
-            copy.put(buffer);
-
-            removeFromDirtyPages(pageKey);
-
-            lsnPagesIteratorSegment = -1;
-            lsnPagesIterator = null;
-
-            copiedPages++;
-          } finally {
-            pointer.releaseSharedLock();
-          }
-
-          if (maxFullLogLSN == null || maxFullLogLSN.compareTo(fullLSN) < 0) {
-            maxFullLogLSN = fullLSN;
-          }
-
-          copy.position(0);
-
-          if (chunk.isEmpty()) {
-            chunk.add(new OTriple<>(version, copy, pointer));
-          } else {
-            if (lastFileId != pointer.getFileId() || lastPageIndex != pointer.getPageIndex() - 1) {
-              if (!chunk.isEmpty()) {
-                flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
-              }
-
-              maxFullLogLSN = null;
-
+            if (chunk.isEmpty()) {
               chunk.add(new OTriple<>(version, copy, pointer));
             } else {
-              chunk.add(new OTriple<>(version, copy, pointer));
-            }
-          }
+              if (lastFileId != pointer.getFileId() || lastPageIndex != pointer.getPageIndex() - 1) {
+                if (!chunk.isEmpty()) {
+                  flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
+                }
 
-          lastFileId = pointer.getFileId();
-          lastPageIndex = pointer.getPageIndex();
+                maxFullLogLSN = null;
+
+                chunk.add(new OTriple<>(version, copy, pointer));
+              } else {
+                chunk.add(new OTriple<>(version, copy, pointer));
+              }
+            }
+
+            lastFileId = pointer.getFileId();
+            lastPageIndex = pointer.getPageIndex();
+          } else {
+            if (!chunk.isEmpty()) {
+              flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
+            }
+
+            maxFullLogLSN = null;
+
+            lastFileId = -1;
+            lastPageIndex = -1;
+          }
         }
       }
 
