@@ -982,9 +982,17 @@ public final class O2QCache implements OReadCache {
   }
 
   private void removeColdestPagesIfNeeded(OWriteCache writeCache) {
+    final MemoryData memoryData = this.memoryDataContainer.get();
+    if (am.size() + a1in.size() > memoryData.get2QCacheSize()) {
+      try {
+        writeCache.checkCacheOverflow();
+      } catch (InterruptedException e) {
+        throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
+      }
+    }
+
     cacheLock.acquireWriteLock();
     try {
-      final MemoryData memoryData = this.memoryDataContainer.get();
       while (am.size() + a1in.size() > memoryData.get2QCacheSize()) {
         if (a1in.size() > memoryData.K_IN) {
           final OCacheEntry removedFromAInEntry = a1in.removeLRU();
@@ -997,12 +1005,6 @@ public final class O2QCache implements OReadCache {
             //cache pointer can be null if we load initial state of cache from disk
             //see #restoreQueueWithPageLoad for details
             if (cachePointer != null) {
-              try {
-                writeCache.checkCacheOverflow();
-              } catch (InterruptedException e) {
-                throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
-              }
-
               cachePointer.decrementReadersReferrer();
               removedFromAInEntry.clearCachePointer();
             }
@@ -1030,12 +1032,6 @@ public final class O2QCache implements OReadCache {
             //cache pointer can be null if we load initial state of cache from disk
             //see #restoreQueueWithPageLoad for details
             if (cachePointer != null) {
-              try {
-                writeCache.checkCacheOverflow();
-              } catch (InterruptedException e) {
-                throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
-              }
-
               cachePointer.decrementReadersReferrer();
               removedEntry.clearCachePointer();
             }
