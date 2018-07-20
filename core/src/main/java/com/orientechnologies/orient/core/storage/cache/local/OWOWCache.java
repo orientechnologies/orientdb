@@ -2593,7 +2593,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       dirtyPagesPercentCount++;
 
       int flushedPages = 0;
-      final int pagesFlushLimit = 512;
+      final int pagesFlushLimit = 1024;
       final long startTs = System.nanoTime();
 
       try {
