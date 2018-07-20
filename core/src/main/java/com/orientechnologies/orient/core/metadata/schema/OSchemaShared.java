@@ -518,6 +518,39 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   protected abstract OClassImpl createClassInstance(ODocument c);
 
+  public ODocument toNetworkStream() {
+    rwSpinLock.acquireReadLock();
+    try {
+      ODocument doc = new ODocument();
+      document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+
+      try {
+        document.field("schemaVersion", CURRENT_VERSION_NUMBER);
+
+        Set<ODocument> cc = new HashSet<ODocument>();
+        for (OClass c : classes.values())
+          cc.add(((OClassImpl) c).toNetworkStream());
+
+        document.field("classes", cc, OType.EMBEDDEDSET);
+
+        List<ODocument> globalProperties = new ArrayList<ODocument>();
+        for (OGlobalProperty globalProperty : properties) {
+          if (globalProperty != null)
+            globalProperties.add(((OGlobalPropertyImpl) globalProperty).toDocument());
+        }
+        document.field("globalProperties", globalProperties, OType.EMBEDDEDLIST);
+        document.field("blobClusters", blobClusters, OType.EMBEDDEDSET);
+      } finally {
+        document.setInternalStatus(ORecordElement.STATUS.LOADED);
+      }
+
+      return document;
+    } finally {
+      rwSpinLock.releaseReadLock();
+    }
+
+  }
+
   /**
    * Binds POJO to ODocument.
    */
