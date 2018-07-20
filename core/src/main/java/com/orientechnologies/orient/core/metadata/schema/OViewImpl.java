@@ -52,6 +52,23 @@ public abstract class OViewImpl extends OClassImpl implements OView {
   }
 
   @Override
+  public ODocument toNetworkStream() {
+    ODocument result = super.toNetworkStream();
+    result.setProperty("query", cfg.getQuery());
+    result.setProperty("updatable", cfg.isUpdatable());
+    Map<String, Map<String, String>> indexes = new HashMap<>();
+    for (OViewConfig.OViewIndexConfig idx : cfg.indexes) {
+      Map<String, String> indexDescriptor = new HashMap<>();
+      for (OPair<String, OType> s : idx.props) {
+        indexDescriptor.put(s.key, s.value.toString());
+      }
+      indexes.put(idx.name, indexDescriptor);
+    }
+    result.setProperty("indexes", indexes);
+    return result;
+  }
+
+  @Override
   public String getQuery() {
     return cfg.getQuery();
   }

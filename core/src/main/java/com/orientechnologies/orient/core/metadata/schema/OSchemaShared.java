@@ -639,6 +639,46 @@ public abstract class OSchemaShared implements OCloseable {
 
   protected abstract OViewImpl createViewInstance(ODocument c);
 
+  public ODocument toNetworkStream() {
+    rwSpinLock.acquireReadLock();
+    try {
+      ODocument doc = new ODocument();
+      document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+
+      try {
+        document.field("schemaVersion", CURRENT_VERSION_NUMBER);
+
+        Set<ODocument> cc = new HashSet<ODocument>();
+        for (OClass c : classes.values())
+          cc.add(((OClassImpl) c).toNetworkStream());
+
+        document.field("classes", cc, OType.EMBEDDEDSET);
+
+        //TODO: this should trigger a netowork protocol version change
+        Set<ODocument> vv = new HashSet<ODocument>();
+        for (OView v : views.values())
+          vv.add(((OViewImpl) v).toNetworkStream());
+
+        document.field("views", vv, OType.EMBEDDEDSET);
+
+        List<ODocument> globalProperties = new ArrayList<ODocument>();
+        for (OGlobalProperty globalProperty : properties) {
+          if (globalProperty != null)
+            globalProperties.add(((OGlobalPropertyImpl) globalProperty).toDocument());
+        }
+        document.field("globalProperties", globalProperties, OType.EMBEDDEDLIST);
+        document.field("blobClusters", blobClusters, OType.EMBEDDEDSET);
+      } finally {
+        document.setInternalStatus(ORecordElement.STATUS.LOADED);
+      }
+
+      return document;
+    } finally {
+      rwSpinLock.releaseReadLock();
+    }
+
+  }
+
   /**
    * Binds POJO to ODocument.
    */
