@@ -1304,6 +1304,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   @Override
   public void addOnlyWriters(final long fileId, final long pageIndex) {
     exclusiveWriteCacheSize.incrementAndGet();
+
+    if (exclusiveWriteCacheSize.get() > 1.5 * exclusiveWriteCacheMaxSize) {
+      Thread.dumpStack();
+    }
+
     exclusiveWritePages.add(new PageKey(extractFileId(fileId), pageIndex));
   }
 
@@ -2693,7 +2698,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
                 dirtyPagesPercent = (int) (100 * writeCacheSize.get() / maxCacheSize);
 
-                if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 30) {
+                if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 40) {
                   flushMode = FLUSH_MODE.IDLE;
                 }
               }
@@ -2714,7 +2719,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               dirtyPagesPercent = (int) (100 * writeCacheSize.get() / maxCacheSize);
 
-              if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 30) {
+              if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 40) {
                 flushMode = FLUSH_MODE.IDLE;
               }
             }
