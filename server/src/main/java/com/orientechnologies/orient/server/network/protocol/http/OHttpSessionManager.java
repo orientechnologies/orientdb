@@ -23,6 +23,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.server.OServer;
 
 import java.security.SecureRandom;
 import java.util.HashMap;
@@ -38,13 +39,13 @@ import java.util.TimerTask;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OHttpSessionManager extends OSharedResourceAbstract {
-  private static final OHttpSessionManager instance = new OHttpSessionManager();
-  private Map<String, OHttpSession>        sessions = new HashMap<String, OHttpSession>();
-  private int                              expirationTime;
-  private Random                           random   = new SecureRandom();
+  private Map<String, OHttpSession> sessions = new HashMap<String, OHttpSession>();
+  private int                       expirationTime;
+  private Random                    random   = new SecureRandom();
 
-  protected OHttpSessionManager() {
-    expirationTime = OGlobalConfiguration.NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT.getValueAsInteger() * 1000;
+  public OHttpSessionManager(OServer server) {
+    expirationTime =
+        server.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT) * 1000;
 
     Orient.instance().scheduleTask(new TimerTask() {
       @Override
@@ -64,7 +65,7 @@ public class OHttpSessionManager extends OSharedResourceAbstract {
       final long now = System.currentTimeMillis();
 
       Entry<String, OHttpSession> s;
-      for (Iterator<Map.Entry<String, OHttpSession>> it = sessions.entrySet().iterator(); it.hasNext();) {
+      for (Iterator<Map.Entry<String, OHttpSession>> it = sessions.entrySet().iterator(); it.hasNext(); ) {
         s = it.next();
 
         if (now - s.getValue().getUpdatedOn() > expirationTime) {
@@ -136,7 +137,7 @@ public class OHttpSessionManager extends OSharedResourceAbstract {
     this.expirationTime = expirationTime;
   }
 
-  public static OHttpSessionManager getInstance() {
-    return instance;
+  public void shutdown() {
+    sessions.clear();
   }
 }

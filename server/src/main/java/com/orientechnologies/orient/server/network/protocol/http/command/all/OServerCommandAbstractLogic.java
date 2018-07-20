@@ -62,7 +62,7 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
 
       // BIND CONTEXT VARIABLES
       final OBasicCommandContext context = new OBasicCommandContext();
-      context.setVariable("session", OHttpSessionManager.getInstance().getSession(iRequest.sessionId));
+      context.setVariable("session", server.getHttpSessionManager().getSession(iRequest.sessionId));
       context.setVariable("request", new OHttpRequestWrapper(iRequest, (String[]) args));
       context.setVariable("response", new OHttpResponseWrapper(iResponse));
 

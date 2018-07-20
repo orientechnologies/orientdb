@@ -46,6 +46,7 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.OServerSocketFactory;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
@@ -70,39 +71,39 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class OServer {
-  private static final String ROOT_PASSWORD_VAR = "ORIENTDB_ROOT_PASSWORD";
-  private static ThreadGroup threadGroup;
-  private static Map<String, OServer> distributedServers = new ConcurrentHashMap<String, OServer>();
-  private       CountDownLatch startupLatch;
-  private       CountDownLatch shutdownLatch;
-  private final boolean        shutdownEngineOnExit;
-  protected          ReentrantLock lock           = new ReentrantLock();
-  protected volatile boolean       running        = false;
-  protected volatile boolean       rejectRequests = true;
-  protected OServerConfigurationManager serverCfg;
-  protected OContextConfiguration       contextConfiguration;
-  protected OServerShutdownHook         shutdownHook;
-  protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols       = new HashMap<String, Class<? extends ONetworkProtocol>>();
-  protected Map<String, OServerSocketFactory>              networkSocketFactories = new HashMap<String, OServerSocketFactory>();
-  protected List<OServerNetworkListener>                   networkListeners       = new ArrayList<OServerNetworkListener>();
-  protected List<OServerLifecycleListener>                 lifecycleListeners     = new ArrayList<OServerLifecycleListener>();
-  protected OServerPluginManager      pluginManager;
-  protected OConfigurableHooksManager hookManager;
-  protected ODistributedServerManager distributedManager;
-  protected OServerSecurity           serverSecurity;
-  private SecureRandom        random    = new SecureRandom();
-  private Map<String, Object> variables = new HashMap<String, Object>();
-  private String                   serverRootDirectory;
-  private String                   databaseDirectory;
-  private OClientConnectionManager clientConnectionManager;
-  private OPushManager             pushManager;
-  private ClassLoader              extensionClassLoader;
-  private OTokenHandler            tokenHandler;
-  private OSystemDatabase          systemDatabase;
-  private OrientDB                 context;
-  private OrientDBInternal         databases;
-  protected Date startedOn = new Date();
-
+  private static final String                                         ROOT_PASSWORD_VAR      = "ORIENTDB_ROOT_PASSWORD";
+  private static       ThreadGroup                                    threadGroup;
+  private static       Map<String, OServer>                           distributedServers     = new ConcurrentHashMap<String, OServer>();
+  private              CountDownLatch                                 startupLatch;
+  private              CountDownLatch                                 shutdownLatch;
+  private final        boolean                                        shutdownEngineOnExit;
+  protected            ReentrantLock                                  lock                   = new ReentrantLock();
+  protected volatile   boolean                                        running                = false;
+  protected volatile   boolean                                        rejectRequests         = true;
+  protected            OServerConfigurationManager                    serverCfg;
+  protected            OContextConfiguration                          contextConfiguration;
+  protected            OServerShutdownHook                            shutdownHook;
+  protected            Map<String, Class<? extends ONetworkProtocol>> networkProtocols       = new HashMap<String, Class<? extends ONetworkProtocol>>();
+  protected            Map<String, OServerSocketFactory>              networkSocketFactories = new HashMap<String, OServerSocketFactory>();
+  protected            List<OServerNetworkListener>                   networkListeners       = new ArrayList<OServerNetworkListener>();
+  protected            List<OServerLifecycleListener>                 lifecycleListeners     = new ArrayList<OServerLifecycleListener>();
+  protected            OServerPluginManager                           pluginManager;
+  protected            OConfigurableHooksManager                      hookManager;
+  protected            ODistributedServerManager                      distributedManager;
+  protected            OServerSecurity                                serverSecurity;
+  private              SecureRandom                                   random                 = new SecureRandom();
+  private              Map<String, Object>                            variables              = new HashMap<String, Object>();
+  private              String                                         serverRootDirectory;
+  private              String                                         databaseDirectory;
+  private              OClientConnectionManager                       clientConnectionManager;
+  private              OHttpSessionManager                            httpSessionManager;
+  private              OPushManager                                   pushManager;
+  private              ClassLoader                                    extensionClassLoader;
+  private              OTokenHandler                                  tokenHandler;
+  private              OSystemDatabase                                systemDatabase;
+  private              OrientDB                                       context;
+  private              OrientDBInternal                               databases;
+  protected            Date                                           startedOn              = new Date();
 
   public OServer()
       throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
@@ -221,6 +222,10 @@ public class OServer {
 
   public OClientConnectionManager getClientConnectionManager() {
     return clientConnectionManager;
+  }
+
+  public OHttpSessionManager getHttpSessionManager() {
+    return httpSessionManager;
   }
 
   public OPushManager getPushManager() {
@@ -346,11 +351,12 @@ public class OServer {
     if (shutdownLatch == null)
       shutdownLatch = new CountDownLatch(1);
 
+    initFromConfiguration();
+
     clientConnectionManager = new OClientConnectionManager(this);
+    httpSessionManager = new OHttpSessionManager(this);
     pushManager = new OPushManager();
     rejectRequests = false;
-
-    initFromConfiguration();
 
     if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP)) {
       System.out.println("Dumping environment after server startup...");
@@ -378,7 +384,6 @@ public class OServer {
         databases = OrientDBInternal.embedded(this.databaseDirectory, config);
       }
     }
-
 
     if (databases instanceof OServerAware) {
       ((OServerAware) databases).init(this);
@@ -573,6 +578,7 @@ public class OServer {
         rejectRequests = true;
         pushManager.shutdown();
         clientConnectionManager.shutdown();
+        httpSessionManager.shutdown();
 
         if (pluginManager != null)
           pluginManager.shutdown();
@@ -691,6 +697,7 @@ public class OServer {
    *
    * @param iUserName Username to authenticate
    * @param iPassword Password in clear
+   *
    * @return true if authentication is ok, otherwise false
    */
   public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
@@ -728,6 +735,7 @@ public class OServer {
    * Checks if a server user is allowed to operate with a resource.
    *
    * @param iUserName Username to authenticate
+   *
    * @return true if authentication is ok, otherwise false
    */
   public boolean isAllowed(final String iUserName, final String iResourceToCheck) {
