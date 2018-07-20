@@ -39,6 +39,14 @@ public final class OCacheEntry {
     return pageIndex;
   }
 
+  public void setDirty() {
+    dataPointer.setDirty();
+  }
+
+  public boolean isDirty() {
+    return dataPointer.isDirty();
+  }
+
   public void acquireExclusiveLock() {
     dataPointer.acquireExclusiveLock();
   }

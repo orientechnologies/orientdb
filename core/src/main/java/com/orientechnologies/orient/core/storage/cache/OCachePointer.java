@@ -24,7 +24,6 @@ import com.orientechnologies.common.log.OLogManager;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -54,7 +53,7 @@ public final class OCachePointer {
   private final long fileId;
   private final long pageIndex;
 
-  private final AtomicBoolean recency        = new AtomicBoolean();
+  private volatile boolean dirty = false;
 
   public OCachePointer(final ByteBuffer buffer, final OByteBufferPool bufferPool, final long fileId, final long pageIndex) {
     assert buffer != null;
@@ -65,15 +64,16 @@ public final class OCachePointer {
     this.pageIndex = pageIndex;
   }
 
-  public void setRecency() {
-    recency.lazySet(true);
+  public void setDirty() {
+    this.dirty = true;
   }
 
-  public boolean clearRecency() {
-    final boolean rec = this.recency.get();
+  public void clearDirty() {
+    this.dirty = false;
+  }
 
-    this.recency.lazySet(false);
-    return rec;
+  public boolean isDirty() {
+    return dirty;
   }
 
   public void setWritersListener(final WritersListener writersListener) {
