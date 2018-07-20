@@ -102,6 +102,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     liveQueryOps.close();
     liveQueryOpsV2.close();
     activeDistributedQueries.values().forEach(x -> x.close());
+    loaded =false;
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
