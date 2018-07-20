@@ -502,6 +502,44 @@ public final class O2QCache implements OReadCache {
       } finally {
         fileLock.unlock();
       }
+
+      final long loads = loadCounter.incrementAndGet();
+      if (loads % 10_000 == 0) {
+        final int currentSize = am.size() + a1in.size();
+        final int maxSize = memoryDataContainer.get().get2QCacheSize();
+        if (100 * currentSize / maxSize >= 80) {
+          if (evictionReportInProgers.compareAndSet(false, true)) {
+            writeCache.clearEvictionCandidates();
+
+            int counter = 0;
+            Iterator<OCacheEntry> iterator = am.reverseIterator();
+
+            while (counter < 256 && iterator.hasNext()) {
+              final OCacheEntry entry = iterator.next();
+
+              if (entry.isDirty() && OAbstractWriteCache.extractStorageId(entry.getFileId()) == writeCache.getId()) {
+                writeCache.addEvictionCandidate(cacheEntry.getFileId(), cacheEntry.getPageIndex());
+                counter++;
+              }
+            }
+
+            iterator = a1in.reverseIterator();
+            counter = 0;
+
+            while (counter < 256 && iterator.hasNext()) {
+              final OCacheEntry entry = iterator.next();
+
+              if (entry.isDirty() && OAbstractWriteCache.extractStorageId(entry.getFileId()) == writeCache.getId()) {
+                writeCache.addEvictionCandidate(cacheEntry.getFileId(), cacheEntry.getPageIndex());
+                counter++;
+              }
+            }
+
+            evictionReportInProgers.set(false);
+          }
+
+        }
+      }
     } finally {
       cacheLock.releaseReadLock();
     }
@@ -510,43 +548,7 @@ public final class O2QCache implements OReadCache {
       sessionStoragePerformanceStatistic.incrementPageAccessOnCacheLevel(cacheHit.getValue());
     }
 
-    final long loads = loadCounter.incrementAndGet();
-    if (loads % 10_000 == 0) {
-      final int currentSize = am.size() + a1in.size();
-      final int maxSize = memoryDataContainer.get().get2QCacheSize();
-      if (100 * currentSize / maxSize >= 80) {
-        if (evictionReportInProgers.compareAndSet(false, true)) {
-          writeCache.clearEvictionCandidates();
 
-          int counter = 0;
-          Iterator<OCacheEntry> iterator = am.reverseIterator();
-
-          while (counter < 256 && iterator.hasNext()) {
-            final OCacheEntry entry = iterator.next();
-
-            if (entry.isDirty() && OAbstractWriteCache.extractStorageId(entry.getFileId()) == writeCache.getId()) {
-              writeCache.addEvictionCandidate(cacheEntry.getFileId(), cacheEntry.getPageIndex());
-              counter++;
-            }
-          }
-
-          iterator = a1in.reverseIterator();
-          counter = 0;
-
-          while (counter < 256 && iterator.hasNext()) {
-            final OCacheEntry entry = iterator.next();
-
-            if (entry.isDirty() && OAbstractWriteCache.extractStorageId(entry.getFileId()) == writeCache.getId()) {
-              writeCache.addEvictionCandidate(cacheEntry.getFileId(), cacheEntry.getPageIndex());
-              counter++;
-            }
-          }
-
-          evictionReportInProgers.set(false);
-        }
-
-      }
-    }
     return new UpdateCacheResult(removeColdPages, cacheEntry);
   }
 
