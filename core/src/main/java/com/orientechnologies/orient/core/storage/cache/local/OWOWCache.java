@@ -2691,9 +2691,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           lsnFlushInterval = 0;
         } else {
           lsnFlushInterval = startTs - lastTsLSNFlush;
-
-          lsnFlushIntervalSum += lsnFlushInterval;
-          lsnIntervalCount++;
         }
 
         long startSegment = writeAheadLog.begin().getSegment();
@@ -2722,6 +2719,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               if (dirtyPagesPercent >= 80 || lsnFlushInterval >= 5 * 1_000_000_000L) {
                 flushMode = FLUSH_MODE.LSN;
                 int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages, false);
+
+                lsnFlushIntervalSum += lsnFlushInterval;
+                lsnIntervalCount++;
+
                 lastTsLSNFlush = startTs;
                 flushedPages += lsnPages;
 
@@ -2747,6 +2748,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               }
             } else {
               int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages, false);
+
+              lsnFlushIntervalSum += lsnFlushInterval;
+              lsnIntervalCount++;
+
               lastTsLSNFlush = startTs;
               flushedPages += lsnPages;
 
