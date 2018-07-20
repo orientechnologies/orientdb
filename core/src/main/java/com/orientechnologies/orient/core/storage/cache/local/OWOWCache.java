@@ -2339,11 +2339,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             "Avg. percent of dirty pages %d, count of flushed lsn pages %d, count of flushed of exclusive pages %d, avg. "
                 + " lsn flush delay interval %d, first dirty pages segment index %d, first dirty pages segment size %d, "
                 + "amount of exclusive pages %d, avg. LSN flush interval %d, count of eviction candidates flushed %d, size of eviction "
-                + "candidates %d\n",
-            dirtyPagesPercentSum / dirtyPagesPercentCount, lsnPagesSum, exclusivePagesSum, lsnIntervalSum / lsnIntervalCount,
-            entry == null ? -1 : entry.getKey().intValue(), entry == null ? -1 : entry.getValue().size(),
-            exclusiveWriteCacheSize.get(), lsnFlushIntervalSum / lsnFlushIntervalCount / 1_000_000, evicationCandidatesSum,
-            evictionCandidates.size());
+                + "candidates %d\n", dirtyPagesPercentSum / dirtyPagesPercentCount, lsnPagesSum, exclusivePagesSum,
+            lsnIntervalSum / lsnIntervalCount, entry == null ? -1 : entry.getKey().intValue(),
+            entry == null ? -1 : entry.getValue().size(), exclusiveWriteCacheSize.get(),
+            lsnFlushIntervalSum / lsnFlushIntervalCount / 1_000_000, evicationCandidatesSum, evictionCandidates.size());
 
         reportTs = ts;
 
@@ -3214,7 +3213,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     OLogSequenceNumber maxFullLogLSN = null;
 
     flushCycle:
-    while (iterator.hasNext()) {
+    while (iterator.hasNext() && countOfFlushedPages < pagesToFlush) {
       long lastFileId = -1;
       long lastPageIndex = -1;
 
@@ -3232,9 +3231,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         final OCachePointer pointer = writeCachePages.get(pageKey);
         final long version;
 
-        if (pointer == null) {
-          iterator.remove();
-        } else {
+        if (pointer != null) {
           if (pointer.tryAcquireSharedLock()) {
             final OLogSequenceNumber fullLSN;
             final ByteBuffer copy = bufferPool.acquireDirect(false, blockSize);
