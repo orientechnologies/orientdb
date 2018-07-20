@@ -2666,7 +2666,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final long startTs = System.nanoTime();
 
       try {
-        if (writeCachePages.isEmpty()) {
+        if (writeCachePages.isEmpty() || exclusiveWriteCacheSize.get() >= exclusiveWriteCacheMaxSize / 2) {
           scheduleNextRun(pagesFlushInterval);
           return;
         }
@@ -2681,6 +2681,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         exclusivePagesSum += flushedPages;
 
         if (flushedPages >= pagesFlushLimit) {
+          releaseExclusiveLatch();
+
           scheduleNextRun(pagesFlushInterval);
           return;
         }
@@ -2792,9 +2794,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             scheduleNextRun(timeInMS / 3);
           }
 
+          releaseExclusiveLatch();
         } else {
           scheduleNextRun(pagesFlushInterval);
         }
+
       } catch (final Error | Exception t) {
         OLogManager.instance().error(this, "Exception during data flush", t);
         OWOWCache.this.fireBackgroundDataFlushExceptionEvent(t);
