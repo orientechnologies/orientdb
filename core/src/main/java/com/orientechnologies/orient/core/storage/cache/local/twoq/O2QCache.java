@@ -37,17 +37,13 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -748,38 +744,6 @@ public final class O2QCache implements OReadCache {
   public void storeCacheState(final OWriteCache writeCache) {
   }
 
-  /**
-   * Stores state of single queue to the {@link OutputStream} . Items are stored from least recently used to most recently used, so
-   * in case of sequential read of data we will restore the same state of queue.
-   * Not all queue items are stored, only ones which contains pages of selected files.
-   * Following format is used to store queue state:
-   * <ol>
-   * <li>File id or -1 if end of queue is reached (int)</li>
-   * <li>Page index (long), is absent if end of the queue is reached</li>
-   * </ol>
-   *
-   * @param writeCache       Write cache is used to convert external file ids to internal ones.
-   * @param filesToStore     List of files state of which should be stored.
-   * @param dataOutputStream Output stream for state file
-   * @param queue            Queue state of which should be stored
-   */
-  private static void storeQueueState(final OWriteCache writeCache, final Set<Long> filesToStore,
-      final DataOutputStream dataOutputStream, final LRUList queue) throws IOException {
-    final Iterator<OCacheEntry> queueIterator = queue.reverseIterator();
-
-    while (queueIterator.hasNext()) {
-      final OCacheEntry cacheEntry = queueIterator.next();
-
-      final long fileId = cacheEntry.getFileId();
-      if (filesToStore.contains(fileId)) {
-        final int internalId = writeCache.internalFileId(fileId);
-        dataOutputStream.writeInt(internalId);
-
-        dataOutputStream.writeLong(cacheEntry.getPageIndex());
-      }
-    }
-  }
-
   @Override
   public void deleteStorage(final OWriteCache writeCache) throws IOException {
     cacheLock.acquireWriteLock();
@@ -1033,13 +997,10 @@ public final class O2QCache implements OReadCache {
             //cache pointer can be null if we load initial state of cache from disk
             //see #restoreQueueWithPageLoad for details
             if (cachePointer != null) {
-              final CountDownLatch latch = writeCache.checkCacheOverflow();
-              if (latch != null) {
-                try {
-                  latch.await();
-                } catch (InterruptedException e) {
-                  throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
-                }
+              try {
+                writeCache.checkCacheOverflow();
+              } catch (InterruptedException e) {
+                throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
               }
 
               cachePointer.decrementReadersReferrer();
@@ -1069,13 +1030,10 @@ public final class O2QCache implements OReadCache {
             //cache pointer can be null if we load initial state of cache from disk
             //see #restoreQueueWithPageLoad for details
             if (cachePointer != null) {
-              final CountDownLatch latch = writeCache.checkCacheOverflow();
-              if (latch != null) {
-                try {
-                  latch.await();
-                } catch (InterruptedException e) {
-                  throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
-                }
+              try {
+                writeCache.checkCacheOverflow();
+              } catch (InterruptedException e) {
+                throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
               }
 
               cachePointer.decrementReadersReferrer();

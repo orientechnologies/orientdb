@@ -85,7 +85,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
@@ -93,7 +93,6 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.zip.CRC32;
@@ -124,24 +123,6 @@ import java.util.zip.CRC32;
  */
 public final class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCachePointer.WritersListener {
   /**
-   * If portion of exclusive pages in write cache is bigger than this value which we switch flush mode to {@link
-   * FLUSH_MODE#EXCLUSIVE} and back to {@link FLUSH_MODE#IDLE} if portion of exclusive pages less than this boundary
-   */
-  private static final double EXCLUSIVE_PAGES_BOUNDARY = OGlobalConfiguration.DISK_CACHE_EXCLUSIVE_PAGES_BOUNDARY.getValueAsFloat();
-
-  /**
-   * If portion of exclusive pages in cache less than this value we release {@link #exclusivePagesLimitLatch} latch and allow writer
-   * threads to continue
-   */
-  private static final double EXCLUSIVE_BOUNDARY_UNLOCK_LIMIT = OGlobalConfiguration.DISK_CACHE_EXCLUSIVE_FLUSH_BOUNDARY
-      .getValueAsFloat();
-
-  /**
-   * Maximum size of chunk which should be flushed by write cache background thread in LSN mode
-   */
-  private static final int LSN_CHUNK_SIZE = OGlobalConfiguration.DISK_CACHE_LSN_CHUNK_SIZE.getValueAsInteger();
-
-  /**
    * Extension for the file which contains mapping between file name and file id
    */
   public static final String NAME_ID_MAP_EXTENSION = ".cm";
@@ -168,11 +149,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private static final String NAME_ID_MAP_V2_T = "name_id_map_v2_t" + NAME_ID_MAP_EXTENSION;
 
   /**
-   * Minimum size of exclusive write cache in pages
-   */
-  private static final int MIN_CACHE_SIZE = 16;
-
-  /**
    * Marks pages which have a checksum stored.
    */
   public static final long MAGIC_NUMBER_WITH_CHECKSUM = 0xFACB03FEL;
@@ -197,12 +173,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    * Interval between values of {@link #amountOfNewPagesAdded} field, after which we will check amount of free space on disk
    */
   private final int diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES.getValueAsInteger();
-
-  /**
-   * Duration of flush of dirty pages to the disk in nano seconds
-   */
-  private final int backgroundFlushInterval =
-      OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger() * 1000 * 1000;
 
   /**
    * Listeners which are called once we detect that there is not enough space left on disk to work. Mostly used to put database in
@@ -325,15 +295,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private final OLockManager<PageKey> lockManager = new OPartitionedLockManager<>();
 
   /**
-   * Latch which is switched on once amount of pages are cached exclusively in write cache is reached limit. And switched off once
-   * size of write cache is down bellow threshold.
-   * Once this latch is switched on all threads which are wrote data in write cache wait till it will be switched off.
-   * It is better to make wait for threads which are going to put data on write cache instead of write threads but it may cause
-   * deadlocks so it is considered as good enough alternative.
-   */
-  private final AtomicReference<CountDownLatch> exclusivePagesLimitLatch = new AtomicReference<>();
-
-  /**
    * We acquire lock managed by this manager in read mode if we need to read data from files, and in write mode if we
    * add/remove/truncate file.
    */
@@ -369,11 +330,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    * of restore of storage data after crash.
    */
   private FileChannel nameIdMapHolder;
-
-  /**
-   * Maximum amount of exclusive pages which is allowed to be hold by write cache
-   */
-  private final int exclusiveWriteCacheMaxSize;
 
   /**
    * Value of next internal id to be set when file is added. If storage is loaded from disk this value equals to maximum absolute
@@ -461,12 +417,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       this.checksumMode = checksumMode;
       this.maxCacheSize = normalizeMemory(maxCacheSize, pageSize);
-
-      int exclusiveWriteNormalizedSize = normalizeMemory(exclusiveWriteCacheMaxSize, pageSize);
-      if (checkMinSize && exclusiveWriteNormalizedSize < MIN_CACHE_SIZE)
-        exclusiveWriteNormalizedSize = MIN_CACHE_SIZE;
-
-      this.exclusiveWriteCacheMaxSize = exclusiveWriteNormalizedSize;
 
       this.storagePath = storagePath;
       try {
@@ -1070,24 +1020,15 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   @Override
-  public CountDownLatch checkCacheOverflow() {
-    CountDownLatch latch = exclusivePagesLimitLatch.get();
-    if (latch != null) {
-      return latch;
-    }
-
-    if (exclusiveWriteCacheSize.get() >= exclusiveWriteCacheMaxSize / 2) {
+  public void checkCacheOverflow() throws InterruptedException {
+    if (exclusiveWriteCacheSize.get() > 0) {
       cacheOverflowCount.increment();
-
-      latch = new CountDownLatch(1);
-      if (!exclusivePagesLimitLatch.compareAndSet(null, latch)) {
-        latch = exclusivePagesLimitLatch.get();
+      try {
+        commitExecutor.submit(new PeriodicExclusiveFlushTask()).get();
+      } catch (ExecutionException e) {
+        throw new IllegalStateException(e);
       }
-
-      commitExecutor.submit(new PeriodicExclusiveFlushTask());
     }
-
-    return latch;
   }
 
   @Override
@@ -1311,11 +1252,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   @Override
   public void addOnlyWriters(final long fileId, final long pageIndex) {
     exclusiveWriteCacheSize.incrementAndGet();
-
-    if (exclusiveWriteCacheSize.get() > 1.5 * exclusiveWriteCacheMaxSize) {
-      Thread.dumpStack();
-    }
-
     exclusiveWritePages.add(new PageKey(extractFileId(fileId), pageIndex));
   }
 
@@ -2394,11 +2330,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         System.out.printf(
             "Avg. percent of dirty pages %d, count of flushed lsn pages %d, count of flushed of exclusive pages %d, avg. "
                 + " lsn flush delay interval %d, first dirty pages segment index %d, first dirty pages segment size %d, "
-                + "amount of exclusive pages %d, exclusive write cache max size %d, "
+                + "amount of exclusive pages %d, "
                 + "current segment of LSN pages iterator %d, last LSN Flush TS %d, avg. LSN flush interval %d\n",
             dirtyPagesPercentSum / dirtyPagesPercentCount, lsnPagesSum, exclusivePagesSum, lsnIntervalSum / lsnIntervalCount,
             entry == null ? -1 : entry.getKey().intValue(), entry == null ? -1 : entry.getValue().size(),
-            exclusiveWriteCacheSize.get(), exclusiveWriteCacheMaxSize, lsnPagesIteratorSegment, lastTsLSNFlush,
+            exclusiveWriteCacheSize.get(), lsnPagesIteratorSegment, lastTsLSNFlush,
             lsnFlushIntervalSum / lsnFlushIntervalCount / 1_000_000);
 
         reportTs = ts;
@@ -2429,7 +2365,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     assert ewcSize >= 0;
 
-    if (ewcSize >= exclusiveWriteCacheMaxSize / 2) {
+    if (ewcSize > 0) {
       if (!flushMode.equals(FLUSH_MODE.EXCLUSIVE)) {
         flushMode = FLUSH_MODE.EXCLUSIVE;
 
@@ -2449,8 +2385,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           flushMode = FLUSH_MODE.IDLE;
         }
       }
-    } else {
-      releaseExclusiveLatch();
     }
 
     return flushedPages;
@@ -2600,12 +2534,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final long ewcSize = exclusiveWriteCacheSize.get();
       assert ewcSize >= 0;
 
-      if (ewcSize >= exclusiveWriteCacheMaxSize / 2) {
+      if (ewcSize > 0) {
         exclusivePagesSum += flushExclusiveWriteCache();
-      } else {
-        releaseExclusiveLatch();
       }
-
     }
   }
 
@@ -2666,7 +2597,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final long startTs = System.nanoTime();
 
       try {
-        if (writeCachePages.isEmpty() || exclusiveWriteCacheSize.get() >= exclusiveWriteCacheMaxSize / 2) {
+        if (writeCachePages.isEmpty()) {
           scheduleNextRun(pagesFlushInterval);
           return;
         }
@@ -2681,8 +2612,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         exclusivePagesSum += flushedPages;
 
         if (flushedPages >= pagesFlushLimit) {
-          releaseExclusiveLatch();
-
           scheduleNextRun(pagesFlushInterval);
           return;
         }
@@ -2793,8 +2722,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           } else {
             scheduleNextRun(timeInMS / 3);
           }
-
-          releaseExclusiveLatch();
         } else {
           scheduleNextRun(pagesFlushInterval);
         }
@@ -3014,7 +2941,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           if (lastFileId != pageKey.fileId || lastPageIndex != pageKey.pageIndex - 1) {
             if (!chunk.isEmpty()) {
               flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
-              releaseExclusiveLatch();
             }
 
             maxFullLogLSN = null;
@@ -3027,7 +2953,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           //we marked page as dirty but did not put it in cache yet
           if (!chunk.isEmpty()) {
             flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
-            releaseExclusiveLatch();
           }
 
           break flushCycle;
@@ -3065,8 +2990,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         if (chunk.size() >= pagesFlushLimit) {
           flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
-          releaseExclusiveLatch();
-
           maxFullLogLSN = null;
 
           lastPageIndex = -1;
@@ -3079,7 +3002,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       if (!chunk.isEmpty()) {
         flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
-        releaseExclusiveLatch();
       }
 
       if (lsnPagesIterator != null) {
@@ -3105,19 +3027,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
 
     return flushedPages;
-  }
-
-  private void releaseExclusiveLatch() {
-    final long ewcSize = exclusiveWriteCacheSize.get();
-
-    if (ewcSize == 0) {
-      final CountDownLatch latch = exclusivePagesLimitLatch.get();
-      if (latch != null) {
-        latch.countDown();
-      }
-
-      exclusivePagesLimitLatch.set(null);
-    }
   }
 
   private int flushPagesChunk(final ArrayList<OTriple<Long, ByteBuffer, OCachePointer>> chunk, OLogSequenceNumber fullLogLSN)
@@ -3219,7 +3128,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         if (!iterator.hasNext()) {
           if (!chunk.isEmpty()) {
             flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
-            releaseExclusiveLatch();
           }
 
           lastFileId = -1;
@@ -3232,7 +3140,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         if (!iterator.hasNext()) {
           if (!chunk.isEmpty()) {
             flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
-            releaseExclusiveLatch();
           }
 
           break flushCycle;
@@ -3283,7 +3190,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             if (lastFileId != pointer.getFileId() || lastPageIndex != pointer.getPageIndex() - 1) {
               if (!chunk.isEmpty()) {
                 flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
-                releaseExclusiveLatch();
               }
 
               maxFullLogLSN = null;
@@ -3301,13 +3207,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       if (!chunk.isEmpty()) {
         flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
-        releaseExclusiveLatch();
       }
 
       maxFullLogLSN = null;
     }
-
-    releaseExclusiveLatch();
 
     if (!chunk.isEmpty()) {
       throw new IllegalStateException("Chunk is not empty !");

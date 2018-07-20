@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerforman
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 
 public interface OWriteCache {
   /**
@@ -92,7 +91,7 @@ public interface OWriteCache {
 
   void store(long fileId, long pageIndex, OCachePointer dataPointer);
 
-  CountDownLatch checkCacheOverflow();
+  void checkCacheOverflow() throws InterruptedException;
 
   OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
       boolean verifyChecksums) throws IOException;
