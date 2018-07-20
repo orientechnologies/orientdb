@@ -609,6 +609,10 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
+  public void clearEvictionCandidates() {
+  }
+
+  @Override
   public void addEvictionCandidate(long fileId, long pageIndex) {
   }
 
@@ -725,7 +729,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
     return firstIntId == secondIntId;
   }
-
 
   @Override
   public String restoreFileById(final long fileId) {

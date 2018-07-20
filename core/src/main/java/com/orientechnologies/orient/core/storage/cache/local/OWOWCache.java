@@ -625,6 +625,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     pageIsBrokenListeners.removeAll(itemsToRemove);
   }
 
+  @Override
+  public void clearEvictionCandidates() {
+    evictionCandidates.clear();
+  }
+
   public void addEvictionCandidate(long fileId, long pageIndex) {
     final PageKey pageKey = new PageKey(internalFileId(fileId), pageIndex);
 
