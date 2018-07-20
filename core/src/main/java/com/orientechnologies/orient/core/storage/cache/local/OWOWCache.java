@@ -2399,7 +2399,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             dirtyPagesPercentSum / dirtyPagesPercentCount, lsnPagesSum, exclusivePagesSum, lsnIntervalSum / lsnIntervalCount,
             entry == null ? -1 : entry.getKey().intValue(), entry == null ? -1 : entry.getValue().size(),
             exclusiveWriteCacheSize.get(), exclusiveWriteCacheMaxSize, lsnPagesIteratorSegment, lastTsLSNFlush,
-            lsnFlushIntervalSum / lsnFlushIntervalCount);
+            lsnFlushIntervalSum / lsnFlushIntervalCount / 1_000_000);
 
         reportTs = ts;
 
