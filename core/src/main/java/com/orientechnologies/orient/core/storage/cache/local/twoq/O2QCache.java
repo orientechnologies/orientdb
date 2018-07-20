@@ -1034,10 +1034,12 @@ public final class O2QCache implements OReadCache {
             //see #restoreQueueWithPageLoad for details
             if (cachePointer != null) {
               final CountDownLatch latch = writeCache.checkCacheOverflow();
-              try {
-                latch.await();
-              } catch (InterruptedException e) {
-                throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
+              if (latch != null) {
+                try {
+                  latch.await();
+                } catch (InterruptedException e) {
+                  throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
+                }
               }
 
               cachePointer.decrementReadersReferrer();
@@ -1068,10 +1070,12 @@ public final class O2QCache implements OReadCache {
             //see #restoreQueueWithPageLoad for details
             if (cachePointer != null) {
               final CountDownLatch latch = writeCache.checkCacheOverflow();
-              try {
-                latch.await();
-              } catch (InterruptedException e) {
-                throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
+              if (latch != null) {
+                try {
+                  latch.await();
+                } catch (InterruptedException e) {
+                  throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
+                }
               }
 
               cachePointer.decrementReadersReferrer();
