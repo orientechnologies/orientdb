@@ -26,12 +26,12 @@ public class ViewManager {
 
   public void start() {
     thread = new ViewThread(this, dbSupplier);
-    thread.start();
+//    thread.start();
   }
 
   public void close() {
     try {
-      thread.finish();
+//      thread.finish();
     } catch (Exception e) {
       e.printStackTrace();
     }
