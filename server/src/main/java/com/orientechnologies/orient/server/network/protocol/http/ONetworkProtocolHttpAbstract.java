@@ -51,6 +51,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.put.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
+import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -202,6 +203,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     connection.getStats().lastCommandExecutionTime = System.currentTimeMillis() - begin;
     connection.getStats().totalCommandExecutionTime += connection.getStats().lastCommandExecutionTime;
+
+    // request type does not have
+    OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) -1);
   }
 
   private List<String> getActiveQueries(ODatabaseDocumentInternal database) {
