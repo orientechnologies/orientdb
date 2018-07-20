@@ -2691,10 +2691,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           lsnFlushInterval = 0;
         } else {
           lsnFlushInterval = startTs - lastTsLSNFlush;
-        }
 
-        lsnFlushIntervalSum += lsnFlushInterval;
-        lsnIntervalCount++;
+          lsnFlushIntervalSum += lsnFlushInterval;
+          lsnIntervalCount++;
+        }
 
         long startSegment = writeAheadLog.begin().getSegment();
         long endSegment = writeAheadLog.end().getSegment();
