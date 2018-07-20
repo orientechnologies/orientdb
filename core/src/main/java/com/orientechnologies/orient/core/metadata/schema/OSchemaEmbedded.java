@@ -204,9 +204,9 @@ public class OSchemaEmbedded extends OSchemaShared {
   }
 
   @Override
-  public OView createView(ODatabaseDocumentInternal database, String viewName, String statement, boolean updatable) {
+  public OView createView(ODatabaseDocumentInternal database, String viewName, String statement, Map<String, Object> metadata) {
     OViewConfig cfg = new OViewConfig(viewName, statement);
-    cfg.setUpdatable(updatable);
+//    cfg.setUpdatable(updatable);
     return createView(database, cfg);
   }
 

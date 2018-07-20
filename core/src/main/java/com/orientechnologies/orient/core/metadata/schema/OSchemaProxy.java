@@ -26,10 +26,7 @@ import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Proxy class to use the shared OSchemaShared instance. Before to delegate each operations it sets the current database in the
@@ -181,11 +178,12 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 
   @Override
   public OView createView(String viewName, String statement) {
-    return createView(database, viewName, statement, false);
+    return createView(database, viewName, statement, new HashMap<>());
   }
 
-  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable) {
-    return delegate.createView(database, viewName, statement, updatable);
+  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement,
+      Map<String, Object> metadata) {
+    return delegate.createView(database, viewName, statement, metadata);
   }
 
   @Override

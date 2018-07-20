@@ -255,7 +255,7 @@ public abstract class OSchemaShared implements OCloseable {
   public abstract OClass createClass(ODatabaseDocumentInternal database, final String className, int clusters,
       OClass... superClasses);
 
-  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable);
+  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata);
 
   public abstract OView createView(ODatabaseDocumentInternal database, OViewConfig cfg);
 

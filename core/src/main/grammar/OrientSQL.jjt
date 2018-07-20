@@ -4090,7 +4090,7 @@ OCreateViewStatement CreateViewStatement():
 		jjtThis.name = Identifier()
 		[ <IF> <NOT> <EXISTS> { jjtThis.ifNotExists = true; }]
 		<FROM> <LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
-		[ <UPDATABLE> { jjtThis.updatable = true; } ]
+		[ <METADATA> jjtThis.metadata = Json() ]
 	)
 	{ return jjtThis; }
 }

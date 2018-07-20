@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClust
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface OSchema {
@@ -88,7 +89,7 @@ public interface OSchema {
 
   OView createView(final String viewName, String statement);
 
-  OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable);
+  OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata);
 
   OView createView(OViewConfig config);
 

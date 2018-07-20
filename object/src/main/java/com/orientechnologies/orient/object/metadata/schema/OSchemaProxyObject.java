@@ -35,10 +35,7 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import javassist.util.proxy.Proxy;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
@@ -192,8 +189,8 @@ public class OSchemaProxyObject implements OSchemaObject {
     return underlying.createView(viewName, statement);
   }
 
-  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable) {
-    return underlying.createView(database, viewName, statement, updatable);
+  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata) {
+    return underlying.createView(database, viewName, statement, metadata);
   }
 
   @Override

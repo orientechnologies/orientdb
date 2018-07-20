@@ -258,7 +258,7 @@ public class OSchemaRemote extends OSchemaShared {
   }
 
   @Override
-  public OView createView(ODatabaseDocumentInternal database, String name, String statement, boolean updatable) {
+  public OView createView(ODatabaseDocumentInternal database, String name, String statement, Map<String, Object> metadata) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(name);
     if (wrongCharacter != null)
       throw new OSchemaException(
@@ -279,9 +279,9 @@ public class OSchemaRemote extends OSchemaShared {
       cmd.append(name);
       cmd.append('`');
       cmd.append(" FROM (" + statement + ") ");
-      if (updatable) {
-        cmd.append(" UPDATABLE");
-      }
+//      if (metadata!=null) {//TODO
+//        cmd.append(" METADATA");
+//      }
 
       database.command(cmd.toString()).close();
       reload(database);
