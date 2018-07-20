@@ -2638,9 +2638,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           localDirtyPagesRebuildTS = startTs;
           //rebuild every 5s
-          if ((localDirtyPages.isEmpty() || localDirtyPagesRebuildInterval >= 5 * 1_000_000_000L) && !dirtyPages.isEmpty()) {
+          //if ((localDirtyPages.isEmpty() || localDirtyPagesRebuildInterval >= 5 * 1_000_000_000L) && !dirtyPages.isEmpty()) {
             convertSharedDirtyPagesToLocal();
-          }
+          //}
 
           Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
 
@@ -2659,9 +2659,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
                 lsnPagesSum += lsnPages;
 
-                if (localDirtyPages.isEmpty() && !dirtyPages.isEmpty()) {
+                //if (localDirtyPages.isEmpty() && !dirtyPages.isEmpty()) {
                   convertSharedDirtyPagesToLocal();
-                }
+                //}
 
                 lsnEntry = localDirtyPagesBySegment.firstEntry();
 
@@ -2688,9 +2688,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               lsnPagesSum += lsnPages;
 
-              if (localDirtyPages.isEmpty() && !dirtyPages.isEmpty()) {
+              //if (localDirtyPages.isEmpty() && !dirtyPages.isEmpty()) {
                 convertSharedDirtyPagesToLocal();
-              }
+              //}
 
               lsnEntry = localDirtyPagesBySegment.firstEntry();
 
@@ -2824,9 +2824,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       throws InterruptedException, IOException {
     //first we try to find page which contains the oldest not flushed changes
     //that is needed to allow to compact WAL as earlier as possible
-    if (localDirtyPages.isEmpty() && !dirtyPages.isEmpty()) {
+    //if (localDirtyPages.isEmpty() && !dirtyPages.isEmpty()) {
       convertSharedDirtyPagesToLocal();
-    }
+    //}
 
     if (!skipRecencyBit) {
       if (lsnPagesIteratorSegment < segStart || lsnPagesIteratorSegment >= segEnd) {
