@@ -6,6 +6,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.OEdgeToVertexIterable;
+import com.orientechnologies.orient.core.record.impl.OEdgeToVertexIterator;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -114,6 +117,16 @@ public class OProjectionItem extends SimpleNode {
     if (value instanceof ORidBag) {
       List result = new ArrayList();
       ((ORidBag) value).forEach(x -> result.add(x));
+      return result;
+    }
+    if (value instanceof OEdgeToVertexIterable) {
+      value = ((OEdgeToVertexIterable) value).iterator();
+    }
+    if (value instanceof OEdgeToVertexIterator) {
+      List<ORID> result = new ArrayList<>();
+      while (((OEdgeToVertexIterator) value).hasNext()) {
+        result.add(((OEdgeToVertexIterator) value).next().getIdentity());
+      }
       return result;
     }
     return value;
