@@ -2383,10 +2383,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         System.out.printf(
             "Avg. percent of dirty pages %d, count of flushed lsn pages %d, count of flushed of exclusive pages %d, avg. "
                 + " lsn flush interval %d, first dirty pages segment index %d, first dirty pages segment size %d, "
-                + "amount of exclusive pages %d, current segment of LSN pages iterator %d\n",
+                + "amount of exclusive pages %d, exclusive write cache max size %d, current segment of LSN pages iterator %d\n",
             dirtyPagesPercentSum / dirtyPagesPercentCount, lsnPagesSum, exclusivePagesSum, lsnIntervalSum / lsnIntervalCount,
             entry == null ? -1 : entry.getKey().intValue(), entry == null ? -1 : entry.getValue().size(),
-            exclusiveWriteCacheSize.get(), lsnPagesIteratorSegment);
+            exclusiveWriteCacheSize.get(), exclusiveWriteCacheMaxSize, lsnPagesIteratorSegment);
 
         reportTs = ts;
 
