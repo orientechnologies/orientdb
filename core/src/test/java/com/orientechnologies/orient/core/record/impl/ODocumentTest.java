@@ -2112,4 +2112,115 @@ public class ODocumentTest {
     }
   }
   
+  @Test
+  public void testUpdateEmbeddedMapDelta(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      String fieldName = "testField";
+      Map<String, String> mapValue = new HashMap<>();
+      mapValue.put("first", "one"); mapValue.put("second", "two");
+      Map<String, String> copyMap = new HashMap<>(mapValue);
+
+      doc.field(fieldName, mapValue, OType.EMBEDDEDMAP);
+      ODocument originalDoc = new ODocument(claz);
+      originalDoc.field(fieldName, copyMap);
+
+      doc = db.save(doc);
+      ODocument originaDoc = doc.copy();
+      
+      Map<String, String> containedMap = doc.field(fieldName);
+      containedMap.put("first", "changed");
+      ODocumentDelta dc = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
+      byte[] stream = ddSer.toStream(dc);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(dc, dcCopy);
+
+      ODocumentDelta updatePart = dc.field("u");
+            
+      originaDoc.mergeUpdateDelta(updatePart);
+      containedMap = originaDoc.field(fieldName);
+      assertEquals("changed", containedMap.get("first"));
+    }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
+  @Test
+  public void testUpdateListOfEmbeddedMapDelta(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      String fieldName = "testField";
+      List<Map<String, String>> originalValue = new ArrayList<>();
+      List<Map<String, String>> copyValue = new ArrayList<>();
+      for (int i = 0; i < 2; i++){
+        Map<String, String> mapValue = new HashMap<>();
+        mapValue.put("first", "one"); mapValue.put("second", "two");
+        Map<String, String> copyMap = new HashMap<>(mapValue);
+        
+        originalValue.add(mapValue);
+        copyValue.add(copyMap);
+      }
+
+      doc.field(fieldName, originalValue, OType.EMBEDDEDLIST);
+      ODocument originalDoc = new ODocument(claz);
+      originalDoc.field(fieldName, copyValue);
+
+      doc = db.save(doc);
+      ODocument originaDoc = doc.copy();
+      
+      Map<String, String> containedMap = (Map<String, String>)((List)doc.field(fieldName)).get(0);
+      containedMap.put("first", "changed");
+      ODocumentDelta dc = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
+      byte[] stream = ddSer.toStream(dc);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(dc, dcCopy);
+
+      ODocumentDelta updatePart = dc.field("u");
+            
+      originaDoc.mergeUpdateDelta(updatePart);
+      containedMap = (Map<String, String>)((List)originaDoc.field(fieldName)).get(0);
+      assertEquals("changed", containedMap.get("first"));
+      containedMap = (Map<String, String>)((List)originaDoc.field(fieldName)).get(1);
+      assertEquals("one", containedMap.get("first"));
+    }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
 }

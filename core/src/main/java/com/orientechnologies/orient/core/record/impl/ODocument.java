@@ -3495,7 +3495,7 @@ public class ODocument extends ORecordAbstract
           }
           else if (currentElement instanceof List){
             List currentElementAsList = (List)currentElement;
-            if (ODocumentEntry.isChangedList(currentElementAsList, parent)){
+            if (ODocumentHelper.isChangedList(currentElementAsList, parent)){
               ODocumentDelta listElementDelta = new ODocumentDelta();
               listElementDelta.field("i", i);
               listElementDelta.field("t", UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd());
@@ -3509,7 +3509,7 @@ public class ODocument extends ORecordAbstract
           }
           else{
             //element
-            OMultiValueChangeEvent.OChangeType changeType = ODocumentEntry.isNestedValueChanged(parent, currentElement, ownersTrace, 1, i);
+            OMultiValueChangeEvent.OChangeType changeType = ODocumentHelper.isNestedValueChanged(parent, currentElement, ownersTrace, 1, i);
             if (changeType != null){
               ODocumentDelta deltaElement = new ODocumentDelta();              
               deltaElement.field("v", currentElement);
@@ -3519,13 +3519,10 @@ public class ODocument extends ORecordAbstract
                   deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd());
                   break;
                 case UPDATE:
+                case NESTED:
                   deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd());
                   break;                
-                  //can never happen
-//                case NESTED:
-//                  deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd());
-//                  break;
-                  //can never happen
+                  //should never happen
 //                case REMOVE:
 //                  deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd());
 //                  break;
@@ -3581,7 +3578,7 @@ public class ODocument extends ORecordAbstract
     }    
   }
   
-   private static List<Integer> isNestedValueChanged(ONestedMultiValueChangeEvent event, List list, List<Object> ownersTrace, int ownersTraceOffset) {
+   private static List<Integer> getRemovedIndexes(ONestedMultiValueChangeEvent event, List list, List<Object> ownersTrace, int ownersTraceOffset) {
     List<Integer> retList = new ArrayList<>();
     if (event.getTimeLine() != null) {
       List<OMultiValueChangeEvent<Object, Object>> events = event.getTimeLine().getMultiValueChangeEvents();
@@ -3591,7 +3588,7 @@ public class ODocument extends ORecordAbstract
                   && nestedEvent.getKey() == ownersTrace.get(ownersTraceOffset)
                   && nestedEvent instanceof ONestedMultiValueChangeEvent) {
             ONestedMultiValueChangeEvent ne = (ONestedMultiValueChangeEvent) nestedEvent;
-            List<Integer> ret = isNestedValueChanged(ne, list, ownersTrace, ownersTraceOffset + 1);
+            List<Integer> ret = getRemovedIndexes(ne, list, ownersTrace, ownersTraceOffset + 1);
             if (ret != null) {
               return ret;
             }
@@ -3618,7 +3615,7 @@ public class ODocument extends ORecordAbstract
               event.getKey() == ownersTrace.get(ownersTraceOffset) && 
               event instanceof ONestedMultiValueChangeEvent){
             ONestedMultiValueChangeEvent nestedEvent = (ONestedMultiValueChangeEvent)event;
-            List<Integer> ret = isNestedValueChanged(nestedEvent, list, ownersTrace, ownersTraceOffset + 1);
+            List<Integer> ret = getRemovedIndexes(nestedEvent, list, ownersTrace, ownersTraceOffset + 1);
             if (ret != null){
               retList.addAll(ret);
             }
