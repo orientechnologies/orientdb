@@ -392,8 +392,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private long reportTs = -1;
 
-  private long lastTsLSNFlush      = -1;
-  private long lastTsEvictionFlush = -1;
+  private          long    lastTsLSNFlush            = -1;
+  private          long    lastTsEvictionFlush       = -1;
+  private volatile boolean refreshEvictionCandidates = false;
 
   private final Set<PageKey> evictionCandidates = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
@@ -627,8 +628,13 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   @Override
   public void clearEvictionCandidates() {
-    System.out.printf("Eviction candidates size %d\n", evictionCandidates.size());
     evictionCandidates.clear();
+    refreshEvictionCandidates = false;
+  }
+
+  @Override
+  public boolean isRefreshEvictionCandidates() {
+    return refreshEvictionCandidates;
   }
 
   public void addEvictionCandidate(long fileId, long pageIndex) {
@@ -3206,8 +3212,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     TreeSet<PageKey> candidates = new TreeSet<>(evictionCandidates);
     List<PageKey> flushedPages = new ArrayList<>();
 
-    System.out.printf("Eviction candidates size %d \n", candidates.size());
-    ;
     Iterator<PageKey> iterator = candidates.iterator();
 
     int copiedPages = 0;
@@ -3313,8 +3317,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     evictionCandidates.removeAll(flushedPages);
 
-    System.out.printf("Flushed eviction candidates size %d \n", flushedPages.size());
-
+    refreshEvictionCandidates = true;
     return countOfFlushedPages;
   }
 

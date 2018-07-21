@@ -47,7 +47,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
@@ -111,7 +110,6 @@ public final class O2QCache implements OReadCache {
   private final OPartitionedLockManager<PageKey>       pageLockManager = new OPartitionedLockManager<>();
   private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages     = new ConcurrentHashMap<>();
 
-  private final AtomicLong    loadCounter             = new AtomicLong();
   private final AtomicBoolean evictionReportInProgers = new AtomicBoolean();
 
   /**
@@ -503,40 +501,42 @@ public final class O2QCache implements OReadCache {
         fileLock.unlock();
       }
 
-      final long loads = loadCounter.incrementAndGet();
-      if (loads % 10_000 == 0) {
+      if (writeCache.isRefreshEvictionCandidates()) {
         final int currentSize = am.size() + a1in.size();
         final int maxSize = memoryDataContainer.get().get2QCacheSize();
+
         if (100 * currentSize / maxSize >= 80) {
           if (evictionReportInProgers.compareAndSet(false, true)) {
             writeCache.clearEvictionCandidates();
 
+            int totalCounter = 0;
             int counter = 0;
             Iterator<OCacheEntry> iterator = am.reverseIterator();
 
-            while (counter < 256 && iterator.hasNext()) {
+            while (totalCounter < 1000 && counter < 256 && iterator.hasNext()) {
               final OCacheEntry entry = iterator.next();
 
               if (entry.isDirty()) {
-                writeCache.addEvictionCandidate(cacheEntry.getFileId(), cacheEntry.getPageIndex());
+                writeCache.addEvictionCandidate(entry.getFileId(), cacheEntry.getPageIndex());
                 counter++;
               }
 
-              if (counter < 10) {
-                System.out.println("Eviction candidate " + entry);
-              }
+              totalCounter++;
             }
 
             iterator = a1in.reverseIterator();
             counter = 0;
+            totalCounter = 0;
 
-            while (counter < 256 && iterator.hasNext()) {
+            while (totalCounter < 1000 && counter < 256 && iterator.hasNext()) {
               final OCacheEntry entry = iterator.next();
 
               if (entry.isDirty()) {
-                writeCache.addEvictionCandidate(cacheEntry.getFileId(), cacheEntry.getPageIndex());
+                writeCache.addEvictionCandidate(entry.getFileId(), cacheEntry.getPageIndex());
                 counter++;
               }
+
+              totalCounter++;
             }
 
             evictionReportInProgers.set(false);
