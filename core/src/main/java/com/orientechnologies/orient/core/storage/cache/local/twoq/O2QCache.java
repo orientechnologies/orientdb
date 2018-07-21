@@ -509,7 +509,7 @@ public final class O2QCache implements OReadCache {
         fileLock.unlock();
       }
 
-      if (loadCounter.incrementAndGet() % 400 == 0) {
+      if (loadCounter.incrementAndGet() % 200 == 0) {
         final int currentSize = am.size() + a1in.size();
         final int maxSize = memoryDataContainer.get().get2QCacheSize();
 
