@@ -617,6 +617,11 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
+  public boolean isRefreshEvictionCandidates() {
+    return false;
+  }
+
+  @Override
   public void addLowDiskSpaceListener(final OLowDiskSpaceListener listener) {
   }
 
