@@ -13,11 +13,11 @@ public class SecondPhaseResponseHandler implements OResponseHandler {
   }
 
   @Override
-  public void receive(ODistributedCoordinator coordinator, ORequestContext context1, ONodeResponse response) {
+  public void receive(ODistributedCoordinator coordinator, ORequestContext context1, ODistributedMember member, ONodeResponse response) {
     if (context1.getResponses().size() >= context1.getQuorum() && !done) {
       done = true;
       submitTx.secondPhase = true;
-      member.reply(new OSubmitResponse() {
+      this.member.reply(new OSubmitResponse() {
       });
     }
   }

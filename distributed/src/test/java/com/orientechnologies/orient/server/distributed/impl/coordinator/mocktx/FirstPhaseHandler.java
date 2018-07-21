@@ -13,11 +13,11 @@ public class FirstPhaseHandler implements OResponseHandler {
   }
 
   @Override
-  public void receive(ODistributedCoordinator coordinator1, ORequestContext context, ONodeResponse response) {
+  public void receive(ODistributedCoordinator coordinator1, ORequestContext context, ODistributedMember member, ONodeResponse response) {
     if (context.getResponses().size() >= context.getQuorum() && !done) {
       done = true;
       submitTx.firstPhase = true;
-      coordinator1.sendOperation(submitTx, new OPhase2Tx(), new SecondPhaseResponseHandler(submitTx, member));
+      coordinator1.sendOperation(submitTx, new OPhase2Tx(), new SecondPhaseResponseHandler(submitTx, this.member));
     }
   }
 

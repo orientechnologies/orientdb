@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
 import java.util.Map;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.*;
 
 public class ODistributedCoordinator implements AutoCloseable {
@@ -25,9 +24,9 @@ public class ODistributedCoordinator implements AutoCloseable {
     });
   }
 
-  public void receive(OLogId relativeRequest, ONodeResponse response) {
+  public void receive(ODistributedMember member, OLogId relativeRequest, ONodeResponse response) {
     requestExecutor.execute(() -> {
-      contexts.get(relativeRequest).receive(response);
+      contexts.get(relativeRequest).receive(member, response);
     });
   }
 

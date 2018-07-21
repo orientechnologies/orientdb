@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ORequestContext {
 
@@ -8,14 +9,14 @@ public class ORequestContext {
     STARTED, QUORUM_OK, QUORUM_KO
   }
 
-  private OSubmitRequest                 submitRequest;
-  private ONodeRequest                   nodeRequest;
-  private Collection<ODistributedMember> involvedMembers;
-  private List<ONodeResponse>            responses = Collections.synchronizedList(new ArrayList<>());
-  private ODistributedCoordinator        coordinator;
-  private int                            quorum;
-  private OResponseHandler               handler;
-  private TimerTask                      timerTask;
+  private OSubmitRequest                         submitRequest;
+  private ONodeRequest                           nodeRequest;
+  private Collection<ODistributedMember>         involvedMembers;
+  private Map<ODistributedMember, ONodeResponse> responses = new ConcurrentHashMap<>();
+  private ODistributedCoordinator                coordinator;
+  private int                                    quorum;
+  private OResponseHandler                       handler;
+  private TimerTask                              timerTask;
 
   public ORequestContext(ODistributedCoordinator coordinator, OSubmitRequest submitRequest, ONodeRequest nodeRequest,
       Collection<ODistributedMember> involvedMembers, OResponseHandler handler) {
@@ -38,12 +39,12 @@ public class ORequestContext {
 
   }
 
-  public void receive(ONodeResponse response) {
-    responses.add(response);
-    handler.receive(coordinator, this, response);
+  public void receive(ODistributedMember member, ONodeResponse response) {
+    responses.put(member, response);
+    handler.receive(coordinator, this, member, response);
   }
 
-  public List<ONodeResponse> getResponses() {
+  public Map<ODistributedMember, ONodeResponse> getResponses() {
     return responses;
   }
 

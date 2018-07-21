@@ -90,7 +90,7 @@ public class CoordinatorTxTest {
     @Override
     public void sendResponse(OLogId id, ONodeResponse nodeResponse) {
       //This in real case should do a network call on the side of the executor node and this call should be in the coordinator node.
-      coordinator.receive(id, nodeResponse);
+      coordinator.receive(member, id, nodeResponse);
     }
 
     @Override

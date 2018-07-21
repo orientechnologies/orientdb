@@ -19,6 +19,7 @@ public class ODistributedCoordinatorTest {
     MockChannel channel = new MockChannel();
     channel.coordinator = coordinator;
     ODistributedMember one = new ODistributedMember("one", channel);
+    channel.member = one;
     coordinator.join(one);
 
     coordinator.submit(one, new OSubmitRequest() {
@@ -27,7 +28,8 @@ public class ODistributedCoordinatorTest {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
-          public void receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeResponse response) {
+          public void receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+              ONodeResponse response) {
             if (context.getResponses().size() == 1) {
               responseReceived.countDown();
             }
@@ -54,17 +56,17 @@ public class ODistributedCoordinatorTest {
     channel.coordinator = coordinator;
     channel.reply = responseReceived;
     ODistributedMember one = new ODistributedMember("one", channel);
+    channel.member = one;
     coordinator.join(one);
 
     coordinator.submit(one, new OSubmitRequest() {
-      private boolean state = true;
-
       @Override
       public void begin(ODistributedMember member, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
-          public void receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeResponse response) {
+          public void receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+              ONodeResponse response) {
             if (context.getResponses().size() == 1) {
               coordinator.sendOperation(null, new ONodeRequest() {
                 @Override
@@ -73,7 +75,8 @@ public class ODistributedCoordinatorTest {
                 }
               }, new OResponseHandler() {
                 @Override
-                public void receive(ODistributedCoordinator coordinator, ORequestContext context, ONodeResponse response) {
+                public void receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+                    ONodeResponse response) {
                   if (context.getResponses().size() == 1) {
                     member.reply(new OSubmitResponse() {
                     });
@@ -97,16 +100,52 @@ public class ODistributedCoordinatorTest {
     });
 
     assertTrue(responseReceived.await(1, TimeUnit.SECONDS));
+  }
+
+  @Test
+  public void simpleTimeoutTest() throws InterruptedException {
+    CountDownLatch timedOut = new CountDownLatch(1);
+    OOperationLog operationLog = new MockOperationLog();
+
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog);
+    MockChannel channel = new MockChannel();
+    channel.coordinator = coordinator;
+    ODistributedMember one = new ODistributedMember("one", channel);
+    channel.member = one;
+    coordinator.join(one);
+
+    coordinator.submit(one, new OSubmitRequest() {
+      @Override
+      public void begin(ODistributedMember member, ODistributedCoordinator coordinator) {
+        MockNodeRequest nodeRequest = new MockNodeRequest();
+        coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
+          @Override
+          public void receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+              ONodeResponse response) {
+
+          }
+
+          @Override
+          public void timeout(ODistributedCoordinator coordinator, ORequestContext context) {
+            timedOut.countDown();
+          }
+        });
+      }
+    });
+
+    //This is 2 seconds because timeout is hard coded with 1 sec now
+    assertTrue(timedOut.await(2, TimeUnit.SECONDS));
 
   }
 
   private static class MockChannel implements ODistributedChannel {
     public ODistributedCoordinator coordinator;
     public CountDownLatch          reply;
+    public ODistributedMember      member;
 
     @Override
     public void sendRequest(OLogId id, ONodeRequest request) {
-      coordinator.receive(id, new ONodeResponse() {
+      coordinator.receive(member, id, new ONodeResponse() {
       });
     }
 
