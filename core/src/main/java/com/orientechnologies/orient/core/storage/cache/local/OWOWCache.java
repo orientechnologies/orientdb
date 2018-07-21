@@ -631,7 +631,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   public void addEvictionCandidate(long fileId, long pageIndex) {
-    final PageKey pageKey = new PageKey(internalFileId(fileId), pageIndex);
+    final PageKey pageKey = new PageKey(extractFileId(fileId), pageIndex);
     evictionCandidates.add(pageKey);
   }
 
@@ -3205,6 +3205,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     TreeSet<PageKey> candidates = new TreeSet<>(evictionCandidates);
     List<PageKey> flushedPages = new ArrayList<>();
 
+    System.out.printf("Eviction candidates size %d \n", candidates.size());
+    ;
     Iterator<PageKey> iterator = candidates.iterator();
 
     int copiedPages = 0;
@@ -3309,6 +3311,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
 
     evictionCandidates.removeAll(flushedPages);
+
+    System.out.printf("Flushed eviction candidates size %d \n", flushedPages.size());
+
     return countOfFlushedPages;
   }
 

@@ -509,8 +509,6 @@ public final class O2QCache implements OReadCache {
         final int maxSize = memoryDataContainer.get().get2QCacheSize();
         if (100 * currentSize / maxSize >= 80) {
           if (evictionReportInProgers.compareAndSet(false, true)) {
-            long total = 0;
-
             writeCache.clearEvictionCandidates();
 
             int counter = 0;
@@ -525,8 +523,6 @@ public final class O2QCache implements OReadCache {
               }
             }
 
-            total += counter;
-
             iterator = a1in.reverseIterator();
             counter = 0;
 
@@ -538,10 +534,6 @@ public final class O2QCache implements OReadCache {
                 counter++;
               }
             }
-
-            total += counter;
-
-            System.out.printf("%d eviction candidates were added\n", total);
 
             evictionReportInProgers.set(false);
           }
@@ -555,7 +547,6 @@ public final class O2QCache implements OReadCache {
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.incrementPageAccessOnCacheLevel(cacheHit.getValue());
     }
-
 
     return new UpdateCacheResult(removeColdPages, cacheEntry);
   }
