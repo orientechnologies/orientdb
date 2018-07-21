@@ -89,7 +89,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -376,14 +375,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private final long maxCacheSize;
 
-  private long dirtyPagesPercentSum   = 0;
-  private long dirtyPagesPercentCount = 0;
-
   private long exclusivePagesSum = 0;
   private long lsnPagesSum       = 0;
-
-  private long lsnIntervalSum   = 0;
-  private long lsnIntervalCount = 0;
 
   private long lsnFlushIntervalSum   = 0;
   private long lsnFlushIntervalCount = 0;
@@ -393,8 +386,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private long reportTs = -1;
 
   private          long    lastTsLSNFlush            = -1;
-  private          long    lastTsEvictionFlush       = -1;
   private volatile boolean refreshEvictionCandidates = false;
+
+  private long lsnFlushIntervalBoundary = -1;
 
   private final Set<PageKey> evictionCandidates = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
@@ -452,9 +446,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       this.pagesFlushInterval = pageFlushInterval;
       if (pageFlushInterval > 0) {
-        commitExecutor.schedule(new PeriodicFlushTask(), pageFlushInterval, TimeUnit.MILLISECONDS);
-        commitExecutor
-            .scheduleWithFixedDelay(new PeriodicExclusiveFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
+        commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
       }
 
     } finally {
@@ -2330,13 +2322,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     } else {
       long ts = System.nanoTime();
       if (ts - reportTs > 10 * 1_000_000_000L) {
-        if (lsnIntervalCount == 0) {
-          lsnIntervalCount = 1;
-        }
-
-        if (dirtyPagesPercentCount == 0) {
-          dirtyPagesPercentCount = 1;
-        }
 
         if (lsnFlushIntervalCount == 0) {
           lsnFlushIntervalCount = 1;
@@ -2344,12 +2329,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         Map.Entry<Long, TreeSet<PageKey>> entry = localDirtyPagesBySegment.firstEntry();
 
-        System.out.printf(
-            "Avg. percent of dirty pages %d, count of flushed lsn pages %d, count of flushed of exclusive pages %d, avg. "
-                + " lsn flush delay interval %d, first dirty pages segment index %d, first dirty pages segment size %d, "
+        System.out.printf("count of flushed lsn pages %d, count of flushed of exclusive pages %d, avg. "
+                + " first dirty pages segment index %d, first dirty pages segment size %d, "
                 + "amount of exclusive pages %d, avg. LSN flush interval %d, count of eviction candidates flushed %d, size of eviction "
-                + "candidates %d\n", dirtyPagesPercentSum / dirtyPagesPercentCount, lsnPagesSum, exclusivePagesSum,
-            lsnIntervalSum / lsnIntervalCount, entry == null ? -1 : entry.getKey().intValue(),
+                + "candidates %d\n", lsnPagesSum, exclusivePagesSum, entry == null ? -1 : entry.getKey().intValue(),
             entry == null ? -1 : entry.getValue().size(), exclusiveWriteCacheSize.get(),
             lsnFlushIntervalSum / lsnFlushIntervalCount / 1_000_000, evicationCandidatesSum, evictionCandidates.size());
 
@@ -2357,14 +2340,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         evicationCandidatesSum = 0;
 
-        dirtyPagesPercentSum = 0;
-        dirtyPagesPercentCount = 0;
-
         lsnPagesSum = 0;
         exclusivePagesSum = 0;
-
-        lsnIntervalSum = 0;
-        lsnIntervalCount = 0;
 
         lsnFlushIntervalCount = 0;
         lsnFlushIntervalSum = 0;
@@ -2605,18 +2582,12 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         statistic.startWriteCacheFlushTimer();
       }
 
-      int dirtyPagesPercent = (int) (100 * writeCacheSize.get() / maxCacheSize);
-
-      dirtyPagesPercentSum += dirtyPagesPercent;
-      dirtyPagesPercentCount++;
-
       int flushedPages = 0;
       final int pagesFlushLimit = 512;
       final long startTs = System.nanoTime();
 
       try {
         if (writeCachePages.isEmpty()) {
-          scheduleNextRun(pagesFlushInterval);
           return;
         }
 
@@ -2630,37 +2601,19 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         exclusivePagesSum += flushedPages;
 
         if (flushedPages >= pagesFlushLimit) {
-          scheduleNextRun(pagesFlushInterval);
           return;
         }
 
-        long evictionCandidatesFlushInterval;
+        final int evictionFlushed = flushEvictionCandidates(pagesFlushLimit);
+        evicationCandidatesSum += evictionFlushed;
 
-        if (lastTsEvictionFlush == -1) {
-          lastTsEvictionFlush = startTs;
-          evictionCandidatesFlushInterval = 0;
-        } else {
-          evictionCandidatesFlushInterval = startTs - lastTsEvictionFlush;
-        }
-
-        if (evictionCandidatesFlushInterval >= 5 * 1_000_000_000L) {
-          int flushed = flushEvictionCandidates(pagesFlushLimit);
-
-          evicationCandidatesSum += flushed;
-
-          flushedPages += flushed;
-          lastTsEvictionFlush = startTs;
-        }
+        flushedPages += evictionFlushed;
 
         if (flushedPages >= pagesFlushLimit) {
-          final long endTs = System.nanoTime();
-          final long timeInMS = (endTs - startTs) / 1_000_000;
-
-          scheduleNextRun(timeInMS);
           return;
         }
 
-        long lsnFlushInterval;
+        final long lsnFlushInterval;
         if (lastTsLSNFlush == -1) {
           lastTsLSNFlush = startTs;
           lsnFlushInterval = 0;
@@ -2668,92 +2621,23 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           lsnFlushInterval = startTs - lastTsLSNFlush;
         }
 
-        long startSegment = writeAheadLog.begin().getSegment();
-        long endSegment = writeAheadLog.end().getSegment();
-
-        if (!flushMode.equals(FLUSH_MODE.EXCLUSIVE)) {
+        if (lsnFlushInterval >= lsnFlushIntervalBoundary) {
           convertSharedDirtyPagesToLocal();
 
-          Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
+          final Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
+
+          final long startSegment = writeAheadLog.begin().getSegment();
+          final long endSegment = writeAheadLog.end().getSegment();
 
           if (lsnEntry != null && endSegment - startSegment >= 1) {
-            if (!flushMode.equals(FLUSH_MODE.LSN)) {//IDLE flush mode
-              //flush at least once in 5s. to minimize WAL vacuum overhead
-              if (dirtyPagesPercent >= 80 || lsnFlushInterval >= 5 * 1_000_000_000L) {
-                flushMode = FLUSH_MODE.LSN;
-                int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages);
-
-                lsnFlushIntervalSum += lsnFlushInterval;
-                lsnFlushIntervalCount++;
-
-                lastTsLSNFlush = startTs;
-                flushedPages += lsnPages;
-
-                lsnPagesSum += lsnPages;
-
-                convertSharedDirtyPagesToLocal();
-
-                lsnEntry = localDirtyPagesBySegment.firstEntry();
-
-                startSegment = writeAheadLog.begin().getSegment();
-                endSegment = writeAheadLog.end().getSegment();
-
-                dirtyPagesPercent = (int) (100 * writeCacheSize.get() / maxCacheSize);
-
-                dirtyPagesPercentSum += dirtyPagesPercent;
-                dirtyPagesPercentCount++;
-
-                if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 70) {
-                  flushMode = FLUSH_MODE.IDLE;
-                }
-              }
-            } else {
-              int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages);
-
-              lsnFlushIntervalSum += lsnFlushInterval;
-              lsnFlushIntervalCount++;
-
-              lastTsLSNFlush = startTs;
+            int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages);
+            if (lsnPages > 0) {
               flushedPages += lsnPages;
-
-              lsnPagesSum += lsnPages;
-
-              convertSharedDirtyPagesToLocal();
-
-              lsnEntry = localDirtyPagesBySegment.firstEntry();
-
-              startSegment = writeAheadLog.begin().getSegment();
-              endSegment = writeAheadLog.end().getSegment();
-
-              dirtyPagesPercent = (int) (100 * writeCacheSize.get() / maxCacheSize);
-
-              dirtyPagesPercentSum += dirtyPagesPercent;
-              dirtyPagesPercentCount++;
-
-              if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 70) {
-                flushMode = FLUSH_MODE.IDLE;
-              }
+              final long endTs = System.nanoTime();
+              lsnFlushIntervalBoundary = (endTs - startTs) * 4;
             }
-          } else {
-            flushMode = FLUSH_MODE.IDLE;
           }
         }
-
-        if (flushedPages > 0) {
-          final long endTs = System.nanoTime();
-          final long timeInMS = (endTs - startTs) / 1_000_000;
-
-          if (dirtyPagesPercent < 90) {
-            scheduleNextRun(timeInMS);
-          } else if (dirtyPagesPercent < 95) {
-            scheduleNextRun(timeInMS / 2);
-          } else {
-            scheduleNextRun(timeInMS / 3);
-          }
-        } else {
-          scheduleNextRun(pagesFlushInterval);
-        }
-
       } catch (final Error | Exception t) {
         OLogManager.instance().error(this, "Exception during data flush", t);
         OWOWCache.this.fireBackgroundDataFlushExceptionEvent(t);
@@ -2764,20 +2648,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
       }
     }
-
-    private void scheduleNextRun(long millis) {
-      lsnIntervalSum += millis;
-      lsnIntervalCount++;
-
-      try {
-        commitExecutor.schedule(this, millis, TimeUnit.MILLISECONDS);
-      } catch (RejectedExecutionException e) {
-        if (!commitExecutor.isShutdown()) {
-          throw e;
-        }
-      }
-    }
-
   }
 
   final class FindMinDirtySegment implements Callable<Long> {

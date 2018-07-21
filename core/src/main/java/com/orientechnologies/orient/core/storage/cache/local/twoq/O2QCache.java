@@ -47,6 +47,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
@@ -110,7 +111,8 @@ public final class O2QCache implements OReadCache {
   private final OPartitionedLockManager<PageKey>       pageLockManager = new OPartitionedLockManager<>();
   private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages     = new ConcurrentHashMap<>();
 
-  private final AtomicBoolean evictionReportInProgers = new AtomicBoolean();
+  private final AtomicBoolean evictionReportInProgres = new AtomicBoolean();
+  private       AtomicLong    diskLoads               = new AtomicLong();
 
   /**
    * @param readCacheMaxMemory   Maximum amount of direct memory which can allocated by disk cache in bytes.
@@ -457,6 +459,8 @@ public final class O2QCache implements OReadCache {
 
     cacheLock.acquireReadLock();
     try {
+      boolean updateWriteCacheHints = false;
+
       fileLock = fileLockManager.acquireSharedLock(fileId);
       try {
         final PageKey[] pageKeys = new PageKey[pageCount];
@@ -471,9 +475,10 @@ public final class O2QCache implements OReadCache {
           if (cacheEntry != null) {
             cacheHit.setValue(true);
             cacheEntry.incrementUsages();
-            return new UpdateCacheResult(false, cacheEntry);
+            return new UpdateCacheResult(false, cacheEntry, false);
           }
         }
+
         pageLocks = pageLockManager.acquireExclusiveLocksInBatch(pageKeys);
         try {
           if (checkPinnedPages)
@@ -485,6 +490,7 @@ public final class O2QCache implements OReadCache {
             if (cacheResult == null)
               return null;
 
+            updateWriteCacheHints = cacheResult.updateWriteCacheHints;
             cacheEntry = cacheResult.cacheEntry;
             removeColdPages = cacheResult.removeColdPages;
           } else {
@@ -501,23 +507,23 @@ public final class O2QCache implements OReadCache {
         fileLock.unlock();
       }
 
-      if (writeCache.isRefreshEvictionCandidates()) {
+      if (updateWriteCacheHints) {
         final int currentSize = am.size() + a1in.size();
         final int maxSize = memoryDataContainer.get().get2QCacheSize();
 
         if (100 * currentSize / maxSize >= 80) {
-          if (evictionReportInProgers.compareAndSet(false, true)) {
+          if (evictionReportInProgres.compareAndSet(false, true)) {
             writeCache.clearEvictionCandidates();
 
             int totalCounter = 0;
             int counter = 0;
             Iterator<OCacheEntry> iterator = am.reverseIterator();
 
-            while (totalCounter < 1000 && counter < 256 && iterator.hasNext()) {
+            while (totalCounter < 500 && counter < 256 && iterator.hasNext()) {
               final OCacheEntry entry = iterator.next();
 
               if (entry.isDirty()) {
-                writeCache.addEvictionCandidate(entry.getFileId(), cacheEntry.getPageIndex());
+                writeCache.addEvictionCandidate(entry.getFileId(), entry.getPageIndex());
                 counter++;
               }
 
@@ -528,18 +534,18 @@ public final class O2QCache implements OReadCache {
             counter = 0;
             totalCounter = 0;
 
-            while (totalCounter < 1000 && counter < 256 && iterator.hasNext()) {
+            while (totalCounter < 500 && counter < 256 && iterator.hasNext()) {
               final OCacheEntry entry = iterator.next();
 
               if (entry.isDirty()) {
-                writeCache.addEvictionCandidate(entry.getFileId(), cacheEntry.getPageIndex());
+                writeCache.addEvictionCandidate(entry.getFileId(), entry.getPageIndex());
                 counter++;
               }
 
               totalCounter++;
             }
 
-            evictionReportInProgers.set(false);
+            evictionReportInProgres.set(false);
           }
 
         }
@@ -552,7 +558,7 @@ public final class O2QCache implements OReadCache {
       sessionStoragePerformanceStatistic.incrementPageAccessOnCacheLevel(cacheHit.getValue());
     }
 
-    return new UpdateCacheResult(removeColdPages, cacheEntry);
+    return new UpdateCacheResult(removeColdPages, cacheEntry, false);
   }
 
   @Override
@@ -937,7 +943,7 @@ public final class O2QCache implements OReadCache {
     }
 
     pages.add(pageIndex);
-    return new UpdateCacheResult(true, cacheEntry);
+    return new UpdateCacheResult(true, cacheEntry, false);
   }
 
   private UpdateCacheResult updateCache(final long fileId, final long pageIndex, final boolean addNewPages,
@@ -951,15 +957,20 @@ public final class O2QCache implements OReadCache {
     if (cacheEntry != null) {
       cacheHit.setValue(true);
 
-      return new UpdateCacheResult(entryIsInAmQueue(fileId, pageIndex, cacheEntry), cacheEntry);
+      return new UpdateCacheResult(entryIsInAmQueue(fileId, pageIndex, cacheEntry), cacheEntry, false);
     }
 
+    boolean updateWriteCacheHints = false;
     boolean removeColdPages;
     OCachePointer[] dataPointers = null;
 
     cacheEntry = a1out.remove(fileId, pageIndex);
     if (cacheEntry != null) {
       dataPointers = writeCache.load(fileId, pageIndex, pageCount, false, cacheHit, verifyChecksums);
+
+      if (diskLoads.incrementAndGet() % 400 == 0) {
+        updateWriteCacheHints = true;
+      }
 
       final OCachePointer dataPointer = dataPointers[0];
       removeColdPages = entryWasInA1OutQueue(fileId, pageIndex, dataPointer, cacheEntry);
@@ -971,6 +982,9 @@ public final class O2QCache implements OReadCache {
         cacheHit.setValue(true);
       } else {
         dataPointers = writeCache.load(fileId, pageIndex, pageCount, addNewPages, cacheHit, verifyChecksums);
+        if (diskLoads.incrementAndGet() % 400 == 0) {
+          updateWriteCacheHints = true;
+        }
 
         if (dataPointers.length == 0)
           return null;
@@ -988,7 +1002,7 @@ public final class O2QCache implements OReadCache {
       }
     }
 
-    return new UpdateCacheResult(removeColdPages, cacheEntry);
+    return new UpdateCacheResult(removeColdPages, cacheEntry, updateWriteCacheHints);
   }
 
   private boolean processFetchedPage(boolean removeColdPages, final OCachePointer dataPointer) {
@@ -1232,10 +1246,12 @@ public final class O2QCache implements OReadCache {
   private final static class UpdateCacheResult {
     private final boolean     removeColdPages;
     private final OCacheEntry cacheEntry;
+    private final boolean     updateWriteCacheHints;
 
-    private UpdateCacheResult(final boolean removeColdPages, final OCacheEntry cacheEntry) {
+    private UpdateCacheResult(final boolean removeColdPages, final OCacheEntry cacheEntry, boolean updateWriteCacheHints) {
       this.removeColdPages = removeColdPages;
       this.cacheEntry = cacheEntry;
+      this.updateWriteCacheHints = updateWriteCacheHints;
     }
   }
 
