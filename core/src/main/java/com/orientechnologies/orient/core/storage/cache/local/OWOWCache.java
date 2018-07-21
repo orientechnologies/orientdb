@@ -632,10 +632,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   public void addEvictionCandidate(long fileId, long pageIndex) {
     final PageKey pageKey = new PageKey(internalFileId(fileId), pageIndex);
-
-    if (writeCachePages.containsKey(pageKey)) {
-      evictionCandidates.add(pageKey);
-    }
+    evictionCandidates.add(pageKey);
   }
 
   @Override
@@ -2674,8 +2671,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           if (lsnEntry != null && endSegment - startSegment >= 1) {
             if (!flushMode.equals(FLUSH_MODE.LSN)) {//IDLE flush mode
-              //flush at least once in 1s. to minimize WAL vacuum overhead
-              if (dirtyPagesPercent >= 80 || lsnFlushInterval >= 1_000_000_000L) {
+              //flush at least once in 5s. to minimize WAL vacuum overhead
+              if (dirtyPagesPercent >= 80 || lsnFlushInterval >= 5 * 1_000_000_000L) {
                 flushMode = FLUSH_MODE.LSN;
                 int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages);
 
@@ -2699,7 +2696,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 dirtyPagesPercentSum += dirtyPagesPercent;
                 dirtyPagesPercentCount++;
 
-                if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 60) {
+                if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 70) {
                   flushMode = FLUSH_MODE.IDLE;
                 }
               }
@@ -2726,7 +2723,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               dirtyPagesPercentSum += dirtyPagesPercent;
               dirtyPagesPercentCount++;
 
-              if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 60) {
+              if (lsnEntry == null || endSegment - startSegment < 1 || dirtyPagesPercent <= 70) {
                 flushMode = FLUSH_MODE.IDLE;
               }
             }
