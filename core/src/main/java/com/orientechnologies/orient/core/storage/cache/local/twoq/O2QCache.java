@@ -106,6 +106,8 @@ public final class O2QCache implements OReadCache {
    */
   private final int percentOfPinnedPages;
 
+  private final AtomicLong loadCounter = new AtomicLong();
+
   private final OReadersWriterSpinLock                 cacheLock       = new OReadersWriterSpinLock();
   private final OPartitionedLockManager<Object>        fileLockManager = new OPartitionedLockManager<>(true);
   private final OPartitionedLockManager<PageKey>       pageLockManager = new OPartitionedLockManager<>();
@@ -507,7 +509,7 @@ public final class O2QCache implements OReadCache {
         fileLock.unlock();
       }
 
-      if (updateWriteCacheHints) {
+      if (loadCounter.incrementAndGet() % 400 == 0) {
         final int currentSize = am.size() + a1in.size();
         final int maxSize = memoryDataContainer.get().get2QCacheSize();
 
