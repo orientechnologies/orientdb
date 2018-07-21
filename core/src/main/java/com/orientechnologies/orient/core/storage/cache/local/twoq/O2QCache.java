@@ -42,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -522,7 +523,12 @@ public final class O2QCache implements OReadCache {
             Iterator<OCacheEntry> iterator = am.reverseIterator();
 
             while (totalCounter < 500 && counter < 256 && iterator.hasNext()) {
-              final OCacheEntry entry = iterator.next();
+              final OCacheEntry entry;
+              try {
+                entry = iterator.next();
+              } catch (NoSuchElementException e) {
+                continue;
+              }
 
               if (entry.isDirty()) {
                 writeCache.addEvictionCandidate(entry.getFileId(), entry.getPageIndex());
@@ -537,7 +543,12 @@ public final class O2QCache implements OReadCache {
             totalCounter = 0;
 
             while (totalCounter < 500 && counter < 256 && iterator.hasNext()) {
-              final OCacheEntry entry = iterator.next();
+              final OCacheEntry entry;
+              try {
+                entry = iterator.next();
+              } catch (NoSuchElementException e) {
+                continue;
+              }
 
               if (entry.isDirty()) {
                 writeCache.addEvictionCandidate(entry.getFileId(), entry.getPageIndex());
