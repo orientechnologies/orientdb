@@ -2565,6 +2565,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private final class PeriodicFlushTask implements Runnable {
     @Override
     public void run() {
+      printReport();
+
       if (flushError != null) {
         OLogManager.instance()
             .errorNoDb(this, "Can not flush data because of issue during data write, %s", null, flushError.getMessage());
