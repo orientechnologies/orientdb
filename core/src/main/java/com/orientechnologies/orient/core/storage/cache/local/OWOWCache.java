@@ -627,6 +627,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   @Override
   public void clearEvictionCandidates() {
+    System.out.printf("Eviction candidates size %d\n", evictionCandidates.size());
     evictionCandidates.clear();
   }
 

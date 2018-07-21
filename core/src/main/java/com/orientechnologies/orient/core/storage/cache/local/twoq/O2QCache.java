@@ -521,6 +521,10 @@ public final class O2QCache implements OReadCache {
                 writeCache.addEvictionCandidate(cacheEntry.getFileId(), cacheEntry.getPageIndex());
                 counter++;
               }
+
+              if (counter < 10) {
+                System.out.println("Eviction candidate " + entry);
+              }
             }
 
             iterator = a1in.reverseIterator();
