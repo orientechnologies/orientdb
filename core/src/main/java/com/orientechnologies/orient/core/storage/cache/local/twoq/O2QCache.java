@@ -968,7 +968,7 @@ public final class O2QCache implements OReadCache {
     if (cacheEntry != null) {
       dataPointers = writeCache.load(fileId, pageIndex, pageCount, false, cacheHit, verifyChecksums);
 
-      if (diskLoads.incrementAndGet() % 400 == 0) {
+      if (diskLoads.incrementAndGet() % 250 == 0) {
         updateWriteCacheHints = true;
       }
 
@@ -982,7 +982,7 @@ public final class O2QCache implements OReadCache {
         cacheHit.setValue(true);
       } else {
         dataPointers = writeCache.load(fileId, pageIndex, pageCount, addNewPages, cacheHit, verifyChecksums);
-        if (diskLoads.incrementAndGet() % 400 == 0) {
+        if (diskLoads.incrementAndGet() % 250 == 0) {
           updateWriteCacheHints = true;
         }
 

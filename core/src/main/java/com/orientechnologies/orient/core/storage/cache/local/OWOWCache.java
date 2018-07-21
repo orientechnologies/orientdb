@@ -2600,6 +2600,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         //
         // last type of buffer usually small and if it is close to overflow we should flush it first
         flushedPages = flushExclusivePagesIfNeeded(flushedPages);
+        boolean exclusiveFlush = flushedPages > 0;
         exclusivePagesSum += flushedPages;
 
         if (flushedPages >= pagesFlushLimit) {
@@ -2607,6 +2608,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
 
         final int evictionFlushed = flushEvictionCandidates(pagesFlushLimit);
+        exclusiveFlush = exclusiveFlush || evictionFlushed > 0;
         evicationCandidatesSum += evictionFlushed;
 
         flushedPages += evictionFlushed;
@@ -2643,7 +2645,11 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             if (lsnPages > 0) {
               flushedPages += lsnPages;
               final long endTs = System.nanoTime();
-              lsnFlushIntervalBoundary = (endTs - startTs) * 4;
+              if (!exclusiveFlush) {
+                lsnFlushIntervalBoundary = (endTs - startTs) * 4;
+              } else {
+                lsnFlushIntervalBoundary = (endTs - startTs) * 9;
+              }
             }
           }
         }
