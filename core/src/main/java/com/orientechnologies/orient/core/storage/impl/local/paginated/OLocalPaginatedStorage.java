@@ -509,7 +509,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(),
         OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(), TimeUnit.SECONDS);
 
-    fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicWALFlush(), 30, 30, TimeUnit.MINUTES);
+    fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicWALFlush(), 15, 15, TimeUnit.MINUTES);
     final String configWalPath = getConfiguration().getContextConfiguration().getValueAsString(OGlobalConfiguration.WAL_LOCATION);
     Path walPath;
     if (configWalPath == null) {
