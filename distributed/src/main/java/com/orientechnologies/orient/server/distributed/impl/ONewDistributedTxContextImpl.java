@@ -21,7 +21,7 @@ import java.util.Set;
 public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   public enum Status {
-    FAILED, SUCCESS,
+    FAILED, SUCCESS, TIMEDOUT,
   }
 
   private final ODistributedDatabaseImpl shared;

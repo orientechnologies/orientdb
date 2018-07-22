@@ -59,6 +59,7 @@ import java.util.concurrent.Callable;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.FAILED;
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.SUCCESS;
+import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.TIMEDOUT;
 
 /**
  * Created by tglman on 30/03/17.
@@ -603,8 +604,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (ODistributedLockException | OLockException ex) {
       txContext.unlock();
       /// ?? do i've to save this state as well ?
-      //xContext.setStatus(FAILED);
-      //getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      txContext.setStatus(TIMEDOUT);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
       throw ex;
     } catch (ORecordDuplicatedException ex) {
       txContext.setStatus(FAILED);
@@ -641,9 +642,40 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OLiveQueryHookV2.removePendingDatabaseOps(this);
         }
         return true;
+      } else if (TIMEDOUT.equals(txContext.getStatus())) {
+        for (int i = 0; i < 10; i++) {
+          try {
+            internalBegin2pc(txContext, false);
+            txContext.setStatus(SUCCESS);
+            break;
+          } catch (Exception ex) {
+            OLogManager.instance()
+                .warn(ODatabaseDocumentDistributed.this, "Error beginning timed out transaction: %s", ex, transactionId);
+          }
+        }
+        if (!SUCCESS.equals(txContext.getStatus())) {
+          Orient.instance().submit(() -> {
+            OLogManager.instance()
+                .warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install",
+                    transactionId);
+            manager.installDatabase(false, ODatabaseDocumentDistributed.this.getName(), true, true);
+          });
+        }
+        try {
+          txContext.commit(this);
+          localDistributedDatabase.popTxContext(transactionId);
+          OLiveQueryHook.notifyForTxChanges(this);
+          OLiveQueryHookV2.notifyForTxChanges(this);
+        } finally {
+          OLiveQueryHook.removePendingDatabaseOps(this);
+          OLiveQueryHookV2.removePendingDatabaseOps(this);
+        }
+
       } else {
         Orient.instance().submit(() -> {
-          OLogManager.instance().warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install", transactionId);
+          OLogManager.instance()
+              .warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install",
+                  transactionId);
           manager.installDatabase(false, ODatabaseDocumentDistributed.this.getName(), true, true);
         });
       }
