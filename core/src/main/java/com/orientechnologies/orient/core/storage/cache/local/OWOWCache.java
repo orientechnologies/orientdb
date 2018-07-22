@@ -2688,7 +2688,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             if (lsnPages > 0) {
               flushedPages += lsnPages;
               final long endTs = System.nanoTime();
-              lsnFlushIntervalBoundary = (endTs - startTs);
+              lsnFlushIntervalBoundary = 2 * (endTs - startTs);
             }
           }
         }
