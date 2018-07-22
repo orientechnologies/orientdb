@@ -49,6 +49,8 @@ public interface OWriteCache {
 
   void addEvictionCandidate(long fileId, long pageIndex);
 
+  void triggerFlushOfEvictionCandidates();
+
   void addLowDiskSpaceListener(OLowDiskSpaceListener listener);
 
   void removeLowDiskSpaceListener(OLowDiskSpaceListener listener);

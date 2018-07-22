@@ -617,6 +617,10 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
+  public void triggerFlushOfEvictionCandidates() {
+  }
+
+  @Override
   public boolean isRefreshEvictionCandidates() {
     return false;
   }

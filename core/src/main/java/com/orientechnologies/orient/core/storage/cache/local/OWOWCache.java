@@ -93,6 +93,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.zip.CRC32;
@@ -392,6 +393,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private final Set<PageKey> evictionCandidates = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
+  private final AtomicReference<Future<?>> evictionCandidatesFlushTask = new AtomicReference<>();
+
   /**
    * Listeners which are called when exception in background data flush thread is happened.
    */
@@ -632,6 +635,23 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   public void addEvictionCandidate(long fileId, long pageIndex) {
     final PageKey pageKey = new PageKey(extractFileId(fileId), pageIndex);
     evictionCandidates.add(pageKey);
+  }
+
+  @Override
+  public void triggerFlushOfEvictionCandidates() {
+    if (!evictionCandidates.isEmpty()) {
+      final Future<?> oldFlushTask = evictionCandidatesFlushTask.get();
+
+      if (oldFlushTask == null || oldFlushTask.isDone()) {
+        final Future<?> flushTask = commitExecutor.submit(new EvictionCandidatesFlushTask());
+
+        if (evictionCandidatesFlushTask.compareAndSet(oldFlushTask, flushTask)) {
+          return;
+        }
+
+        flushTask.cancel(false);
+      }
+    }
   }
 
   @Override
@@ -1034,7 +1054,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     if (exclusiveWriteCacheSize.get() > 0) {
       cacheOverflowCount.increment();
       try {
-        commitExecutor.submit(new PeriodicExclusiveFlushTask()).get();
+        commitExecutor.submit(new ExclusiveFlushTask()).get();
       } catch (ExecutionException e) {
         throw new IllegalStateException(e);
       }
@@ -2507,6 +2527,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         long minDirtySegment = firstEntry.getKey();
         while (minDirtySegment < segmentId) {
           flushExclusivePagesIfNeeded();
+          flushEvictionCandidates(512);
 
           lsnPagesSum += flushWriteCacheFromMinLSN(writeAheadLog.begin().getSegment(), segmentId, 512 * 8);
 
@@ -2535,7 +2556,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private final class PeriodicExclusiveFlushTask implements Runnable {
+  private final class ExclusiveFlushTask implements Runnable {
 
     @Override
     public void run() {
@@ -2559,6 +2580,31 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         flushError = t;
       }
 
+    }
+  }
+
+  private final class EvictionCandidatesFlushTask implements Runnable {
+    @Override
+    public void run() {
+      printReport();
+
+      if (flushError != null) {
+        OLogManager.instance()
+            .errorNoDb(this, "Can not flush data because of issue during data write, %s", null, flushError.getMessage());
+        return;
+      }
+
+      if (writeCachePages.isEmpty()) {
+        return;
+      }
+
+      try {
+        evicationCandidatesSum += flushEvictionCandidates(512);
+      } catch (final Error | Exception t) {
+        OLogManager.instance().error(this, "Exception during data flush", t);
+        OWOWCache.this.fireBackgroundDataFlushExceptionEvent(t);
+        flushError = t;
+      }
     }
   }
 
@@ -2643,7 +2689,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             if (lsnPages > 0) {
               flushedPages += lsnPages;
               final long endTs = System.nanoTime();
-              lsnFlushIntervalBoundary = (endTs - startTs) * 7;
+              lsnFlushIntervalBoundary = (endTs - startTs) * 19;
             }
           }
         }

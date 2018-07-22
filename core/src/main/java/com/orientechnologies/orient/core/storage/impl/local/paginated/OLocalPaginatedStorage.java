@@ -509,6 +509,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(),
         OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(), TimeUnit.SECONDS);
 
+    fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicWALFlush(), 30, 30, TimeUnit.MINUTES);
     final String configWalPath = getConfiguration().getContextConfiguration().getValueAsString(OGlobalConfiguration.WAL_LOCATION);
     Path walPath;
     if (configWalPath == null) {
@@ -599,13 +600,67 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     return Files.exists(path.resolve("database.ocf"));
   }
 
-  private class PeriodicFuzzyCheckpoint implements Runnable {
+  private final class PeriodicFuzzyCheckpoint implements Runnable {
     @Override
     public void run() {
       try {
         makeFuzzyCheckpoint();
       } catch (RuntimeException e) {
         OLogManager.instance().error(this, "Error during fuzzy checkpoint", e);
+      }
+    }
+  }
+
+  private final class PeriodicWALFlush implements Runnable {
+    @Override
+    public void run() {
+      try {
+        if (status == STATUS.CLOSED) {
+          return;
+        }
+
+        OLogManager.instance().infoNoDb(this, "WAL flush is started");
+        final long[] nonActiveSegments = writeAheadLog.nonActiveSegments();
+        if (nonActiveSegments.length == 0) {
+          OLogManager.instance().infoNoDb(this, "WAL flush: nothing to start, return");
+          return;
+        }
+
+        long flushTillSegmentId = nonActiveSegments[nonActiveSegments.length - 1];
+
+        OLogManager.instance()
+            .infoNoDb(this, "WAL flush: Amount of non active segments %d, will flush till segment %d", nonActiveSegments.length,
+                flushTillSegmentId);
+
+        long minDirtySegment;
+        do {
+          OLogManager.instance().infoNoDb(this, "WAL flush: flushing till segment %d", flushTillSegmentId);
+
+          writeCache.flushTillSegment(flushTillSegmentId);
+
+          //we should take min lsn BEFORE min write cache LSN call
+          //to avoid case when new data are changed before call
+          OLogSequenceNumber endLSN = writeAheadLog.end();
+          Long minLSNSegment = writeCache.getMinimalNotFlushedSegment();
+
+          if (minLSNSegment == null) {
+            minDirtySegment = endLSN.getSegment();
+          } else {
+            minDirtySegment = minLSNSegment;
+          }
+
+          OLogManager.instance().infoNoDb(this, "WAL flush: min not flushed segment after flush is %d", minDirtySegment);
+        } while (minDirtySegment < flushTillSegmentId);
+
+        OLogManager.instance().infoNoDb(this, "WAL flush: making fuzzy checkpoint tiil %d", minDirtySegment);
+        writeCache.makeFuzzyCheckpoint(minDirtySegment);
+
+        OLogManager.instance().infoNoDb(this, "WAL flush: is completed");
+      } catch (Exception e) {
+        dataFlushException = e;
+        OLogManager.instance().error(this, "Error during flushing of data for fuzzy checkpoint", e);
+      } finally {
+        stateLock.releaseReadLock();
       }
     }
   }

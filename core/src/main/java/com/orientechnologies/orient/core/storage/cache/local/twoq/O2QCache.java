@@ -520,6 +520,8 @@ public final class O2QCache implements OReadCache {
 
             int totalCounter = 0;
             int counter = 0;
+
+            int dirtyPages = 0;
             Iterator<OCacheEntry> iterator = am.reverseIterator();
 
             while (totalCounter < 500 && counter < 256 && iterator.hasNext()) {
@@ -538,6 +540,7 @@ public final class O2QCache implements OReadCache {
               totalCounter++;
             }
 
+            dirtyPages += counter;
             iterator = a1in.reverseIterator();
             counter = 0;
             totalCounter = 0;
@@ -556,6 +559,12 @@ public final class O2QCache implements OReadCache {
               }
 
               totalCounter++;
+            }
+
+            dirtyPages += counter;
+
+            if (dirtyPages > 0) {
+              writeCache.triggerFlushOfEvictionCandidates();
             }
 
             evictionReportInProgres.set(false);

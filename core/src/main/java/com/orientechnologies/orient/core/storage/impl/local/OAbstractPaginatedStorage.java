@@ -321,7 +321,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected volatile OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
 
-  private volatile Throwable dataFlushException = null;
+  protected volatile Throwable dataFlushException = null;
 
   private final int id;
 
