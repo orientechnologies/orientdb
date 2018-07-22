@@ -2803,14 +2803,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         currentSegment++;
 
         if (currentSegment >= segEnd) {
-          //we flush the last segment only if we have no other choice
-          if (localDirtyPagesBySegment.size() <= 1) {
-            if (currentSegment > segEnd) {
-              currentSegment = segStart;
-            }
-          } else {
-            currentSegment = segStart;
-          }
+          break;
         }
 
         continue;
