@@ -2924,7 +2924,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     int copiedPages = 0;
 
     final long ewcSize = exclusiveWriteCacheSize.get();
-    final long pagesToFlush = Math.min(ewcSize, exclusiveWriteCacheMaxSize / 2);
+    final long pagesToFlush = Math.min(512, ewcSize);
 
     final ArrayList<OTriple<Long, ByteBuffer, OCachePointer>> chunk = new ArrayList<>(512);
 
