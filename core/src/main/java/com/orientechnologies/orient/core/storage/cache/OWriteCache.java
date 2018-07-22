@@ -43,14 +43,6 @@ public interface OWriteCache {
   @SuppressWarnings("unused")
   void removePageIsBrokenListener(OPageIsBrokenListener listener);
 
-  void clearEvictionCandidates();
-
-  boolean isRefreshEvictionCandidates();
-
-  void addEvictionCandidate(long fileId, long pageIndex);
-
-  void triggerFlushOfEvictionCandidates();
-
   void addLowDiskSpaceListener(OLowDiskSpaceListener listener);
 
   void removeLowDiskSpaceListener(OLowDiskSpaceListener listener);
