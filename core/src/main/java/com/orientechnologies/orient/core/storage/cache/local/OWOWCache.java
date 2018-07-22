@@ -2351,10 +2351,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         System.out.printf("count of flushed lsn pages %d, count of flushed of exclusive pages %d, avg. "
                 + " first dirty pages segment index %d, first dirty pages segment size %d, "
-                + "amount of exclusive pages %d, avg. LSN flush interval %d, count of eviction candidates flushed %d, size of eviction "
-                + "candidates %d\n", lsnPagesSum, exclusivePagesSum, entry == null ? -1 : entry.getKey().intValue(),
-            entry == null ? -1 : entry.getValue().size(), exclusiveWriteCacheSize.get(),
-            lsnFlushIntervalSum / lsnFlushIntervalCount / 1_000_000, evicationCandidatesSum, evictionCandidates.size());
+                + "avg. LSN flush interval %d, count of eviction candidates flushed %d\n", lsnPagesSum, exclusivePagesSum,
+            entry == null ? -1 : entry.getKey().intValue(), entry == null ? -1 : entry.getValue().size(),
+            lsnFlushIntervalSum / lsnFlushIntervalCount / 1_000_000, evicationCandidatesSum);
 
         reportTs = ts;
 
