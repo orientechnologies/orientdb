@@ -2529,7 +2529,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           flushExclusivePagesIfNeeded();
           flushEvictionCandidates(512);
 
-          lsnPagesSum += flushWriteCacheFromMinLSN(writeAheadLog.begin().getSegment(), segmentId, 512 * 8);
+          lsnPagesSum += flushWriteCacheFromMinLSN(writeAheadLog.begin().getSegment(), segmentId, 512);
 
           firstEntry = localDirtyPagesBySegment.firstEntry();
 
