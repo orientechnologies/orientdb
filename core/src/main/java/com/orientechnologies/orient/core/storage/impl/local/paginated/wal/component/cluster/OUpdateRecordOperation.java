@@ -92,18 +92,6 @@ public final class OUpdateRecordOperation extends OClusterOperation {
     content[offset] = recordType;
     offset++;
 
-    OIntegerSerializer.INSTANCE.serializeNative(prevRecord.length, content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    System.arraycopy(prevRecord, 0, content, offset, prevRecord.length);
-    offset += prevRecord.length;
-
-    OIntegerSerializer.INSTANCE.serializeNative(prevRecordVersion, content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    content[offset] = prevRecordType;
-    offset++;
-
     return offset;
   }
 
@@ -127,19 +115,6 @@ public final class OUpdateRecordOperation extends OClusterOperation {
     recordType = content[offset];
     offset++;
 
-    final int prevRecordLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    prevRecord = new byte[prevRecordLen];
-    System.arraycopy(content, offset, prevRecord, 0, prevRecordLen);
-    offset += prevRecordLen;
-
-    prevRecordVersion = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    prevRecordType = content[offset];
-    offset++;
-
     return offset;
   }
 
@@ -153,11 +128,6 @@ public final class OUpdateRecordOperation extends OClusterOperation {
     buffer.put(record);
     buffer.putInt(recordVersion);
     buffer.put(recordType);
-
-    buffer.putInt(prevRecord.length);
-    buffer.put(prevRecord);
-    buffer.putInt(prevRecordVersion);
-    buffer.put(prevRecordType);
   }
 
   @Override
@@ -167,11 +137,6 @@ public final class OUpdateRecordOperation extends OClusterOperation {
 
     size += OIntegerSerializer.INT_SIZE;
     size += record.length;
-    size += OIntegerSerializer.INT_SIZE;
-    size += OByteSerializer.BYTE_SIZE;
-
-    size += OIntegerSerializer.INT_SIZE;
-    size += prevRecord.length;
     size += OIntegerSerializer.INT_SIZE;
     size += OByteSerializer.BYTE_SIZE;
 

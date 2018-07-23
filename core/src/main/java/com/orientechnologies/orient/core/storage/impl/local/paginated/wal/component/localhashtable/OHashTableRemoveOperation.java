@@ -55,12 +55,6 @@ public final class OHashTableRemoveOperation extends OLocalHashTableOperation {
       offset += key.length;
     }
 
-    OIntegerSerializer.INSTANCE.serializeNative(oldValue.length, content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    System.arraycopy(oldValue, 0, content, offset, oldValue.length);
-    offset += oldValue.length;
-
     return offset;
   }
 
@@ -81,13 +75,6 @@ public final class OHashTableRemoveOperation extends OLocalHashTableOperation {
       offset += keyLen;
     }
 
-    final int valueLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    oldValue = new byte[valueLen];
-    System.arraycopy(content, offset, oldValue, 0, valueLen);
-    offset += valueLen;
-
     return offset;
   }
 
@@ -102,9 +89,6 @@ public final class OHashTableRemoveOperation extends OLocalHashTableOperation {
       buffer.putInt(key.length);
       buffer.put(key);
     }
-
-    buffer.putInt(oldValue.length);
-    buffer.put(oldValue);
   }
 
   @Override
@@ -116,9 +100,6 @@ public final class OHashTableRemoveOperation extends OLocalHashTableOperation {
       size += OIntegerSerializer.INT_SIZE;
       size += key.length;
     }
-
-    size += OIntegerSerializer.INT_SIZE;
-    size += oldValue.length;
 
     return size;
   }

@@ -48,12 +48,6 @@ public final class OSBTreeBonsaiRemoveOperation extends OSBTreeBonsaiModificatio
     System.arraycopy(key, 0, content, offset, key.length);
     offset += key.length;
 
-    OIntegerSerializer.INSTANCE.serializeNative(value.length, content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    System.arraycopy(value, 0, content, offset, value.length);
-    offset += value.length;
-
     return offset;
   }
 
@@ -68,13 +62,6 @@ public final class OSBTreeBonsaiRemoveOperation extends OSBTreeBonsaiModificatio
     System.arraycopy(content, offset, key, 0, keyLen);
     offset += keyLen;
 
-    final int valueLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    value = new byte[valueLen];
-    System.arraycopy(content, offset, value, 0, valueLen);
-    offset += valueLen;
-
     return offset;
   }
 
@@ -84,13 +71,11 @@ public final class OSBTreeBonsaiRemoveOperation extends OSBTreeBonsaiModificatio
 
     buffer.putInt(key.length);
     buffer.put(key);
-    buffer.putInt(value.length);
-    buffer.put(value);
   }
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + OIntegerSerializer.INT_SIZE + key.length + OIntegerSerializer.INT_SIZE + value.length;
+    return super.serializedSize() + OIntegerSerializer.INT_SIZE + key.length;
   }
 
   @Override
