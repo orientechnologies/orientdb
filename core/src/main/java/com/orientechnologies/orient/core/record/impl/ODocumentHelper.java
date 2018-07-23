@@ -1591,14 +1591,12 @@ public class ODocumentHelper {
     }
     if (event.getTimeLine() != null){
       List<OMultiValueChangeEvent<Object, Object>> timeline = event.getTimeLine().getMultiValueChangeEvents();
-      for (OMultiValueChangeEvent<Object, Object> nestedEvent : timeline){
-        if (!(nestedEvent instanceof ONestedMultiValueChangeEvent)){
-          if (nestedEvent.getKey() == list){
-            return true;
-          }
-        }
+      for (OMultiValueChangeEvent<Object, Object> nestedEvent : timeline){        
+        if (nestedEvent.getKey() == list){
+          return true;
+        }        
         else{
-          if (event.getKey() == ownersTrace.get(ownersTraceOffset) &&
+          if (nestedEvent instanceof ONestedMultiValueChangeEvent &&              
               isInNestedEvent((ONestedMultiValueChangeEvent)nestedEvent, list, ownersTrace, ownersTraceOffset + 1)){
             return true;
           }
@@ -1610,6 +1608,9 @@ public class ODocumentHelper {
   
   public static boolean isChangedList(List list, ODocumentEntry entry, List<Object> ownersTrace, int ownersTraceOffset){        
     ownersTrace.add(list);
+    
+    //We can't use same logic as in isNestedValueChanged, because
+    //change of ODocument contained in list will not fire adequate change event
     for (Object element : list){
       if (element instanceof ODocument){
         if (((ODocument)element).isChangedInDepth()){
@@ -1631,17 +1632,14 @@ public class ODocumentHelper {
           if (key == list){
             return true;
           }
-          if (event instanceof ONestedMultiValueChangeEvent &&
-              event.getKey() == ownersTrace.get(ownersTraceOffset)){
-            ONestedMultiValueChangeEvent nestedEvent = (ONestedMultiValueChangeEvent)event;
-            if (isInNestedEvent(nestedEvent, list, ownersTrace, ownersTraceOffset + 1)){
+          if (event instanceof ONestedMultiValueChangeEvent &&              
+              isInNestedEvent((ONestedMultiValueChangeEvent)event, list, ownersTrace, ownersTraceOffset + 1)){
               return true;
-            }
           }
         }
       }
     }
-    
+        
     return false;
   }
   
