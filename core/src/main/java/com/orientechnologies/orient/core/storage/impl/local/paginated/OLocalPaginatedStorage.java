@@ -553,7 +553,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB;
     long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
-    long writeCacheSize = (long) (0.2 * diskCacheSize);
+    long writeCacheSize = (long) (OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger() / 100.0 * diskCacheSize);
 
     final OBinarySerializerFactory binarySerializerFactory = getComponentsFactory().binarySerializerFactory;
     final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(), writeAheadLog,
