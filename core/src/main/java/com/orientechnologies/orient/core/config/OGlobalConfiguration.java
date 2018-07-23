@@ -302,7 +302,7 @@ public enum OGlobalConfiguration {
 
   DISK_CACHE_EXCLUSIVE_FLUSH_BOUNDARY("storage.diskCache.exclusiveFlushBoundary",
       "If portion of exclusive pages into cache exceeds this value we start to flush only exclusive pages from disk cache",
-      Float.class, 0.9),
+      Float.class, 0.85),
 
   DISK_CACHE_RING_FLUSH_INTERVAL("storage.diskCache.ringFlushInterval",
       "Interval in ms. between two consecutive flushes of dirty pages in ring mode", Integer.class, 100),
