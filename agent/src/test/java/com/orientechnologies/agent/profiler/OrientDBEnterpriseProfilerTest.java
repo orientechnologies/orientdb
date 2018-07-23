@@ -131,7 +131,7 @@ public class OrientDBEnterpriseProfilerTest {
 
     Assert.assertEquals(1, timer.getCount());
 
-    assertThat(TimeUnit.NANOSECONDS.toMillis(finalTime)).isGreaterThan(1000);
+    assertThat(TimeUnit.NANOSECONDS.toMillis(finalTime)).isGreaterThanOrEqualTo(1000);
 
   }
 }

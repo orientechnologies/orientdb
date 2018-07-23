@@ -93,6 +93,7 @@ public class OrientDBServerResourcesMetrics implements OrientDBMetric {
     this.registry.remove(OGlobalMetrics.SERVER_RUNTIME_GC.name);
     this.registry.remove(OGlobalMetrics.SERVER_RUNTIME_MEMORY.name);
     this.registry.remove(OGlobalMetrics.SERVER_RUNTIME_THREADS.name);
+    this.registry.remove(OGlobalMetrics.SERVER_RUNTIME_DISK_CACHE.name);
   }
 
   public double cpuUsage() {

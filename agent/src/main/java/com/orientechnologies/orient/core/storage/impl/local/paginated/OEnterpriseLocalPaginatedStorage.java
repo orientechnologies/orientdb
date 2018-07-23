@@ -29,15 +29,22 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OBackupInProgressException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -57,6 +64,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   public static final  String        INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
   private static final String        CONF_UTF_8_ENTRY_NAME         = "database_utf8.ocf";
   private final        AtomicBoolean backupInProgress              = new AtomicBoolean(false);
+
+  private List<OEnterpriseStorageOperationListener> listeners = Collections.synchronizedList(new ArrayList<>());
 
   public OEnterpriseLocalPaginatedStorage(String name, String filePath, String mode, int id, OReadCache readCache,
       OClosableLinkedContainer<Long, OFileClassic> files) throws IOException {
@@ -146,6 +155,14 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
 
     return fileName;
+  }
+
+  public void registerStorageListener(OEnterpriseStorageOperationListener listener) {
+    this.listeners.add(listener);
+  }
+
+  public void unRegisterStorageListener(OEnterpriseStorageOperationListener listener) {
+    this.listeners.remove(listener);
   }
 
   private String[] fetchIBUFiles(final File backupDirectory) throws IOException {
@@ -282,7 +299,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
               final ZipEntry configurationEntry = new ZipEntry(CONF_UTF_8_ENTRY_NAME);
 
               zipOutputStream.putNextEntry(configurationEntry);
-              final byte[] btConf =  ((OStorageConfigurationImpl)getConfiguration()).toStream(Charset.forName("UTF-8"));
+              final byte[] btConf = ((OStorageConfigurationImpl) getConfiguration()).toStream(Charset.forName("UTF-8"));
 
               zipOutputStream.write(btConf);
               zipOutputStream.closeEntry();
@@ -588,6 +605,38 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     }
   }
 
+  @Override
+  public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
+      boolean prefetchRecords, ORecordCallback<ORawBuffer> iCallback) {
+
+    try {
+      return super.readRecord(iRid, iFetchPlan, iIgnoreCache, prefetchRecords, iCallback);
+    } finally {
+      listeners.forEach((l) -> {
+        l.onRead();
+      });
+    }
+  }
+
+  @Override
+  public List<ORecordOperation> commit(OTransactionInternal clientTx) {
+    List<ORecordOperation> operations = super.commit(clientTx);
+    listeners.forEach((l) -> l.onCommit(operations));
+    return operations;
+  }
+
+  @Override
+  public void rollback(OTransactionInternal clientTx) {
+    super.rollback(clientTx);
+    listeners.forEach((l) -> l.onRollback());
+  }
+
+  @Override
+  public void rollback(OMicroTransaction microTransaction) {
+    super.rollback(microTransaction);
+    listeners.forEach((l) -> l.onRollback());
+  }
+
   private void replaceConfiguration(ZipInputStream zipInputStream, Charset charset) throws IOException {
     OContextConfiguration config = getConfiguration().getContextConfiguration();
 
@@ -610,13 +659,12 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       }
     }
 
+    ((OStorageConfigurationImpl) getConfiguration()).fromStream(buffer, 0, rb, charset);
+    ((OStorageConfigurationImpl) getConfiguration()).update();
 
-    ((OStorageConfigurationImpl)getConfiguration()).fromStream(buffer, 0, rb, charset);
-    ((OStorageConfigurationImpl)getConfiguration()).update();
+    ((OStorageConfigurationImpl) getConfiguration()).close();
 
-    ((OStorageConfigurationImpl)getConfiguration()).close();
-
-    ((OStorageConfigurationImpl)getConfiguration()).load(config);
+    ((OStorageConfigurationImpl) getConfiguration()).load(config);
   }
 
 }

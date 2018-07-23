@@ -5,6 +5,7 @@ import com.orientechnologies.agent.profiler.OMetricsRegistry;
 import com.orientechnologies.agent.profiler.OMetricsRegistryFactory;
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.agent.services.metrics.server.OrientDBServerMetrics;
+import com.orientechnologies.agent.services.metrics.server.database.OrientDBDatabasesMetrics;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
@@ -43,6 +44,10 @@ public class OrientDBMetricsService implements OEnterpriseService {
 
       if (settings.server.enabled) {
         metricSupport.add(new OrientDBServerMetrics(server, registry));
+      }
+
+      if (settings.database.enabled) {
+        metricSupport.add(new OrientDBDatabasesMetrics(server, registry));
       }
 
       metricSupport.start();

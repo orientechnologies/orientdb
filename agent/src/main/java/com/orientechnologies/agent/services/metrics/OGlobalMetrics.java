@@ -9,7 +9,11 @@ public enum OGlobalMetrics {
       "server.network.sessions", "Number of opened sessions (HTTP/Binary)"), SERVER_RUNTIME_GC("server.runtime.gc",
       "Stats about GC"), SERVER_RUNTIME_MEMORY("server.runtime.memory", "Stats about memory usage"), SERVER_RUNTIME_THREADS(
       "server.runtime.threads", "Info about threads"), SERVER_RUNTIME_CPU("server.runtime.cpu",
-      "Total cpu used by the process"), SERVER_RUNTIME_DISK_CACHE("server.runtime.diskCache", "Stats about Disk Cache");
+      "Total cpu used by the process"), SERVER_RUNTIME_DISK_CACHE("server.runtime.diskCache",
+      "Stats about Disk Cache"), DATABASE_READ_OPS("db.%.readOps", "Stats on read operations"), DATABASE_CREATE_OPS(
+      "db.%.createOps", "Stats on create operations"), DATABASE_UPDATE_OPS("db.%.updateOps",
+      "Stats on update operations"), DATABASE_DELETE_OPS("db.%.deleteOps", "Stats on delete operations"), DATABASE_COMMIT_OPS(
+      "db.%.commitOps", "Stats on commit operations"), DATABASE_ROLLBACK_OPS("db.%.rollbackOps", "Stats on rollback operations");
 
   public final String name;
   public final String description;
