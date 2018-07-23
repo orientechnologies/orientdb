@@ -393,7 +393,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * 1024 * 1024L,
         25, true, getConfiguration().getLocaleInstance(), OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024,
-        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT), true);
+        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT), true,
+        getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC));
 
     return restoreWAL;
   }
@@ -523,7 +524,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             * 1_000_000_000L, walMaxSegSize, 25, true, getConfiguration().getLocaleInstance(),
         OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024,
-        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT), true);
+        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT), true,
+        getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC));
 
     diskWriteAheadLog.addLowDiskSpaceListener(this);
     writeAheadLog = diskWriteAheadLog;
@@ -557,7 +559,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(), writeAheadLog,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, diskCacheSize, true,
         getStoragePath(), getPerformanceStatisticManager(), getName(), binarySerializerFactory.getObjectSerializer(OType.STRING),
-        files, getId(), contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), true);
+        files, getId(), contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), true,
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC));
 
     wowCache.addLowDiskSpaceListener(this);
     wowCache.loadRegisteredFiles();

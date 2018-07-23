@@ -387,6 +387,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private       long lsnFlushIntervalBoundary = -1;
   private final int  exclusiveWriteCacheMaxSize;
 
+  private final boolean callFsync;
+
   /**
    * Listeners which are called when exception in background data flush thread is happened.
    */
@@ -396,7 +398,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final long pageFlushInterval, final long exclusiveWriteCacheMaxSize, final long maxCacheSize, final boolean checkMinSize,
       Path storagePath, OPerformanceStatisticManager performanceStatisticManager, String storageName,
       OBinarySerializer<String> stringSerializer, final OClosableLinkedContainer<Long, OFileClassic> files, final int id,
-      final OChecksumMode checksumMode, boolean allowDirectIO) {
+      final OChecksumMode checksumMode, boolean allowDirectIO, boolean callFsync) {
+    this.callFsync = callFsync;
+
     filesLock.acquireWriteLock();
     try {
       this.id = id;
@@ -797,7 +801,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         fileId = -fileId;
 
       fileClassic = createFileInstance(fileName, fileId);
-      createFile(fileClassic);
+      createFile(fileClassic, callFsync);
 
       final long externalId = composeFileId(id, fileId);
       files.add(externalId, fileClassic);
@@ -899,7 +903,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           nextInternalId = intId;
 
         fileClassic = createFileInstance(fileName, intId);
-        createFile(fileClassic);
+        createFile(fileClassic, callFsync);
 
         files.add(fileId, fileClassic);
       }
@@ -938,14 +942,17 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           if (intId < 0)
             continue;
 
-          final long fileId = composeFileId(id, intId);
-          final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
-          try {
-            final OFileClassic fileClassic = entry.get();
-            fileClassic.synch();
-          } finally {
-            files.release(entry);
+          if (callFsync) {
+            final long fileId = composeFileId(id, intId);
+            final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
+            try {
+              final OFileClassic fileClassic = entry.get();
+              fileClassic.synch();
+            } finally {
+              files.release(entry);
+            }
           }
+
         }
 
         writeAheadLog.logFuzzyCheckPointEnd();
@@ -1721,10 +1728,13 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   }
 
-  private static void createFile(final OFileClassic fileClassic) throws IOException {
+  private static void createFile(final OFileClassic fileClassic, boolean callFsync) throws IOException {
     if (!fileClassic.exists()) {
       fileClassic.create();
-      fileClassic.synch();
+
+      if (callFsync) {
+        fileClassic.synch();
+      }
     } else {
       throw new OStorageException("File '" + fileClassic.getName() + "' already exists.");
     }
@@ -2311,9 +2321,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         System.out.printf("count of flushed lsn pages %d, count of flushed of exclusive pages %d, avg. "
                 + " first dirty pages segment index %d, first dirty pages segment size %d, " + "avg. LSN flush interval %d\n",
-            lsnPagesSum, exclusivePagesSum,
-            entry == null ? -1 : entry.getKey().intValue(), entry == null ? -1 : entry.getValue().size(),
-            lsnFlushIntervalSum / lsnFlushIntervalCount / 1_000_000);
+            lsnPagesSum, exclusivePagesSum, entry == null ? -1 : entry.getKey().intValue(),
+            entry == null ? -1 : entry.getValue().size(), lsnFlushIntervalSum / lsnFlushIntervalCount / 1_000_000);
 
         reportTs = ts;
 
@@ -3098,12 +3107,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
       }
 
-      final long finalId = composeFileId(id, fileId);
-      final OClosableEntry<Long, OFileClassic> entry = files.acquire(finalId);
-      try {
-        entry.get().synch();
-      } finally {
-        files.release(entry);
+      if (callFsync) {
+        final long finalId = composeFileId(id, fileId);
+        final OClosableEntry<Long, OFileClassic> entry = files.acquire(finalId);
+        try {
+          entry.get().synch();
+        } finally {
+          files.release(entry);
+        }
       }
 
       return null;

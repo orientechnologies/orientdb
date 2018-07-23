@@ -206,6 +206,9 @@ public enum OGlobalConfiguration {
   STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate",
       "Indicates whether a full checkpoint should be performed, if storage was created", Boolean.class, false),
 
+  STORAGE_CALL_FSYNC("strorage.callFsync", "Call fsync during fuzzy checkpoints or WAL writes, true by default", Boolean.class,
+      true),
+
   /**
    * @deprecated because it was used as workaround for the case when storage is already opened but there are no checkpoints and as
    * result data restore after crash may work incorrectly, this bug is fixed under https://github.com/orientechnologies/orientdb/issues/7562

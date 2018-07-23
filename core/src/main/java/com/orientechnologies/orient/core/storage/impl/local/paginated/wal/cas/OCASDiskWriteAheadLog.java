@@ -173,9 +173,12 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private OLogSequenceNumber lastLSN              = null;
   private OLogSequenceNumber checkPointLSN        = null;
 
+  private final boolean callFsync;
+
   public OCASDiskWriteAheadLog(final String storageName, final Path storagePath, final Path walPath, final int maxPagesCacheSize,
       long segmentsInterval, final long maxSegmentSize, final int commitDelay, final boolean filterWALFiles, final Locale locale,
-      final long walSizeHardLimit, final long freeSpaceLimit, final int fsyncInterval, boolean allowDirectIO) throws IOException {
+      final long walSizeHardLimit, final long freeSpaceLimit, final int fsyncInterval, boolean allowDirectIO, boolean callFsync)
+      throws IOException {
     commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
@@ -185,6 +188,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     });
 
     this.segmentsInterval = segmentsInterval;
+    this.callFsync = callFsync;
     commitExecutor.setMaximumPoolSize(1);
 
     this.fsyncInterval = fsyncInterval;
@@ -1109,7 +1113,10 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
           fileCloseQueueSize.decrementAndGet();
           if (pair.key >= segmentId) {
-            file.force(true);
+            if (callFsync) {
+              file.force(true);
+            }
+
             file.close();
             break;
           } else {
@@ -1347,13 +1354,19 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
     for (final OPair<Long, OWALFile> pair : fileCloseQueue) {
       final OWALFile file = pair.value;
 
-      file.force(true);
+      if (callFsync) {
+        file.force(true);
+      }
+
       file.close();
     }
 
     fileCloseQueueSize.set(0);
 
-    walFile.force(true);
+    if (callFsync) {
+      walFile.force(true);
+    }
+
     walFile.close();
     masterRecordLSNHolder.close();
     segments.clear();
@@ -1933,7 +1946,10 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
                       assert file.position() % pageSize == 0;
 
-                      file.force(true);
+                      if (callFsync) {
+                        file.force(true);
+                      }
+
                       file.close();
 
                       fileCloseQueueSize.decrementAndGet();
@@ -1945,7 +1961,10 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                   }
                 }
 
-                walFile.force(true);
+                if (callFsync) {
+                  walFile.force(true);
+                }
+
                 updateCheckpoint(writtenCheckpoint);
                 flushedLSN = writtenUpTo.get().lsn;
 
@@ -2072,7 +2091,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         } finally {
           allocator.deallocate(pointer);
         }
-        
+
         return null;
       });
     }
