@@ -389,6 +389,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private final boolean callFsync;
 
+  private final double exclusiveWriteCacheBoundary;
+
   /**
    * Listeners which are called when exception in background data flush thread is happened.
    */
@@ -398,8 +400,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final long pageFlushInterval, final long exclusiveWriteCacheMaxSize, final long maxCacheSize, final boolean checkMinSize,
       Path storagePath, OPerformanceStatisticManager performanceStatisticManager, String storageName,
       OBinarySerializer<String> stringSerializer, final OClosableLinkedContainer<Long, OFileClassic> files, final int id,
-      final OChecksumMode checksumMode, boolean allowDirectIO, boolean callFsync) {
+      final OChecksumMode checksumMode, boolean allowDirectIO, boolean callFsync, double exclusiveWriteCacheBoundary) {
     this.callFsync = callFsync;
+    this.exclusiveWriteCacheBoundary = exclusiveWriteCacheBoundary;
 
     filesLock.acquireWriteLock();
     try {
@@ -2346,7 +2349,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     assert ewcSize >= 0;
 
-    if (100 * ewcSize / exclusiveWriteCacheMaxSize >= 65) {
+    if (1.0 * ewcSize / exclusiveWriteCacheMaxSize >= exclusiveWriteCacheBoundary) {
       flushedPages += flushExclusiveWriteCache();
     }
 
@@ -2497,7 +2500,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final long ewcSize = exclusiveWriteCacheSize.get();
       assert ewcSize >= 0;
 
-      if (100 * ewcSize / exclusiveWriteCacheMaxSize >= 65) {
+      if (1.0 * ewcSize / exclusiveWriteCacheMaxSize >= exclusiveWriteCacheBoundary) {
         exclusivePagesSum += flushExclusiveWriteCache();
       }
     }

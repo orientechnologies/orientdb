@@ -122,7 +122,7 @@ public class ReadWriteCacheConcurrentTest {
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12 * 1024, Integer.MAX_VALUE,
         Integer.MAX_VALUE, 100, true, Locale.US, -1, 1024 * 1024 * 1024L, 1000, true, false);
     writeBuffer = new OWOWCache(8 + systemOffset, bufferPool, writeAheadLog, -1, 15000 * (8 + systemOffset), 4 * (8 + systemOffset),
-        true, storagePath, null, storageName, OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndThrow, false, false);
+        true, storagePath, null, storageName, OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndThrow, false, false, 0.9);
     writeBuffer.loadRegisteredFiles();
     readBuffer = new O2QCache(4 * (8 + systemOffset), 8 + systemOffset, true, 20);
   }
