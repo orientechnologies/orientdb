@@ -56,6 +56,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
@@ -585,28 +586,23 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer{
     return fullPos;
   }
    
-  protected Object readEmbeddedMap(final BytesContainer bytes, final ODocument document) {
+  protected Map readEmbeddedMap(final BytesContainer bytes, final ODocument document) {
     int size = OVarIntSerializer.readAsInteger(bytes);
-    final OTrackedMap<Object> result = new OTrackedMap<>(document);
-
-    result.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
-    try {
-      for (int i = 0; i < size; i++) {
-        OType keyType = readOType(bytes, false);
-        Object key = deserializeValue(bytes, keyType, document);
-        byte typeId = readByte(bytes);
-        if (typeId != -1) {
-          final OType type = OType.getById(typeId);
-          Object value = deserializeValue(bytes, type, document);
-          result.put(key, value);
-        } else
-          result.put(key, null);
-      }
-      return result;
-
-    } finally {
-      result.setInternalStatus(ORecordElement.STATUS.LOADED);
+    final Map result = new HashMap();
+    
+    for (int i = 0; i < size; i++) {
+      OType keyType = readOType(bytes, false);
+      Object key = deserializeValue(bytes, keyType, document);
+      byte typeId = readByte(bytes);
+      if (typeId != -1) {
+        final OType type = OType.getById(typeId);
+        Object value = deserializeValue(bytes, type, document);
+        result.put(key, value);
+      } else
+        result.put(key, null);
     }
+    return result;
+
   }
   
 }

@@ -3477,7 +3477,7 @@ public class ODocument extends ORecordAbstract
           }
           else if (currentElement instanceof List){
             List currentElementAsList = (List)currentElement;
-            if (ODocumentHelper.isChangedList(currentElementAsList, parent, new ArrayList<>(ownersTrace), 1)){
+            if (ODocumentHelper.isChangedCollection(currentElementAsList, parent, new ArrayList<>(ownersTrace), 1)){
               ODocumentDelta listElementDelta = new ODocumentDelta();
               listElementDelta.field("i", i);
               listElementDelta.field("t", UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd());

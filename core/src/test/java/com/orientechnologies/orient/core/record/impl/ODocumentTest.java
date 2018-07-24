@@ -26,6 +26,7 @@ import java.util.Map;
 
 import static org.junit.Assert.*;
 import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializerI;
+import javax.swing.text.Document;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -991,70 +992,7 @@ public class ODocumentTest {
         odb.close();
       }
     }
-  } 
-  
-  @Test
-  public void testRemoveFieldListOfDocsDelta(){
-    ODatabaseSession db = null;
-    OrientDB odb = null;
-    try{      
-      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
-      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
-      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
-
-      String fieldName = "testField";
-      
-      OClass claz = db.createClassIfNotExist("TestClass");
-
-      ODocument doc = new ODocument(claz);
-      ODocument originalDoc = new ODocument(claz);
-      
-      String constantField = "constField";
-      String constValue = "ConstValue";
-      String variableField = "varField";
-      List<ODocument> originalValue = new ArrayList<>();
-      List<ODocument> copyValue = new ArrayList<>();
-      for (int i = 0; i < 2; i++){
-        ODocument containedDoc = new ODocument();
-        containedDoc.field(constantField, constValue);
-        containedDoc.field(variableField, "one" + i);
-        originalValue.add(containedDoc);
-        copyValue.add(containedDoc.copy());
-      }
-      
-      doc.field(fieldName, originalValue);
-      originalDoc.field(fieldName, copyValue);
-
-      doc = db.save(doc);
-      
-      ODocument testDoc = originalValue.get(1);
-      testDoc.removeField(variableField);   
-      
-      ODocumentDelta delta = doc.getDeltaFromOriginal();
-      
-      //test serialization/deserialization
-      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
-      byte[] stream = ddSer.toStream(delta);
-      BytesContainer bytes = new BytesContainer(stream);
-      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
-      assertEquals(delta, dcCopy);
-      
-      delta = delta.field("d");
-      
-      originalDoc.mergeDeleteDelta(delta);
-      List<ODocument> checkList = originalDoc.field(fieldName);
-      ODocument checkDoc = checkList.get(1);
-      assertFalse(checkDoc.containsField(variableField));      
-    }
-    finally{
-      if (db != null)
-        db.close();
-      if (odb != null){
-        odb.drop(dbName);
-        odb.close();
-      }
-    }
-  }
+  }     
   
   @Test
   public void testListOfListsOfDocumentDelta(){
@@ -1950,8 +1888,7 @@ public class ODocumentTest {
       ODocument originalDoc = new ODocument(claz);
       originalDoc.field(nestedFieldName, doc.copy());
       
-      rootDoc = db.save(rootDoc);
-      ODocument originaDoc = rootDoc.copy();
+      rootDoc = db.save(rootDoc);      
             
       doc.removeField(fieldName);
       
@@ -1966,8 +1903,8 @@ public class ODocumentTest {
 
       ODocumentDelta deletePart = dc.field("d");
             
-      originaDoc.mergeDeleteDelta(deletePart);
-      ODocument nested = originaDoc.field(nestedFieldName);
+      originalDoc.mergeDeleteDelta(deletePart);
+      ODocument nested = originalDoc.field(nestedFieldName);
       assertFalse(nested.containsField(fieldName));
     }
     finally{
@@ -1981,7 +1918,7 @@ public class ODocumentTest {
   }
   
   @Test
-  public void testListOfDocsRemoveField(){
+  public void testRemoveFieldListOfDocsDelta(){
     ODatabaseSession db = null;
     OrientDB odb = null;
     try{      
@@ -2131,10 +2068,9 @@ public class ODocumentTest {
 
       doc.field(fieldName, mapValue, OType.EMBEDDEDMAP);
       ODocument originalDoc = new ODocument(claz);
-      originalDoc.field(fieldName, copyMap);
+      originalDoc.field(fieldName, copyMap, OType.EMBEDDEDMAP);
 
-      doc = db.save(doc);
-      ODocument originaDoc = doc.copy();
+      doc = db.save(doc);      
       
       Map<String, String> containedMap = doc.field(fieldName);
       containedMap.put("first", "changed");
@@ -2149,8 +2085,8 @@ public class ODocumentTest {
 
       ODocumentDelta updatePart = dc.field("u");
             
-      originaDoc.mergeUpdateDelta(updatePart);
-      containedMap = originaDoc.field(fieldName);
+      originalDoc.mergeUpdateDelta(updatePart);
+      containedMap = originalDoc.field(fieldName);
       assertEquals("changed", containedMap.get("first"));
     }
     finally{
@@ -2191,8 +2127,7 @@ public class ODocumentTest {
       ODocument originalDoc = new ODocument(claz);
       originalDoc.field(fieldName, copyValue);
 
-      doc = db.save(doc);
-      ODocument originaDoc = doc.copy();
+      doc = db.save(doc);      
       
       Map<String, String> containedMap = (Map<String, String>)((List)doc.field(fieldName)).get(0);
       containedMap.put("first", "changed");
@@ -2207,12 +2142,70 @@ public class ODocumentTest {
 
       ODocumentDelta updatePart = dc.field("u");
             
-      originaDoc.mergeUpdateDelta(updatePart);
-      containedMap = (Map<String, String>)((List)originaDoc.field(fieldName)).get(0);
+      originalDoc.mergeUpdateDelta(updatePart);
+      containedMap = (Map<String, String>)((List)originalDoc.field(fieldName)).get(0);
       assertEquals("changed", containedMap.get("first"));
-      containedMap = (Map<String, String>)((List)originaDoc.field(fieldName)).get(1);
+      containedMap = (Map<String, String>)((List)originalDoc.field(fieldName)).get(1);
       assertEquals("one", containedMap.get("first"));
     }
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
+  @Test
+  public void testUpdateDocInMapDelta(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      String fieldName = "testField";
+      Map<String, ODocument> mapValue = new HashMap<>();
+      ODocument d1 = new ODocument(); d1.field("f1", "v1");      
+      mapValue.put("first", d1);
+      ODocument d2 = new ODocument(); d2.field("f2", "v2");
+      mapValue.put("second", d2);
+      Map<String, ODocument> copyMap = new HashMap<>();
+      copyMap.put("first", d1.copy());
+      copyMap.put("second", d2.copy());
+
+      doc.field(fieldName, mapValue, OType.EMBEDDEDMAP);
+      ODocument originalDoc = new ODocument(claz);
+      originalDoc.field(fieldName, copyMap, OType.EMBEDDEDMAP);
+
+      doc = db.save(doc);      
+      
+      Map<String, ODocument> containedMap = doc.field(fieldName);
+      ODocument changeDoc = containedMap.get("first");
+      changeDoc.field("f1", "changed");
+      
+      ODocumentDelta dc = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
+      byte[] stream = ddSer.toStream(dc);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(dc, dcCopy);
+
+      ODocumentDelta updatePart = dc.field("u");
+            
+      originalDoc.mergeUpdateDelta(updatePart);
+      containedMap = originalDoc.field(fieldName);
+      ODocument containedDoc = containedMap.get("first");
+      assertEquals("changed", containedDoc.field("f1"));
+    }    
     finally{
       if (db != null)
         db.close();

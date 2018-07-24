@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -65,8 +66,8 @@ public class ODocumentEntry {
       return doc.isChangedInDepth();
     }
     
-    if (value instanceof List){
-      List list = (List)value;
+    if (value instanceof Collection){
+      Collection list = (Collection)value;
       for (Object element : list){
         if (element instanceof ODocument){
           ODocument doc = (ODocument)element;
@@ -76,12 +77,42 @@ public class ODocumentEntry {
             }
           }
         }
-        else if (element instanceof List){
-          if (ODocumentHelper.isChangedList((List)element, this, ownersTrace, 1)){
+        else if (element instanceof Collection){
+          if (ODocumentHelper.isChangedCollection((Collection)element, this, ownersTrace, 1)){
+            return true;
+          }
+        }
+        else if (element instanceof Map){
+          if (ODocumentHelper.isChangedMap((Map<Object, Object>)element, this, ownersTrace, 1)){
             return true;
           }
         }
       }      
+    }
+    
+    if (value instanceof Map){
+      Map<Object, Object> map = (Map)value;
+      for (Map.Entry<Object, Object> entry : map.entrySet()){
+        Object element = entry.getValue();
+        if (element instanceof ODocument){
+          ODocument doc = (ODocument)element;
+          for (Map.Entry<String, ODocumentEntry> field : doc._fields.entrySet()){
+            if (field.getValue().isChangedTree(new ArrayList<>())){
+              return true;
+            }
+          }
+        }
+        else if (element instanceof Collection){
+          if (ODocumentHelper.isChangedCollection((List)element, this, ownersTrace, 1)){
+            return true;
+          }
+        }
+        else if (element instanceof Map){
+          if (ODocumentHelper.isChangedMap((Map<Object, Object>)element, this, ownersTrace, 1)){
+            return true;
+          }
+        }
+      }
     }
     
     if (timeLine != null){
