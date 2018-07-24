@@ -2216,4 +2216,66 @@ public class ODocumentTest {
     }
   }
   
+  @Test
+  public void testListOfMapsUpdateDelta(){
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try{      
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);      
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+
+      ODocument doc = new ODocument(claz);
+      String fieldName = "testField";
+      List<Map> originalList = new ArrayList<>();
+      List<Map> copyList = new ArrayList<>();
+      
+      Map<String, String> mapValue1 = new HashMap<>();
+      mapValue1.put("first", "one"); mapValue1.put("second", "two");
+      originalList.add(mapValue1);
+      Map<String, String> mapValue1Copy = new HashMap<>(mapValue1);
+      copyList.add(mapValue1Copy);
+      
+      Map<String, String> mapValue2 = new HashMap<>();
+      mapValue2.put("third", "three"); mapValue2.put("forth", "four");
+      originalList.add(mapValue2);
+      Map<String, String> mapValue2Copy = new HashMap<>(mapValue2);
+      copyList.add(mapValue2Copy);                  
+
+      doc.field(fieldName, originalList);
+      ODocument originalDoc = new ODocument(claz);
+      originalDoc.field(fieldName, copyList);
+
+      doc = db.save(doc);      
+      
+      Map<String, String> containedMap = (Map<String, String>)((List)doc.field(fieldName)).get(0);      
+      containedMap.put("first", "changed");
+      
+      ODocumentDelta dc = doc.getDeltaFromOriginal();
+      
+      //test serialization/deserialization
+      ODocumentDeltaSerializerI ddSer = ODocumentDeltaSerializer.getActiveSerializer();
+      byte[] stream = ddSer.toStream(dc);
+      BytesContainer bytes = new BytesContainer(stream);
+      ODocumentDelta dcCopy = ddSer.fromStream(bytes);
+      assertEquals(dc, dcCopy);
+
+      ODocumentDelta updatePart = dc.field("u");
+            
+      originalDoc.mergeUpdateDelta(updatePart);
+      containedMap = (Map<String, String>)((List)originalDoc.field(fieldName)).get(0);      
+      assertEquals("changed", containedMap.get("first"));
+    }    
+    finally{
+      if (db != null)
+        db.close();
+      if (odb != null){
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
 }
