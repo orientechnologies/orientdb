@@ -17,31 +17,40 @@ public class ORequestContext {
   private int                                    quorum;
   private OResponseHandler                       handler;
   private TimerTask                              timerTask;
+  private OLogId                                 requestId;
 
   public ORequestContext(ODistributedCoordinator coordinator, OSubmitRequest submitRequest, ONodeRequest nodeRequest,
-      Collection<ODistributedMember> involvedMembers, OResponseHandler handler) {
+      Collection<ODistributedMember> involvedMembers, OResponseHandler handler, OLogId requestId) {
     this.coordinator = coordinator;
     this.submitRequest = submitRequest;
     this.nodeRequest = nodeRequest;
     this.involvedMembers = involvedMembers;
     this.handler = handler;
     this.quorum = (involvedMembers.size() / 2) + 1;
+    this.requestId =requestId;
 
     timerTask = new TimerTask() {
       @Override
       public void run() {
         coordinator.executeOperation(() -> {
-          handler.timeout(coordinator, ORequestContext.this);
-          //TODO:Cancel the task depending on the timeout action.
+          if (handler.timeout(coordinator, ORequestContext.this)  ) {
+            finish();
+          }
         });
       }
     };
 
   }
 
+  public void finish() {
+    coordinator.finish(requestId);
+  }
+
   public void receive(ODistributedMember member, ONodeResponse response) {
     responses.put(member, response);
-    handler.receive(coordinator, this, member, response);
+    if(handler.receive(coordinator, this, member, response)){
+      finish();
+    }
   }
 
   public Map<ODistributedMember, ONodeResponse> getResponses() {
@@ -54,5 +63,9 @@ public class ORequestContext {
 
   public TimerTask getTimerTask() {
     return timerTask;
+  }
+
+  public Collection<ODistributedMember> getInvolvedMembers() {
+    return involvedMembers;
   }
 }

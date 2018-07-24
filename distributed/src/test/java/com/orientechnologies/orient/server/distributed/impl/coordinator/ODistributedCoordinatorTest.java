@@ -6,6 +6,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class ODistributedCoordinatorTest {
@@ -28,22 +29,25 @@ public class ODistributedCoordinatorTest {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
-          public void receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+          public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
               ONodeResponse response) {
             if (context.getResponses().size() == 1) {
               responseReceived.countDown();
             }
+            return context.getResponses().size() == context.getInvolvedMembers().size();
           }
 
           @Override
-          public void timeout(ODistributedCoordinator coordinator, ORequestContext context) {
-
+          public boolean timeout(ODistributedCoordinator coordinator, ORequestContext context) {
+            return true;
           }
         });
       }
 
     });
     assertTrue(responseReceived.await(1, TimeUnit.SECONDS));
+    coordinator.close();
+    assertEquals(0, coordinator.getContexts().size());
   }
 
   @Test
@@ -65,7 +69,7 @@ public class ODistributedCoordinatorTest {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
-          public void receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+          public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
               ONodeResponse response) {
             if (context.getResponses().size() == 1) {
               coordinator.sendOperation(null, new ONodeRequest() {
@@ -75,31 +79,35 @@ public class ODistributedCoordinatorTest {
                 }
               }, new OResponseHandler() {
                 @Override
-                public void receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+                public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
                     ONodeResponse response) {
                   if (context.getResponses().size() == 1) {
                     member.reply(new OSubmitResponse() {
                     });
                   }
+                  return context.getResponses().size() == context.getInvolvedMembers().size();
                 }
 
                 @Override
-                public void timeout(ODistributedCoordinator coordinator, ORequestContext context) {
-
+                public boolean timeout(ODistributedCoordinator coordinator, ORequestContext context) {
+                  return true;
                 }
               });
             }
+            return context.getResponses().size() == context.getInvolvedMembers().size();
           }
 
           @Override
-          public void timeout(ODistributedCoordinator coordinator, ORequestContext context) {
-
+          public boolean timeout(ODistributedCoordinator coordinator, ORequestContext context) {
+            return true;
           }
         });
       }
     });
 
     assertTrue(responseReceived.await(1, TimeUnit.SECONDS));
+    coordinator.close();
+    assertEquals(0, coordinator.getContexts().size());
   }
 
   @Test
@@ -120,14 +128,15 @@ public class ODistributedCoordinatorTest {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
-          public void receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+          public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
               ONodeResponse response) {
-
+            return false;
           }
 
           @Override
-          public void timeout(ODistributedCoordinator coordinator, ORequestContext context) {
+          public boolean timeout(ODistributedCoordinator coordinator, ORequestContext context) {
             timedOut.countDown();
+            return true;
           }
         });
       }
@@ -135,7 +144,8 @@ public class ODistributedCoordinatorTest {
 
     //This is 2 seconds because timeout is hard coded with 1 sec now
     assertTrue(timedOut.await(2, TimeUnit.SECONDS));
-
+    coordinator.close();
+    assertEquals(0, coordinator.getContexts().size());
   }
 
   private static class MockChannel implements ODistributedChannel {
