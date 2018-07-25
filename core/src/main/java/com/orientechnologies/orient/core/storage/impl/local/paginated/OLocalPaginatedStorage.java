@@ -558,12 +558,23 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     double exclusiveWriteCacheBoundary = contextConfiguration
         .getValueAsFloat(OGlobalConfiguration.DISK_CACHE_EXCLUSIVE_FLUSH_BOUNDARY);
 
+    final boolean printCacheStatistics = contextConfiguration
+        .getValueAsBoolean(OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS);
+    final int statisticsPrintInterval = contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_STATISTICS_INTERVAL);
+    final boolean flushTillSegmentLogging = contextConfiguration
+        .getValueAsBoolean(OGlobalConfiguration.DISK_CACHE_PRINT_FLUSH_TILL_SEGMENT_STATISTICS);
+    final boolean fileFlushLogging = contextConfiguration
+        .getValueAsBoolean(OGlobalConfiguration.DISK_CACHE_PRINT_FLUSH_FILE_STATISTICS);
+    final boolean fileRemovalLogging = contextConfiguration
+        .getValueAsBoolean(OGlobalConfiguration.DISK_CACHE_PRINT_FILE_REMOVE_STATISTICS);
+
     final OBinarySerializerFactory binarySerializerFactory = getComponentsFactory().binarySerializerFactory;
     final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(), writeAheadLog,
-        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, diskCacheSize, true,
-        getStoragePath(), getPerformanceStatisticManager(), getName(), binarySerializerFactory.getObjectSerializer(OType.STRING),
-        files, getId(), contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), true,
-        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC), exclusiveWriteCacheBoundary);
+        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, diskCacheSize,
+        getStoragePath(), getName(), binarySerializerFactory.getObjectSerializer(OType.STRING), files, getId(),
+        contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), true,
+        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC), exclusiveWriteCacheBoundary,
+        printCacheStatistics, statisticsPrintInterval, flushTillSegmentLogging, fileFlushLogging, fileRemovalLogging);
 
     wowCache.addLowDiskSpaceListener(this);
     wowCache.loadRegisteredFiles();

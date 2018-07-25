@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptio
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
@@ -64,19 +63,12 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   private int counter = 0;
 
-  private final int                          pageSize;
-  private final int                          id;
-  private final OPerformanceStatisticManager performanceStatisticManager;
+  private final int pageSize;
+  private final int id;
 
   ODirectMemoryOnlyDiskCache(final int pageSize, final int id, final OPerformanceStatisticManager performanceStatisticManager) {
     this.pageSize = pageSize;
     this.id = id;
-    this.performanceStatisticManager = performanceStatisticManager;
-  }
-
-  @Override
-  public OPerformanceStatisticManager getPerformanceStatisticManager() {
-    return performanceStatisticManager;
   }
 
   /**
@@ -211,32 +203,19 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   private OCacheEntry doLoad(final long fileId, final long pageIndex) {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
-        .getSessionPerformanceStatistic();
+    final int intId = extractFileId(fileId);
 
-    if (sessionStoragePerformanceStatistic != null) {
-      sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
+    final MemoryFile memoryFile = getFile(intId);
+    final OCacheEntry cacheEntry = memoryFile.loadPage(pageIndex);
+    if (cacheEntry == null)
+      return null;
+
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (cacheEntry) {
+      cacheEntry.incrementUsages();
     }
 
-    try {
-      final int intId = extractFileId(fileId);
-
-      final MemoryFile memoryFile = getFile(intId);
-      final OCacheEntry cacheEntry = memoryFile.loadPage(pageIndex);
-      if (cacheEntry == null)
-        return null;
-
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (cacheEntry) {
-        cacheEntry.incrementUsages();
-      }
-
-      return cacheEntry;
-    } finally {
-      if (sessionStoragePerformanceStatistic != null) {
-        sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
-      }
-    }
+    return cacheEntry;
   }
 
   @Override
@@ -245,31 +224,18 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public OCacheEntry allocateNewPage(final long fileId, final OWriteCache writeCache, final boolean verifyChecksums) {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
-        .getSessionPerformanceStatistic();
+    final int intId = extractFileId(fileId);
 
-    if (sessionStoragePerformanceStatistic != null) {
-      sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
+    final MemoryFile memoryFile = getFile(intId);
+    final OCacheEntry cacheEntry = memoryFile.addNewPage();
+
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (cacheEntry) {
+      cacheEntry.incrementUsages();
     }
 
-    try {
-      final int intId = extractFileId(fileId);
-
-      final MemoryFile memoryFile = getFile(intId);
-      final OCacheEntry cacheEntry = memoryFile.addNewPage();
-
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (cacheEntry) {
-        cacheEntry.incrementUsages();
-      }
-
-      cacheEntry.acquireExclusiveLock();
-      return cacheEntry;
-    } finally {
-      if (sessionStoragePerformanceStatistic != null) {
-        sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
-      }
-    }
+    cacheEntry.acquireExclusiveLock();
+    return cacheEntry;
   }
 
   private MemoryFile getFile(final int fileId) {

@@ -314,6 +314,22 @@ public enum OGlobalConfiguration {
   DISK_CACHE_LSN_CHUNK_SIZE("storage.diskCache.ringChunkSize",
       "Maximum size of chunk which should be flushed by write cache background thread in LSN mode", Integer.class, 1),
 
+  DISK_CACHE_PRINT_CACHE_STATISTICS("storage.diskCache.printCacheStatistics",
+      "Print information about write cache performance metrics", Boolean.class, true),
+
+  DISK_CACHE_STATISTICS_INTERVAL("storage.diskCache.cacheStatisticsInterval",
+      "Period in sec. after which information about write cache performance metrics will be printed", Integer.class, 10),
+
+  DISK_CACHE_PRINT_FLUSH_TILL_SEGMENT_STATISTICS("storage.diskCache.printFlushTillSegmentStatistics",
+      "Print information about write cache state when it is requested to flush all data operations on which are logged "
+          + "till provided WAL segment", Boolean.class, true),
+
+  DISK_CACHE_PRINT_FLUSH_FILE_STATISTICS("storage.diskCache.printFlushFileStatistics",
+      "Print information about write cache state when it is requested to flush all data of file specified", Boolean.class, true),
+
+  DISK_CACHE_PRINT_FILE_REMOVE_STATISTICS("storage.diskCache.printFileRemoveStatistics",
+      "Print information about write cache state when it is requested to clear all data of file specified", Boolean.class, true),
+
   DISK_CACHE_EXCLUSIVE_PAGES_BOUNDARY("storage.diskCache.exclusiveBoundary",
       "Portion of exclusive pages in write cache after which we will start to flush only exclusive pages", Float.class, 0.7),
 

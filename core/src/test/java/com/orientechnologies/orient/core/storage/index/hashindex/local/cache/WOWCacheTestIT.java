@@ -118,8 +118,8 @@ public class WOWCacheTestIT {
 
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, Integer.MAX_VALUE, Integer.MAX_VALUE,
         25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false);
-    wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, 10, 100, 10_000_000, false, storagePath, null, storageName,
-        OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, false, false, 0.9);
+    wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, 10, 100, 10_000_000, storagePath, storageName,
+        OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, false, false, 0.9, true, 10, true, true, true);
 
     wowCache.loadRegisteredFiles();
   }
