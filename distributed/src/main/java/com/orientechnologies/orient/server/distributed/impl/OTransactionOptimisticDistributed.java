@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -15,6 +16,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,12 +60,26 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         }
         break;
       case ORecordOperation.UPDATED:
-        if (change.getRecord() instanceof ODocument) {
-          ODocumentDelta deltaRecord = (ODocumentDelta) change.getRecordContainer();
-          ODocument original = database.load(deltaRecord.getIdentity());
+        if (change.getRecord() instanceof ODocument) {          
+          ODocument original = null;
+          OIdentifiable updateRecord = null;
+          if (OTransactionPhase1Task.useDeltasForUpdate){
+            updateRecord = change.getRecordContainer();                        
+          }
+          else{
+            updateRecord = change.getRecord();            
+          }
+          
+          original = database.load(updateRecord.getIdentity());
           if (original == null)
-            throw new ORecordNotFoundException(deltaRecord.getIdentity());
-          original = original.mergeDelta(deltaRecord);
+            throw new ORecordNotFoundException(updateRecord.getIdentity());
+          
+          if (OTransactionPhase1Task.useDeltasForUpdate){
+            original = original.mergeDelta((ODocumentDelta)updateRecord);
+          }
+          else{
+            original.merge((ODocument)updateRecord, false, false);
+          }
           
           ODocument updateDoc = original;
           OLiveQueryHook.addOp(updateDoc, ORecordOperation.UPDATED, database);
