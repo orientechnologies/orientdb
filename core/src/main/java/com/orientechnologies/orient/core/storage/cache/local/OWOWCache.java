@@ -2707,9 +2707,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               endTs = System.nanoTime();
             } else {
               //if no writes were done write at least exclusive pages if any
-              flushExclusiveWriteCache(null);
+              lsnPages = flushExclusiveWriteCache(null);
 
-              endTs = System.nanoTime();
+              if (lsnPages > 0) {
+                endTs = System.nanoTime();
+              } else {
+                flushWriteCacheFromMinLSN(startSegment, endSegment + 1, pagesFlushLimit - flushedPages);
+                endTs = System.nanoTime();
+              }
             }
 
             final int segments = localDirtyPagesBySegment.size();
