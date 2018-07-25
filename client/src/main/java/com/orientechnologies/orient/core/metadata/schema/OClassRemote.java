@@ -81,7 +81,7 @@ public class OClassRemote extends OClassImpl {
         cmd.append(" unsafe ");
 
       database.command(cmd.toString()).close();
-      reload();
+      getOwner().reload(database);
 
       return getProperty(propertyName);
     } finally {

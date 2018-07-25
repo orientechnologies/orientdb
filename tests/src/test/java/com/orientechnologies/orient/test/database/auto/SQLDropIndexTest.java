@@ -50,7 +50,6 @@ public class SQLDropIndexTest {
     oClass.createProperty("prop1", EXPECTED_PROP1_TYPE);
     oClass.createProperty("prop2", EXPECTED_PROP2_TYPE);
 
-    schema.save();
   }
 
   @AfterClass

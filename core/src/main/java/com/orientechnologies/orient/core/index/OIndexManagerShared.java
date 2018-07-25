@@ -480,6 +480,32 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     }
   }
 
+  public ODocument toNetworkStream() {
+    ODocument document = new ODocument();
+    internalAcquireExclusiveLock();
+    try {
+      document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+
+      try {
+        final OTrackedSet<ODocument> indexes = new OTrackedSet<>(document);
+
+        for (final OIndex<?> i : this.indexes.values()) {
+          indexes.add(((OIndexInternal<?>) i).updateConfiguration().copy());
+        }
+        document.field(CONFIG_INDEXES, indexes, OType.EMBEDDEDSET);
+
+      } finally {
+        document.setInternalStatus(ORecordElement.STATUS.LOADED);
+      }
+      document.setDirty();
+
+      return document;
+    } finally {
+      internalReleaseExclusiveLock();
+    }
+
+  }
+
   private class RecreateIndexesTask implements Runnable {
     private final OStorage storage;
     private       int      ok;

@@ -115,14 +115,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
       final boolean ignoreCache, final boolean iUpdateCache, final boolean loadTombstones,
       final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader);
 
-  <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver, final OPERATION_MODE mode,
-      boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
-      ORecordCallback<Integer> recordUpdatedCallback);
-
   void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired, final OPERATION_MODE iMode,
       boolean prohibitTombstones);
-
-  <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName);
 
   void setDefaultTransactionMode();
 
@@ -155,13 +149,17 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
     throw new UnsupportedOperationException();
   }
 
+  default Map<String, OResultSet> getActiveQueries() {
+    throw new UnsupportedOperationException();
+  }
+
   boolean isUseLightweightEdges();
 
   OEdge newLightweightEdge(String iClassName, OVertex from, OVertex to);
 
   void setUseLightweightEdges(boolean b);
 
-  /**
+  /**yep before in
    * Hides records content by putting tombstone on the records position but does not delete record itself.
    * <p>
    * This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method. This
@@ -245,5 +243,10 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   }
 
   void internalClose(boolean recycle);
+
+  ORecord saveAll(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback);
+
+  String getClusterName(final ORecord record);
 
 }

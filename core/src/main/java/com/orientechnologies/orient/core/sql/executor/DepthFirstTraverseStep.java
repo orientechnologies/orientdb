@@ -6,7 +6,10 @@ import com.orientechnologies.orient.core.sql.parser.OInteger;
 import com.orientechnologies.orient.core.sql.parser.OTraverseProjectionItem;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by luigidellaquila on 26/10/16.
@@ -33,12 +36,19 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       ((OResultInternal) item).setMetadata("$stack", stack);
 
       List<OIdentifiable> path = new ArrayList<>();
-      path.add(item.getIdentity().get());
+      if (item.getIdentity().isPresent()) {
+        path.add(item.getIdentity().get());
+      } else if (item.getProperty("@rid") != null) {
+        path.add(item.getProperty("@rid"));
+      }
       ((OResultInternal) item).setMetadata("$path", path);
 
       if (item != null && item.isElement() && !traversed.contains(item.getElement().get().getIdentity())) {
         tryAddEntryPoint(item, ctx);
         traversed.add(item.getElement().get().getIdentity());
+      } else if (item.getProperty("@rid") != null && item.getProperty("@rid") instanceof OIdentifiable) {
+        tryAddEntryPoint(item, ctx);
+        traversed.add(((OIdentifiable) item.getProperty("@rid")).getIdentity());
       }
     }
   }
@@ -59,6 +69,14 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
         res.depth = 0;
         res.setMetadata("$depth", 0);
       }
+    } else {
+      res = new OTraverseResult();
+      for (String key : item.getPropertyNames()) {
+        res.setProperty(key, item.getProperty(key));
+      }
+      for (String md : item.getMetadataKeys()) {
+        res.setMetadata(md, item.getMetadata(md));
+      }
     }
 
     return res;
@@ -71,8 +89,9 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       this.results.add(item);
       for (OTraverseProjectionItem proj : projections) {
         Object nextStep = proj.execute(item, ctx);
-        if (this.maxDepth == null || this.maxDepth.getValue().intValue() > item.depth) {
-          addNextEntryPoints(nextStep, item.depth + 1, (List) item.getMetadata("$path"), (List) item.getMetadata("$stack"), ctx);
+        Integer depth = item.depth != null ? item.depth : (Integer) item.getMetadata("$depth");
+        if (this.maxDepth == null || this.maxDepth.getValue().intValue() > depth) {
+          addNextEntryPoints(nextStep, depth + 1, (List) item.getMetadata("$path"), (List) item.getMetadata("$stack"), ctx);
         }
       }
     }
@@ -170,7 +189,12 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     if (whileClause == null || whileClause.matchesFilters(res, ctx)) {
       this.entryPoints.add(0, res);
     }
-    traversed.add(res.getElement().get().getIdentity());
+
+    if (res.isElement()) {
+      traversed.add(res.getElement().get().getIdentity());
+    } else if (res.getProperty("@rid") != null && res.getProperty("@rid") instanceof OIdentifiable) {
+      traversed.add(((OIdentifiable) res.getProperty("@rid")).getIdentity());
+    }
   }
 
   @Override

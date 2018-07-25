@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.ORemoteConnectionManager;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
@@ -345,6 +344,8 @@ public class OrientDBRemote implements OrientDBInternal {
   public OEmbeddedDatabaseInstanceFactory getFactory() {
     throw new UnsupportedOperationException("instance factory is not supported in remote");
   }
+
+
 
   @Override
   public void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,

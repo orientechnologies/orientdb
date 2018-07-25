@@ -2,10 +2,9 @@ package com.orientechnologies.orient.server.distributed.impl.metadata;
 
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexes;
@@ -21,12 +20,16 @@ import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.function.Supplier;
+
 /**
  * Created by tglman on 22/06/17.
  */
 public class OSharedContextDistributed extends OSharedContext {
 
-  public OSharedContextDistributed(OStorage storage) {
+  private ViewManager viewManager;
+
+  public OSharedContextDistributed(OStorage storage, Supplier<ODatabaseDocument> adminDbSupplier) {
     schema = new OSchemaDistributed(this);
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerDistributed(storage);
@@ -45,6 +48,9 @@ public class OSharedContextDistributed extends OSharedContext {
 
     queryStats = new OQueryStats();
 
+    this.viewManager = new ViewManager(adminDbSupplier);
+    this.viewManager.start();
+
   }
 
   public synchronized void load(ODatabaseDocumentInternal database) {
@@ -56,7 +62,7 @@ public class OSharedContextDistributed extends OSharedContext {
           schema.load(database);
           indexManager.load(database);
           //The Immutable snapshot should be after index and schema that require and before everything else that use it
-          schema.forceSnapshot();
+          schema.forceSnapshot(database);
           security.load();
           functionLibrary.load(database);
           scheduler.load(database);
@@ -74,6 +80,7 @@ public class OSharedContextDistributed extends OSharedContext {
 
   @Override
   public synchronized void close() {
+    viewManager.close();
     schema.close();
     security.close(false);
     indexManager.close();
@@ -89,10 +96,10 @@ public class OSharedContextDistributed extends OSharedContext {
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
     OScenarioThreadLocal.executeAsDistributed(() -> {
-      schema.reload();
+      schema.reload(database);
       indexManager.reload();
       //The Immutable snapshot should be after index and schema that require and before everything else that use it
-      schema.forceSnapshot();
+      schema.forceSnapshot(database);
       security.load();
       functionLibrary.load(database);
       sequenceLibrary.load(database);
@@ -126,7 +133,7 @@ public class OSharedContextDistributed extends OSharedContext {
         //the index does not exist
       }
 
-      schema.forceSnapshot();
+      schema.forceSnapshot(database);
       loaded = true;
       return null;
     });

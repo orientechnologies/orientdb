@@ -13,7 +13,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.OEdgeToVertexIterable;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -2166,10 +2165,10 @@ public class OSelectStatementExecutionTest {
     int counter = 0;
     while (resultSet.hasNext()) {
       OResult result = resultSet.next();
-      OEdgeToVertexIterable edge = result.getProperty("$x");
-      Iterator<OVertex> iter = edge.iterator();
+      Iterable edge = result.getProperty("$x");
+      Iterator<OIdentifiable> iter = edge.iterator();
       while (iter.hasNext()) {
-        OVertex toVertex = iter.next();
+        OVertex toVertex = db.load(iter.next().getIdentity());
         if (doc2Id.equals(toVertex.getIdentity())) {
           ++counter;
         }

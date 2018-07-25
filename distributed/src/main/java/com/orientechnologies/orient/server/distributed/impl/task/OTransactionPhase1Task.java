@@ -8,11 +8,9 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializer;
 import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializerI;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -106,18 +104,12 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
     convert(database);
-    OTransactionResultPayload res1 = null;
-    try {
-      OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
-
-      res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
-    } catch (ORecordNotFoundException e) {
-      //Do nothing this will cause the transaction to re-enque and wait for the next operation that will insert the missing data.
-    }
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
+    OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
     if (res1 == null) {
       retryCount++;
       ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
-          .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this);
+          .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this, retryCount);
       hasResponse = false;
       return null;
     }
@@ -144,7 +136,6 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     } catch (ODistributedLockException | OLockException ex) {
       payload = new OTxLockTimeout();
     } catch (ORecordDuplicatedException ex) {
-      //TODO:Check if can get out the key
       payload = new OTxUniqueIndex((ORecordId) ex.getRid(), ex.getIndexName(), ex.getKey());
     } catch (RuntimeException ex) {
       payload = new OTxException(ex);
@@ -259,5 +250,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       return operations.stream().mapToInt((x) -> x.getId().getClusterId()).toArray();
     else
       return ops.stream().mapToInt((x) -> x.getRID().getClusterId()).toArray();
+  }
+
+  @Override
+  public long getDistributedTimeout() {
+    return super.getDistributedTimeout() + (operations.size() / 10);
   }
 }

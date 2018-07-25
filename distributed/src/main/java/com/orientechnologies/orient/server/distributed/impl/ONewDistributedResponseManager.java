@@ -1,9 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
@@ -11,7 +7,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTr
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
 
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 
 public class ONewDistributedResponseManager implements ODistributedResponseManager {
 
@@ -101,27 +96,7 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   }
 
   @Override
-  public Collection<String> getConflictServers() {
-    return null;
-  }
-
-  @Override
   public Set<String> getServersWithoutFollowup() {
-    return null;
-  }
-
-  @Override
-  public boolean addFollowupToServer(String node) {
-    return false;
-  }
-
-  @Override
-  public boolean isSynchronousWaiting() {
-    return false;
-  }
-
-  @Override
-  public ODistributedResponse getQuorumResponse() {
     return null;
   }
 
@@ -136,18 +111,8 @@ public class ONewDistributedResponseManager implements ODistributedResponseManag
   }
 
   @Override
-  public Object getResponseFromServer(String server) {
-    return null;
-  }
-
-  @Override
   public int getQuorum() {
     return 0;
-  }
-
-  @Override
-  public boolean executeInLock(OCallable<Boolean, ODistributedResponseManager> oCallable) {
-    return false;
   }
 
   public synchronized boolean collectResponse(OTransactionPhase1TaskResult response, String senderNodeName) {

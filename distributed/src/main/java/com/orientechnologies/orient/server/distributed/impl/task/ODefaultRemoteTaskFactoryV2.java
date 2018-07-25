@@ -144,6 +144,8 @@ public class ODefaultRemoteTaskFactoryV2 extends ODefaultRemoteTaskFactoryV1 {
 
     case NodeOperationTask.FACTORYID: //55
       return new NodeOperationTask();
+    case OToLeaderTransactionTask.FACTORYID: // 30
+      return new OToLeaderTransactionTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

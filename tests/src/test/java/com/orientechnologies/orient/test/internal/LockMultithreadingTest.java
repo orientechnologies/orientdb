@@ -156,8 +156,6 @@ public class LockMultithreadingTest {
 
     database.getMetadata().getSchema().createClass(TRANSACTIONAL_WORD + STUDENT_CLASS_NAME);
 
-    database.getMetadata().getSchema().save();
-
     this.db = database;
   }
 

@@ -250,24 +250,10 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <RET extends ORecord> RET executeSaveRecord(ORecord record, String clusterName, int ver, OPERATION_MODE mode,
-      boolean forceCreate, ORecordCallback<? extends Number> recordCreatedCallback,
-      ORecordCallback<Integer> recordUpdatedCallback) {
-    checkOpenness();
-    return internal.executeSaveRecord(record, clusterName, ver, mode, forceCreate, recordCreatedCallback, recordUpdatedCallback);
-  }
-
-  @Override
   public void executeDeleteRecord(OIdentifiable record, int iVersion, boolean iRequired, OPERATION_MODE iMode,
       boolean prohibitTombstones) {
     checkOpenness();
     internal.executeDeleteRecord(record, iVersion, iRequired, iMode, prohibitTombstones);
-  }
-
-  @Override
-  public <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName) {
-    checkOpenness();
-    return internal.executeSaveEmptyRecord(record, clusterName);
   }
 
   @Override
@@ -1532,5 +1518,15 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public void internalClose(boolean recycle) {
     internal.internalClose(true);
+  }
+  
+  public ORecord saveAll(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
+    return internal.saveAll(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+  }
+
+  @Override
+  public String getClusterName(ORecord record) {
+    return internal.getClusterName(record);
   }
 }

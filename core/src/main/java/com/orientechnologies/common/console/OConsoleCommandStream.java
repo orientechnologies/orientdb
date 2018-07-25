@@ -31,6 +31,7 @@ public class OConsoleCommandStream implements OCommandStream {
 
   private Character nextCharacter;
   private State     state;
+  private int nestingLevel = 0;
 
   private enum State {
     TEXT, SINGLE_QUOTE_STRING, DOUBLE_QUOTE_STRING, SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT, HYPHEN, SLASH, CLOSING_ASTERISK, ESCAPING_STRING
@@ -50,6 +51,8 @@ public class OConsoleCommandStream implements OCommandStream {
     NEW_LINE, //command separator
 
     STRING_ESCAPE, //backslash, string escape
+
+    LEFT_BRACKET, RIGHT_BRAKET, // { and }, for blocks
 
     EOF//end of file
   }
@@ -122,6 +125,17 @@ public class OConsoleCommandStream implements OCommandStream {
             result.append(c);
             state = State.SINGLE_QUOTE_STRING;
             break;
+          case LEFT_BRACKET:
+            result.append(c);
+            nestingLevel++;
+            break;
+          case RIGHT_BRAKET:
+            result.append(c);
+            nestingLevel--;
+            if (nestingLevel <= 0 && !isMatch(result)) {
+              return result.toString().trim();
+            }
+            break;
           case HYPHEN:
             if (result.toString().trim().length() == 0) {
               //allow commands only at the beginning of a row
@@ -147,6 +161,13 @@ public class OConsoleCommandStream implements OCommandStream {
             break;
           case SEPARATOR:
           case NEW_LINE:
+            if (nestingLevel <= 0) {
+              state = State.TEXT;
+              return result.toString().trim();
+            } else {
+              result.append("\n");
+            }
+            break;
           case EOF:
             state = State.TEXT;
             return result.toString().trim();
@@ -245,6 +266,17 @@ public class OConsoleCommandStream implements OCommandStream {
     }
   }
 
+  private boolean isMatch(StringBuilder result) {
+    String cmd = result.toString().trim();
+    if (cmd.length() < 6) {
+      return false;
+    }
+    if (cmd.substring(0, 6).equalsIgnoreCase("match ")) {
+      return true;
+    }
+    return false;
+  }
+
   @Override
   public void close() {
     try {
@@ -271,6 +303,10 @@ public class OConsoleCommandStream implements OCommandStream {
       return Symbol.ASTERISK;
     if (c.equals(';'))
       return Symbol.SEPARATOR;
+    if (c.equals('{'))
+      return Symbol.LEFT_BRACKET;
+    if (c.equals('}'))
+      return Symbol.RIGHT_BRAKET;
     if (c.equals('\n') || c.equals('\r'))
       return Symbol.NEW_LINE;
 

@@ -263,7 +263,6 @@ public class IndexConcurrencyTest {
       OClass personClass = db.getMetadata().getSchema().createClass("Person", vertexClass);
       personClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
       personClass.createProperty("identifier", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-      db.getMetadata().getSchema().save();
 
       // POPULATE TREE
       db.begin();

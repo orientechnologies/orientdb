@@ -9,6 +9,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import org.junit.Ignore;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -57,10 +59,11 @@ public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
     }
   }
 
-  @Test
+  @Test(enabled = false)
+  // This is not supported anymore direct record operations are removed from the storage, only tx is available
   public void testRawCreateWithoutIDTest() {
     OClass clazz = this.database.getMetadata().getSchema().createClass("RidCreationTestClass");
-    OStorage storage = this.database.getStorage();
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) this.database.getStorage();
     ODocument doc = new ODocument("RidCreationTestClass");
     doc.field("test", "test");
     ORecordId bad = new ORecordId(-1, -1);

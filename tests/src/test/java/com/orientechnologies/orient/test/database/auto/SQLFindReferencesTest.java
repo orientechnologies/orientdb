@@ -132,7 +132,6 @@ public class SQLFindReferencesTest extends DocumentDBBaseTest {
     car.createProperty("plate", OType.STRING);
     car.createProperty("owner", OType.LINK, worker);
 
-    database.getMetadata().getSchema().save();
   }
 
   private void populateDatabase() {
@@ -221,12 +220,10 @@ public class SQLFindReferencesTest extends DocumentDBBaseTest {
   private void dropClass(String iClass) {
     OCommandSQL dropClassCommand = new OCommandSQL("drop class " + iClass);
     database.command(dropClassCommand).execute();
-    database.getMetadata().getSchema().save();
     database.getMetadata().getSchema().reload();
     database.reload();
     while (database.getMetadata().getSchema().existsClass(iClass)) {
       database.getMetadata().getSchema().dropClass(iClass);
-      database.getMetadata().getSchema().save();
       database.reload();
     }
     while (database.getClusterIdByName(iClass) > -1) {

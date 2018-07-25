@@ -42,7 +42,6 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
 
     final OSchema schema = database.getMetadata().getSchema();
     schema.createClass(TEST_CLASS);
-    schema.save();
 
     database.close();
   }

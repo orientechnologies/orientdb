@@ -27,25 +27,13 @@ public interface ODistributedResponseManager {
 
   List<String> getRespondingNodes();
 
-  Collection<String> getConflictServers();
-
   Set<String> getServersWithoutFollowup();
-
-  boolean addFollowupToServer(String node);
-
-  boolean isSynchronousWaiting();
-
-  ODistributedResponse getQuorumResponse();
 
   ODistributedRequestId getMessageId();
 
   ODistributedRequest getRequest();
 
-  Object getResponseFromServer(String server);
-
   int getQuorum();
-
-  boolean executeInLock(OCallable<Boolean, ODistributedResponseManager> oCallable);
 
   boolean collectResponse(ODistributedResponse response);
 

@@ -519,7 +519,6 @@ public class FreezeMultiThreadingTestNonTX {
     transactionalStudent.createIndex("index5", OClass.INDEX_TYPE.NOTUNIQUE, "counter2");
     transactionalStudent.createIndex("index6", OClass.INDEX_TYPE.NOTUNIQUE, "counter", "counter2");
 
-    database.getMetadata().getSchema().save();
 
     System.out.println("*in before***********CLOSE************************************");
     database.close();

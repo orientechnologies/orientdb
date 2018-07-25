@@ -229,10 +229,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     return collectResponse(localResponse);
   }
 
-  public boolean isSynchronousWaiting() {
-    return synchronousResponsesArrived.getCount() > 0;
-  }
-
   public void removeServerBecauseUnreachable(final String node) {
     synchronousResponsesLock.lock();
     try {
@@ -397,15 +393,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     }
   }
 
-  public boolean executeInLock(final OCallable<Boolean, ODistributedResponseManager> callback) {
-    synchronousResponsesLock.lock();
-    try {
-      return callback.call(this);
-    } finally {
-      synchronousResponsesLock.unlock();
-    }
-  }
-
   public boolean isWaitForLocalNode() {
     return waitForLocalNode;
   }
@@ -511,40 +498,10 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     }
   }
 
-  /**
-   * Returns all the servers in conflict.
-   */
-  public List<String> getConflictServers() {
-    synchronousResponsesLock.lock();
-    try {
-
-      final List<String> servers = new ArrayList<String>();
-      if (quorumResponse != null) {
-        for (Map.Entry<String, Object> entry : responses.entrySet()) {
-          if (!quorumResponse.equals(entry.getValue()))
-            servers.add(entry.getKey());
-        }
-      }
-      return servers;
-
-    } finally {
-      synchronousResponsesLock.unlock();
-    }
-  }
-
   public Set<String> getExpectedNodes() {
     synchronousResponsesLock.lock();
     try {
       return new HashSet<String>(responses.keySet());
-    } finally {
-      synchronousResponsesLock.unlock();
-    }
-  }
-
-  public boolean addFollowupToServer(final String server) {
-    synchronousResponsesLock.lock();
-    try {
-      return followupToNodes.add(server);
     } finally {
       synchronousResponsesLock.unlock();
     }
@@ -559,22 +516,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
       final HashSet<String> servers = new HashSet<String>(responses.keySet());
       servers.removeAll(followupToNodes);
       return servers;
-    } finally {
-      synchronousResponsesLock.unlock();
-    }
-  }
-
-  public ODistributedResponse getQuorumResponse() {
-    return quorumResponse;
-  }
-
-  public Object getResponseFromServer(final String s) {
-    synchronousResponsesLock.lock();
-    try {
-      final Object r = responses.get(s);
-      if (r == NO_RESPONSE)
-        return null;
-      return r;
     } finally {
       synchronousResponsesLock.unlock();
     }

@@ -47,7 +47,6 @@ public class CollectionIndexTest extends ObjectDBBaseTest {
     collector.createProperty("id", OType.STRING);
     collector.createProperty("stringCollection", OType.EMBEDDEDLIST, OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-    database.getMetadata().getSchema().save();
   }
   @AfterMethod
   public void afterMethod() throws Exception {

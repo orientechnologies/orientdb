@@ -75,6 +75,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 /**
  * Document API entrypoint.
@@ -84,26 +85,26 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
-  protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
-  protected       ORecordSerializer                           serializer;
-  protected       String                                      url;
-  protected       STATUS                                      status;
-  protected       OIntent                                     currentIntent;
-  protected       ODatabaseInternal<?>                        databaseOwner;
-  protected       OMetadataDefault                            metadata;
-  protected       OImmutableUser                              user;
+  protected final Map<String, Object> properties = new HashMap<String, Object>();
+  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
+  protected ORecordSerializer    serializer;
+  protected String               url;
+  protected STATUS               status;
+  protected OIntent              currentIntent;
+  protected ODatabaseInternal<?> databaseOwner;
+  protected OMetadataDefault     metadata;
+  protected OImmutableUser       user;
   protected final byte                                        recordType    = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
-  protected       OLocalRecordCache                           localCache;
-  protected       OCurrentStorageComponentsFactory            componentsFactory;
-  protected       boolean                                     initialized   = false;
-  protected       OTransaction                                currentTx;
+  protected OLocalRecordCache                localCache;
+  protected OCurrentStorageComponentsFactory componentsFactory;
+  protected boolean initialized = false;
+  protected OTransaction currentTx;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected       OSharedContext  sharedContext;
+  protected OSharedContext sharedContext;
 
   private boolean prefetchRecords;
 
@@ -147,6 +148,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   protected abstract void loadMetadata();
+
+  protected abstract void loadMetadata(Supplier<ODatabaseDocument> adminDbSupplier);
 
   public void callOnCloseListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
@@ -213,7 +216,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public ODatabaseDocumentInternal cleanOutRecord(final ORID iRecord, final int iVersion) {
-    executeDeleteRecord(iRecord, iVersion, true, OPERATION_MODE.SYNCHRONOUS, true);
+    delete(iRecord, iVersion);
     return this;
   }
 
@@ -1435,34 +1438,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     }
     return rid.getClusterId();
   }
-
-  public <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName) {
-    ORecordId rid = (ORecordId) record.getIdentity();
-    assert rid.isNew();
-
-    ORecordInternal.onBeforeIdentityChanged(record);
-    int id = assignAndCheckCluster(record, clusterName);
-    clusterName = getClusterNameById(id);
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, clusterName);
-
-    byte[] content = getSerializer().writeClassOnly(record);
-
-    final OStorageOperationResult<OPhysicalPosition> ppos = getStorage()
-        .createRecord(rid, content, record.getVersion(), recordType, OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
-
-    ORecordInternal.setVersion(record, ppos.getResult().recordVersion);
-    ((ORecordId) record.getIdentity()).copyFrom(rid);
-    ORecordInternal.onAfterIdentityChanged(record);
-
-    return (RET) record;
-  }
-
-  public abstract <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
-      final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
-      ORecordCallback<Integer> recordUpdatedCallback);
-
-  public abstract void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired,
-      final OPERATION_MODE iMode, boolean prohibitTombstones);
 
   /**
    * This method is internal, it can be subject to signature change or be removed, do not use.
@@ -2735,6 +2710,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     }
   }
 
+  public Map<String, OResultSet> getActiveQueries() {
+    return activeQueries;
+  }
+
   public OResultSet getActiveQuery(String id) {
     return activeQueries.get(id);
   }
@@ -2759,4 +2738,5 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       return true;
     return false;
   }
+
 }

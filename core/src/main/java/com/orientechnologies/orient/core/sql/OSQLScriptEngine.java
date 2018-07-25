@@ -75,7 +75,13 @@ public class OSQLScriptEngine implements ScriptEngine {
     if (db == null) {
       throw new OCommandExecutionException("No database available in threadlocal");
     }
-    OResultSet queryResult = db.command(script, convertToParameters(n));
+    Map<Object, Object> params = convertToParameters(n);
+    OResultSet queryResult;
+    if (params.keySet().stream().anyMatch(x -> !(x instanceof String))) {
+      queryResult = db.execute("sql", script, params);
+    } else {
+      queryResult = db.execute("sql", script, (Map) params);
+    }
     OLegacyResultSet finalResult = new OBasicLegacyResultSet();
     queryResult.stream().forEach(x -> finalResult.add(x));
     queryResult.close();
