@@ -2690,33 +2690,46 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         if (lsnFlushInterval >= lsnFlushIntervalBoundary) {
           convertSharedDirtyPagesToLocal();
 
-          final Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
+          Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
 
           final long startSegment = writeAheadLog.begin().getSegment();
           final long endSegment = writeAheadLog.end().getSegment();
 
+          int lsnPages = 0;
           if (lsnEntry != null && endSegment - startSegment >= 1) {
-            int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages);
+            lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, pagesFlushLimit - flushedPages);
             lastTsLSNFlush = startTs;
 
             lsnFlushIntervalSum += lsnFlushInterval;
             lsnFlushIntervalCount++;
+          }
 
-            final long endTs;
+          final long endTs;
+          if (lsnPages > 0) {
+            endTs = System.nanoTime();
+          } else {
+            //if no writes were done write at least exclusive pages if any
+            lsnPages = flushExclusiveWriteCache(null);
+            lastTsLSNFlush = startTs;
+
             if (lsnPages > 0) {
               endTs = System.nanoTime();
             } else {
-              //if no writes were done write at least exclusive pages if any
-              lsnPages = flushExclusiveWriteCache(null);
+              lsnEntry = localDirtyPagesBySegment.firstEntry();
 
-              if (lsnPages > 0) {
-                endTs = System.nanoTime();
-              } else {
-                flushWriteCacheFromMinLSN(startSegment, endSegment + 1, pagesFlushLimit - flushedPages);
-                endTs = System.nanoTime();
+              if (lsnEntry != null) {
+                lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment + 1, pagesFlushLimit - flushedPages);
+                lastTsLSNFlush = startTs;
+
+                lsnFlushIntervalSum += lsnFlushInterval;
+                lsnFlushIntervalCount++;
               }
-            }
 
+              endTs = System.nanoTime();
+            }
+          }
+
+          if (lsnPages > 0) {
             final int segments = localDirtyPagesBySegment.size();
             if (segments <= 2) {
               lsnFlushIntervalBoundary = 9 * (endTs - startTs);
