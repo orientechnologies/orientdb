@@ -673,6 +673,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     commit2pc(transactionId);
   }
 
+  /**
+   * 
+   * @param transactionId
+   * @return 
+   * null returned means that commit failed
+   */
   public Collection<ORecordOperation> commit2pc(ODistributedRequestId transactionId) {
     getStorageDistributed().resetLastValidBackup();
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
