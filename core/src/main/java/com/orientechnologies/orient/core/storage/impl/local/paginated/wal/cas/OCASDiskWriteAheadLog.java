@@ -2182,7 +2182,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         final long threadsWaitingCount = OCASDiskWriteAheadLog.this.threadsWaitingCount.sum();
         final long threadsWaitingSum = OCASDiskWriteAheadLog.this.threadsWaitingSum.sum();
 
-        OLogManager.instance().infoNoDb(this, "%d KB was written, write speed is %d KB/s. FSync count %d. "
+        OLogManager.instance().infoNoDb(this, "WAL stat: %d KB was written, write speed is %d KB/s. FSync count %d. "
                 + "Avg. fsync time %d ms. %d times threads were waiting for WAL. Avg wait interval %d ms.", bytesWritten / 1024,
             writtenTime > 0 ? 1_000_000_000L * bytesWritten / writtenTime / 1024 : -1, fsyncCount,
             fsyncCount > 0 ? fsyncTime / fsyncCount / 1_000_000 : -1, threadsWaitingCount,
