@@ -185,7 +185,7 @@ public final class OWALRecordsFactory {
 
           if (initialSize > 0) {
             OLogManager.instance()
-                .infoNoDb(this, "WAL compression:  WAL content was compressed at %d percent", 100 * compressedSize / initialSize);
+                .infoNoDb(this, "WAL compression:  WAL content compression ratio %d percent", 100 * initialSize / compressedSize);
 
             initialSizeSum.add(-initialSize);
             compressedSizeSum.add(-compressedSize);
