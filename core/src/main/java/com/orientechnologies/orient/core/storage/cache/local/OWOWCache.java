@@ -2709,16 +2709,20 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           final double writeCachePart = ewcSize / exclusiveWriteCacheMaxSize;
 
           final long endTs = System.nanoTime();
-          if (writeCachePart <= 0.5) {
+          if (writeCachePart <= 0.1) {
             exclusiveFlushIntervalBoundary = 9 * (endTs - exclusiveTs);
-          } else if (writeCachePart <= 0.6) {
+          } else if (writeCachePart <= 0.2) {
             exclusiveFlushIntervalBoundary = 4 * (endTs - exclusiveTs);
-          } else if (writeCachePart <= 0.7) {
+          } else if (writeCachePart <= 0.5) {
             exclusiveFlushIntervalBoundary = (endTs - exclusiveTs);
-          } else if (writeCachePart <= 0.8) {
+          } else if (writeCachePart <= 0.7) {
             exclusiveFlushIntervalBoundary = (endTs - exclusiveTs) / 2;
+          } else if (writeCachePart <= 0.8) {
+            exclusiveFlushIntervalBoundary = (endTs - exclusiveTs) / 4;
+          } else if (writeCachePart <= 0.9) {
+            exclusiveFlushIntervalBoundary = (endTs - exclusiveTs) / 8;
           } else {
-            exclusiveFlushIntervalBoundary = pagesFlushInterval;
+            exclusiveFlushIntervalBoundary = 0;
           }
         }
 
@@ -2759,8 +2763,12 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 lsnFlushIntervalBoundary = (endTs - lsnTs);
               } else if (segments <= 5) {
                 lsnFlushIntervalBoundary = (endTs - lsnTs) / 2;
+              } else if (segments <= 6) {
+                lsnFlushIntervalBoundary = (endTs - lsnTs) / 4;
+              } else if (segments <= 7) {
+                lsnFlushIntervalBoundary = (endTs - lsnTs) / 8;
               } else {
-                lsnFlushIntervalBoundary = pagesFlushInterval;
+                lsnFlushIntervalBoundary = 0;
               }
             }
           }
