@@ -49,7 +49,7 @@ public interface OWriteAheadLog {
 
   OLogSequenceNumber getLastCheckpoint();
 
-  OLogSequenceNumber begin() throws IOException;
+  OLogSequenceNumber begin();
 
   OLogSequenceNumber begin(long segmentId) throws IOException;
 
