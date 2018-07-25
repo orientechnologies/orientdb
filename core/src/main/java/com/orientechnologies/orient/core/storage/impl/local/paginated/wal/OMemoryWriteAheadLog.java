@@ -36,7 +36,7 @@ import java.util.Map;
  */
 public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   @Override
-  public OLogSequenceNumber begin() throws IOException {
+  public OLogSequenceNumber begin() {
     throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
