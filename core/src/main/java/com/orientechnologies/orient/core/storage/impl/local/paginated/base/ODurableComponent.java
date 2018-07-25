@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
 
 import java.io.IOException;
@@ -148,9 +149,10 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
       OLogSequenceNumber recordLSN = null;
 
       try {
-        for (OPageOperation operation : pageOperations) {
-          recordLSN = writeAheadLog.log(operation);
-        }
+//        for (OPageOperation operation : pageOperations) {
+//          recordLSN = writeAheadLog.log(operation);
+//        }
+        recordLSN = writeAheadLog.log(new OEmptyWALRecord());
       } catch (IOException e) {
         throw OException.wrapException(new OStorageException(
             "Error during generation of LSN for page " + cacheEntry.getFileId() + ":" + cacheEntry.getPageIndex() + " in storage "
