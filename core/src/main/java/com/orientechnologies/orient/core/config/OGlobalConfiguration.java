@@ -212,8 +212,14 @@ public enum OGlobalConfiguration {
   STORAGE_PRINT_WAL_COMPRESSION_STATISTICS("storage.printWALCompressionStatistics", "Prints compression ration of WAL data",
       Boolean.class, true),
 
-  STORAGE_PRINT_WAL_COMPRESSION_INTERVAL("storage.printWALCompressionStatistics",
+  STORAGE_PRINT_WAL_COMPRESSION_INTERVAL("storage.walCompressionStatisticsInterval",
       "Interval in seconds between consequent reports of WAL statistics", Integer.class, 10),
+
+  STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS("storage.printWALPerformanceStatistics",
+      "Periodically prints statistics about WAL performance", Boolean.class, true),
+
+  STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL("storage.walPerformanceStatisticsInterval",
+      "Interval in seconds between consequent reports of WAL performance statistics", Integer.class, 10),
 
   /**
    * @deprecated because it was used as workaround for the case when storage is already opened but there are no checkpoints and as

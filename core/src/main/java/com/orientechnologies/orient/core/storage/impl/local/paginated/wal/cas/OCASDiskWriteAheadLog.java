@@ -73,6 +73,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
@@ -175,10 +176,24 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
   private final boolean callFsync;
 
+  private final boolean printPerformanceStatistic;
+  private final int     statisticPrintInterval;
+
+  private volatile long bytesWrittenSum  = 0;
+  private volatile long bytesWrittenTime = 0;
+
+  private volatile long fsyncTime  = 0;
+  private volatile long fsyncCount = 0;
+
+  private final LongAdder threadsWaitingSum   = new LongAdder();
+  private final LongAdder threadsWaitingCount = new LongAdder();
+
+  private long reportTs = -1;
+
   public OCASDiskWriteAheadLog(final String storageName, final Path storagePath, final Path walPath, final int maxPagesCacheSize,
       long segmentsInterval, final long maxSegmentSize, final int commitDelay, final boolean filterWALFiles, final Locale locale,
-      final long walSizeHardLimit, final long freeSpaceLimit, final int fsyncInterval, boolean allowDirectIO, boolean callFsync)
-      throws IOException {
+      final long walSizeHardLimit, final long freeSpaceLimit, final int fsyncInterval, boolean allowDirectIO, boolean callFsync,
+      boolean printPerformanceStatistic, int statisticPrintInterval) throws IOException {
     commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
@@ -189,6 +204,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     this.segmentsInterval = segmentsInterval;
     this.callFsync = callFsync;
+    this.printPerformanceStatistic = printPerformanceStatistic;
+    this.statisticPrintInterval = statisticPrintInterval;
     commitExecutor.setMaximumPoolSize(1);
 
     this.fsyncInterval = fsyncInterval;
@@ -1040,8 +1057,17 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     long qsize = queueSize.addAndGet(writeableRecord.getDiskSize());
     if (qsize >= maxCacheSize) {
+      threadsWaitingCount.increment();
       try {
+        long startTs = 0;
+        if (printPerformanceStatistic) {
+          startTs = System.nanoTime();
+        }
         flushLatch.get().await();
+        if (printPerformanceStatistic) {
+          final long endTs = System.nanoTime();
+          threadsWaitingSum.add(endTs - startTs);
+        }
       } catch (final InterruptedException e) {
         OLogManager.instance().errorNoDb(this, "WAL write was interrupted", e);
       }
@@ -1049,7 +1075,15 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       qsize = queueSize.get();
 
       if (qsize >= maxCacheSize) {
+        long startTs = 0;
+        if (printPerformanceStatistic) {
+          startTs = System.nanoTime();
+        }
         doFlush(false);
+        if (printPerformanceStatistic) {
+          final long endTs = System.nanoTime();
+          threadsWaitingSum.add(endTs - startTs);
+        }
       }
     }
 
@@ -1709,6 +1743,10 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
     @Override
     public void run() {
+      if (printPerformanceStatistic) {
+        printReport();
+      }
+
       try {
         final long ts = System.nanoTime();
         final boolean makeFSync = forceSync || ts - lastFSyncTs > fsyncInterval * 1_000_000;
@@ -1934,6 +1972,11 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
             writeFuture = Orient.instance().writeThread().submit((Callable<?>) () -> {
               try {
+                long startTs = 0;
+                if (printPerformanceStatistic) {
+                  startTs = System.nanoTime();
+                }
+
                 final int cqSize = fileCloseQueueSize.get();
                 if (cqSize > 0) {
                   int counter = 0;
@@ -1969,6 +2012,14 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
                 flushedLSN = writtenUpTo.get().lsn;
 
                 fireEventsFor(flushedLSN);
+
+                if (printPerformanceStatistic) {
+                  final long endTs = System.nanoTime();
+                  //noinspection NonAtomicOperationOnVolatileField
+                  fsyncTime += (endTs - startTs);
+                  //noinspection NonAtomicOperationOnVolatileField
+                  fsyncCount++;
+                }
               } catch (final IOException e) {
                 OLogManager.instance().errorNoDb(this, "Error during FSync of WAL data", e);
                 throw e;
@@ -2053,6 +2104,11 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
 
       writeFuture = Orient.instance().writeThread().submit((Callable<?>) () -> {
         try {
+          long startTs = 0;
+          if (printPerformanceStatistic) {
+            startTs = System.nanoTime();
+          }
+
           assert buffer.position() == 0;
           assert file.position() % pageSize == 0;
           assert buffer.limit() == limit;
@@ -2085,6 +2141,15 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
             assert writtenCheckpoint == null || writtenCheckpoint.compareTo(checkpointLSN) < 0;
             writtenCheckpoint = checkpointLSN;
           }
+
+          if (printPerformanceStatistic) {
+            final long endTs = System.nanoTime();
+
+            //noinspection NonAtomicOperationOnVolatileField
+            bytesWrittenSum += buffer.limit();
+            //noinspection NonAtomicOperationOnVolatileField
+            bytesWrittenTime += (endTs - startTs);
+          }
         } catch (final IOException e) {
           OLogManager.instance().errorNoDb(this, "Error during WAL data write", e);
           throw e;
@@ -2095,6 +2160,48 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         return null;
       });
     }
+
+    private void printReport() {
+      final long ts = System.nanoTime();
+      final long reportInterval;
+
+      if (reportTs == -1) {
+        reportTs = ts;
+        reportInterval = 0;
+      } else {
+        reportInterval = ts - reportTs;
+      }
+
+      if (reportInterval > statisticPrintInterval) {
+        final long bytesWritten = OCASDiskWriteAheadLog.this.bytesWrittenSum;
+        final long writtenTime = OCASDiskWriteAheadLog.this.bytesWrittenTime;
+
+        final long fsyncTime = OCASDiskWriteAheadLog.this.fsyncTime;
+        final long fsyncCount = OCASDiskWriteAheadLog.this.fsyncCount;
+
+        final long threadsWaitingCount = OCASDiskWriteAheadLog.this.threadsWaitingCount.sum();
+        final long threadsWaitingSum = OCASDiskWriteAheadLog.this.threadsWaitingSum.sum();
+
+        OLogManager.instance().infoNoDb(this, "%d KB was written, write speed is %d KB/s. FSync count %d. "
+                + "Avg. fsync time %d ms. %d times threads were waiting for WAL. Avg wait interval %d ms.", bytesWritten / 1024,
+            1_000_000_000L * bytesWritten / writtenTime / 1024, fsyncCount,
+            fsyncCount > 0 ? fsyncTime / fsyncCount / 1_000_000 : -1, threadsWaitingCount,
+            threadsWaitingCount > 0 ? threadsWaitingSum / threadsWaitingCount / 1_000_000 : -1);
+
+        OCASDiskWriteAheadLog.this.bytesWrittenSum -= bytesWritten;
+        OCASDiskWriteAheadLog.this.bytesWrittenTime -= writtenTime;
+
+        OCASDiskWriteAheadLog.this.fsyncTime -= fsyncTime;
+        OCASDiskWriteAheadLog.this.fsyncCount -= fsyncCount;
+
+        OCASDiskWriteAheadLog.this.threadsWaitingSum.add(-threadsWaitingSum);
+        OCASDiskWriteAheadLog.this.threadsWaitingCount.add(-threadsWaitingCount);
+
+        reportTs = ts;
+      }
+
+    }
+
   }
 
   private static final class WrittenUpTo {
