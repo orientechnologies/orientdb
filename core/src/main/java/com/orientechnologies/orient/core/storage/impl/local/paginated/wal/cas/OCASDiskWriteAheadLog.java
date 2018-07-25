@@ -2172,7 +2172,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
         reportInterval = ts - reportTs;
       }
 
-      if (reportInterval > statisticPrintInterval) {
+      if (reportInterval >= statisticPrintInterval * 1_000_000_000L) {
         final long bytesWritten = OCASDiskWriteAheadLog.this.bytesWrittenSum;
         final long writtenTime = OCASDiskWriteAheadLog.this.bytesWrittenTime;
 
