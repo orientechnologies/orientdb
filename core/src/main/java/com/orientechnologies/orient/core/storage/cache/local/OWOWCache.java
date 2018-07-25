@@ -2391,6 +2391,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           chunkSizeCountSum = 1;
         }
 
+        if (exclusiveFlushIntervalCount == 0) {
+          exclusiveFlushIntervalCount = 1;
+        }
+
         Map.Entry<Long, TreeSet<PageKey>> entry = localDirtyPagesBySegment.firstEntry();
 
         long loadedPages = this.loadedPagesSum.sum();
@@ -2433,6 +2437,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         lsnFlushIntervalCount = 0;
         lsnFlushIntervalSum = 0;
+
+        exclusiveFlushIntervalSum = 0;
+        exclusiveFlushIntervalCount = 0;
 
         flushedPagesSum = 0;
         flushedPagesTime = 0;
