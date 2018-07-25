@@ -20,8 +20,10 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
@@ -84,6 +86,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimerTask;
+import java.util.concurrent.atomic.LongAdder;
 
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.ALLOCATE_POSITION_OPERATION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.ATOMIC_UNIT_END_RECORD;
@@ -158,10 +162,38 @@ public final class OWALRecordsFactory {
 
   public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
 
+  private static final boolean printCompressionStatistics    = OGlobalConfiguration.STORAGE_PRINT_WAL_COMPRESSION_STATISTICS
+      .getValueAsBoolean();
+  private static final int     compressionStatisticsInterval = OGlobalConfiguration.STORAGE_PRINT_WAL_COMPRESSION_INTERVAL
+      .getValueAsInteger();
+
   private static final LZ4Factory factory                    = LZ4Factory.fastestInstance();
   private static final int        MIN_COMPRESSED_RECORD_SIZE = OGlobalConfiguration.WAL_MINIMAL_COMPRESSED_RECORD_SIZE.
 
       getValueAsInteger();
+
+  private static final LongAdder initialSizeSum    = new LongAdder();
+  private static final LongAdder compressedSizeSum = new LongAdder();
+
+  static {
+    if (printCompressionStatistics) {
+      Orient.instance().scheduleTask(new TimerTask() {
+        @Override
+        public void run() {
+          final long initialSize = initialSizeSum.sum();
+          final long compressedSize = compressedSizeSum.sum();
+
+          if (initialSize > 0) {
+            OLogManager.instance()
+                .infoNoDb(this, "WAL compression:  WAL content was compressed at %d percent", 100 * compressedSize / initialSize);
+
+            initialSizeSum.add(-initialSize);
+            compressedSizeSum.add(-compressedSize);
+          }
+        }
+      }, compressionStatisticsInterval * 1_000, compressionStatisticsInterval * 1_000);
+    }
+  }
 
   public static OPair<ByteBuffer, Long> toStream(final OWriteableWALRecord walRecord) {
     final int contentSize = walRecord.serializedSize() + 1;
@@ -181,7 +213,10 @@ public final class OWALRecordsFactory {
     content.put(recordId);
     walRecord.toStream(content);
 
+    initialSizeSum.add(contentSize);
+
     if (MIN_COMPRESSED_RECORD_SIZE <= 0 || contentSize < MIN_COMPRESSED_RECORD_SIZE) {
+      compressedSizeSum.add(contentSize);
       return new OPair<>(content, pointer);
     }
 
@@ -203,6 +238,8 @@ public final class OWALRecordsFactory {
     compressedContent.limit(compressedLength + 5);
     compressedContent.put(0, (byte) (-(recordId + 1)));
     compressedContent.putInt(1, contentSize);
+
+    compressedSizeSum.add(compressedLength);
 
     return new OPair<>(compressedContent, compressedPointer);
   }

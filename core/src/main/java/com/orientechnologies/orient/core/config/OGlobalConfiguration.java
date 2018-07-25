@@ -209,6 +209,12 @@ public enum OGlobalConfiguration {
   STORAGE_CALL_FSYNC("strorage.callFsync", "Call fsync during fuzzy checkpoints or WAL writes, true by default", Boolean.class,
       true),
 
+  STORAGE_PRINT_WAL_COMPRESSION_STATISTICS("storage.printWALCompressionStatistics", "Prints compression ration of WAL data",
+      Boolean.class, true),
+
+  STORAGE_PRINT_WAL_COMPRESSION_INTERVAL("storage.printWALCompressionStatistics",
+      "Interval in seconds between consequent reports of WAL statistics", Integer.class, 10),
+
   /**
    * @deprecated because it was used as workaround for the case when storage is already opened but there are no checkpoints and as
    * result data restore after crash may work incorrectly, this bug is fixed under https://github.com/orientechnologies/orientdb/issues/7562

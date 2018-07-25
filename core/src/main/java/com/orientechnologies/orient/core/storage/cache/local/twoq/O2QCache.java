@@ -155,8 +155,11 @@ public final class O2QCache implements OReadCache {
             long cacheRequests = O2QCache.this.cacheRequests.sum();
             long cacheHits = O2QCache.this.cacheHits.sum();
 
-            OLogManager.instance().infoNoDb(this, "Read cache stat: cache hits %d percents",
-                cacheRequests > 0 ? 100 * cacheHits / cacheRequests : -1);
+            final MemoryData memoryData = memoryDataContainer.get();
+
+            OLogManager.instance().infoNoDb(this, "Read cache stat: cache hits %d percents, cache size is %d percent",
+                cacheRequests > 0 ? 100 * cacheHits / cacheRequests : -1,
+                100 * (am.size() + a1in.size() + memoryData.pinnedPages) / memoryData.maxSize);
 
             O2QCache.this.cacheRequests.add(-cacheRequests);
             O2QCache.this.cacheHits.add(-cacheHits);
