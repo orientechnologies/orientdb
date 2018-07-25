@@ -2707,16 +2707,15 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         if (flushedPages > 0) {
           final long ewcSize = exclusiveWriteCacheSize.get();
           final double writeCachePart = ewcSize / exclusiveWriteCacheMaxSize;
-          final double writeCacheDiff = writeCachePart - 0.5;
 
           final long endTs = System.nanoTime();
-          if (writeCacheDiff <= 0.5) {
+          if (writeCachePart <= 0.5) {
             exclusiveFlushIntervalBoundary = 9 * (endTs - exclusiveTs);
-          } else if (writeCacheDiff <= 0.6) {
+          } else if (writeCachePart <= 0.6) {
             exclusiveFlushIntervalBoundary = 4 * (endTs - exclusiveTs);
-          } else if (writeCacheDiff <= 0.7) {
+          } else if (writeCachePart <= 0.7) {
             exclusiveFlushIntervalBoundary = (endTs - exclusiveTs);
-          } else if (writeCacheDiff <= 0.8) {
+          } else if (writeCachePart <= 0.8) {
             exclusiveFlushIntervalBoundary = (endTs - exclusiveTs) / 2;
           } else {
             exclusiveFlushIntervalBoundary = pagesFlushInterval;
