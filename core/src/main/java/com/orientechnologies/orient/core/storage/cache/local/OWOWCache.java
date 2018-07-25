@@ -2418,7 +2418,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 + "%d pages were read from the disk, read speed is %d pages/s (%d KB/s), "
                 + "data threads were waiting because of cache overflow %d times, avg. wait time is %d ms., "
                 + "avg. chunk size %d, avg, chunk flush time %d ms., WAL begin %s, WAL end %s, %d of percent of exclusive write cache is filled, "
-                + "LSN flush interval boundary %d ms, exclusive flush interval boundary %d, avg. exclusive flush interval %d ms",
+                + "LSN flush interval boundary %d ms, exclusive flush interval boundary %d ms., avg. exclusive flush interval %d ms",
             lsnPagesSum, exclusivePagesSum, entry == null ? -1 : entry.getKey().intValue(),
             entry == null ? -1 : entry.getValue().size(), lsnFlushIntervalSum / lsnFlushIntervalCount / 1_000_000, flushedPagesSum,
             1_000_000_000L * flushedPagesSum / flushedPagesTime,
@@ -2428,7 +2428,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             cacheOverflowCount, cacheOverflowCount > 0 ? cacheOverflowTime / cacheOverflowCount / 1_000_000 : 0,
             chunkSizeSum / chunkSizeCountSum, chunkSizeTimeSum / chunkSizeCountSum / 1_000_000, walBegin, walEnd,
             100 * exclusiveWriteCacheSize.get() / exclusiveWriteCacheMaxSize, lsnFlushIntervalBoundary / 1_000_000,
-            exclusiveFlushIntervalBoundary, exclusiveFlushIntervalSum / exclusiveFlushIntervalCount / 1_000_000);
+            exclusiveFlushIntervalBoundary / 1_000_000, exclusiveFlushIntervalSum / exclusiveFlushIntervalCount / 1_000_000);
 
         statisticTs = ts;
 
