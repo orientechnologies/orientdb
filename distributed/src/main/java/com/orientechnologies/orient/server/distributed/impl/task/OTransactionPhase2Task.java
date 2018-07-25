@@ -142,7 +142,9 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
         }
       } else{
         hasResponse = true;
-        updateRecordVersionsinCache(database, operations);
+        if (OTransactionPhase1Task.useDeltasForUpdate){
+          updateRecordVersionsinCache(database, operations);
+        }
       }
     } else {
       if (!((ODatabaseDocumentDistributed) database).rollback2pc(transactionId)) {
