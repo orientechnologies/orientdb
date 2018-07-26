@@ -418,6 +418,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private final boolean fileFlushLogging;
   private final boolean fileRemovalLogging;
 
+  private double lastWriteCachePart = 0;
+
   /**
    * Listeners which are called when exception in background data flush thread is happened.
    */
@@ -2699,7 +2701,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
 
         int exclusivePages = 0;
-        if (exclusiveFlushInterval >= exclusiveFlushIntervalBoundary && writeCachePart > 0.5) {
+        if ((exclusiveFlushInterval >= exclusiveFlushIntervalBoundary || writeCachePart - lastWriteCachePart > 0.05)
+            && writeCachePart > 0.5) {
+          lastWriteCachePart = writeCachePart;
           lastTsExclusiveFlush = exclusiveTs;
           exclusivePages = flushExclusiveWriteCache(null);
 
@@ -2714,8 +2718,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           double writeOverhead = (writeCachePart - 0.5) * 2;
 
           if (writeOverhead > 0) {
-            if (writeOverhead < 0.001) {
-              writeOverhead = 0.001;
+            if (writeOverhead < 0.1) {
+              writeOverhead = 0.1;
             }
 
             exclusiveFlushIntervalBoundary = (long) Math.floor(writeTime * (1 / writeOverhead - 1));
