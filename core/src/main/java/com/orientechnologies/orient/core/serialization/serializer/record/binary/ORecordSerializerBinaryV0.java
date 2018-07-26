@@ -28,14 +28,11 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.*;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
@@ -692,8 +689,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
     return value;
   }
-  
-  protected ORidBag readRidbag(BytesContainer bytes){
+
+  protected ORidBag readRidbag(BytesContainer bytes) {
     ORidBag bag = new ORidBag();
     bag.fromStream(bytes);
     return bag;
@@ -706,7 +703,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     else
       writeEmptyString(bytes);
     return clazz;
-  }  
+  }
 
   protected int writeLinkMap(final BytesContainer bytes, final Map<Object, OIdentifiable> map) {
     final boolean disabledAutoConversion =
@@ -736,7 +733,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         ((ORecordLazyMultiValue) map).setAutoConvertToRecord(true);
     }
   }
-  
+
   protected Map<Object, OIdentifiable> readLinkMap(final BytesContainer bytes, final ODocument document, boolean justRunThrough) {
     int size = OVarIntSerializer.readAsInteger(bytes);
     ORecordLazyMap result = null;
@@ -793,7 +790,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     } finally {
       result.setInternalStatus(ORecordElement.STATUS.LOADED);
     }
-  }  
+  }
 
   protected Collection<?> readEmbeddedSet(final BytesContainer bytes, final ODocument ownerDocument) {
 
@@ -971,10 +968,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     int length = bytes.offset - startOffset;
     return new Tuple<>(pointer, length);
   }
-  
-  protected int writeRidBag(BytesContainer bytes, ORidBag ridbag){
+
+  protected int writeRidBag(BytesContainer bytes, ORidBag ridbag) {
     return ridbag.toStream(bytes);
-  }    
+  }
 
   @SuppressWarnings("unchecked")
   protected int writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
@@ -1011,7 +1008,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       }
     }
     return fullPos;
-  }      
+  }
 
   protected int writeEmbeddedCollection(final BytesContainer bytes, final Collection<?> value, final OType linkedType) {
     final int pos = OVarIntSerializer.write(bytes, value.size());
@@ -1050,11 +1047,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     if (type == null || OType.ANY == type)
       type = OType.getTypeByValue(entry.value);
     return type;
-  }  
+  }
 
   protected int writeEmptyString(final BytesContainer bytes) {
     return OVarIntSerializer.write(bytes, 0);
-  }  
+  }
 
   @Override
   public boolean isSerializingClassNameByDefault() {

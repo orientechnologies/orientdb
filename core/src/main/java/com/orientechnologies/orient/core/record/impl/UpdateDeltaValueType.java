@@ -16,66 +16,58 @@
 package com.orientechnologies.orient.core.record.impl;
 
 /**
- *
  * @author mdjurovi
  */
-public enum UpdateDeltaValueType {  
-  UPDATE,  
-  LIST_UPDATE,
-  LIST_ELEMENT_ADD,
-  LIST_ELEMENT_REMOVE,
-  LIST_ELEMENT_UPDATE,
-  LIST_ELEMENT_CHANGE,
-  CHANGE,
-  UNKNOWN;
-  
-  public byte getOrd(){
-    switch (this){
-      case UPDATE:
-        return 1;
-      case LIST_UPDATE:
-        return 2;
-      case LIST_ELEMENT_ADD:
-        return 3;
-      case LIST_ELEMENT_REMOVE:
-        return 4;
-      case LIST_ELEMENT_UPDATE:
-        return 5;
-      case LIST_ELEMENT_CHANGE:
-        return 6;
-      case CHANGE:
-        return 7;
-      default:
-        return 0;
+public enum UpdateDeltaValueType {
+  UPDATE, LIST_UPDATE, LIST_ELEMENT_ADD, LIST_ELEMENT_REMOVE, LIST_ELEMENT_UPDATE, LIST_ELEMENT_CHANGE, CHANGE, UNKNOWN;
+
+  public byte getOrd() {
+    switch (this) {
+    case UPDATE:
+      return 1;
+    case LIST_UPDATE:
+      return 2;
+    case LIST_ELEMENT_ADD:
+      return 3;
+    case LIST_ELEMENT_REMOVE:
+      return 4;
+    case LIST_ELEMENT_UPDATE:
+      return 5;
+    case LIST_ELEMENT_CHANGE:
+      return 6;
+    case CHANGE:
+      return 7;
+    default:
+      return 0;
     }
   }
-  
-  public static UpdateDeltaValueType fromOrd(Byte ordValue){
-    if (ordValue == null){
+
+  public static UpdateDeltaValueType fromOrd(Byte ordValue) {
+    if (ordValue == null) {
       return UNKNOWN;
     }
-    switch (ordValue){      
-      case 1:
-        return UPDATE;
-      case 2:
-        return LIST_UPDATE;
-      case 3: 
-        return LIST_ELEMENT_ADD;
-      case 4:
-        return LIST_ELEMENT_REMOVE;
-      case 5:
-        return LIST_ELEMENT_UPDATE;
-      case 6:
-        return LIST_ELEMENT_CHANGE;
-      case 7:
-        return CHANGE;
-      case 0:
-      default:
-        return UNKNOWN;
+    switch (ordValue) {
+    case 1:
+      return UPDATE;
+    case 2:
+      return LIST_UPDATE;
+    case 3:
+      return LIST_ELEMENT_ADD;
+    case 4:
+      return LIST_ELEMENT_REMOVE;
+    case 5:
+      return LIST_ELEMENT_UPDATE;
+    case 6:
+      return LIST_ELEMENT_CHANGE;
+    case 7:
+      return CHANGE;
+    case 0:
+    default:
+      return UNKNOWN;
     }
   }
-  
-  public boolean isListElementOperation(){
+
+  public boolean isListElementOperation() {
     return this == LIST_ELEMENT_ADD || this == LIST_ELEMENT_CHANGE || this == LIST_ELEMENT_REMOVE || this == LIST_ELEMENT_UPDATE;
   }
 }

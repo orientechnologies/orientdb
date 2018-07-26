@@ -18,14 +18,13 @@ package com.orientechnologies.orient.core.delta;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 
 /**
- *
  * @author mdjurovi
  */
 public interface ODocumentDeltaSerializerI {
-  
-  byte[] toStream(ODocumentDelta delta);    
-  
+
+  byte[] toStream(ODocumentDelta delta);
+
   ODocumentDelta fromStream(BytesContainer bytes);
-  
+
   void fromStream(ODocumentDelta delta, BytesContainer bytes);
 }

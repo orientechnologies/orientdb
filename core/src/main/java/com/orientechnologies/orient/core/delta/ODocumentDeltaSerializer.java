@@ -16,13 +16,12 @@
 package com.orientechnologies.orient.core.delta;
 
 /**
- *
  * @author mdjurovi
  */
-public abstract class ODocumentDeltaSerializer implements ODocumentDeltaSerializerI{
-  
-  public static ODocumentDeltaSerializerI getActiveSerializer(){
+public abstract class ODocumentDeltaSerializer implements ODocumentDeltaSerializerI {
+
+  public static ODocumentDeltaSerializerI getActiveSerializer() {
     return new ODocumentDeltaSerializerV1();
   }
-  
+
 }

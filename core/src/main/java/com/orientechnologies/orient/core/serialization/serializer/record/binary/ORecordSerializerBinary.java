@@ -121,12 +121,12 @@ public class ORecordSerializerBinary implements ORecordSerializer {
       return iSource.toStream();
     } else {
       ODocument documentToSerialize = (ODocument) iSource;
-      
-      if (iOnlyDelta){
+
+      if (iOnlyDelta) {
         ODocumentDelta deltaDoc = documentToSerialize.getDeltaFromOriginal();
         return deltaDoc.serialize();
       }
-      
+
       final BytesContainer container = new BytesContainer();
 
       // WRITE SERIALIZER VERSION

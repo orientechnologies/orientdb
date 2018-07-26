@@ -110,7 +110,7 @@ public class OTransactionPhase1TaskTest {
 
     assertTrue(res.getResultPayload() instanceof OTxConcurrentModification);
     assertEquals(((OTxConcurrentModification) res.getResultPayload()).getRecordId(), old.getIdentity());
-    assertEquals(((OTxConcurrentModification) res.getResultPayload()).getVersion(), doc.getVersion());                
+    assertEquals(((OTxConcurrentModification) res.getResultPayload()).getVersion(), doc.getVersion());
   }
 
   @Test
@@ -119,7 +119,7 @@ public class OTransactionPhase1TaskTest {
     doc.field("first", "one");
     session.save(doc);
     ODocument old = doc.copy();
-    doc.field("first", "two");    
+    doc.field("first", "two");
     session.save(doc);
     session.getLocalCache().clear();
 

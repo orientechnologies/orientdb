@@ -42,19 +42,10 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.ChangeSerializationHelper;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.*;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TimeZone;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author mdjurovi
@@ -62,7 +53,7 @@ import java.util.UUID;
 public class HelperClasses {
   protected static final String    CHARSET_UTF_8    = "UTF-8";
   protected static final ORecordId NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
-  public static final long      MILLISEC_PER_DAY = 86400000;
+  public static final    long      MILLISEC_PER_DAY = 86400000;
 
   public static class Tuple<T1, T2> {
 
@@ -129,15 +120,15 @@ public class HelperClasses {
   public static void writeOType(BytesContainer bytes, int pos, OType type) {
     bytes.bytes[pos] = (byte) type.getId();
   }
-  
-  public static void writeType(BytesContainer bytes, OType type){
+
+  public static void writeType(BytesContainer bytes, OType type) {
     int pos = bytes.alloc(1);
     bytes.bytes[pos] = (byte) type.getId();
   }
-  
-  public static OType readType(BytesContainer bytes){
+
+  public static OType readType(BytesContainer bytes) {
     byte typeId = bytes.bytes[bytes.offset++];
-    if (typeId == -1){
+    if (typeId == -1) {
       return null;
     }
     return OType.getById(typeId);
@@ -153,7 +144,7 @@ public class HelperClasses {
 
   public static String readString(final BytesContainer bytes) {
     final int len = OVarIntSerializer.readAsInteger(bytes);
-    if (len == 0){
+    if (len == 0) {
       return "";
     }
     final String res = stringFromBytes(bytes.bytes, bytes.offset, len);
@@ -217,19 +208,19 @@ public class HelperClasses {
     toCalendar.set(Calendar.MILLISECOND, 0);
     return toCalendar.getTimeInMillis();
   }
-  
+
   public static OGlobalProperty getGlobalProperty(final ODocument document, final int len) {
     final int id = (len * -1) - 1;
     return ODocumentInternal.getGlobalPropertyById(document, id);
   }
-  
+
   public static int writeBinary(final BytesContainer bytes, final byte[] valueBytes) {
     final int pointer = OVarIntSerializer.write(bytes, valueBytes.length);
     final int start = bytes.alloc(valueBytes.length);
     System.arraycopy(valueBytes, 0, bytes.bytes, start, valueBytes.length);
     return pointer;
   }
-  
+
   public static int writeOptimizedLink(final BytesContainer bytes, OIdentifiable link) {
     if (!link.getIdentity().isPersistent()) {
       try {
@@ -247,20 +238,20 @@ public class HelperClasses {
     OVarIntSerializer.write(bytes, link.getIdentity().getClusterPosition());
     return pos;
   }
-  
+
   public static int writeNullLink(final BytesContainer bytes) {
     final int pos = OVarIntSerializer.write(bytes, NULL_RECORD_ID.getIdentity().getClusterId());
     OVarIntSerializer.write(bytes, NULL_RECORD_ID.getIdentity().getClusterPosition());
     return pos;
   }
-  
+
   public static OType getTypeFromValueEmbedded(final Object fieldValue) {
     OType type = OType.getTypeByValue(fieldValue);
     if (type == OType.LINK && fieldValue instanceof ODocument && !((ODocument) fieldValue).getIdentity().isValid())
       type = OType.EMBEDDED;
     return type;
   }
-  
+
   public static int writeLinkCollection(final BytesContainer bytes, final Collection<OIdentifiable> value) {
     final int pos = OVarIntSerializer.write(bytes, value.size());
 
@@ -287,7 +278,7 @@ public class HelperClasses {
 
     return pos;
   }
-  
+
   public static Collection<OIdentifiable> readLinkCollection(final BytesContainer bytes, final Collection<OIdentifiable> found,
       boolean justRunThrough) {
     final int items = OVarIntSerializer.readAsInteger(bytes);
@@ -302,7 +293,7 @@ public class HelperClasses {
     }
     return found;
   }
-  
+
   public static int writeString(final BytesContainer bytes, final String toWrite) {
     final byte[] nameBytes = bytesFromString(toWrite);
     final int pointer = OVarIntSerializer.write(bytes, nameBytes.length);
@@ -310,7 +301,7 @@ public class HelperClasses {
     System.arraycopy(nameBytes, 0, bytes.bytes, start, nameBytes.length);
     return pointer;
   }
-  
+
   public static int writeLinkMap(final BytesContainer bytes, final Map<Object, OIdentifiable> map) {
     final boolean disabledAutoConversion =
         map instanceof ORecordLazyMultiValue && ((ORecordLazyMultiValue) map).isAutoConvertToRecord();
@@ -321,7 +312,7 @@ public class HelperClasses {
 
     try {
       final int fullPos = OVarIntSerializer.write(bytes, map.size());
-      for (Map.Entry<Object, OIdentifiable> entry : map.entrySet()) {        
+      for (Map.Entry<Object, OIdentifiable> entry : map.entrySet()) {
         writeString(bytes, entry.getKey().toString());
         if (entry.getValue() == null)
           writeNullLink(bytes);
@@ -335,8 +326,9 @@ public class HelperClasses {
         ((ORecordLazyMultiValue) map).setAutoConvertToRecord(true);
     }
   }
-  
-  public static Map<Object, OIdentifiable> readLinkMap(final BytesContainer bytes, final ODocument document, boolean justRunThrough) {
+
+  public static Map<Object, OIdentifiable> readLinkMap(final BytesContainer bytes, final ODocument document,
+      boolean justRunThrough) {
     int size = OVarIntSerializer.readAsInteger(bytes);
     ORecordLazyMap result = null;
     if (!justRunThrough)
@@ -359,12 +351,12 @@ public class HelperClasses {
       result.setInternalStatus(ORecordElement.STATUS.LOADED);
     }
   }
-  
-  public static void writeByte(BytesContainer bytes, byte val){
+
+  public static void writeByte(BytesContainer bytes, byte val) {
     int pos = bytes.alloc(OByteSerializer.BYTE_SIZE);
     OByteSerializer.INSTANCE.serialize(val, bytes.bytes, pos);
   }
-  
+
   public static void writeRidBag(BytesContainer bytes, ORidBag ridbag) {
     ridbag.checkAndConvert();
 
@@ -394,9 +386,9 @@ public class HelperClasses {
       writeEmbeddedRidbag(bytes, ridbag);
     } else {
       writeSBTreeRidbag(bytes, ridbag, ownerUuid);
-    }    
+    }
   }
-  
+
   protected static void writeEmbeddedRidbag(BytesContainer bytes, ORidBag ridbag) {
     OVarIntSerializer.write(bytes, ridbag.size());
     Object[] entries = ((OEmbeddedRidBag) ridbag.getDelegate()).getEntries();
@@ -457,7 +449,7 @@ public class HelperClasses {
       //removed changes serialization
     }
   }
-  
+
   private static int getHighLevelDocClusterId(ORidBag ridbag) {
     ORidBagDelegate delegate = ridbag.getDelegate();
     ORecordElement owner = delegate.getOwner();
@@ -470,13 +462,13 @@ public class HelperClasses {
 
     return -1;
   }
-  
+
   public static void writeLinkOptimized(final BytesContainer bytes, OIdentifiable link) {
     ORID id = link.getIdentity();
     OVarIntSerializer.write(bytes, id.getClusterId());
     OVarIntSerializer.write(bytes, id.getClusterPosition());
   }
-  
+
   public static ORidBag readRidbag(BytesContainer bytes) {
     byte configByte = OByteSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset++);
     boolean isEmbedded = (configByte & 1) != 0;
@@ -518,7 +510,7 @@ public class HelperClasses {
     }
     return ridbag;
   }
-  
+
   private static OIdentifiable readLinkOptimizedEmbedded(final BytesContainer bytes) {
     ORID rid = new ORecordId(OVarIntSerializer.readAsInteger(bytes), OVarIntSerializer.readAsLong(bytes));
     OIdentifiable identifiable = null;
@@ -540,13 +532,13 @@ public class HelperClasses {
       identifiable = rid;
     return identifiable;
   }
-  
+
   private static Change deserializeChange(BytesContainer bytes) {
     byte type = OByteSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
     bytes.skip(OByteSerializer.BYTE_SIZE);
     int change = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
     bytes.skip(OIntegerSerializer.INT_SIZE);
     return ChangeSerializationHelper.createChangeInstance(type, change);
-  }    
-  
+  }
+
 }

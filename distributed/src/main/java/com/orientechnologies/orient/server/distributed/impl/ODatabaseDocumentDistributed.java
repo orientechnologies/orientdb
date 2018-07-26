@@ -68,9 +68,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
-import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.FAILED;
-import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.SUCCESS;
-import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.TIMEDOUT;
+import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
 
 /**
  * Created by tglman on 30/03/17.
@@ -619,8 +617,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (OConcurrentCreateException ex) {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
-          OLogManager.instance().debug(this, "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue request",
-              ex.getExpectedRid(), ex.getActualRid());
+          OLogManager.instance()
+              .debug(this, "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue request", ex.getExpectedRid(),
+                  ex.getActualRid());
           txContext.unlock();
           return false;
         }
@@ -674,10 +673,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   /**
-   * 
    * @param transactionId
-   * @return 
-   * null returned means that commit failed
+   *
+   * @return null returned means that commit failed
    */
   public Collection<ORecordOperation> commit2pc(ODistributedRequestId transactionId) {
     getStorageDistributed().resetLastValidBackup();
@@ -686,7 +684,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedServerManager manager = getStorageDistributed().getDistributedManager();
     ONewDistributedTxContextImpl txContext = (ONewDistributedTxContextImpl) localDistributedDatabase.getTxContext(transactionId);
     Collection<ORecordOperation> operations = txContext.getTransaction().getRecordOperations();
-    
+
     if (txContext != null) {
       if (SUCCESS.equals(txContext.getStatus())) {
         try {
@@ -710,7 +708,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                 .warn(ODatabaseDocumentDistributed.this, "Error beginning timed out transaction: %s", ex, transactionId);
           }
         }
-        if (!SUCCESS.equals(txContext.getStatus())) {          
+        if (!SUCCESS.equals(txContext.getStatus())) {
           Orient.instance().submit(() -> {
             OLogManager.instance()
                 .warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install",
@@ -728,14 +726,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OLiveQueryHookV2.removePendingDatabaseOps(this);
         }
 
-      } else {        
+      } else {
         Orient.instance().submit(() -> {
           OLogManager.instance()
               .warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install",
                   transactionId);
           manager.installDatabase(false, ODatabaseDocumentDistributed.this.getName(), true, true);
         });
-      }      
+      }
     }
     return null;
   }

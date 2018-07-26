@@ -43,13 +43,13 @@ import java.util.Map;
 public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public static final int FACTORYID = 43;
 
-  private volatile  boolean                                         hasResponse;
-  private           OLogSequenceNumber                              lastLSN;
-  private           List<ORecordOperation>                          ops;
-  private           List<ORecordOperationRequest>                   operations;
-  private           OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
-  private transient int                                             retryCount = 0;
-  public static final boolean useDeltasForUpdate = false;
+  private volatile boolean                       hasResponse;
+  private          OLogSequenceNumber            lastLSN;
+  private          List<ORecordOperation>        ops;
+  private          List<ORecordOperationRequest> operations;
+  private             OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType         = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
+  private transient   int                                             retryCount         = 0;
+  public static final boolean                                         useDeltasForUpdate = false;
 
   public OTransactionPhase1Task() {
     ops = new ArrayList<>();
@@ -72,14 +72,14 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       request.setId(txEntry.getRecord().getIdentity());
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
       switch (txEntry.type) {
-      case ORecordOperation.CREATED:{        
-          byte[] newRec = ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false);
-          request.setRecord(newRec);
-          request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
-        }
-        break;
-      case ORecordOperation.UPDATED:        
-        byte[] deltaRec = ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), useDeltasForUpdate);                       
+      case ORecordOperation.CREATED: {
+        byte[] newRec = ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false);
+        request.setRecord(newRec);
+        request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
+      }
+      break;
+      case ORecordOperation.UPDATED:
+        byte[] deltaRec = ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), useDeltasForUpdate);
         request.setRecord(deltaRec);
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
@@ -88,7 +88,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       }
       operations.add(request);
     }
-  }    
+  }
 
   @Override
   public String getName() {
@@ -165,25 +165,24 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
       ORecord record = null;
       switch (type) {
-      case ORecordOperation.CREATED:{
-          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
-          ORecordInternal.setRecordSerializer(record, database.getSerializer());
-        }
-        break;
+      case ORecordOperation.CREATED: {
+        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+        ORecordInternal.setRecordSerializer(record, database.getSerializer());
+      }
+      break;
       case ORecordOperation.UPDATED: {
-          OIdentifiable updateRecord = null;
-          if (useDeltasForUpdate){
-            ODocumentDeltaSerializerI serializer = ODocumentDeltaSerializer.getActiveSerializer();
-            updateRecord = serializer.fromStream(new BytesContainer(req.getRecord()));
-          }
-          else{
-            updateRecord = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
-            record = (ORecord)updateRecord;
-          }
-          ORecordOperation op = new ORecordOperation(updateRecord, type);
-          ops.add(op);
+        OIdentifiable updateRecord = null;
+        if (useDeltasForUpdate) {
+          ODocumentDeltaSerializerI serializer = ODocumentDeltaSerializer.getActiveSerializer();
+          updateRecord = serializer.fromStream(new BytesContainer(req.getRecord()));
+        } else {
+          updateRecord = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+          record = (ORecord) updateRecord;
         }
-        break;
+        ORecordOperation op = new ORecordOperation(updateRecord, type);
+        ops.add(op);
+      }
+      break;
       case ORecordOperation.DELETED:
         record = database.getRecord(req.getId());
         if (record == null) {
@@ -192,8 +191,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         }
         break;
       }
-      if (type == ORecordOperation.CREATED || type == ORecordOperation.DELETED ||
-          (type == ORecordOperation.UPDATED && !useDeltasForUpdate)){
+      if (type == ORecordOperation.CREATED || type == ORecordOperation.DELETED || (type == ORecordOperation.UPDATED
+          && !useDeltasForUpdate)) {
         ORecordInternal.setIdentity(record, (ORecordId) req.getId());
         ORecordInternal.setVersion(record, req.getVersion());
         ORecordOperation op = new ORecordOperation(record, type);

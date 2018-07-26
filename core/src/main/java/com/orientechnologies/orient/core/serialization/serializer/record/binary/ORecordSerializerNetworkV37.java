@@ -869,10 +869,9 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
       ODocument doc = (ODocument) iSource;
       // SERIALIZE RECORD
-      if (!iOnlyDelta){
+      if (!iOnlyDelta) {
         serialize(doc, container, false);
-      }
-      else{
+      } else {
         ODocumentDelta deltaDoc = doc.getDeltaFromOriginal();
         return deltaDoc.serialize();
       }

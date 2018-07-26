@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
@@ -48,7 +47,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
     List<OClassIndexManager.IndexChange> changes = new ArrayList<>();
     if (change.getRecordContainer() instanceof ORecord && change.getRecord() instanceof ODocument) {
       detectedChange = true;
-      ODocument rec = (ODocument) change.getRecord();      
+      ODocument rec = (ODocument) change.getRecord();
       switch (change.getType()) {
       case ORecordOperation.CREATED:
         if (change.getRecord() instanceof ODocument) {
@@ -73,27 +72,25 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         createdRecords.put(change.getRID().copy(), change.getRecord());
         break;
       case ORecordOperation.UPDATED:
-        if (change.getRecord() instanceof ODocument) {          
+        if (change.getRecord() instanceof ODocument) {
           ODocument original = null;
           OIdentifiable updateRecord = null;
-          if (OTransactionPhase1Task.useDeltasForUpdate){
-            updateRecord = change.getRecordContainer();                        
+          if (OTransactionPhase1Task.useDeltasForUpdate) {
+            updateRecord = change.getRecordContainer();
+          } else {
+            updateRecord = change.getRecord();
           }
-          else{
-            updateRecord = change.getRecord();            
-          }
-          
+
           original = database.load(updateRecord.getIdentity());
           if (original == null)
             throw new ORecordNotFoundException(updateRecord.getIdentity());
-          
-          if (OTransactionPhase1Task.useDeltasForUpdate){
-            original = original.mergeDelta((ODocumentDelta)updateRecord);
+
+          if (OTransactionPhase1Task.useDeltasForUpdate) {
+            original = original.mergeDelta((ODocumentDelta) updateRecord);
+          } else {
+            original.merge((ODocument) updateRecord, false, false);
           }
-          else{
-            original.merge((ODocument)updateRecord, false, false);
-          }
-          
+
           ODocument updateDoc = original;
           OLiveQueryHook.addOp(updateDoc, ORecordOperation.UPDATED, database);
           OLiveQueryHookV2.addOp(updateDoc, ORecordOperation.UPDATED, database);
@@ -105,7 +102,8 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
               Orient.instance().getScriptManager().close(database.getName());
             }
             if (clazz.isSequence()) {
-              ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(database, updateDoc);
+              ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate()
+                  .onSequenceUpdated(database, updateDoc);
             }
           }
         }
@@ -138,13 +136,12 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         break;
       default:
         break;
-      }      
-    }
-    else if (change.getRecordContainer() instanceof ODocumentDelta){
+      }
+    } else if (change.getRecordContainer() instanceof ODocumentDelta) {
       detectedChange = true;
       switch (change.getType()) {
       case ORecordOperation.UPDATED:
-        
+
         ODocumentDelta deltaRecord = (ODocumentDelta) change.getRecordContainer();
         ODocument original = database.load(deltaRecord.getIdentity());
         if (original == null)
@@ -162,14 +159,15 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
             Orient.instance().getScriptManager().close(database.getName());
           }
           if (clazz.isSequence()) {
-            ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(database, updateDoc);
+            ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate()
+                .onSequenceUpdated(database, updateDoc);
           }
-        }       
+        }
         break;
       }
     }
-    
-    if (detectedChange){
+
+    if (detectedChange) {
       for (OClassIndexManager.IndexChange indexChange : changes) {
         addIndexEntry(indexChange.index, indexChange.index.getName(), indexChange.operation, indexChange.key, indexChange.value);
       }

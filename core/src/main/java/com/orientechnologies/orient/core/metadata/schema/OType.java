@@ -25,13 +25,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OBinary;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.id.ORID;
@@ -45,16 +39,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Generic representation of a type.<br>
@@ -110,7 +95,7 @@ public enum OType {
   LINKBAG("LinkBag", 22, ORidBag.class, new Class<?>[] { ORidBag.class }),
 
   ANY("Any", 23, null, new Class<?>[] {}),
-  
+
   DELTA_RECORD("DeltaRecord", 24, ODocumentDelta.class, new Class<?>[] { ODocumentDelta.class });
 
   // Don't change the order, the type discover get broken if you change the order.
@@ -780,8 +765,8 @@ public enum OType {
     return this == EMBEDDEDLIST || this == EMBEDDEDMAP || this == EMBEDDEDSET || this == LINKLIST || this == LINKMAP
         || this == LINKSET || this == LINKBAG;
   }
-  
-  public boolean isList(){
+
+  public boolean isList() {
     return this == EMBEDDEDLIST || this == LINKLIST;
   }
 

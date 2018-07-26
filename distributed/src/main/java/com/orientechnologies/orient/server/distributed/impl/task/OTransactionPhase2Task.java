@@ -5,6 +5,14 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.delta.ODocumentDelta;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -16,20 +24,9 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedT
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Collection;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.delta.ODocumentDelta;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
-import java.util.Collection;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila - at - orientdb.com)
@@ -37,11 +34,11 @@ import java.util.Collection;
 public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   public static final int FACTORYID = 44;
 
-  private          ODistributedRequestId transactionId;
-  private          boolean               success;
-  private          int[]                 involvedClusters;
-  private          boolean               hasResponse = false;
-  private volatile int                   retryCount  = 0;
+  private ODistributedRequestId transactionId;
+  private boolean               success;
+  private int[]                 involvedClusters;
+  private          boolean hasResponse = false;
+  private volatile int     retryCount  = 0;
 
   public OTransactionPhase2Task(ODistributedRequestId transactionId, boolean success, int[] involvedClusters,
       OLogSequenceNumber lsn) {
@@ -91,22 +88,22 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
     lastLSN.toStream(out);
   }
 
-  private void updateRecordVersionsinCache(ODatabaseDocumentInternal database, Collection<ORecordOperation> operations){
-          
-    if (database instanceof ODatabaseSession){
-      ODatabaseSession session = (ODatabaseSession)database;        
+  private void updateRecordVersionsinCache(ODatabaseDocumentInternal database, Collection<ORecordOperation> operations) {
+
+    if (database instanceof ODatabaseSession) {
+      ODatabaseSession session = (ODatabaseSession) database;
       OLocalRecordCache cache = session.getLocalCache();
-      for (ORecordOperation operation : operations){
+      for (ORecordOperation operation : operations) {
         Object resulData = operation.getResultData();
-        if (resulData instanceof Integer){
-          Integer version = (Integer)resulData;
-          if (version != null){
+        if (resulData instanceof Integer) {
+          Integer version = (Integer) resulData;
+          if (version != null) {
             OIdentifiable operationRecord = operation.getRecordContainer();
-            if (operationRecord instanceof ODocumentDelta){
+            if (operationRecord instanceof ODocumentDelta) {
               ODocumentDelta deltaRecord = (ODocumentDelta) operationRecord;
               ORID id = deltaRecord.getIdentity();
               ORecord rec = cache.findRecord(id);
-              if (rec != null && rec instanceof ORecordAbstract){                
+              if (rec != null && rec instanceof ORecordAbstract) {
                 ORecordInternal.setVersion(rec, version);
               }
             }
@@ -114,12 +111,12 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
         }
       }
     }
-    
+
   }
-  
+
   @Override
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database) throws Exception {    
+      ODatabaseDocumentInternal database) throws Exception {
     if (success) {
       Collection<ORecordOperation> operations = ((ODatabaseDocumentDistributed) database).commit2pc(transactionId);
       if (operations == null) {
@@ -140,9 +137,9 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
           hasResponse = true;
           return "KO";
         }
-      } else{
+      } else {
         hasResponse = true;
-        if (OTransactionPhase1Task.useDeltasForUpdate){
+        if (OTransactionPhase1Task.useDeltasForUpdate) {
           updateRecordVersionsinCache(database, operations);
         }
       }
