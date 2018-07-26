@@ -2716,17 +2716,17 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           exclusiveFlushInterval = exclusiveTs - lastTsExclusiveFlush;
         }
 
-        int flushedPages = 0;
+        int exclusivePages = 0;
         if (exclusiveFlushInterval >= exclusiveFlushIntervalBoundary && exclusiveCategory > 0
             && exclusiveCategory >= lastExclusiveCategory) {
           lastTsExclusiveFlush = exclusiveTs;
-          flushedPages = flushExclusiveWriteCache(null);
+          exclusivePages = flushExclusiveWriteCache(null);
 
           exclusiveFlushIntervalSum += exclusiveFlushInterval;
           exclusiveFlushIntervalCount++;
         }
 
-        if (flushedPages > 0) {
+        if (exclusivePages > 0) {
           ewcSize = exclusiveWriteCacheSize.get();
           writeCachePart = 1.0 * ewcSize / exclusiveWriteCacheMaxSize;
 
@@ -2777,7 +2777,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             lsnFlushIntervalSum += lsnFlushInterval;
             lsnFlushIntervalCount++;
 
-            if (lsnPages == 0) {
+            if (lsnPages == 0 && exclusivePages == 0) {
               lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment + 1, 512);
             }
 
