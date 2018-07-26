@@ -2692,20 +2692,20 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         double writeCachePart = 1.0 * ewcSize / exclusiveWriteCacheMaxSize;
         int exclusiveCategory;
 
-        if (writeCachePart <= 0.4) {
-          exclusiveCategory = 1;
-        } else if (writeCachePart <= 0.5) {
-          exclusiveCategory = 2;
+        if (writeCachePart <= 0.5) {
+          exclusiveCategory = -1;
         } else if (writeCachePart <= 0.6) {
-          exclusiveCategory = 3;
+          exclusiveCategory = 1;
         } else if (writeCachePart <= 0.7) {
-          exclusiveCategory = 4;
+          exclusiveCategory = 2;
         } else if (writeCachePart <= 0.8) {
-          exclusiveCategory = 5;
+          exclusiveCategory = 3;
         } else if (writeCachePart <= 0.9) {
-          exclusiveCategory = 6;
+          exclusiveCategory = 4;
+        } else if (writeCachePart <= 0.95) {
+          exclusiveCategory = 5;
         } else {
-          exclusiveCategory = 7;
+          exclusiveCategory = 6;
         }
 
         final long exclusiveFlushInterval;
@@ -2717,7 +2717,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
 
         int flushedPages = 0;
-        if (exclusiveFlushInterval >= exclusiveFlushIntervalBoundary || exclusiveCategory > lastExclusiveCategory) {
+        if (exclusiveFlushInterval >= exclusiveFlushIntervalBoundary && (exclusiveCategory >= 5
+            || exclusiveCategory > lastExclusiveCategory)) {
           lastTsExclusiveFlush = exclusiveTs;
           flushedPages = flushExclusiveWriteCache(null);
 
@@ -2730,27 +2731,24 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           writeCachePart = 1.0 * ewcSize / exclusiveWriteCacheMaxSize;
 
           final long endTs = System.nanoTime();
-          if (writeCachePart <= 0.4) {
+          if (writeCachePart <= 0.6) {
             exclusiveFlushIntervalBoundary = 9 * (endTs - exclusiveTs);
             lastExclusiveCategory = 1;
-          } else if (writeCachePart <= 0.5) {
+          } else if (writeCachePart <= 0.7) {
             exclusiveFlushIntervalBoundary = 4 * (endTs - exclusiveTs);
             lastExclusiveCategory = 2;
-          } else if (writeCachePart <= 0.6) {
+          } else if (writeCachePart <= 0.8) {
             exclusiveFlushIntervalBoundary = 2 * (endTs - exclusiveTs);
             lastExclusiveCategory = 3;
-          } else if (writeCachePart <= 0.7) {
+          } else if (writeCachePart <= 0.9) {
             exclusiveFlushIntervalBoundary = (endTs - exclusiveTs);
             lastExclusiveCategory = 4;
-          } else if (writeCachePart <= 0.8) {
+          } else if (writeCachePart <= 0.95) {
             exclusiveFlushIntervalBoundary = (endTs - exclusiveTs) / 2;
             lastExclusiveCategory = 5;
-          } else if (writeCachePart <= 0.9) {
-            exclusiveFlushIntervalBoundary = (endTs - exclusiveTs) / 4;
-            lastExclusiveCategory = 6;
           } else {
             exclusiveFlushIntervalBoundary = 0;
-            lastExclusiveCategory = 7;
+            lastExclusiveCategory = 6;
           }
         }
 
