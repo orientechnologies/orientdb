@@ -2693,7 +2693,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           final long endSegment = writeAheadLog.end().getSegment();
 
           if (lsnEntry != null && endSegment - startSegment >= 1) {
-            int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 512);
+            int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 8192);
 
             lsnFlushIntervalSum += lsnFlushInterval;
             lsnFlushIntervalCount++;
@@ -2909,7 +2909,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           chunk.add(new OTriple<>(version, copy, pointer));
 
-          if (chunk.size() >= pagesFlushLimit) {
+          if (chunk.size() >= pagesFlushLimit || chunk.size() >= 512) {
             flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
             maxFullLogLSN = null;
 
