@@ -2725,7 +2725,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public boolean isClusterEdge(int cluster) {
-    OClass clazz = getMetadata().getSchema().getClassByClusterId(cluster);
+    OClass clazz = getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(cluster);
     if (clazz != null && clazz.isEdgeType())
       return true;
     return false;
@@ -2733,7 +2733,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public boolean isClusterVertex(int cluster) {
-    OClass clazz = getMetadata().getSchema().getClassByClusterId(cluster);
+    OClass clazz = getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(cluster);
     if (clazz != null && clazz.isVertexType())
       return true;
     return false;
