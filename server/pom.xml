@@ -18,7 +18,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>3.0.4-SNAPSHOT</version>
+        <version>3.0.5-SNAPSHOT</version>
     </parent>
 
     <artifactId>orientdb-server</artifactId>
@@ -217,6 +217,13 @@
                         </manifest>
                     </archive>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

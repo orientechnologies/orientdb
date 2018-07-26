@@ -291,10 +291,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         final CountDownLatch syncLatch = new CountDownLatch(involvedWorkerQueues.size());
         final ODistributedRequest syncRequest = new ODistributedRequest(null, request.getId().getNodeId(), -1, databaseName,
             new OSynchronizedTaskWrapper(syncLatch));
-        for (int queue : involvedWorkerQueues)
-          workerThreads.get(queue).processRequest(syncRequest);
+        for (int queue : involvedWorkerQueues) {
+          ODistributedWorker worker = workerThreads.get(queue);
+          worker.processRequest(syncRequest);
+        }
 
-        long taskTimeout = task.getDistributedTimeout();
+        // Make infinite timeout everytime
+        long taskTimeout = 0;
         try {
           if (taskTimeout <= 0)
             syncLatch.await();

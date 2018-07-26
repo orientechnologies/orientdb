@@ -45,7 +45,7 @@ public class OServerCommandGetDisconnect extends OServerCommandAbstract {
     iRequest.data.commandDetail = null;
 
     if (iRequest.sessionId != null) {
-      OHttpSessionManager.getInstance().removeSession(iRequest.sessionId);
+      server.getHttpSessionManager().removeSession(iRequest.sessionId);
       iRequest.sessionId = OServerCommandAuthenticatedDbAbstract.SESSIONID_UNAUTHORIZED;
       iResponse.setSessionId(iRequest.sessionId);
     }

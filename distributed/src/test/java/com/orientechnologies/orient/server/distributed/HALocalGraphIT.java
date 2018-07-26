@@ -54,7 +54,7 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
 
   protected final static int           SERVERS                 = 3;
   protected static final int           CONCURRENCY_LEVEL       = 4;
-  protected static final int           TOTAL_CYCLES_PER_THREAD = 100000;
+  protected static final int           TOTAL_CYCLES_PER_THREAD = 300000;
   protected final        AtomicBoolean serverDown              = new AtomicBoolean(false);
   protected final        AtomicBoolean serverRestarting        = new AtomicBoolean(false);
   protected final        AtomicBoolean serverRestarted         = new AtomicBoolean(false);

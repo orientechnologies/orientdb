@@ -86,7 +86,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
         retryCount++;
         if (retryCount < database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
           OLogManager.instance()
-              .info(OTransactionPhase2Task.this, "Received second phase but not yet first phase, re-enqueue second phase");
+              .debug(OTransactionPhase2Task.this, "Received second phase but not yet first phase, re-enqueue second phase");
           ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
               .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this, retryCount);
           hasResponse = false;
@@ -100,31 +100,28 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
           hasResponse = true;
           return "KO";
         }
-      } else
+      } else {
         hasResponse = true;
+      }
     } else {
       if (!((ODatabaseDocumentDistributed) database).rollback2pc(transactionId)) {
         retryCount++;
         if (retryCount < database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
           OLogManager.instance()
-              .info(OTransactionPhase2Task.this, "Received second phase but not yet first phase, re-enqueue second phase");
+              .debug(OTransactionPhase2Task.this, "Received second phase but not yet first phase, re-enqueue second phase");
           ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
               .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this, retryCount);
           hasResponse = false;
         } else {
-          Orient.instance().submit(() -> {
-            OLogManager.instance()
-                .warn(OTransactionPhase2Task.this, "Reached limit of retry for rollback tx:%s forcing database re-install",
-                    transactionId);
-            iManager.installDatabase(false, database.getName(), true, true);
-          });
+          //ABORT THE OPERATION IF THERE IS A NOT VALID TRANSACTION ACTIVE WILL BE ROLLBACK ON RE-INSTALL
           hasResponse = true;
           return "KO";
         }
-      } else
+      } else {
         hasResponse = true;
+      }
     }
-    return "OK"; //TODO
+    return "OK";
   }
 
   @Override

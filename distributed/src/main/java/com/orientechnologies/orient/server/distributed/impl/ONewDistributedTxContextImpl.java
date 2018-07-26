@@ -20,12 +20,17 @@ import java.util.Set;
 
 public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
-  private final    ODistributedDatabaseImpl shared;
-  private final    ODistributedRequestId    id;
-  private final    OTransactionInternal     tx;
-  private final    long                     startedOn;
-  private final    List<ORID>               lockedRids = new ArrayList<>();
-  private final    List<Object>             lockedKeys = new ArrayList<>();
+  public enum Status {
+    FAILED, SUCCESS, TIMEDOUT,
+  }
+
+  private final ODistributedDatabaseImpl shared;
+  private final ODistributedRequestId    id;
+  private final OTransactionInternal     tx;
+  private final long                     startedOn;
+  private final List<ORID>               lockedRids = new ArrayList<>();
+  private final List<Object>             lockedKeys = new ArrayList<>();
+  private       Status                   status;
 
   public ONewDistributedTxContextImpl(ODistributedDatabaseImpl shared, ODistributedRequestId reqId, OTransactionInternal tx) {
     this.shared = shared;
@@ -66,7 +71,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public synchronized void begin(ODatabaseDocumentInternal database, boolean local) {
-    ((ODatabaseDocumentDistributed) database).internalBegin2pc(this, local);
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -124,5 +129,13 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   @Override
   public OTransactionInternal getTransaction() {
     return tx;
+  }
+
+  public void setStatus(Status status) {
+    this.status = status;
+  }
+
+  public Status getStatus() {
+    return status;
   }
 }

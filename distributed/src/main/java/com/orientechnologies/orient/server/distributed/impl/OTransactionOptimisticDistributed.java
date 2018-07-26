@@ -18,12 +18,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
+  private List<ORecordOperation> changes;
+
   public OTransactionOptimisticDistributed(ODatabaseDocumentInternal database, List<ORecordOperation> changes) {
     super(database);
+    this.changes = changes;
+  }
+
+  @Override
+  public void begin() {
+    super.begin();
     for (ORecordOperation change : changes) {
       allEntries.put(change.getRID(), change);
       resolveTracking(change);
     }
+
   }
 
   private void resolveTracking(ORecordOperation change) {

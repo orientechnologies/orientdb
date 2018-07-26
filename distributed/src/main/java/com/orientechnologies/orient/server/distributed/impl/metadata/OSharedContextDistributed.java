@@ -56,7 +56,7 @@ public class OSharedContextDistributed extends OSharedContext {
           schema.load(database);
           indexManager.load(database);
           //The Immutable snapshot should be after index and schema that require and before everything else that use it
-          schema.forceSnapshot();
+          schema.forceSnapshot(database);
           security.load();
           functionLibrary.load(database);
           scheduler.load(database);
@@ -89,10 +89,10 @@ public class OSharedContextDistributed extends OSharedContext {
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
     OScenarioThreadLocal.executeAsDistributed(() -> {
-      schema.reload();
+      schema.reload(database);
       indexManager.reload();
       //The Immutable snapshot should be after index and schema that require and before everything else that use it
-      schema.forceSnapshot();
+      schema.forceSnapshot(database);
       security.load();
       functionLibrary.load(database);
       sequenceLibrary.load(database);
@@ -126,7 +126,7 @@ public class OSharedContextDistributed extends OSharedContext {
         //the index does not exist
       }
 
-      schema.forceSnapshot();
+      schema.forceSnapshot(database);
       loaded = true;
       return null;
     });

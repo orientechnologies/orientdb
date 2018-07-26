@@ -4,6 +4,7 @@ import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
+import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -16,10 +17,12 @@ import java.util.Map;
  * Created by tglman on 25/01/17.
  */
 public class OJsr223ScriptExecutor implements OScriptExecutor {
-  private String language;
+  private final OScriptTransformer transformer;
+  private       String             language;
 
-  public OJsr223ScriptExecutor(String language) {
+  public OJsr223ScriptExecutor(String language, OScriptTransformer scriptTransformer) {
     this.language = language;
+    this.transformer = scriptTransformer;
   }
 
   @Override
@@ -53,17 +56,18 @@ public class OJsr223ScriptExecutor implements OScriptExecutor {
       }
 
       final Bindings binding = scriptManager
-          .bindContextVariables(compiledScript.getEngine(),compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE), database, null, params);
+          .bindContextVariables(compiledScript.getEngine(), compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
+              database, null, params);
 
       try {
         final Object ob = compiledScript.eval(binding);
-        return scriptManager.getTransformer().toResultSet(ob);
+        return transformer.toResultSet(ob);
       } catch (ScriptException e) {
         throw OException
             .wrapException(new OCommandScriptException("Error on execution of the script", script, e.getColumnNumber()), e);
 
       } finally {
-        scriptManager.unbind(scriptEngine,binding, null, params);
+        scriptManager.unbind(scriptEngine, binding, null, params);
       }
     } finally {
       scriptManager.releaseDatabaseEngine(language, database.getName(), entry);

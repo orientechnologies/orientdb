@@ -132,7 +132,7 @@ public class OConsoleCommandStream implements OCommandStream {
           case RIGHT_BRAKET:
             result.append(c);
             nestingLevel--;
-            if (nestingLevel <= 0) {
+            if (nestingLevel <= 0 && !isMatch(result)) {
               return result.toString().trim();
             }
             break;
@@ -264,6 +264,17 @@ public class OConsoleCommandStream implements OCommandStream {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private boolean isMatch(StringBuilder result) {
+    String cmd = result.toString().trim();
+    if (cmd.length() < 6) {
+      return false;
+    }
+    if (cmd.substring(0, 6).equalsIgnoreCase("match ")) {
+      return true;
+    }
+    return false;
   }
 
   @Override

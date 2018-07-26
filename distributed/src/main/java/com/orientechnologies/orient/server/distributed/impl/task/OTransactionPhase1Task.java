@@ -96,16 +96,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
     convert(database);
-    OTransactionResultPayload res1 = null;
-    try {
-      OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
-
-      res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
-    } catch (ORecordNotFoundException e) {
-      OLogManager.instance().info(this, "Update of not yet existing record: %s re-enqueuing first phase", e.getRid());
-
-      //Do nothing this will cause the transaction to re-enque and wait for the next operation that will insert the missing data.
-    }
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
+    OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
     if (res1 == null) {
       retryCount++;
       ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
@@ -136,7 +128,6 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     } catch (ODistributedLockException | OLockException ex) {
       payload = new OTxLockTimeout();
     } catch (ORecordDuplicatedException ex) {
-      //TODO:Check if can get out the key
       payload = new OTxUniqueIndex((ORecordId) ex.getRid(), ex.getIndexName(), ex.getKey());
     } catch (RuntimeException ex) {
       payload = new OTxException(ex);
@@ -234,5 +225,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       return operations.stream().mapToInt((x) -> x.getId().getClusterId()).toArray();
     else
       return ops.stream().mapToInt((x) -> x.getRID().getClusterId()).toArray();
+  }
+
+  @Override
+  public long getDistributedTimeout() {
+    return super.getDistributedTimeout() + (operations.size() / 10);
   }
 }

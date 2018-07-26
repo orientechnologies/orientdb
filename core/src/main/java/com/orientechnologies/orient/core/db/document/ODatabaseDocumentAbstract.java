@@ -84,26 +84,26 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
-  protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
-  protected       ORecordSerializer                           serializer;
-  protected       String                                      url;
-  protected       STATUS                                      status;
-  protected       OIntent                                     currentIntent;
-  protected       ODatabaseInternal<?>                        databaseOwner;
-  protected       OMetadataDefault                            metadata;
-  protected       OImmutableUser                              user;
+  protected final Map<String, Object> properties = new HashMap<String, Object>();
+  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
+  protected ORecordSerializer    serializer;
+  protected String               url;
+  protected STATUS               status;
+  protected OIntent              currentIntent;
+  protected ODatabaseInternal<?> databaseOwner;
+  protected OMetadataDefault     metadata;
+  protected OImmutableUser       user;
   protected final byte                                        recordType    = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
-  protected       OLocalRecordCache                           localCache;
-  protected       OCurrentStorageComponentsFactory            componentsFactory;
-  protected       boolean                                     initialized   = false;
-  protected       OTransaction                                currentTx;
+  protected OLocalRecordCache                localCache;
+  protected OCurrentStorageComponentsFactory componentsFactory;
+  protected boolean initialized = false;
+  protected OTransaction currentTx;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected       OSharedContext  sharedContext;
+  protected OSharedContext sharedContext;
 
   private boolean prefetchRecords;
 
@@ -2735,6 +2735,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     }
   }
 
+  public Map<String, OResultSet> getActiveQueries() {
+    return activeQueries;
+  }
+
   public OResultSet getActiveQuery(String id) {
     return activeQueries.get(id);
   }
@@ -2746,7 +2750,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public boolean isClusterEdge(int cluster) {
-    OClass clazz = getMetadata().getSchema().getClassByClusterId(cluster);
+    OClass clazz = getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(cluster);
     if (clazz != null && clazz.isEdgeType())
       return true;
     return false;
@@ -2754,7 +2758,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public boolean isClusterVertex(int cluster) {
-    OClass clazz = getMetadata().getSchema().getClassByClusterId(cluster);
+    OClass clazz = getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(cluster);
     if (clazz != null && clazz.isVertexType())
       return true;
     return false;
