@@ -401,6 +401,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private long exclusiveFlushIntervalBoundary = -1;
   private long lastTsExclusiveFlush           = -1;
+  private int  lastExclusiveCategory          = -1;
 
   private long exclusiveFlushIntervalSum   = 0;
   private long exclusiveFlushIntervalCount = 0;
@@ -2687,6 +2688,26 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         final long exclusiveTs = System.nanoTime();
 
+        long ewcSize = exclusiveWriteCacheSize.get();
+        double writeCachePart = 1.0 * ewcSize / exclusiveWriteCacheMaxSize;
+        int exclusiveCategory;
+
+        if (writeCachePart <= 0.4) {
+          exclusiveCategory = 1;
+        } else if (writeCachePart <= 0.5) {
+          exclusiveCategory = 2;
+        } else if (writeCachePart <= 0.6) {
+          exclusiveCategory = 3;
+        } else if (writeCachePart <= 0.7) {
+          exclusiveCategory = 4;
+        } else if (writeCachePart <= 0.8) {
+          exclusiveCategory = 5;
+        } else if (writeCachePart <= 0.9) {
+          exclusiveCategory = 6;
+        } else {
+          exclusiveCategory = 7;
+        }
+
         final long exclusiveFlushInterval;
         if (lastTsExclusiveFlush == -1) {
           lastTsExclusiveFlush = exclusiveTs;
@@ -2696,7 +2717,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
 
         int flushedPages = 0;
-        if (exclusiveFlushInterval >= exclusiveFlushIntervalBoundary) {
+        if (exclusiveFlushInterval >= exclusiveFlushIntervalBoundary || exclusiveCategory > lastExclusiveCategory) {
           lastTsExclusiveFlush = exclusiveTs;
           flushedPages = flushExclusiveWriteCache(null);
 
@@ -2705,24 +2726,31 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
 
         if (flushedPages > 0) {
-          final long ewcSize = exclusiveWriteCacheSize.get();
-          final double writeCachePart = 1.0 * ewcSize / exclusiveWriteCacheMaxSize;
+          ewcSize = exclusiveWriteCacheSize.get();
+          writeCachePart = 1.0 * ewcSize / exclusiveWriteCacheMaxSize;
 
           final long endTs = System.nanoTime();
-          if (writeCachePart <= 0.1) {
+          if (writeCachePart <= 0.4) {
             exclusiveFlushIntervalBoundary = 9 * (endTs - exclusiveTs);
-          } else if (writeCachePart <= 0.2) {
+            lastExclusiveCategory = 1;
+          } else if (writeCachePart <= 0.5) {
             exclusiveFlushIntervalBoundary = 4 * (endTs - exclusiveTs);
-          } else if (writeCachePart <= 0.4) {
-            exclusiveFlushIntervalBoundary = (endTs - exclusiveTs);
+            lastExclusiveCategory = 2;
           } else if (writeCachePart <= 0.6) {
-            exclusiveFlushIntervalBoundary = (endTs - exclusiveTs) / 2;
+            exclusiveFlushIntervalBoundary = 2 * (endTs - exclusiveTs);
+            lastExclusiveCategory = 3;
+          } else if (writeCachePart <= 0.7) {
+            exclusiveFlushIntervalBoundary = (endTs - exclusiveTs);
+            lastExclusiveCategory = 4;
           } else if (writeCachePart <= 0.8) {
-            exclusiveFlushIntervalBoundary = (endTs - exclusiveTs) / 4;
+            exclusiveFlushIntervalBoundary = (endTs - exclusiveTs) / 2;
+            lastExclusiveCategory = 5;
           } else if (writeCachePart <= 0.9) {
-            exclusiveFlushIntervalBoundary = (endTs - exclusiveTs) / 8;
+            exclusiveFlushIntervalBoundary = (endTs - exclusiveTs) / 4;
+            lastExclusiveCategory = 6;
           } else {
             exclusiveFlushIntervalBoundary = 0;
+            lastExclusiveCategory = 7;
           }
         }
 
@@ -2746,10 +2774,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           final long endSegment = writeAheadLog.end().getSegment();
 
           if (lsnEntry != null && endSegment - startSegment >= 1) {
-            final int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 512);
+            int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 512);
 
             lsnFlushIntervalSum += lsnFlushInterval;
             lsnFlushIntervalCount++;
+
+            if (lsnPages == 0) {
+              lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment + 1, 512);
+            }
 
             if (lsnPages > 0) {
               final long endTs = System.nanoTime();
@@ -2760,13 +2792,13 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               } else if (segments <= 3) {
                 lsnFlushIntervalBoundary = 4 * (endTs - lsnTs);
               } else if (segments <= 4) {
-                lsnFlushIntervalBoundary = (endTs - lsnTs);
+                lsnFlushIntervalBoundary = 2 * (endTs - lsnTs);
               } else if (segments <= 5) {
-                lsnFlushIntervalBoundary = (endTs - lsnTs) / 2;
+                lsnFlushIntervalBoundary = (endTs - lsnTs);
               } else if (segments <= 6) {
-                lsnFlushIntervalBoundary = (endTs - lsnTs) / 4;
+                lsnFlushIntervalBoundary = (endTs - lsnTs) / 2;
               } else if (segments <= 7) {
-                lsnFlushIntervalBoundary = (endTs - lsnTs) / 8;
+                lsnFlushIntervalBoundary = (endTs - lsnTs) / 4;
               } else {
                 lsnFlushIntervalBoundary = 0;
               }

@@ -85,7 +85,7 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   private final static XXHashFactory xxHashFactory = XXHashFactory.fastestInstance();
   private static final int           XX_SEED       = 0x9747b28c;
 
-  private static final int BUFFER_SIZE = 64 * 1024 * 1024;
+  private static final int BUFFER_SIZE = 2 * 64 * 1024 * 1024;
 
   private static final int MASTER_RECORD_SIZE = 20;
   private static final int BATCH_READ_SIZE    = 320;
