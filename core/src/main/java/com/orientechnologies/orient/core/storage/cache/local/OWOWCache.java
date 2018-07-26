@@ -2711,11 +2711,13 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           final long endTs = System.nanoTime();
           final long writeTime = endTs - exclusiveTs;
 
-          ewcSize = exclusiveWriteCacheSize.get();
-          writeCachePart = 1.0 * ewcSize / exclusiveWriteCacheMaxSize;
+          double writeOverhead = (writeCachePart - 0.5) * 2;
 
-          if (writeCachePart > 0.5) {
-            final double writeOverhead = (writeCachePart - 0.5) * 2;
+          if (writeOverhead > 0) {
+            if (writeOverhead < 0.001) {
+              writeOverhead = 0.001;
+            }
+
             exclusiveFlushIntervalBoundary = (long) Math.floor(writeTime * (1 / writeOverhead - 1));
           }
         }
