@@ -2598,8 +2598,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final long ewcSize = exclusiveWriteCacheSize.get();
       assert ewcSize >= 0;
 
-      if (ewcSize >= exclusiveWriteCacheMaxSize * 0.85) {
-        flushExclusiveWriteCache(null, ewcSize - exclusiveWriteCacheMaxSize / 2);
+      if (ewcSize > 0) {
+        flushExclusiveWriteCache(null, ewcSize);
       }
     }
   }
@@ -2669,8 +2669,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         final long ewcSize = exclusiveWriteCacheSize.get();
 
-        if (ewcSize >= exclusiveWriteCacheMaxSize * 0.85) {
-          flushExclusiveWriteCache(null, ewcSize - exclusiveWriteCacheMaxSize / 2);
+        if (ewcSize > 0) {
+          flushExclusiveWriteCache(null, ewcSize);
         }
 
         final long lsnTs = System.nanoTime();
