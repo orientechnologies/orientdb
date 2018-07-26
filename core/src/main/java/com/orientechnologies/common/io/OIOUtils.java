@@ -507,7 +507,6 @@ public class OIOUtils {
       final int bufferIndex = (int) written / bufferLimit;
       final ByteBuffer buffer = buffers[bufferIndex];
       final int bufferOffset = (int) (written - bufferIndex * buffer.limit());
-      written -= bufferOffset;//we need to write only aligned memory blocks
 
       try {
         written += ONative.instance().pwritev(fd, position + written, buffers, bufferIndex);

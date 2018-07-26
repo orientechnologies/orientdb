@@ -266,7 +266,7 @@ public enum OGlobalConfiguration {
   WAL_SEGMENT_BUFFER_SIZE("storage.wal.segmentBufferSize",
       "Size of the buffer which contains WAL records in serialized format " + "in megabytes", Integer.class, 32),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, -1),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, 8 * 1024),
 
   WAL_MAX_SEGMENT_SIZE_PERCENT("storage.wal.maxSegmentSizePercent",
       "Maximum size of single WAL segment in percent of initial free space", Integer.class, 10),
