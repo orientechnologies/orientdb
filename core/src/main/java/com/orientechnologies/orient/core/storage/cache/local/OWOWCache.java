@@ -454,18 +454,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         throw OException.wrapException(new OStorageException("Error during retrieving of file store"), e);
       }
 
-      if (allowDirectIO) {
-        this.blockSize = calculateBlockSize(storagePath.toAbsolutePath().toString());
-      } else {
-        blockSize = -1;
-      }
-
-      if (blockSize <= 0) {
-        OLogManager.instance().infoNoDb(this, "Direct IO is disabled for storage " + storagePath);
-      } else {
-        OLogManager.instance()
-            .infoNoDb(this, "Direct IO is enabled for storage " + storagePath + " with block size " + blockSize + " bytes.");
-      }
+      blockSize = -1;
 
       this.stringSerializer = stringSerializer;
       this.storageName = storageName;
