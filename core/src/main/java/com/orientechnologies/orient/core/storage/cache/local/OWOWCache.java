@@ -2717,8 +2717,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
 
         int flushedPages = 0;
-        if (exclusiveFlushInterval >= exclusiveFlushIntervalBoundary && (exclusiveCategory >= 5
-            || exclusiveCategory > lastExclusiveCategory)) {
+        if (exclusiveFlushInterval >= exclusiveFlushIntervalBoundary && exclusiveCategory > 0
+            && exclusiveCategory >= lastExclusiveCategory) {
           lastTsExclusiveFlush = exclusiveTs;
           flushedPages = flushExclusiveWriteCache(null);
 
