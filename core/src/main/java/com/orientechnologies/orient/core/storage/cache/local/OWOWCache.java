@@ -2849,9 +2849,17 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           copy.position(0);
 
           chunk.add(new OTriple<>(version, copy, pointer));
+          if (chunk.size() >= 1024) {
+            flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
 
-          lastPageIndex = pageKey.pageIndex;
-          lastFileId = pageKey.fileId;
+            maxFullLogLSN = null;
+
+            lastPageIndex = -1;
+            lastFileId = -1;
+          } else {
+            lastPageIndex = pageKey.pageIndex;
+            lastFileId = pageKey.fileId;
+          }
         } else {
           if (!chunk.isEmpty()) {
             flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
