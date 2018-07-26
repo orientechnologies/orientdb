@@ -145,7 +145,7 @@ public enum OGlobalConfiguration {
       "Max time until a page will be flushed from write cache (in seconds)", Long.class, 24 * 60 * 60),
 
   DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL("storage.diskCache.writeCachePageFlushInterval",
-      "Interval between flushing of pages from write cache (in ms)", Integer.class, 25),
+      "Interval between flushing of pages from write cache (in ms)", Integer.class, 5),
 
   DISK_WRITE_CACHE_FLUSH_WRITE_INACTIVITY_INTERVAL("storage.diskCache.writeCacheFlushInactivityInterval",
       "Interval between 2 writes to the disk cache,"
