@@ -399,12 +399,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private long lastTsLSNFlush           = -1;
   private long lsnFlushIntervalBoundary = -1;
 
-  private long exclusiveFlushIntervalBoundary = -1;
-  private long lastTsExclusiveFlush           = -1;
-
-  private long exclusiveFlushIntervalSum   = 0;
-  private long exclusiveFlushIntervalCount = 0;
-
   private final int exclusiveWriteCacheMaxSize;
 
   private final boolean callFsync;
@@ -2393,10 +2387,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           chunkSizeCountSum = 1;
         }
 
-        if (exclusiveFlushIntervalCount == 0) {
-          exclusiveFlushIntervalCount = 1;
-        }
-
         Map.Entry<Long, TreeSet<PageKey>> entry = localDirtyPagesBySegment.firstEntry();
 
         long loadedPages = this.loadedPagesSum.sum();
@@ -2420,17 +2410,16 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 + "%d pages were read from the disk, read speed is %d pages/s (%d KB/s), "
                 + "data threads were waiting because of cache overflow %d times, avg. wait time is %d ms., "
                 + "avg. chunk size %d, avg, chunk flush time %d ms., WAL begin %s, WAL end %s, %d percent of exclusive write cache is filled, "
-                + "LSN flush interval boundary %d ms, exclusive flush interval boundary %d ms., avg. exclusive flush interval %d ms",
-            lsnPagesSum, exclusivePagesSum, entry == null ? -1 : entry.getKey().intValue(),
-            entry == null ? -1 : entry.getValue().size(), lsnFlushIntervalSum / lsnFlushIntervalCount / 1_000_000, flushedPagesSum,
+                + "LSN flush interval boundary %d ms", lsnPagesSum, exclusivePagesSum,
+            entry == null ? -1 : entry.getKey().intValue(), entry == null ? -1 : entry.getValue().size(),
+            lsnFlushIntervalSum / lsnFlushIntervalCount / 1_000_000, flushedPagesSum,
             1_000_000_000L * flushedPagesSum / flushedPagesTime,
             1_000_000_000L * flushedPagesSum / flushedPagesTime * pageSize / 1024, walFlushCount,
             walFlushCount > 0 ? walFlushTime / walFlushCount / 1_000_000 : 0, loadedPages,
             1_000_000_000L * loadedPages / loadedPagesTime, 1_000_000_000L * loadedPages / loadedPagesTime * pageSize / 1024,
             cacheOverflowCount, cacheOverflowCount > 0 ? cacheOverflowTime / cacheOverflowCount / 1_000_000 : 0,
             chunkSizeSum / chunkSizeCountSum, chunkSizeTimeSum / chunkSizeCountSum / 1_000_000, walBegin, walEnd,
-            100 * exclusiveWriteCacheSize.get() / exclusiveWriteCacheMaxSize, lsnFlushIntervalBoundary / 1_000_000,
-            exclusiveFlushIntervalBoundary / 1_000_000, exclusiveFlushIntervalSum / exclusiveFlushIntervalCount / 1_000_000);
+            100 * exclusiveWriteCacheSize.get() / exclusiveWriteCacheMaxSize, lsnFlushIntervalBoundary / 1_000_000);
 
         statisticTs = ts;
 
@@ -2439,9 +2428,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         lsnFlushIntervalCount = 0;
         lsnFlushIntervalSum = 0;
-
-        exclusiveFlushIntervalSum = 0;
-        exclusiveFlushIntervalCount = 0;
 
         flushedPagesSum = 0;
         flushedPagesTime = 0;
@@ -2466,23 +2452,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   public void setChecksumMode(final OChecksumMode checksumMode) { // for testing purposes only
     this.checksumMode = checksumMode;
-  }
-
-  private int flushExclusivePagesIfNeeded(CountDownLatch latch) throws InterruptedException, IOException {
-    long ewcSize = exclusiveWriteCacheSize.get();
-
-    assert ewcSize >= 0;
-
-    if (latch != null && ewcSize <= exclusiveWriteCacheMaxSize) {
-      latch.countDown();
-    }
-
-    int flushedPages = 0;
-    if (1.0 * ewcSize / exclusiveWriteCacheMaxSize >= exclusiveWriteCacheBoundary) {
-      flushedPages = flushExclusiveWriteCache(latch);
-    }
-
-    return flushedPages;
   }
 
   private static final class NameFileIdEntry {
@@ -2629,8 +2598,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final long ewcSize = exclusiveWriteCacheSize.get();
       assert ewcSize >= 0;
 
-      if (1.0 * ewcSize / exclusiveWriteCacheMaxSize >= exclusiveWriteCacheBoundary) {
-        flushExclusiveWriteCache(null);
+      if (ewcSize >= exclusiveWriteCacheMaxSize * 0.85) {
+        flushExclusiveWriteCache(null, ewcSize - exclusiveWriteCacheMaxSize / 2);
       }
     }
   }
@@ -2655,7 +2624,18 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           return;
         }
 
-        flushExclusivePagesIfNeeded(latch);
+        final long ewcSize = exclusiveWriteCacheSize.get();
+
+        assert ewcSize >= 0;
+
+        if (latch != null && ewcSize <= exclusiveWriteCacheMaxSize) {
+          latch.countDown();
+        }
+
+        if (ewcSize > exclusiveWriteCacheMaxSize) {
+          flushExclusiveWriteCache(latch, 512);
+        }
+
       } catch (final Error | Exception t) {
         OLogManager.instance().error(this, "Exception during data flush", t);
         OWOWCache.this.fireBackgroundDataFlushExceptionEvent(t);
@@ -2687,56 +2667,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           return;
         }
 
-        final long exclusiveTs = System.nanoTime();
+        final long ewcSize = exclusiveWriteCacheSize.get();
 
-        long ewcSize = exclusiveWriteCacheSize.get();
-        double writeCachePart = 1.0 * ewcSize / exclusiveWriteCacheMaxSize;
-
-        final long exclusiveFlushInterval;
-        if (lastTsExclusiveFlush == -1) {
-          lastTsExclusiveFlush = exclusiveTs;
-          exclusiveFlushInterval = 0;
-        } else {
-          exclusiveFlushInterval = exclusiveTs - lastTsExclusiveFlush;
-        }
-
-        double writeCacheDiff;
-        if (writeCachePart < 0.6) {
-          writeCacheDiff = 0.05;
-        } else if (writeCachePart < 0.7) {
-          writeCacheDiff = 0.04;
-        } else if (writeCachePart < 0.8) {
-          writeCacheDiff = 0.03;
-        } else if (writeCachePart < 0.9) {
-          writeCacheDiff = 0.02;
-        } else {
-          writeCacheDiff = 0.01;
-        }
-
-        int exclusivePages = 0;
-        if ((exclusiveFlushInterval >= exclusiveFlushIntervalBoundary || writeCachePart - lastWriteCachePart >= writeCacheDiff)
-            && writeCachePart > 0.5) {
-          lastWriteCachePart = writeCachePart;
-          lastTsExclusiveFlush = exclusiveTs;
-          exclusivePages = flushExclusiveWriteCache(null);
-
-          exclusiveFlushIntervalSum += exclusiveFlushInterval;
-          exclusiveFlushIntervalCount++;
-        }
-
-        if (exclusivePages > 0) {
-          final long endTs = System.nanoTime();
-          final long writeTime = endTs - exclusiveTs;
-
-          double writeOverhead = (writeCachePart - 0.5) * 2;
-
-          if (writeOverhead > 0) {
-            if (writeOverhead < 0.1) {
-              writeOverhead = 0.1;
-            }
-
-            exclusiveFlushIntervalBoundary = (long) Math.floor(writeTime * (1 / writeOverhead - 1));
-          }
+        if (ewcSize >= exclusiveWriteCacheMaxSize * 0.85) {
+          flushExclusiveWriteCache(null, ewcSize - exclusiveWriteCacheMaxSize / 2);
         }
 
         final long lsnTs = System.nanoTime();
@@ -2763,10 +2697,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
             lsnFlushIntervalSum += lsnFlushInterval;
             lsnFlushIntervalCount++;
-
-            if (lsnPages == 0 && exclusivePages == 0) {
-              lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment + 1, 512);
-            }
 
             if (lsnPages > 0) {
               final long endTs = System.nanoTime();
@@ -3132,14 +3062,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     return flushedPages;
   }
 
-  private int flushExclusiveWriteCache(CountDownLatch latch) throws InterruptedException, IOException {
+  private int flushExclusiveWriteCache(CountDownLatch latch, long pagesToFlush) throws InterruptedException, IOException {
     Iterator<PageKey> iterator = exclusiveWritePages.iterator();
 
     int flushedPages = 0;
     int copiedPages = 0;
 
     final long ewcSize = exclusiveWriteCacheSize.get();
-    final long pagesToFlush = Math.min(512, ewcSize);
+    pagesToFlush = Math.min(pagesToFlush, ewcSize);
 
     final ArrayList<OTriple<Long, ByteBuffer, OCachePointer>> chunk = new ArrayList<>(512);
 
