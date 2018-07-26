@@ -33,6 +33,7 @@ public class OSequenceCached extends OSequence {
   private static final String FIELD_CACHE = "cache";
   private              long   cacheStart  = 0L;
   private              long   cacheEnd    = 0L;
+  private              int upperLimitValue;
 
   public OSequenceCached() {
     super();

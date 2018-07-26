@@ -43,6 +43,7 @@ public abstract class OSequence {
   public static final long DEFAULT_START     = 0;
   public static final int  DEFAULT_INCREMENT = 1;
   public static final int  DEFAULT_CACHE     = 20;
+  public static final int  DEFAULT_UPPER_LIMIT = -1;
 
   protected static final int    DEF_MAX_RETRY = OGlobalConfiguration.SEQUENCE_MAX_RETRY.getValueAsInteger();
   public static final    String CLASS_NAME    = "OSequence";
@@ -50,17 +51,21 @@ public abstract class OSequence {
   private static final String FIELD_START     = "start";
   private static final String FIELD_INCREMENT = "incr";
   private static final String FIELD_VALUE     = "value";
+  private static final String FIELD_UPPER_VALUE     = "uvalue";
+  //initialy set this value to true, so those one who read it can pull upper limit value from document
+  private boolean upperValueChanged = true;
 
   private static final String FIELD_NAME = "name";
   private static final String FIELD_TYPE = "type";
 
   private ODocument document;
-  private ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();
+  private ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();  
 
   public static class CreateParams {
     public Long    start     = DEFAULT_START;
     public Integer increment = DEFAULT_INCREMENT;
     public Integer cacheSize = DEFAULT_CACHE;
+    public Integer upperLimit = DEFAULT_UPPER_LIMIT; 
 
     public CreateParams setStart(Long start) {
       this.start = start;
@@ -84,7 +89,8 @@ public abstract class OSequence {
       this.start = this.start != null ? this.start : DEFAULT_START;
       this.increment = this.increment != null ? this.increment : DEFAULT_INCREMENT;
       this.cacheSize = this.cacheSize != null ? this.cacheSize : DEFAULT_CACHE;
-
+      upperLimit = upperLimit == null ? upperLimit = DEFAULT_UPPER_LIMIT : upperLimit;
+      
       return this;
     }
   }
@@ -142,6 +148,7 @@ public abstract class OSequence {
     setStart(params.start);
     setIncrement(params.increment);
     setValue(params.start);
+    setUpperLimit(params.upperLimit);
 
     setSequenceType();
   }
@@ -180,6 +187,14 @@ public abstract class OSequence {
 
   protected synchronized int getIncrement() {
     return tlDocument.get().field(FIELD_INCREMENT, OType.INTEGER);
+  }
+  
+  protected synchronized void setUpperLimit(Integer upperLimit) {
+    tlDocument.get().field(FIELD_UPPER_VALUE, upperLimit);
+  }
+  
+  protected synchronized int getUpperLimit(Integer upperLimit) {
+    return tlDocument.get().field(FIELD_UPPER_VALUE);
   }
 
   protected synchronized void setIncrement(int value) {
