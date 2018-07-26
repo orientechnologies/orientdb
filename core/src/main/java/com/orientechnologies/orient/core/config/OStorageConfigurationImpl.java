@@ -343,8 +343,16 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   public Locale getLocaleInstance() {
     lock.acquireReadLock();
     try {
-      if (localeInstance == null)
-        localeInstance = new Locale(localeLanguage, localeCountry);
+      if (localeInstance == null) {
+        try {
+          localeInstance = new Locale(localeLanguage, localeCountry);
+        } catch (RuntimeException e) {
+          localeInstance = Locale.getDefault();
+          OLogManager.instance()
+              .errorNoDb(this, "Error during initialization of locale, default one %s will be used", e, localeInstance);
+
+        }
+      }
 
       return localeInstance;
     } finally {
