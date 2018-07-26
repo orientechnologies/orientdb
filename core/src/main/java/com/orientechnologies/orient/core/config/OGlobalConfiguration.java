@@ -257,7 +257,7 @@ public enum OGlobalConfiguration {
       30_000),
 
   WAL_SEGMENTS_INTERVAL("storage.wal.segmentsInterval",
-      "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 5),
+      "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 30),
 
   WAL_FILE_AUTOCLOSE_INTERVAL("storage.wal.fileAutoCloseInterval",
       "Interval in seconds after which WAL file will be closed if there is no "
@@ -266,7 +266,7 @@ public enum OGlobalConfiguration {
   WAL_SEGMENT_BUFFER_SIZE("storage.wal.segmentBufferSize",
       "Size of the buffer which contains WAL records in serialized format " + "in megabytes", Integer.class, 32),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, 8 * 1024),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, -1),
 
   WAL_MAX_SEGMENT_SIZE_PERCENT("storage.wal.maxSegmentSizePercent",
       "Maximum size of single WAL segment in percent of initial free space", Integer.class, 10),
