@@ -4,12 +4,10 @@ import com.orientechnologies.orient.core.command.script.OScriptResultSet;
 import com.orientechnologies.orient.core.command.script.OScriptResultSets;
 import com.orientechnologies.orient.core.command.script.transformer.result.MapTransformer;
 import com.orientechnologies.orient.core.command.script.transformer.result.OResultTransformer;
-import com.orientechnologies.orient.core.command.script.transformer.resultset.ONashornObjectMirrorTransformer;
 import com.orientechnologies.orient.core.command.script.transformer.resultset.OResultSetTransformer;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
 import java.util.*;
 
@@ -25,7 +23,7 @@ public class OScriptTransformerImpl implements OScriptTransformer {
 
     registerResultTransformer(HashMap.class, new MapTransformer(this));
     registerResultTransformer(LinkedHashMap.class, new MapTransformer(this));
-    registerResultSetTransformer(ScriptObjectMirror.class, new ONashornObjectMirrorTransformer(this));
+
   }
 
   @Override
