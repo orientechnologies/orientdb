@@ -36,13 +36,20 @@ import org.junit.Test;
  */
 public class DistributedSuperNodeIT extends AbstractServerClusterGraphTest {
   @Test
+  @Ignore
   public void test() throws Exception {
+    final long timeout = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsLong();
+    OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(1);
+    try {
 
-    count = 200;
-    init(3);
-    prepare(false);
-    execute();
+      count = 200;
+      init(3);
+      prepare(false);
+      execute();
 
+    } finally {
+      OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(timeout);
+    }
   }
 
   @Override
