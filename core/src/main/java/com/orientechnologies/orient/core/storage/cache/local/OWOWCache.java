@@ -2700,8 +2700,21 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           exclusiveFlushInterval = exclusiveTs - lastTsExclusiveFlush;
         }
 
+        double writeCacheDiff;
+        if (writeCachePart < 0.6) {
+          writeCacheDiff = 0.05;
+        } else if (writeCachePart < 0.7) {
+          writeCacheDiff = 0.04;
+        } else if (writeCachePart < 0.8) {
+          writeCacheDiff = 0.03;
+        } else if (writeCachePart < 0.9) {
+          writeCacheDiff = 0.02;
+        } else {
+          writeCacheDiff = 0.01;
+        }
+
         int exclusivePages = 0;
-        if ((exclusiveFlushInterval >= exclusiveFlushIntervalBoundary || writeCachePart - lastWriteCachePart > 0.05)
+        if ((exclusiveFlushInterval >= exclusiveFlushIntervalBoundary || writeCachePart - lastWriteCachePart >= writeCacheDiff)
             && writeCachePart > 0.5) {
           lastWriteCachePart = writeCachePart;
           lastTsExclusiveFlush = exclusiveTs;
