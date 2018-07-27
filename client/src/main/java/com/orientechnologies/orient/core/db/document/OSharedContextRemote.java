@@ -51,6 +51,7 @@ public class OSharedContextRemote extends OSharedContext {
     security.close(false);
     indexManager.close();
     sequenceLibrary.close();
+    loaded = false;
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
