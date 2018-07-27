@@ -402,6 +402,7 @@ public class OSchemaRemote extends OSchemaShared {
     if (!skipPush.get()) {
       this.document = schema;
       super.fromStream();
+      this.snapshot = null;
     }
   }
 

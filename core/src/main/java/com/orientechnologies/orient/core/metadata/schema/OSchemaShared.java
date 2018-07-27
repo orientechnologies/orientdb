@@ -80,7 +80,7 @@ public abstract class OSchemaShared implements OCloseable {
   private            Set<Integer>                 blobClusters         = new HashSet<Integer>();
   private volatile   int                          version              = 0;
   private volatile   boolean                      acquiredDistributed  = false;
-  private volatile   OImmutableSchema             snapshot;
+  protected volatile OImmutableSchema             snapshot;
   protected volatile ODocument                    document;
 
   protected static Set<String> internalClasses = new HashSet<String>();
