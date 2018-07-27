@@ -32,8 +32,8 @@ import java.util.concurrent.Callable;
 public class OSequenceCached extends OSequence {
   private static final String FIELD_CACHE = "cache";
   private              long   cacheStart  = 0L;
-  private              long   cacheEnd    = 0L;
-  private              int upperLimitValue;
+  private              long   cacheEnd    = 0L;  
+  private boolean firstCache = true;
 
   public OSequenceCached() {
     super();
@@ -78,13 +78,25 @@ public class OSequenceCached extends OSequence {
         return callRetry(new Callable<Long>() {
           @Override
           public Long call() throws Exception {
-            synchronized (OSequenceCached.this) {
+            synchronized (OSequenceCached.this) {              
+              
               int increment = getIncrement();
-              if (cacheStart + increment >= cacheEnd) {
+              int upperLimit = getUpperLimit();
+              if (cacheStart + increment > cacheEnd && !(getUpperLimit() > -1 && cacheStart + increment > upperLimit)) {
+                boolean cachedbefore = !firstCache;
+                allocateCache(getCacheSize(), finalDb);
+                if (!cachedbefore){
+                  cacheStart = cacheStart + increment;
+                }
+              }
+              else if (getUpperLimit() > -1 && cacheStart + increment > upperLimit){
+                setValue(getStart());
                 allocateCache(getCacheSize(), finalDb);
               }
-
-              cacheStart = cacheStart + increment;
+              else{
+                cacheStart = cacheStart + increment;
+              }
+              
               return cacheStart;
             }
           }
@@ -125,7 +137,7 @@ public class OSequenceCached extends OSequence {
               long newValue = getStart();
               setValue(newValue);
               save(finalDb);
-
+              firstCache = true;
               allocateCache(getCacheSize(), finalDb);
 
               return newValue;
@@ -165,5 +177,6 @@ public class OSequenceCached extends OSequence {
 
     this.cacheStart = value;
     this.cacheEnd = newValue - 1;
+    firstCache = false;
   }
 }

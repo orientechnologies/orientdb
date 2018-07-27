@@ -52,14 +52,15 @@ public abstract class OSequence {
   private static final String FIELD_INCREMENT = "incr";
   private static final String FIELD_VALUE     = "value";
   private static final String FIELD_UPPER_VALUE     = "uvalue";
-  //initialy set this value to true, so those one who read it can pull upper limit value from document
-  private boolean upperValueChanged = true;
+  //initialy set this value to true, so those one who read it can pull upper limit value from document  
 
   private static final String FIELD_NAME = "name";
   private static final String FIELD_TYPE = "type";
 
   private ODocument document;
   private ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();  
+  
+  protected boolean upperLimitValueChanged = true;
 
   public static class CreateParams {
     public Long    start     = DEFAULT_START;
@@ -79,6 +80,11 @@ public abstract class OSequence {
 
     public CreateParams setCacheSize(Integer cacheSize) {
       this.cacheSize = cacheSize;
+      return this;
+    }
+    
+    public CreateParams setUpperLimit(Integer upperLimit){
+      this.upperLimit = upperLimit;
       return this;
     }
 
@@ -193,7 +199,7 @@ public abstract class OSequence {
     tlDocument.get().field(FIELD_UPPER_VALUE, upperLimit);
   }
   
-  protected synchronized int getUpperLimit(Integer upperLimit) {
+  protected synchronized int getUpperLimit() {
     return tlDocument.get().field(FIELD_UPPER_VALUE);
   }
 

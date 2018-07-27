@@ -61,6 +61,9 @@ public class OSequenceOrdered extends OSequence {
           @Override
           public Long call() throws Exception {
             long newValue = getValue() + getIncrement();
+            if (newValue > getUpperLimit()){
+              newValue = getStart();
+            }
             setValue(newValue);
 
             save(finalDb);

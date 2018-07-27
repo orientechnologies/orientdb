@@ -284,4 +284,38 @@ public class OSequenceTest {
 
     assertThat(db.countClass("Person")).isEqualTo(10);
   }
+  
+  @Test
+  public void testCachedSequeneceUpperLimit() throws Exception {
+    // issue #6484
+    OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
+                                                                 setIncrement(10).
+                                                                 setUpperLimit(30);
+    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.CACHED, params);
+    OSequence myseq = sequences.getSequence("MYSEQ");
+    assertThat(myseq.current()).isEqualTo(0);
+    assertThat(myseq.next()).isEqualTo(10);
+    assertThat(myseq.next()).isEqualTo(20);
+    assertThat(myseq.next()).isEqualTo(30);
+    assertThat(myseq.next()).isEqualTo(0);
+    
+    sequences.dropSequence("MYSEQ");
+  }
+  
+  @Test
+  public void testCachedSequeneceOverCache() throws Exception {
+    // issue #6484
+    OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
+                                                                 setIncrement(1).
+                                                                 setCacheSize(3);
+    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.CACHED, params);
+    OSequence myseq = sequences.getSequence("MYSEQ");
+    assertThat(myseq.current()).isEqualTo(0);
+    assertThat(myseq.next()).isEqualTo(1);
+    assertThat(myseq.next()).isEqualTo(2);
+    assertThat(myseq.next()).isEqualTo(3);
+    assertThat(myseq.next()).isEqualTo(4);
+    
+    sequences.dropSequence("MYSEQ");
+  }
 }
