@@ -48,7 +48,14 @@ import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,6 +64,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -86,6 +94,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   private final Path                                         storagePath;
   private final OClosableLinkedContainer<Long, OFileClassic> files;
 
+  private Future<?> fuzzyCheckpointTask = null;
+
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id, OReadCache readCache,
       OClosableLinkedContainer<Long, OFileClassic> files) throws IOException {
     super(name, filePath, mode, id);
@@ -93,9 +103,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     this.files = files;
     this.readCache = readCache;
 
-    File f = new File(url);
-
-    String sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));    
+    String sp = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(url).getPath()));
 
     storagePath = Paths.get(OIOUtils.getPathFromDatabaseName(sp));
     variableParser = new OStorageVariableParser(storagePath);
@@ -204,7 +212,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
               zos.setLevel(compressionLevel);
 
               final List<String> names = OZIPCompressionUtil.compressDirectory(getStoragePath().toString(), zos,
-                  new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION , ".lock"}, iOutput);
+                  new String[] { ".fl", O2QCache.CACHE_STATISTIC_FILE_EXTENSION, ".lock" }, iOutput);
               OPaginatedStorageDirtyFlag.addFileToArchive(zos, "dirty.fl");
               names.add("dirty.fl");
               return names;
@@ -404,6 +412,15 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
+  protected void preCloseSteps() {
+    super.preCloseSteps();
+
+    if (fuzzyCheckpointTask != null) {
+      fuzzyCheckpointTask.cancel(false);
+    }
+  }
+
+  @Override
   protected void preCreateSteps() throws IOException {
     dirtyFlag.create();
   }
@@ -490,7 +507,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   protected void initWalAndDiskCache(OContextConfiguration contextConfiguration) throws IOException, InterruptedException {
     if (getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
-      fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
+      fuzzyCheckpointTask = fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
           OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(),
           OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(), TimeUnit.SECONDS);
 
