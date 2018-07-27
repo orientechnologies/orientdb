@@ -257,7 +257,7 @@ public enum OGlobalConfiguration {
       30_000),
 
   WAL_SEGMENTS_INTERVAL("storage.wal.segmentsInterval",
-      "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 5),
+      "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 10),
 
   WAL_FILE_AUTOCLOSE_INTERVAL("storage.wal.fileAutoCloseInterval",
       "Interval in seconds after which WAL file will be closed if there is no "
