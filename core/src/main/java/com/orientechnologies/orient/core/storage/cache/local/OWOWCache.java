@@ -2742,16 +2742,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         throw new IllegalStateException("Chunk is not empty !");
       }
 
-      if (localDirtyPagesBySegment.isEmpty()) {
-        if (!dirtyPages.isEmpty()) {
-          convertSharedDirtyPagesToLocal();
-          currentSegment = segStart;
-          continue;
-        } else {
-          break;
-        }
-      }
-
       final TreeSet<PageKey> segmentPages = localDirtyPagesBySegment.get(currentSegment);
 
       if (segmentPages == null) {
