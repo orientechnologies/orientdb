@@ -318,4 +318,21 @@ public class OSequenceTest {
     
     sequences.dropSequence("MYSEQ");
   }
+  
+  @Test
+  public void testOrderedSequeneceUpperLimit() throws Exception {
+    // issue #6484
+    OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
+                                                                 setIncrement(10).
+                                                                 setUpperLimit(30);
+    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
+    OSequence myseq = sequences.getSequence("MYSEQ");
+    assertThat(myseq.current()).isEqualTo(0);
+    assertThat(myseq.next()).isEqualTo(10);
+    assertThat(myseq.next()).isEqualTo(20);
+    assertThat(myseq.next()).isEqualTo(30);
+    assertThat(myseq.next()).isEqualTo(0);
+    
+    sequences.dropSequence("MYSEQ");
+  }
 }
