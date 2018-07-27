@@ -74,7 +74,7 @@ public enum OGlobalConfiguration {
           + "Value can be set as % of total memory provided to OrientDB or as absolute value in bytes, kilobytes, megabytes or gigabytes. "
           + "If you set value as 10% it means that 10% of memory will not be allocated by OrientDB and will be left to use by the rest of "
           + "applications, if 2g value is provided it means that 2 gigabytes of memory will be left to use by the rest of applications. "
-          + "Default value is 2g", String.class, "12g"),
+          + "Default value is 2g", String.class, "11776m"),
 
   MEMORY_LEFT_TO_CONTAINER("memory.leftToContainer",
       "Amount of free memory which should be left unallocated in case of OrientDB is started inside of container. "
@@ -257,7 +257,7 @@ public enum OGlobalConfiguration {
       30_000),
 
   WAL_SEGMENTS_INTERVAL("storage.wal.segmentsInterval",
-      "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 30),
+      "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 15),
 
   WAL_FILE_AUTOCLOSE_INTERVAL("storage.wal.fileAutoCloseInterval",
       "Interval in seconds after which WAL file will be closed if there is no "
@@ -269,7 +269,7 @@ public enum OGlobalConfiguration {
   WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, -1),
 
   WAL_MAX_SEGMENT_SIZE_PERCENT("storage.wal.maxSegmentSizePercent",
-      "Maximum size of single WAL segment in percent of initial free space", Integer.class, 10),
+      "Maximum size of single WAL segment in percent of initial free space", Integer.class, 5),
 
   WAL_MIN_SEG_SIZE("storage.wal.minSegSize", "Minimal value of maximum WAL segment size in MB", Integer.class, 512),
 
