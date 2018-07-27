@@ -2695,7 +2695,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               final int segments = localDirtyPagesBySegment.size();
               if (segments <= 2) {
-                lsnFlushIntervalBoundary = 9 * (endTs - lsnTs);
+                lsnFlushIntervalBoundary = 8 * (endTs - lsnTs);
               } else if (segments <= 3) {
                 lsnFlushIntervalBoundary = 4 * (endTs - lsnTs);
               } else if (segments <= 4) {
