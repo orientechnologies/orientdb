@@ -303,6 +303,24 @@ public class OSequenceTest {
   }
   
   @Test
+  public void testNegativeCachedSequeneceDownerLimit() throws Exception {
+    // issue #6484
+    OSequence.CreateParams params = new OSequence.CreateParams().setStart(30L).
+                                                                 setIncrement(10).
+                                                                 setUpperLimit(0).
+                                                                 setOrderType(SequenceOrderType.ORDER_NEGATIVE);
+    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.CACHED, params);
+    OSequence myseq = sequences.getSequence("MYSEQ");
+    assertThat(myseq.current()).isEqualTo(30);
+    assertThat(myseq.next()).isEqualTo(20);
+    assertThat(myseq.next()).isEqualTo(10);
+    assertThat(myseq.next()).isEqualTo(0);
+    assertThat(myseq.next()).isEqualTo(30);
+    
+    sequences.dropSequence("MYSEQ");
+  }
+  
+  @Test
   public void testCachedSequeneceOverCache() throws Exception {
     // issue #6484
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
@@ -320,6 +338,26 @@ public class OSequenceTest {
   }
   
   @Test
+  public void testNegativeCachedSequeneceOverCache() throws Exception {
+    // issue #6484
+    OSequence.CreateParams params = new OSequence.CreateParams().setStart(6L).
+                                                                 setIncrement(1).
+                                                                 setCacheSize(3).
+                                                                 setOrderType(SequenceOrderType.ORDER_NEGATIVE);
+    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.CACHED, params);
+    OSequence myseq = sequences.getSequence("MYSEQ");
+    assertThat(myseq.current()).isEqualTo(6);
+    assertThat(myseq.next()).isEqualTo(5);
+    assertThat(myseq.next()).isEqualTo(4);
+    assertThat(myseq.next()).isEqualTo(3);
+    assertThat(myseq.next()).isEqualTo(2);
+    assertThat(myseq.next()).isEqualTo(1);
+    assertThat(myseq.next()).isEqualTo(0);
+    
+    sequences.dropSequence("MYSEQ");
+  }
+  
+  @Test
   public void testOrderedSequeneceUpperLimit() throws Exception {
     // issue #6484
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
@@ -332,6 +370,41 @@ public class OSequenceTest {
     assertThat(myseq.next()).isEqualTo(20);
     assertThat(myseq.next()).isEqualTo(30);
     assertThat(myseq.next()).isEqualTo(0);
+    
+    sequences.dropSequence("MYSEQ");
+  }
+  
+  @Test
+  public void testNegativeOrderedSequenece() throws Exception {
+    // issue #6484
+    OSequence.CreateParams params = new OSequence.CreateParams().setStart(6L).
+                                                                 setIncrement(1).
+                                                                 setOrderType(SequenceOrderType.ORDER_NEGATIVE);                                                                 
+    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
+    OSequence myseq = sequences.getSequence("MYSEQ");
+    assertThat(myseq.current()).isEqualTo(6);
+    assertThat(myseq.next()).isEqualTo(5);
+    assertThat(myseq.next()).isEqualTo(4);
+    assertThat(myseq.next()).isEqualTo(3);
+    assertThat(myseq.next()).isEqualTo(2);
+    
+    sequences.dropSequence("MYSEQ");
+  }
+  
+  @Test
+  public void testNegativeOrderedSequeneceDownerLimit() throws Exception {
+    // issue #6484
+    OSequence.CreateParams params = new OSequence.CreateParams().setStart(30L).
+                                                                 setIncrement(10).
+                                                                 setUpperLimit(0).
+                                                                 setOrderType(SequenceOrderType.ORDER_NEGATIVE);
+    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
+    OSequence myseq = sequences.getSequence("MYSEQ");
+    assertThat(myseq.current()).isEqualTo(30);
+    assertThat(myseq.next()).isEqualTo(20);
+    assertThat(myseq.next()).isEqualTo(10);
+    assertThat(myseq.next()).isEqualTo(0);
+    assertThat(myseq.next()).isEqualTo(30);
     
     sequences.dropSequence("MYSEQ");
   }

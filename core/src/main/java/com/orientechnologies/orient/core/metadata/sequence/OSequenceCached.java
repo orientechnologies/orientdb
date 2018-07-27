@@ -31,9 +31,9 @@ import java.util.concurrent.Callable;
  */
 public class OSequenceCached extends OSequence {
   private static final String FIELD_CACHE = "cache";
-  private              long   cacheStart  = 0L;
-  private              long   cacheEnd    = 0L;  
-  private boolean firstCache = true;
+  private              long   cacheStart;
+  private              long   cacheEnd;  
+  private boolean firstCache;
 
   public OSequenceCached() {
     super();
@@ -58,9 +58,16 @@ public class OSequenceCached extends OSequence {
   }
 
   @Override
-  protected void initSequence(OSequence.CreateParams params) {
+  protected void initSequence(OSequence.CreateParams params) {    
     super.initSequence(params);
     setCacheSize(params.cacheSize);
+    firstCache = true;
+  }
+  
+  @Override
+  protected void allwaysInitSection(){
+    cacheStart = cacheEnd = 0L;
+    allocateCache(getCacheSize(), getDatabase());
   }
 
   @Override
@@ -81,20 +88,39 @@ public class OSequenceCached extends OSequence {
             synchronized (OSequenceCached.this) {              
               
               int increment = getIncrement();
-              int upperLimit = getUpperLimit();
-              if (cacheStart + increment > cacheEnd && !(getUpperLimit() > -1 && cacheStart + increment > upperLimit)) {
-                boolean cachedbefore = !firstCache;
-                allocateCache(getCacheSize(), finalDb);
-                if (!cachedbefore){
+              Integer limitVlaue = getLimitValue();
+              SequenceOrderType orderType = getOrderType();
+              if (orderType == SequenceOrderType.ORDER_POSITIVE){
+                if (cacheStart + increment > cacheEnd && !(limitVlaue != null && cacheStart + increment > limitVlaue)) {
+                  boolean cachedbefore = !firstCache;
+                  allocateCache(getCacheSize(), finalDb);
+                  if (!cachedbefore){
+                    cacheStart = cacheStart + increment;
+                  }
+                }
+                else if (limitVlaue != null && cacheStart + increment > limitVlaue){
+                  setValue(getStart());
+                  allocateCache(getCacheSize(), finalDb);
+                }
+                else{
                   cacheStart = cacheStart + increment;
                 }
               }
-              else if (getUpperLimit() > -1 && cacheStart + increment > upperLimit){
-                setValue(getStart());
-                allocateCache(getCacheSize(), finalDb);
-              }
               else{
-                cacheStart = cacheStart + increment;
+                if (cacheStart - increment < cacheEnd && !(limitVlaue != null && cacheStart - increment < limitVlaue)) {
+                  boolean cachedbefore = !firstCache;
+                  allocateCache(getCacheSize(), finalDb);
+                  if (!cachedbefore){
+                    cacheStart = cacheStart - increment;
+                  }
+                }
+                else if (limitVlaue != null && cacheStart - increment < limitVlaue){
+                  setValue(getStart());
+                  allocateCache(getCacheSize(), finalDb);
+                }
+                else{
+                  cacheStart = cacheStart - increment;
+                }
               }
               
               return cacheStart;
@@ -170,13 +196,25 @@ public class OSequenceCached extends OSequence {
   }
 
   private void allocateCache(int cacheSize, ODatabaseDocumentInternal db) {
+    SequenceOrderType orederType = getOrderType();
     long value = getValue();
-    long newValue = value + (getIncrement() * cacheSize);
+    long newValue;
+    if (orederType == SequenceOrderType.ORDER_POSITIVE){
+      newValue = value + (getIncrement() * cacheSize);
+    }
+    else{
+      newValue = value - (getIncrement() * cacheSize);
+    }
     setValue(newValue);
     save(db);
 
     this.cacheStart = value;
-    this.cacheEnd = newValue - 1;
+    if (orederType == SequenceOrderType.ORDER_POSITIVE){
+      this.cacheEnd = newValue - 1;
+    }
+    else{
+      this.cacheEnd = newValue + 1;
+    }
     firstCache = false;
   }
 }

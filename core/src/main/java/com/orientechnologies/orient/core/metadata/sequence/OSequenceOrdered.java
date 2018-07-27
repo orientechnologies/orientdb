@@ -46,6 +46,11 @@ public class OSequenceOrdered extends OSequence {
   }
 
   @Override
+  protected void allwaysInitSection(){
+    
+  }
+  
+  @Override
   public synchronized long next() {
     ODatabaseDocumentInternal mainDb = getDatabase();
     boolean tx = mainDb.getTransaction().isActive();
@@ -60,10 +65,21 @@ public class OSequenceOrdered extends OSequence {
         return callRetry(new Callable<Long>() {
           @Override
           public Long call() throws Exception {
-            long newValue = getValue() + getIncrement();
-            if (newValue > getUpperLimit()){
-              newValue = getStart();
+            long newValue;
+            Integer limitVlaue = getLimitValue();
+            if (getOrderType() == SequenceOrderType.ORDER_POSITIVE){
+              newValue = getValue() + getIncrement();              
+              if (limitVlaue != null && newValue > limitVlaue){
+                newValue = getStart();
+              }
             }
+            else{
+              newValue = getValue() - getIncrement();
+              if (limitVlaue != null && newValue < limitVlaue){
+                newValue = getStart();
+              }
+            }
+            
             setValue(newValue);
 
             save(finalDb);

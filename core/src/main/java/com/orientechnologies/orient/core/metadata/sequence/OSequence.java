@@ -43,7 +43,7 @@ public abstract class OSequence {
   public static final long DEFAULT_START     = 0;
   public static final int  DEFAULT_INCREMENT = 1;
   public static final int  DEFAULT_CACHE     = 20;
-  public static final int  DEFAULT_UPPER_LIMIT = -1;
+  public static final Integer  DEFAULT_LIMIT_VALUE = null;
 
   protected static final int    DEF_MAX_RETRY = OGlobalConfiguration.SEQUENCE_MAX_RETRY.getValueAsInteger();
   public static final    String CLASS_NAME    = "OSequence";
@@ -51,7 +51,8 @@ public abstract class OSequence {
   private static final String FIELD_START     = "start";
   private static final String FIELD_INCREMENT = "incr";
   private static final String FIELD_VALUE     = "value";
-  private static final String FIELD_UPPER_VALUE     = "uvalue";
+  private static final String FIELD_LIMIT_VALUE     = "lvalue";
+  private static final String FIELD_ORDER_TYPE     = "otype";
   //initialy set this value to true, so those one who read it can pull upper limit value from document  
 
   private static final String FIELD_NAME = "name";
@@ -60,13 +61,16 @@ public abstract class OSequence {
   private ODocument document;
   private ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();  
   
-  protected boolean upperLimitValueChanged = true;
-
+  protected boolean upperLimitValueChanged = true;  
+  
+  public static final SequenceOrderType DEFAULT_ORDER_TYPE = SequenceOrderType.ORDER_POSITIVE;
+  
   public static class CreateParams {
     public Long    start     = DEFAULT_START;
     public Integer increment = DEFAULT_INCREMENT;
     public Integer cacheSize = DEFAULT_CACHE;
-    public Integer upperLimit = DEFAULT_UPPER_LIMIT; 
+    public Integer limitValue = DEFAULT_LIMIT_VALUE;
+    public SequenceOrderType orderType = DEFAULT_ORDER_TYPE;
 
     public CreateParams setStart(Long start) {
       this.start = start;
@@ -83,8 +87,13 @@ public abstract class OSequence {
       return this;
     }
     
-    public CreateParams setUpperLimit(Integer upperLimit){
-      this.upperLimit = upperLimit;
+    public CreateParams setUpperLimit(Integer limitValue){
+      this.limitValue = limitValue;
+      return this;
+    }
+    
+    public CreateParams setOrderType(SequenceOrderType orderType){
+      this.orderType = orderType;
       return this;
     }
 
@@ -95,7 +104,8 @@ public abstract class OSequence {
       this.start = this.start != null ? this.start : DEFAULT_START;
       this.increment = this.increment != null ? this.increment : DEFAULT_INCREMENT;
       this.cacheSize = this.cacheSize != null ? this.cacheSize : DEFAULT_CACHE;
-      upperLimit = upperLimit == null ? upperLimit = DEFAULT_UPPER_LIMIT : upperLimit;
+      limitValue = limitValue == null ? DEFAULT_LIMIT_VALUE : limitValue;
+      orderType = orderType == null ? DEFAULT_ORDER_TYPE : orderType;
       
       return this;
     }
@@ -128,8 +138,11 @@ public abstract class OSequence {
 
       document = getDocument();
     }
+    allwaysInitSection();
   }
 
+  protected abstract void allwaysInitSection();
+  
   public void save() {
     ODocument doc = tlDocument.get();
     doc.save();
@@ -154,7 +167,8 @@ public abstract class OSequence {
     setStart(params.start);
     setIncrement(params.increment);
     setValue(params.start);
-    setUpperLimit(params.upperLimit);
+    setLimitValue(params.limitValue);
+    setOrderType(params.orderType);
 
     setSequenceType();
   }
@@ -195,12 +209,21 @@ public abstract class OSequence {
     return tlDocument.get().field(FIELD_INCREMENT, OType.INTEGER);
   }
   
-  protected synchronized void setUpperLimit(Integer upperLimit) {
-    tlDocument.get().field(FIELD_UPPER_VALUE, upperLimit);
+  protected synchronized void setLimitValue(Integer limitValue) {
+    tlDocument.get().field(FIELD_LIMIT_VALUE, limitValue);
   }
   
-  protected synchronized int getUpperLimit() {
-    return tlDocument.get().field(FIELD_UPPER_VALUE);
+  protected synchronized Integer getLimitValue() {
+    return tlDocument.get().field(FIELD_LIMIT_VALUE);
+  }
+  
+  protected synchronized void setOrderType(SequenceOrderType orderType) {
+    tlDocument.get().field(FIELD_ORDER_TYPE, orderType.getValue());
+  }
+  
+  protected synchronized SequenceOrderType getOrderType() {
+    byte val = tlDocument.get().field(FIELD_ORDER_TYPE);
+    return SequenceOrderType.fromValue(val);
   }
 
   protected synchronized void setIncrement(int value) {
