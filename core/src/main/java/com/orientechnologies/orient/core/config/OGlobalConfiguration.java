@@ -327,7 +327,7 @@ public enum OGlobalConfiguration {
       "Maximum size of chunk which should be flushed by write cache background thread in LSN mode", Integer.class, 1),
 
   DISK_CACHE_PRINT_CACHE_STATISTICS("storage.diskCache.printCacheStatistics",
-      "Print information about write cache performance metrics", Boolean.class, true),
+      "Print information about write cache performance metrics", Boolean.class, false),
 
   DISK_CACHE_STATISTICS_INTERVAL("storage.diskCache.cacheStatisticsInterval",
       "Period in sec. after which information about write cache performance metrics will be printed", Integer.class, 10),
