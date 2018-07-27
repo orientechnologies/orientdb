@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.lock.OComparableLockManager;
-import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
@@ -195,9 +194,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -260,6 +257,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  protected static final OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
+
+  static {
+    fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
+    fuzzyCheckpointExecutor.setMaximumPoolSize(1);
+  }
+
   private final OComparableLockManager<ORID> lockManager;
 
   /**
@@ -306,8 +310,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    */
   private final      Set<OPair<String, Long>> brokenPages                                = Collections
       .newSetFromMap(new ConcurrentHashMap<>());
-
-  protected volatile OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
 
   private volatile Throwable dataFlushException = null;
 
@@ -371,9 +373,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
         pessimisticLock = contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
-
-        fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
-        fuzzyCheckpointExecutor.setMaximumPoolSize(1);
 
         transaction = new ThreadLocal<>();
         ((OStorageConfigurationImpl) configuration).load(contextConfiguration);
@@ -569,9 +568,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it already exists");
 
         pessimisticLock = contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
-
-        fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
-        fuzzyCheckpointExecutor.setMaximumPoolSize(1);
 
         ((OStorageConfigurationImpl) configuration).initConfiguration(contextConfiguration);
         componentsFactory = new OCurrentStorageComponentsFactory(getConfiguration());
@@ -4059,18 +4055,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   protected void makeFuzzyCheckpoint() {
-    if (writeAheadLog == null)
+    if (writeAheadLog == null) {
       return;
+    }
 
     //check every 1 ms.
     while (!stateLock.tryAcquireReadLock(1_000_000)) {
-      if (status != STATUS.OPEN)
+      if (status != STATUS.OPEN) {
         return;
+      }
     }
 
     try {
-      if (status != STATUS.OPEN || writeAheadLog == null)
+      if (status != STATUS.OPEN || writeAheadLog == null) {
         return;
+      }
 
       final OLogSequenceNumber endLSN = writeAheadLog.end();
 
@@ -4704,14 +4703,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (!force && !onDelete)
       return;
 
-    if (status == STATUS.CLOSED)
+    if (status == STATUS.CLOSED) {
       return;
+    }
 
     final long timer = Orient.instance().getProfiler().startChrono();
-    int fuzzyCheckpointWaitTimeout = getConfiguration().getContextConfiguration()
-        .getValueAsInteger(OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT);
-
-    ScheduledExecutorService executor = fuzzyCheckpointExecutor;
     stateLock.acquireWriteLock();
     try {
       if (status == STATUS.CLOSED)
@@ -4793,7 +4789,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
 
         transaction = null;
-        fuzzyCheckpointExecutor = null;
       } else {
         OLogManager.instance()
             .errorNoDb(this, "Because of JVM error happened inside of storage it can not be properly closed", null);
@@ -4810,17 +4805,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       //noinspection ResultOfMethodCallIgnored
       Orient.instance().getProfiler().stopChrono("db." + name + ".close", "Close a database", timer, "db.*.close");
       stateLock.releaseWriteLock();
-    }
-
-    if (executor != null) {
-      executor.shutdown();
-      try {
-        if (!executor.awaitTermination(fuzzyCheckpointWaitTimeout, TimeUnit.SECONDS)) {
-          throw new OStorageException("Can not able to terminate fuzzy checkpoint");
-        }
-      } catch (InterruptedException e) {
-        throw OException.wrapException(new OInterruptedException("Thread was interrupted during fuzzy checkpoint termination"), e);
-      }
     }
   }
 
@@ -5716,7 +5700,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private static class FuzzyCheckpointThreadFactory implements ThreadFactory {
     @Override
     public Thread newThread(Runnable r) {
-      Thread thread = new Thread(r);
+      Thread thread = new Thread(storageThreadGroup, r);
       thread.setDaemon(true);
       thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       return thread;
@@ -5732,12 +5716,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     public void run() {
       stateLock.acquireReadLock();
       try {
-        if (status == STATUS.CLOSED)
+        if (status == STATUS.CLOSED) {
           return;
+        }
 
         final long[] nonActiveSegments = writeAheadLog.nonActiveSegments();
-        if (nonActiveSegments.length == 0)
+        if (nonActiveSegments.length == 0) {
           return;
+        }
 
         long flushTillSegmentId;
         if (nonActiveSegments.length == 1) {
