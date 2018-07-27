@@ -398,6 +398,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private long lastTsLSNFlush           = -1;
   private long lsnFlushIntervalBoundary = -1;
+  private int  lastSegmentCount         = 1;
 
   private final int exclusiveWriteCacheMaxSize;
 
@@ -2671,15 +2672,17 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           lsnFlushInterval = lsnTs - lastTsLSNFlush;
         }
 
-        if (lsnFlushInterval >= lsnFlushIntervalBoundary) {
+        final long startSegment = writeAheadLog.begin().getSegment();
+        final long endSegment = writeAheadLog.end().getSegment();
+        final int segmentCount = (int) (endSegment - startSegment + 1);
+
+        if (lsnFlushInterval >= lsnFlushIntervalBoundary || segmentCount > lastSegmentCount) {
           lastTsLSNFlush = lsnTs;
+          lastSegmentCount = segmentCount;
 
           convertSharedDirtyPagesToLocal();
 
           Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
-
-          final long startSegment = writeAheadLog.begin().getSegment();
-          final long endSegment = writeAheadLog.end().getSegment();
 
           if (lsnEntry != null && endSegment - startSegment >= 1) {
             int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 512);
