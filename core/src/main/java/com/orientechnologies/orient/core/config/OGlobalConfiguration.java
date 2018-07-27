@@ -74,7 +74,7 @@ public enum OGlobalConfiguration {
           + "Value can be set as % of total memory provided to OrientDB or as absolute value in bytes, kilobytes, megabytes or gigabytes. "
           + "If you set value as 10% it means that 10% of memory will not be allocated by OrientDB and will be left to use by the rest of "
           + "applications, if 2g value is provided it means that 2 gigabytes of memory will be left to use by the rest of applications. "
-          + "Default value is 2g", String.class, "11776m"),
+          + "Default value is 10%", String.class, "10%"),
 
   MEMORY_LEFT_TO_CONTAINER("memory.leftToContainer",
       "Amount of free memory which should be left unallocated in case of OrientDB is started inside of container. "

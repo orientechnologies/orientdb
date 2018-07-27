@@ -155,7 +155,7 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
         return memoryLimit;
       }
 
-      return (int) ((memoryLimit * (100.0 - percent)) / 100.0);
+      return (long) (memoryLimit * ((100.0 - percent) / 100.0));
     } else if (lastChar == 'b') {
       final String bytesValue = memoryLeft.substring(0, memoryLeft.length() - 1);
       final long bytes;
