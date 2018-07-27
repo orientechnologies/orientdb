@@ -34,6 +34,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.util.OURLConnection;
+import com.orientechnologies.orient.core.util.OURLHelper;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -45,7 +47,7 @@ import java.util.Set;
  */
 @Deprecated
 public class OServerAdmin {
-  protected OStorageRemote storage;
+  protected OStorageRemote        storage;
   protected OStorageRemoteSession session      = new OStorageRemoteSession(-1);
   protected String                clientType   = OStorageRemote.DRIVER_NAME;
   protected boolean               collectStats = true;
@@ -59,15 +61,17 @@ public class OServerAdmin {
    */
   @Deprecated
   public OServerAdmin(String iURL) throws IOException {
-    if (iURL.startsWith(OEngineRemote.NAME))
-      iURL = iURL.substring(OEngineRemote.NAME.length() + 1);
+    String url = iURL;
+    if (url.startsWith(OEngineRemote.NAME))
+      url = url.substring(OEngineRemote.NAME.length() + 1);
 
-    if (!iURL.contains("/"))
-      iURL += "/";
+    if (!url.contains("/"))
+      url += "/";
 
-    OrientDBRemote remote = (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(iURL);
+    OURLConnection connection = OURLHelper.parse(iURL);
+    OrientDBRemote remote = (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(connection.getPath());
 
-    storage = new OStorageRemote(iURL, null, "", remote.getConnectionManager(), OStorage.STATUS.OPEN) {
+    storage = new OStorageRemote(url, null, "", remote.getConnectionManager(), OStorage.STATUS.OPEN) {
       @Override
       protected OStorageRemoteSession getCurrentSession() {
         return session;
@@ -310,17 +314,9 @@ public class OServerAdmin {
     ODropDatabaseRequest request = new ODropDatabaseRequest(iDatabaseName, storageType);
     ODropDatabaseResponse response = networkAdminOperation(request, "Cannot delete the remote storage: " + storage.getName());
 
-    final Set<OStorage> underlyingStorages = new HashSet<OStorage>();
-
-    for (OStorage s : Orient.instance().getStorages()) {
-      if (s.getType().equals(storage.getType()) && s.getName().equals(storage.getName())) {
-        underlyingStorages.add(s.getUnderlying());
-      }
-    }
-
-    for (OStorage s : underlyingStorages) {
-      s.close(true, true);
-    }
+    OURLConnection connection = OURLHelper.parse(getURL());
+    OrientDBRemote remote = (OrientDBRemote) ODatabaseDocumentTxInternal.getOrCreateRemoteFactory(connection.getPath());
+    remote.forceDatabaseClose(iDatabaseName);
 
     ODatabaseRecordThreadLocal.instance().remove();
 
