@@ -2658,6 +2658,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           return;
         }
 
+        final long startTs = System.nanoTime();
         long ewcSize = exclusiveWriteCacheSize.get();
 
         int exclusivePages = 0;
@@ -2665,7 +2666,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           exclusivePages = flushExclusiveWriteCache(null, ewcSize);
         }
 
-        final long startTs = System.nanoTime();
         final long lsnFlushInterval;
         if (lastTsLSNFlush == -1) {
           lastTsLSNFlush = startTs;
@@ -2687,7 +2687,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
 
-          if (lsnEntry != null && endSegment - startSegment >= 1) {
+          if (lsnEntry != null && endSegment - startSegment >= 1 && lsnEntry.getKey() < endSegment) {
+            final long lsnTs = System.nanoTime();
+
             lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 512);
 
             lsnFlushIntervalSum += lsnFlushInterval;
@@ -2697,20 +2699,22 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               final long endTs = System.nanoTime();
 
               final int segments = localDirtyPagesBySegment.size();
+              final long flushInterval = endTs - lsnTs;
+
               if (segments <= 2) {
-                lsnFlushIntervalBoundary = 8 * (endTs - startTs);
+                lsnFlushIntervalBoundary = 8 * flushInterval;
               } else if (segments <= 3) {
-                lsnFlushIntervalBoundary = 4 * (endTs - startTs);
+                lsnFlushIntervalBoundary = 4 * flushInterval;
               } else if (segments <= 4) {
-                lsnFlushIntervalBoundary = 2 * (endTs - startTs);
+                lsnFlushIntervalBoundary = 2 * flushInterval;
               } else if (segments <= 5) {
-                lsnFlushIntervalBoundary = (endTs - startTs);
+                lsnFlushIntervalBoundary = flushInterval;
               } else if (segments <= 6) {
-                lsnFlushIntervalBoundary = (endTs - startTs) / 2;
+                lsnFlushIntervalBoundary = flushInterval / 2;
               } else if (segments <= 7) {
-                lsnFlushIntervalBoundary = (endTs - startTs) / 4;
+                lsnFlushIntervalBoundary = flushInterval / 4;
               } else if (segments <= 8) {
-                lsnFlushIntervalBoundary = (endTs - startTs) / 8;
+                lsnFlushIntervalBoundary = flushInterval / 8;
               } else {
                 lsnFlushIntervalBoundary = 0;
               }
