@@ -413,7 +413,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private final boolean fileFlushLogging;
   private final boolean fileRemovalLogging;
 
-  private double lastWriteCachePart = 0;
+  private long lastFlushTs                     = -1;
+  private long backroundExclusiveFlushBoundary = -1;
 
   /**
    * Listeners which are called when exception in background data flush thread is happened.
@@ -2657,27 +2658,29 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           return;
         }
 
-        final long ewcSize = exclusiveWriteCacheSize.get();
+        long ewcSize = exclusiveWriteCacheSize.get();
 
+        int exclusivePages = 0;
         if (ewcSize >= 0.8 * exclusiveWriteCacheMaxSize) {
-          flushExclusiveWriteCache(null, ewcSize);
+          exclusivePages = flushExclusiveWriteCache(null, ewcSize);
         }
 
-        final long lsnTs = System.nanoTime();
+        final long startTs = System.nanoTime();
         final long lsnFlushInterval;
         if (lastTsLSNFlush == -1) {
-          lastTsLSNFlush = lsnTs;
+          lastTsLSNFlush = startTs;
           lsnFlushInterval = 0;
         } else {
-          lsnFlushInterval = lsnTs - lastTsLSNFlush;
+          lsnFlushInterval = startTs - lastTsLSNFlush;
         }
 
         final long startSegment = writeAheadLog.begin().getSegment();
         final long endSegment = writeAheadLog.end().getSegment();
         final int segmentCount = (int) (endSegment - startSegment + 1);
 
+        int lsnPages = 0;
         if (lsnFlushInterval >= lsnFlushIntervalBoundary || segmentCount > lastSegmentCount) {
-          lastTsLSNFlush = lsnTs;
+          lastTsLSNFlush = startTs;
           lastSegmentCount = segmentCount;
 
           convertSharedDirtyPagesToLocal();
@@ -2685,7 +2688,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
 
           if (lsnEntry != null && endSegment - startSegment >= 1) {
-            int lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 512);
+            lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 512);
 
             lsnFlushIntervalSum += lsnFlushInterval;
             lsnFlushIntervalCount++;
@@ -2695,24 +2698,51 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               final int segments = localDirtyPagesBySegment.size();
               if (segments <= 2) {
-                lsnFlushIntervalBoundary = 8 * (endTs - lsnTs);
+                lsnFlushIntervalBoundary = 8 * (endTs - startTs);
               } else if (segments <= 3) {
-                lsnFlushIntervalBoundary = 4 * (endTs - lsnTs);
+                lsnFlushIntervalBoundary = 4 * (endTs - startTs);
               } else if (segments <= 4) {
-                lsnFlushIntervalBoundary = 2 * (endTs - lsnTs);
+                lsnFlushIntervalBoundary = 2 * (endTs - startTs);
               } else if (segments <= 5) {
-                lsnFlushIntervalBoundary = (endTs - lsnTs);
+                lsnFlushIntervalBoundary = (endTs - startTs);
               } else if (segments <= 6) {
-                lsnFlushIntervalBoundary = (endTs - lsnTs) / 2;
+                lsnFlushIntervalBoundary = (endTs - startTs) / 2;
               } else if (segments <= 7) {
-                lsnFlushIntervalBoundary = (endTs - lsnTs) / 4;
+                lsnFlushIntervalBoundary = (endTs - startTs) / 4;
               } else if (segments <= 8) {
-                lsnFlushIntervalBoundary = (endTs - lsnTs) / 8;
+                lsnFlushIntervalBoundary = (endTs - startTs) / 8;
               } else {
                 lsnFlushIntervalBoundary = 0;
               }
             }
           }
+        }
+
+        if (lsnPages + exclusivePages == 0) {
+          final long backgroundExclusiveInterval;
+
+          if (lastFlushTs == -1) {
+            backgroundExclusiveInterval = 0;
+          } else {
+            backgroundExclusiveInterval = startTs - lastFlushTs;
+          }
+
+          ewcSize = exclusiveWriteCacheSize.get();
+
+          if (ewcSize >= 512 && backgroundExclusiveInterval >= backroundExclusiveFlushBoundary) {
+            final long backgroundTs = System.nanoTime();
+
+            final int backgroundPages = flushExclusiveWriteCache(null, (long) (0.1 * exclusiveWriteCacheMaxSize));
+
+            if (backgroundPages > 0) {
+              final long endTs = System.nanoTime();
+              backroundExclusiveFlushBoundary = 9 * (endTs - backgroundTs);
+            }
+
+            lastFlushTs = startTs;
+          }
+        } else {
+          lastFlushTs = startTs;
         }
       } catch (final Error | Exception t) {
         OLogManager.instance().error(this, "Exception during data flush", t);
