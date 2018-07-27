@@ -2,6 +2,7 @@ package org.apache.tinkerpop.gremlin.orientdb.executor.transformer;
 
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
 import com.orientechnologies.orient.core.command.script.transformer.result.OResultTransformer;
+import com.orientechnologies.orient.core.command.script.transformer.resultset.OResultSetTransformer;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.tinkerpop.gremlin.orientdb.OrientElement;
@@ -54,5 +55,10 @@ public class OGremlinTransformer implements OScriptTransformer {
   @Override
   public void registerResultTransformer(Class clazz, OResultTransformer resultTransformer) {
     this.transformer.registerResultTransformer(clazz, resultTransformer);
+  }
+
+  @Override
+  public void registerResultSetTransformer(Class clazz, OResultSetTransformer transformer) {
+    this.transformer.registerResultSetTransformer(clazz,transformer);
   }
 }

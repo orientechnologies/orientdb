@@ -64,12 +64,12 @@ public class OCommandGremlinExecutor implements OScriptExecutor, OScriptInjectio
 
     private OScriptTransformer transformer;
 
-    public OCommandGremlinExecutor(OScriptManager scriptManager) {
+    public OCommandGremlinExecutor(OScriptManager scriptManager,OScriptTransformer transformer) {
 
         factory = new GremlinGroovyScriptEngineFactory();
         factory.setCustomizerManager(new CachedGremlinScriptEngineManager());
         this.scriptManager = scriptManager;
-        this.transformer = new OGremlinTransformer(scriptManager.getTransformer());
+        this.transformer = new OGremlinTransformer(transformer);
 
         initCustomTransformer(this.transformer);
 
