@@ -273,6 +273,7 @@ public class OSchemaRemote extends OSchemaShared {
   public void update(ODocument schema) {
     if (!skipPush.get()) {
       super.fromStream(schema);
+      this.snapshot = null;
     }
   }
 

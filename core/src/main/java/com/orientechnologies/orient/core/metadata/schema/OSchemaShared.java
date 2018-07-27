@@ -71,13 +71,13 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   private final OClusterSelectionFactory clusterSelectionFactory = new OClusterSelectionFactory();
 
-  private final    OModifiableInteger           modificationCounter  = new OModifiableInteger();
-  private final    List<OGlobalProperty>        properties           = new ArrayList<OGlobalProperty>();
-  private final    Map<String, OGlobalProperty> propertiesByNameType = new HashMap<String, OGlobalProperty>();
-  private          Set<Integer>                 blobClusters         = new HashSet<Integer>();
-  private volatile int                          version              = 0;
-  private volatile boolean                      acquiredDistributed  = false;
-  private volatile OImmutableSchema             snapshot;
+  private final      OModifiableInteger           modificationCounter  = new OModifiableInteger();
+  private final      List<OGlobalProperty>        properties           = new ArrayList<OGlobalProperty>();
+  private final      Map<String, OGlobalProperty> propertiesByNameType = new HashMap<String, OGlobalProperty>();
+  private            Set<Integer>                 blobClusters         = new HashSet<Integer>();
+  private volatile   int                          version              = 0;
+  private volatile   boolean                      acquiredDistributed  = false;
+  protected volatile OImmutableSchema             snapshot;
 
   protected static Set<String> internalClasses = new HashSet<String>();
 
