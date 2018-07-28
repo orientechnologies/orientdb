@@ -416,6 +416,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private long lastFlushTs                     = -1;
   private long backroundExclusiveFlushBoundary = -1;
 
+  private long lsnPagesFlushIntervalSum   = 0;
+  private int  lsnPagesFlushIntervalCount = 0;
+
   /**
    * Listeners which are called when exception in background data flush thread is happened.
    */
@@ -2700,20 +2703,32 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               final int segments = localDirtyPagesBySegment.size();
               final long flushInterval = endTs - lsnTs;
 
+              if (lsnPagesFlushIntervalCount == 10) {
+                final long avgFlushInterval = lsnPagesFlushIntervalSum / lsnPagesFlushIntervalCount;
+
+                lsnPagesFlushIntervalSum = avgFlushInterval;
+                lsnPagesFlushIntervalCount = 1;
+              }
+
+              lsnPagesFlushIntervalSum += flushInterval;
+              lsnPagesFlushIntervalCount++;
+
+              final long avgFlushInterval = lsnPagesFlushIntervalSum / lsnPagesFlushIntervalCount;
+
               if (segments <= 2) {
-                lsnFlushIntervalBoundary = 8 * flushInterval;
+                lsnFlushIntervalBoundary = 8 * avgFlushInterval;
               } else if (segments <= 3) {
-                lsnFlushIntervalBoundary = 4 * flushInterval;
+                lsnFlushIntervalBoundary = 4 * avgFlushInterval;
               } else if (segments <= 4) {
-                lsnFlushIntervalBoundary = 2 * flushInterval;
+                lsnFlushIntervalBoundary = 2 * avgFlushInterval;
               } else if (segments <= 5) {
-                lsnFlushIntervalBoundary = flushInterval;
+                lsnFlushIntervalBoundary = avgFlushInterval;
               } else if (segments <= 6) {
-                lsnFlushIntervalBoundary = flushInterval / 2;
+                lsnFlushIntervalBoundary = avgFlushInterval / 2;
               } else if (segments <= 7) {
-                lsnFlushIntervalBoundary = flushInterval / 4;
+                lsnFlushIntervalBoundary = avgFlushInterval / 4;
               } else if (segments <= 8) {
-                lsnFlushIntervalBoundary = flushInterval / 8;
+                lsnFlushIntervalBoundary = avgFlushInterval / 8;
               } else {
                 lsnFlushIntervalBoundary = 0;
               }
