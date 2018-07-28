@@ -161,6 +161,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private static final int PAGE_OFFSET_TO_CHECKSUM_FROM = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
 
+  private static final int CHUNK_SIZE = 32 * 1024 * 1024;
+
   /**
    * Limit of free space on disk after which database will be switched to "read only" mode
    */
@@ -419,6 +421,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private long lsnPagesFlushIntervalSum   = 0;
   private int  lsnPagesFlushIntervalCount = 0;
 
+  private final int chunkSize;
+
   /**
    * Listeners which are called when exception in background data flush thread is happened.
    */
@@ -443,6 +447,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     try {
       this.id = id;
       this.files = files;
+      this.chunkSize = CHUNK_SIZE / pageSize;
 
       this.pageSize = pageSize;
       this.writeAheadLog = writeAheadLog;
@@ -2571,7 +2576,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         while (minDirtySegment < segmentId) {
           flushExclusivePagesIfNeeded();
 
-          flushWriteCacheFromMinLSN(writeAheadLog.begin().getSegment(), segmentId, 512);
+          flushWriteCacheFromMinLSN(writeAheadLog.begin().getSegment(), segmentId, chunkSize);
 
           firstEntry = localDirtyPagesBySegment.firstEntry();
 
@@ -2627,7 +2632,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
 
         if (ewcSize > exclusiveWriteCacheMaxSize) {
-          flushExclusiveWriteCache(latch, 512);
+          flushExclusiveWriteCache(latch, chunkSize);
         }
 
       } catch (final Error | Exception t) {
@@ -2692,7 +2697,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           if (lsnEntry != null && segmentCount > 0 && lsnEntry.getKey() < endSegment) {
             final long lsnTs = System.nanoTime();
 
-            lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 8 * 512);
+            lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 8 * chunkSize);
 
             lsnFlushIntervalSum += lsnFlushInterval;
             lsnFlushIntervalCount++;
@@ -2749,7 +2754,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           ewcSize = exclusiveWriteCacheSize.get();
 
-          if (ewcSize >= 512 && backgroundExclusiveInterval >= backroundExclusiveFlushBoundary) {
+          if (ewcSize >= chunkSize && backgroundExclusiveInterval >= backroundExclusiveFlushBoundary) {
             final long backgroundTs = System.nanoTime();
 
             final int backgroundPages = flushExclusiveWriteCache(null, (long) (0.1 * exclusiveWriteCacheMaxSize));
@@ -2941,7 +2946,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           chunk.add(new OTriple<>(version, copy, pointer));
 
-          if (chunk.size() >= pagesFlushLimit || chunk.size() >= 512) {
+          if (chunk.size() >= pagesFlushLimit || chunk.size() >= chunkSize) {
             flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
             maxFullLogLSN = null;
 
@@ -3101,9 +3106,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     int copiedPages = 0;
 
     final long ewcSize = exclusiveWriteCacheSize.get();
-    pagesToFlush = Math.min(Math.max(pagesToFlush, 512), ewcSize);
+    pagesToFlush = Math.min(Math.max(pagesToFlush, chunkSize), ewcSize);
 
-    final ArrayList<OTriple<Long, ByteBuffer, OCachePointer>> chunk = new ArrayList<>(512);
+    final ArrayList<OTriple<Long, ByteBuffer, OCachePointer>> chunk = new ArrayList<>(chunkSize);
 
     if (latch != null && ewcSize <= exclusiveWriteCacheMaxSize) {
       latch.countDown();
@@ -3116,7 +3121,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       OLogSequenceNumber maxFullLogLSN = null;
 
-      while (chunk.size() < 512 && flushedPages + chunk.size() < pagesToFlush) {
+      while (chunk.size() < chunkSize && flushedPages + chunk.size() < pagesToFlush) {
         if (!iterator.hasNext()) {
           if (!chunk.isEmpty()) {
             flushedPages += flushPagesChunk(chunk, maxFullLogLSN);
