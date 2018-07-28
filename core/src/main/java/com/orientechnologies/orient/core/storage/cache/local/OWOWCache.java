@@ -2697,7 +2697,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           if (lsnEntry != null && segmentCount > 0 && lsnEntry.getKey() < endSegment) {
             final long lsnTs = System.nanoTime();
 
-            lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 16 * chunkSize);
+            lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 8 * chunkSize);
 
             lsnFlushIntervalSum += lsnFlushInterval;
             lsnFlushIntervalCount++;
