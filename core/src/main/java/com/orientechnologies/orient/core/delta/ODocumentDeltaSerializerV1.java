@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -42,8 +41,6 @@ import com.orientechnologies.orient.core.util.ODateHelper;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.*;
-
-import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.*;
 
 /**
  * @author mdjurovi
@@ -67,25 +64,25 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
       Object fieldValue = entry.getValue();
 
       //serialize field name
-      serializeValue(bytes, fieldName, OType.STRING);
+      serializeValue(bytes, fieldName, ODeltaDocumentFieldType.STRING);
 
       //serialize field type
-      OType type = OType.getTypeByClass(fieldValue != null ? fieldValue.getClass() : null);
+      ODeltaDocumentFieldType type = ODeltaDocumentFieldType.getFromClass(fieldValue != null ? fieldValue.getClass() : null);
       if (type == null) {
         //signal for null value
         HelperClasses.writeByte(bytes, (byte) -1);
         continue;
       }
 
-      if (type == OType.LINK && fieldValue instanceof ODocument) {
-        type = OType.EMBEDDED;
+      if (type == ODeltaDocumentFieldType.LINK && fieldValue instanceof ODocument) {
+        type = ODeltaDocumentFieldType.EMBEDDED;
       }
 
       HelperClasses.writeType(bytes, type);
       //serialize field value
       serializeValue(bytes, fieldValue, type);
     }
-    serializeValue(bytes, -1, OType.INTEGER);
+    serializeValue(bytes, -1, ODeltaDocumentFieldType.INTEGER);
   }
 
   private void deserialize(ODocumentDelta delta, BytesContainer bytes) {
@@ -96,7 +93,7 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
         if (fieldNameLength > 0) {
           String fieldName = HelperClasses.stringFromBytes(bytes.bytes, bytes.offset, fieldNameLength);
           bytes.offset += fieldNameLength;
-          OType type = HelperClasses.readType(bytes);
+          ODeltaDocumentFieldType type = HelperClasses.readDeltaDocumentType(bytes);
           if (type == null) {
             delta.field(fieldName, null);
             continue;
@@ -120,20 +117,20 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     return OVarIntSerializer.write(bytes, 0);
   }
 
-  private int serializeEmbeddedCollection(final BytesContainer bytes, final Collection<?> value, final OType linkedType) {
+  private int serializeEmbeddedCollection(final BytesContainer bytes, final Collection<?> value, final ODeltaDocumentFieldType linkedType) {
     final int pos = OVarIntSerializer.write(bytes, value.size());
     // TODO manage embedded type from schema and auto-determined.    
     for (Object itemValue : value) {
       // TODO:manage in a better way null entry
       if (itemValue == null) {
-        HelperClasses.writeType(bytes, OType.ANY);
+        HelperClasses.writeType(bytes, ODeltaDocumentFieldType.ANY);
         continue;
       }
-      OType type;
-      if (linkedType == null || linkedType == OType.ANY) {
-        type = HelperClasses.getTypeFromValueEmbedded(itemValue);
-        if (type == OType.LINK && itemValue instanceof ODocument) {
-          type = OType.EMBEDDED;
+      ODeltaDocumentFieldType type;
+      if (linkedType == null || linkedType == ODeltaDocumentFieldType.ANY) {
+        type = HelperClasses.getDeltaTypeFromValueEmbedded(itemValue);
+        if (type == ODeltaDocumentFieldType.LINK && itemValue instanceof ODocument) {
+          type = ODeltaDocumentFieldType.EMBEDDED;
         }
       } else
         type = linkedType;
@@ -168,8 +165,8 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     try {
 
       for (int i = 0; i < items; i++) {
-        OType itemType = readOType(bytes, false);
-        if (itemType == OType.ANY)
+        ODeltaDocumentFieldType itemType = HelperClasses.readDeltaDocumentType(bytes);
+        if (itemType == ODeltaDocumentFieldType.ANY)
           found.add(null);
         else
           found.add(deserializeValue(bytes, itemType, ownerDocument));
@@ -190,8 +187,8 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     try {
 
       for (int i = 0; i < items; i++) {
-        OType itemType = HelperClasses.readOType(bytes, false);
-        if (itemType == OType.ANY)
+        ODeltaDocumentFieldType itemType = HelperClasses.readDeltaDocumentType(bytes);
+        if (itemType == ODeltaDocumentFieldType.ANY)
           found.add(null);
         else
           found.add(deserializeValue(bytes, itemType, ownerDocument));
@@ -203,7 +200,7 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     }
   }
 
-  private void serializeValue(final BytesContainer bytes, Object value, OType type) {
+  private void serializeValue(final BytesContainer bytes, Object value, ODeltaDocumentFieldType type) {
     switch (type) {
     case INTEGER:
     case LONG:
@@ -335,22 +332,22 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
           docEntry.property = prop;
       }
 
-      OType valueType = getDocumentFieldType(docEntry);
+      ODeltaDocumentFieldType valueType = getDocumentFieldType(docEntry);
       if (docEntry.property != null) {
         //write prop ID
-        serializeValue(bytes, (docEntry.property.getId() + 1) * -1, OType.INTEGER);
-        if (valueType == OType.ANY) {
+        serializeValue(bytes, (docEntry.property.getId() + 1) * -1, ODeltaDocumentFieldType.INTEGER);
+        if (valueType == ODeltaDocumentFieldType.ANY) {
           //write type if differs from ANY
           HelperClasses.writeType(bytes, valueType);
         }
       } else {
 
-        if (valueType == OType.LINK && docEntry.value instanceof ODocument) {
-          valueType = OType.EMBEDDED;
+        if (valueType == ODeltaDocumentFieldType.LINK && docEntry.value instanceof ODocument) {
+          valueType = ODeltaDocumentFieldType.EMBEDDED;
         }
 
         //write field name
-        serializeValue(bytes, entry.getKey(), OType.STRING);
+        serializeValue(bytes, entry.getKey(), ODeltaDocumentFieldType.STRING);
 
         //write type
         HelperClasses.writeType(bytes, valueType);
@@ -359,7 +356,7 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
       serializeValue(bytes, docEntry.value, valueType);
     }
     //signal for end
-    serializeValue(bytes, 0, OType.INTEGER);
+    serializeValue(bytes, 0, ODeltaDocumentFieldType.INTEGER);
   }
 
   private ODocument deserializeDoc(final BytesContainer bytes, ODocument owner) {
@@ -374,27 +371,27 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     boolean endSignal = false;
     while (!endSignal) {
       //read field name length
-      int len = deserializeValue(bytes, OType.INTEGER, null);
+      int len = deserializeValue(bytes, ODeltaDocumentFieldType.INTEGER, null);
       if (len == 0) {
         endSignal = true;
       } else {
         String fieldName;
         Object fieldValue;
-        OType fieldType;
+        ODeltaDocumentFieldType fieldType;
         if (len < 0) {
           OGlobalProperty prop = HelperClasses.getGlobalProperty(ret, len);
           fieldName = prop.getName();
-          fieldType = prop.getType();
-          if (fieldType == OType.ANY) {
+          fieldType = HelperClasses.getDeltaTypeFromType(prop.getType());
+          if (fieldType == ODeltaDocumentFieldType.ANY) {
             //read type
-            fieldType = HelperClasses.readType(bytes);
+            fieldType = HelperClasses.readDeltaDocumentType(bytes);
           }
         } else {
           //read rest of string
           fieldName = HelperClasses.stringFromBytes(bytes.bytes, bytes.offset, len);
           bytes.offset += len;
           //read type
-          fieldType = HelperClasses.readType(bytes);
+          fieldType = HelperClasses.readDeltaDocumentType(bytes);
         }
         //read value
         fieldValue = deserializeValue(bytes, fieldType, ret);
@@ -407,19 +404,19 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     return ret;
   }
 
-  protected OType getDocumentFieldType(final ODocumentEntry entry) {
-    OType type = entry.type;
+  protected ODeltaDocumentFieldType getDocumentFieldType(final ODocumentEntry entry) {
+    ODeltaDocumentFieldType type = HelperClasses.getDeltaTypeFromType(entry.type);
     if (type == null) {
       final OProperty prop = entry.property;
       if (prop != null)
-        type = prop.getType();
+        type = HelperClasses.getDeltaTypeFromType(prop.getType());
     }
-    if (type == null || OType.ANY == type)
-      type = OType.getTypeByValue(entry.value);
+    if (type == null || ODeltaDocumentFieldType.ANY == type)
+      type = ODeltaDocumentFieldType.getTypeByValue(entry.value);
     return type;
   }
 
-  protected <T> T deserializeValue(final BytesContainer bytes, OType type, final ODocument ownerDocument) {
+  protected <T> T deserializeValue(final BytesContainer bytes, ODeltaDocumentFieldType type, final ODocument ownerDocument) {
 
     Object value = null;
     switch (type) {
@@ -451,8 +448,8 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
       value = new Date(OVarIntSerializer.readAsLong(bytes));
       break;
     case DATE:
-      long savedTime = OVarIntSerializer.readAsLong(bytes) * MILLISEC_PER_DAY;
-      savedTime = convertDayToTimezone(TimeZone.getTimeZone("GMT"), ODateHelper.getDatabaseTimeZone(), savedTime);
+      long savedTime = OVarIntSerializer.readAsLong(bytes) * HelperClasses.MILLISEC_PER_DAY;
+      savedTime = HelperClasses.convertDayToTimezone(TimeZone.getTimeZone("GMT"), ODateHelper.getDatabaseTimeZone(), savedTime);
       value = new Date(savedTime);
       break;
     case EMBEDDED:
@@ -537,14 +534,14 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     for (Map.Entry<Object, Object> entry : map.entrySet()) {
       // TODO:check skip of complex types
       // FIXME: changed to support only string key on map
-      OType type = OType.STRING;
+      ODeltaDocumentFieldType type = ODeltaDocumentFieldType.STRING;
       HelperClasses.writeType(bytes, type);
-      writeString(bytes, entry.getKey().toString());
+      HelperClasses.writeString(bytes, entry.getKey().toString());
       final Object value = entry.getValue();
       if (value != null) {
-        type = getTypeFromValueEmbedded(value);
-        if (type == OType.LINK && value instanceof ODocument) {
-          type = OType.EMBEDDED;
+        type = HelperClasses.getDeltaTypeFromValueEmbedded(value);
+        if (type == ODeltaDocumentFieldType.LINK && value instanceof ODocument) {
+          type = ODeltaDocumentFieldType.EMBEDDED;
         }
         if (type == null) {
           throw new OSerializationException(
@@ -566,11 +563,11 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     final Map result = new HashMap();
 
     for (int i = 0; i < size; i++) {
-      OType keyType = readOType(bytes, false);
+      ODeltaDocumentFieldType keyType = HelperClasses.readDeltaDocumentType(bytes);
       Object key = deserializeValue(bytes, keyType, document);
-      byte typeId = readByte(bytes);
+      byte typeId = HelperClasses.readByte(bytes);
       if (typeId != -1) {
-        final OType type = OType.getById(typeId);
+        final ODeltaDocumentFieldType type = ODeltaDocumentFieldType.getFromId(typeId);
         Object value = deserializeValue(bytes, type, document);
         result.put(key, value);
       } else

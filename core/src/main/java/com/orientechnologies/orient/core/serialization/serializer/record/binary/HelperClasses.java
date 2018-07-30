@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
+import com.orientechnologies.orient.core.delta.ODeltaDocumentFieldType;
+import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -116,12 +118,28 @@ public class HelperClasses {
     }
     return OType.getById(readByte(bytes));
   }
+  
+  public static ODeltaDocumentFieldType readDeltaDocumentType(final BytesContainer bytes) {
+    return ODeltaDocumentFieldType.getFromId(readByte(bytes));
+  }
+  
+  public static ODeltaDocumentFieldType getDeltaTypeFromType(OType type){
+    if (type == null){
+      return null;
+    }
+    return ODeltaDocumentFieldType.getFromId(type.getId());
+  }
 
   public static void writeOType(BytesContainer bytes, int pos, OType type) {
     bytes.bytes[pos] = (byte) type.getId();
   }
 
   public static void writeType(BytesContainer bytes, OType type) {
+    int pos = bytes.alloc(1);
+    bytes.bytes[pos] = (byte) type.getId();
+  }
+  
+  public static void writeType(BytesContainer bytes, ODeltaDocumentFieldType type) {
     int pos = bytes.alloc(1);
     bytes.bytes[pos] = (byte) type.getId();
   }
@@ -250,6 +268,18 @@ public class HelperClasses {
     if (type == OType.LINK && fieldValue instanceof ODocument && !((ODocument) fieldValue).getIdentity().isValid())
       type = OType.EMBEDDED;
     return type;
+  }
+  
+  public static ODeltaDocumentFieldType getDeltaTypeFromValueEmbedded(final Object fieldValue) {
+    if (fieldValue instanceof ODocumentDelta){
+      return ODeltaDocumentFieldType.DELTA_RECORD;
+    }
+    
+    OType type = getTypeFromValueEmbedded(fieldValue);
+    if (type == null){
+      return null;
+    }
+    return ODeltaDocumentFieldType.getFromId(type.getId());
   }
 
   public static int writeLinkCollection(final BytesContainer bytes, final Collection<OIdentifiable> value) {

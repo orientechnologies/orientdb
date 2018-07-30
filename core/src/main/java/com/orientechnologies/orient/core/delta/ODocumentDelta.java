@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -184,13 +183,13 @@ public class ODocumentDelta implements OIdentifiable {
       return true;
     }
 
-    OType fieldType = OType.getTypeByClass(val1.getClass());
-    if (fieldType == OType.LINK && val1 instanceof ODocument) {
-      fieldType = OType.EMBEDDED;
+    ODeltaDocumentFieldType fieldType = ODeltaDocumentFieldType.getFromClass(val1.getClass());
+    if (fieldType == ODeltaDocumentFieldType.LINK && val1 instanceof ODocument) {
+      fieldType = ODeltaDocumentFieldType.EMBEDDED;
     }
-    OType otherFieldType = OType.getTypeByClass(val2.getClass());
-    if (otherFieldType == OType.LINK && val2 instanceof ODocument) {
-      otherFieldType = OType.EMBEDDED;
+    ODeltaDocumentFieldType otherFieldType = ODeltaDocumentFieldType.getFromClass(val2.getClass());
+    if (otherFieldType == ODeltaDocumentFieldType.LINK && val2 instanceof ODocument) {
+      otherFieldType = ODeltaDocumentFieldType.EMBEDDED;
     }
 
     if (fieldType != otherFieldType) {
