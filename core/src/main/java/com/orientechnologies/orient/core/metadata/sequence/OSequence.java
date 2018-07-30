@@ -87,7 +87,7 @@ public abstract class OSequence {
       return this;
     }
     
-    public CreateParams setUpperLimit(Integer limitValue){
+    public CreateParams setLimitValue(Integer limitValue){
       this.limitValue = limitValue;
       return this;
     }
