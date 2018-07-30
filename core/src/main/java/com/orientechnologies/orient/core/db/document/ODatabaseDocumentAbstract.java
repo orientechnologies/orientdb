@@ -2362,7 +2362,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     if (!isClosed()) {
       loadMetadata();
-      sharedContext = null;
+      sharedContext.reload(this);
     }
   }
 
