@@ -206,7 +206,7 @@ public enum OGlobalConfiguration {
   STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate",
       "Indicates whether a full checkpoint should be performed, if storage was created", Boolean.class, false),
 
-  STORAGE_CALL_FSYNC("strorage.callFsync", "Call fsync during fuzzy checkpoints or WAL writes, true by default", Boolean.class,
+  STORAGE_CALL_FSYNC("storage.callFsync", "Call fsync during fuzzy checkpoints or WAL writes, true by default", Boolean.class,
       true),
 
   STORAGE_PRINT_WAL_COMPRESSION_STATISTICS("storage.printWALCompressionStatistics", "Prints compression ration of WAL data",
