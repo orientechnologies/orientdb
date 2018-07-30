@@ -34,7 +34,7 @@ import java.util.Map.Entry;
  * 
  */
 public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
-  protected final static String QUERY_GET = "select rid from index:%s where key = ?";
+  protected final static String QUERY_GET = "select rid from index:`%s` where key = ?";
 
   public OIndexRemoteOneValue(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
       final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex) {
