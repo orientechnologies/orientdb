@@ -280,9 +280,4 @@ public interface OrientDBInternal extends AutoCloseable {
 
   void forceDatabaseClose(String databaseName);
 
-  void replaceFactory(OEmbeddedDatabaseInstanceFactory instanceFactory);
-
-  OEmbeddedDatabaseInstanceFactory getFactory();
-
-
 }

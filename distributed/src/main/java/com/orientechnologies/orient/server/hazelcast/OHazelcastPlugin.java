@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -80,7 +79,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public static final String CONFIG_LOCKMANAGER     = "coordinator";
   public static final String CONFIG_REGISTEREDNODES = "registeredNodes";
 
-  protected String hazelcastConfigFile = "hazelcast.xml";
+  protected          String            hazelcastConfigFile = "hazelcast.xml";
   protected          Config            hazelcastConfig;
   protected          String            membershipListenerRegistration;
   protected          String            membershipListenerMapRegistration;
@@ -116,7 +115,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         hazelcastConfigFile = OFileUtils.getPath(hazelcastConfigFile);
       }
     }
-    iServer.getDatabases().replaceFactory(new ODistributedEmbeddedDatabaseInstanceFactory(this));
   }
 
   @Override
@@ -124,8 +122,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (!enabled)
       return;
 
-    if (!(serverInstance.getDatabases().getFactory() instanceof ODistributedEmbeddedDatabaseInstanceFactory))
-      serverInstance.getDatabases().replaceFactory(new ODistributedEmbeddedDatabaseInstanceFactory(this));
+    if (serverInstance.getDatabases() instanceof OrientDBDistributed)
+      ((OrientDBDistributed) serverInstance.getDatabases()).setPlugin(this);
 
     Orient.instance().setRunningDistributed(true);
 
@@ -611,7 +609,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
     });
 
-    serverInstance.getDatabases().replaceFactory(new ODefaultEmbeddedDatabaseInstanceFactory());
     setNodeStatus(NODE_STATUS.OFFLINE);
     OServer.unregisterServerInstance(getLocalNodeName());
   }

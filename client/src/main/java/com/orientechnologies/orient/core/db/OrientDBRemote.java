@@ -348,20 +348,10 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   @Override
-  public void replaceFactory(OEmbeddedDatabaseInstanceFactory instanceFactory) {
-    throw new UnsupportedOperationException("instance factory is not supported in remote");
-  }
-
-  @Override
   public synchronized void forceDatabaseClose(String databaseName) {
     OStorageRemote remote = storages.get(databaseName);
     if (remote != null)
       closeStorage(remote);
-  }
-
-  @Override
-  public OEmbeddedDatabaseInstanceFactory getFactory() {
-    throw new UnsupportedOperationException("instance factory is not supported in remote");
   }
 
   @Override
