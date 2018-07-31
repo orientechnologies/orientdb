@@ -20,10 +20,7 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 23/06/17.
@@ -111,7 +108,7 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
     serializerNetwork.serialize(serializePlan(plan), container);
 
     OResultInternal params = new OResultInternal();
-    params.setProperty("params", inputParams);
+    params.setProperty("params", convertParams(inputParams));
     serializerNetwork.serialize(params, container);
 
     OResultInternal metadata = new OResultInternal();
@@ -122,6 +119,14 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
     out.write(container.bytes.length);
     out.write(container.bytes);
 
+  }
+
+  private Map<String, Object> convertParams(Map<Object, Object> inputParams) {
+    Map<String, Object> result = new HashMap<>();
+    for (Map.Entry<Object, Object> entry : inputParams.entrySet()) {
+      result.put(String.valueOf(entry.getKey()), entry.getValue());
+    }
+    return result;
   }
 
   @Override

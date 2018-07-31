@@ -186,6 +186,7 @@ public class OSelectExecutionPlanner {
           subPlans.add(subPlan);
         }
       }
+      result.chain(new ParallelExecStep((List) subPlans, ctx, enableProfiling));
     }
     info.distributedPlanCreated = true;
   }
