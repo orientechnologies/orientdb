@@ -71,6 +71,9 @@ public class OWhereClause extends SimpleNode {
       Map<String, Object> conditions = getEqualityOperations(condition, ctx);
       long conditionEstimation = Long.MAX_VALUE;
       for (OIndex index : indexes) {
+        if (index.getType().equals(OClass.INDEX_TYPE.FULLTEXT.name()) || index.getType().equals(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name())) {
+          continue;
+        }
         List<String> indexedFields = index.getDefinition().getFields();
         int nMatchingKeys = 0;
         for (String indexedField : indexedFields) {
