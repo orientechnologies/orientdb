@@ -3445,8 +3445,8 @@ public class ODocument extends ORecordAbstract
         }
       }
       //this means that some list memeber document is changed
-      if (currentType.isList() && previousValue == null) {
-        List currentList = (List) currentValue;
+      if (currentType.isList() && previousValue == null) { 
+       List currentList = (List) currentValue;
         retVal.type = UpdateDeltaValueType.LIST_UPDATE;
         List<ODocumentDelta> deltaList = new ArrayList<>();
         retVal.value = deltaList;

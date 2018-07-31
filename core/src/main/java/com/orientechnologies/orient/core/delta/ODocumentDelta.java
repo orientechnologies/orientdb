@@ -20,6 +20,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -183,47 +185,46 @@ public class ODocumentDelta implements OIdentifiable {
       return true;
     }
 
-    ODeltaDocumentFieldType fieldType = ODeltaDocumentFieldType.getFromClass(val1.getClass());
-    if (fieldType == ODeltaDocumentFieldType.LINK && val1 instanceof ODocument) {
-      fieldType = ODeltaDocumentFieldType.EMBEDDED;
+    OTypeInterface fieldType = ODeltaDocumentFieldType.getFromClass(val1.getClass());
+    if (fieldType == OType.LINK && val1 instanceof ODocument) {
+      fieldType = OType.EMBEDDED;
     }
-    ODeltaDocumentFieldType otherFieldType = ODeltaDocumentFieldType.getFromClass(val2.getClass());
-    if (otherFieldType == ODeltaDocumentFieldType.LINK && val2 instanceof ODocument) {
-      otherFieldType = ODeltaDocumentFieldType.EMBEDDED;
+    OTypeInterface otherFieldType = ODeltaDocumentFieldType.getFromClass(val2.getClass());
+    if (otherFieldType == OType.LINK && val2 instanceof ODocument) {
+      otherFieldType = OType.EMBEDDED;
     }
 
     if (fieldType != otherFieldType) {
       return false;
     }
 
-    switch (fieldType) {
-    case INTEGER:
-    case LONG:
-    case SHORT:
-    case STRING:
-    case DOUBLE:
-    case FLOAT:
-    case BYTE:
-    case BOOLEAN:
-    case DATETIME:
-    case DATE:
-    case LINKBAG:
-    case BINARY:
-    case DECIMAL:
-    case LINKSET:
-    case LINKLIST:
-    case DELTA_RECORD:
-    case LINK:
-    case LINKMAP:
-    case TRANSIENT:
-    case ANY:
+    if (fieldType == OType.INTEGER ||
+        fieldType == OType.LONG ||
+        fieldType == OType.SHORT ||
+        fieldType == OType.STRING ||
+        fieldType == OType.DOUBLE ||
+        fieldType == OType.FLOAT ||
+        fieldType == OType.BYTE ||
+        fieldType == OType.BOOLEAN ||
+        fieldType == OType.DATETIME ||
+        fieldType == OType.DATE ||
+        fieldType == OType.LINKBAG ||
+        fieldType == OType.BINARY ||
+        fieldType == OType.DECIMAL ||
+        fieldType == OType.LINKSET ||
+        fieldType == OType.LINKLIST ||
+        fieldType == ODeltaDocumentFieldType.DELTA_RECORD ||
+        fieldType == OType.LINK ||
+        fieldType == OType.LINKMAP ||
+        fieldType == OType.TRANSIENT ||
+        fieldType == OType.ANY){
 
       if (!Objects.equals(val1, val2)) {
         return false;
       }
 
-      break;
-    case EMBEDDED:
+    }
+    else if (fieldType == OType.EMBEDDED){
       ODocument fieldDoc;
       if (val1 instanceof ODocumentSerializable) {
         fieldDoc = ((ODocumentSerializable) val1).toDocument();
@@ -242,9 +243,9 @@ public class ODocumentDelta implements OIdentifiable {
         return false;
       }
 
-      break;
-    case EMBEDDEDSET:
-    case EMBEDDEDLIST:
+    }
+    else if (fieldType == OType.EMBEDDEDSET ||
+             fieldType == OType.EMBEDDEDLIST){
       Collection col1;
       if (val1.getClass().isArray())
         col1 = Arrays.asList(OMultiValue.array(val1));
@@ -260,15 +261,15 @@ public class ODocumentDelta implements OIdentifiable {
       if (!equalEmbeddedCollections(col1, col2)) {
         return false;
       }
-      break;
-    case EMBEDDEDMAP:
+    }
+    else if (fieldType == OType.EMBEDDEDMAP){
       Map m1 = (Map) val1;
       Map m2 = (Map) val2;
       if (!equalEmbeddedMaps(m1, m2)) {
         return false;
       }
-      break;
-    case CUSTOM:
+    }
+    else if (fieldType == OType.CUSTOM){
       byte[] v1;
       if (!(val1 instanceof OSerializableStream)) {
         v1 = new OSerializableWrapper((Serializable) val1).toStream();
@@ -286,7 +287,6 @@ public class ODocumentDelta implements OIdentifiable {
       if (!Objects.equals(v1, v2)) {
         return false;
       }
-      break;
     }
 
     return true;

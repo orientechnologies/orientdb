@@ -27,6 +27,8 @@ import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -64,25 +66,25 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
       Object fieldValue = entry.getValue();
 
       //serialize field name
-      serializeValue(bytes, fieldName, ODeltaDocumentFieldType.STRING);
+      serializeValue(bytes, fieldName, OType.STRING);
 
       //serialize field type
-      ODeltaDocumentFieldType type = ODeltaDocumentFieldType.getFromClass(fieldValue != null ? fieldValue.getClass() : null);
+      OTypeInterface type = ODeltaDocumentFieldType.getFromClass(fieldValue != null ? fieldValue.getClass() : null);
       if (type == null) {
         //signal for null value
         HelperClasses.writeByte(bytes, (byte) -1);
         continue;
       }
 
-      if (type == ODeltaDocumentFieldType.LINK && fieldValue instanceof ODocument) {
-        type = ODeltaDocumentFieldType.EMBEDDED;
+      if (type == OType.LINK && fieldValue instanceof ODocument) {
+        type = OType.EMBEDDED;
       }
 
       HelperClasses.writeType(bytes, type);
       //serialize field value
       serializeValue(bytes, fieldValue, type);
     }
-    serializeValue(bytes, -1, ODeltaDocumentFieldType.INTEGER);
+    serializeValue(bytes, -1, OType.INTEGER);
   }
 
   private void deserialize(ODocumentDelta delta, BytesContainer bytes) {
@@ -93,7 +95,7 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
         if (fieldNameLength > 0) {
           String fieldName = HelperClasses.stringFromBytes(bytes.bytes, bytes.offset, fieldNameLength);
           bytes.offset += fieldNameLength;
-          ODeltaDocumentFieldType type = HelperClasses.readDeltaDocumentType(bytes);
+          OTypeInterface type = HelperClasses.readDeltaDocumentType(bytes);
           if (type == null) {
             delta.field(fieldName, null);
             continue;
@@ -117,20 +119,20 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     return OVarIntSerializer.write(bytes, 0);
   }
 
-  private int serializeEmbeddedCollection(final BytesContainer bytes, final Collection<?> value, final ODeltaDocumentFieldType linkedType) {
+  private int serializeEmbeddedCollection(final BytesContainer bytes, final Collection<?> value, final OTypeInterface linkedType) {
     final int pos = OVarIntSerializer.write(bytes, value.size());
     // TODO manage embedded type from schema and auto-determined.    
     for (Object itemValue : value) {
       // TODO:manage in a better way null entry
       if (itemValue == null) {
-        HelperClasses.writeType(bytes, ODeltaDocumentFieldType.ANY);
+        HelperClasses.writeType(bytes, OType.ANY);
         continue;
       }
-      ODeltaDocumentFieldType type;
-      if (linkedType == null || linkedType == ODeltaDocumentFieldType.ANY) {
+      OTypeInterface type;
+      if (linkedType == null || linkedType == OType.ANY) {
         type = HelperClasses.getDeltaTypeFromValueEmbedded(itemValue);
-        if (type == ODeltaDocumentFieldType.LINK && itemValue instanceof ODocument) {
-          type = ODeltaDocumentFieldType.EMBEDDED;
+        if (type == OType.LINK && itemValue instanceof ODocument) {
+          type = OType.EMBEDDED;
         }
       } else
         type = linkedType;
@@ -165,8 +167,8 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     try {
 
       for (int i = 0; i < items; i++) {
-        ODeltaDocumentFieldType itemType = HelperClasses.readDeltaDocumentType(bytes);
-        if (itemType == ODeltaDocumentFieldType.ANY)
+        OTypeInterface itemType = HelperClasses.readDeltaDocumentType(bytes);
+        if (itemType == OType.ANY)
           found.add(null);
         else
           found.add(deserializeValue(bytes, itemType, ownerDocument));
@@ -187,8 +189,8 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     try {
 
       for (int i = 0; i < items; i++) {
-        ODeltaDocumentFieldType itemType = HelperClasses.readDeltaDocumentType(bytes);
-        if (itemType == ODeltaDocumentFieldType.ANY)
+        OTypeInterface itemType = HelperClasses.readDeltaDocumentType(bytes);
+        if (itemType == OType.ANY)
           found.add(null);
         else
           found.add(deserializeValue(bytes, itemType, ownerDocument));
@@ -200,40 +202,41 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     }
   }
 
-  private void serializeValue(final BytesContainer bytes, Object value, ODeltaDocumentFieldType type) {
-    switch (type) {
-    case INTEGER:
-    case LONG:
-    case SHORT:
+  private void serializeValue(final BytesContainer bytes, Object value, OTypeInterface type) {
+    
+    
+    if (type == OType.INTEGER ||    
+        type == OType.LONG ||
+        type == OType.SHORT){
       OVarIntSerializer.write(bytes, ((Number) value).longValue());
-      break;
-    case STRING:
+    }
+    else if (type == OType.STRING){
       HelperClasses.writeString(bytes, value.toString());
-      break;
-    case DOUBLE:
+    }
+    else if (type == OType.DOUBLE){
       long dg = Double.doubleToLongBits(((Number) value).doubleValue());
       int pointer = bytes.alloc(OLongSerializer.LONG_SIZE);
       OLongSerializer.INSTANCE.serializeLiteral(dg, bytes.bytes, pointer);
-      break;
-    case FLOAT:
+    }
+    else if (type == OType.FLOAT){
       int fg = Float.floatToIntBits(((Number) value).floatValue());
-      pointer = bytes.alloc(OIntegerSerializer.INT_SIZE);
+      int pointer = bytes.alloc(OIntegerSerializer.INT_SIZE);
       OIntegerSerializer.INSTANCE.serializeLiteral(fg, bytes.bytes, pointer);
-      break;
-    case BYTE:
+    }
+    else if (type == OType.BYTE){
       HelperClasses.writeByte(bytes, ((Number) value).byteValue());
-      break;
-    case BOOLEAN:
+    }
+    else if (type == OType.BOOLEAN){
       byte val = ((Boolean) value) ? (byte) 1 : (byte) 0;
       HelperClasses.writeByte(bytes, val);
-      break;
-    case DATETIME:
+    }
+    else if (type == OType.DATETIME){
       if (value instanceof Number) {
         OVarIntSerializer.write(bytes, ((Number) value).longValue());
       } else
         OVarIntSerializer.write(bytes, ((Date) value).getTime());
-      break;
-    case DATE:
+    }
+    else if (type == OType.DATE){
       long dateValue;
       if (value instanceof Number) {
         dateValue = ((Number) value).longValue();
@@ -241,8 +244,8 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
         dateValue = ((Date) value).getTime();
       dateValue = HelperClasses.convertDayToTimezone(ODateHelper.getDatabaseTimeZone(), TimeZone.getTimeZone("GMT"), dateValue);
       OVarIntSerializer.write(bytes, dateValue / HelperClasses.MILLISEC_PER_DAY);
-      break;
-    case EMBEDDED:
+    }
+    else if (type == OType.EMBEDDED){
       if (value instanceof ODocumentSerializable) {
         ODocument cur = ((ODocumentSerializable) value).toDocument();
         cur.field(ODocumentSerializable.CLASS_NAME, value.getClass().getName());
@@ -250,56 +253,51 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
       } else {
         serializeDoc((ODocument) value, bytes);
       }
-      break;
-    case EMBEDDEDSET:
-    case EMBEDDEDLIST:
+    }
+    else if (type == OType.EMBEDDEDSET ||
+             type == OType.EMBEDDEDLIST){
       if (value.getClass().isArray())
         serializeEmbeddedCollection(bytes, Arrays.asList(OMultiValue.array(value)), null);
       else
         serializeEmbeddedCollection(bytes, (Collection<?>) value, null);
-      break;
-    case DECIMAL:
+    }
+    else if (type == OType.DECIMAL){
       BigDecimal decimalValue = (BigDecimal) value;
-      pointer = bytes.alloc(ODecimalSerializer.INSTANCE.getObjectSize(decimalValue));
+      int pointer = bytes.alloc(ODecimalSerializer.INSTANCE.getObjectSize(decimalValue));
       ODecimalSerializer.INSTANCE.serialize(decimalValue, bytes.bytes, pointer);
-      break;
-    case BINARY:
+    }
+    else if (type == OType.BINARY){
       HelperClasses.writeBinary(bytes, (byte[]) (value));
-      break;
-    case LINKSET:
-    case LINKLIST:
+    }    
+    else if (type == OType.LINKSET ||
+             type == OType.LINKLIST){
       Collection<OIdentifiable> ridCollection = (Collection<OIdentifiable>) value;
       HelperClasses.writeLinkCollection(bytes, ridCollection);
-      break;
-    case LINK:
+    }
+    else if (type == OType.LINK){
       if (!(value instanceof OIdentifiable))
         throw new OValidationException("Value '" + value + "' is not a OIdentifiable");
 
       HelperClasses.writeOptimizedLink(bytes, (OIdentifiable) value);
-      break;
-    case LINKMAP:
+    }
+    else if (type == OType.LINKMAP){
       HelperClasses.writeLinkMap(bytes, (Map<Object, OIdentifiable>) value);
-      break;
-    case EMBEDDEDMAP:
+    }
+    else if (type == OType.EMBEDDEDMAP){
       writeEmbeddedMap(bytes, (Map<Object, Object>) value);
-      break;
-    case LINKBAG:
+    }
+    else if (type == OType.LINKBAG){
       HelperClasses.writeRidBag(bytes, (ORidBag) value);
-      break;
-    case CUSTOM:
+    }
+    else if (type == OType.CUSTOM){
       if (!(value instanceof OSerializableStream))
         value = new OSerializableWrapper((Serializable) value);
       HelperClasses.writeString(bytes, value.getClass().getName());
       HelperClasses.writeBinary(bytes, ((OSerializableStream) value).toStream());
-      break;
-    case DELTA_RECORD:
+    }
+    else if (type == ODeltaDocumentFieldType.DELTA_RECORD){
       ODocumentDelta deltaVal = (ODocumentDelta) value;
       serialize(deltaVal, bytes);
-      break;
-    case TRANSIENT:
-      break;
-    case ANY:
-      break;
     }
   }
 
@@ -332,22 +330,22 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
           docEntry.property = prop;
       }
 
-      ODeltaDocumentFieldType valueType = getDocumentFieldType(docEntry);
+      OTypeInterface valueType = getDocumentFieldType(docEntry);
       if (docEntry.property != null) {
         //write prop ID
-        serializeValue(bytes, (docEntry.property.getId() + 1) * -1, ODeltaDocumentFieldType.INTEGER);
-        if (valueType == ODeltaDocumentFieldType.ANY) {
+        serializeValue(bytes, (docEntry.property.getId() + 1) * -1, OType.INTEGER);
+        if (valueType == OType.ANY) {
           //write type if differs from ANY
           HelperClasses.writeType(bytes, valueType);
         }
       } else {
 
-        if (valueType == ODeltaDocumentFieldType.LINK && docEntry.value instanceof ODocument) {
-          valueType = ODeltaDocumentFieldType.EMBEDDED;
+        if (valueType == OType.LINK && docEntry.value instanceof ODocument) {
+          valueType = OType.EMBEDDED;
         }
 
         //write field name
-        serializeValue(bytes, entry.getKey(), ODeltaDocumentFieldType.STRING);
+        serializeValue(bytes, entry.getKey(), OType.STRING);
 
         //write type
         HelperClasses.writeType(bytes, valueType);
@@ -356,7 +354,7 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
       serializeValue(bytes, docEntry.value, valueType);
     }
     //signal for end
-    serializeValue(bytes, 0, ODeltaDocumentFieldType.INTEGER);
+    serializeValue(bytes, 0, OType.INTEGER);
   }
 
   private ODocument deserializeDoc(final BytesContainer bytes, ODocument owner) {
@@ -371,18 +369,18 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     boolean endSignal = false;
     while (!endSignal) {
       //read field name length
-      int len = deserializeValue(bytes, ODeltaDocumentFieldType.INTEGER, null);
+      int len = deserializeValue(bytes, OType.INTEGER, null);
       if (len == 0) {
         endSignal = true;
       } else {
         String fieldName;
         Object fieldValue;
-        ODeltaDocumentFieldType fieldType;
+        OTypeInterface fieldType;
         if (len < 0) {
           OGlobalProperty prop = HelperClasses.getGlobalProperty(ret, len);
           fieldName = prop.getName();
-          fieldType = HelperClasses.getDeltaTypeFromType(prop.getType());
-          if (fieldType == ODeltaDocumentFieldType.ANY) {
+          fieldType = prop.getType();
+          if (fieldType == OType.ANY) {
             //read type
             fieldType = HelperClasses.readDeltaDocumentType(bytes);
           }
@@ -404,101 +402,98 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     return ret;
   }
 
-  protected ODeltaDocumentFieldType getDocumentFieldType(final ODocumentEntry entry) {
-    ODeltaDocumentFieldType type = HelperClasses.getDeltaTypeFromType(entry.type);
+  protected OTypeInterface getDocumentFieldType(final ODocumentEntry entry) {
+    OTypeInterface type = entry.type;
     if (type == null) {
       final OProperty prop = entry.property;
       if (prop != null)
-        type = HelperClasses.getDeltaTypeFromType(prop.getType());
+        type = prop.getType();
     }
-    if (type == null || ODeltaDocumentFieldType.ANY == type)
+    if (type == null || OType.ANY == type)
       type = ODeltaDocumentFieldType.getTypeByValue(entry.value);
     return type;
   }
 
-  protected <T> T deserializeValue(final BytesContainer bytes, ODeltaDocumentFieldType type, final ODocument ownerDocument) {
+  protected <T> T deserializeValue(final BytesContainer bytes, OTypeInterface type, final ODocument ownerDocument) {
 
     Object value = null;
-    switch (type) {
-    case INTEGER:
+    if (type == OType.INTEGER){
       value = OVarIntSerializer.readAsInteger(bytes);
-      break;
-    case LONG:
+    }
+    else if (type == OType.LONG){
       value = OVarIntSerializer.readAsLong(bytes);
-      break;
-    case SHORT:
+    }
+    else if (type == OType.SHORT){
       value = OVarIntSerializer.readAsShort(bytes);
-      break;
-    case STRING:
+    }
+    else if (type == OType.STRING){
       value = HelperClasses.readString(bytes);
-      break;
-    case DOUBLE:
+    }
+    else if (type == OType.DOUBLE){
       value = Double.longBitsToDouble(HelperClasses.readLong(bytes));
-      break;
-    case FLOAT:
+    }
+    else if (type == OType.FLOAT){
       value = Float.intBitsToFloat(HelperClasses.readInteger(bytes));
-      break;
-    case BYTE:
+    }
+    else if (type == OType.BYTE){
       value = HelperClasses.readByte(bytes);
-      break;
-    case BOOLEAN:
+    }
+    else if (type == OType.BOOLEAN){
       value = HelperClasses.readByte(bytes) == 1;
-      break;
-    case DATETIME:
+    }
+    else if (type == OType.DATETIME){
       value = new Date(OVarIntSerializer.readAsLong(bytes));
-      break;
-    case DATE:
+    }
+    else if (type == OType.DATE){
       long savedTime = OVarIntSerializer.readAsLong(bytes) * HelperClasses.MILLISEC_PER_DAY;
       savedTime = HelperClasses.convertDayToTimezone(TimeZone.getTimeZone("GMT"), ODateHelper.getDatabaseTimeZone(), savedTime);
       value = new Date(savedTime);
-      break;
-    case EMBEDDED:
+    }
+    else if (type == OType.EMBEDDED){
       value = deserializeDoc(bytes, ownerDocument);
-      break;
-    case EMBEDDEDSET:
+    }
+    else if (type == OType.EMBEDDEDSET){
       value = deserializeEmbeddedCollection(bytes, ownerDocument, false);
-      break;
-    case EMBEDDEDLIST:
+    }
+    else if (type == OType.EMBEDDEDLIST){
       value = deserializeEmbeddedCollection(bytes, ownerDocument, true);
-      break;
-    case LINKSET:
+    }
+    else if (type == OType.LINKSET){
       ORecordLazySet collectionSet = null;
       collectionSet = new ORecordLazySet(ownerDocument);
       value = HelperClasses.readLinkCollection(bytes, collectionSet, false);
-      break;
-    case LINKLIST:
+    }
+    else if (type == OType.LINKLIST){
       ORecordLazyList collectionList = null;
       collectionList = new ORecordLazyList(ownerDocument);
       value = HelperClasses.readLinkCollection(bytes, collectionList, false);
-      break;
-    case BINARY:
+    }
+    else if (type == OType.BINARY){
       value = HelperClasses.readBinary(bytes);
-      break;
-    case LINK:
+    }
+    else if (type == OType.LINK){
       value = HelperClasses.readOptimizedLink(bytes, false);
-      break;
-    case LINKMAP:
+    }
+    else if (type == OType.LINKMAP){
       value = HelperClasses.readLinkMap(bytes, ownerDocument, false);
-      break;
-    case EMBEDDEDMAP:
+    }
+    else if (type == OType.EMBEDDEDMAP){
       value = readEmbeddedMap(bytes, ownerDocument);
-      break;
-    case DECIMAL:
+    }
+    else if (type == OType.DECIMAL){
       value = ODecimalSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
       bytes.skip(ODecimalSerializer.INSTANCE.getObjectSize(bytes.bytes, bytes.offset));
-      break;
-    case LINKBAG:
+    }
+    else if (type == OType.LINKBAG){
       ORidBag bag = HelperClasses.readRidbag(bytes);
       bag.setOwner(ownerDocument);
       value = bag;
-      break;
-    case DELTA_RECORD:
+    }
+    else if (type == ODeltaDocumentFieldType.DELTA_RECORD){
       ODocumentDelta delta = deserialize(bytes);
       value = delta;
-      break;
-    case TRANSIENT:
-      break;
-    case CUSTOM:
+    }
+    else if (type == OType.CUSTOM){
       try {
         String className = HelperClasses.readString(bytes);
         Class<?> clazz = Class.forName(className);
@@ -512,16 +507,14 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
-      break;
-    case ANY:
-      break;
-
     }
+    
     return (T) value;
   }
 
+  @Override
   public void fromStream(ODocumentDelta delta, BytesContainer bytes) {
-
+    deserialize(delta, bytes);
   }
 
   @Override
@@ -534,14 +527,14 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     for (Map.Entry<Object, Object> entry : map.entrySet()) {
       // TODO:check skip of complex types
       // FIXME: changed to support only string key on map
-      ODeltaDocumentFieldType type = ODeltaDocumentFieldType.STRING;
+      OTypeInterface type = OType.STRING;
       HelperClasses.writeType(bytes, type);
       HelperClasses.writeString(bytes, entry.getKey().toString());
       final Object value = entry.getValue();
       if (value != null) {
         type = HelperClasses.getDeltaTypeFromValueEmbedded(value);
-        if (type == ODeltaDocumentFieldType.LINK && value instanceof ODocument) {
-          type = ODeltaDocumentFieldType.EMBEDDED;
+        if (type == OType.LINK && value instanceof ODocument) {
+          type = OType.EMBEDDED;
         }
         if (type == null) {
           throw new OSerializationException(
@@ -563,11 +556,11 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
     final Map result = new HashMap();
 
     for (int i = 0; i < size; i++) {
-      ODeltaDocumentFieldType keyType = HelperClasses.readDeltaDocumentType(bytes);
+      OTypeInterface keyType = HelperClasses.readDeltaDocumentType(bytes);
       Object key = deserializeValue(bytes, keyType, document);
       byte typeId = HelperClasses.readByte(bytes);
       if (typeId != -1) {
-        final ODeltaDocumentFieldType type = ODeltaDocumentFieldType.getFromId(typeId);
+        final OTypeInterface type = ODeltaDocumentFieldType.getFromId(typeId);
         Object value = deserializeValue(bytes, type, document);
         result.put(key, value);
       } else

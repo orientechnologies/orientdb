@@ -46,7 +46,7 @@ import java.util.*;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public enum OType {
+public enum OType implements OTypeInterface{
   BOOLEAN("Boolean", 0, Boolean.class, new Class<?>[] { Number.class }),
 
   INTEGER("Integer", 1, Integer.class, new Class<?>[] { Number.class }),
@@ -182,7 +182,8 @@ public enum OType {
    *
    * @return the identifier of the type.
    */
-  public int getId() {
+  @Override
+  public final int getId() {
     return id;
   }
 

@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.delta;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses;
+import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,32 +24,9 @@ import java.util.Map;
  *
  * @author marko
  */
-public enum ODeltaDocumentFieldType {
-  BOOLEAN(0),
-  INTEGER(1),
-  SHORT(2),
-  LONG(3),
-  FLOAT(4),
-  DOUBLE(5),
-  DATETIME(6),
-  STRING(7),
-  BINARY(8),
-  EMBEDDED(9),
-  EMBEDDEDLIST(10),
-  EMBEDDEDSET(11),
-  EMBEDDEDMAP(12),
-  LINK(13),
-  LINKLIST(14),
-  LINKSET(15),
-  LINKMAP(16),
-  BYTE(17),
-  TRANSIENT(18),
-  DATE(19),
-  CUSTOM(20),
-  DECIMAL(21),
-  LINKBAG(22),
-  ANY(23),
-  DELTA_RECORD(24);
+public enum ODeltaDocumentFieldType implements OTypeInterface{
+  
+  DELTA_RECORD(Byte.MAX_VALUE);
   
   private final int id;
   private static final Map<Integer, ODeltaDocumentFieldType> mappedIds = new HashMap<>();
@@ -64,11 +41,12 @@ public enum ODeltaDocumentFieldType {
     this.id = id;
   }
   
+  @Override
   public int getId(){
     return id;
   }
   
-  protected static ODeltaDocumentFieldType getFromClass(Class claz){
+  protected static OTypeInterface getFromClass(Class claz){
     if (claz == null){
       return null;
     }
@@ -78,19 +56,19 @@ public enum ODeltaDocumentFieldType {
     }
     
     OType type = OType.getTypeByClass(claz);
-    if (mappedIds.containsKey(type.getId())){
-      return mappedIds.get(type.getId());
-    }
-    else{
-      return null;
-    }
+    return type;
   }
   
-  public static ODeltaDocumentFieldType getFromId(int id){
-    return mappedIds.get(id);
+  public static OTypeInterface getFromId(int id){
+    if (mappedIds.containsKey(id)){
+      return mappedIds.get(id);
+    }
+    
+    OType baseType = OType.getById((byte)id);
+    return baseType;
   }
   
-  public static ODeltaDocumentFieldType getTypeByValue(Object value){
+  public static OTypeInterface getTypeByValue(Object value){
     if (value == null){
       return null;
     }
@@ -100,11 +78,6 @@ public enum ODeltaDocumentFieldType {
     }
     
     OType type = OType.getTypeByValue(value);
-    if (mappedIds.containsKey(type.getId())){
-      return mappedIds.get(type.getId());
-    }
-    else{
-      return null;
-    }
+    return type;
   }
 }

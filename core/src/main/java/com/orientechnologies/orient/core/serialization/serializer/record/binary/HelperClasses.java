@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -119,22 +120,22 @@ public class HelperClasses {
     return OType.getById(readByte(bytes));
   }
   
-  public static ODeltaDocumentFieldType readDeltaDocumentType(final BytesContainer bytes) {
+  public static OTypeInterface readDeltaDocumentType(final BytesContainer bytes) {
     return ODeltaDocumentFieldType.getFromId(readByte(bytes));
   }
   
-  public static ODeltaDocumentFieldType getDeltaTypeFromType(OType type){
-    if (type == null){
-      return null;
-    }
-    return ODeltaDocumentFieldType.getFromId(type.getId());
-  }
+//  public static ODeltaDocumentFieldType getDeltaTypeFromType(OType type){
+//    if (type == null){
+//      return null;
+//    }
+//    return ODeltaDocumentFieldType.getFromId(type.getId());
+//  }
 
   public static void writeOType(BytesContainer bytes, int pos, OType type) {
     bytes.bytes[pos] = (byte) type.getId();
   }
 
-  public static void writeType(BytesContainer bytes, OType type) {
+  public static void writeType(BytesContainer bytes, OTypeInterface type) {
     int pos = bytes.alloc(1);
     bytes.bytes[pos] = (byte) type.getId();
   }
@@ -270,7 +271,7 @@ public class HelperClasses {
     return type;
   }
   
-  public static ODeltaDocumentFieldType getDeltaTypeFromValueEmbedded(final Object fieldValue) {
+  public static OTypeInterface getDeltaTypeFromValueEmbedded(final Object fieldValue) {
     if (fieldValue instanceof ODocumentDelta){
       return ODeltaDocumentFieldType.DELTA_RECORD;
     }
@@ -279,7 +280,7 @@ public class HelperClasses {
     if (type == null){
       return null;
     }
-    return ODeltaDocumentFieldType.getFromId(type.getId());
+    return type;
   }
 
   public static int writeLinkCollection(final BytesContainer bytes, final Collection<OIdentifiable> value) {
