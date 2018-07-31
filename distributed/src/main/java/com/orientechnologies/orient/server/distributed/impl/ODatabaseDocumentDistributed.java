@@ -658,6 +658,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       txContext.setStatus(FAILED);
       getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
       throw ex;
+    } catch (OLowDiskSpaceException ex) {
+      getStorageDistributed().getDistributedManager()
+          .setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      throw ex;
     }
     getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
     return true;
@@ -756,6 +760,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     try {
       OTransactionInternal tx = txContext.getTransaction();
       ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
+    } catch (OLowDiskSpaceException ex) {
+      getStorageDistributed().getDistributedManager()
+          .setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      throw ex;
     } finally {
       txContext.destroy();
     }

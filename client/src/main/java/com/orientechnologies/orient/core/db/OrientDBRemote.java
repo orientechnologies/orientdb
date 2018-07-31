@@ -46,13 +46,13 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETW
  * Created by tglman on 08/04/16.
  */
 public class OrientDBRemote implements OrientDBInternal {
-  private final Map<String, OStorageRemote> storages = new HashMap<>();
-  private final Set<ODatabasePoolInternal>  pools    = new HashSet<>();
-  private final      String[]                 hosts;
-  private final      OrientDBConfig           configurations;
-  private final      Orient                   orient;
-  protected volatile ORemoteConnectionManager connectionManager;
-  private volatile boolean open = true;
+  private final      Map<String, OStorageRemote> storages = new HashMap<>();
+  private final      Set<ODatabasePoolInternal>  pools    = new HashSet<>();
+  private final      String[]                    hosts;
+  private final      OrientDBConfig              configurations;
+  private final      Orient                      orient;
+  protected volatile ORemoteConnectionManager    connectionManager;
+  private volatile   boolean                     open     = true;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
@@ -336,8 +336,10 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   @Override
-  public void forceDatabaseClose(String databaseName) {
-    throw new UnsupportedOperationException("force close is not supported in remote");
+  public synchronized void forceDatabaseClose(String databaseName) {
+    OStorageRemote remote = storages.get(databaseName);
+    if (remote != null)
+      closeStorage(remote);
   }
 
   @Override
