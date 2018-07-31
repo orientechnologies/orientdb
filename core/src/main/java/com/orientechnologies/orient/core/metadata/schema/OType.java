@@ -99,7 +99,7 @@ public enum OType {
   protected static final OType[] TYPES = new OType[] { EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, CUSTOM, EMBEDDED, STRING,
       DATETIME };
 
-  protected static final OType[]              TYPES_BY_ID    = new OType[25];
+  protected static final OType[]              TYPES_BY_ID    = new OType[24];
   // Values previosly stored in javaTypes
   protected static final Map<Class<?>, OType> TYPES_BY_CLASS = new HashMap<Class<?>, OType>();
 
