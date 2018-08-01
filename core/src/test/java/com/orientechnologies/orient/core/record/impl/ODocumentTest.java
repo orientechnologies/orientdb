@@ -449,7 +449,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(dc, dcCopy);
 
-      ODocumentDelta updatePart = dc.field("u");
+      ODocumentDelta updatePart = dc.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(updatePart);
       assertEquals(testValue, originalDoc.field(fieldName));
@@ -499,7 +499,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(dc, dcCopy);
 
-      ODocumentDelta updatePart = dc.field("u");
+      ODocumentDelta updatePart = dc.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(updatePart);
       assertEquals(testValue, originalDoc.field(fieldName));
@@ -558,7 +558,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(dc, dcCopy);
 
-      dc = dc.field("u");
+      dc = dc.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(dc);
       nestedDoc = originalDoc.field(nestedDocField);
@@ -618,7 +618,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(dc, dcCopy);
 
-      dc = dc.field("u");
+      dc = dc.field("u").getValue();
 
       doc.mergeUpdateDelta(dc);
       nestedDoc = doc.field(nestedDocField);
@@ -670,7 +670,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List checkList = originalDoc.field(fieldName);
@@ -723,7 +723,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List checkList = originalDoc.field(fieldName);
@@ -781,7 +781,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List<List> checkList = originalDoc.field(fieldName);
@@ -842,7 +842,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List<List> checkList = originalDoc.field(fieldName);
@@ -903,7 +903,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List<ODocument> checkList = originalDoc.field(fieldName);
@@ -969,7 +969,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List<ODocument> checkList = originalDoc.field(fieldName);
@@ -1040,7 +1040,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List<List<ODocument>> checkList = originalDoc.field(fieldName);
@@ -1118,7 +1118,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List<List<ODocument>> checkList = originalDoc.field(fieldName);
@@ -1185,7 +1185,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List<List<List<String>>> checkList = originalDoc.field(fieldName);
@@ -1257,7 +1257,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List<List<List<String>>> checkList = originalDoc.field(fieldName);
@@ -1327,7 +1327,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List<ODocument> checkList = originalDoc.field(fieldName);
@@ -1404,7 +1404,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List<ODocument> checkList = originalDoc.field(fieldName);
@@ -1458,7 +1458,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List checkList = originalDoc.field(fieldName);
@@ -1513,7 +1513,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List checkList = originalDoc.field(fieldName);
@@ -1572,7 +1572,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List<List<String>> rootList = originalDoc.field(fieldName);
@@ -1637,7 +1637,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List<List<String>> rootList = originalDoc.field(fieldName);
@@ -1695,7 +1695,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List checkList = originalDoc.field(fieldName);
@@ -1749,7 +1749,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("u");
+      delta = delta.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(delta);
       List checkList = originalDoc.field(fieldName);
@@ -1796,7 +1796,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(dc, dcCopy);
 
-      ODocumentDelta updatePart = dc.field("u");
+      ODocumentDelta updatePart = dc.field("u").getValue();
 
       originaDoc.mergeUpdateDelta(updatePart);
       assertEquals(testValue, originaDoc.field(fieldName));
@@ -1842,7 +1842,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(dc, dcCopy);
 
-      ODocumentDelta deletePart = dc.field("d");
+      ODocumentDelta deletePart = dc.field("d").getValue();
 
       originaDoc.mergeDeleteDelta(deletePart);
       assertFalse(originaDoc.containsField(fieldName));
@@ -1896,7 +1896,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(dc, dcCopy);
 
-      ODocumentDelta deletePart = dc.field("d");
+      ODocumentDelta deletePart = dc.field("d").getValue();
 
       originalDoc.mergeDeleteDelta(deletePart);
       ODocument nested = originalDoc.field(nestedFieldName);
@@ -1957,7 +1957,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("d");
+      delta = delta.field("d").getValue();
 
       originalDoc.mergeDeleteDelta(delta);
       List<ODocument> checkList = originalDoc.field(fieldName);
@@ -2024,7 +2024,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(delta, dcCopy);
 
-      delta = delta.field("d");
+      delta = delta.field("d").getValue();
 
       originalDoc.mergeDeleteDelta(delta);
       List<ODocument> checkList = originalDoc.field(fieldName);
@@ -2076,7 +2076,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(dc, dcCopy);
 
-      ODocumentDelta updatePart = dc.field("u");
+      ODocumentDelta updatePart = dc.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(updatePart);
       containedMap = originalDoc.field(fieldName);
@@ -2133,7 +2133,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(dc, dcCopy);
 
-      ODocumentDelta updatePart = dc.field("u");
+      ODocumentDelta updatePart = dc.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(updatePart);
       containedMap = (Map<String, String>) ((List) originalDoc.field(fieldName)).get(0);
@@ -2193,7 +2193,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(dc, dcCopy);
 
-      ODocumentDelta updatePart = dc.field("u");
+      ODocumentDelta updatePart = dc.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(updatePart);
       containedMap = originalDoc.field(fieldName);
@@ -2257,7 +2257,7 @@ public class ODocumentTest {
       ODocumentDelta dcCopy = ddSer.fromStream(bytes);
       assertEquals(dc, dcCopy);
 
-      ODocumentDelta updatePart = dc.field("u");
+      ODocumentDelta updatePart = dc.field("u").getValue();
 
       originalDoc.mergeUpdateDelta(updatePart);
       containedMap = (Map<String, String>) ((List) originalDoc.field(fieldName)).get(0);

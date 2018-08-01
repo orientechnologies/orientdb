@@ -21,4 +21,5 @@ package com.orientechnologies.orient.core.metadata.schema;
  */
 public interface OTypeInterface {
   int getId();
+  boolean isList();
 }

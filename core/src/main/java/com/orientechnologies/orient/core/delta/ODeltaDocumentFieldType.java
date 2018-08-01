@@ -80,4 +80,9 @@ public enum ODeltaDocumentFieldType implements OTypeInterface{
     OType type = OType.getTypeByValue(value);
     return type;
   }
+
+  @Override
+  public boolean isList() {
+    return false;
+  }
 }

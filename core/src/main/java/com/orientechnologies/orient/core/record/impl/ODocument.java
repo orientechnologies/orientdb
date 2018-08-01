@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.delta.ODeltaDocumentFieldType;
 import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
@@ -1564,17 +1565,19 @@ public class ODocument extends ORecordAbstract
   }
 
   //process in depth first
-  private static Object mergeUpdateTree(Object toObj, final Object fromObj) {
-    OType toType = OType.getTypeByClass(toObj.getClass());
-    OType fromType = OType.getTypeByClass(fromObj.getClass());
+  private static Object mergeUpdateTree(ODocumentDelta.ValueType toValueType, final ODocumentDelta.ValueType fromValueType) {
+    OTypeInterface toType = toValueType.type;
+    OTypeInterface fromType = fromValueType.type;
+    Object toObj = toValueType.value;
+    Object fromObj = fromValueType.value;
     if (toObj instanceof ODocument && fromObj instanceof ODocumentDelta) {
       ODocument to = (ODocument) toObj;
       ODocumentDelta from = (ODocumentDelta) fromObj;
-      for (Map.Entry<String, Object> field : from.fields()) {
+      for (Map.Entry<String, ODocumentDelta.ValueType> field : from.fields()) {
         final String fieldName = field.getKey();
-        final ODocumentDelta updateDoc = from.field(fieldName);
-        Object deltaVal = updateDoc.field("v");
-        UpdateDeltaValueType deltaType = UpdateDeltaValueType.fromOrd(updateDoc.field("t"));
+        final ODocumentDelta updateDoc = from.field(fieldName).getValue();
+        Object deltaVal = updateDoc.field("v").getValue();
+        UpdateDeltaValueType deltaType = UpdateDeltaValueType.fromOrd(updateDoc.field("t").getValue());
 
         if (deltaType == UpdateDeltaValueType.UPDATE || deltaType == UpdateDeltaValueType.CHANGE) {
           if (!(deltaVal instanceof ODocumentDelta) || !to._fields.keySet().contains(fieldName) || valuesDiffersInClass(
@@ -1583,7 +1586,11 @@ public class ODocument extends ORecordAbstract
           } else {
             final ODocumentDelta fromDocField = (ODocumentDelta) deltaVal;
             final ODocument toDocField = (ODocument) to.field(fieldName);
-            mergeUpdateTree(toDocField, fromDocField);
+            ODocumentDelta.ValueType toNestedValueType = new ODocumentDelta.ValueType();
+            toNestedValueType.value = toDocField; toNestedValueType.type = OType.EMBEDDED;
+            ODocumentDelta.ValueType fromNestedValueType = new ODocumentDelta.ValueType();
+            fromNestedValueType.value = fromDocField; fromNestedValueType.type = ODeltaDocumentFieldType.DELTA_RECORD;
+            mergeUpdateTree(toNestedValueType, fromNestedValueType);
           }
         } else if (deltaType == UpdateDeltaValueType.LIST_UPDATE) {
           List deltaList = (List) deltaVal;
@@ -1591,34 +1598,39 @@ public class ODocument extends ORecordAbstract
           int removed = 0;
           for (int i = 0; i < deltaList.size(); i++) {
             ODocumentDelta deltaUpdateListElement = (ODocumentDelta) deltaList.get(i);
-            UpdateDeltaValueType listElementUpdateType = UpdateDeltaValueType.fromOrd(deltaUpdateListElement.field("t"));
+            UpdateDeltaValueType listElementUpdateType = UpdateDeltaValueType.fromOrd(deltaUpdateListElement.field("t").getValue());
             Object val;
             int index;
             switch (listElementUpdateType) {
             case LIST_ELEMENT_ADD:
-              val = deltaUpdateListElement.field("v");
+              val = deltaUpdateListElement.field("v").getValue();
               originalList.add(val);
               break;
             case LIST_ELEMENT_CHANGE:
-              val = deltaUpdateListElement.field("v");
-              index = deltaUpdateListElement.field("i");
+              val = deltaUpdateListElement.field("v").getValue();
+              index = deltaUpdateListElement.field("i").getValue();
               originalList.set(index, val);
               break;
             case LIST_ELEMENT_REMOVE:
-              index = deltaUpdateListElement.field("i");
+              index = deltaUpdateListElement.field("i").getValue();
               originalList.remove(index - removed++);
               break;
             case LIST_ELEMENT_UPDATE:
-              ODocumentDelta deltaValue = deltaUpdateListElement.field("v");
-              index = deltaUpdateListElement.field("i");
+              ODocumentDelta.ValueType deltaValueType = deltaUpdateListElement.field("v");
+              index = deltaUpdateListElement.field("i").getValue();
               Object originalVal = originalList.get(index);
               //here deltaDeltaVal can be null, then we want to use valDoc. This is case with list of documents
-              UpdateDeltaValueType deltaValueType = UpdateDeltaValueType.fromOrd(deltaValue.field("t"));
-              Object deltaPassObject = deltaValue;
-              if (deltaValueType == UpdateDeltaValueType.LIST_UPDATE || deltaValueType == UpdateDeltaValueType.UPDATE) {
-                deltaPassObject = deltaValue.field("v");
+              ODocumentDelta deltaObj = deltaValueType.getValue();
+              deltaType = UpdateDeltaValueType.fromOrd(deltaObj.field("t").getValue());
+              ODocumentDelta.ValueType deltaPassObject = deltaValueType;
+              if (deltaType == UpdateDeltaValueType.LIST_UPDATE || deltaType == UpdateDeltaValueType.UPDATE) {
+                deltaPassObject = new ODocumentDelta.ValueType();
+                deltaPassObject.value = deltaObj.field("v").getValue();
+                deltaPassObject.type = deltaObj.field("v").type;
               }
-              Object merged = mergeUpdateTree(originalVal, deltaPassObject);
+              ODocumentDelta.ValueType originalValueType = new ODocumentDelta.ValueType();
+              originalValueType.value = originalVal; originalValueType.type = ODeltaDocumentFieldType.getTypeByValue(originalVal);
+              Object merged = mergeUpdateTree(originalValueType, deltaPassObject);
               originalList.set(index, merged);
               break;
             }
@@ -1636,15 +1648,15 @@ public class ODocument extends ORecordAbstract
         Object fromElement = fromList.get(i);
         if (fromElement instanceof ODocumentDelta) {
           ODocumentDelta fromDoc = (ODocumentDelta) fromElement;
-          UpdateDeltaValueType type = UpdateDeltaValueType.fromOrd(fromDoc.field("t"));
+          UpdateDeltaValueType type = UpdateDeltaValueType.fromOrd(fromDoc.field("t").getValue());
           if (type == UpdateDeltaValueType.LIST_ELEMENT_ADD) {
-            Object addVal = fromDoc.field("v");
+            Object addVal = fromDoc.field("v").getValue();
             toList.add(addVal);
             continue;
           }
-          int index = fromDoc.field("i");
+          int index = fromDoc.field("i").getValue();
           if (type == UpdateDeltaValueType.LIST_ELEMENT_CHANGE) {
-            Object val = fromDoc.field("v");
+            Object val = fromDoc.field("v").getValue();
             toList.set(index, val);
             continue;
           }
@@ -1653,18 +1665,25 @@ public class ODocument extends ORecordAbstract
             continue;
           }
           Object toElement = toList.get(index);
+          
+          ODocumentDelta.ValueType fromValueTypeNested = new ODocumentDelta.ValueType();
+          fromValueTypeNested.value = fromElement;
+          fromValueTypeNested.type = ODeltaDocumentFieldType.DELTA_RECORD;
           if (type == UpdateDeltaValueType.LIST_ELEMENT_UPDATE) {
-            fromElement = fromDoc.field("v");
+            fromValueTypeNested = fromDoc.field("v");
           }
-          fromDoc = (ODocumentDelta) fromElement;
-          type = UpdateDeltaValueType.fromOrd(fromDoc.field("t"));
+          fromDoc = fromValueTypeNested.getValue();
+          type = UpdateDeltaValueType.fromOrd(fromDoc.field("t").getValue());
           if (type == UpdateDeltaValueType.CHANGE) {
-            toElement = fromDoc.field("v");
+            toElement = fromDoc.field("v").getValue();
           } else {
             if (type == UpdateDeltaValueType.LIST_UPDATE || type == UpdateDeltaValueType.UPDATE) {
-              fromElement = fromDoc.field("v");
+              fromValueTypeNested = fromDoc.field("v");
             }
-            toElement = mergeUpdateTree(toElement, fromElement);
+            ODocumentDelta.ValueType toValueTypeNested = new ODocumentDelta.ValueType();
+            toValueTypeNested.value = toElement;
+            toValueTypeNested.type = ODeltaDocumentFieldType.getTypeByValue(toElement);
+            toElement = mergeUpdateTree(toValueTypeNested, fromValueTypeNested);
           }
           toList.set(index, toElement);
         } else {
@@ -1674,7 +1693,7 @@ public class ODocument extends ORecordAbstract
       }
     } else if (fromObj instanceof ODocumentDelta) {
       ODocumentDelta from = (ODocumentDelta) fromObj;
-      toObj = from.field("v");
+      toObj = from.field("v").getValue();
     } else {
       toObj = fromObj;
     }
@@ -1689,16 +1708,23 @@ public class ODocument extends ORecordAbstract
 
     checkForLoading();
     checkForFields();
+    
+    ODocumentDelta.ValueType mergeTo = new ODocumentDelta.ValueType();
+    mergeTo.value = this; mergeTo.type = OType.EMBEDDED;
+    
+    ODocumentDelta.ValueType mergeFrom = new ODocumentDelta.ValueType();
+    mergeFrom.value = iOther; mergeFrom.type = ODeltaDocumentFieldType.DELTA_RECORD;
 
-    mergeUpdateTree(this, iOther);
+    mergeUpdateTree(mergeTo, mergeFrom);
 
     return this;
   }
 
   private static void mergeDeleteTree(final ODocument to, final ODocumentDelta from) {
-    for (Map.Entry<String, Object> field : from.fields()) {
+    for (Map.Entry<String, ODocumentDelta.ValueType> field : from.fields()) {
       final String fieldName = field.getKey();
-      final Object fieldVal = field.getValue();
+      final ODocumentDelta.ValueType fieldValueType = field.getValue();
+      Object fieldVal = fieldValueType.getValue();
       if ((!(fieldVal instanceof ODocumentDelta) && !(fieldVal instanceof List)) || (fieldVal instanceof ODocumentDelta
           && ((ODocumentDelta) fieldVal).isLeaf())) {
         to.removeField(fieldName);
@@ -1706,11 +1732,11 @@ public class ODocument extends ORecordAbstract
         List<ODocumentDelta> fieldList = (List<ODocumentDelta>) fieldVal;
         List toFieldList = to.field(fieldName);
         for (ODocumentDelta deltaElement : fieldList) {
-          int index = deltaElement.field("i");
+          int index = deltaElement.field("i").getValue();
           if (toFieldList.size() > index) {
             Object toElement = toFieldList.get(index);
             if (toElement instanceof ODocument) {
-              ODocumentDelta fromElement = deltaElement.field("v");
+              ODocumentDelta fromElement = deltaElement.field("v").getValue();
               mergeDeleteTree((ODocument) toElement, fromElement);
             }
           }
@@ -1743,8 +1769,8 @@ public class ODocument extends ORecordAbstract
   }
 
   public ODocument mergeDelta(final ODocumentDelta delta) {
-    ODocumentDelta updateDoc = delta.field("u");
-    ODocumentDelta deleteDoc = delta.field("d");
+    ODocumentDelta updateDoc = delta.field("u").getValue();
+    ODocumentDelta deleteDoc = delta.field("d").getValue();
     mergeUpdateDelta(updateDoc);
     mergeDeleteDelta(deleteDoc);
     return this;
@@ -3398,8 +3424,12 @@ public class ODocument extends ORecordAbstract
             if (i > previousList.size() - 1) {
               //these elements doesn't have pair in original list
               ODocumentDelta deltaElement = new ODocumentDelta();
-              deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd());
-              deltaElement.field("v", currentElement);
+              ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
+              vt.value = UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd(); vt.type = OType.BYTE;
+              deltaElement.field("t", vt);
+              vt = new ODocumentDelta.ValueType();
+              vt.value = currentElement; vt.type = ODeltaDocumentFieldType.getTypeByValue(currentElement);
+              deltaElement.field("v", vt);
               deltaList.add(deltaElement);
               continue;
             }
@@ -3412,23 +3442,39 @@ public class ODocument extends ORecordAbstract
                 !(currentElement instanceof ODocument) && !(currentElement instanceof List))) {
               if (!Objects.equals(currentElement, originalElement)) {
                 ODocumentDelta deltaElement = new ODocumentDelta();
-                deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd());
-                deltaElement.field("v", currentElement);
-                deltaElement.field("i", i);
+                ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
+                vt.value = UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd(); vt.type = OType.BYTE;
+                deltaElement.field("t", vt);
+                vt = new ODocumentDelta.ValueType();
+                vt.value = currentElement; vt.type = currentElementType;
+                deltaElement.field("v", vt);
+                vt = new ODocumentDelta.ValueType();
+                vt.value = i; vt.type = OType.INTEGER;
+                deltaElement.field("i", vt);
                 deltaList.add(deltaElement);
               }
             } else {
               if (!Objects.equals(currentElement, originalElement)) {
                 //now we want to go in depth to get delta value
                 ODocumentDelta deltaElement = new ODocumentDelta();
-                deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd());
+                ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
+                vt.value = UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(); vt.type = OType.BYTE;
+                deltaElement.field("t", vt);
 
                 TypeValue delta = getUpdateDeltaValue(currentElement, originalElement, true, parent, ownersTrace);
                 ODocumentDelta doc = new ODocumentDelta();
-                doc.field("t", delta.type.getOrd());
-                doc.field("v", delta.value);
-                deltaElement.field("v", doc);
-                deltaElement.field("i", i);
+                vt = new ODocumentDelta.ValueType();
+                vt.value = delta.type.getOrd(); vt.type = OType.BYTE;
+                doc.field("t", vt);
+                vt = new ODocumentDelta.ValueType();
+                vt.value = delta.value; vt.type = ODeltaDocumentFieldType.getTypeByValue(delta.value);
+                doc.field("v", vt);
+                vt = new ODocumentDelta.ValueType();
+                vt.value = doc; vt.type = ODeltaDocumentFieldType.DELTA_RECORD;
+                deltaElement.field("v", vt);
+                vt = new ODocumentDelta.ValueType();
+                vt.value = i; vt.type = OType.INTEGER;
+                deltaElement.field("i", vt);
                 deltaList.add(deltaElement);
               }
               //this means that elements are equal so nothig to do
@@ -3437,8 +3483,12 @@ public class ODocument extends ORecordAbstract
           //these element are contained only in original list , so they should be removed
           for (int j = i; j < previousList.size(); j++) {
             ODocumentDelta deltaElement = new ODocumentDelta();
-            deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd());
-            deltaElement.field("i", j);
+            ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
+            vt.value = UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd(); vt.type = OType.BYTE;
+            deltaElement.field("t", vt);
+            vt = new ODocumentDelta.ValueType();
+            vt.value = j; vt.type = OType.INTEGER;
+            deltaElement.field("i", vt);
             deltaList.add(deltaElement);
           }
           return retVal;
@@ -3456,23 +3506,39 @@ public class ODocument extends ORecordAbstract
             ODocument currentElementDoc = (ODocument) currentElement;
             if (currentElementDoc.isChangedInDepth()) {
               ODocumentDelta listElementDelta = new ODocumentDelta();
-              listElementDelta.field("i", i);
-              listElementDelta.field("t", UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd());
+              ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
+              vt.value = i; vt.type = OType.INTEGER;
+              listElementDelta.field("i", vt);
+              vt = new ODocumentDelta.ValueType();
+              vt.value = UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(); vt.type = OType.BYTE;
+              listElementDelta.field("t", vt);
               ODocumentDelta deltaUpdate = currentElementDoc.getDeltaFromOriginalForUpdate();
-              listElementDelta.field("v", deltaUpdate);
+              vt = new ODocumentDelta.ValueType();
+              vt.type = ODeltaDocumentFieldType.DELTA_RECORD; vt.value = deltaUpdate;
+              listElementDelta.field("v", vt);
               deltaList.add(listElementDelta);
             }
           } else if (currentElement instanceof List) {
             List currentElementAsList = (List) currentElement;
             if (ODocumentHelper.isChangedCollection(currentElementAsList, parent, new ArrayList<>(ownersTrace), 1)) {
               ODocumentDelta listElementDelta = new ODocumentDelta();
-              listElementDelta.field("i", i);
-              listElementDelta.field("t", UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd());
+              ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
+              vt.value = i; vt.type = OType.INTEGER;
+              listElementDelta.field("i", vt);
+              vt = new ODocumentDelta.ValueType();
+              vt.value = UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(); vt.type = OType.BYTE;
+              listElementDelta.field("t", vt);
               TypeValue deltaUpdate = getUpdateDeltaValue(currentElementAsList, null, false, parent, ownersTrace);
               ODocumentDelta deltaValue = new ODocumentDelta();
-              deltaValue.field("t", deltaUpdate.type.getOrd());
-              deltaValue.field("v", deltaUpdate.value);
-              listElementDelta.field("v", deltaValue);
+              vt = new ODocumentDelta.ValueType();
+              vt.value = deltaUpdate.type.getOrd(); vt.type = OType.BYTE;
+              deltaValue.field("t", vt);
+              vt = new ODocumentDelta.ValueType();
+              vt.value = deltaUpdate.value; vt.type = ODeltaDocumentFieldType.getTypeByValue(deltaUpdate.value);
+              deltaValue.field("v", vt);
+              vt = new ODocumentDelta.ValueType();
+              vt.value = deltaValue; vt.type = ODeltaDocumentFieldType.DELTA_RECORD;
+              listElementDelta.field("v", vt);
               deltaList.add(listElementDelta);
             }
           } else {
@@ -3481,15 +3547,23 @@ public class ODocument extends ORecordAbstract
                 .isNestedValueChanged(parent, currentElement, ownersTrace, 1, i);
             if (changeType != null) {
               ODocumentDelta deltaElement = new ODocumentDelta();
-              deltaElement.field("v", currentElement);
-              deltaElement.field("i", i);
+              ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
+              vt.value = currentElement; vt.type = ODeltaDocumentFieldType.getTypeByValue(currentElement);
+              deltaElement.field("v", vt);
+              vt = new ODocumentDelta.ValueType();
+              vt.value = i; vt.type = OType.INTEGER;
+              deltaElement.field("i", vt);
               switch (changeType) {
               case ADD:
-                deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd());
+                vt = new ODocumentDelta.ValueType();
+                vt.value = UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd(); vt.type = OType.BYTE;
+                deltaElement.field("t", vt);
                 break;
               case UPDATE:
               case NESTED:
-                deltaElement.field("t", UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd());
+                vt = new ODocumentDelta.ValueType();
+                vt.value = UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd(); vt.type = OType.BYTE;
+                deltaElement.field("t", vt);
                 break;
               //should never happen
 //                case REMOVE:
@@ -3504,16 +3578,20 @@ public class ODocument extends ORecordAbstract
         int counter = 0;
         for (Integer index : indexesToRemove) {
           ODocumentDelta removeDleta = new ODocumentDelta();
-          removeDleta.field("t", UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd());
-          removeDleta.field("i", index + counter++);
+          ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
+          vt.value = UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd(); vt.type = OType.BYTE;
+          removeDleta.field("t", vt);
+          vt = new ODocumentDelta.ValueType();
+          vt.value = index + counter++; vt.type = OType.INTEGER;
+          removeDleta.field("i", vt);
           deltaList.add(removeDleta);
         }
         return retVal;
       }
 
-      OType previousType = null;
+      OTypeInterface previousType = null;
       if (previousValue != null) {
-        previousType = OType.getTypeByValue(previousValue);
+        previousType = ODeltaDocumentFieldType.getTypeByValue(previousValue);
       }
       if (currentType == OType.LINK && previousType != null && previousType == OType.LINK) {
         ODocument docVal;
@@ -3617,8 +3695,12 @@ public class ODocument extends ORecordAbstract
         Object innerDelta = getDeleteDeltaValue(element, true);
         if (innerDelta != null) {
           ODocumentDelta deltaDoc = new ODocumentDelta();
-          deltaDoc.field("i", i);
-          deltaDoc.field("v", innerDelta);
+          ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
+          vt.value = i; vt.type = OType.INTEGER;
+          deltaDoc.field("i", vt);
+          vt = new ODocumentDelta.ValueType();
+          vt.value = innerDelta; vt.type = ODeltaDocumentFieldType.getTypeByValue(innerDelta);
+          deltaDoc.field("v", vt);
           deltaList.add(deltaDoc);
         }
       }
@@ -3642,9 +3724,15 @@ public class ODocument extends ORecordAbstract
         String fieldName = fieldVal.getKey();
         TypeValue deltaValue = getUpdateDeltaValue(val.value, val.original, val.isChanged(), val, ownersTrace);
         ODocumentDelta doc = new ODocumentDelta();
-        doc.field("v", deltaValue.value);
-        doc.field("t", deltaValue.type.getOrd());
-        updated.field(fieldName, doc);
+        ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
+        vt.value = deltaValue.value; vt.type = ODeltaDocumentFieldType.getTypeByValue(deltaValue.value);
+        doc.field("v", vt);
+        vt = new ODocumentDelta.ValueType();
+        vt.value = deltaValue.type.getOrd(); vt.type = OType.BYTE;
+        doc.field("t", vt);
+        vt = new ODocumentDelta.ValueType();
+        vt.value = doc; vt.type = ODeltaDocumentFieldType.DELTA_RECORD;
+        updated.field(fieldName, vt);
       }
     }
     return updated;
@@ -3658,7 +3746,9 @@ public class ODocument extends ORecordAbstract
       if (val.hasNonExistingTree()) {
         String fieldName = fieldVal.getKey();
         Object deltaValue = getDeleteDeltaValue(val.value, val.exist());
-        delete.field(fieldName, deltaValue);
+        ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
+        vt.value = deltaValue; vt.type = ODeltaDocumentFieldType.getTypeByValue(deltaValue);
+        delete.field(fieldName, vt);
       }
     }
     if (delete.fields().isEmpty()) {
@@ -3670,11 +3760,15 @@ public class ODocument extends ORecordAbstract
   public ODocumentDelta getDeltaFromOriginal() {
     ODocumentDelta ret = new ODocumentDelta();
     ODocumentDelta updated = getDeltaFromOriginalForUpdate();
-    ret.field("u", updated);
+    ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
+    vt.value = updated; vt.type = ODeltaDocumentFieldType.DELTA_RECORD;
+    ret.field("u", vt);
 
     //get deleted delta
     ODocumentDelta deleted = getDeltaFromOriginalForDelete();
-    ret.field("d", deleted);
+    vt = new ODocumentDelta.ValueType();
+    vt.value = deleted; vt.type = ODeltaDocumentFieldType.DELTA_RECORD;
+    ret.field("d", vt);
 
     ORecordId id = (ORecordId) getIdentity();
     ret.setIdentity(id);

@@ -40,28 +40,40 @@ import java.util.*;
  */
 public class ODocumentDelta implements OIdentifiable {
 
-  protected Map<String, Object> fields = new HashMap<>();
+  public static class ValueType{
+    public Object value;
+    public OTypeInterface type;
+    
+    public <T> T getValue(){
+      return (T)value;
+    }
+  }
+  
+  protected Map<String, ValueType> fields = new HashMap<>();
   private final ODocumentDeltaSerializerI serializer;
 
   public ODocumentDelta() {
     this.serializer = ODocumentDeltaSerializer.getActiveSerializer();
   }
 
-  public <T> T field(String name) {
-    return (T) fields.get(name);
+  public ValueType field(String name) {
+    return fields.get(name);
   }
 
-  public void field(String name, Object value) {
+  public void field(String name, ValueType value) {
     fields.put(name, value);
   }
 
   @Override
   public ORID getIdentity() {
-    return field("i");
+    return field("i").getValue();
   }
 
   public void setIdentity(ORID identity) {
-    field("i", identity);
+    ValueType vt = new ValueType();
+    vt.value = identity;
+    vt.type = OType.LINK;
+    field("i", vt);
   }
 
   public byte[] serialize() {
@@ -69,11 +81,14 @@ public class ODocumentDelta implements OIdentifiable {
   }
 
   public void setVersion(int version) {
-    field("r", version);
+    ValueType vt = new ValueType();
+    vt.value = version;
+    vt.type = OType.INTEGER;
+    field("r", vt);
   }
 
   private Integer getVersion() {
-    return field("r");
+    return field("r").getValue();
   }
 
   public void deserialize(BytesContainer bytes) {
@@ -84,7 +99,7 @@ public class ODocumentDelta implements OIdentifiable {
     return fields.isEmpty();
   }
 
-  public Set<Map.Entry<String, Object>> fields() {
+  public Set<Map.Entry<String, ValueType>> fields() {
     return fields.entrySet();
   }
 
@@ -309,14 +324,14 @@ public class ODocumentDelta implements OIdentifiable {
       return false;
     }
 
-    for (Map.Entry<String, Object> field : fields.entrySet()) {
+    for (Map.Entry<String, ValueType> field : fields.entrySet()) {
       String fieldName = field.getKey();
       if (!other.fields.containsKey(fieldName)) {
         return false;
       }
 
-      Object fieldVal = field.getValue();
-      Object otherFieldVal = other.fields.get(fieldName);
+      Object fieldVal = field.getValue().type;
+      Object otherFieldVal = other.fields.get(fieldName).type;
 
       if (!equalVals(fieldVal, otherFieldVal)) {
         return false;
