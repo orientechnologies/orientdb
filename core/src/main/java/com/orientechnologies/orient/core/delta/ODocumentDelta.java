@@ -330,9 +330,9 @@ public class ODocumentDelta implements OIdentifiable {
         return false;
       }
 
-      Object fieldVal = field.getValue().type;
-      Object otherFieldVal = other.fields.get(fieldName).type;
-
+      Object fieldVal = field.getValue().value;
+      Object otherFieldVal = other.fields.get(fieldName).value;
+      
       if (!equalVals(fieldVal, otherFieldVal)) {
         return false;
       }

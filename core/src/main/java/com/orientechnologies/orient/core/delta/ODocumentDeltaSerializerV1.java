@@ -98,7 +98,9 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
           bytes.offset += fieldNameLength;
           OTypeInterface type = HelperClasses.readDeltaDocumentType(bytes);
           if (type == null) {
-            delta.field(fieldName, null);
+            ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
+            vt.value = null; vt.type = null;
+            delta.field(fieldName, vt);
             continue;
           }
           Object value = deserializeValue(bytes, type, null);
