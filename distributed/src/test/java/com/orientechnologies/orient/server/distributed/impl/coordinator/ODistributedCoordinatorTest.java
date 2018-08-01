@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -74,7 +75,8 @@ public class ODistributedCoordinatorTest {
             if (context.getResponses().size() == 1) {
               coordinator.sendOperation(null, new ONodeRequest() {
                 @Override
-                public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor) {
+                public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
+                    ODatabaseDocumentInternal session) {
                   return null;
                 }
               }, new OResponseHandler() {
@@ -173,7 +175,8 @@ public class ODistributedCoordinatorTest {
   private static class MockNodeRequest implements ONodeRequest {
 
     @Override
-    public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor) {
+    public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
+        ODatabaseDocumentInternal session) {
       return null;
     }
   }
