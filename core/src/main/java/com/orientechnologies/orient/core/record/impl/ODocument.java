@@ -1498,6 +1498,7 @@ public class ODocument extends ORecordAbstract
   /**
    * Removes a field.
    */
+  @Override
   public Object removeField(final String iFieldName) {
     checkForLoading();
     checkForFields();
@@ -1628,7 +1629,13 @@ public class ODocument extends ORecordAbstract
               Object originalVal = originalList.get(index);
               //here deltaDeltaVal can be null, then we want to use valDoc. This is case with list of documents
               ODocumentDelta deltaObj = deltaValueType.getValue();
-              deltaType = UpdateDeltaValueType.fromOrd(deltaObj.field("t").getValue());
+              if (deltaObj.field("t") == null){
+                //in this case some document field should be updated, and in that case update type is not set
+                deltaType = UpdateDeltaValueType.UNKNOWN;
+              }
+              else{
+                deltaType = UpdateDeltaValueType.fromOrd(deltaObj.field("t").getValue());
+              }
               ODocumentDelta.ValueType deltaPassObject = deltaValueType;
               if (deltaType == UpdateDeltaValueType.LIST_UPDATE || deltaType == UpdateDeltaValueType.UPDATE) {
                 deltaPassObject = new ODocumentDelta.ValueType();
@@ -1674,17 +1681,19 @@ public class ODocument extends ORecordAbstract
           Object toElement = toList.get(index);
           
           ODocumentDelta.ValueType fromValueTypeNested = new ODocumentDelta.ValueType();
-          fromValueTypeNested.value = fromElement;
+          fromValueTypeNested.value = fromDoc;
           fromValueTypeNested.type = ODeltaDocumentFieldType.DELTA_RECORD;
           if (type == UpdateDeltaValueType.LIST_ELEMENT_UPDATE) {
             fromValueTypeNested = fromDoc.field("v");
           }
           fromDoc = fromValueTypeNested.getValue();
           if (fromDoc.field("t") == null){
-            int a = 0;
-            ++a;
+            //this is the case when updating field, in this case update type is not set
+            type = UpdateDeltaValueType.UNKNOWN;
           }
-          type = UpdateDeltaValueType.fromOrd(fromDoc.field("t").getValue());
+          else{
+            type = UpdateDeltaValueType.fromOrd(fromDoc.field("t").getValue());
+          }
           if (type == UpdateDeltaValueType.CHANGE) {
             toElement = fromDoc.field("v").getValue();
           } else {
@@ -3419,10 +3428,6 @@ public class ODocument extends ORecordAbstract
       UpdateTypeValueType retVal = new UpdateTypeValueType();
       //separate processing for embedded lists
       //if previous value is null we want to send whole list to reduce overhead
-      if (currentValueType == null){
-        int a = 0;
-        ++a;
-      }
       if (currentValueType.isList() && previousValue != null) {
         //if previous value differs in type we want to send whole list to reduce overhead
         if (previousValueType.isList()) {

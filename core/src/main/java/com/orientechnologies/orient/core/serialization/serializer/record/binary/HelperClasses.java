@@ -36,7 +36,9 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -570,6 +572,19 @@ public class HelperClasses {
     int change = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
     bytes.skip(OIntegerSerializer.INT_SIZE);
     return ChangeSerializationHelper.createChangeInstance(type, change);
+  }
+  
+  public static OType getLinkedType(ODocument document, OType type, String key) {
+    if (type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDMAP)
+      return null;
+    OClass immutableClass = ODocumentInternal.getImmutableSchemaClass(document);
+    if (immutableClass != null) {
+      OProperty prop = immutableClass.getProperty(key);
+      if (prop != null) {
+        return prop.getLinkedType();
+      }
+    }
+    return null;
   }
 
 }
