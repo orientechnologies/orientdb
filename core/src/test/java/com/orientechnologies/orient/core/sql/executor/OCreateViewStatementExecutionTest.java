@@ -24,7 +24,6 @@ public class OCreateViewStatementExecutionTest {
   }
 
   @Test
-  @Ignore
   public void testPlain() {
     String className = "testPlain";
     OResultSet result = db.command("create view " + className + "  FROM (SELECT FROM V)");

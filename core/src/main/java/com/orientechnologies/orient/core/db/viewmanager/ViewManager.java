@@ -32,12 +32,12 @@ public class ViewManager {
 
   public void start() {
     thread = new ViewThread(this, () -> orientDB.openNoAuthorization(dbName));
-//    thread.start();
+    thread.start();
   }
 
   public void close() {
     try {
-//      thread.finish();
+      thread.finish();
     } catch (Exception e) {
       e.printStackTrace();
     }

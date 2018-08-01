@@ -3693,7 +3693,6 @@ public class OSelectStatementExecutionTest {
   }
 
   @Test
-  @Ignore
   public void testQueryView() throws InterruptedException {
     String className = "testQueryView_Class";
     String viewName = "testQueryView_View";

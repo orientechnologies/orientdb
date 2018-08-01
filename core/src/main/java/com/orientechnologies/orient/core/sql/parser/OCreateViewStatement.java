@@ -6,11 +6,11 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class OCreateViewStatement extends ODDLStatement {
@@ -47,9 +47,8 @@ public class OCreateViewStatement extends ODDLStatement {
     result.setProperty("operation", "create view");
     result.setProperty("viewName", name.getStringValue());
 
-    OView view = null;
-    view = schema.createView((ODatabaseDocumentInternal) ctx.getDatabase(), name.getStringValue(), statement.toString(),
-        metadata.toMap(new OResultInternal(), ctx));
+    schema.createView((ODatabaseDocumentInternal) ctx.getDatabase(), name.getStringValue(), statement.toString(),
+        metadata == null ? new HashMap<>() : metadata.toMap(new OResultInternal(), ctx));
 
     OInternalResultSet rs = new OInternalResultSet();
     rs.add(result);

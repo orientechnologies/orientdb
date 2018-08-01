@@ -281,7 +281,7 @@ public abstract class OSchemaShared implements OCloseable {
 
       final OView existingView = clustersToViews.get(clusterId);
 
-      if (existingView != null && (cls == null || !cls.equals(existingCls)))
+      if (existingView != null && (cls == null || !cls.equals(existingView)))
         throw new OSchemaException(
             "Cluster with id " + clusterId + " already belongs to the view '" + clustersToClasses.get(clusterId) + "'");
 

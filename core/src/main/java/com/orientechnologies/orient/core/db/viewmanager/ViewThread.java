@@ -57,6 +57,7 @@ public class ViewThread extends Thread {
       }
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Failed to update views");
+      e.printStackTrace();
     }
   }
 
