@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
 
@@ -390,6 +391,9 @@ public class OSelectExecutionPlanner {
     } else if (item.getIdentifier() != null) {
       String className = item.getIdentifier().getStringValue();
       OClass clazz = db.getMetadata().getSchema().getClass(className);
+      if (clazz == null) {
+        clazz = db.getMetadata().getSchema().getView(className);
+      }
       if (clazz == null) {
         return null;
       }
@@ -1525,8 +1529,12 @@ public class OSelectExecutionPlanner {
           }
           resultSubPlans.add(subPlan);
         } else {
-          FetchFromClassExecutionStep step = new FetchFromClassExecutionStep(clazz.getName(), filterClusters, ctx, true,
-              profilingEnabled);
+          FetchFromClassExecutionStep step;
+          if (clazz instanceof OView) {
+            step = new FetchFromViewExecutionStep(clazz.getName(), filterClusters, info, ctx, true, profilingEnabled);
+          } else {
+            step = new FetchFromClassExecutionStep(clazz.getName(), filterClusters, ctx, true, profilingEnabled);
+          }
           OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
           subPlan.chain(step);
           if (!block.getSubBlocks().isEmpty()) {
@@ -1758,6 +1766,9 @@ public class OSelectExecutionPlanner {
     if (result == null) {
       result = new ArrayList<>();
       OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass);
+      if(clazz==null){
+        clazz = ctx.getDatabase().getMetadata().getSchema().getView(targetClass);
+      }
       if (clazz == null) {
         throw new OCommandExecutionException("Cannot find class " + targetClass);
       }
@@ -1793,13 +1804,17 @@ public class OSelectExecutionPlanner {
 
     OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass);
     if (clazz == null) {
+      clazz = ctx.getDatabase().getMetadata().getSchema().getView(targetClass);
+    }
+    if (clazz == null) {
       throw new OCommandExecutionException("Cannot find class " + targetClass);
     }
 
     Set<OIndex<?>> indexes = clazz.getIndexes();
 
+    final OClass c = clazz;
     List<IndexSearchDescriptor> indexSearchDescriptors = info.flattenedWhereClause.stream()
-        .map(x -> findBestIndexFor(ctx, indexes, x, clazz)).filter(Objects::nonNull).collect(Collectors.toList());
+        .map(x -> findBestIndexFor(ctx, indexes, x, c)).filter(Objects::nonNull).collect(Collectors.toList());
     if (indexSearchDescriptors.size() != info.flattenedWhereClause.size()) {
       return null; //some blocks could not be managed with an index
     }
