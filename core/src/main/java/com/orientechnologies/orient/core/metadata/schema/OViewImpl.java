@@ -25,6 +25,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     String query = document.getProperty("query");
     this.cfg = new OViewConfig(getName(), query);
     this.cfg.setUpdatable(Boolean.TRUE.equals(document.getProperty("updatable")));
+
     Map<String, Map<String, String>> idxData = document.getProperty("indexes");
     for (Map.Entry<String, Map<String, String>> idx : idxData.entrySet()) {
       OViewConfig.OViewIndexConfig indexConfig = this.cfg.addIndex(idx.getKey());
@@ -39,6 +40,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     ODocument result = super.toStream();
     result.setProperty("query", cfg.getQuery());
     result.setProperty("updatable", cfg.isUpdatable());
+
     Map<String, Map<String, String>> indexes = new HashMap<>();
     for (OViewConfig.OViewIndexConfig idx : cfg.indexes) {
       Map<String, String> indexDescriptor = new HashMap<>();

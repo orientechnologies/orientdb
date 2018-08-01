@@ -9,8 +9,11 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -21,7 +24,13 @@ public class ViewManager {
 
   ViewThread thread;
 
-  ConcurrentMap<String, AtomicInteger> visitorsPerView;
+  /**
+   * To retain clusters that are being used in queries until the queries are closed.
+   * <p>
+   * view -> cluster -> number of visitors
+   */
+  ConcurrentMap<Integer, AtomicInteger> viewCluserVisitors = new ConcurrentHashMap<>();
+  List<Integer>                         clustersToDrop     = Collections.synchronizedList(new ArrayList<>());
 
   String lastUpdatedView = null;
 
@@ -40,6 +49,21 @@ public class ViewManager {
       thread.finish();
     } catch (Exception e) {
       e.printStackTrace();
+    }
+  }
+
+  public synchronized void cleanUnusedViewClusters(ODatabaseDocument db) {
+    List<Integer> toRemove = new ArrayList<>();
+    for (Integer cluster : clustersToDrop) {
+      AtomicInteger visitors = viewCluserVisitors.get(cluster);
+      if (visitors == null || visitors.get() <= 0) {
+        toRemove.add(cluster);
+      }
+    }
+    for (Integer cluster : toRemove) {
+      viewCluserVisitors.remove(cluster);
+      clustersToDrop.remove(cluster);
+      db.dropCluster(cluster, false);
     }
   }
 
@@ -74,14 +98,15 @@ public class ViewManager {
     view.addClusterId(cluster);
     for (int i : view.getClusterIds()) {
       if (i != cluster) {
+        clustersToDrop.add(i);
+        viewCluserVisitors.put(i, new AtomicInteger(0));
         view.removeClusterId(i);
-        db.dropCluster(i, false);
       }
     }
     unlockView(view);
   }
 
-  private void unlockView(OView view) {
+  private synchronized void unlockView(OView view) {
     //TODO
   }
 
@@ -130,5 +155,22 @@ public class ViewManager {
         db.close();
       }
     }).start();
+  }
+
+  public synchronized void startUsingViewCluster(Integer cluster) {
+    AtomicInteger item = viewCluserVisitors.get(cluster);
+    if (item == null) {
+      item = new AtomicInteger(0);
+      viewCluserVisitors.put(cluster, item);
+    }
+    item.incrementAndGet();
+  }
+
+  public synchronized void endUsingViewCluster(Integer cluster) {
+    AtomicInteger item = viewCluserVisitors.get(cluster);
+    if (item == null) {
+      return;
+    }
+    item.decrementAndGet();
   }
 }

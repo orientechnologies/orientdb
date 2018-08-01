@@ -1,9 +1,14 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
+import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -11,18 +16,33 @@ import java.util.Set;
  */
 public class FetchFromViewExecutionStep extends FetchFromClassExecutionStep {
 
-  protected FetchFromViewExecutionStep(OCommandContext ctx, boolean profilingEnabled) {
-    super(ctx, profilingEnabled);
-  }
-
-  public FetchFromViewExecutionStep(String className, Set<String> clusters, OCommandContext ctx, Boolean ridOrder,
-      boolean profilingEnabled) {
-    super(className, clusters, ctx, ridOrder, profilingEnabled);
-  }
-
+  List<Integer> usedClusters = new ArrayList<>();
+  
   public FetchFromViewExecutionStep(String className, Set<String> clusters, QueryPlanningInfo planningInfo, OCommandContext ctx,
       Boolean ridOrder, boolean profilingEnabled) {
     super(className, clusters, planningInfo, ctx, ridOrder, profilingEnabled);
+
+    OSharedContextEmbedded sharedContext = (OSharedContextEmbedded) ((ODatabaseDocumentInternal) ctx.getDatabase())
+        .getSharedContext();
+    ViewManager viewManager = sharedContext.getViewManager();
+    OView view = loadClassFromSchema(className, ctx);
+    int[] classClusters = view.getPolymorphicClusterIds();
+    for (int clusterId : classClusters) {
+      String clusterName = ctx.getDatabase().getClusterNameById(clusterId);
+      if (clusters == null || clusters.contains(clusterName)) {
+        usedClusters.add(clusterId);
+        viewManager.startUsingViewCluster(clusterId);
+      }
+    }
+  }
+
+  @Override
+  public void close() {
+    super.close();
+    OSharedContextEmbedded sharedContext = (OSharedContextEmbedded) ((ODatabaseDocumentInternal) ctx.getDatabase())
+        .getSharedContext();
+    ViewManager viewManager = sharedContext.getViewManager();
+    usedClusters.forEach(x -> viewManager.endUsingViewCluster(x));
   }
 
   protected OView loadClassFromSchema(String className, OCommandContext ctx) {
@@ -53,5 +73,9 @@ public class FetchFromViewExecutionStep extends FetchFromClassExecutionStep {
     return builder.toString();
   }
 
+  @Override
+  public boolean canBeCached() {
+    return false;
+  }
 }
 

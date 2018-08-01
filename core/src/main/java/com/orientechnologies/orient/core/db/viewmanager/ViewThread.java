@@ -46,6 +46,7 @@ public class ViewThread extends Thread {
 
   private void updateViews(ODatabaseDocument db) {
     try {
+      viewManager.cleanUnusedViewClusters(db);
       OView view = viewManager.getNextViewToUpdate(db);
       while (view != null) {
         if (interrupted) {
@@ -55,6 +56,7 @@ public class ViewThread extends Thread {
 
         view = viewManager.getNextViewToUpdate(db);
       }
+      viewManager.cleanUnusedViewClusters(db);
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Failed to update views");
       e.printStackTrace();
