@@ -51,7 +51,7 @@ public class OSequenceOrdered extends OSequence {
   }
   
   @Override
-  public synchronized long next() {
+  public synchronized long next() throws OSequenceLimitReachedException{
     ODatabaseDocumentInternal mainDb = getDatabase();
     boolean tx = mainDb.getTransaction().isActive();
     try {
@@ -70,13 +70,23 @@ public class OSequenceOrdered extends OSequence {
             if (getOrderType() == SequenceOrderType.ORDER_POSITIVE){
               newValue = getValue() + getIncrement();              
               if (limitVlaue != null && newValue > limitVlaue){
-                newValue = getStart();
+                if (getRecyclable()){
+                  newValue = getStart();
+                }
+                else{
+                  throw new OSequenceLimitReachedException("Limit reached");
+                }
               }
             }
             else{
               newValue = getValue() - getIncrement();
               if (limitVlaue != null && newValue < limitVlaue){
-                newValue = getStart();
+                if (getRecyclable()){
+                  newValue = getStart();
+                }
+                else{
+                  throw new OSequenceLimitReachedException("Limit reached");
+                }
               }
             }
             

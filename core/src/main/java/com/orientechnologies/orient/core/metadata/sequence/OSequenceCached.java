@@ -34,6 +34,10 @@ public class OSequenceCached extends OSequence {
   private              long   cacheStart;
   private              long   cacheEnd;  
   private boolean firstCache;
+  private int increment;
+  private Integer limitValue = null;
+  private SequenceOrderType orderType;
+  private boolean recyclable;
 
   public OSequenceCached() {
     super();
@@ -60,18 +64,18 @@ public class OSequenceCached extends OSequence {
   @Override
   protected void initSequence(OSequence.CreateParams params) {    
     super.initSequence(params);
-    setCacheSize(params.cacheSize);
-    firstCache = true;
+    setCacheSize(params.cacheSize);    
   }
   
   @Override
   protected void allwaysInitSection(){
     cacheStart = cacheEnd = 0L;
+    firstCache = true;
     allocateCache(getCacheSize(), getDatabase());
   }
 
   @Override
-  public long next() {
+  public long next() throws OSequenceLimitReachedException{
     ODatabaseDocumentInternal mainDb = getDatabase();
     boolean tx = mainDb.getTransaction().isActive();
     try {
@@ -87,42 +91,60 @@ public class OSequenceCached extends OSequence {
           public Long call() throws Exception {
             synchronized (OSequenceCached.this) {              
               
-              int increment = getIncrement();
-              Integer limitVlaue = getLimitValue();
-              SequenceOrderType orderType = getOrderType();
+              boolean detectedCrucialValueChange = false;
+              if (getCrucilaValueChanged()){
+                increment = getIncrement();
+                limitValue = getLimitValue();
+                orderType = getOrderType();
+                detectedCrucialValueChange = true;
+                recyclable = getRecyclable();
+              }
               if (orderType == SequenceOrderType.ORDER_POSITIVE){
-                if (cacheStart + increment > cacheEnd && !(limitVlaue != null && cacheStart + increment > limitVlaue)) {
+                if (cacheStart + increment > cacheEnd && !(limitValue != null && cacheStart + increment > limitValue)) {                  
                   boolean cachedbefore = !firstCache;
                   allocateCache(getCacheSize(), finalDb);
                   if (!cachedbefore){
                     cacheStart = cacheStart + increment;
                   }
                 }
-                else if (limitVlaue != null && cacheStart + increment > limitVlaue){
-                  setValue(getStart());
-                  allocateCache(getCacheSize(), finalDb);
+                else if (limitValue != null && cacheStart + increment > limitValue){
+                  if (recyclable){
+                    setValue(getStart());
+                    allocateCache(getCacheSize(), finalDb);
+                  }
+                  else{
+                    throw new OSequenceLimitReachedException("Limit reached");
+                  }
                 }
                 else{
                   cacheStart = cacheStart + increment;
                 }
               }
               else{
-                if (cacheStart - increment < cacheEnd && !(limitVlaue != null && cacheStart - increment < limitVlaue)) {
+                if (cacheStart - increment < cacheEnd && !(limitValue != null && cacheStart - increment < limitValue)) {
                   boolean cachedbefore = !firstCache;
                   allocateCache(getCacheSize(), finalDb);
                   if (!cachedbefore){
                     cacheStart = cacheStart - increment;
                   }
                 }
-                else if (limitVlaue != null && cacheStart - increment < limitVlaue){
-                  setValue(getStart());
-                  allocateCache(getCacheSize(), finalDb);
+                else if (limitValue != null && cacheStart - increment < limitValue){
+                  if (recyclable){
+                    setValue(getStart());
+                    allocateCache(getCacheSize(), finalDb);
+                  }
+                  else{
+                    throw new OSequenceLimitReachedException("Limit reached");
+                  }
                 }
                 else{
                   cacheStart = cacheStart - increment;
                 }
               }
               
+              if (detectedCrucialValueChange){
+                setCrucialValueChanged(false);
+              }
               return cacheStart;
             }
           }
@@ -165,7 +187,6 @@ public class OSequenceCached extends OSequence {
               save(finalDb);
               firstCache = true;
               allocateCache(getCacheSize(), finalDb);
-
               return newValue;
             }
           }

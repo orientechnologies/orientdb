@@ -44,7 +44,8 @@ public abstract class OSequence {
   public static final int  DEFAULT_INCREMENT = 1;
   public static final int  DEFAULT_CACHE     = 20;
   public static final Integer  DEFAULT_LIMIT_VALUE = null;
-
+  public static final boolean DEFAULT_RECYCLABLE_VALUE = true;
+  
   protected static final int    DEF_MAX_RETRY = OGlobalConfiguration.SEQUENCE_MAX_RETRY.getValueAsInteger();
   public static final    String CLASS_NAME    = "OSequence";
 
@@ -53,15 +54,16 @@ public abstract class OSequence {
   private static final String FIELD_VALUE     = "value";
   private static final String FIELD_LIMIT_VALUE     = "lvalue";
   private static final String FIELD_ORDER_TYPE     = "otype";
+  private static final String FIELD_RECYCLABLE     = "recycle";
   //initialy set this value to true, so those one who read it can pull upper limit value from document  
 
   private static final String FIELD_NAME = "name";
   private static final String FIELD_TYPE = "type";
 
   private ODocument document;
-  private ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();  
+  private ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();
   
-  protected boolean upperLimitValueChanged = true;  
+  private boolean cruacialValueChanged = false;  
   
   public static final SequenceOrderType DEFAULT_ORDER_TYPE = SequenceOrderType.ORDER_POSITIVE;
   
@@ -71,9 +73,10 @@ public abstract class OSequence {
     public Integer cacheSize = DEFAULT_CACHE;
     public Integer limitValue = DEFAULT_LIMIT_VALUE;
     public SequenceOrderType orderType = DEFAULT_ORDER_TYPE;
-
+    public Boolean recyclable = DEFAULT_RECYCLABLE_VALUE;
+    
     public CreateParams setStart(Long start) {
-      this.start = start;
+      this.start = start;      
       return this;
     }
 
@@ -97,6 +100,11 @@ public abstract class OSequence {
       return this;
     }
 
+    public CreateParams setRecyclable(boolean recyclable) {
+      this.recyclable = recyclable;
+      return this;
+    }
+        
     public CreateParams() {
     }
 
@@ -106,6 +114,7 @@ public abstract class OSequence {
       this.cacheSize = this.cacheSize != null ? this.cacheSize : DEFAULT_CACHE;
       limitValue = limitValue == null ? DEFAULT_LIMIT_VALUE : limitValue;
       orderType = orderType == null ? DEFAULT_ORDER_TYPE : orderType;
+      recyclable = recyclable == null ? DEFAULT_RECYCLABLE_VALUE : recyclable;
       
       return this;
     }
@@ -121,6 +130,18 @@ public abstract class OSequence {
     this(null, null);
   }
 
+  protected void setCrucialValueChanged(boolean val){
+    synchronized(this){
+      cruacialValueChanged = val;
+    }
+  }
+  
+  protected boolean getCrucilaValueChanged(){
+    synchronized(this){
+      return cruacialValueChanged;
+    }
+  }
+  
   protected OSequence(final ODocument iDocument) {
     this(iDocument, null);
   }
@@ -138,7 +159,8 @@ public abstract class OSequence {
 
       document = getDocument();
     }
-    allwaysInitSection();
+    cruacialValueChanged = true;
+    allwaysInitSection();    
   }
 
   protected abstract void allwaysInitSection();
@@ -169,7 +191,8 @@ public abstract class OSequence {
     setValue(params.start);
     setLimitValue(params.limitValue);
     setOrderType(params.orderType);
-
+    setRecyclable(params.recyclable);
+    
     setSequenceType();
   }
 
@@ -203,6 +226,7 @@ public abstract class OSequence {
 
   protected synchronized void setValue(long value) {
     tlDocument.get().field(FIELD_VALUE, value);
+    setCrucialValueChanged(true);
   }
 
   protected synchronized int getIncrement() {
@@ -211,6 +235,7 @@ public abstract class OSequence {
   
   protected synchronized void setLimitValue(Integer limitValue) {
     tlDocument.get().field(FIELD_LIMIT_VALUE, limitValue);
+    setCrucialValueChanged(true);
   }
   
   protected synchronized Integer getLimitValue() {
@@ -219,6 +244,7 @@ public abstract class OSequence {
   
   protected synchronized void setOrderType(SequenceOrderType orderType) {
     tlDocument.get().field(FIELD_ORDER_TYPE, orderType.getValue());
+    setCrucialValueChanged(true);
   }
   
   protected synchronized SequenceOrderType getOrderType() {
@@ -228,6 +254,7 @@ public abstract class OSequence {
 
   protected synchronized void setIncrement(int value) {
     tlDocument.get().field(FIELD_INCREMENT, value);
+    setCrucialValueChanged(true);
   }
 
   protected synchronized long getStart() {
@@ -236,6 +263,7 @@ public abstract class OSequence {
 
   protected synchronized void setStart(long value) {
     tlDocument.get().field(FIELD_START, value);
+    setCrucialValueChanged(true);
   }
 
   public synchronized int getMaxRetry() {
@@ -254,9 +282,19 @@ public abstract class OSequence {
     tlDocument.get().field(FIELD_NAME, name);
     return this;
   }
+  
+  public synchronized boolean getRecyclable() {
+    return tlDocument.get().field(FIELD_RECYCLABLE, OType.BOOLEAN);
+  }
+
+  public synchronized void setRecyclable(final boolean recyclable) {
+    tlDocument.get().field(FIELD_RECYCLABLE, recyclable);
+    setCrucialValueChanged(true);
+  }
 
   private synchronized void setSequenceType() {
     tlDocument.get().field(FIELD_TYPE, getSequenceType());
+    setCrucialValueChanged(true);
   }
 
   protected synchronized ODatabaseDocumentInternal getDatabase() {
@@ -288,7 +326,7 @@ public abstract class OSequence {
    * Forwards the sequence by one, and returns the new value.
    */
   @OApi
-  public abstract long next();
+  public abstract long next() throws OSequenceLimitReachedException;
 
   /*
    * Returns the current sequence value. If next() was never called, returns null
@@ -311,7 +349,7 @@ public abstract class OSequence {
     tlDocument.set(tlDocument.get().reload(null, true));
   }
 
-  protected <T> T callRetry(final Callable<T> callable, final String method) {
+  protected <T> T callRetry(final Callable<T> callable, final String method){
     for (int retry = 0; retry < maxRetry; ++retry) {
       try {
         reloadSequence();
@@ -332,9 +370,14 @@ public abstract class OSequence {
           throw OException
               .wrapException(new OSequenceException("Error in transactional processing of " + getName() + "." + method + "()"), e);
         }
-      } catch (OException ignore) {
+      }
+      catch (OSequenceLimitReachedException exc){
+        throw exc;
+      }
+      catch (OException ignore) {
         reloadSequence();
-      } catch (Exception e) {
+      }      
+      catch (Exception e) {        
         throw OException
             .wrapException(new OSequenceException("Error in transactional processing of " + getName() + "." + method + "()"), e);
       }

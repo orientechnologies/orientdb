@@ -408,4 +408,56 @@ public class OSequenceTest {
     
     sequences.dropSequence("MYSEQ");
   }
+  
+  @Test
+  public void testNonRecyclableCachedSequeneceLimitReach() throws Exception {
+    // issue #6484
+    OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
+                                                                 setIncrement(10).
+                                                                 setUpperLimit(30).
+                                                                 setOrderType(SequenceOrderType.ORDER_POSITIVE).
+                                                                 setRecyclable(false);
+    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.CACHED, params);
+    OSequence myseq = sequences.getSequence("MYSEQ");
+    assertThat(myseq.current()).isEqualTo(0);
+    assertThat(myseq.next()).isEqualTo(10);
+    assertThat(myseq.next()).isEqualTo(20);
+    assertThat(myseq.next()).isEqualTo(30);
+    Byte exceptionsCought = 0;
+    try{
+      myseq.next();
+    }
+    catch (OSequenceLimitReachedException exc){
+      exceptionsCought++;
+    }
+    assertThat(exceptionsCought).isEqualTo((byte)1);
+    
+    sequences.dropSequence("MYSEQ");
+  }
+  
+  @Test
+  public void testNonRecyclableOrderedSequeneceLimitReach() throws Exception {
+    // issue #6484
+    OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
+                                                                 setIncrement(10).
+                                                                 setUpperLimit(30).
+                                                                 setOrderType(SequenceOrderType.ORDER_POSITIVE).
+                                                                 setRecyclable(false);
+    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
+    OSequence myseq = sequences.getSequence("MYSEQ");
+    assertThat(myseq.current()).isEqualTo(0);
+    assertThat(myseq.next()).isEqualTo(10);
+    assertThat(myseq.next()).isEqualTo(20);
+    assertThat(myseq.next()).isEqualTo(30);
+    Byte exceptionsCought = 0;
+    try{
+      myseq.next();
+    }
+    catch (OSequenceLimitReachedException exc){
+      exceptionsCought++;
+    }
+    assertThat(exceptionsCought).isEqualTo((byte)1);
+    
+    sequences.dropSequence("MYSEQ");
+  }
 }
