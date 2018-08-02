@@ -65,6 +65,9 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   @Override
   public void startup() {
+    final String userName = System.getProperty("user.name", "unknown");
+    OLogManager.instance().infoNoDb(this, "System is started under an effective user : `%s`", userName);
+
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
     super.startup();
 
