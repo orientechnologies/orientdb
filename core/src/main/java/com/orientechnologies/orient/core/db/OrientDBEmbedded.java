@@ -40,7 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -56,6 +56,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
   protected final  OEngine                                disk;
   protected final  Orient                                 orient;
   private volatile boolean                                open           = true;
+  private          ExecutorService                        executor;
+  private          Timer                                  timer;
 
   public OrientDBEmbedded(String directoryPath, OrientDBConfig configurations, Orient orient) {
     super();
@@ -73,6 +75,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
 
     orient.addOrientDB(this);
+
+    executor = new ThreadPoolExecutor(1, Runtime.getRuntime().availableProcessors(), 30, TimeUnit.MINUTES,
+        new LinkedBlockingQueue<>());
+    timer = new Timer();
+
   }
 
   @Override
@@ -368,11 +375,23 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
-  public synchronized void close() {
+  public void close() {
     if (!open)
       return;
-    removeShutdownHook();
-    internalClose();
+    timer.cancel();
+    executor.shutdown();
+    try {
+      if (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
+        OLogManager.instance().warn(this, "Failed waiting background operations termination");
+        executor.shutdownNow();
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    synchronized (this) {
+      removeShutdownHook();
+      internalClose();
+    }
   }
 
   public synchronized void internalClose() {
@@ -480,6 +499,32 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public boolean isEmbedded() {
     return true;
+  }
+
+  public void schedule(TimerTask task, long delay, long period) {
+    timer.schedule(task, delay, period);
+  }
+
+  public void scheduleOnce(TimerTask task, long delay) {
+    timer.schedule(task, delay);
+  }
+
+  @Override
+  public <X> Future<X> execute(String database, String user, ODatabaseTask<X> task) {
+    return executor.submit(() -> {
+      try (ODatabaseSession session = openNoAuthenticate(database, user)) {
+        return task.call(session);
+      }
+    });
+  }
+
+  @Override
+  public <X> Future<X> executeNoAuthorization(String database, ODatabaseTask<X> task) {
+    return executor.submit(() -> {
+      try (ODatabaseSession session = openNoAuthorization(database)) {
+        return task.call(session);
+      }
+    });
   }
 
 }
