@@ -16,10 +16,10 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 /**
- *
  * @author marko
  */
 public interface OTypeInterface {
   int getId();
+
   boolean isList();
 }

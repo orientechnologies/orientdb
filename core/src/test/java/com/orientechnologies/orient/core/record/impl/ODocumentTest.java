@@ -910,12 +910,10 @@ public class ODocumentTest {
       ODocument checkDoc = checkList.get(1);
       assertEquals(checkDoc.field(constantField), constValue);
       assertEquals(checkDoc.field(variableField), "two");
-    } 
-    catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
       throw e;
-    }
-    finally {
+    } finally {
       if (db != null)
         db.close();
       if (odb != null) {

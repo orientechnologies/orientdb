@@ -17,66 +17,66 @@ package com.orientechnologies.orient.core.delta;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
+
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
  * @author marko
  */
-public enum ODeltaDocumentFieldType implements OTypeInterface{
-  
+public enum ODeltaDocumentFieldType implements OTypeInterface {
+
   DELTA_RECORD(Byte.MAX_VALUE);
-  
+
   private final int id;
   private static final Map<Integer, ODeltaDocumentFieldType> mappedIds = new HashMap<>();
-  
-  static{
-    for (ODeltaDocumentFieldType type : values()){
+
+  static {
+    for (ODeltaDocumentFieldType type : values()) {
       mappedIds.put(type.id, type);
     }
   }
-  
-  ODeltaDocumentFieldType(int id){
+
+  ODeltaDocumentFieldType(int id) {
     this.id = id;
   }
-  
+
   @Override
-  public int getId(){
+  public int getId() {
     return id;
   }
-  
-  protected static OTypeInterface getFromClass(Class claz){
-    if (claz == null){
+
+  protected static OTypeInterface getFromClass(Class claz) {
+    if (claz == null) {
       return null;
     }
-    
-    if (claz.equals(ODocumentDelta.class)){
+
+    if (claz.equals(ODocumentDelta.class)) {
       return DELTA_RECORD;
     }
-    
+
     OType type = OType.getTypeByClass(claz);
     return type;
   }
-  
-  public static OTypeInterface getFromId(int id){
-    if (mappedIds.containsKey(id)){
+
+  public static OTypeInterface getFromId(int id) {
+    if (mappedIds.containsKey(id)) {
       return mappedIds.get(id);
     }
-    
-    OType baseType = OType.getById((byte)id);
+
+    OType baseType = OType.getById((byte) id);
     return baseType;
   }
-  
-  public static OTypeInterface getTypeByValue(Object value){
-    if (value == null){
+
+  public static OTypeInterface getTypeByValue(Object value) {
+    if (value == null) {
       return null;
     }
-    
-    if (value instanceof ODocumentDelta){
+
+    if (value instanceof ODocumentDelta) {
       return DELTA_RECORD;
     }
-    
+
     OType type = OType.getTypeByValue(value);
     return type;
   }

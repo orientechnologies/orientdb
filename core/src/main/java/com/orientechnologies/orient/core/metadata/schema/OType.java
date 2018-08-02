@@ -47,7 +47,7 @@ import java.util.*;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public enum OType implements OTypeInterface{
+public enum OType implements OTypeInterface {
   BOOLEAN("Boolean", 0, Boolean.class, new Class<?>[] { Number.class }),
 
   INTEGER("Integer", 1, Integer.class, new Class<?>[] { Number.class }),

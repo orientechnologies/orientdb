@@ -36,11 +36,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -121,11 +117,11 @@ public class HelperClasses {
     }
     return OType.getById(readByte(bytes));
   }
-  
+
   public static OTypeInterface readDeltaDocumentType(final BytesContainer bytes) {
     return ODeltaDocumentFieldType.getFromId(readByte(bytes));
   }
-  
+
 //  public static ODeltaDocumentFieldType getDeltaTypeFromType(OType type){
 //    if (type == null){
 //      return null;
@@ -141,7 +137,7 @@ public class HelperClasses {
     int pos = bytes.alloc(1);
     bytes.bytes[pos] = (byte) type.getId();
   }
-  
+
   public static void writeType(BytesContainer bytes, ODeltaDocumentFieldType type) {
     int pos = bytes.alloc(1);
     bytes.bytes[pos] = (byte) type.getId();
@@ -272,14 +268,14 @@ public class HelperClasses {
       type = OType.EMBEDDED;
     return type;
   }
-  
+
   public static OTypeInterface getDeltaTypeFromValueEmbedded(final Object fieldValue) {
-    if (fieldValue instanceof ODocumentDelta){
+    if (fieldValue instanceof ODocumentDelta) {
       return ODeltaDocumentFieldType.DELTA_RECORD;
     }
-    
+
     OType type = getTypeFromValueEmbedded(fieldValue);
-    if (type == null){
+    if (type == null) {
       return null;
     }
     return type;
@@ -573,7 +569,7 @@ public class HelperClasses {
     bytes.skip(OIntegerSerializer.INT_SIZE);
     return ChangeSerializationHelper.createChangeInstance(type, change);
   }
-  
+
   public static OType getLinkedType(ODocument document, OType type, String key) {
     if (type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDMAP)
       return null;

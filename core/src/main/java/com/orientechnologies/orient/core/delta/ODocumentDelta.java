@@ -38,8 +38,8 @@ import java.util.*;
 /**
  * @author marko
  */
-public class ODocumentDelta implements OIdentifiable {  
-  
+public class ODocumentDelta implements OIdentifiable {
+
   protected Map<String, ValueType> fields = new HashMap<>();
   private final ODocumentDeltaSerializerI serializer;
 
@@ -61,7 +61,7 @@ public class ODocumentDelta implements OIdentifiable {
   }
 
   public void setIdentity(ORID identity) {
-    ValueType vt = new ValueType(identity, OType.LINK);     
+    ValueType vt = new ValueType(identity, OType.LINK);
     field("i", vt);
   }
 
@@ -200,33 +200,18 @@ public class ODocumentDelta implements OIdentifiable {
       return false;
     }
 
-    if (fieldType == OType.INTEGER ||
-        fieldType == OType.LONG ||
-        fieldType == OType.SHORT ||
-        fieldType == OType.STRING ||
-        fieldType == OType.DOUBLE ||
-        fieldType == OType.FLOAT ||
-        fieldType == OType.BYTE ||
-        fieldType == OType.BOOLEAN ||
-        fieldType == OType.DATETIME ||
-        fieldType == OType.DATE ||
-        fieldType == OType.LINKBAG ||
-        fieldType == OType.BINARY ||
-        fieldType == OType.DECIMAL ||
-        fieldType == OType.LINKSET ||
-        fieldType == OType.LINKLIST ||
-        fieldType == ODeltaDocumentFieldType.DELTA_RECORD ||
-        fieldType == OType.LINK ||
-        fieldType == OType.LINKMAP ||
-        fieldType == OType.TRANSIENT ||
-        fieldType == OType.ANY){
+    if (fieldType == OType.INTEGER || fieldType == OType.LONG || fieldType == OType.SHORT || fieldType == OType.STRING
+        || fieldType == OType.DOUBLE || fieldType == OType.FLOAT || fieldType == OType.BYTE || fieldType == OType.BOOLEAN
+        || fieldType == OType.DATETIME || fieldType == OType.DATE || fieldType == OType.LINKBAG || fieldType == OType.BINARY
+        || fieldType == OType.DECIMAL || fieldType == OType.LINKSET || fieldType == OType.LINKLIST
+        || fieldType == ODeltaDocumentFieldType.DELTA_RECORD || fieldType == OType.LINK || fieldType == OType.LINKMAP
+        || fieldType == OType.TRANSIENT || fieldType == OType.ANY) {
 
       if (!Objects.equals(val1, val2)) {
         return false;
       }
 
-    }
-    else if (fieldType == OType.EMBEDDED){
+    } else if (fieldType == OType.EMBEDDED) {
       ODocument fieldDoc;
       if (val1 instanceof ODocumentSerializable) {
         fieldDoc = ((ODocumentSerializable) val1).toDocument();
@@ -245,9 +230,7 @@ public class ODocumentDelta implements OIdentifiable {
         return false;
       }
 
-    }
-    else if (fieldType == OType.EMBEDDEDSET ||
-             fieldType == OType.EMBEDDEDLIST){
+    } else if (fieldType == OType.EMBEDDEDSET || fieldType == OType.EMBEDDEDLIST) {
       Collection col1;
       if (val1.getClass().isArray())
         col1 = Arrays.asList(OMultiValue.array(val1));
@@ -263,15 +246,13 @@ public class ODocumentDelta implements OIdentifiable {
       if (!equalEmbeddedCollections(col1, col2)) {
         return false;
       }
-    }
-    else if (fieldType == OType.EMBEDDEDMAP){
+    } else if (fieldType == OType.EMBEDDEDMAP) {
       Map m1 = (Map) val1;
       Map m2 = (Map) val2;
       if (!equalEmbeddedMaps(m1, m2)) {
         return false;
       }
-    }
-    else if (fieldType == OType.CUSTOM){
+    } else if (fieldType == OType.CUSTOM) {
       byte[] v1;
       if (!(val1 instanceof OSerializableStream)) {
         v1 = new OSerializableWrapper((Serializable) val1).toStream();
@@ -319,7 +300,7 @@ public class ODocumentDelta implements OIdentifiable {
 
       Object fieldVal = field.getValue().getValue();
       Object otherFieldVal = other.fields.get(fieldName).getValue();
-      
+
       if (!equalVals(fieldVal, otherFieldVal)) {
         return false;
       }
