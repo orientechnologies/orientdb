@@ -38,16 +38,7 @@ import java.util.*;
 /**
  * @author marko
  */
-public class ODocumentDelta implements OIdentifiable {
-
-  public static class ValueType{
-    public Object value;
-    public OTypeInterface type;
-    
-    public <T> T getValue(){
-      return (T)value;
-    }
-  }
+public class ODocumentDelta implements OIdentifiable {  
   
   protected Map<String, ValueType> fields = new HashMap<>();
   private final ODocumentDeltaSerializerI serializer;
@@ -70,9 +61,7 @@ public class ODocumentDelta implements OIdentifiable {
   }
 
   public void setIdentity(ORID identity) {
-    ValueType vt = new ValueType();
-    vt.value = identity;
-    vt.type = OType.LINK;
+    ValueType vt = new ValueType(identity, OType.LINK);     
     field("i", vt);
   }
 
@@ -81,9 +70,7 @@ public class ODocumentDelta implements OIdentifiable {
   }
 
   public void setVersion(int version) {
-    ValueType vt = new ValueType();
-    vt.value = version;
-    vt.type = OType.INTEGER;
+    ValueType vt = new ValueType(version, OType.INTEGER);
     field("r", vt);
   }
 
@@ -330,8 +317,8 @@ public class ODocumentDelta implements OIdentifiable {
         return false;
       }
 
-      Object fieldVal = field.getValue().value;
-      Object otherFieldVal = other.fields.get(fieldName).value;
+      Object fieldVal = field.getValue().getValue();
+      Object otherFieldVal = other.fields.get(fieldName).getValue();
       
       if (!equalVals(fieldVal, otherFieldVal)) {
         return false;

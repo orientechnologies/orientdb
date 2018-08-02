@@ -61,16 +61,16 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
   }
 
   private void serialize(ODocumentDelta deltaDoc, BytesContainer bytes) {
-    for (Map.Entry<String, ODocumentDelta.ValueType> entry : deltaDoc.fields.entrySet()) {
+    for (Map.Entry<String, ValueType> entry : deltaDoc.fields.entrySet()) {
       String fieldName = entry.getKey();
-      ODocumentDelta.ValueType fieldValueType = entry.getValue();
+      ValueType fieldValueType = entry.getValue();
       Object fieldValue = fieldValueType.getValue();
       
       //serialize field name
       serializeValue(bytes, fieldName, OType.STRING);
 
       //serialize field type
-      OTypeInterface type = fieldValue != null ? fieldValueType.type : null;
+      OTypeInterface type = fieldValue != null ? fieldValueType.getType() : null;
       if (type == null) {
         //signal for null value
         HelperClasses.writeByte(bytes, (byte) -1);
@@ -98,16 +98,11 @@ public class ODocumentDeltaSerializerV1 extends ODocumentDeltaSerializer {
           bytes.offset += fieldNameLength;
           OTypeInterface type = HelperClasses.readDeltaDocumentType(bytes);
           if (type == null) {
-            ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
-            vt.value = null; vt.type = null;
-            delta.field(fieldName, vt);
+            delta.field(fieldName, new ValueType(null, null));
             continue;
           }
-          Object value = deserializeValue(bytes, type, null);
-          ODocumentDelta.ValueType vt = new ODocumentDelta.ValueType();
-          vt.value = value;
-          vt.type = type;
-          delta.field(fieldName, vt);
+          Object value = deserializeValue(bytes, type, null);          
+          delta.field(fieldName, new ValueType(value, type));
         }
       } else {
         endReached = true;
