@@ -1568,6 +1568,132 @@ public class ODocument extends ORecordAbstract
     return true;
   }
 
+  private static void mergeDocumentToDocument(final ODocument to, final ODocumentDelta from){
+    for (Map.Entry<String, ValueType> field : from.fields()) {
+      final String fieldName = field.getKey();
+      final ODocumentDelta updateDoc = from.field(fieldName).getValue();
+      Object deltaVal = updateDoc.field("v").getValue();
+      UpdateDeltaValueType deltaType = UpdateDeltaValueType.fromOrd(updateDoc.field("t").getValue());
+
+      if (deltaType == UpdateDeltaValueType.UPDATE || deltaType == UpdateDeltaValueType.CHANGE) {
+        if (!(deltaVal instanceof ODocumentDelta) || !to._fields.keySet().contains(fieldName) || valuesDiffersInClass(
+            to._fields.get(fieldName).value, deltaVal)) {
+          to.field(fieldName, deltaVal);
+        } else {
+          final ODocumentDelta fromDocField = (ODocumentDelta) deltaVal;
+          final ODocument toDocField = (ODocument) to.field(fieldName);
+          ValueType toNestedValueType = new ValueType(toDocField, OType.EMBEDDED);            
+          ValueType fromNestedValueType = new ValueType(fromDocField, ODeltaDocumentFieldType.DELTA_RECORD);            
+          mergeUpdateTree(toNestedValueType, fromNestedValueType);
+        }
+      } else if (deltaType == UpdateDeltaValueType.LIST_UPDATE) {
+        List deltaList = (List) deltaVal;
+        List originalList = to.field(fieldName);
+        OType toLinkedType = HelperClasses.getLinkedType(to, to.fieldType(fieldName), fieldName);
+        //we want to treat ANY as null, because elements remain of unknown type
+        if (toLinkedType == OType.ANY){
+          toLinkedType = null;
+        }
+        int removed = 0;
+        for (int i = 0; i < deltaList.size(); i++) {
+          ODocumentDelta deltaUpdateListElement = (ODocumentDelta) deltaList.get(i);
+          UpdateDeltaValueType listElementUpdateType = UpdateDeltaValueType.fromOrd(deltaUpdateListElement.field("t").getValue());
+          Object val;
+          int index;
+          switch (listElementUpdateType) {
+          case LIST_ELEMENT_ADD:
+            val = deltaUpdateListElement.field("v").getValue();
+            originalList.add(val);
+            break;
+          case LIST_ELEMENT_CHANGE:
+            val = deltaUpdateListElement.field("v").getValue();
+            index = deltaUpdateListElement.field("i").getValue();
+            originalList.set(index, val);
+            break;
+          case LIST_ELEMENT_REMOVE:
+            index = deltaUpdateListElement.field("i").getValue();
+            originalList.remove(index - removed++);
+            break;
+          case LIST_ELEMENT_UPDATE:
+            ValueType deltaValueType = deltaUpdateListElement.field("v");
+            index = deltaUpdateListElement.field("i").getValue();
+            Object originalVal = originalList.get(index);
+            //here deltaDeltaVal can be null, then we want to use valDoc. This is case with list of documents
+            ODocumentDelta deltaObj = deltaValueType.getValue();
+            if (deltaObj.field("t") == null){
+              //in this case some document field should be updated, and in that case update type is not set
+              deltaType = UpdateDeltaValueType.UNKNOWN;
+            }
+            else{
+              deltaType = UpdateDeltaValueType.fromOrd(deltaObj.field("t").getValue());
+            }
+            ValueType deltaPassObject = deltaValueType;
+            if (deltaType == UpdateDeltaValueType.LIST_UPDATE || deltaType == UpdateDeltaValueType.UPDATE) {
+              deltaPassObject = deltaObj.field("v");                
+            }
+            ValueType originalValueType = new ValueType(originalVal, toLinkedType != null ? toLinkedType : ODeltaDocumentFieldType.getTypeByValue(originalVal));              
+            Object merged = mergeUpdateTree(originalValueType, deltaPassObject);
+            originalList.set(index, merged);
+            break;
+          }
+        }
+      }
+    }
+  }
+  
+  private static void mergeListToList(List toList, List fromList){
+    int removed = 0;
+    for (int i = 0; i < fromList.size(); i++) {
+      Object fromElement = fromList.get(i);
+      if (fromElement instanceof ODocumentDelta) {
+        ODocumentDelta fromDoc = (ODocumentDelta) fromElement;
+        UpdateDeltaValueType type = UpdateDeltaValueType.fromOrd(fromDoc.field("t").getValue());
+        if (type == UpdateDeltaValueType.LIST_ELEMENT_ADD) {
+          Object addVal = fromDoc.field("v").getValue();
+          toList.add(addVal);
+          continue;
+        }
+        int index = fromDoc.field("i").getValue();
+        if (type == UpdateDeltaValueType.LIST_ELEMENT_CHANGE) {
+          Object val = fromDoc.field("v").getValue();
+          toList.set(index, val);
+          continue;
+        }
+        if (type == UpdateDeltaValueType.LIST_ELEMENT_REMOVE) {
+          toList.remove(index - removed++);
+          continue;
+        }
+        Object toElement = toList.get(index);
+
+        ValueType fromValueTypeNested = new ValueType(fromDoc, ODeltaDocumentFieldType.DELTA_RECORD);
+        if (type == UpdateDeltaValueType.LIST_ELEMENT_UPDATE) {
+          fromValueTypeNested = fromDoc.field("v");
+        }
+        fromDoc = fromValueTypeNested.getValue();
+        if (fromDoc.field("t") == null){
+          //this is the case when updating field, in this case update type is not set
+          type = UpdateDeltaValueType.UNKNOWN;
+        }
+        else{
+          type = UpdateDeltaValueType.fromOrd(fromDoc.field("t").getValue());
+        }
+        if (type == UpdateDeltaValueType.CHANGE) {
+          toElement = fromDoc.field("v").getValue();
+        } else {
+          if (type == UpdateDeltaValueType.LIST_UPDATE || type == UpdateDeltaValueType.UPDATE) {
+            fromValueTypeNested = fromDoc.field("v");
+          }
+          ValueType toValueTypeNested = new ValueType(toElement, ODeltaDocumentFieldType.getTypeByValue(toElement));
+          toElement = mergeUpdateTree(toValueTypeNested, fromValueTypeNested);
+        }
+        toList.set(index, toElement);
+      } else {
+        //this should never happend, this is invalid delta
+        throw new IllegalStateException("Inavlid delta");
+      }
+    }
+  }
+  
   //process in depth first
   private static Object mergeUpdateTree(ValueType toValueType, final ValueType fromValueType) {
     OTypeInterface toType = toValueType.getType();
@@ -1577,132 +1703,14 @@ public class ODocument extends ORecordAbstract
     if (toObj instanceof ODocument && fromObj instanceof ODocumentDelta) {
       ODocument to = (ODocument) toObj;
       ODocumentDelta from = (ODocumentDelta) fromObj;
-      for (Map.Entry<String, ValueType> field : from.fields()) {
-        final String fieldName = field.getKey();
-        final ODocumentDelta updateDoc = from.field(fieldName).getValue();
-        Object deltaVal = updateDoc.field("v").getValue();
-        UpdateDeltaValueType deltaType = UpdateDeltaValueType.fromOrd(updateDoc.field("t").getValue());
-
-        if (deltaType == UpdateDeltaValueType.UPDATE || deltaType == UpdateDeltaValueType.CHANGE) {
-          if (!(deltaVal instanceof ODocumentDelta) || !to._fields.keySet().contains(fieldName) || valuesDiffersInClass(
-              to._fields.get(fieldName).value, deltaVal)) {
-            to.field(fieldName, deltaVal);
-          } else {
-            final ODocumentDelta fromDocField = (ODocumentDelta) deltaVal;
-            final ODocument toDocField = (ODocument) to.field(fieldName);
-            ValueType toNestedValueType = new ValueType(toDocField, OType.EMBEDDED);            
-            ValueType fromNestedValueType = new ValueType(fromDocField, ODeltaDocumentFieldType.DELTA_RECORD);            
-            mergeUpdateTree(toNestedValueType, fromNestedValueType);
-          }
-        } else if (deltaType == UpdateDeltaValueType.LIST_UPDATE) {
-          List deltaList = (List) deltaVal;
-          List originalList = to.field(fieldName);
-          OType toLinkedType = HelperClasses.getLinkedType(to, to.fieldType(fieldName), fieldName);
-          //we want to treat ANY as null, because elements remain of unknown type
-          if (toLinkedType == OType.ANY){
-            toLinkedType = null;
-          }
-          int removed = 0;
-          for (int i = 0; i < deltaList.size(); i++) {
-            ODocumentDelta deltaUpdateListElement = (ODocumentDelta) deltaList.get(i);
-            UpdateDeltaValueType listElementUpdateType = UpdateDeltaValueType.fromOrd(deltaUpdateListElement.field("t").getValue());
-            Object val;
-            int index;
-            switch (listElementUpdateType) {
-            case LIST_ELEMENT_ADD:
-              val = deltaUpdateListElement.field("v").getValue();
-              originalList.add(val);
-              break;
-            case LIST_ELEMENT_CHANGE:
-              val = deltaUpdateListElement.field("v").getValue();
-              index = deltaUpdateListElement.field("i").getValue();
-              originalList.set(index, val);
-              break;
-            case LIST_ELEMENT_REMOVE:
-              index = deltaUpdateListElement.field("i").getValue();
-              originalList.remove(index - removed++);
-              break;
-            case LIST_ELEMENT_UPDATE:
-              ValueType deltaValueType = deltaUpdateListElement.field("v");
-              index = deltaUpdateListElement.field("i").getValue();
-              Object originalVal = originalList.get(index);
-              //here deltaDeltaVal can be null, then we want to use valDoc. This is case with list of documents
-              ODocumentDelta deltaObj = deltaValueType.getValue();
-              if (deltaObj.field("t") == null){
-                //in this case some document field should be updated, and in that case update type is not set
-                deltaType = UpdateDeltaValueType.UNKNOWN;
-              }
-              else{
-                deltaType = UpdateDeltaValueType.fromOrd(deltaObj.field("t").getValue());
-              }
-              ValueType deltaPassObject = deltaValueType;
-              if (deltaType == UpdateDeltaValueType.LIST_UPDATE || deltaType == UpdateDeltaValueType.UPDATE) {
-                deltaPassObject = deltaObj.field("v");                
-              }
-              ValueType originalValueType = new ValueType(originalVal, toLinkedType != null ? toLinkedType : ODeltaDocumentFieldType.getTypeByValue(originalVal));              
-              Object merged = mergeUpdateTree(originalValueType, deltaPassObject);
-              originalList.set(index, merged);
-              break;
-            }
-          }
-        }
-      }
+      mergeDocumentToDocument(to, from);
     }
     //here processing nested lists
     else if (fromType.isList() && toType.isList()) {
       //this case should only happen with list of documents
       List fromList = (List) fromObj;
       List toList = (List) toObj;
-      int removed = 0;
-      for (int i = 0; i < fromList.size(); i++) {
-        Object fromElement = fromList.get(i);
-        if (fromElement instanceof ODocumentDelta) {
-          ODocumentDelta fromDoc = (ODocumentDelta) fromElement;
-          UpdateDeltaValueType type = UpdateDeltaValueType.fromOrd(fromDoc.field("t").getValue());
-          if (type == UpdateDeltaValueType.LIST_ELEMENT_ADD) {
-            Object addVal = fromDoc.field("v").getValue();
-            toList.add(addVal);
-            continue;
-          }
-          int index = fromDoc.field("i").getValue();
-          if (type == UpdateDeltaValueType.LIST_ELEMENT_CHANGE) {
-            Object val = fromDoc.field("v").getValue();
-            toList.set(index, val);
-            continue;
-          }
-          if (type == UpdateDeltaValueType.LIST_ELEMENT_REMOVE) {
-            toList.remove(index - removed++);
-            continue;
-          }
-          Object toElement = toList.get(index);
-          
-          ValueType fromValueTypeNested = new ValueType(fromDoc, ODeltaDocumentFieldType.DELTA_RECORD);
-          if (type == UpdateDeltaValueType.LIST_ELEMENT_UPDATE) {
-            fromValueTypeNested = fromDoc.field("v");
-          }
-          fromDoc = fromValueTypeNested.getValue();
-          if (fromDoc.field("t") == null){
-            //this is the case when updating field, in this case update type is not set
-            type = UpdateDeltaValueType.UNKNOWN;
-          }
-          else{
-            type = UpdateDeltaValueType.fromOrd(fromDoc.field("t").getValue());
-          }
-          if (type == UpdateDeltaValueType.CHANGE) {
-            toElement = fromDoc.field("v").getValue();
-          } else {
-            if (type == UpdateDeltaValueType.LIST_UPDATE || type == UpdateDeltaValueType.UPDATE) {
-              fromValueTypeNested = fromDoc.field("v");
-            }
-            ValueType toValueTypeNested = new ValueType(toElement, ODeltaDocumentFieldType.getTypeByValue(toElement));
-            toElement = mergeUpdateTree(toValueTypeNested, fromValueTypeNested);
-          }
-          toList.set(index, toElement);
-        } else {
-          //this should never happend, this is invalid delta
-          throw new IllegalStateException("Inavlid delta");
-        }
-      }
+      mergeListToList(toList, fromList);
     } else if (fromObj instanceof ODocumentDelta) {
       ODocumentDelta from = (ODocumentDelta) fromObj;
       toObj = from.field("v").getValue();
@@ -3416,6 +3424,155 @@ public class ODocument extends ORecordAbstract
       super.unTrack(id);
   }
 
+  private UpdateTypeValueType getUpdateForListWithPreviousValue(Object currentValue, Object previousValue, ODocumentEntry parent,
+                                                                List<Object> ownersTrace, OType currentValueLinkedType, 
+                                                                OType previousValueType, OType previousValueLinkedType){
+    UpdateTypeValueType retVal = null;
+    if (previousValueType.isList()) {
+      retVal = new UpdateTypeValueType();
+      retVal.setUpdateType(UpdateDeltaValueType.LIST_UPDATE);
+      List deltaList = new ArrayList();
+      retVal.setValue(deltaList);
+      retVal.setValueType(OType.EMBEDDEDLIST);
+      //now find a diff
+      List currentList = (List) currentValue;
+      List previousList = (List) previousValue;
+      int i = 0;
+      for (i = 0; i < currentList.size(); i++) {
+        Object currentElement = currentList.get(i);
+        if (i > previousList.size() - 1) {
+          //these elements doesn't have pair in original list
+          ODocumentDelta deltaElement = new ODocumentDelta();              
+          deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd(), OType.BYTE));
+          deltaElement.field("v", new ValueType(currentElement, currentValueLinkedType != null ? currentValueLinkedType : ODeltaDocumentFieldType.getTypeByValue(currentElement)));
+          deltaList.add(deltaElement);
+          continue;
+        }
+        //these elements have pairs in original list, so we need to calculate deltas
+        Object originalElement = previousList.get(i);
+        //check if can we go just with value change
+        OType currentElementType = currentValueLinkedType != null ? currentValueLinkedType :OType.getTypeByClass(currentElement.getClass());
+        OType previousElementType = previousValueLinkedType != null ? previousValueLinkedType : OType.getTypeByClass(originalElement.getClass());
+        if ((currentElementType != previousElementType && currentElementType.isList() != previousElementType.isList()) || (
+            !(currentElement instanceof ODocument) && !(currentElement instanceof List))) {
+          if (!Objects.equals(currentElement, originalElement)) {
+            ODocumentDelta deltaElement = new ODocumentDelta();                
+            deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd(), OType.BYTE));                
+            deltaElement.field("v", new ValueType(currentElement, currentElementType));                
+            deltaElement.field("i", new ValueType(i, OType.INTEGER));
+            deltaList.add(deltaElement);
+          }
+        } else {
+          if (!Objects.equals(currentElement, originalElement)) {
+            //now we want to go in depth to get delta value
+            ODocumentDelta deltaElement = new ODocumentDelta();                
+            deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(), OType.BYTE));
+
+            //we cann't determine linked type directly from document because this can be double nested collection
+            UpdateTypeValueType delta = getUpdateDeltaValue(currentElement, originalElement, true, parent, ownersTrace,
+                    currentElementType, null, previousElementType, null);
+            ODocumentDelta doc = new ODocumentDelta();
+            doc.field("t", new ValueType(delta.getUpdateType().getOrd(), OType.BYTE));
+            doc.field("v", new ValueType(delta.getValue(), delta.getValueType()));
+            deltaElement.field("v", new ValueType(doc, ODeltaDocumentFieldType.DELTA_RECORD));
+            deltaElement.field("i", new ValueType(i, OType.INTEGER));
+            deltaList.add(deltaElement);
+          }
+          //this means that elements are equal so nothig to do
+        }
+      }
+      //these element are contained only in original list , so they should be removed
+      for (int j = i; j < previousList.size(); j++) {
+        ODocumentDelta deltaElement = new ODocumentDelta();
+        deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd(), OType.BYTE));
+        deltaElement.field("i", new ValueType(j, OType.INTEGER));
+        deltaList.add(deltaElement);
+      }      
+    }
+    return retVal;
+  }
+  
+  private UpdateTypeValueType getUpdateForListWithoutPreviousValue(Object currentValue, ODocumentEntry parent,
+                                                                  List<Object> ownersTrace, OType currentValueLinkedType){
+    List currentList = (List) currentValue;
+    UpdateTypeValueType retVal = new UpdateTypeValueType();
+    retVal.setUpdateType(UpdateDeltaValueType.LIST_UPDATE);
+    List<ODocumentDelta> deltaList = new ArrayList<>();
+    retVal.setValue(deltaList);
+    retVal.setValueType(OType.EMBEDDEDLIST);
+    for (int i = 0; i < currentList.size(); i++) {
+      Object currentElement = currentList.get(i);
+      OType currentElementType = currentValueLinkedType != null ? currentValueLinkedType : OType.getTypeByValue(currentElement);
+      if (currentElement instanceof ODocument) {
+        ODocument currentElementDoc = (ODocument) currentElement;
+        if (currentElementDoc.isChangedInDepth()) {
+          ODocumentDelta listElementDelta = new ODocumentDelta();
+          listElementDelta.field("i", new ValueType(i, OType.INTEGER));
+          listElementDelta.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(), OType.BYTE));
+          ODocumentDelta deltaUpdate = currentElementDoc.getDeltaFromOriginalForUpdate();
+          listElementDelta.field("v", new ValueType(deltaUpdate, ODeltaDocumentFieldType.DELTA_RECORD));
+          deltaList.add(listElementDelta);
+        }
+      } else if (currentElement instanceof List) {
+        List currentElementAsList = (List) currentElement;
+        if (ODocumentHelper.isChangedCollection(currentElementAsList, parent, new ArrayList<>(ownersTrace), 1)) {
+          ODocumentDelta listElementDelta = new ODocumentDelta();                            
+          listElementDelta.field("i", new ValueType(i, OType.INTEGER));
+          listElementDelta.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(), OType.BYTE));
+          UpdateTypeValueType deltaUpdate = getUpdateDeltaValue(currentElementAsList, null, false, parent, ownersTrace,
+                  currentElementType, null, null, null);
+          ODocumentDelta deltaValue = new ODocumentDelta();
+          deltaValue.field("t", new ValueType(deltaUpdate.getUpdateType().getOrd(), OType.BYTE));                            
+          deltaValue.field("v", new ValueType(deltaUpdate.getValue(), deltaUpdate.getValueType()));
+          listElementDelta.field("v", new ValueType(deltaValue, ODeltaDocumentFieldType.DELTA_RECORD));
+          deltaList.add(listElementDelta);
+        }
+      } else {
+        //element
+        OMultiValueChangeEvent.OChangeType changeType = ODocumentHelper
+            .isNestedValueChanged(parent, currentElement, ownersTrace, 1, i);
+        if (changeType != null) {
+          ODocumentDelta deltaElement = new ODocumentDelta();
+          deltaElement.field("v", new ValueType(currentElement, currentElementType));
+          deltaElement.field("i", new ValueType(i, OType.INTEGER));
+          switch (changeType) {
+          case ADD:
+            deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd(), OType.BYTE));
+            break;
+          case UPDATE:
+          case NESTED:
+            deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd(), OType.BYTE));
+            break;              
+          }
+          deltaList.add(deltaElement);
+        }
+      }
+    }
+    List<Integer> indexesToRemove = getRemovedIndexes(parent, currentList, ownersTrace, 1);
+    int counter = 0;
+    for (Integer index : indexesToRemove) {
+      ODocumentDelta removeDleta = new ODocumentDelta();
+      removeDleta.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd(), OType.BYTE));
+      removeDleta.field("i", new ValueType(index + counter++, OType.INTEGER));
+      deltaList.add(removeDleta);
+    }
+    return retVal;
+  }
+  
+  private UpdateTypeValueType getUpdateForNestedDocument(Object currentValue){
+    UpdateTypeValueType retVal = new UpdateTypeValueType();
+    ODocument docVal;
+    if (currentValue instanceof ODocumentSerializable) {
+      docVal = ((ODocumentSerializable) currentValue).toDocument();
+    } else {
+      docVal = (ODocument) currentValue;
+    }
+    retVal.setValue(docVal.getDeltaFromOriginalForUpdate());
+    retVal.setUpdateType(UpdateDeltaValueType.UPDATE);
+    retVal.setValueType(ODeltaDocumentFieldType.DELTA_RECORD);
+    return retVal;
+  }
+  
   //this method is callen only for changed fields
   private UpdateTypeValueType getUpdateDeltaValue(Object currentValue, Object previousValue, boolean changed, ODocumentEntry parent,
       List<Object> ownersTrace, OType currentValueType, OType currentValueLinkedType, OType previousValueType, OType previousValueLinkedType) {
@@ -3427,168 +3584,34 @@ public class ODocument extends ORecordAbstract
     }
     //TODO review this clause once again
     ownersTrace.add(currentValue);
-    if (changed || !(currentValue instanceof ODocument)) {
-      UpdateTypeValueType retVal = new UpdateTypeValueType();
+    if (changed || !(currentValue instanceof ODocument)) {      
       //separate processing for embedded lists
       //if previous value is null we want to send whole list to reduce overhead
       if (currentValueType.isList() && previousValue != null) {
-        //if previous value differs in type we want to send whole list to reduce overhead
-        if (previousValueType.isList()) {
-          retVal.setUpdateType(UpdateDeltaValueType.LIST_UPDATE);
-          List deltaList = new ArrayList();
-          retVal.setValue(deltaList);
-          retVal.setValueType(OType.EMBEDDEDLIST);
-          //now find a diff
-          List currentList = (List) currentValue;
-          List previousList = (List) previousValue;
-          int i = 0;
-          for (i = 0; i < currentList.size(); i++) {
-            Object currentElement = currentList.get(i);
-            if (i > previousList.size() - 1) {
-              //these elements doesn't have pair in original list
-              ODocumentDelta deltaElement = new ODocumentDelta();              
-              deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd(), OType.BYTE));
-              deltaElement.field("v", new ValueType(currentElement, currentValueLinkedType != null ? currentValueLinkedType : ODeltaDocumentFieldType.getTypeByValue(currentElement)));
-              deltaList.add(deltaElement);
-              continue;
-            }
-            //these elements have pairs in original list, so we need to calculate deltas
-            Object originalElement = previousList.get(i);
-            //check if can we go just with value change
-            OType currentElementType = currentValueLinkedType != null ? currentValueLinkedType :OType.getTypeByClass(currentElement.getClass());
-            OType previousElementType = previousValueLinkedType != null ? previousValueLinkedType : OType.getTypeByClass(originalElement.getClass());
-            if ((currentElementType != previousElementType && currentElementType.isList() != previousElementType.isList()) || (
-                !(currentElement instanceof ODocument) && !(currentElement instanceof List))) {
-              if (!Objects.equals(currentElement, originalElement)) {
-                ODocumentDelta deltaElement = new ODocumentDelta();                
-                deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd(), OType.BYTE));                
-                deltaElement.field("v", new ValueType(currentElement, currentElementType));                
-                deltaElement.field("i", new ValueType(i, OType.INTEGER));
-                deltaList.add(deltaElement);
-              }
-            } else {
-              if (!Objects.equals(currentElement, originalElement)) {
-                //now we want to go in depth to get delta value
-                ODocumentDelta deltaElement = new ODocumentDelta();                
-                deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(), OType.BYTE));
-
-                //we cann't determine linked type directly from document because this can be double nested collection
-                UpdateTypeValueType delta = getUpdateDeltaValue(currentElement, originalElement, true, parent, ownersTrace,
-                        currentElementType, null, previousElementType, null);
-                ODocumentDelta doc = new ODocumentDelta();
-                doc.field("t", new ValueType(delta.getUpdateType().getOrd(), OType.BYTE));
-                doc.field("v", new ValueType(delta.getValue(), delta.getValueType()));
-                deltaElement.field("v", new ValueType(doc, ODeltaDocumentFieldType.DELTA_RECORD));
-                deltaElement.field("i", new ValueType(i, OType.INTEGER));
-                deltaList.add(deltaElement);
-              }
-              //this means that elements are equal so nothig to do
-            }
-          }
-          //these element are contained only in original list , so they should be removed
-          for (int j = i; j < previousList.size(); j++) {
-            ODocumentDelta deltaElement = new ODocumentDelta();
-            deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd(), OType.BYTE));
-            deltaElement.field("i", new ValueType(j, OType.INTEGER));
-            deltaList.add(deltaElement);
-          }
+        //if previous value differs in type we want to send whole list to reduce overhead        
+        UpdateTypeValueType retVal = getUpdateForListWithPreviousValue(currentValue, previousValue, parent, ownersTrace, currentValueLinkedType, previousValueType, previousValueLinkedType);
+        if (retVal != null){
           return retVal;
-        }
+        }        
       }
+      UpdateTypeValueType retVal = new UpdateTypeValueType();
       //this means that some list memeber document is changed
       if (currentValueType.isList() && previousValue == null) { 
-       List currentList = (List) currentValue;
-        retVal.setUpdateType(UpdateDeltaValueType.LIST_UPDATE);
-        List<ODocumentDelta> deltaList = new ArrayList<>();
-        retVal.setValue(deltaList);
-        retVal.setValueType(OType.EMBEDDEDLIST);
-        for (int i = 0; i < currentList.size(); i++) {
-          Object currentElement = currentList.get(i);
-          OType currentElementType = currentValueLinkedType != null ? currentValueLinkedType : OType.getTypeByValue(currentElement);
-          if (currentElement instanceof ODocument) {
-            ODocument currentElementDoc = (ODocument) currentElement;
-            if (currentElementDoc.isChangedInDepth()) {
-              ODocumentDelta listElementDelta = new ODocumentDelta();
-              listElementDelta.field("i", new ValueType(i, OType.INTEGER));
-              listElementDelta.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(), OType.BYTE));
-              ODocumentDelta deltaUpdate = currentElementDoc.getDeltaFromOriginalForUpdate();
-              listElementDelta.field("v", new ValueType(deltaUpdate, ODeltaDocumentFieldType.DELTA_RECORD));
-              deltaList.add(listElementDelta);
-            }
-          } else if (currentElement instanceof List) {
-            List currentElementAsList = (List) currentElement;
-            if (ODocumentHelper.isChangedCollection(currentElementAsList, parent, new ArrayList<>(ownersTrace), 1)) {
-              ODocumentDelta listElementDelta = new ODocumentDelta();                            
-              listElementDelta.field("i", new ValueType(i, OType.INTEGER));
-              listElementDelta.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_UPDATE.getOrd(), OType.BYTE));
-              UpdateTypeValueType deltaUpdate = getUpdateDeltaValue(currentElementAsList, null, false, parent, ownersTrace,
-                      currentElementType, null, null, null);
-              ODocumentDelta deltaValue = new ODocumentDelta();
-              deltaValue.field("t", new ValueType(deltaUpdate.getUpdateType().getOrd(), OType.BYTE));                            
-              deltaValue.field("v", new ValueType(deltaUpdate.getValue(), deltaUpdate.getValueType()));
-              listElementDelta.field("v", new ValueType(deltaValue, ODeltaDocumentFieldType.DELTA_RECORD));
-              deltaList.add(listElementDelta);
-            }
-          } else {
-            //element
-            OMultiValueChangeEvent.OChangeType changeType = ODocumentHelper
-                .isNestedValueChanged(parent, currentElement, ownersTrace, 1, i);
-            if (changeType != null) {
-              ODocumentDelta deltaElement = new ODocumentDelta();
-              deltaElement.field("v", new ValueType(currentElement, currentElementType));
-              deltaElement.field("i", new ValueType(i, OType.INTEGER));
-              switch (changeType) {
-              case ADD:
-                deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd(), OType.BYTE));
-                break;
-              case UPDATE:
-              case NESTED:
-                deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd(), OType.BYTE));
-                break;              
-              }
-              deltaList.add(deltaElement);
-            }
-          }
-        }
-        List<Integer> indexesToRemove = getRemovedIndexes(parent, currentList, ownersTrace, 1);
-        int counter = 0;
-        for (Integer index : indexesToRemove) {
-          ODocumentDelta removeDleta = new ODocumentDelta();
-          removeDleta.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd(), OType.BYTE));
-          removeDleta.field("i", new ValueType(index + counter++, OType.INTEGER));
-          deltaList.add(removeDleta);
-        }
-        return retVal;
+        return getUpdateForListWithoutPreviousValue(currentValue, parent, ownersTrace, currentValueLinkedType);
       }
 
-      if (currentValueType == OType.LINK && previousValueType != null && previousValueType == OType.LINK) {
-        ODocument docVal;
-        if (currentValue instanceof ODocumentSerializable) {
-          docVal = ((ODocumentSerializable) currentValue).toDocument();
-        } else {
-          docVal = (ODocument) currentValue;
-        }
-        retVal.setValue(docVal.getDeltaFromOriginalForUpdate());
-        retVal.setUpdateType(UpdateDeltaValueType.UPDATE);
-        retVal.setValueType(ODeltaDocumentFieldType.DELTA_RECORD);
-        return retVal;
+      //check for nested document
+      if (currentValueType == OType.LINK && previousValueType != null && previousValueType == OType.LINK) {        
+        return getUpdateForNestedDocument(currentValue);
       }
 
+      //in this case we want to swap values
       retVal.setValue(currentValue);
       retVal.setUpdateType(UpdateDeltaValueType.CHANGE);
       retVal.setValueType(currentValueType);
       return retVal;
-    } else {
-      ODocument docVal;
-      if (currentValue instanceof ODocumentSerializable) {
-        docVal = ((ODocumentSerializable) currentValue).toDocument();
-      } else {
-        docVal = (ODocument) currentValue;
-      }
-      UpdateTypeValueType retVal = new UpdateTypeValueType(UpdateDeltaValueType.UPDATE, 
-                                                            docVal.getDeltaFromOriginalForUpdate(), 
-                                                            ODeltaDocumentFieldType.DELTA_RECORD);
-      return retVal;
+    } else {      
+      return getUpdateForNestedDocument(currentValue);
     }
   }
 
