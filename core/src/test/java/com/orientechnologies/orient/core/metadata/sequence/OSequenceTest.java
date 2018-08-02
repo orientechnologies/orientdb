@@ -289,8 +289,7 @@ public class OSequenceTest {
   public void testCachedSequeneceUpperLimit() throws Exception {
     // issue #6484
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
-                                                                 setIncrement(10).
-                                                                 setUpperLimit(30);
+                                                                 setIncrement(10).setLimitValue(30);
     sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.CACHED, params);
     OSequence myseq = sequences.getSequence("MYSEQ");
     assertThat(myseq.current()).isEqualTo(0);
@@ -306,8 +305,7 @@ public class OSequenceTest {
   public void testNegativeCachedSequeneceDownerLimit() throws Exception {
     // issue #6484
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(30L).
-                                                                 setIncrement(10).
-                                                                 setUpperLimit(0).
+                                                                 setIncrement(10).setLimitValue(0).
                                                                  setOrderType(SequenceOrderType.ORDER_NEGATIVE);
     sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.CACHED, params);
     OSequence myseq = sequences.getSequence("MYSEQ");
@@ -361,8 +359,7 @@ public class OSequenceTest {
   public void testOrderedSequeneceUpperLimit() throws Exception {
     // issue #6484
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
-                                                                 setIncrement(10).
-                                                                 setUpperLimit(30);
+                                                                 setIncrement(10).setLimitValue(30);
     sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
     OSequence myseq = sequences.getSequence("MYSEQ");
     assertThat(myseq.current()).isEqualTo(0);
@@ -395,8 +392,7 @@ public class OSequenceTest {
   public void testNegativeOrderedSequeneceDownerLimit() throws Exception {
     // issue #6484
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(30L).
-                                                                 setIncrement(10).
-                                                                 setUpperLimit(0).
+                                                                 setIncrement(10).setLimitValue(0).
                                                                  setOrderType(SequenceOrderType.ORDER_NEGATIVE);
     sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
     OSequence myseq = sequences.getSequence("MYSEQ");
