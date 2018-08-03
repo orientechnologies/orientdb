@@ -410,7 +410,7 @@ public class OSequenceTest {
     // issue #6484
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
                                                                  setIncrement(10).
-                                                                 setUpperLimit(30).
+                                                                 setLimitValue(30).
                                                                  setOrderType(SequenceOrderType.ORDER_POSITIVE).
                                                                  setRecyclable(false);
     sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.CACHED, params);
@@ -436,7 +436,7 @@ public class OSequenceTest {
     // issue #6484
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
                                                                  setIncrement(10).
-                                                                 setUpperLimit(30).
+                                                                 setLimitValue(30).
                                                                  setOrderType(SequenceOrderType.ORDER_POSITIVE).
                                                                  setRecyclable(false);
     sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
