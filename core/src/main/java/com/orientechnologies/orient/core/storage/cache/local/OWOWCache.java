@@ -1739,7 +1739,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       fileClassic.create();
       fileClassic.synch();
     } else {
-      throw new OStorageException("File '" + fileClassic.getName() + "' already exists.");
+      OLogManager.instance().warnNoDb(this, "File '" + fileClassic.getName() + "' already exists and will be truncated");
+
+      fileClassic.open();
+      fileClassic.shrink(0);
+      fileClassic.synch();
     }
   }
 
