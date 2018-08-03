@@ -22,12 +22,14 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
@@ -49,7 +51,10 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
       if (index == null)
         throw new IllegalArgumentException("Index name '" + urlParts[2] + "' not found");
 
-      final Object content = index.get(urlParts[3]);
+      Object iKey = urlParts[3];
+      if (urlParts[3].contains(","))
+        iKey = new OCompositeKey(Arrays.asList(urlParts[3].split(",")));
+      final Object content = index.get(iKey);
 
       if (content == null)
         iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null,
