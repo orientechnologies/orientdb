@@ -7,6 +7,8 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -170,5 +172,21 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   @Override
   public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
 
+  }
+
+  @Override
+  public void registerFunction(OSQLFunction function) {
+    OSQLEngine.getInstance().registerFunction(function.getName(), function);
+
+  }
+
+  @Override
+  public List<OClientConnection> getConnections() {
+    return server.getClientConnectionManager().getConnections();
+  }
+
+  @Override
+  public void unregisterFunction(String function) {
+    OSQLEngine.getInstance().unregisterFunction(function);
   }
 }

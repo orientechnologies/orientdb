@@ -18,6 +18,7 @@
 package com.orientechnologies.agent;
 
 import com.orientechnologies.agent.backup.OBackupManager;
+import com.orientechnologies.agent.functions.OAgentFunctionFactory;
 import com.orientechnologies.agent.ha.OEnterpriseDistributedStrategy;
 import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.operation.NodesManager;
@@ -120,6 +121,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   private void registerAndInitServices() {
 
     this.services.add(new OrientDBMetricsService());
+
+    this.services.add(new OAgentFunctionFactory());
 
     this.services.forEach((s) -> s.init(this.enterpriseServer));
 
