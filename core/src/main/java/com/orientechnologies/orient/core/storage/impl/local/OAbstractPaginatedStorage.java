@@ -2211,7 +2211,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit) {
+  private static void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit) {
     final Map<OIndex, OIndexAbstract.IndexTxSnapshot> snapshots = new IdentityHashMap<>();
 
     for (OTransactionIndexChanges changes : indexesToCommit.values()) {
@@ -2246,7 +2246,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private TreeMap<String, OTransactionIndexChanges> getSortedIndexOperations(OTransactionInternal clientTx) {
+  private static TreeMap<String, OTransactionIndexChanges> getSortedIndexOperations(OTransactionInternal clientTx) {
     return new TreeMap<>(clientTx.getIndexOperations());
   }
 
@@ -2386,6 +2386,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize, clustersToIndex,
             engineProperties, metadata, encryption);
 
+        synch();
+
         indexEngineNameMap.put(engineName, engine);
 
         indexEngines.add(engine);
@@ -2411,7 +2413,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private int determineKeySize(OIndexDefinition indexDefinition) {
+  private static int determineKeySize(OIndexDefinition indexDefinition) {
     if (indexDefinition == null || indexDefinition instanceof ORuntimeKeyIndexDefinition)
       return 1;
     else
@@ -4557,7 +4559,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private ORawBuffer doReadRecordIfNotLatest(final OCluster cluster, final ORecordId rid, final int recordVersion)
+  private static ORawBuffer doReadRecordIfNotLatest(final OCluster cluster, final ORecordId rid, final int recordVersion)
       throws ORecordNotFoundException {
     try {
       return cluster.readRecordIfVersionIsNotLatest(rid.getClusterPosition(), recordVersion);
@@ -4679,16 +4681,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       cluster = null;
     }
 
-    final int createdClusterId = registerCluster(cluster);
+    int createdClusterId = -1;
 
     if (cluster != null) {
       if (!cluster.exists()) {
         cluster.create(-1);
       } else {
         cluster.open();
-        ((OPaginatedCluster) cluster).registerInStorageConfig((OStorageConfigurationImpl) configuration);
       }
 
+      synch();
+
+      createdClusterId = registerCluster(cluster);
+
+      ((OPaginatedCluster) cluster).registerInStorageConfig((OStorageConfigurationImpl) configuration);
       ((OStorageConfigurationImpl) configuration).update();
     }
 
@@ -5290,7 +5296,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private void archiveEntry(ZipOutputStream archiveZipOutputStream, String walSegment) throws IOException {
+  private static void archiveEntry(ZipOutputStream archiveZipOutputStream, String walSegment) throws IOException {
     final File walFile = new File(walSegment);
     final ZipEntry walZipEntry = new ZipEntry(walFile.getName());
     archiveZipOutputStream.putNextEntry(walZipEntry);
@@ -5559,7 +5565,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @SuppressWarnings("unused")
-  protected Map<Integer, List<ORecordId>> getRidsGroupedByCluster(final Collection<ORecordId> iRids) {
+  protected static Map<Integer, List<ORecordId>> getRidsGroupedByCluster(final Collection<ORecordId> iRids) {
     final Map<Integer, List<ORecordId>> ridsPerCluster = new HashMap<>();
     for (ORecordId rid : iRids) {
       List<ORecordId> rids = ridsPerCluster.computeIfAbsent(rid.getClusterId(), k -> new ArrayList<>(iRids.size()));
@@ -5568,7 +5574,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return ridsPerCluster;
   }
 
-  private void lockIndexes(final TreeMap<String, OTransactionIndexChanges> indexes) {
+  private static void lockIndexes(final TreeMap<String, OTransactionIndexChanges> indexes) {
     for (OTransactionIndexChanges changes : indexes.values()) {
       assert changes.changesPerKey instanceof TreeMap;
 
@@ -5593,7 +5599,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private void lockClusters(final TreeMap<Integer, OCluster> clustersToLock) {
+  private static void lockClusters(final TreeMap<Integer, OCluster> clustersToLock) {
     for (OCluster cluster : clustersToLock.values())
       cluster.acquireAtomicExclusiveLock();
   }
