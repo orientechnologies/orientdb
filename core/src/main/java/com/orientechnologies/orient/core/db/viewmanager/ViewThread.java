@@ -38,7 +38,7 @@ public class ViewThread extends Thread {
         db.close();
       }
       try {
-        Thread.sleep(30 * 1000);
+        Thread.sleep(10 * 1000);
       } catch (InterruptedException e) {
       }
     }
@@ -56,7 +56,6 @@ public class ViewThread extends Thread {
 
         view = viewManager.getNextViewToUpdate(db);
       }
-      viewManager.cleanUnusedViewClusters(db);
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Failed to update views");
       e.printStackTrace();

@@ -206,7 +206,26 @@ public class OSchemaEmbedded extends OSchemaShared {
   @Override
   public OView createView(ODatabaseDocumentInternal database, String viewName, String statement, Map<String, Object> metadata) {
     OViewConfig cfg = new OViewConfig(viewName, statement);
-//    cfg.setUpdatable(updatable);
+    if (metadata != null) {
+      cfg.setUpdatable(Boolean.TRUE.equals(metadata.get("updatable")));
+
+      Object updateInterval = metadata.get("updateIntervalSeconds");
+      if (updateInterval instanceof Integer) {
+        cfg.setUpdateIntervalSeconds((Integer) updateInterval);
+      }
+
+      Object updateStrategy = metadata.get("updateStrategy");
+      if (updateStrategy instanceof String) {
+        cfg.setUpdateStragegy((String) updateStrategy);
+      }
+
+      Object watchClasses = metadata.get("watchClasses");
+      if (watchClasses instanceof List) {
+        cfg.setWatchClasses((List) watchClasses);
+      }
+
+//      result.setProperty("indexes", indexes);
+    }
     return createView(database, cfg);
   }
 
@@ -812,4 +831,17 @@ public class OSchemaEmbedded extends OSchemaShared {
     }
   }
 
+  void removeClusterForView(ODatabaseDocumentInternal database, int clusterId, OView view) {
+    acquireSchemaWriteLock(database);
+    try {
+      if (clusterId < 0)
+        return;
+
+      checkEmbedded();
+
+      clustersToViews.remove(clusterId);
+    } finally {
+      releaseSchemaWriteLock(database);
+    }
+  }
 }

@@ -9,10 +9,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,11 +29,18 @@ public class ViewManager {
   ConcurrentMap<Integer, AtomicInteger> viewCluserVisitors = new ConcurrentHashMap<>();
   List<Integer>                         clustersToDrop     = Collections.synchronizedList(new ArrayList<>());
 
+  Map<String, Long> lastUpdateTimestampForView = new HashMap<>();
+
   String lastUpdatedView = null;
 
   public ViewManager(OrientDBInternal orientDb, String dbName) {
     this.orientDB = orientDb;
     this.dbName = dbName;
+    init();
+  }
+
+  protected void init() {
+
   }
 
   public void start() {
@@ -75,6 +79,9 @@ public class ViewManager {
       return null;
     }
     for (String name : names) {
+      if (!isUpdateExpiredFor(name, db)) {
+        continue;
+      }
       if (lastUpdatedView == null || name.compareTo(lastUpdatedView) > 0) {
         lastUpdatedView = name;
         return schema.getView(name);
@@ -85,7 +92,20 @@ public class ViewManager {
     return null;
   }
 
+  private boolean isUpdateExpiredFor(String viewName, ODatabase db) {
+    Long lastUpdate = lastUpdateTimestampForView.get(viewName);
+    if (lastUpdate == null) {
+      return true;
+    }
+    OView view = db.getMetadata().getSchema().getView(viewName);
+    int updateInterval = view.getUpdateIntervalSeconds();
+    return lastUpdate + (updateInterval * 1000) < System.currentTimeMillis();
+  }
+
   public synchronized void updateView(OView view, ODatabaseDocument db) {
+
+    lastUpdateTimestampForView.put(view.getName(), System.currentTimeMillis());
+
     int cluster = db.addCluster(getNextClusterNameFor(view, db));
     String clusterName = db.getClusterNameById(cluster);
     OResultSet rs = db.query(view.getQuery());
@@ -104,6 +124,7 @@ public class ViewManager {
       }
     }
     unlockView(view);
+    cleanUnusedViewClusters(db);
   }
 
   private synchronized void unlockView(OView view) {

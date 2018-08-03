@@ -815,7 +815,7 @@ public class OViewEmbedded extends OViewImpl {
           defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
       }
 
-      ((OSchemaEmbedded) owner).removeClusterForClass(database, clusterToRemove, this);
+      ((OSchemaEmbedded) owner).removeClusterForView(database, clusterToRemove, this);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -1012,7 +1012,7 @@ public class OViewEmbedded extends OViewImpl {
           for (int clusterId : getClusterIds()) {
             tryDropCluster(clusterId);
             removePolymorphicClusterId(clusterId);
-            ((OSchemaEmbedded) owner).removeClusterForClass(database, clusterId, this);
+            ((OSchemaEmbedded) owner).removeClusterForView(database, clusterId, this);
           }
 
           setClusterIds(new int[] { NOT_EXISTENT_CLUSTER_ID });

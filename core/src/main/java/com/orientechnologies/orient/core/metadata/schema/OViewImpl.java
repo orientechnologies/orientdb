@@ -4,6 +4,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class OViewImpl extends OClassImpl implements OView {
@@ -33,6 +34,15 @@ public abstract class OViewImpl extends OClassImpl implements OView {
         indexConfig.addProperty(prop.getKey(), OType.valueOf(prop.getValue()));
       }
     }
+    if (document.getProperty("updateIntervalSeconds") instanceof Integer) {
+      cfg.setUpdateIntervalSeconds(document.getProperty("updateIntervalSeconds"));
+    }
+    if (document.getProperty("updateStrategy") instanceof String) {
+      cfg.setUpdateStragegy(document.getProperty("updateStrategy"));
+    }
+    if (document.getProperty("watchClasses") instanceof List) {
+      cfg.setWatchClasses(document.getProperty("watchClasses"));
+    }
   }
 
   @Override
@@ -50,6 +60,9 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       indexes.put(idx.name, indexDescriptor);
     }
     result.setProperty("indexes", indexes);
+    result.setProperty("updateIntervalSeconds", cfg.getUpdateIntervalSeconds());
+    result.setProperty("updateStrategy", cfg.getUpdateStragegy());
+    result.setProperty("watchClasses", cfg.getWatchClasses());
     return result;
   }
 
@@ -67,6 +80,9 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       indexes.put(idx.name, indexDescriptor);
     }
     result.setProperty("indexes", indexes);
+    result.setProperty("updateIntervalSeconds", cfg.getUpdateIntervalSeconds());
+    result.setProperty("updateStrategy", cfg.getUpdateStragegy());
+    result.setProperty("watchClasses", cfg.getWatchClasses());
     return result;
   }
 
@@ -84,4 +100,8 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     }
   }
 
+  @Override
+  public int getUpdateIntervalSeconds() {
+    return cfg.updateIntervalSeconds;
+  }
 }

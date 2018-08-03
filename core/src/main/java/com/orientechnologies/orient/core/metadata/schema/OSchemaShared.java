@@ -283,7 +283,7 @@ public abstract class OSchemaShared implements OCloseable {
 
       if (existingView != null && (cls == null || !cls.equals(existingView)))
         throw new OSchemaException(
-            "Cluster with id " + clusterId + " already belongs to the view '" + clustersToClasses.get(clusterId) + "'");
+            "Cluster with id " + clusterId + " already belongs to the view '" + clustersToViews.get(clusterId) + "'");
 
     } finally {
       releaseSchemaReadLock();
@@ -423,7 +423,8 @@ public abstract class OSchemaShared implements OCloseable {
         if (iSave) {
           if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
             saveInternal(database);
-          } else {
+          }
+          else {
             reload(database);
           }
         } else {
