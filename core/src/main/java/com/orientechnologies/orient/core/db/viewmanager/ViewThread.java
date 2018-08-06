@@ -28,7 +28,7 @@ public class ViewThread extends Thread {
       ODatabaseDocument db = null;
       try {
         db = dbSupplier.get();
-//        db.activateOnCurrentThread();
+
         updateViews(db);
       } catch (ODatabaseException ex) {
         return;
@@ -38,7 +38,7 @@ public class ViewThread extends Thread {
         db.close();
       }
       try {
-        Thread.sleep(10 * 1000);
+        Thread.sleep(5_000);
       } catch (InterruptedException e) {
       }
     }

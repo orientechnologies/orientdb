@@ -3,9 +3,12 @@ package com.orientechnologies.orient.core.db.viewmanager;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
@@ -30,6 +33,8 @@ public class ViewManager {
   List<Integer>                         clustersToDrop     = Collections.synchronizedList(new ArrayList<>());
 
   Map<String, Long> lastUpdateTimestampForView = new HashMap<>();
+
+  Map<String, Long> lastChangePerClass = new ConcurrentHashMap<>();
 
   String lastUpdatedView = null;
 
@@ -73,13 +78,16 @@ public class ViewManager {
 
   public synchronized OView getNextViewToUpdate(ODatabase db) {
     OSchema schema = db.getMetadata().getSchema();
-//    schema.reload();
+
     List<String> names = schema.getViews().stream().map(x -> x.getName()).sorted().collect(Collectors.toList());
     if (names.isEmpty()) {
       return null;
     }
     for (String name : names) {
       if (!isUpdateExpiredFor(name, db)) {
+        continue;
+      }
+      if (!needsUpdateBasedOnWatchRules(name, db)) {
         continue;
       }
       if (lastUpdatedView == null || name.compareTo(lastUpdatedView) > 0) {
@@ -90,6 +98,44 @@ public class ViewManager {
 
     lastUpdatedView = null;
     return null;
+  }
+
+  /**
+   * Checks if the view could need an update based on watch rules
+   *
+   * @param name view name
+   * @param db   db instance
+   *
+   * @return true if there are no watch rules for this view; true if there are watch rules and some of them happened since last
+   * update; true if the view was never updated; false otherwise.
+   */
+  private boolean needsUpdateBasedOnWatchRules(String name, ODatabase db) {
+    OView view = db.getMetadata().getSchema().getView(name);
+    if (view == null) {
+      return false;
+    }
+
+    Long lastViewUpdate = lastUpdateTimestampForView.get(name);
+    if (lastViewUpdate == null) {
+      return true;
+    }
+
+    List<String> watchRules = view.getWatchClasses();
+    if (watchRules == null || watchRules.size() == 0) {
+      return true;
+    }
+
+    for (String watchRule : watchRules) {
+      Long classChangeTimestamp = lastChangePerClass.get(watchRule.toLowerCase(Locale.ENGLISH));
+      if (classChangeTimestamp == null) {
+        continue;
+      }
+      if (classChangeTimestamp >= lastViewUpdate) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private boolean isUpdateExpiredFor(String viewName, ODatabase db) {
@@ -194,4 +240,17 @@ public class ViewManager {
     }
     item.decrementAndGet();
   }
+
+  public void recordAdded(OImmutableClass clazz, ODocument doc, ODatabaseDocumentEmbedded oDatabaseDocumentEmbedded) {
+    lastChangePerClass.put(clazz.getName().toLowerCase(Locale.ENGLISH), System.currentTimeMillis());
+  }
+
+  public void recordUpdated(OImmutableClass clazz, ODocument doc, ODatabaseDocumentEmbedded oDatabaseDocumentEmbedded) {
+    lastChangePerClass.put(clazz.getName().toLowerCase(Locale.ENGLISH), System.currentTimeMillis());
+  }
+
+  public void recordDeleted(OImmutableClass clazz, ODocument doc, ODatabaseDocumentEmbedded oDatabaseDocumentEmbedded) {
+    lastChangePerClass.put(clazz.getName().toLowerCase(Locale.ENGLISH), System.currentTimeMillis());
+  }
+
 }

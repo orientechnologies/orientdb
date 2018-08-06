@@ -659,7 +659,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     return microTransaction;
   }
 
-
   @Override
   public int addBlobCluster(final String iClusterName, final Object... iParameters) {
     int id;
@@ -864,7 +863,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterCreate(doc, this);
         }
+
+        ((OSharedContextEmbedded) getSharedContext()).getViewManager().recordAdded(clazz, doc, this);
       }
+
       OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, this);
     }
@@ -890,9 +892,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterUpdate(doc, this);
         }
+
+        ((OSharedContextEmbedded) getSharedContext()).getViewManager().recordUpdated(clazz, doc, this);
       }
       OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.UPDATED, this);
+
     }
     callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
   }
@@ -920,6 +925,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterDelete(doc, this);
         }
+
+        ((OSharedContextEmbedded) getSharedContext()).getViewManager().recordDeleted(clazz, doc, this);
       }
       OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, this);

@@ -104,4 +104,8 @@ public abstract class OViewImpl extends OClassImpl implements OView {
   public int getUpdateIntervalSeconds() {
     return cfg.updateIntervalSeconds;
   }
+
+  public List<String> getWatchClasses() {
+    return cfg.getWatchClasses();
+  }
 }
