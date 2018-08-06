@@ -43,6 +43,10 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     if (document.getProperty("watchClasses") instanceof List) {
       cfg.setWatchClasses(document.getProperty("watchClasses"));
     }
+    if (document.getProperty("originRidField") instanceof String) {
+      cfg.setOriginRidField(document.getProperty("originRidField"));
+    }
+
   }
 
   @Override
@@ -63,6 +67,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     result.setProperty("updateIntervalSeconds", cfg.getUpdateIntervalSeconds());
     result.setProperty("updateStrategy", cfg.getUpdateStragegy());
     result.setProperty("watchClasses", cfg.getWatchClasses());
+    result.setProperty("originRidField", cfg.getOriginRidField());
     return result;
   }
 
@@ -83,6 +88,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     result.setProperty("updateIntervalSeconds", cfg.getUpdateIntervalSeconds());
     result.setProperty("updateStrategy", cfg.getUpdateStragegy());
     result.setProperty("watchClasses", cfg.getWatchClasses());
+    result.setProperty("originRidField", cfg.getOriginRidField());
     return result;
   }
 
@@ -107,5 +113,10 @@ public abstract class OViewImpl extends OClassImpl implements OView {
 
   public List<String> getWatchClasses() {
     return cfg.getWatchClasses();
+  }
+
+  @Override
+  public String getOriginRidField() {
+    return cfg.getOriginRidField();
   }
 }

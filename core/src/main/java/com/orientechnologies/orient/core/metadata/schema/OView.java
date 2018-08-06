@@ -8,4 +8,6 @@ public interface OView extends OClass {
   int getUpdateIntervalSeconds();
 
   List<String> getWatchClasses();
+
+  String getOriginRidField();
 }

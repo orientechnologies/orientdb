@@ -32,6 +32,7 @@ public class OViewConfig {
   protected String                 updateStragegy        = UPDATE_STRATEGY_BATCH;
   protected List<String>           watchClasses          = new ArrayList<>();
   protected int                    updateIntervalSeconds = 30;
+  protected String                 originRidField        = null;
 
   public OViewConfig(String name, String query) {
     this.name = name;
@@ -48,6 +49,7 @@ public class OViewConfig {
     result.updateStragegy = this.updateStragegy;
     result.watchClasses = this.watchClasses == null ? null : new ArrayList<>(this.watchClasses);
     result.updateIntervalSeconds = this.updateIntervalSeconds;
+    result.originRidField = this.originRidField;
     return result;
   }
 
@@ -107,5 +109,13 @@ public class OViewConfig {
 
   public void setUpdateIntervalSeconds(int updateIntervalSeconds) {
     this.updateIntervalSeconds = updateIntervalSeconds;
+  }
+
+  public String getOriginRidField() {
+    return originRidField;
+  }
+
+  public void setOriginRidField(String originRidField) {
+    this.originRidField = originRidField;
   }
 }

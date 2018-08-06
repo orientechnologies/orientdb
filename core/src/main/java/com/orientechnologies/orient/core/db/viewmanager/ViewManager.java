@@ -155,9 +155,13 @@ public class ViewManager {
     int cluster = db.addCluster(getNextClusterNameFor(view, db));
     String clusterName = db.getClusterNameById(cluster);
     OResultSet rs = db.query(view.getQuery());
+    String originRidField = view.getOriginRidField();
     while (rs.hasNext()) {
       OResult item = rs.next();
       OElement newRow = copyElement(item, db);
+      if (originRidField != null) {
+        newRow.setProperty(originRidField, item.getIdentity().orElse(item.getProperty("@rid")));
+      }
       db.save(newRow, clusterName);
     }
     lockView(view);
