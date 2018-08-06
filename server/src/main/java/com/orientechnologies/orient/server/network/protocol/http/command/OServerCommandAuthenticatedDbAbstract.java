@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -152,6 +151,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   @Override
   public boolean afterExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
     ODatabaseRecordThreadLocal.instance().remove();
+    iRequest.executor.getConnection().setDatabase(null);
     return true;
   }
 
@@ -262,6 +262,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
     iRequest.data.lastDatabase = localDatabase.getName();
     iRequest.data.lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
+    iRequest.executor.getConnection().setDatabase(localDatabase);
     return (ODatabaseDocumentInternal) localDatabase.getDatabaseOwner();
   }
 
