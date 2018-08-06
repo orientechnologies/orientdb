@@ -36,4 +36,6 @@ public interface OEnterpriseServer {
   List<OClientConnection> getConnections();
 
   OrientDBInternal getDatabases();
+
+  void interruptConnection(Integer connectionId);
 }

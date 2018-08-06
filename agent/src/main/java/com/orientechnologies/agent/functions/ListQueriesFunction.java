@@ -3,11 +3,11 @@ package com.orientechnologies.agent.functions;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 /**
  * Created by Enrico Risa on 23/07/2018.
  */
-public class ListQueriesFunction extends OSQLFunctionAbstract {
+public class ListQueriesFunction extends OSQLEnterpriseFunction {
 
   private OEnterpriseServer server;
 
@@ -28,10 +28,9 @@ public class ListQueriesFunction extends OSQLFunctionAbstract {
   }
 
   @Override
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
+  public Object exec(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
-
-    return server.getConnections().stream().filter((c) -> c.getDatabase() != null)
+    return server.getConnections().stream().filter((c) -> sameDatabase(c, iContext))
         .flatMap((c) -> c.getDatabase().getActiveQueries().entrySet().stream().map((k) -> {
           OResultInternal internal = new OResultInternal();
           internal.setProperty("queryId", k.getKey());
@@ -57,6 +56,16 @@ public class ListQueriesFunction extends OSQLFunctionAbstract {
           return internal;
         })).collect(Collectors.toList());
 
+  }
+
+  @Override
+  public ORule.ResourceGeneric genericPermission() {
+    return ORule.ResourceGeneric.DATABASE;
+  }
+
+  @Override
+  public String specificPermission() {
+    return "listQueries";
   }
 
   @Override

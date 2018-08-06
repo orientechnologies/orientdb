@@ -87,6 +87,11 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   }
 
   @Override
+  public void interruptConnection(Integer connectionId) {
+    server.getClientConnectionManager().kill(connectionId);
+  }
+
+  @Override
   public void onClientConnection(OClientConnection oClientConnection) {
 
     this.listeners.forEach((l) -> l.onClientConnection(oClientConnection));

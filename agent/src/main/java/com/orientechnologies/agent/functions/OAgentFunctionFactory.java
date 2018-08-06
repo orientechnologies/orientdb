@@ -25,6 +25,8 @@ public class OAgentFunctionFactory implements OEnterpriseService {
     this.server = server;
     this.eeFunctions.add(new ListQueriesFunction(server));
     this.eeFunctions.add(new KillQueryFunction(server));
+    this.eeFunctions.add(new ListSessionsFunction(server));
+    this.eeFunctions.add(new KillSessionFunction(server));
   }
 
   @Override
