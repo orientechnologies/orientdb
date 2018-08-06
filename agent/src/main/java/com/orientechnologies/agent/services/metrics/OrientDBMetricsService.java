@@ -53,7 +53,7 @@ public class OrientDBMetricsService implements OEnterpriseService {
       metricSupport.start();
     }
 
-    server.registerStatelessCommand(new OrientDBMetricsCommand(registry));
+    server.registerStatelessCommand(new OrientDBMetricsCommand(registry, this.settings));
 
   }
 

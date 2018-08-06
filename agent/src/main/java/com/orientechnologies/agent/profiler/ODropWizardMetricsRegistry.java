@@ -16,6 +16,8 @@ import com.orientechnologies.agent.services.metrics.reporters.CSVReporter;
 import com.orientechnologies.agent.services.metrics.reporters.ConsoleReporterConfig;
 import com.orientechnologies.agent.services.metrics.reporters.JMXReporter;
 import com.orientechnologies.common.log.OLogManager;
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.dropwizard.DropwizardExports;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,12 +37,13 @@ import java.util.function.Supplier;
  */
 public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
-  private final MetricRegistry                 registry         = new MetricRegistry();
-  private       ConcurrentMap<String, OMetric> metrics          = new ConcurrentHashMap<>();
-  private       ConsoleReporter                consoleReporter  = null;
-  private       CsvReporter                    csvReporter      = null;
-  private       JmxReporter                    jmxReporter      = null;
-  private       GraphiteReporter               graphiteReporter = null;
+  private final MetricRegistry                 registry        = new MetricRegistry();
+  private       ConcurrentMap<String, OMetric> metrics         = new ConcurrentHashMap<>();
+  private       ConsoleReporter                consoleReporter = null;
+  private       CsvReporter                    csvReporter     = null;
+  private       JmxReporter                    jmxReporter     = null;
+
+  private GraphiteReporter graphiteReporter = null;
   private OrientDBMetricsSettings settings;
   private Map<Class<? extends OMetric>, Function<String, Metric>> metricFactory = new HashMap<>();
 
@@ -87,6 +90,10 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     jmxReporter = configureJMXReporter(settings.reporters.jmx);
     consoleReporter = configureConsoleReporter(settings.reporters.console);
     csvReporter = configureCsvReporter(settings.reporters.csv);
+
+    if (settings.reporters.prometheus.enabled) {
+      CollectorRegistry.defaultRegistry.register(new DropwizardExports(registry));
+    }
   }
 
   private JmxReporter configureJMXReporter(JMXReporter jmxConfig) {

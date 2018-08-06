@@ -9,9 +9,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Reporters {
 
-  public JMXReporter           jmx     = new JMXReporter();
-  public ConsoleReporterConfig console = new ConsoleReporterConfig();
-  public CSVReporter           csv     = new CSVReporter();
+  public JMXReporter           jmx        = new JMXReporter();
+  public ConsoleReporterConfig console    = new ConsoleReporterConfig();
+  public CSVReporter           csv        = new CSVReporter();
+  public PrometheusReporter    prometheus = new PrometheusReporter();
 
   public Reporters() {
   }
