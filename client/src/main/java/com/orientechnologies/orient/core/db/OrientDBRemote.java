@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 import static com.orientechnologies.orient.client.remote.OStorageRemote.ADDRESS_SEPARATOR;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_LOCK_TIMEOUT;
@@ -47,14 +48,14 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETW
  * Created by tglman on 08/04/16.
  */
 public class OrientDBRemote implements OrientDBInternal {
-  protected final Map<String, OSharedContext> sharedContexts = new HashMap<>();
-  private final   Map<String, OStorageRemote> storages       = new HashMap<>();
-  private final   Set<ODatabasePoolInternal>  pools          = new HashSet<>();
-  private final      String[]                 hosts;
-  private final      OrientDBConfig           configurations;
-  private final      Orient                   orient;
-  protected volatile ORemoteConnectionManager connectionManager;
-  private volatile boolean open = true;
+  protected final    Map<String, OSharedContext> sharedContexts = new HashMap<>();
+  private final      Map<String, OStorageRemote> storages       = new HashMap<>();
+  private final      Set<ODatabasePoolInternal>  pools          = new HashSet<>();
+  private final      String[]                    hosts;
+  private final      OrientDBConfig              configurations;
+  private final      Orient                      orient;
+  protected volatile ORemoteConnectionManager    connectionManager;
+  private volatile   boolean                     open           = true;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
@@ -382,4 +383,23 @@ public class OrientDBRemote implements OrientDBInternal {
 
   }
 
+  @Override
+  public void schedule(TimerTask task, long delay, long period) {
+    throw new UnsupportedOperationException("schedule not available in remote");
+  }
+
+  @Override
+  public void scheduleOnce(TimerTask task, long delay) {
+    throw new UnsupportedOperationException("schedule not available in remote");
+  }
+
+  @Override
+  public <X> Future<X> executeNoAuthorization(String database, ODatabaseTask<X> task) {
+    throw new UnsupportedOperationException("execute with no session not available in remote");
+  }
+
+  @Override
+  public <X> Future<X> execute(String database, String user, ODatabaseTask<X> task) {
+    throw new UnsupportedOperationException("execute with no session not available in remote");
+  }
 }

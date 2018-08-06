@@ -3,6 +3,10 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.transac
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
@@ -60,6 +64,72 @@ public class FirstPhaseOperationTest {
     try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
       ONodeResponse res = ops.execute(null, null, null, (ODatabaseDocumentInternal) session);
       assertEquals(((OTransactionFirstPhaseResult) res).getType(), OTransactionFirstPhaseResult.Type.SUCCESS);
+    }
+  }
+
+  @Test
+  public void testConcurrentModification() {
+    List<ORecordOperationRequest> networkOps;
+    ORID id;
+    try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
+      session.begin();
+      OElement ele = session.newElement("simple");
+      ele.setProperty("one", "val");
+      id = session.save(ele).getIdentity();
+      session.commit();
+    }
+
+    try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
+      session.begin();
+      OElement ele = session.load(id);
+      ele.setProperty("one", "val10");
+      session.save(ele);
+      Collection<ORecordOperation> txOps = ((OTransactionOptimistic) session.getTransaction()).getRecordOperations();
+      networkOps = OTransactionSubmit.genOps(txOps);
+    }
+
+    try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
+      session.begin();
+      OElement ele = session.load(id);
+      ele.setProperty("one", "val11");
+      session.save(ele);
+      session.commit();
+    }
+
+    OTransactionFirstPhaseOperation ops = new OTransactionFirstPhaseOperation(networkOps);
+    try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
+      ONodeResponse res = ops.execute(null, null, null, (ODatabaseDocumentInternal) session);
+      assertEquals(((OTransactionFirstPhaseResult) res).getType(),
+          OTransactionFirstPhaseResult.Type.CONCURRENT_MODIFICATION_EXCEPTION);
+    }
+  }
+
+  @Test
+  public void testDuplicateKey() {
+    List<ORecordOperationRequest> networkOps;
+    try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
+      OProperty pro = session.getClass("simple").createProperty("indexed", OType.STRING);
+      pro.createIndex(OClass.INDEX_TYPE.UNIQUE);
+      session.begin();
+      OElement ele = session.newElement("simple");
+      ele.setProperty("indexed", "val");
+      session.save(ele);
+      session.commit();
+    }
+
+    try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
+      session.begin();
+      OElement ele = session.newElement("simple");
+      ele.setProperty("indexed", "val");
+      session.save(ele);
+      Collection<ORecordOperation> txOps = ((OTransactionOptimistic) session.getTransaction()).getRecordOperations();
+      networkOps = OTransactionSubmit.genOps(txOps);
+    }
+
+    OTransactionFirstPhaseOperation ops = new OTransactionFirstPhaseOperation(networkOps);
+    try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
+      ONodeResponse res = ops.execute(null, null, null, (ODatabaseDocumentInternal) session);
+      assertEquals(((OTransactionFirstPhaseResult) res).getType(), OTransactionFirstPhaseResult.Type.UNIQUE_KEY_VIOLATION);
     }
   }
 
