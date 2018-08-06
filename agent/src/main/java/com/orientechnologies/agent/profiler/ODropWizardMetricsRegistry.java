@@ -3,9 +3,12 @@ package com.orientechnologies.agent.profiler;
 import com.codahale.metrics.*;
 import com.codahale.metrics.graphite.GraphiteReporter;
 import com.codahale.metrics.jmx.JmxReporter;
+import com.codahale.metrics.json.MetricsModule;
 import com.codahale.metrics.jvm.CachedThreadStatesGaugeSet;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.orientechnologies.agent.profiler.metrics.*;
 import com.orientechnologies.agent.profiler.metrics.dropwizard.*;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsSettings;
@@ -15,8 +18,11 @@ import com.orientechnologies.agent.services.metrics.reporters.JMXReporter;
 import com.orientechnologies.common.log.OLogManager;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -38,6 +44,8 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
   private OrientDBMetricsSettings settings;
   private Map<Class<? extends OMetric>, Function<String, Metric>> metricFactory = new HashMap<>();
 
+  private transient ObjectMapper mapper;
+
   public ODropWizardMetricsRegistry() {
     this(new OrientDBMetricsSettings());
   }
@@ -48,6 +56,24 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     configureProfiler(settings);
 
     initFactories(settings);
+
+    configureMapper(settings);
+  }
+
+  private void configureMapper(OrientDBMetricsSettings settings) {
+    final TimeUnit rateUnit = TimeUnit.SECONDS;
+    final TimeUnit durationUnit = TimeUnit.SECONDS;
+    final boolean showSamples = false;
+    MetricFilter filter = MetricFilter.ALL;
+    this.mapper = new ObjectMapper().registerModule(new MetricsModule(rateUnit, durationUnit, showSamples, filter));
+  }
+
+  private TimeUnit parseTimeUnit(String value, TimeUnit defaultValue) {
+    try {
+      return TimeUnit.valueOf(String.valueOf(value).toUpperCase(Locale.US));
+    } catch (IllegalArgumentException e) {
+      return defaultValue;
+    }
   }
 
   private void initFactories(OrientDBMetricsSettings settings) {
@@ -213,5 +239,13 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
   public boolean remove(String name) {
     metrics.remove(name);
     return registry.remove(name);
+  }
+
+  @Override
+  public void toJSON(OutputStream outputStream) throws IOException {
+
+    ObjectWriter writer = mapper.writer();
+
+    writer.writeValue(outputStream, registry);
   }
 }

@@ -5,6 +5,7 @@ import com.orientechnologies.enterprise.server.listener.OEnterpriseStorageListen
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +25,10 @@ public interface OEnterpriseServer {
   void unRegisterDatabaseListener(OEnterpriseStorageListener listener);
 
   void registerFunction(OSQLFunction function);
+
+  void registerStatelessCommand(final OServerCommand iCommand);
+
+  void unregisterStatelessCommand(final Class<? extends OServerCommand> iCommandClass);
 
   void unregisterFunction(String function);
 

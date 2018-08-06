@@ -52,6 +52,9 @@ public class OrientDBMetricsService implements OEnterpriseService {
 
       metricSupport.start();
     }
+
+    server.registerStatelessCommand(new OrientDBMetricsCommand(registry));
+
   }
 
   @Override
@@ -83,7 +86,6 @@ public class OrientDBMetricsService implements OEnterpriseService {
 
             settings = mapper.readValue(buffer, OrientDBMetricsSettings.class);
 
-            //            settings = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
           } finally {
             if (fis != null)
               fis.close();

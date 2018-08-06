@@ -2,6 +2,8 @@ package com.orientechnologies.agent.profiler;
 
 import com.orientechnologies.agent.profiler.metrics.*;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -41,4 +43,6 @@ public interface OMetricsRegistry {
   void registerAll(String prefix, OMetricSet metricSet);
 
   boolean remove(String name);
+
+  void toJSON(OutputStream outputStream) throws IOException;
 }

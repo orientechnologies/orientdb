@@ -14,6 +14,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpris
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 
@@ -183,6 +186,22 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   public void registerFunction(OSQLFunction function) {
     OSQLEngine.getInstance().registerFunction(function.getName(), function);
 
+  }
+
+  @Override
+  public void registerStatelessCommand(OServerCommand iCommand) {
+    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    if (listener != null) {
+      listener.registerStatelessCommand(iCommand);
+    }
+  }
+
+  @Override
+  public void unregisterStatelessCommand(Class<? extends OServerCommand> iCommandClass) {
+    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    if (listener != null) {
+      listener.unregisterStatelessCommand(iCommandClass);
+    }
   }
 
   @Override
