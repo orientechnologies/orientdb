@@ -263,7 +263,8 @@ public abstract class OSchemaShared implements OCloseable {
   public abstract OClass createClass(ODatabaseDocumentInternal database, final String className, int clusters,
       OClass... superClasses);
 
-  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata);
+  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement,
+      Map<String, Object> metadata);
 
   public abstract OView createView(ODatabaseDocumentInternal database, OViewConfig cfg);
 
@@ -431,8 +432,7 @@ public abstract class OSchemaShared implements OCloseable {
         if (iSave) {
           if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
             saveInternal(database);
-          }
-          else {
+          } else {
             reload(database);
           }
         } else {

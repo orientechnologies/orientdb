@@ -12,7 +12,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,7 +31,6 @@ public class ViewManager {
 
   /**
    * To retain clusters that are being used in queries until the queries are closed.
-   * <p>
    * view -> cluster -> number of visitors
    */
   ConcurrentMap<Integer, AtomicInteger> viewCluserVisitors = new ConcurrentHashMap<>();

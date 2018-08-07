@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.mocktx;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedExecutor;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OLogId;

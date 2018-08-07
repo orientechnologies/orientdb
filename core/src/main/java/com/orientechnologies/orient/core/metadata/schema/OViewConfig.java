@@ -13,7 +13,7 @@ public class OViewConfig {
   public static String UPDATE_STRATEGY_LIVE  = "live";
 
   public static class OViewIndexConfig {
-    protected String name;
+    protected String                     name;
     protected List<OPair<String, OType>> props = new ArrayList<>();
 
     OViewIndexConfig(String name) {
@@ -25,9 +25,9 @@ public class OViewConfig {
     }
   }
 
-  protected String  name;
-  protected String  query;
-  protected boolean updatable;
+  protected String                 name;
+  protected String                 query;
+  protected boolean                updatable;
   protected List<OViewIndexConfig> indexes               = new ArrayList<>();
   protected String                 updateStragegy        = UPDATE_STRATEGY_BATCH;
   protected List<String>           watchClasses          = new ArrayList<>();

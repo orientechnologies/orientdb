@@ -17,7 +17,7 @@ import java.util.Set;
 public class FetchFromViewExecutionStep extends FetchFromClassExecutionStep {
 
   List<Integer> usedClusters = new ArrayList<>();
-  
+
   public FetchFromViewExecutionStep(String className, Set<String> clusters, QueryPlanningInfo planningInfo, OCommandContext ctx,
       Boolean ridOrder, boolean profilingEnabled) {
     super(className, clusters, planningInfo, ctx, ridOrder, profilingEnabled);

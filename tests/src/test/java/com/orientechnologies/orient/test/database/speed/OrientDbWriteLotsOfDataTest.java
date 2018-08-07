@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.ArrayList;
-
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -24,6 +22,8 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+
+import java.util.ArrayList;
 
 public class OrientDbWriteLotsOfDataTest {
 

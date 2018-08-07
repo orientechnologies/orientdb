@@ -69,6 +69,7 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -138,26 +139,26 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected final Map<String, Object> properties = new HashMap<String, Object>();
-  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
-  protected ORecordSerializer    serializer;
-  protected String               url;
-  protected STATUS               status;
-  protected OIntent              currentIntent;
-  protected ODatabaseInternal<?> databaseOwner;
-  protected OMetadataDefault     metadata;
-  protected OImmutableUser       user;
+  protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
+  protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
+  protected       ORecordSerializer                           serializer;
+  protected       String                                      url;
+  protected       STATUS                                      status;
+  protected       OIntent                                     currentIntent;
+  protected       ODatabaseInternal<?>                        databaseOwner;
+  protected       OMetadataDefault                            metadata;
+  protected       OImmutableUser                              user;
   protected final byte                                        recordType    = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
-  protected OLocalRecordCache                localCache;
-  protected OCurrentStorageComponentsFactory componentsFactory;
-  protected boolean initialized = false;
-  protected OTransaction currentTx;
+  protected       OLocalRecordCache                           localCache;
+  protected       OCurrentStorageComponentsFactory            componentsFactory;
+  protected       boolean                                     initialized   = false;
+  protected       OTransaction                                currentTx;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected OSharedContext sharedContext;
+  protected       OSharedContext  sharedContext;
 
   private boolean prefetchRecords;
 
@@ -1397,7 +1398,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
         iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType, rid.getClusterId(), this);
 
-      ORecordInternal.setRecordSerializer(iRecord,getSerializer());
+      ORecordInternal.setRecordSerializer(iRecord, getSerializer());
       ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false, this);
 
       if (iRecord instanceof ODocument)

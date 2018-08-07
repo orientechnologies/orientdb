@@ -65,15 +65,15 @@ import java.util.stream.Collectors;
  * Created by tglman on 08/04/16.
  */
 public class OrientDBEmbedded implements OrientDBInternal {
-  protected final  Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
+  protected final  Map<String, OAbstractPaginatedStorage> storages       = new HashMap<>();
   protected final  Map<String, OSharedContext>            sharedContexts = new HashMap<>();
-  protected final  Set<ODatabasePoolInternal>             pools    = new HashSet<>();
+  protected final  Set<ODatabasePoolInternal>             pools          = new HashSet<>();
   protected final  OrientDBConfig                         configurations;
   protected final  String                                 basePath;
   protected final  OEngine                                memory;
   protected final  OEngine                                disk;
   protected final  Orient                                 orient;
-  private volatile boolean                                open     = true;
+  private volatile boolean                                open           = true;
   private          ExecutorService                        executor;
   private          Timer                                  timer;
 

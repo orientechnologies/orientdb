@@ -425,15 +425,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void preCloseSteps() {
-    super.preCloseSteps();
-
-    if (fuzzyCheckpointTask != null) {
-      fuzzyCheckpointTask.cancel(false);
-    }
-  }
-
-  @Override
   protected void preCreateSteps() throws IOException {
     dirtyFlag.create();
   }
@@ -525,6 +516,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       fuzzyCheckpointTask = fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
           OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(),
           OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(), TimeUnit.SECONDS);
+    }
 
     final String configWalPath = getConfiguration().getContextConfiguration().getValueAsString(OGlobalConfiguration.WAL_LOCATION);
     Path walPath;
@@ -608,6 +600,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   protected Map<String, Object> preCloseSteps() {
     final Map<String, Object> params = super.preCloseSteps();
     params.put("segmentAdderExecutor", segmentAdderExecutor);
+
+    if (fuzzyCheckpointTask != null) {
+      fuzzyCheckpointTask.cancel(false);
+    }
 
     return params;
   }

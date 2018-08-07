@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
 import java.util.Map;
+import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;

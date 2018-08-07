@@ -1,7 +1,10 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -14,7 +17,6 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeRes
 import com.orientechnologies.orient.server.distributed.impl.transaction.OTransactionFirstPhaseOperation;
 import com.orientechnologies.orient.server.distributed.impl.transaction.OTransactionFirstPhaseResult;
 import com.orientechnologies.orient.server.distributed.impl.transaction.OTransactionSubmit;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -6,7 +6,13 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -14,7 +20,7 @@ import java.util.stream.Collectors;
  */
 public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
-  protected String className;
+  protected String               className;
   protected boolean              orderByRidAsc  = false;
   protected boolean              orderByRidDesc = false;
   protected List<OExecutionStep> subSteps       = new ArrayList<>();

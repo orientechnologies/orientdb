@@ -1812,7 +1812,7 @@ public class OSelectExecutionPlanner {
     if (result == null) {
       result = new ArrayList<>();
       OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass);
-      if(clazz==null){
+      if (clazz == null) {
         clazz = ctx.getDatabase().getMetadata().getSchema().getView(targetClass);
       }
       if (clazz == null) {

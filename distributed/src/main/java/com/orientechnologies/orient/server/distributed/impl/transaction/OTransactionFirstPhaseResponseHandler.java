@@ -1,6 +1,10 @@
 package com.orientechnologies.orient.server.distributed.impl.transaction;
 
-import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedCoordinator;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeResponse;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ORequestContext;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OResponseHandler;
 
 public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
   @Override

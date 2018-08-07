@@ -14,7 +14,11 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedExecutor;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeRequest;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeResponse;
 import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
 
 import java.util.ArrayList;

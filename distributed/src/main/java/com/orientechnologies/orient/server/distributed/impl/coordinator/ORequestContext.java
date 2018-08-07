@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ORequestContext {

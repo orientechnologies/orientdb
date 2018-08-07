@@ -515,8 +515,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
   private class RecreateIndexesTask implements Runnable {
     private final OSharedContext ctx;
-    private       int      ok;
-    private       int      errors;
+    private       int            ok;
+    private       int            errors;
 
     public RecreateIndexesTask(OSharedContext ctx) {
       this.ctx = ctx;

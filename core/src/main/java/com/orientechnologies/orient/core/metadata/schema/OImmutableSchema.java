@@ -308,7 +308,8 @@ public class OImmutableSchema implements OSchema {
     throw new UnsupportedOperationException();
   }
 
-  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata) {
+  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement,
+      Map<String, Object> metadata) {
     throw new UnsupportedOperationException();
   }
 
