@@ -13,6 +13,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
 
@@ -2107,6 +2109,16 @@ public class OSelectExecutionPlanner {
                 indexKeyValue.getSubBlocks().add(condition);
                 blockIterator.remove();
                 break;
+              } else if (operator instanceof OContainsKeyOperator && isMap(clazz, indexField) && isIndexByKey(index, indexField)) {
+                found = true;
+                indexFieldFound = true;
+                OBinaryCondition condition = new OBinaryCondition(-1);
+                condition.setLeft(left);
+                condition.setOperator(operator);
+                condition.setRight(((OBinaryCondition) singleExp).getRight().copy());
+                indexKeyValue.getSubBlocks().add(condition);
+                blockIterator.remove();
+                break;
               } else if (allowsRange && operator.isRangeOperator()) {
                 found = true;
                 indexFieldFound = true;
@@ -2128,6 +2140,23 @@ public class OSelectExecutionPlanner {
                 }
                 break;
               }
+            }
+          }
+        } else if (singleExp instanceof OContainsValueCondition && ((OContainsValueCondition) singleExp).getExpression() != null
+            && isMap(clazz, indexField) && isIndexByValue(index, indexField)) {
+          OExpression left = ((OContainsValueCondition) singleExp).getLeft();
+          if (left.isBaseIdentifier()) {
+            String fieldName = left.getDefaultAlias().getStringValue();
+            if (indexField.equals(fieldName)) {
+              found = true;
+              indexFieldFound = true;
+              OBinaryCondition condition = new OBinaryCondition(-1);
+              condition.setLeft(left);
+              condition.setOperator(new OContainsValueOperator(-1));
+              condition.setRight(((OContainsValueCondition) singleExp).getExpression().copy());
+              indexKeyValue.getSubBlocks().add(condition);
+              blockIterator.remove();
+              break;
             }
           }
         } else if (singleExp instanceof OContainsAnyCondition) {
@@ -2196,6 +2225,34 @@ public class OSelectExecutionPlanner {
       return result;
     }
     return null;
+  }
+
+  private boolean isIndexByKey(OIndex<?> index, String field) {
+    OIndexDefinition def = index.getDefinition();
+    for (String o : def.getFieldsToIndex()) {
+      if (o.equalsIgnoreCase(field + " by key")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isIndexByValue(OIndex<?> index, String field) {
+    OIndexDefinition def = index.getDefinition();
+    for (String o : def.getFieldsToIndex()) {
+      if (o.equalsIgnoreCase(field + " by value")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isMap(OClass clazz, String indexField) {
+    OProperty prop = clazz.getProperty(indexField);
+    if (prop == null) {
+      return false;
+    }
+    return prop.getType() == OType.EMBEDDEDMAP;
   }
 
   private boolean createsRangeWith(OBinaryCondition left, OBooleanExpression next) {

@@ -517,7 +517,7 @@ public class OSelectStatementExecutionTest {
     elem.save();
 
     try {
-      OResultSet result = db.query("select count(*) from " + className+" where name = 'foo'");
+      OResultSet result = db.query("select count(*) from " + className + " where name = 'foo'");
       printExecutionPlan(result);
       Assert.assertNotNull(result);
       Assert.assertTrue(result.hasNext());
@@ -3696,4 +3696,86 @@ public class OSelectStatementExecutionTest {
     }
   }
 
+  @Test
+  public void testMapByKeyIndex() {
+    String className = "testMapByKeyIndex";
+
+    OClass clazz1 = db.createClassIfNotExist(className);
+    OProperty prop = clazz1.createProperty("themap", OType.EMBEDDEDMAP);
+
+    db.command("CREATE INDEX " + className + ".themap ON " + className + "(themap by key) NOTUNIQUE");
+
+    for (int i = 0; i < 100; i++) {
+      Map<String, Object> theMap = new HashMap<>();
+      theMap.put("key" + i, "val" + i);
+      OElement elem1 = db.newElement(className);
+      elem1.setProperty("themap", theMap);
+      elem1.save();
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where themap CONTAINSKEY ?", "key10")) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Map<String, Object> map = item.getProperty("themap");
+      Assert.assertEquals("key10", map.keySet().iterator().next());
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
+
+  @Test
+  public void testMapByKeyIndexMultiple() {
+    String className = "testMapByKeyIndexMultiple";
+
+    OClass clazz1 = db.createClassIfNotExist(className);
+    clazz1.createProperty("themap", OType.EMBEDDEDMAP);
+    clazz1.createProperty("thestring", OType.STRING);
+
+    db.command("CREATE INDEX " + className + ".themap_thestring ON " + className + "(themap by key, thestring) NOTUNIQUE");
+
+    for (int i = 0; i < 100; i++) {
+      Map<String, Object> theMap = new HashMap<>();
+      theMap.put("key" + i, "val" + i);
+      OElement elem1 = db.newElement(className);
+      elem1.setProperty("themap", theMap);
+      elem1.setProperty("thestring", "thestring" + i);
+      elem1.save();
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where themap CONTAINSKEY ? AND thestring = ?", "key10", "thestring10")) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Map<String, Object> map = item.getProperty("themap");
+      Assert.assertEquals("key10", map.keySet().iterator().next());
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
+
+  @Test
+  public void testMapByValueIndex() {
+    String className = "testMapByValueIndex";
+
+    OClass clazz1 = db.createClassIfNotExist(className);
+    OProperty prop = clazz1.createProperty("themap", OType.EMBEDDEDMAP, OType.STRING);
+
+    db.command("CREATE INDEX " + className + ".themap ON " + className + "(themap by value) NOTUNIQUE");
+
+    for (int i = 0; i < 100; i++) {
+      Map<String, Object> theMap = new HashMap<>();
+      theMap.put("key" + i, "val" + i);
+      OElement elem1 = db.newElement(className);
+      elem1.setProperty("themap", theMap);
+      elem1.save();
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where themap CONTAINSVALUE ?", "val10")) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Map<String, Object> map = item.getProperty("themap");
+      Assert.assertEquals("key10", map.keySet().iterator().next());
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
 }

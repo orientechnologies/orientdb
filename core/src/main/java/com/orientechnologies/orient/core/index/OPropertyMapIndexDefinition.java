@@ -26,9 +26,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.*;
 
 /**
- * Index implementation bound to one schema class property that presents
- * {@link com.orientechnologies.orient.core.metadata.schema.OType#EMBEDDEDMAP or
- * 
+ * Index implementation bound to one schema class property that presents {@link com.orientechnologies.orient.core.metadata.schema.OType#EMBEDDEDMAP
+ * or
+ *
  * @link com.orientechnologies.orient.core.metadata.schema.OType#LINKMAP} property.
  */
 public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiValue {
@@ -82,9 +82,14 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 
     final Collection<?> mapParams = extractMapParams((Map<?, ?>) params[0]);
 
-    final List<Object> result = new ArrayList<Object>(mapParams.size());
+    final List<Object> result = new ArrayList<>(mapParams.size());
     for (final Object mapParam : mapParams) {
-      result.add(createSingleValue(mapParam));
+      Object val = createSingleValue(mapParam);
+      result.add(val);
+    }
+
+    if (getFieldsToIndex().size() == 1 && result.size() == 1) {
+      return result.get(0);
     }
 
     return result;
@@ -103,7 +108,7 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
   @Override
   protected void serializeFromStream() {
     super.serializeFromStream();
-    indexBy = INDEX_BY.valueOf(document.<String> field("mapIndexBy"));
+    indexBy = INDEX_BY.valueOf(document.<String>field("mapIndexBy"));
   }
 
   private Collection<?> extractMapParams(Map<?, ?> map) {
@@ -198,7 +203,7 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
   }
 
   @Override
-  public String toCreateIndexDDL(String indexName, String indexType,String engine) {
+  public String toCreateIndexDDL(String indexName, String indexType, String engine) {
     final StringBuilder ddl = new StringBuilder("create index `");
 
     ddl.append(indexName).append("` on `");
