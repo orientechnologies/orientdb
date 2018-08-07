@@ -1089,6 +1089,9 @@ OStatement StatementInternal():
                 LOOKAHEAD(DropClassStatement())
                 result = DropClassStatement()
                 |
+                LOOKAHEAD(DropViewStatement())
+                result = DropViewStatement()
+                |
                 LOOKAHEAD(AlterPropertyStatement())
                 result = AlterPropertyStatement()
                 |
@@ -4264,6 +4267,16 @@ ODropClassStatement DropClassStatement():
 	[ <UNSAFE> { jjtThis.unsafe = true; } ]
 	{ return jjtThis; }
 }
+
+ODropViewStatement DropViewStatement():
+{}
+{
+	<DROP> <VIEW>
+	jjtThis.name = Identifier()
+	[ <IF> <EXISTS> { jjtThis.ifExists = true; } ]
+	{ return jjtThis; }
+}
+
 
 void IfNotExists():{}
 {

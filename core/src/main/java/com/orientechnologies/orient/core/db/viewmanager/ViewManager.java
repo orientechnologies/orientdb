@@ -164,6 +164,12 @@ public class ViewManager {
       }
       db.save(newRow, clusterName);
     }
+    view = db.getMetadata().getSchema().getView(view.getName());
+    if (view == null) {
+      //the view was dropped in the meantime
+      db.dropCluster(clusterName, false);
+      return;
+    }
     lockView(view);
     view.addClusterId(cluster);
     for (int i : view.getClusterIds()) {
