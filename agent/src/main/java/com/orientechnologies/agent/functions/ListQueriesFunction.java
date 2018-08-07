@@ -46,6 +46,13 @@ public class ListQueriesFunction extends OSQLEnterpriseFunction {
             }
             return q;
           })).orElse("");
+
+          String user = "-";
+
+          if (c.getDatabase() != null && c.getDatabase().getUser() != null) {
+            user = c.getDatabase().getUser().getName();
+          }
+          internal.setProperty("user", user);
           internal.setProperty("query", query);
           if (resultSet instanceof OLocalResultSetLifecycleDecorator) {
             OResultSet oResultSet = ((OLocalResultSetLifecycleDecorator) resultSet).getInternal();
