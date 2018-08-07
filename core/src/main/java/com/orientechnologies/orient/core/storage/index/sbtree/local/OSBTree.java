@@ -24,6 +24,7 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
@@ -87,15 +88,15 @@ public class OSBTree<K, V> extends ODurableComponent {
   private final static long                  ROOT_INDEX       = 0;
   private final        Comparator<? super K> comparator       = ODefaultComparator.INSTANCE;
   private final        String                nullFileExtension;
-  private       long                 fileId;
-  private       long                 nullBucketFileId = -1;
-  private       int                  keySize;
-  private       OBinarySerializer<K> keySerializer;
-  private       OType[]              keyTypes;
-  private       OBinarySerializer<V> valueSerializer;
-  private       boolean              nullPointerSupport;
-  private final AtomicLong           bonsayFileId     = new AtomicLong(0);
-  private       OEncryption          encryption;
+  private              long                  fileId;
+  private              long                  nullBucketFileId = -1;
+  private              int                   keySize;
+  private              OBinarySerializer<K>  keySerializer;
+  private              OType[]               keyTypes;
+  private              OBinarySerializer<V>  valueSerializer;
+  private              boolean               nullPointerSupport;
+  private final        AtomicLong            bonsayFileId     = new AtomicLong(0);
+  private              OEncryption           encryption;
 
   public OSBTree(String name, String dataFileExtension, String nullFileExtension, OAbstractPaginatedStorage storage) {
     super(storage, name, dataFileExtension, name + dataFileExtension);
@@ -704,23 +705,16 @@ public class OSBTree<K, V> extends ODurableComponent {
     return removedValue;
   }
 
-  public V removeKey(OAtomicOperation atomicOperation, BucketSearchResult bucketSearchResult) throws IOException {
-    V removedValue;
+  public byte[] removeKey(OAtomicOperation atomicOperation, BucketSearchResult bucketSearchResult) throws IOException {
+    byte[] removedValue;
     OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false);
     try {
       OSBTreeBucket<K, V> keyBucket = new OSBTreeBucket<K, V>(keyBucketCacheEntry, keySerializer, keyTypes, valueSerializer,
           encryption);
 
-      final OSBTreeValue<V> removed = keyBucket.getEntry(bucketSearchResult.itemIndex).value;
-      final V value = readValue(removed, atomicOperation);
-
-      long removedValueLink = keyBucket.remove(bucketSearchResult.itemIndex);
-      if (removedValueLink >= 0)
-        removeLinkedValue(removedValueLink, atomicOperation);
-
+      removedValue = keyBucket.getRawValue(bucketSearchResult.itemIndex);
+      keyBucket.remove(bucketSearchResult.itemIndex, null, removedValue);
       updateSize(-1, atomicOperation);
-
-      removedValue = value;
     } finally {
       releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
     }
@@ -1437,12 +1431,13 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       int indexToSplit = bucketSize >>> 1;
       final K separationKey = bucketToSplit.getKey(indexToSplit);
-      final List<OSBTreeBucket.SBTreeEntry<K, V>> rightEntries = new ArrayList<OSBTreeBucket.SBTreeEntry<K, V>>(indexToSplit);
+      final List<byte[]> rightEntries = new ArrayList<>(indexToSplit);
 
       final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
 
-      for (int i = startRightIndex; i < bucketSize; i++)
-        rightEntries.add(bucketToSplit.getEntry(i));
+      for (int i = startRightIndex; i < bucketSize; i++) {
+        rightEntries.add(bucketToSplit.getRawEntry(i));
+      }
 
       if (pageIndex != ROOT_INDEX) {
         return splitNonRootBucket(path, keyIndex, keyToInsert, pageIndex, bucketToSplit, splitLeaf, indexToSplit, separationKey,
@@ -1457,8 +1452,8 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private BucketSearchResult splitNonRootBucket(List<Long> path, int keyIndex, K keyToInsert, long pageIndex,
-      OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey,
-      List<OSBTreeBucket.SBTreeEntry<K, V>> rightEntries, OAtomicOperation atomicOperation) throws IOException {
+      OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey, List<byte[]> rightEntries,
+      OAtomicOperation atomicOperation) throws IOException {
     OCacheEntry rightBucketEntry = addPage(atomicOperation, fileId);
 
     try {
@@ -1539,15 +1534,16 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private BucketSearchResult splitRootBucket(List<Long> path, int keyIndex, K keyToInsert, long pageIndex, OCacheEntry bucketEntry,
-      OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey,
-      List<OSBTreeBucket.SBTreeEntry<K, V>> rightEntries, OAtomicOperation atomicOperation) throws IOException {
+      OSBTreeBucket<K, V> bucketToSplit, boolean splitLeaf, int indexToSplit, K separationKey, List<byte[]> rightEntries,
+      OAtomicOperation atomicOperation) throws IOException {
     final long freeListPage = bucketToSplit.getValuesFreeListFirstIndex();
     final long treeSize = bucketToSplit.getTreeSize();
 
-    final List<OSBTreeBucket.SBTreeEntry<K, V>> leftEntries = new ArrayList<OSBTreeBucket.SBTreeEntry<K, V>>(indexToSplit);
+    final List<byte[]> leftEntries = new ArrayList<>(indexToSplit);
 
-    for (int i = 0; i < indexToSplit; i++)
-      leftEntries.add(bucketToSplit.getEntry(i));
+    for (int i = 0; i < indexToSplit; i++) {
+      leftEntries.add(bucketToSplit.getRawEntry(i));
+    }
 
     OCacheEntry leftBucketEntry = addPage(atomicOperation, fileId);
 
