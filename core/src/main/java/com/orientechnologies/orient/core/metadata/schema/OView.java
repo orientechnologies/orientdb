@@ -10,4 +10,6 @@ public interface OView extends OClass {
   List<String> getWatchClasses();
 
   String getOriginRidField();
+
+  boolean isUpdatable();
 }

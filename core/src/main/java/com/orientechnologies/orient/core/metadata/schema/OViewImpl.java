@@ -119,4 +119,9 @@ public abstract class OViewImpl extends OClassImpl implements OView {
   public String getOriginRidField() {
     return cfg.getOriginRidField();
   }
+
+  @Override
+  public boolean isUpdatable() {
+    return cfg.isUpdatable();
+  }
 }

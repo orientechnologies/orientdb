@@ -7,8 +7,9 @@ public class OImmutableView extends OImmutableClass implements OView {
 
   private final int          updateIntervalSeconds;
   private final List<String> watchClasses;
-  String query;
-  private String originRidField;
+  private       String       query;
+  private       String       originRidField;
+  private       boolean      updatable;
 
   public OImmutableView(OView view, OImmutableSchema schema) {
     super(view, schema);
@@ -16,6 +17,7 @@ public class OImmutableView extends OImmutableClass implements OView {
     this.updateIntervalSeconds = view.getUpdateIntervalSeconds();
     this.watchClasses = view.getWatchClasses() == null ? null : new ArrayList<>(view.getWatchClasses());
     this.originRidField = view.getOriginRidField();
+    this.updatable = view.isUpdatable();
   }
 
   @Override
@@ -35,5 +37,9 @@ public class OImmutableView extends OImmutableClass implements OView {
 
   public String getOriginRidField() {
     return originRidField;
+  }
+
+  public boolean isUpdatable() {
+    return updatable;
   }
 }
