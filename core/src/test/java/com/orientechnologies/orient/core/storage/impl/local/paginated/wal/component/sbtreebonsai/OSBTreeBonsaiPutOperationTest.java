@@ -35,14 +35,12 @@ public class OSBTreeBonsaiPutOperationTest {
     final OSBTreeBonsaiPutOperation restoredPutOperation = new OSBTreeBonsaiPutOperation();
     offset = restoredPutOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
-    Assert.assertEquals(putOperation, restoredPutOperation);
 
     Assert.assertEquals(unitId, putOperation.getOperationUnitId());
     Assert.assertEquals(fileId, putOperation.getFileId());
     Assert.assertEquals(pointer, putOperation.getPointer());
     Assert.assertArrayEquals(key, putOperation.getKey());
     Assert.assertArrayEquals(value, putOperation.getValue());
-    Assert.assertArrayEquals(oldValue, putOperation.getOldValue());
   }
 
   @Test
@@ -67,14 +65,12 @@ public class OSBTreeBonsaiPutOperationTest {
     final OSBTreeBonsaiPutOperation restoredPutOperation = new OSBTreeBonsaiPutOperation();
     offset = restoredPutOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
-    Assert.assertEquals(putOperation, restoredPutOperation);
 
     Assert.assertEquals(unitId, putOperation.getOperationUnitId());
     Assert.assertEquals(fileId, putOperation.getFileId());
     Assert.assertEquals(pointer, putOperation.getPointer());
     Assert.assertArrayEquals(key, putOperation.getKey());
     Assert.assertArrayEquals(value, putOperation.getValue());
-    Assert.assertArrayEquals(null, putOperation.getOldValue());
   }
 
   @Test
@@ -104,14 +100,12 @@ public class OSBTreeBonsaiPutOperationTest {
     final OSBTreeBonsaiPutOperation restoredPutOperation = new OSBTreeBonsaiPutOperation();
     final int offset = restoredPutOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
-    Assert.assertEquals(putOperation, restoredPutOperation);
 
     Assert.assertEquals(unitId, putOperation.getOperationUnitId());
     Assert.assertEquals(fileId, putOperation.getFileId());
     Assert.assertEquals(pointer, putOperation.getPointer());
     Assert.assertArrayEquals(key, putOperation.getKey());
     Assert.assertArrayEquals(value, putOperation.getValue());
-    Assert.assertArrayEquals(oldValue, putOperation.getOldValue());
   }
 
   @Test
@@ -139,13 +133,11 @@ public class OSBTreeBonsaiPutOperationTest {
     final OSBTreeBonsaiPutOperation restoredPutOperation = new OSBTreeBonsaiPutOperation();
     final int offset = restoredPutOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
-    Assert.assertEquals(putOperation, restoredPutOperation);
 
     Assert.assertEquals(unitId, putOperation.getOperationUnitId());
     Assert.assertEquals(fileId, putOperation.getFileId());
     Assert.assertEquals(pointer, putOperation.getPointer());
     Assert.assertArrayEquals(key, putOperation.getKey());
     Assert.assertArrayEquals(value, putOperation.getValue());
-    Assert.assertArrayEquals(null, putOperation.getOldValue());
   }
 }

@@ -53,6 +53,7 @@ public final class OAllocatePositionOperation extends OClusterOperation {
 
     recordType = content[offset];
     offset++;
+
     return offset;
   }
 

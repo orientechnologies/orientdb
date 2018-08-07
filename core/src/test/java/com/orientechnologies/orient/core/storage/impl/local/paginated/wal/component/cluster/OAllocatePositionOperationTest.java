@@ -28,11 +28,9 @@ public class OAllocatePositionOperationTest {
     final OAllocatePositionOperation restoredAllocatePositionOperation = new OAllocatePositionOperation();
     offset = restoredAllocatePositionOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
-    Assert.assertEquals(allocatePositionOperation, restoredAllocatePositionOperation);
 
     Assert.assertEquals(unitId, restoredAllocatePositionOperation.getOperationUnitId());
     Assert.assertEquals(42, restoredAllocatePositionOperation.getClusterId());
-    Assert.assertEquals(78, restoredAllocatePositionOperation.getPosition());
     Assert.assertEquals(2, restoredAllocatePositionOperation.getRecordType());
   }
 
@@ -50,11 +48,9 @@ public class OAllocatePositionOperationTest {
     final OAllocatePositionOperation restoredAllocatePositionOperation = new OAllocatePositionOperation();
     final int offset = restoredAllocatePositionOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
-    Assert.assertEquals(allocatePositionOperation, restoredAllocatePositionOperation);
 
     Assert.assertEquals(unitId, restoredAllocatePositionOperation.getOperationUnitId());
     Assert.assertEquals(42, restoredAllocatePositionOperation.getClusterId());
-    Assert.assertEquals(78, restoredAllocatePositionOperation.getPosition());
     Assert.assertEquals(2, restoredAllocatePositionOperation.getRecordType());
   }
 }

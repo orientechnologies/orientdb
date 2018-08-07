@@ -33,13 +33,11 @@ public class OSBTreeBonsaiRemoveOperationTest {
     final OSBTreeBonsaiRemoveOperation restoredRemoveOperation = new OSBTreeBonsaiRemoveOperation();
     offset = restoredRemoveOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
-    Assert.assertEquals(removeOperation, restoredRemoveOperation);
 
     Assert.assertEquals(unitId, restoredRemoveOperation.getOperationUnitId());
     Assert.assertEquals(fileId, restoredRemoveOperation.getFileId());
     Assert.assertEquals(pointer, restoredRemoveOperation.getPointer());
     Assert.assertArrayEquals(key, restoredRemoveOperation.getKey());
-    Assert.assertArrayEquals(value, restoredRemoveOperation.getValue());
   }
 
   @Test
@@ -67,12 +65,10 @@ public class OSBTreeBonsaiRemoveOperationTest {
     final OSBTreeBonsaiRemoveOperation restoredRemoveOperation = new OSBTreeBonsaiRemoveOperation();
     final int offset = restoredRemoveOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
-    Assert.assertEquals(removeOperation, restoredRemoveOperation);
 
     Assert.assertEquals(unitId, restoredRemoveOperation.getOperationUnitId());
     Assert.assertEquals(fileId, restoredRemoveOperation.getFileId());
     Assert.assertEquals(pointer, restoredRemoveOperation.getPointer());
     Assert.assertArrayEquals(key, restoredRemoveOperation.getKey());
-    Assert.assertArrayEquals(value, restoredRemoveOperation.getValue());
   }
 }

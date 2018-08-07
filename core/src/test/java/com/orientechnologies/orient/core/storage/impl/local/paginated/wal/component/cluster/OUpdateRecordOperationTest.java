@@ -29,7 +29,6 @@ public class OUpdateRecordOperationTest {
     final OUpdateRecordOperation restoredUpdateRecordOperation = new OUpdateRecordOperation();
     offset = restoredUpdateRecordOperation.fromStream(content, 1);
     Assert.assertEquals(content.length, offset);
-    Assert.assertEquals(updateRecordOperation, restoredUpdateRecordOperation);
 
     Assert.assertEquals(unitId, restoredUpdateRecordOperation.getOperationUnitId());
     Assert.assertEquals(42, restoredUpdateRecordOperation.getClusterId());
@@ -37,9 +36,6 @@ public class OUpdateRecordOperationTest {
     Assert.assertArrayEquals(record, restoredUpdateRecordOperation.getRecord());
     Assert.assertEquals(73, restoredUpdateRecordOperation.getRecordVersion());
     Assert.assertEquals(2, restoredUpdateRecordOperation.getRecordType());
-    Assert.assertArrayEquals(prevRecord, restoredUpdateRecordOperation.getPrevRecord());
-    Assert.assertEquals(85, restoredUpdateRecordOperation.getPrevRecordVersion());
-    Assert.assertEquals(3, restoredUpdateRecordOperation.getPrevRecordType());
   }
 
   @Test
@@ -63,7 +59,6 @@ public class OUpdateRecordOperationTest {
     final OUpdateRecordOperation restoredUpdateRecordOperation = new OUpdateRecordOperation();
     final int offset = restoredUpdateRecordOperation.fromStream(buffer.array(), 1);
     Assert.assertEquals(serializedSize + 1, offset);
-    Assert.assertEquals(updateRecordOperation, restoredUpdateRecordOperation);
 
     Assert.assertEquals(unitId, restoredUpdateRecordOperation.getOperationUnitId());
     Assert.assertEquals(42, restoredUpdateRecordOperation.getClusterId());
@@ -71,8 +66,5 @@ public class OUpdateRecordOperationTest {
     Assert.assertArrayEquals(record, restoredUpdateRecordOperation.getRecord());
     Assert.assertEquals(73, restoredUpdateRecordOperation.getRecordVersion());
     Assert.assertEquals(2, restoredUpdateRecordOperation.getRecordType());
-    Assert.assertArrayEquals(prevRecord, restoredUpdateRecordOperation.getPrevRecord());
-    Assert.assertEquals(85, restoredUpdateRecordOperation.getPrevRecordVersion());
-    Assert.assertEquals(3, restoredUpdateRecordOperation.getPrevRecordType());
   }
 }

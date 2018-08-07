@@ -7,6 +7,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOpera
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Objects;
 
 public final class ODeleteRecordOperation extends OClusterOperation {
   private long clusterPosition;
@@ -87,6 +89,26 @@ public final class ODeleteRecordOperation extends OClusterOperation {
   @Override
   public byte getId() {
     return WALRecordTypes.DELETE_RECORD_OPERATION;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    if (!super.equals(o))
+      return false;
+    ODeleteRecordOperation that = (ODeleteRecordOperation) o;
+    return clusterPosition == that.clusterPosition && recordVersion == that.recordVersion && recordType == that.recordType && Arrays
+        .equals(record, that.record);
+  }
+
+  @Override
+  public int hashCode() {
+    int result = Objects.hash(super.hashCode(), clusterPosition, recordVersion, recordType);
+    result = 31 * result + Arrays.hashCode(record);
+    return result;
   }
 }
 
