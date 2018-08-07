@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.mocktx;
 
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -32,15 +33,21 @@ public class CoordinatorTxTest {
   @Before
   public void before() {
     this.one = OrientDBInternal.distributed("target/one/", OrientDBConfig.defaultConfig()).newOrientDB();
+    this.one.create("none",ODatabaseType.MEMORY);
     this.two = OrientDBInternal.distributed("target/two/", OrientDBConfig.defaultConfig()).newOrientDB();
+    this.two.create("none",ODatabaseType.MEMORY);
     this.three = OrientDBInternal.distributed("target/three/", OrientDBConfig.defaultConfig()).newOrientDB();
+    this.three.create("none",ODatabaseType.MEMORY);
   }
 
   @Test
   public void testTxCoordinator() throws InterruptedException {
-    ODistributedExecutor eOne = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(), this.one);
-    ODistributedExecutor eTwo = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(), this.two);
-    ODistributedExecutor eThree = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(), this.three);
+    ODistributedExecutor eOne = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(), this.one,
+        "none");
+    ODistributedExecutor eTwo = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(), this.two,
+        "none");
+    ODistributedExecutor eThree = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(), this.three,
+        "none");
 
     ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), new MockOperationLog());
 
@@ -97,7 +104,7 @@ public class CoordinatorTxTest {
     @Override
     public void sendResponse(OLogId id, ONodeResponse nodeResponse) {
       //This in real case should do a network call on the side of the executor node and this call should be in the coordinator node.
-      coordinator.receive(id, nodeResponse);
+      coordinator.receive(member, id, nodeResponse);
     }
 
     @Override

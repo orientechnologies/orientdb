@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -95,7 +96,7 @@ public class ONewDistributedTransactionManager {
 
     try {
       localDistributedDatabase.getSyncConfiguration()
-          .setLastLSN(localNodeName, ((OLocalPaginatedStorage) storage.getUnderlying()).getLSN(), true);
+          .setLastLSN(localNodeName, ((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN(), true);
     } catch (IOException e) {
       ODistributedServerLog
           .debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.NONE,
@@ -122,7 +123,7 @@ public class ONewDistributedTransactionManager {
               return responseManager;
             }));
 
-    handleResponse(requestId, responseManager, involvedClusters, nodes, database);
+    handleResponse(requestId, responseManager, involvedClusters, nodes, database, iTx);
 
     // OK, DISTRIBUTED COMMIT SUCCEED
     return;
@@ -134,7 +135,7 @@ public class ONewDistributedTransactionManager {
   }
 
   private void handleResponse(ODistributedRequestId requestId, ONewDistributedResponseManager responseManager,
-      Set<String> involvedClusters, Set<String> nodes, ODatabaseDocumentDistributed database) {
+      Set<String> involvedClusters, Set<String> nodes, ODatabaseDocumentDistributed database, OTransactionInternal iTx) {
 
     int[] involvedClustersIds = new int[involvedClusters.size()];
     int i = 0;
@@ -178,7 +179,13 @@ public class ONewDistributedTransactionManager {
       }
       case OTxLockTimeout.ID:
         sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
-        throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId, 0);
+        throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId, database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
+      }
+
+      for (OTransactionResultPayload result : responseManager.getAllResponses()) {
+        if (result.getResponseType() == OTxException.ID) {
+          OLogManager.instance().warn(this, "One node on error", ((OTxException) result).getException());
+        }
       }
     } else {
       List<OTransactionResultPayload> results = responseManager.getAllResponses();
@@ -189,13 +196,15 @@ public class ONewDistributedTransactionManager {
         switch (result.getResponseType()) {
         case OTxLockTimeout.ID:
           sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
-          throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId, 0);
+          throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId, database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
         case OTxSuccess.ID:
           messages.add("success");
           break;
         case OTxConcurrentModification.ID:
-          messages.add(String.format("concurrent modification record: %s database version: %i",
-              ((OTxConcurrentModification) result).getRecordId().toString(), ((OTxConcurrentModification) result).getVersion()));
+          ORecordId recordId = ((OTxConcurrentModification) result).getRecordId();
+          messages.add(String
+              .format("concurrent modification record: %s database version: %d transaction version: %d", recordId.toString(),
+                  ((OTxConcurrentModification) result).getVersion(), iTx.getRecordEntry(recordId).getRecord().getVersion()));
           break;
         case OTxException.ID:
           exceptions.add(((OTxException) result).getException());

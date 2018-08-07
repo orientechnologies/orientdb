@@ -2139,6 +2139,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
     OSubscribeLiveQueryRequest request = new OSubscribeLiveQueryRequest(query, params);
     OSubscribeLiveQueryResponse response = pushThread.subscribe(request, getCurrentSession());
+    if (response == null) {
+      throw new ODatabaseException("Impossible to start the live query, check server log for additional information");
+    }
     registerLiveListener(response.getMonitorId(), listener);
     return new OLiveQueryMonitorRemote(database, response.getMonitorId());
   }
@@ -2147,6 +2150,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       Map<String, ?> params) {
     OSubscribeLiveQueryRequest request = new OSubscribeLiveQueryRequest(query, (Map<String, Object>) params);
     OSubscribeLiveQueryResponse response = pushThread.subscribe(request, getCurrentSession());
+    if (response == null) {
+      throw new ODatabaseException("Impossible to start the live query, check server log for additional information");
+    }
     registerLiveListener(response.getMonitorId(), listener);
     return new OLiveQueryMonitorRemote(database, response.getMonitorId());
   }

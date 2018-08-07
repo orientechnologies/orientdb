@@ -27,13 +27,21 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
   private final Map<ORID, ORecord> createdRecords = new HashMap<>();
   private final Map<ORID, ORecord> updatedRecords = new HashMap<>();
   private final Set<ORID>          deletedRecord  = new HashSet<>();
+  private List<ORecordOperation> changes;
 
   public OTransactionOptimisticDistributed(ODatabaseDocumentInternal database, List<ORecordOperation> changes) {
     super(database);
+    this.changes = changes;
+  }
+
+  @Override
+  public void begin() {
+    super.begin();
     for (ORecordOperation change : changes) {
       allEntries.put(change.getRID(), change);
       resolveTracking(change);
     }
+
   }
 
   private void resolveTracking(ORecordOperation change) {

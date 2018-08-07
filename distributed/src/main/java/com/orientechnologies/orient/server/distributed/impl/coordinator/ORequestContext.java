@@ -1,8 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ORequestContext {
 
@@ -10,34 +9,63 @@ public class ORequestContext {
     STARTED, QUORUM_OK, QUORUM_KO
   }
 
-  private OSubmitRequest          submitRequest;
-  private ONodeRequest            nodeRequest;
-  private List<ONodeResponse>     responses = Collections.synchronizedList(new ArrayList<>());
-  private ODistributedCoordinator coordinator;
-  private int                     quorum;
-  private OResponseHandler        handler;
-  private Status                  status;
+  private OSubmitRequest                         submitRequest;
+  private ONodeRequest                           nodeRequest;
+  private Collection<ODistributedMember>         involvedMembers;
+  private Map<ODistributedMember, ONodeResponse> responses = new ConcurrentHashMap<>();
+  private ODistributedCoordinator                coordinator;
+  private int                                    quorum;
+  private OResponseHandler                       handler;
+  private TimerTask                              timerTask;
+  private OLogId                                 requestId;
 
-  public ORequestContext(ODistributedCoordinator coordinator, OSubmitRequest submitRequest, ONodeRequest nodeRequest, int quorum,
-      OResponseHandler handler) {
+  public ORequestContext(ODistributedCoordinator coordinator, OSubmitRequest submitRequest, ONodeRequest nodeRequest,
+      Collection<ODistributedMember> involvedMembers, OResponseHandler handler, OLogId requestId) {
     this.coordinator = coordinator;
     this.submitRequest = submitRequest;
     this.nodeRequest = nodeRequest;
-    this.quorum = quorum;
+    this.involvedMembers = involvedMembers;
     this.handler = handler;
-    this.status = Status.STARTED;
+    this.quorum = (involvedMembers.size() / 2) + 1;
+    this.requestId =requestId;
+
+    timerTask = new TimerTask() {
+      @Override
+      public void run() {
+        coordinator.executeOperation(() -> {
+          if (handler.timeout(coordinator, ORequestContext.this)  ) {
+            finish();
+          }
+        });
+      }
+    };
+
   }
 
-  public void receive(ONodeResponse response) {
-    responses.add(response);
-    status = handler.receive(coordinator, this, response, status);
+  public void finish() {
+    coordinator.finish(requestId);
   }
 
-  public List<ONodeResponse> getResponses() {
+  public void receive(ODistributedMember member, ONodeResponse response) {
+    responses.put(member, response);
+    if(handler.receive(coordinator, this, member, response)){
+      finish();
+    }
+  }
+
+  public Map<ODistributedMember, ONodeResponse> getResponses() {
     return responses;
   }
 
   public int getQuorum() {
     return quorum;
+  }
+
+  public TimerTask getTimerTask() {
+    return timerTask;
+  }
+
+  public Collection<ODistributedMember> getInvolvedMembers() {
+    return involvedMembers;
   }
 }

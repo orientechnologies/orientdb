@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
 import com.orientechnologies.orient.core.sql.executor.OQueryStats;
 import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Created by tglman on 15/06/16.
@@ -22,6 +23,8 @@ import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 public abstract class OSharedContext extends OListenerManger<OMetadataUpdateListener> {
   protected static final OProfiler PROFILER = Orient.instance().getProfiler();
 
+  protected OrientDBInternal               orientDB;
+  protected OStorage                       storage;
   protected OSchemaShared                  schema;
   protected OSecurity                      security;
   protected OIndexManagerAbstract          indexManager;
@@ -93,4 +96,16 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
   public abstract void reload(ODatabaseDocumentInternal database);
 
   public abstract void close();
+
+  public OStorage getStorage() {
+    return storage;
+  }
+
+  public OrientDBInternal getOrientDB() {
+    return orientDB;
+  }
+
+  public void setStorage(OStorage storage) {
+    this.storage = storage;
+  }
 }

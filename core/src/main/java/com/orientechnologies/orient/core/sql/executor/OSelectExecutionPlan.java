@@ -133,7 +133,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
       lastStep = newStep;
       copy.getSteps().add(newStep);
     }
-    copy.lastStep = copy.steps.get(copy.steps.size() - 1);
+    copy.lastStep = copy.steps.size() == 0 ? null : copy.steps.get(copy.steps.size() - 1);
     copy.location = this.location;
     copy.statement = this.statement;
     return copy;

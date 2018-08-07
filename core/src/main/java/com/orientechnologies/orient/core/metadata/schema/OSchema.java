@@ -20,12 +20,13 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface OSchema {
@@ -54,7 +55,7 @@ public interface OSchema {
 
   void dropClass(String iClassName);
 
-  <RET extends ODocumentWrapper> RET reload();
+  OSchema reload();
 
   boolean existsClass(String iClassName);
 
@@ -82,9 +83,17 @@ public interface OSchema {
 
   Collection<OClass> getClasses();
 
+  Collection<OView> getViews();
+
   OView getView(String name);
 
-  OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable);
+  OView createView(final String viewName, String statement);
+
+  OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata);
+
+  OView createView(OViewConfig config);
+
+  OView createView(OViewConfig config, ViewCreationListener listener);
 
   boolean existsView(String name);
 
@@ -97,14 +106,6 @@ public interface OSchema {
   int getVersion();
 
   ORID getIdentity();
-
-  /**
-   * Do nothing. Starting from 1.0rc2 the schema is auto saved!
-   *
-   * @COMPATIBILITY 1.0rc1
-   */
-  @Deprecated
-  <RET extends ODocumentWrapper> RET save();
 
   /**
    * Returns all the classes that rely on a cluster

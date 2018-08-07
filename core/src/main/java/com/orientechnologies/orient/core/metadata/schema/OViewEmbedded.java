@@ -22,12 +22,9 @@ import java.util.Locale;
 import java.util.concurrent.Callable;
 
 public class OViewEmbedded extends OViewImpl {
-  protected OViewEmbedded(OSchemaShared iOwner, String iName) {
-    super(iOwner, iName);
-  }
 
-  protected OViewEmbedded(OSchemaShared iOwner, String iName, int[] iClusterIds) {
-    super(iOwner, iName, iClusterIds);
+  protected OViewEmbedded(OSchemaShared iOwner, String iName, OViewConfig cfg, int[] iClusterIds) {
+    super(iOwner, iName, cfg, iClusterIds);
   }
 
   protected OViewEmbedded(OSchemaShared iOwner, ODocument iDocument, String iName) {
@@ -510,7 +507,7 @@ public class OViewEmbedded extends OViewImpl {
       if (defaultClusterId == NOT_EXISTENT_CLUSTER_ID)
         defaultClusterId = clusterId;
 
-      ((OSchemaEmbedded) owner).addClusterForClass(database, clusterId, this);
+      ((OSchemaEmbedded) owner).addClusterForView(database, clusterId, this);
       return this;
     } finally {
       releaseSchemaWriteLock();
@@ -822,7 +819,7 @@ public class OViewEmbedded extends OViewImpl {
           defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
       }
 
-      ((OSchemaEmbedded) owner).removeClusterForClass(database, clusterToRemove, this);
+      ((OSchemaEmbedded) owner).removeClusterForView(database, clusterToRemove, this);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -1019,7 +1016,7 @@ public class OViewEmbedded extends OViewImpl {
           for (int clusterId : getClusterIds()) {
             tryDropCluster(clusterId);
             removePolymorphicClusterId(clusterId);
-            ((OSchemaEmbedded) owner).removeClusterForClass(database, clusterId, this);
+            ((OSchemaEmbedded) owner).removeClusterForView(database, clusterId, this);
           }
 
           setClusterIds(new int[] { NOT_EXISTENT_CLUSTER_ID });

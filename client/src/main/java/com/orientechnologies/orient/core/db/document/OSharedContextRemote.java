@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OrientDBRemote;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
@@ -15,7 +16,9 @@ import com.orientechnologies.orient.core.storage.OStorage;
  */
 public class OSharedContextRemote extends OSharedContext {
 
-  public OSharedContextRemote(OStorage storage) {
+  public OSharedContextRemote(OStorage storage, OrientDBRemote orientDBRemote) {
+    this.orientDB = orientDBRemote;
+    this.storage = storage;
     schema = new OSchemaRemote();
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerRemote(storage);
@@ -32,7 +35,7 @@ public class OSharedContextRemote extends OSharedContext {
         schema.load(database);
         indexManager.load(database);
         //The Immutable snapshot should be after index and schema that require and before everything else that use it
-        schema.forceSnapshot();
+        schema.forceSnapshot(database);
         security.load();
         sequenceLibrary.load(database);
         schema.onPostIndexManagement();
@@ -51,13 +54,14 @@ public class OSharedContextRemote extends OSharedContext {
     security.close(false);
     indexManager.close();
     sequenceLibrary.close();
+    loaded = false;
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
-    schema.reload();
+    schema.reload(database);
     indexManager.reload();
     //The Immutable snapshot should be after index and schema that require and before everything else that use it
-    schema.forceSnapshot();
+    schema.forceSnapshot(database);
     security.load();
     scheduler.load(database);
   }

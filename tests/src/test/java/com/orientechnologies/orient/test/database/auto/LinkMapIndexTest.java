@@ -32,14 +32,12 @@ public class LinkMapIndexTest extends DocumentDBBaseTest {
     linkMapIndexTestClass.createIndex("mapIndexTestKey", OClass.INDEX_TYPE.NOTUNIQUE, "linkMap");
     linkMapIndexTestClass.createIndex("mapIndexTestValue", OClass.INDEX_TYPE.NOTUNIQUE, "linkMap by value");
 
-    database.getMetadata().getSchema().save();
   }
 
   @AfterClass
   public void destroySchema() {
     database.open("admin", "admin");
     database.getMetadata().getSchema().dropClass("LinkMapIndexTestClass");
-    database.getMetadata().getSchema().save();
     database.close();
   }
 

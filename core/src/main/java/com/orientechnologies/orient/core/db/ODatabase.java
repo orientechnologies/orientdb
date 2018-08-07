@@ -58,14 +58,11 @@ import java.util.function.Function;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
- * Limits:
- * <ul>
- * <li>Maximum records per cluster/class = <b>9.223.372.036 Billions</b>: 2^63 = 9.223.372.036.854.775.808 records</li>
+ * Limits: <ul> <li>Maximum records per cluster/class = <b>9.223.372.036 Billions</b>: 2^63 = 9.223.372.036.854.775.808 records</li>
  * <li>Maximum records per database = <b>302.231.454.903.657 Billions</b>: 2^15 clusters x 2^63 records = (2^78) 32.768 *
- * 9,223.372.036.854.775.808 = 302.231,454.903.657.293.676.544 records</li>
- * <li>Maximum storage per database = <b>19.807.040.628.566.084 Terabytes</b>: 2^31 data-segments x 2^63 bytes = (2^94)
- * 2.147.483.648 x 9,223.372.036.854.775.808 Exabytes = 19.807,040.628.566.084.398.385.987.584 Yottabytes</li>
- * </ul>
+ * 9,223.372.036.854.775.808 = 302.231,454.903.657.293.676.544 records</li> <li>Maximum storage per database =
+ * <b>19.807.040.628.566.084 Terabytes</b>: 2^31 data-segments x 2^63 bytes = (2^94) 2.147.483.648 x 9,223.372.036.854.775.808
+ * Exabytes = 19.807,040.628.566.084.398.385.987.584 Yottabytes</li> </ul>
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -854,14 +851,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   <RET extends OCommandRequest> RET command(OCommandRequest iCommand);
 
   /**
-   * Executes an SQL query. The result set has to be closed after usage
-   * <br><br>
-   * Sample usage:
+   * Executes an SQL query. The result set has to be closed after usage <br><br> Sample usage:
    * <p>
-   * <code>
-   * OResultSet rs = db.query("SELECT FROM V where name = ?", "John"); while(rs.hasNext()){ OResult item = rs.next(); ... }
-   * rs.close();
-   * </code>
+   * <code> OResultSet rs = db.query("SELECT FROM V where name = ?", "John"); while(rs.hasNext()){ OResult item = rs.next(); ... }
+   * rs.close(); </code>
    *
    * @param query the query string
    * @param args  query parameters (positional)
@@ -873,14 +866,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   }
 
   /**
-   * Executes an SQL query (idempotent). The result set has to be closed after usage
-   * <br><br>
-   * Sample usage:
+   * Executes an SQL query (idempotent). The result set has to be closed after usage <br><br> Sample usage:
    * <p>
-   * <code>
-   * Map&lt;String, Object&gt params = new HashMapMap&lt;&gt(); params.put("name", "John"); OResultSet rs = db.query("SELECT FROM V
-   * where name = :name", params); while(rs.hasNext()){ OResult item = rs.next(); ... } rs.close();
-   * </code>
+   * <code> Map&lt;String, Object&gt params = new HashMapMap&lt;&gt(); params.put("name", "John"); OResultSet rs = db.query("SELECT
+   * FROM V where name = :name", params); while(rs.hasNext()){ OResult item = rs.next(); ... } rs.close(); </code>
    *
    * @param query the query string
    * @param args  query parameters (named)
@@ -892,13 +881,9 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   }
 
   /**
-   * Executes a generic (idempotent or non idempotent) command. The result set has to be closed after usage
-   * <br><br>
-   * Sample usage:
+   * Executes a generic (idempotent or non idempotent) command. The result set has to be closed after usage <br><br> Sample usage:
    * <p>
-   * <code>
-   * OResultSet rs = db.command("INSERT INTO Person SET name = ?", "John"); ... rs.close();
-   * </code>
+   * <code> OResultSet rs = db.command("INSERT INTO Person SET name = ?", "John"); ... rs.close(); </code>
    *
    * @param query
    * @param args  query arguments
@@ -910,14 +895,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   }
 
   /**
-   * Executes a generic (idempotent or non idempotent) command. The result set has to be closed after usage
-   * <br><br>
-   * Sample usage:
+   * Executes a generic (idempotent or non idempotent) command. The result set has to be closed after usage <br><br> Sample usage:
    * <p>
-   * <code>
-   * Map&lt;String, Object&gt params = new HashMapMap&lt;&gt(); params.put("name", "John"); OResultSet rs = db.query("INSERT INTO
-   * Person SET name = :name", params); ... rs.close();
-   * </code>
+   * <code> Map&lt;String, Object&gt params = new HashMapMap&lt;&gt(); params.put("name", "John"); OResultSet rs = db.query("INSERT
+   * INTO Person SET name = :name", params); ... rs.close(); </code>
    *
    * @param query
    * @param args
@@ -929,16 +910,12 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   }
 
   /**
-   * Execute a script in a specified query language. The result set has to be closed after usage
-   * <br><br>
-   * Sample usage:
+   * Execute a script in a specified query language. The result set has to be closed after usage <br><br> Sample usage:
    * <p>
-   * <code>
-   * String script = "INSERT INTO Person SET name = 'foo', surname = ?;"+ "INSERT INTO Person SET name = 'bar', surname = ?;"+
-   * "INSERT INTO Person SET name = 'baz', surname = ?;";
+   * <code> String script = "INSERT INTO Person SET name = 'foo', surname = ?;"+ "INSERT INTO Person SET name = 'bar', surname =
+   * ?;"+ "INSERT INTO Person SET name = 'baz', surname = ?;";
    * <p>
-   * OResultSet rs = db.execute("sql", script, "Surname1", "Surname2", "Surname3"); ... rs.close();
-   * </code>
+   * OResultSet rs = db.execute("sql", script, "Surname1", "Surname2", "Surname3"); ... rs.close(); </code>
    *
    * @param language
    * @param script
@@ -952,19 +929,15 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   }
 
   /**
-   * Execute a script of a specified query language The result set has to be closed after usage
-   * <br><br>
-   * Sample usage:
+   * Execute a script of a specified query language The result set has to be closed after usage <br><br> Sample usage:
    * <p>
-   * <code>
-   * Map&lt;String, Object&gt params = new HashMapMap&lt;&gt(); params.put("surname1", "Jones"); params.put("surname2", "May");
-   * params.put("surname3", "Ali");
+   * <code> Map&lt;String, Object&gt params = new HashMapMap&lt;&gt(); params.put("surname1", "Jones"); params.put("surname2",
+   * "May"); params.put("surname3", "Ali");
    * <p>
    * String script = "INSERT INTO Person SET name = 'foo', surname = :surname1;"+ "INSERT INTO Person SET name = 'bar', surname =
    * :surname2;"+ "INSERT INTO Person SET name = 'baz', surname = :surname3;";
    * <p>
-   * OResultSet rs = db.execute("sql", script, params); ... rs.close();
-   * </code>
+   * OResultSet rs = db.execute("sql", script, params); ... rs.close(); </code>
    *
    * @param language
    * @param script

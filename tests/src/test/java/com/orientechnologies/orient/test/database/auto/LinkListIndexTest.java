@@ -32,7 +32,6 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     linkListIndexTestClass.createProperty("linkCollection", OType.LINKLIST);
 
     linkListIndexTestClass.createIndex("linkCollectionIndex", OClass.INDEX_TYPE.NOTUNIQUE, "linkCollection");
-    database.getMetadata().getSchema().save();
   }
 
   @AfterClass

@@ -23,10 +23,8 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
@@ -34,7 +32,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 /**
  * Created by tglman on 27/03/16.
@@ -282,8 +282,12 @@ public interface OrientDBInternal extends AutoCloseable {
 
   void forceDatabaseClose(String databaseName);
 
-  void replaceFactory(OEmbeddedDatabaseInstanceFactory instanceFactory);
+  void schedule(TimerTask task, long delay, long period);
 
-  OEmbeddedDatabaseInstanceFactory getFactory();
+  void scheduleOnce(TimerTask task, long delay);
+
+  <X> Future<X> execute(String database, String user, ODatabaseTask<X> task);
+
+  <X> Future<X> executeNoAuthorization(String database, ODatabaseTask<X> task);
 
 }

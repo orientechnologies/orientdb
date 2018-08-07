@@ -8,7 +8,8 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeRes
 
 public class OPhase2Tx implements ONodeRequest {
   @Override
-  public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor) {
+  public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
+      ODatabaseDocumentInternal session) {
     return new OPhase2TxOk();
   }
 }

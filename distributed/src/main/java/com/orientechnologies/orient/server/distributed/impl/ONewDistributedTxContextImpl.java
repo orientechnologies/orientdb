@@ -20,13 +20,17 @@ import java.util.Set;
 
 public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
+  public enum Status {
+    FAILED, SUCCESS, TIMEDOUT,
+  }
+
   private final ODistributedDatabaseImpl shared;
   private final ODistributedRequestId    id;
   private final OTransactionInternal     tx;
   private final long                     startedOn;
-  private final    List<ORID>   lockedRids = new ArrayList<>();
-  private final    List<Object> lockedKeys = new ArrayList<>();
-  private volatile boolean      began      = true;
+  private final List<ORID>               lockedRids = new ArrayList<>();
+  private final List<Object>             lockedKeys = new ArrayList<>();
+  private       Status                   status;
 
   public ONewDistributedTxContextImpl(ODistributedDatabaseImpl shared, ODistributedRequestId reqId, OTransactionInternal tx) {
     this.shared = shared;
@@ -67,21 +71,11 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public synchronized void begin(ODatabaseDocumentInternal database, boolean local) {
-    try {
-      ((ODatabaseDocumentDistributed) database).internalBegin2pc(this, local);
-      began = true;
-    } catch (RuntimeException e) {
-      began = false;
-      unlock();
-      throw e;
-    }
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public synchronized void commit(ODatabaseDocumentInternal database) {
-    if (!began) {
-      begin(database, false);
-    }
     ((ODatabaseDocumentDistributed) database).internalCommit2pc(this);
   }
 
@@ -135,5 +129,13 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   @Override
   public OTransactionInternal getTransaction() {
     return tx;
+  }
+
+  public void setStatus(Status status) {
+    this.status = status;
+  }
+
+  public Status getStatus() {
+    return status;
   }
 }

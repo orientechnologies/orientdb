@@ -138,7 +138,7 @@ public class OConsoleCommandStream implements OCommandStream {
           case RIGHT_BRAKET:
             result.append(c);
             nestingLevel--;
-            if (nestingLevel <= 0) {
+            if (nestingLevel <= 0 && isControlBlock(result)) {
               return result.toString().trim();
             }
             break;
@@ -270,6 +270,23 @@ public class OConsoleCommandStream implements OCommandStream {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private boolean isControlBlock(StringBuilder result) {
+    String cmd = result.toString().trim();
+    if (cmd.length() < 6) {
+      return false;
+    }
+    if (cmd.substring(0, 6).equalsIgnoreCase("if ")) {
+      return true;
+    }
+    if (cmd.substring(0, 6).equalsIgnoreCase("foreach ")) {
+      return true;
+    }
+    if (cmd.substring(0, 6).equalsIgnoreCase("while ")) {
+      return true;
+    }
+    return false;
   }
 
   @Override

@@ -319,4 +319,30 @@ public class OInsertStatementExecutionTest {
     result.close();
   }
 
+  @Test
+  public void testInsertReturn() {
+    String className = "testInsertReturn";
+    db.getMetadata().getSchema().createClass(className);
+
+    OResultSet result = db.command("insert into " + className + " set name = 'name1' RETURN 'OK' as result");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals("OK", item.getProperty("result"));
+    }
+    Assert.assertFalse(result.hasNext());
+
+    result = db.query("select from " + className);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals("name1", item.getProperty("name"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
 }

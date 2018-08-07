@@ -103,8 +103,9 @@ public class OInCondition extends OBooleanExpression {
 
   protected static boolean evaluateExpression(final Object iLeft, final Object iRight) {
     if (OMultiValue.isMultiValue(iRight)) {
-      if (iRight instanceof Set<?>)
-        return ((Set) iRight).contains(iLeft);
+      if (iRight instanceof Set && ((Set) iRight).contains(iLeft)) {
+        return true;
+      }
 
       for (final Object o : OMultiValue.getMultiValueIterable(iRight, false)) {
         if (OQueryOperatorEquals.equals(iLeft, o))

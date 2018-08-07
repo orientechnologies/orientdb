@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
@@ -99,18 +100,12 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
     convert(database);
-    OTransactionResultPayload res1 = null;
-    try {
-      OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
-
-      res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
-    } catch (ORecordNotFoundException e) {
-      //Do nothing this will cause the transaction to re-enque and wait for the next operation that will insert the missing data.
-    }
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
+    OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
     if (res1 == null) {
       retryCount++;
       ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
-          .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this);
+          .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this, retryCount);
       hasResponse = false;
       return null;
     }
@@ -137,7 +132,6 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     } catch (ODistributedLockException | OLockException ex) {
       payload = new OTxLockTimeout();
     } catch (ORecordDuplicatedException ex) {
-      //TODO:Check if can get out the key
       payload = new OTxUniqueIndex((ORecordId) ex.getRid(), ex.getIndexName(), ex.getKey());
     } catch (RuntimeException ex) {
       payload = new OTxException(ex);
@@ -235,5 +229,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       return operations.stream().mapToInt((x) -> x.getId().getClusterId()).toArray();
     else
       return ops.stream().mapToInt((x) -> x.getRID().getClusterId()).toArray();
+  }
+
+  @Override
+  public long getDistributedTimeout() {
+    return super.getDistributedTimeout() + (operations.size() / 10);
   }
 }

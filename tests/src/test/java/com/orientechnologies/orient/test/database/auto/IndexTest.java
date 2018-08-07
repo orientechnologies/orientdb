@@ -532,7 +532,6 @@ public class IndexTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "testChangeOfIndexToUnique")
   public void removeNotUniqueIndexOnNick() {
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
-    database.getMetadata().getSchema().save();
   }
 
   @Test(dependsOnMethods = "removeNotUniqueIndexOnNick")
@@ -553,7 +552,6 @@ public class IndexTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "testQueryingWithoutNickIndex")
   public void createNotUniqueIndexOnNick() {
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-    database.getMetadata().getSchema().save();
   }
 
   @Test(dependsOnMethods = { "createNotUniqueIndexOnNick", "populateIndexDocuments" })
@@ -659,7 +657,6 @@ public class IndexTest extends ObjectDBBaseTest {
       testClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
       testLinkClass.createProperty("testBoolean", OType.BOOLEAN);
       testLinkClass.createProperty("testString", OType.STRING);
-      db.getMetadata().getSchema().save();
     }
     ODocument testClassDocument = db.newInstance("TestClass");
     testClassDocument.field("name", "Test Class 1");
@@ -739,7 +736,6 @@ public class IndexTest extends ObjectDBBaseTest {
 
       db.getMetadata().getSchema().getClass("MyFruit").getProperty("color").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-      db.getMetadata().getSchema().save();
     }
 
     long expectedIndexSize = 0;
@@ -788,7 +784,6 @@ public class IndexTest extends ObjectDBBaseTest {
       termClass.createIndex("idxTerm", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true),
           new String[] { "label" });
 
-      db.getMetadata().getSchema().save();
     }
 
     final ODocument doc = new ODocument("IndexTestTerm");
@@ -809,7 +804,6 @@ public class IndexTest extends ObjectDBBaseTest {
       termClass.createProperty("label", OType.STRING);
       termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE.toString(), null,
           new ODocument().fields("ignoreNullValues", true), new String[] { "label" });
-      db.getMetadata().getSchema().save();
     }
 
     ODocument docOne = new ODocument("TransactionUniqueIndexTest");
@@ -846,7 +840,6 @@ public class IndexTest extends ObjectDBBaseTest {
       termClass.createProperty("label", OType.STRING);
       termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE.toString(), null,
           new ODocument().fields("ignoreNullValues", true), new String[] { "label" });
-      db.getMetadata().getSchema().save();
     }
 
     final List<ODocument> resultBeforeCommit = db
@@ -882,7 +875,6 @@ public class IndexTest extends ObjectDBBaseTest {
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexWithDotTest")) {
       final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexWithDotTest", 1, null);
       termClass.createProperty("label", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
-      db.getMetadata().getSchema().save();
     }
 
     ODocument docOne = new ODocument("TransactionUniqueIndexWithDotTest");
@@ -922,7 +914,6 @@ public class IndexTest extends ObjectDBBaseTest {
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexWithDotTest")) {
       final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexWithDotTest", 1, null);
       termClass.createProperty("label", OType.STRING).createIndex(INDEX_TYPE.UNIQUE);
-      db.getMetadata().getSchema().save();
     }
 
     final List<ODocument> resultBeforeCommit = db
@@ -997,7 +988,6 @@ public class IndexTest extends ObjectDBBaseTest {
 
         baseClass.createProperty("testParentProperty", OType.LONG).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-        db.getMetadata().getSchema().save();
       }
 
       ODocument childClassDocument = db.newInstance("ChildTestClass");

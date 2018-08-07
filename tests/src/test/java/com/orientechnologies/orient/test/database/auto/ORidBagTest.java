@@ -343,6 +343,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     ORID rid = doc.getIdentity();
 
     OStorage storage = database.getStorage();
+    database.getSharedContext().close();
     database.close();
     storage.close(true, false);
 

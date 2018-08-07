@@ -12,10 +12,12 @@ public class ODistributedCoordinator implements AutoCloseable {
   private OOperationLog                          operationLog;
   private ConcurrentMap<OLogId, ORequestContext> contexts = new ConcurrentHashMap<>();
   private Map<String, ODistributedMember>        members  = new ConcurrentHashMap<>();
+  private Timer                                  timer;
 
   public ODistributedCoordinator(ExecutorService requestExecutor, OOperationLog operationLog) {
     this.requestExecutor = requestExecutor;
     this.operationLog = operationLog;
+    this.timer = new Timer(true);
   }
 
   public void submit(ODistributedMember member, OSubmitRequest request) {
@@ -24,9 +26,9 @@ public class ODistributedCoordinator implements AutoCloseable {
     });
   }
 
-  public void receive(OLogId relativeRequest, ONodeResponse response) {
+  public void receive(ODistributedMember member, OLogId relativeRequest, ONodeResponse response) {
     requestExecutor.execute(() -> {
-      contexts.get(relativeRequest).receive(response);
+      contexts.get(relativeRequest).receive(member, response);
     });
   }
 
@@ -36,11 +38,13 @@ public class ODistributedCoordinator implements AutoCloseable {
 
   public ORequestContext sendOperation(OSubmitRequest submitRequest, ONodeRequest nodeRequest, OResponseHandler handler) {
     OLogId id = log(nodeRequest);
-    ORequestContext context = new ORequestContext(this, submitRequest, nodeRequest, members.size() / 2 + 1, handler);
+    ORequestContext context = new ORequestContext(this, submitRequest, nodeRequest, members.values(), handler, id);
     contexts.put(id, context);
     for (ODistributedMember member : members.values()) {
       member.sendRequest(id, nodeRequest);
     }
+    //Get the timeout from the configuration
+    timer.schedule(context.getTimerTask(), 1000, 1000);
     return context;
   }
 
@@ -50,6 +54,7 @@ public class ODistributedCoordinator implements AutoCloseable {
 
   @Override
   public void close() {
+    timer.cancel();
     requestExecutor.shutdown();
     try {
       requestExecutor.awaitTermination(1, TimeUnit.HOURS);
@@ -57,5 +62,17 @@ public class ODistributedCoordinator implements AutoCloseable {
       Thread.currentThread().interrupt();
     }
 
+  }
+
+  protected void executeOperation(Runnable runnable) {
+    requestExecutor.execute(runnable);
+  }
+
+  protected void finish(OLogId requestId) {
+    contexts.remove(requestId);
+  }
+
+  protected ConcurrentMap<OLogId, ORequestContext> getContexts() {
+    return contexts;
   }
 }

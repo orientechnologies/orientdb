@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -43,8 +44,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,7 +62,7 @@ import java.util.concurrent.Callable;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public abstract class OSchemaShared extends ODocumentWrapperNoClass implements OCloseable {
+public abstract class OSchemaShared implements OCloseable {
   private static final int  NOT_EXISTENT_CLUSTER_ID = -1;
   public static final  int  CURRENT_VERSION_NUMBER  = 4;
   public static final  int  VERSION_NUMBER_V4       = 4;
@@ -81,13 +80,14 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   private final OClusterSelectionFactory clusterSelectionFactory = new OClusterSelectionFactory();
 
-  private final    OModifiableInteger           modificationCounter  = new OModifiableInteger();
-  private final    List<OGlobalProperty>        properties           = new ArrayList<OGlobalProperty>();
-  private final    Map<String, OGlobalProperty> propertiesByNameType = new HashMap<String, OGlobalProperty>();
-  private          Set<Integer>                 blobClusters         = new HashSet<Integer>();
-  private volatile int                          version              = 0;
-  private volatile boolean                      acquiredDistributed  = false;
-  private volatile OImmutableSchema snapshot;
+  private final      OModifiableInteger           modificationCounter  = new OModifiableInteger();
+  private final      List<OGlobalProperty>        properties           = new ArrayList<OGlobalProperty>();
+  private final      Map<String, OGlobalProperty> propertiesByNameType = new HashMap<String, OGlobalProperty>();
+  private            Set<Integer>                 blobClusters         = new HashSet<Integer>();
+  private volatile   int                          version              = 0;
+  private volatile   boolean                      acquiredDistributed  = false;
+  protected volatile OImmutableSchema             snapshot;
+  protected volatile ODocument                    document;
 
   protected static Set<String> internalClasses = new HashSet<String>();
 
@@ -106,7 +106,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   }
 
   public OSchemaShared() {
-    super(new ODocument().setTrackingChanges(false));
+    document = new ODocument().setTrackingChanges(false);
 
   }
 
@@ -152,14 +152,14 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     return null;
   }
 
-  public OImmutableSchema makeSnapshot() {
+  public OImmutableSchema makeSnapshot(ODatabaseDocumentInternal database) {
     if (snapshot == null) {
       // Is null only in the case that is asked while the schema is created
       // all the other cases are already protected by a write lock
       acquireSchemaReadLock();
       try {
         if (snapshot == null)
-          snapshot = new OImmutableSchema(this);
+          snapshot = new OImmutableSchema(this, database);
       } finally {
         releaseSchemaReadLock();
       }
@@ -167,10 +167,12 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     return snapshot;
   }
 
-  public void forceSnapshot() {
+  public void forceSnapshot(ODatabaseDocumentInternal database) {
     acquireSchemaReadLock();
     try {
-      snapshot = new OImmutableSchema(this);
+      if (document.getInternalStatus() == ORecordElement.STATUS.LOADED) {
+        snapshot = new OImmutableSchema(this, database);
+      }
     } finally {
       releaseSchemaReadLock();
     }
@@ -261,7 +263,12 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   public abstract OClass createClass(ODatabaseDocumentInternal database, final String className, int clusters,
       OClass... superClasses);
 
-  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable);
+  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata);
+
+  public abstract OView createView(ODatabaseDocumentInternal database, OViewConfig cfg);
+
+  public abstract OView createView(ODatabaseDocumentInternal database, OViewConfig cfg, ViewCreationListener listener)
+      throws UnsupportedOperationException;
 
   public abstract void checkEmbedded();
 
@@ -282,9 +289,9 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
       final OView existingView = clustersToViews.get(clusterId);
 
-      if (existingView != null && (cls == null || !cls.equals(existingCls)))
+      if (existingView != null && (cls == null || !cls.equals(existingView)))
         throw new OSchemaException(
-            "Cluster with id " + clusterId + " already belongs to the view '" + clustersToClasses.get(clusterId) + "'");
+            "Cluster with id " + clusterId + " already belongs to the view '" + clustersToViews.get(clusterId) + "'");
 
     } finally {
       releaseSchemaReadLock();
@@ -321,13 +328,12 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   /**
    * Reloads the schema inside a storage's shared lock.
    */
-  @Override
-  public <RET extends ODocumentWrapper> RET reload() {
+  public void reload(ODatabaseDocumentInternal database) {
     rwSpinLock.acquireWriteLock();
     try {
-      reload(null);
-      forceSnapshot();
-      return (RET) this;
+      this.document = database.reload(this.document, null, true, true);
+      fromStream();
+      forceSnapshot(database);
     } finally {
       rwSpinLock.releaseWriteLock();
     }
@@ -425,11 +431,12 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
         if (iSave) {
           if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
             saveInternal(database);
-          } else {
-            reload();
+          }
+          else {
+            reload(database);
           }
         } else {
-          snapshot = new OImmutableSchema(this);
+          snapshot = new OImmutableSchema(this, database);
         }
         version++;
       }
@@ -494,7 +501,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   /**
    * Binds ODocument to POJO.
    */
-  @Override
   public void fromStream() {
     rwSpinLock.acquireWriteLock();
     modificationCounter.increment();
@@ -529,55 +535,33 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
       }
       // REGISTER ALL THE CLASSES
       clustersToClasses.clear();
-      clustersToViews.clear();
 
       final Map<String, OClass> newClasses = new HashMap<String, OClass>();
       final Map<String, OView> newViews = new HashMap<String, OView>();
 
       Collection<ODocument> storedClasses = document.field("classes");
       for (ODocument c : storedClasses) {
-
         String name = c.field("name");
-        if (Boolean.TRUE.equals(c.field("view"))) {
-          OViewImpl view;
-          if (views.containsKey(name.toLowerCase(Locale.ENGLISH))) {
-            view = (OViewImpl) views.get(name.toLowerCase(Locale.ENGLISH));
-            view.fromStream(c);
-          } else {
-            view = createViewInstance(c);
-            view.fromStream();
-          }
 
-          newViews.put(view.getName().toLowerCase(Locale.ENGLISH), view);
-
-          if (view.getShortName() != null)
-            newViews.put(view.getShortName().toLowerCase(Locale.ENGLISH), view);
-
-          addClusterViewMap(view);
+        OClassImpl cls;
+        if (classes.containsKey(name.toLowerCase(Locale.ENGLISH))) {
+          cls = (OClassImpl) classes.get(name.toLowerCase(Locale.ENGLISH));
+          cls.fromStream(c);
         } else {
-          OClassImpl cls;
-          if (classes.containsKey(name.toLowerCase(Locale.ENGLISH))) {
-            cls = (OClassImpl) classes.get(name.toLowerCase(Locale.ENGLISH));
-            cls.fromStream(c);
-          } else {
-            cls = createClassInstance(c);
-            cls.fromStream();
-          }
-
-          newClasses.put(cls.getName().toLowerCase(Locale.ENGLISH), cls);
-
-          if (cls.getShortName() != null)
-            newClasses.put(cls.getShortName().toLowerCase(Locale.ENGLISH), cls);
-
-          addClusterClassMap(cls);
+          cls = createClassInstance(c);
+          cls.fromStream();
         }
+
+        newClasses.put(cls.getName().toLowerCase(Locale.ENGLISH), cls);
+
+        if (cls.getShortName() != null)
+          newClasses.put(cls.getShortName().toLowerCase(Locale.ENGLISH), cls);
+
+        addClusterClassMap(cls);
       }
 
       classes.clear();
       classes.putAll(newClasses);
-
-      views.clear();
-      views.putAll(newViews);
 
       // REBUILD THE INHERITANCE TREE
       Collection<String> superClassNames;
@@ -613,6 +597,37 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
         }
       }
 
+      //VIEWS
+
+      clustersToViews.clear();
+      Collection<ODocument> storedViews = document.field("views");
+      if (storedViews != null) {
+        for (ODocument v : storedViews) {
+
+          String name = v.field("name");
+
+          OViewImpl view;
+          if (views.containsKey(name.toLowerCase(Locale.ENGLISH))) {
+            view = (OViewImpl) views.get(name.toLowerCase(Locale.ENGLISH));
+            view.fromStream(v);
+          } else {
+            view = createViewInstance(v);
+            view.fromStream();
+          }
+
+          newViews.put(view.getName().toLowerCase(Locale.ENGLISH), view);
+
+          if (view.getShortName() != null)
+            newViews.put(view.getShortName().toLowerCase(Locale.ENGLISH), view);
+
+          addClusterViewMap(view);
+
+        }
+      }
+
+      views.clear();
+      views.putAll(newViews);
+
       if (document.containsField("blobClusters"))
         blobClusters = document.field("blobClusters");
 
@@ -633,10 +648,49 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
 
   protected abstract OViewImpl createViewInstance(ODocument c);
 
+  public ODocument toNetworkStream() {
+    rwSpinLock.acquireReadLock();
+    try {
+      ODocument doc = new ODocument();
+      document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+
+      try {
+        document.field("schemaVersion", CURRENT_VERSION_NUMBER);
+
+        Set<ODocument> cc = new HashSet<ODocument>();
+        for (OClass c : classes.values())
+          cc.add(((OClassImpl) c).toNetworkStream());
+
+        document.field("classes", cc, OType.EMBEDDEDSET);
+
+        //TODO: this should trigger a netowork protocol version change
+        Set<ODocument> vv = new HashSet<ODocument>();
+        for (OView v : views.values())
+          vv.add(((OViewImpl) v).toNetworkStream());
+
+        document.field("views", vv, OType.EMBEDDEDSET);
+
+        List<ODocument> globalProperties = new ArrayList<ODocument>();
+        for (OGlobalProperty globalProperty : properties) {
+          if (globalProperty != null)
+            globalProperties.add(((OGlobalPropertyImpl) globalProperty).toDocument());
+        }
+        document.field("globalProperties", globalProperties, OType.EMBEDDEDLIST);
+        document.field("blobClusters", blobClusters, OType.EMBEDDEDSET);
+      } finally {
+        document.setInternalStatus(ORecordElement.STATUS.LOADED);
+      }
+
+      return document;
+    } finally {
+      rwSpinLock.releaseReadLock();
+    }
+
+  }
+
   /**
    * Binds POJO to ODocument.
    */
-  @Override
   public ODocument toStream() {
     rwSpinLock.acquireReadLock();
     try {
@@ -738,7 +792,8 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
         throw new OSchemaNotCreatedException("Schema is not created and cannot be loaded");
 
       ((ORecordId) document.getIdentity()).fromString(database.getStorage().getConfiguration().getSchemaRecordId());
-      reload("*:-1 index:0");
+      document = database.reload(document, "*:-1 index:0", true);
+      fromStream();
 
       return this;
     } finally {
@@ -749,9 +804,9 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   public void create(final ODatabaseDocumentInternal database) {
     rwSpinLock.acquireWriteLock();
     try {
-      super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
+      document = database.save(document, OMetadataDefault.CLUSTER_INTERNAL_NAME);
       database.getStorage().setSchemaRecordId(document.getIdentity().toString());
-      snapshot = new OImmutableSchema(this);
+      snapshot = new OImmutableSchema(this, database);
     } finally {
       rwSpinLock.releaseWriteLock();
     }
@@ -773,22 +828,6 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     } finally {
       releaseSchemaReadLock();
     }
-  }
-
-  /**
-   * Avoid to handle this by user API.
-   */
-  @Override
-  public <RET extends ODocumentWrapper> RET save() {
-    return (RET) this;
-  }
-
-  /**
-   * Avoid to handle this by user API.
-   */
-  @Override
-  public <RET extends ODocumentWrapper> RET save(final String iClusterName) {
-    return (RET) this;
   }
 
   public OSchemaShared setDirty() {
@@ -844,7 +883,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
   private void saveInternal(ODatabaseDocumentInternal database) {
 
     if (database.getTransaction().isActive()) {
-      reload(null, true);
+      document = database.reload(document, null, true);
       throw new OSchemaException("Cannot change the schema while a transaction is active. Schema changes are not transactional");
     }
 
@@ -857,14 +896,14 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
           toStream();
           document.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
         } catch (OConcurrentModificationException e) {
-          reload(null, true);
+          OSchemaShared.this.document = database.reload(OSchemaShared.this.document, null, true);
           throw e;
         }
         return null;
       }
     });
 
-    forceSnapshot();
+    forceSnapshot(database);
     for (OMetadataUpdateListener listener : database.getSharedContext().browseListeners()) {
       listener.onSchemaUpdate(database.getName(), this);
     }
@@ -945,4 +984,7 @@ public abstract class OSchemaShared extends ODocumentWrapperNoClass implements O
     return Collections.unmodifiableSet(blobClusters);
   }
 
+  public ODocument getDocument() {
+    return document;
+  }
 }

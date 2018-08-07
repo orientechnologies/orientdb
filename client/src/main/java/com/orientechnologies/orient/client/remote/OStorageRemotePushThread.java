@@ -17,15 +17,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class OStorageRemotePushThread extends Thread {
 
-  private final ORemotePushHandler pushHandler;
-  private final String             host;
-  private final int                retryDelay;
-  private final long               requestTimeout;
-  private       OChannelBinary     network;
-  private BlockingQueue<OSubscribeResponse> blockingQueue = new SynchronousQueue<>();
-  private volatile OBinaryRequest currentRequest;
+  private final    ORemotePushHandler                pushHandler;
+  private final    String                            host;
+  private final    int                               retryDelay;
+  private final    long                              requestTimeout;
+  private          OChannelBinary                    network;
+  private          BlockingQueue<OSubscribeResponse> blockingQueue = new SynchronousQueue<>();
+  private volatile OBinaryRequest                    currentRequest;
 
   public OStorageRemotePushThread(ORemotePushHandler storage, String host, int retryDelay, long requestTimeout) {
+    setDaemon(true);
     this.pushHandler = storage;
     this.host = host;
     network = storage.getNetwork(this.host);
@@ -106,7 +107,10 @@ public class OStorageRemotePushThread extends Thread {
         this.currentRequest.write(network, null);
         network.flush();
       }
-      return (T) blockingQueue.poll(requestTimeout, TimeUnit.MILLISECONDS).getResponse();
+      OSubscribeResponse poll = blockingQueue.poll(requestTimeout, TimeUnit.MILLISECONDS);
+      if (poll == null)
+        return null;
+      return (T) poll.getResponse();
     } catch (IOException e) {
       OLogManager.instance().warn(this, "Exception on subscribe", e);
     } catch (InterruptedException e) {

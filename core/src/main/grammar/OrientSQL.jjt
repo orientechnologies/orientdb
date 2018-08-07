@@ -226,6 +226,10 @@ TOKEN:
 	< CLASSES: ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) ( "e" | "E" ) ( "s" | "S" ) >
 	|
 	< SUPERCLASSES: ( "s" | "S" ) ( "u" | "U" ) ( "p" | "P" ) ( "e" | "E" ) ( "r" | "R" ) ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) ( "e" | "E" ) ( "s" | "S" )>
+	|
+	< VIEW: ( "v" | "V" ) ( "i" | "I" ) ( "e" | "E" ) ( "w" | "W" ) >
+	|
+	< UPDATABLE: ( "u" | "U" ) ( "p" | "P" ) ( "d" | "D" ) ( "a" | "A" ) ( "t" | "T" ) ( "a" | "A" ) ( "b" | "B" ) ( "l" | "L" ) ( "e" | "E" )  >
     |
 	< EXCEPTION: ( "e" | "E" ) ( "x" | "X" ) ( "c" | "C" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
 	|
@@ -743,6 +747,10 @@ OIdentifier Identifier():
     |
     token = <CLASSES>
     |
+    token = <VIEW>
+    |
+    token = <UPDATABLE>
+    |
     token = <MINDEPTH>
     |
     token = <NEAR>
@@ -1006,6 +1014,9 @@ OStatement StatementInternal():
                 |
                 LOOKAHEAD(2)
                 result = CreateClassStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateViewStatement()
                 |
                 LOOKAHEAD(2)
                 result = CreatePropertyStatement()
@@ -4067,6 +4078,19 @@ OCreateClassStatement CreateClassStatement():
 		]
 		[ <CLUSTERS> jjtThis.totalClusterNo = Integer() ]
 		[ <ABSTRACT> { jjtThis.abstractClass = true; } ]
+	)
+	{ return jjtThis; }
+}
+
+OCreateViewStatement CreateViewStatement():
+{}
+{
+	<CREATE> <VIEW>
+	(
+		jjtThis.name = Identifier()
+		[ <IF> <NOT> <EXISTS> { jjtThis.ifNotExists = true; }]
+		<FROM> <LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
+		[ <METADATA> jjtThis.metadata = Json() ]
 	)
 	{ return jjtThis; }
 }

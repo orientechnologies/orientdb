@@ -138,7 +138,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     throw new UnsupportedOperationException("Use OrientDB");
   }
 
-  public void init(OrientDBConfig config) {
+  public void init(OrientDBConfig config, OSharedContext sharedContext) {
+    this.sharedContext = sharedContext;
     activateOnCurrentThread();
     this.config = config;
     applyAttributes(config);
@@ -161,7 +162,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
       localCache.startup();
 
-      loadMetadata();
+      loadMetadata(this.sharedContext);
 
       installHooksEmbedded();
       if (this.getMetadata().getCommandCache().isEnabled())
@@ -241,14 +242,15 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   /**
    * {@inheritDoc}
    */
-  public void internalCreate(OrientDBConfig config) {
+  public void internalCreate(OrientDBConfig config, OSharedContext ctx) {
+    this.sharedContext = ctx;
     this.status = STATUS.OPEN;
     // THIS IF SHOULDN'T BE NEEDED, CREATE HAPPEN ONLY IN EMBEDDED
     applyAttributes(config);
     applyListeners(config);
     metadata = new OMetadataDefault(this);
     installHooksEmbedded();
-    createMetadata();
+    createMetadata(ctx);
 
     if (this.getMetadata().getCommandCache().isEnabled())
       registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
@@ -267,29 +269,21 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       }
   }
 
-  protected void createMetadata() {
-    // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
-    OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextEmbedded(getStorage());
-        return shared;
-      }
-    });
+  protected void createMetadata(OSharedContext shared) {
     metadata.init(shared);
     ((OSharedContextEmbedded) shared).create(this);
   }
 
   @Override
   protected void loadMetadata() {
+    loadMetadata(this.sharedContext);
+  }
+
+  @Override
+  protected void loadMetadata(OSharedContext shared) {
     metadata = new OMetadataDefault(this);
-    sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextEmbedded(getStorage());
-        return shared;
-      }
-    });
+    sharedContext = shared;
+
     metadata.init(sharedContext);
     sharedContext.load(this);
   }
@@ -485,8 +479,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    * instance. The database copy is not set in thread local.
    */
   public ODatabaseDocumentInternal copy() {
-    ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(storage);
-    database.init(config);
+    ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(getSharedContext().getStorage());
+    database.init(config, this.sharedContext);
     String user;
     if (getUser() != null) {
       user = getUser().getName();
@@ -506,7 +500,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public boolean isClosed() {
-    return status == STATUS.CLOSED || storage.isClosed();
+    return status == STATUS.CLOSED || getStorage().isClosed();
   }
 
   public void rebuildIndexes() {
@@ -526,6 +520,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public void replaceStorage(OStorage iNewStorage) {
+    this.getSharedContext().setStorage(iNewStorage);
     storage = iNewStorage;
   }
 
@@ -691,13 +686,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
     microTransaction.begin();
     return microTransaction;
-  }
-
-  public static void deInit(OAbstractPaginatedStorage storage) {
-    OSharedContext sharedContext = storage.removeResource(OSharedContext.class.getName());
-    //This storage may not have been completely opened yet
-    if (sharedContext != null)
-      sharedContext.close();
   }
 
   @Override
@@ -904,7 +892,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterCreate(doc, this);
         }
+
+        ((OSharedContextEmbedded) getSharedContext()).getViewManager().recordAdded(clazz, doc, this);
       }
+
       OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, this);
     }
@@ -930,9 +921,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterUpdate(doc, this);
         }
+
+        ((OSharedContextEmbedded) getSharedContext()).getViewManager().recordUpdated(clazz, doc, this);
       }
       OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.UPDATED, this);
+
     }
     callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
   }
@@ -960,6 +954,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterDelete(doc, this);
         }
+
+        ((OSharedContextEmbedded) getSharedContext()).getViewManager().recordDeleted(clazz, doc, this);
       }
       OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, this);

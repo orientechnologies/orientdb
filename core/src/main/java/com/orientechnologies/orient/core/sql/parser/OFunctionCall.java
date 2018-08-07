@@ -128,6 +128,7 @@ public class OFunctionCall extends SimpleNode {
       }
     }
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
+    function.config(this.params.toArray());
     if (function != null) {
       if (record instanceof OIdentifiable) {
         return function.execute(targetObjects, (OIdentifiable) record, null, paramValues.toArray(), ctx);

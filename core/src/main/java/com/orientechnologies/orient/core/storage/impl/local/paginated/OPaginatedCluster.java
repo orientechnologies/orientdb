@@ -184,9 +184,7 @@ public final class OPaginatedCluster extends ODurableComponent implements OClust
 
       initCusterState(atomicOperation);
 
-      registerInStorageConfig((OStorageConfigurationImpl) config.root);
-
-      clusterPositionMap.create();
+        clusterPositionMap.create();
 
       logComponentOperation(atomicOperation,
           new OCreateClusterOperation(atomicOperation.getOperationUnitId(), id, getName(), clusterPositionMap.getFileId()));

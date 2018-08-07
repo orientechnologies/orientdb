@@ -12,13 +12,6 @@ import java.util.List;
  * Created by tglman on 14/06/17.
  */
 public class OViewRemote extends OViewImpl {
-  protected OViewRemote(OSchemaShared iOwner, String iName) {
-    super(iOwner, iName);
-  }
-
-  protected OViewRemote(OSchemaShared iOwner, String iName, int[] iClusterIds) {
-    super(iOwner, iName, iClusterIds);
-  }
 
   protected OViewRemote(OSchemaShared iOwner, ODocument iDocument, String iName) {
     super(iOwner, iDocument, iName);
@@ -79,7 +72,6 @@ public class OViewRemote extends OViewImpl {
         cmd.append(" unsafe ");
 
       database.command(cmd.toString()).close();
-      reload();
 
       return getProperty(propertyName);
     } finally {

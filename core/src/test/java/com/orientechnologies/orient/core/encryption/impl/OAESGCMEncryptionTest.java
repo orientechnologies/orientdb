@@ -181,9 +181,11 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
       db.open("admin", "admin");
       OStorage storage = ((ODatabaseDocumentInternal) db).getStorage();
 
+      OrientDBInternal orientDB = ((ODatabaseDocumentTx) db).getSharedContext().getOrientDB();
       db.close();
 
-      storage.close(true, false);
+      orientDB.forceDatabaseClose(db.getName());
+//      storage.close(true, false);
 
       db.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
       db.open("admin", "admin");
@@ -192,7 +194,8 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
       storage = ((ODatabaseDocumentInternal) db).getStorage();
       db.close();
 
-      storage.close(true, false);
+//      storage.close(true, false);
+      orientDB.forceDatabaseClose(db.getName());
 
       db.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "invalidPassword");
       OSecurityException exception = null;
@@ -206,7 +209,8 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
         exception = e;
       } finally {
         db.close();
-        storage.close(true, false);
+//        storage.close(true, false);
+        orientDB.forceDatabaseClose(db.getName());
         assertNotNull(exception);
       }
 
@@ -221,7 +225,8 @@ public class OAESGCMEncryptionTest extends AbstractEncryptionTest {
       } finally {
         db.activateOnCurrentThread();
         db.close();
-        storage.close(true, false);
+//        storage.close(true, false);
+        orientDB.forceDatabaseClose(db.getName());
         assertNotNull(exception);
       }
 

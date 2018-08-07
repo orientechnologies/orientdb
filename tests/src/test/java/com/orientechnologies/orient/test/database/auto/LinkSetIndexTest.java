@@ -29,7 +29,6 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     ridBagIndexTestClass.createProperty("linkSet", OType.LINKSET);
 
     ridBagIndexTestClass.createIndex("linkSetIndex", OClass.INDEX_TYPE.NOTUNIQUE, "linkSet");
-    database.getMetadata().getSchema().save();
     database.close();
   }
 

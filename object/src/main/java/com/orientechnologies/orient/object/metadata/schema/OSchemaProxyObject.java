@@ -22,6 +22,7 @@ import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -34,16 +35,12 @@ import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import javassist.util.proxy.Proxy;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
@@ -129,7 +126,7 @@ public class OSchemaProxyObject implements OSchemaObject {
   }
 
   @Override
-  public <RET extends ODocumentWrapper> RET reload() {
+  public OSchema reload() {
     return underlying.reload();
   }
 
@@ -147,7 +144,6 @@ public class OSchemaProxyObject implements OSchemaObject {
   public void dropView(String name) {
     underlying.dropView(name);
   }
-
 
   @Override
   public OClass getClass(Class<?> iClass) {
@@ -184,13 +180,32 @@ public class OSchemaProxyObject implements OSchemaObject {
     return underlying.getClasses();
   }
 
+  public Collection<OView> getViews() {
+    return underlying.getViews();
+  }
+
   @Override
   public OView getView(String name) {
     return underlying.getView(name);
   }
 
-  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable) {
-    return underlying.createView(database, viewName, statement, updatable);
+  @Override
+  public OView createView(String viewName, String statement) {
+    return underlying.createView(viewName, statement);
+  }
+
+  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata) {
+    return underlying.createView(database, viewName, statement, metadata);
+  }
+
+  @Override
+  public OView createView(OViewConfig config) {
+    return underlying.createView(config);
+  }
+
+  @Override
+  public OView createView(OViewConfig config, ViewCreationListener listener) {
+    return underlying.createView(config);
   }
 
   @Override
@@ -207,11 +222,6 @@ public class OSchemaProxyObject implements OSchemaObject {
   @Override
   public ORID getIdentity() {
     return underlying.getIdentity();
-  }
-
-  @Override
-  public <RET extends ODocumentWrapper> RET save() {
-    return underlying.save();
   }
 
   @Override
@@ -418,7 +428,6 @@ public class OSchemaProxyObject implements OSchemaObject {
       }
     }
     if (database != null && !database.isClosed() && reloadSchema) {
-      database.getMetadata().getSchema().save();
       database.getMetadata().getSchema().reload();
     }
   }
@@ -454,7 +463,6 @@ public class OSchemaProxyObject implements OSchemaObject {
       }
     }
     if (reloadSchema) {
-      database.getMetadata().getSchema().save();
       database.getMetadata().getSchema().reload();
     }
   }

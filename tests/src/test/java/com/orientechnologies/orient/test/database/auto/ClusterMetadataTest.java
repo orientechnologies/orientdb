@@ -2,6 +2,10 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -35,8 +39,10 @@ public class ClusterMetadataTest extends DocumentDBBaseTest {
     Assert.assertEquals(cluster.recordGrowFactor(), 2f);
     Assert.assertEquals(cluster.recordOverflowGrowFactor(), 2f);
 
+    OSharedContext context = ((ODatabaseDocumentInternal) database).getSharedContext();
     OStorage storage = database.getStorage();
     database.close();
+    context.close();
     storage.close(true, false);
 
     database.activateOnCurrentThread();

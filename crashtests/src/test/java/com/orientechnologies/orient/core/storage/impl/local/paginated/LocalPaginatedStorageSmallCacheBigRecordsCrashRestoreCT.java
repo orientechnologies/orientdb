@@ -174,7 +174,6 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreCT {
 
       testClass.createIndex("idIndex", OClass.INDEX_TYPE.UNIQUE, "id");
 
-      schema.save();
     }
   }
 

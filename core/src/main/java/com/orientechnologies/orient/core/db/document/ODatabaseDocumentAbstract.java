@@ -138,26 +138,26 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
-  protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
-  protected       ORecordSerializer                           serializer;
-  protected       String                                      url;
-  protected       STATUS                                      status;
-  protected       OIntent                                     currentIntent;
-  protected       ODatabaseInternal<?>                        databaseOwner;
-  protected       OMetadataDefault                            metadata;
-  protected       OImmutableUser                              user;
+  protected final Map<String, Object> properties = new HashMap<String, Object>();
+  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
+  protected ORecordSerializer    serializer;
+  protected String               url;
+  protected STATUS               status;
+  protected OIntent              currentIntent;
+  protected ODatabaseInternal<?> databaseOwner;
+  protected OMetadataDefault     metadata;
+  protected OImmutableUser       user;
   protected final byte                                        recordType    = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
-  protected       OLocalRecordCache                           localCache;
-  protected       OCurrentStorageComponentsFactory            componentsFactory;
-  protected       boolean                                     initialized   = false;
-  protected       OTransaction                                currentTx;
+  protected OLocalRecordCache                localCache;
+  protected OCurrentStorageComponentsFactory componentsFactory;
+  protected boolean initialized = false;
+  protected OTransaction currentTx;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected       OSharedContext  sharedContext;
+  protected OSharedContext sharedContext;
 
   private boolean prefetchRecords;
 
@@ -201,6 +201,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   protected abstract void loadMetadata();
+
+  protected abstract void loadMetadata(OSharedContext ctx);
 
   public void callOnCloseListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
@@ -1395,6 +1397,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
         iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType, rid.getClusterId(), this);
 
+      ORecordInternal.setRecordSerializer(iRecord,getSerializer());
       ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false, this);
 
       if (iRecord instanceof ODocument)
@@ -2117,6 +2120,17 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   /**
    * Returns the number of the records of the class iClassName.
    */
+  public long countView(final String viewName) {
+    final OView cls = getMetadata().getImmutableSchemaSnapshot().getView(viewName);
+    if (cls == null)
+      throw new IllegalArgumentException("View '" + cls + "' not found in database");
+
+    return countClass(cls, false);
+  }
+
+  /**
+   * Returns the number of the records of the class iClassName.
+   */
   public long countClass(final String iClassName) {
     return countClass(iClassName, true);
   }
@@ -2126,14 +2140,19 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    */
   public long countClass(final String iClassName, final boolean iPolymorphic) {
     final OClass cls = getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
-
     if (cls == null)
-      throw new IllegalArgumentException("Class '" + iClassName + "' not found in database");
+      throw new IllegalArgumentException("Class '" + cls + "' not found in database");
+
+    return countClass(cls, iPolymorphic);
+  }
+
+  protected long countClass(final OClass cls, final boolean iPolymorphic) {
 
     long totalOnDb = cls.count(iPolymorphic);
 
     long deletedInTx = 0;
     long addedInTx = 0;
+    String className = cls.getName();
     if (getTransaction().isActive())
       for (ORecordOperation op : getTransaction().getRecordOperations()) {
         if (op.type == ORecordOperation.DELETED) {
@@ -2141,10 +2160,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
           if (rec != null && rec instanceof ODocument) {
             OClass schemaClass = ((ODocument) rec).getSchemaClass();
             if (iPolymorphic) {
-              if (schemaClass.isSubClassOf(iClassName))
+              if (schemaClass.isSubClassOf(className))
                 deletedInTx++;
             } else {
-              if (iClassName.equals(schemaClass.getName()) || iClassName.equals(schemaClass.getShortName()))
+              if (className.equals(schemaClass.getName()) || className.equals(schemaClass.getShortName()))
                 deletedInTx++;
             }
           }
@@ -2155,10 +2174,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
             OClass schemaClass = ((ODocument) rec).getSchemaClass();
             if (schemaClass != null) {
               if (iPolymorphic) {
-                if (schemaClass.isSubClassOf(iClassName))
+                if (schemaClass.isSubClassOf(className))
                   addedInTx++;
               } else {
-                if (iClassName.equals(schemaClass.getName()) || iClassName.equals(schemaClass.getShortName()))
+                if (className.equals(schemaClass.getName()) || className.equals(schemaClass.getShortName()))
                   addedInTx++;
               }
             }
@@ -2345,7 +2364,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     if (!isClosed()) {
       loadMetadata();
-      sharedContext = null;
+      sharedContext.reload(this);
     }
   }
 
@@ -2710,6 +2729,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     }
   }
 
+  public Map<String, OResultSet> getActiveQueries() {
+    return activeQueries;
+  }
+
   public OResultSet getActiveQuery(String id) {
     return activeQueries.get(id);
   }
@@ -2721,7 +2744,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public boolean isClusterEdge(int cluster) {
-    OClass clazz = getMetadata().getSchema().getClassByClusterId(cluster);
+    OClass clazz = getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(cluster);
     if (clazz != null && clazz.isEdgeType())
       return true;
     return false;
@@ -2729,7 +2752,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public boolean isClusterVertex(int cluster) {
-    OClass clazz = getMetadata().getSchema().getClassByClusterId(cluster);
+    OClass clazz = getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(cluster);
     if (clazz != null && clazz.isVertexType())
       return true;
     return false;

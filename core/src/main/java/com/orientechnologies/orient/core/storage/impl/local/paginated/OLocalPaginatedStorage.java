@@ -101,6 +101,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   private final Path                                         storagePath;
   private final OClosableLinkedContainer<Long, OFileClassic> files;
 
+  private Future<?> fuzzyCheckpointTask = null;
+
   private volatile OThreadPoolExecutorWithLogging segmentAdderExecutor;
   private final    AtomicReference<Future<Void>>  segmentAppender = new AtomicReference<>();
   private final    long                           walMaxSegSize;
@@ -423,6 +425,15 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
+  protected void preCloseSteps() {
+    super.preCloseSteps();
+
+    if (fuzzyCheckpointTask != null) {
+      fuzzyCheckpointTask.cancel(false);
+    }
+  }
+
+  @Override
   protected void preCreateSteps() throws IOException {
     dirtyFlag.create();
   }
@@ -510,9 +521,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void initWalAndDiskCache(OContextConfiguration contextConfiguration) throws IOException, InterruptedException {
-    fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
-        OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(),
-        OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(), TimeUnit.SECONDS);
+    if (getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
+      fuzzyCheckpointTask = fuzzyCheckpointExecutor.scheduleWithFixedDelay(new PeriodicFuzzyCheckpoint(),
+          OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(),
+          OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger(), TimeUnit.SECONDS);
 
     final String configWalPath = getConfiguration().getContextConfiguration().getValueAsString(OGlobalConfiguration.WAL_LOCATION);
     Path walPath;
