@@ -31,13 +31,13 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public class ORecordIteratorClassDescendentOrder<REC extends ORecord> extends ORecordIteratorClass<REC> {
   public ORecordIteratorClassDescendentOrder(ODatabaseDocumentInternal iDatabase, ODatabaseDocumentInternal iLowLevelDatabase,
       String iClassName, boolean iPolymorphic) {
-    this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, false, OStorage.LOCKING_STRATEGY.NONE);
+    this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, OStorage.LOCKING_STRATEGY.NONE);
   }
 
   @Deprecated
   public ORecordIteratorClassDescendentOrder(ODatabaseDocumentInternal iDatabase, ODatabaseDocumentInternal iLowLevelDatabase,
-      String iClassName, boolean iPolymorphic, boolean iterateThroughTombstones, OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    super(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, iterateThroughTombstones, iLockingStrategy);
+      String iClassName, boolean iPolymorphic, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    super(iDatabase, iClassName, iPolymorphic, iLockingStrategy);
 
     currentClusterIdx = clusterIds.length - 1; // START FROM THE LAST CLUSTER
     updateClusterRange();

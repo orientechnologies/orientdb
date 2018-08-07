@@ -85,26 +85,26 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected final Map<String, Object> properties = new HashMap<String, Object>();
-  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
-  protected ORecordSerializer    serializer;
-  protected String               url;
-  protected STATUS               status;
-  protected OIntent              currentIntent;
-  protected ODatabaseInternal<?> databaseOwner;
-  protected OMetadataDefault     metadata;
-  protected OImmutableUser       user;
+  protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
+  protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
+  protected       ORecordSerializer                           serializer;
+  protected       String                                      url;
+  protected       STATUS                                      status;
+  protected       OIntent                                     currentIntent;
+  protected       ODatabaseInternal<?>                        databaseOwner;
+  protected       OMetadataDefault                            metadata;
+  protected       OImmutableUser                              user;
   protected final byte                                        recordType    = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
-  protected OLocalRecordCache                localCache;
-  protected OCurrentStorageComponentsFactory componentsFactory;
-  protected boolean initialized = false;
-  protected OTransaction currentTx;
+  protected       OLocalRecordCache                           localCache;
+  protected       OCurrentStorageComponentsFactory            componentsFactory;
+  protected       boolean                                     initialized   = false;
+  protected       OTransaction                                currentTx;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected OSharedContext sharedContext;
+  protected       OSharedContext  sharedContext;
 
   private boolean prefetchRecords;
 
@@ -256,13 +256,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(final String iClusterName, final Class<REC> iClass) {
-    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
-
-    checkIfActive();
-
-    final int clusterId = getClusterIdByName(iClusterName);
-
-    return new ORecordIteratorCluster<REC>(this, this, clusterId);
+    return (ORecordIteratorCluster<REC>) browseCluster(iClusterName);
   }
 
   /**
@@ -277,8 +271,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition, loadTombstones,
-        OStorage.LOCKING_STRATEGY.DEFAULT);
+    return new ORecordIteratorCluster<REC>(this, clusterId, startClusterPosition, endClusterPosition, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @Override
@@ -289,7 +282,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<REC>(this, this, clusterId, startClusterPosition, endClusterPosition);
+    return new ORecordIteratorCluster<REC>(this, clusterId, startClusterPosition, endClusterPosition);
   }
 
   /**
@@ -1856,7 +1849,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");
 
     checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iClassName);
-    return new ORecordIteratorClass<ODocument>(this, this, iClassName, iPolymorphic, false);
+    return new ORecordIteratorClass<ODocument>(this, iClassName, iPolymorphic, false);
   }
 
   /**
@@ -1866,7 +1859,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   public ORecordIteratorCluster<ODocument> browseCluster(final String iClusterName) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-    return new ORecordIteratorCluster<ODocument>(this, this, getClusterIdByName(iClusterName));
+    return new ORecordIteratorCluster<ODocument>(this, getClusterIdByName(iClusterName));
   }
 
   /**
@@ -1886,8 +1879,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       boolean loadTombstones) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-    return new ORecordIteratorCluster<ODocument>(this, this, getClusterIdByName(iClusterName), startClusterPosition,
-        endClusterPosition, loadTombstones, OStorage.LOCKING_STRATEGY.DEFAULT);
+    return new ORecordIteratorCluster<ODocument>(this, getClusterIdByName(iClusterName), startClusterPosition,
+        endClusterPosition, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   /**

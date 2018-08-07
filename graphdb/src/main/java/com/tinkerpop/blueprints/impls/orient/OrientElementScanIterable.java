@@ -23,7 +23,6 @@ package com.tinkerpop.blueprints.impls.orient;
 import java.util.Iterator;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.tinkerpop.blueprints.CloseableIterable;
@@ -46,7 +45,7 @@ class OrientElementScanIterable<T extends Element> implements CloseableIterable<
   public Iterator<T> iterator() {
     final ODatabaseDocumentInternal rawGraph = this.graph.getRawGraph();
     return new OrientElementIterator<T>(this.graph,
-        new ORecordIteratorClass<ORecord>(rawGraph, rawGraph, elementClass, polymorphic));
+        new ORecordIteratorClass<ORecord>(rawGraph, elementClass, polymorphic));
   }
 
   public void close() {
