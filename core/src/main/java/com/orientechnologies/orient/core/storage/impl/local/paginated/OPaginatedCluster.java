@@ -99,7 +99,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     private final int recordVersion;
     private final int recordsSizeDiff;
 
-    public AddEntryResult(long pageIndex, int pagePosition, int recordVersion, int recordsSizeDiff) {
+    AddEntryResult(long pageIndex, int pagePosition, int recordVersion, int recordsSizeDiff) {
       this.pageIndex = pageIndex;
       this.pagePosition = pagePosition;
       this.recordVersion = recordVersion;
@@ -135,7 +135,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         final String cfgEncryption = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD);
         final String cfgEncryptionKey = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
 
-        config = new OStoragePaginatedClusterConfiguration((OStorageConfigurationImpl) storage.getConfiguration(), id, clusterName,
+        config = new OStoragePaginatedClusterConfiguration(storage.getConfiguration(), id, clusterName,
             null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
             OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, cfgCompression, cfgEncryption, cfgEncryptionKey, null,
             OStorageClusterConfiguration.STATUS.ONLINE);
@@ -157,27 +157,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       init((OAbstractPaginatedStorage) storage, config);
     } finally {
       releaseExclusiveLock();
-    }
-  }
-
-  @Override
-  public boolean exists() {
-    startOperation();
-    try {
-      atomicOperationsManager.acquireReadLock(this);
-      try {
-        acquireSharedLock();
-        try {
-          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-          return isFileExists(atomicOperation, getFullName());
-        } finally {
-          releaseSharedLock();
-        }
-      } finally {
-        atomicOperationsManager.releaseReadLock(this);
-      }
-    } finally {
-      completeOperation();
     }
   }
 
@@ -1563,7 +1542,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public void synch() throws IOException {
+  public void synch() {
     startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
@@ -1807,7 +1786,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     ((OStorageConfigurationImpl) storageLocal.getConfiguration()).update();
   }
 
-  private OPhysicalPosition createPhysicalPosition(final byte recordType, final long clusterPosition, final int version) {
+  private static OPhysicalPosition createPhysicalPosition(final byte recordType, final long clusterPosition, final int version) {
     final OPhysicalPosition physicalPosition = new OPhysicalPosition();
     physicalPosition.recordType = recordType;
     physicalPosition.recordSize = -1;
@@ -2083,7 +2062,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
-  private int calculateFreePageIndex(OClusterPage localPage) {
+  private static int calculateFreePageIndex(OClusterPage localPage) {
     int newFreePageIndex;
     if (localPage.isEmpty())
       newFreePageIndex = FREE_LIST_SIZE - 1;
@@ -2114,7 +2093,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   }
 
-  private OPhysicalPosition[] convertToPhysicalPositions(long[] clusterPositions) {
+  private static OPhysicalPosition[] convertToPhysicalPositions(long[] clusterPositions) {
     OPhysicalPosition[] positions = new OPhysicalPosition[clusterPositions.length];
     for (int i = 0; i < positions.length; i++) {
       OPhysicalPosition physicalPosition = new OPhysicalPosition();

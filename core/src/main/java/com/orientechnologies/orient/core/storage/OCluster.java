@@ -93,8 +93,6 @@ public interface OCluster {
 
   ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion) throws IOException, ORecordNotFoundException;
 
-  boolean exists();
-
   /**
    * Fills and return the PhysicalPosition object received as parameter with the physical position of logical record iPosition
    */

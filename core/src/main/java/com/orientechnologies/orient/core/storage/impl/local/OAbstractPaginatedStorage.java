@@ -4684,11 +4684,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     int createdClusterId = -1;
 
     if (cluster != null) {
-      if (!cluster.exists()) {
-        cluster.create(-1);
-      } else {
-        cluster.open();
-      }
+      cluster.create(-1);
 
       synch();
 

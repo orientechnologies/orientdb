@@ -22,7 +22,11 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 
@@ -151,11 +155,6 @@ public class OOfflineCluster implements OCluster {
     throw OException.wrapException(new ORecordNotFoundException(new ORecordId(id, clusterPosition),
             "Record with rid #" + id + ":" + clusterPosition + " was not found in database"),
         new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'"));
-  }
-
-  @Override
-  public boolean exists() {
-    return true;
   }
 
   @Override
