@@ -639,7 +639,7 @@ public enum OGlobalConfiguration {
   // QUERY
   QUERY_REMOTE_RESULTSET_PAGE_SIZE("query.remoteResultSet.pageSize",
       "The size of a remote ResultSet page, ie. the number of records"
-          + "that are fetched together during remote query execution. This has to be set on the client.", Integer.class, 100),
+          + "that are fetched together during remote query execution. This has to be set on the client.", Integer.class, 1000),
 
   QUERY_REMOTE_SEND_EXECUTION_PLAN("query.remoteResultSet.sendExecutionPlan",
       "Send the execution plan details or not. False by default", Boolean.class, false),
