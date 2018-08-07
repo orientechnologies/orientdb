@@ -132,13 +132,6 @@ public final class OSBTreePutOperation extends OSBTreeOperation {
     size += OIntegerSerializer.INT_SIZE;
     size += value.length;
 
-    size += OByteSerializer.BYTE_SIZE;
-
-    if (oldValue != null) {
-      size += OIntegerSerializer.INT_SIZE;
-      size += oldValue.length;
-    }
-
     return size;
   }
 
