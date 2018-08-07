@@ -804,6 +804,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       cmdManager.registerCommand(c);
   }
 
+  public OClientConnection getConnection() {
+    return connection;
+  }
+
   private String getCommandString(final String command) {
     final int getQueryPosition = command.indexOf('?');
 
