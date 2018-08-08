@@ -436,6 +436,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   public void fetchNextPage(ORemoteResultSet rs) {
+    checkOpenness();
+    checkAndSendTransaction();
     storage.fetchNextPage(this, rs);
   }
 
