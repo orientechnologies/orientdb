@@ -421,8 +421,7 @@ public enum OGlobalConfiguration {
       "The number of cached LINKBAG collections, which will be removed, when the cache limit is reached", Integer.class, 1000),
 
   SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER("sbtreebonsai.freeSpaceReuseTrigger",
-      "How much free space should be in an sbtreebonsai file, before it will be reused during the next allocation", Float.class,
-      0.5),
+      "How much free space should be in an sbtreebonsai file, before it will be reused during the next allocation", Float.class, 0),
 
   // RIDBAG
   RID_BAG_EMBEDDED_DEFAULT_SIZE("ridBag.embeddedDefaultSize", "Size of embedded RidBag array, when created (empty)", Integer.class,
