@@ -40,7 +40,14 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollection
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -57,17 +64,14 @@ import java.util.concurrent.locks.Lock;
 public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTreeBonsai<K, V> {
   private static final OLockManager<Long> FILE_LOCK_MANAGER = new OPartitionedLockManager<Long>();
 
-  private static final int                  PAGE_SIZE             =
-      OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
-  private final        float                freeSpaceReuseTrigger = OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER
-      .getValueAsFloat();
-  private static final OBonsaiBucketPointer SYS_BUCKET            = new OBonsaiBucketPointer(0, 0);
+  private static final int                  PAGE_SIZE  = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  private static final OBonsaiBucketPointer SYS_BUCKET = new OBonsaiBucketPointer(0, 0);
 
   private OBonsaiBucketPointer rootBucketPointer;
 
   private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
 
-  private volatile Long fileId = -1l;
+  private volatile Long fileId = -1L;
 
   private OBinarySerializer<K> keySerializer;
   private OBinarySerializer<V> valueSerializer;
@@ -1122,13 +1126,13 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
       int indexToSplit = bucketSize >>> 1;
       final K separationKey = bucketToSplit.getKey(indexToSplit);
-      final List<OSBTreeBonsaiBucket.SBTreeEntry<K, V>> rightEntries = new ArrayList<OSBTreeBonsaiBucket.SBTreeEntry<K, V>>(
-          indexToSplit);
+      final List<byte[]> rightEntries = new ArrayList<>(indexToSplit);
 
       final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
 
-      for (int i = startRightIndex; i < bucketSize; i++)
-        rightEntries.add(bucketToSplit.getEntry(i));
+      for (int i = startRightIndex; i < bucketSize; i++) {
+        rightEntries.add(bucketToSplit.getRawEntry(i));
+      }
 
       if (!bucketPointer.equals(rootBucketPointer)) {
         final AllocationResult allocationResult = allocateBucketForWrite(atomicOperation);
@@ -1216,11 +1220,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       } else {
         long treeSize = bucketToSplit.getTreeSize();
 
-        final List<OSBTreeBonsaiBucket.SBTreeEntry<K, V>> leftEntries = new ArrayList<OSBTreeBonsaiBucket.SBTreeEntry<K, V>>(
-            indexToSplit);
+        final List<byte[]> leftEntries = new ArrayList<>(indexToSplit);
 
-        for (int i = 0; i < indexToSplit; i++)
-          leftEntries.add(bucketToSplit.getEntry(i));
+        for (int i = 0; i < indexToSplit; i++) {
+          leftEntries.add(bucketToSplit.getRawEntry(i));
+        }
 
         final AllocationResult leftAllocationResult = allocateBucketForWrite(atomicOperation);
         OCacheEntry leftBucketEntry = leftAllocationResult.getCacheEntry();
@@ -1348,8 +1352,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
     try {
       final OSysBucket sysBucket = new OSysBucket(sysCacheEntry);
-      if ((1.0 * sysBucket.freeListLength()) / ((1.0 * getFilledUpTo(atomicOperation, fileId)) * PAGE_SIZE
-          / OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES) >= freeSpaceReuseTrigger) {
+      if (sysBucket.freeListLength() > 0) {
         final AllocationResult allocationResult = reuseBucketFromFreeList(sysBucket, atomicOperation);
         return allocationResult;
       } else {
