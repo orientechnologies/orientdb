@@ -58,8 +58,12 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
   }
 
   private void configureDefaults() {
-    if (!OGlobalConfiguration.DISK_CACHE_SIZE.isChanged())
+    if (!OGlobalConfiguration.DISK_CACHE_SIZE.isChanged()) {
       configureDefaultDiskCacheSize();
+    } else {
+      final long diskCacheInMB = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsInteger();
+      OLogManager.instance().infoNoDb(null, "OrientDB config DISKCACHE=%,dMB", diskCacheInMB);
+    }
 
     if (!OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.isChanged())
       configureDefaultWalRestoreBatchSize();
