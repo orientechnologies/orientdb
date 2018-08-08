@@ -86,6 +86,9 @@ public class ViewManager {
       return null;
     }
     for (String name : names) {
+      if (!buildOnThisNode(db, name)) {
+        continue;
+      }
       if (!isUpdateExpiredFor(name, db)) {
         continue;
       }
@@ -100,6 +103,10 @@ public class ViewManager {
 
     lastUpdatedView = null;
     return null;
+  }
+
+  protected boolean buildOnThisNode(ODatabase db, String name) {
+    return true;
   }
 
   /**
@@ -158,6 +165,7 @@ public class ViewManager {
     String query = view.getQuery();
     String originRidField = view.getOriginRidField();
     String clusterName = db.getClusterNameById(cluster);
+
     OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
       @Override
       public Object call() {
@@ -226,7 +234,9 @@ public class ViewManager {
 
     new Thread(() -> {
       ODatabaseDocument db = orientDB.openNoAuthorization(dbName);
-//      db.activateOnCurrentThread();
+      if (!buildOnThisNode(db, name)) {
+        return;
+      }
       try {
         OView view = db.getMetadata().getSchema().getView(name);
         updateView(view, db);
@@ -234,7 +244,6 @@ public class ViewManager {
           listener.afterCreate(name);
         }
       } catch (Exception e) {
-//        e.printStackTrace();
         if (listener != null) {
           listener.onError(name, e);
         }

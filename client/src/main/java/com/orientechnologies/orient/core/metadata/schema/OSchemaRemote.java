@@ -237,7 +237,7 @@ public class OSchemaRemote extends OSchemaShared {
       if (cfg.isUpdatable()) {
         cmd.append(" UPDATABLE");
       }
-      //TODO indexes
+      //TODO METADATA!!!
 
       database.command(cmd.toString()).close();
       reload(database);

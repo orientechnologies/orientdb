@@ -78,4 +78,35 @@ public class OCreateViewStatementExecutionTest {
     rs.close();
   }
 
+  @Test
+  public void testMetadata() throws InterruptedException {
+    String className = "testMetadataClass";
+    String viewName = "testMetadata";
+    db.createClass(className);
+
+    String statement = "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    statement += "updatable:true, ";
+//    statement+="indexes...";
+    statement += "updateStrategy: '" + OViewConfig.UPDATE_STRATEGY_LIVE + "', ";
+    statement += "watchClasses:['foo', 'bar'], ";
+    statement += "nodes:['baz','xx'], ";
+    statement += "updateIntervalSeconds:100, ";
+    statement += "originRidField:'pp' ";
+    statement += "}";
+
+    db.command(statement);
+
+    OView view = db.getMetadata().getSchema().getView(viewName);
+    Assert.assertTrue(view.isUpdatable());
+//    Assert.assertEquals(OViewConfig.UPDATE_STRATEGY_LIVE, view.get());
+    Assert.assertTrue(view.getWatchClasses().contains("foo"));
+    Assert.assertTrue(view.getWatchClasses().contains("bar"));
+    Assert.assertEquals(2, view.getWatchClasses().size());
+    Assert.assertTrue(view.getNodes().contains("baz"));
+    Assert.assertTrue(view.getNodes().contains("xx"));
+    Assert.assertEquals(2, view.getNodes().size());
+    Assert.assertEquals(100, view.getUpdateIntervalSeconds());
+    Assert.assertEquals("pp", view.getOriginRidField());
+  }
+
 }

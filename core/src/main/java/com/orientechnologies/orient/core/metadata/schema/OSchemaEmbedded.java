@@ -216,12 +216,22 @@ public class OSchemaEmbedded extends OSchemaShared {
 
       Object updateStrategy = metadata.get("updateStrategy");
       if (updateStrategy instanceof String) {
-        cfg.setUpdateStragegy((String) updateStrategy);
+        cfg.setUpdateStrategy((String) updateStrategy);
       }
 
       Object watchClasses = metadata.get("watchClasses");
       if (watchClasses instanceof List) {
         cfg.setWatchClasses((List) watchClasses);
+      }
+
+      Object nodes = metadata.get("nodes");
+      if (nodes instanceof List) {
+        cfg.setNodes((List) nodes);
+      }
+
+      Object originRidField = metadata.get("originRidField");
+      if (originRidField instanceof String) {
+        cfg.setOriginRidField((String) originRidField);
       }
 
 //      result.setProperty("indexes", indexes);

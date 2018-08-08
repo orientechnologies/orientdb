@@ -12,4 +12,6 @@ public interface OView extends OClass {
   String getOriginRidField();
 
   boolean isUpdatable();
+
+  List<String> getNodes();
 }

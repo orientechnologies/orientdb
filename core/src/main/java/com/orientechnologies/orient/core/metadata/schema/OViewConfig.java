@@ -29,8 +29,9 @@ public class OViewConfig {
   protected String  query;
   protected boolean updatable;
   protected List<OViewIndexConfig> indexes               = new ArrayList<>();
-  protected String                 updateStragegy        = UPDATE_STRATEGY_BATCH;
+  protected String                 updateStrategy        = UPDATE_STRATEGY_BATCH;
   protected List<String>           watchClasses          = new ArrayList<>();
+  protected List<String>           nodes                 = null;
   protected int                    updateIntervalSeconds = 30;
   protected String                 originRidField        = null;
 
@@ -46,10 +47,11 @@ public class OViewConfig {
       OViewIndexConfig idx = result.addIndex(index.name);
       index.props.forEach(x -> idx.addProperty(x.key, x.value));
     }
-    result.updateStragegy = this.updateStragegy;
+    result.updateStrategy = this.updateStrategy;
     result.watchClasses = this.watchClasses == null ? null : new ArrayList<>(this.watchClasses);
     result.updateIntervalSeconds = this.updateIntervalSeconds;
     result.originRidField = this.originRidField;
+    result.nodes = this.nodes == null ? null : new ArrayList<>(this.nodes);
     return result;
   }
 
@@ -87,12 +89,12 @@ public class OViewConfig {
     return indexes;
   }
 
-  public String getUpdateStragegy() {
-    return updateStragegy;
+  public String getUpdateStrategy() {
+    return updateStrategy;
   }
 
-  public void setUpdateStragegy(String updateStragegy) {
-    this.updateStragegy = updateStragegy;
+  public void setUpdateStrategy(String updateStrategy) {
+    this.updateStrategy = updateStrategy;
   }
 
   public List<String> getWatchClasses() {
@@ -117,5 +119,13 @@ public class OViewConfig {
 
   public void setOriginRidField(String originRidField) {
     this.originRidField = originRidField;
+  }
+
+  public List<String> getNodes() {
+    return nodes;
+  }
+
+  public void setNodes(List<String> nodes) {
+    this.nodes = nodes;
   }
 }

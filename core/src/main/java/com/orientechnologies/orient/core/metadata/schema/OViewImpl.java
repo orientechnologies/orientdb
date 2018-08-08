@@ -38,13 +38,16 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       cfg.setUpdateIntervalSeconds(document.getProperty("updateIntervalSeconds"));
     }
     if (document.getProperty("updateStrategy") instanceof String) {
-      cfg.setUpdateStragegy(document.getProperty("updateStrategy"));
+      cfg.setUpdateStrategy(document.getProperty("updateStrategy"));
     }
     if (document.getProperty("watchClasses") instanceof List) {
       cfg.setWatchClasses(document.getProperty("watchClasses"));
     }
     if (document.getProperty("originRidField") instanceof String) {
       cfg.setOriginRidField(document.getProperty("originRidField"));
+    }
+    if (document.getProperty("nodes") instanceof List) {
+      cfg.setNodes(document.getProperty("nodes"));
     }
 
   }
@@ -65,9 +68,10 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     }
     result.setProperty("indexes", indexes);
     result.setProperty("updateIntervalSeconds", cfg.getUpdateIntervalSeconds());
-    result.setProperty("updateStrategy", cfg.getUpdateStragegy());
+    result.setProperty("updateStrategy", cfg.getUpdateStrategy());
     result.setProperty("watchClasses", cfg.getWatchClasses());
     result.setProperty("originRidField", cfg.getOriginRidField());
+    result.setProperty("nodes", cfg.getNodes());
     return result;
   }
 
@@ -86,9 +90,10 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     }
     result.setProperty("indexes", indexes);
     result.setProperty("updateIntervalSeconds", cfg.getUpdateIntervalSeconds());
-    result.setProperty("updateStrategy", cfg.getUpdateStragegy());
+    result.setProperty("updateStrategy", cfg.getUpdateStrategy());
     result.setProperty("watchClasses", cfg.getWatchClasses());
     result.setProperty("originRidField", cfg.getOriginRidField());
+    result.setProperty("nodes", cfg.getNodes());
     return result;
   }
 
@@ -123,5 +128,10 @@ public abstract class OViewImpl extends OClassImpl implements OView {
   @Override
   public boolean isUpdatable() {
     return cfg.isUpdatable();
+  }
+
+  @Override
+  public List<String> getNodes() {
+    return cfg.getNodes();
   }
 }
