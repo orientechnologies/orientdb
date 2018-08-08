@@ -193,7 +193,7 @@ public class ReadWriteDiskCacheTest {
         OChecksumMode.StoreAndThrow);
     writeBuffer.loadRegisteredFiles();
 
-    readBuffer = new O2QCache(READ_CACHE_MAX_MEMORY, PAGE_SIZE, false, 50);
+    readBuffer = new O2QCache(READ_CACHE_MAX_MEMORY, PAGE_SIZE, false, 50, true, 10);
   }
 
   @Test
@@ -1192,7 +1192,7 @@ public class ReadWriteDiskCacheTest {
 
     writeBuffer.loadRegisteredFiles();
 
-    readBuffer = new O2QCache(4 * (8 + systemOffset), 8 + systemOffset, false, 20);
+    readBuffer = new O2QCache(4 * (8 + systemOffset), 8 + systemOffset, false, 20, true, 10);
 
     long fileId = readBuffer.addFile(fileName, writeBuffer);
     OLogSequenceNumber lsnToFlush = null;
