@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.db.viewmanager;
 
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
@@ -13,6 +14,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -149,21 +151,29 @@ public class ViewManager {
   }
 
   public synchronized void updateView(OView view, ODatabaseDocument db) {
-
     lastUpdateTimestampForView.put(view.getName(), System.currentTimeMillis());
 
     int cluster = db.addCluster(getNextClusterNameFor(view, db));
-    String clusterName = db.getClusterNameById(cluster);
-    OResultSet rs = db.query(view.getQuery());
+
+    String query = view.getQuery();
     String originRidField = view.getOriginRidField();
-    while (rs.hasNext()) {
-      OResult item = rs.next();
-      OElement newRow = copyElement(item, db);
-      if (originRidField != null) {
-        newRow.setProperty(originRidField, item.getIdentity().orElse(item.getProperty("@rid")));
+    String clusterName = db.getClusterNameById(cluster);
+    OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
+      @Override
+      public Object call() {
+        OResultSet rs = db.query(query);
+        while (rs.hasNext()) {
+          OResult item = rs.next();
+          OElement newRow = copyElement(item, db);
+          if (originRidField != null) {
+            newRow.setProperty(originRidField, item.getIdentity().orElse(item.getProperty("@rid")));
+          }
+          db.save(newRow, clusterName);
+        }
+        return null;
       }
-      db.save(newRow, clusterName);
-    }
+    });
+
     view = db.getMetadata().getSchema().getView(view.getName());
     if (view == null) {
       //the view was dropped in the meantime
