@@ -37,7 +37,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage.PAGE_SIZE;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -419,7 +418,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       }
     }
 
-    setIntValue(FREE_POINTER_OFFSET, PAGE_SIZE);//TODO set correct page size
+    setIntValue(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
 
     int index = 0;
     for (final byte[] entry : rawEntries) {
