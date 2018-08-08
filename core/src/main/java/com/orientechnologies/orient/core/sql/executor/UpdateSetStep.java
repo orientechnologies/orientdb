@@ -2,6 +2,12 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OView;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.parser.OUpdateItem;
 
 import java.util.List;
@@ -33,6 +39,29 @@ public class UpdateSetStep extends AbstractExecutionStep {
         OResult result = upstream.next();
         if (result instanceof OResultInternal) {
           for (OUpdateItem item : items) {
+            OClass type = result.getElement().flatMap(x -> x.getSchemaType()).orElse(null);
+            if (type == null) {
+              Object clazz = result.getProperty("@view");
+              if (clazz instanceof String) {
+                type = ctx.getDatabase().getMetadata().getSchema().getView((String) clazz);
+              }
+            }
+            if (type instanceof OView) {
+              if (!((OView) type).isUpdatable()) {
+                throw new OCommandExecutionException("View not updatable: " + type.getName());
+              }
+              String originField = ((OView) type).getOriginRidField();
+              if (originField == null) {
+                throw new OCommandExecutionException("No origin field set for view " + type.getName());
+              }
+              OIdentifiable elem = result.getProperty(originField);
+              if (elem instanceof ORID) {
+                elem = elem.getRecord();
+              }
+              OUpdatableResult linkedResult = new OUpdatableResult((OElement) elem);
+              item.applyUpdate(linkedResult, ctx);
+            }
+
             item.applyUpdate((OResultInternal) result, ctx);
           }
         }

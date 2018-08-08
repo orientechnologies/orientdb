@@ -162,6 +162,7 @@ public class ViewManager {
 
     int cluster = db.addCluster(getNextClusterNameFor(view, db));
 
+    String viewName = view.getName();
     String query = view.getQuery();
     String originRidField = view.getOriginRidField();
     String clusterName = db.getClusterNameById(cluster);
@@ -175,6 +176,7 @@ public class ViewManager {
           OElement newRow = copyElement(item, db);
           if (originRidField != null) {
             newRow.setProperty(originRidField, item.getIdentity().orElse(item.getProperty("@rid")));
+            newRow.setProperty("@view", viewName);
           }
           db.save(newRow, clusterName);
         }

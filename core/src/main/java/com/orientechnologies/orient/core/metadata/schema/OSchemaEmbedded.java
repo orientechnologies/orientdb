@@ -261,7 +261,7 @@ public class OSchemaEmbedded extends OSchemaShared {
     try {
 
       final String key = config.getName().toLowerCase(Locale.ENGLISH);
-      if (classes.containsKey(key))
+      if (classes.containsKey(key) || views.containsKey(key))
         throw new OSchemaException("View (or class) '" + config.getName() + "' already exists in current database");
 
       if (executeThroughDistributedStorage(database)) {

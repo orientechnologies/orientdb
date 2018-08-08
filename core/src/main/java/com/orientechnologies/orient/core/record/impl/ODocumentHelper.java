@@ -888,8 +888,8 @@ public class ODocumentHelper {
 
     if (fieldValue != null) {
       if (fieldValue instanceof ODocument && ((ODocument) fieldValue).isEmbedded()) {
-          // EMBEDDED DOCUMENT
-          return ((ODocument) fieldValue).copy();
+        // EMBEDDED DOCUMENT
+        return ((ODocument) fieldValue).copy();
       } else if (fieldValue instanceof ORidBag) {
         ORidBag newBag = ((ORidBag) fieldValue).copy();
         newBag.setOwner(null);
