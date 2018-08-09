@@ -36,11 +36,11 @@ public class OSBTreeBonsaiNonLeafBucketV2Test {
     cacheEntry.acquireExclusiveLock();
 
     OSBTreeBonsaiBucketV2<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV2<>(cacheEntry, 0, false,
-        OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
+        OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 256);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertFalse(treeBucket.isLeaf());
 
-    treeBucket = new OSBTreeBonsaiBucketV2<>(cacheEntry, 0, OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
+    treeBucket = new OSBTreeBonsaiBucketV2<>(cacheEntry, 0, OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 256);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertFalse(treeBucket.isLeaf());
     Assert.assertEquals(treeBucket.getLeftSibling().getPageIndex(), -1);
@@ -58,7 +58,7 @@ public class OSBTreeBonsaiNonLeafBucketV2Test {
     TreeSet<Long> keys = new TreeSet<>();
     Random random = new Random(seed);
 
-    while (keys.size() < 2 * OSBTreeBonsaiBucketV2.MAX_BUCKET_SIZE_BYTES / OLongSerializer.LONG_SIZE) {
+    while (keys.size() < 2 * 256 / OLongSerializer.LONG_SIZE) {
       keys.add(random.nextLong());
     }
 
@@ -72,10 +72,10 @@ public class OSBTreeBonsaiNonLeafBucketV2Test {
     cacheEntry.acquireExclusiveLock();
 
     for (int n = 0; n < 5; n++) {
-      final int pageOffset = (n + 1) * OSBTreeBonsaiBucketV2.MAX_BUCKET_SIZE_BYTES;
+      final int pageOffset = (n + 1) * 256;
 
       OSBTreeBonsaiBucketV2<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV2<>(cacheEntry, pageOffset, false,
-          OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
+          OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 256);
 
       int index = 0;
       Map<Long, Integer> keyIndexMap = new HashMap<>();
@@ -138,7 +138,7 @@ public class OSBTreeBonsaiNonLeafBucketV2Test {
     TreeSet<Long> keys = new TreeSet<>();
     Random random = new Random(seed);
 
-    while (keys.size() < 2 * OSBTreeBonsaiBucketV2.MAX_BUCKET_SIZE_BYTES / OLongSerializer.LONG_SIZE) {
+    while (keys.size() < 2 * 256 / OLongSerializer.LONG_SIZE) {
       keys.add(random.nextLong());
     }
 
@@ -151,10 +151,10 @@ public class OSBTreeBonsaiNonLeafBucketV2Test {
     cacheEntry.acquireExclusiveLock();
 
     for (int n = 0; n < 5; n++) {
-      final int pageOffset = (n + 1) * OSBTreeBonsaiBucketV2.MAX_BUCKET_SIZE_BYTES;
+      final int pageOffset = (n + 1) * 256;
 
       OSBTreeBonsaiBucketV2<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucketV2<>(cacheEntry, pageOffset, false,
-          OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
+          OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 256);
 
       int index = 0;
       for (Long key : keys) {
@@ -249,10 +249,11 @@ public class OSBTreeBonsaiNonLeafBucketV2Test {
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    OSBTreeBonsaiBucketV2<Long, OIdentifiable> restoredBucket = new OSBTreeBonsaiBucketV2<>(cacheEntry);
+    OSBTreeBonsaiBucketV2<Long, OIdentifiable> restoredBucket = new OSBTreeBonsaiBucketV2<>(cacheEntry, 256);
     restoredBucket.deserializePage(serializedPage);
 
-    restoredBucket = new OSBTreeBonsaiBucketV2<>(cacheEntry, pageOffset, OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
+    restoredBucket = new OSBTreeBonsaiBucketV2<>(cacheEntry, pageOffset, OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null,
+        256);
 
     consumer.accept(restoredBucket);
 

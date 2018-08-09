@@ -135,7 +135,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createTree(int clusterId) {
 
     final OSBTreeBonsaiLocalV2<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocalV2<>(FILE_NAME_PREFIX + clusterId,
-        DEFAULT_EXTENSION, storage);
+        DEFAULT_EXTENSION, storage, 1024);
     tree.create(OLinkSerializer.INSTANCE, OIntegerSerializer.INSTANCE);
 
     return tree;
@@ -153,7 +153,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
           storage);
     } else if (rootPointer.getVersion() == OSBTreeBonsaiLocalV2.BINARY_VERSION) {
       tree = new OSBTreeBonsaiLocalV2<>(fileName.substring(0, fileName.length() - DEFAULT_EXTENSION.length()), DEFAULT_EXTENSION,
-          storage);
+          storage, 1024);
     } else {
       throw new IllegalStateException("Invalid tree version " + rootPointer.getVersion());
     }

@@ -28,7 +28,7 @@ public enum PageSerializationType {
   }, SBTREE_BONSAI_BUCKET {
     @Override
     public ODurablePage pageInstance(OCacheEntry cacheEntry) {
-      return new OBonsaiBucketAbstractV2(cacheEntry);
+      return new OBonsaiBucketAbstractV2(cacheEntry, 1024);
     }
   }, CLUSTER_POSITION_MAP_BUCKET {
     @Override

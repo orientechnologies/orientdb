@@ -45,43 +45,42 @@ public final class OSysBucketV2 extends OBonsaiBucketAbstractV2 {
    */
   private static final byte SYS_MAGIC = (byte) 41;
 
-  OSysBucketV2(final OCacheEntry cacheEntry) {
-    super(cacheEntry);
+  OSysBucketV2(final OCacheEntry cacheEntry, int maxBucketSizeInBytes) {
+    super(cacheEntry, maxBucketSizeInBytes);
   }
 
   public void init() {
-    buffer.put(SYS_MAGIC_OFFSET, SYS_MAGIC);
-    setBucketPointer(FREE_SPACE_OFFSET,
-        new OBonsaiBucketPointer(0, OSBTreeBonsaiBucketV2.MAX_BUCKET_SIZE_BYTES, OSBTreeBonsaiLocalV2.BINARY_VERSION));
-    setBucketPointer(FREE_LIST_HEAD_OFFSET, OBonsaiBucketPointer.NULL);
-    buffer.putLong(FREE_LIST_LENGTH_OFFSET, 0L);
+    buffer.put(sysMagicOffset, SYS_MAGIC);
+    setBucketPointer(freeSpaceOffset, new OBonsaiBucketPointer(0, maxBucketSizeInBytes, OSBTreeBonsaiLocalV2.BINARY_VERSION));
+    setBucketPointer(freeListHeadOffset, OBonsaiBucketPointer.NULL);
+    buffer.putLong(freeListLengthOffset, 0L);
   }
 
   public boolean isInitialized() {
-    return buffer.get(SYS_MAGIC_OFFSET) != 41;
+    return buffer.get(sysMagicOffset) != 41;
   }
 
   long freeListLength() {
-    return buffer.getLong(FREE_LIST_LENGTH_OFFSET);
+    return buffer.getLong(freeListLengthOffset);
   }
 
   void setFreeListLength(final long length) {
-    buffer.putLong(FREE_LIST_LENGTH_OFFSET, length);
+    buffer.putLong(freeListLengthOffset, length);
   }
 
   OBonsaiBucketPointer getFreeSpacePointer() {
-    return getBucketPointer(FREE_SPACE_OFFSET);
+    return getBucketPointer(freeSpaceOffset);
   }
 
   void setFreeSpacePointer(final OBonsaiBucketPointer pointer) {
-    setBucketPointer(FREE_SPACE_OFFSET, pointer);
+    setBucketPointer(freeSpaceOffset, pointer);
   }
 
   OBonsaiBucketPointer getFreeListHead() {
-    return getBucketPointer(FREE_LIST_HEAD_OFFSET);
+    return getBucketPointer(freeListHeadOffset);
   }
 
   void setFreeListHead(final OBonsaiBucketPointer pointer) {
-    setBucketPointer(FREE_LIST_HEAD_OFFSET, pointer);
+    setBucketPointer(freeListHeadOffset, pointer);
   }
 }

@@ -23,7 +23,6 @@ package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.v2;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.PageSerializationType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -41,39 +40,81 @@ import java.nio.ByteBuffer;
  * @see com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai
  */
 public class OBonsaiBucketAbstractV2 extends ODurablePage {
-  private static final int BITS_IN_BYTE          = 8;
-  static final         int MAX_BUCKET_SIZE_BYTES = OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getValueAsInteger() * 1024;
+  private static final int BITS_IN_BYTE = 8;
+  final                int maxBucketSizeInBytes;
 
   private static final int CREATED_BUCKETS_OFFSET = NEXT_FREE_POSITION;
-  private static final int AMOUNT_OF_BUCKETS      = PAGE_SIZE / MAX_BUCKET_SIZE_BYTES;
-  private static final int BUCKETS_FILL_SIZE      = (AMOUNT_OF_BUCKETS + BITS_IN_BYTE - 1) / BITS_IN_BYTE;
+  private final        int amountOfBuckets;
+  private final        int bucketsFillSize;
 
-  private static final int END_CREATED_BUCKETS = CREATED_BUCKETS_OFFSET + BUCKETS_FILL_SIZE;
+  private final int endCreatedBuckets;
 
-  static final int FREE_POINTER_OFFSET      = END_CREATED_BUCKETS;
-  static final int SIZE_OFFSET              = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
-  static final int FLAGS_OFFSET             = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
-  static final int FREE_LIST_POINTER_OFFSET = FLAGS_OFFSET + OByteSerializer.BYTE_SIZE;
-  static final int LEFT_SIBLING_OFFSET      = FREE_LIST_POINTER_OFFSET + 2 * OIntegerSerializer.INT_SIZE;
-  static final int RIGHT_SIBLING_OFFSET     = LEFT_SIBLING_OFFSET + 2 * OIntegerSerializer.INT_SIZE;
-  static final int TREE_SIZE_OFFSET         = RIGHT_SIBLING_OFFSET + 2 * OIntegerSerializer.INT_SIZE;
-  static final int KEY_SERIALIZER_OFFSET    = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
-  static final int VALUE_SERIALIZER_OFFSET  = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
-  static final int POSITIONS_ARRAY_OFFSET   = VALUE_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
+  final int freePointerOffset;
+  final int sizeOffset;
+  final int flagsOffset;
+  final int freeListPointerOffset;
+  final int leftSiblingOffset;
+  final int rightSiblingOffset;
+  final int treeSizeOffset;
+  final int keySerializerOffset;
+  final int valueSerializerOffset;
+  final int positionsArrayOffset;
 
-  static final int SYS_MAGIC_OFFSET        = END_CREATED_BUCKETS;
-  static final int FREE_SPACE_OFFSET       = SYS_MAGIC_OFFSET + OByteSerializer.BYTE_SIZE;
-  static final int FREE_LIST_HEAD_OFFSET   = FREE_SPACE_OFFSET + 2 * OIntegerSerializer.INT_SIZE;
-  static final int FREE_LIST_LENGTH_OFFSET = FREE_LIST_HEAD_OFFSET + 2 * OIntegerSerializer.INT_SIZE;
+  final int sysMagicOffset;
+  final int freeSpaceOffset;
+  final int freeListHeadOffset;
+  final int freeListLengthOffset;
 
-  public OBonsaiBucketAbstractV2(OCacheEntry cacheEntry) {
+  public OBonsaiBucketAbstractV2(OCacheEntry cacheEntry, int maxBucketSizeInBytes) {
     super(cacheEntry);
+
+    this.maxBucketSizeInBytes = maxBucketSizeInBytes;
+    this.amountOfBuckets = PAGE_SIZE / maxBucketSizeInBytes;
+    this.bucketsFillSize = (amountOfBuckets + BITS_IN_BYTE - 1) / BITS_IN_BYTE;
+    this.endCreatedBuckets = CREATED_BUCKETS_OFFSET + bucketsFillSize;
+
+    this.freePointerOffset = endCreatedBuckets;
+    this.sizeOffset = freePointerOffset + OIntegerSerializer.INT_SIZE;
+    this.flagsOffset = sizeOffset + OIntegerSerializer.INT_SIZE;
+    this.freeListPointerOffset = flagsOffset + OByteSerializer.BYTE_SIZE;
+    this.leftSiblingOffset = freeListPointerOffset + 2 * OIntegerSerializer.INT_SIZE;
+    this.rightSiblingOffset = leftSiblingOffset + 2 * OIntegerSerializer.INT_SIZE;
+    this.treeSizeOffset = rightSiblingOffset + 2 * OIntegerSerializer.INT_SIZE;
+    this.keySerializerOffset = treeSizeOffset + OLongSerializer.LONG_SIZE;
+    this.valueSerializerOffset = keySerializerOffset + OByteSerializer.BYTE_SIZE;
+    this.positionsArrayOffset = valueSerializerOffset + OByteSerializer.BYTE_SIZE;
+
+    this.sysMagicOffset = endCreatedBuckets;
+    this.freeSpaceOffset = sysMagicOffset + OByteSerializer.BYTE_SIZE;
+    this.freeListHeadOffset = freeSpaceOffset + 2 * OIntegerSerializer.INT_SIZE;
+    this.freeListLengthOffset = freeListHeadOffset + 2 * OIntegerSerializer.INT_SIZE;
   }
 
-  OBonsaiBucketAbstractV2(OCacheEntry cacheEntry, int pageOffset) {
+  OBonsaiBucketAbstractV2(OCacheEntry cacheEntry, int pageOffset, int maxBucketSizeInBytes) {
     super(cacheEntry);
 
-    final int bucketIndex = pageOffset / MAX_BUCKET_SIZE_BYTES;
+    this.maxBucketSizeInBytes = maxBucketSizeInBytes;
+    this.amountOfBuckets = PAGE_SIZE / maxBucketSizeInBytes;
+    this.bucketsFillSize = (amountOfBuckets + BITS_IN_BYTE - 1) / BITS_IN_BYTE;
+    this.endCreatedBuckets = CREATED_BUCKETS_OFFSET + bucketsFillSize;
+
+    this.freePointerOffset = endCreatedBuckets;
+    this.sizeOffset = freePointerOffset + OIntegerSerializer.INT_SIZE;
+    this.flagsOffset = sizeOffset + OIntegerSerializer.INT_SIZE;
+    this.freeListPointerOffset = flagsOffset + OByteSerializer.BYTE_SIZE;
+    this.leftSiblingOffset = freeListPointerOffset + 2 * OIntegerSerializer.INT_SIZE;
+    this.rightSiblingOffset = leftSiblingOffset + 2 * OIntegerSerializer.INT_SIZE;
+    this.treeSizeOffset = rightSiblingOffset + 2 * OIntegerSerializer.INT_SIZE;
+    this.keySerializerOffset = treeSizeOffset + OLongSerializer.LONG_SIZE;
+    this.valueSerializerOffset = keySerializerOffset + OByteSerializer.BYTE_SIZE;
+    this.positionsArrayOffset = valueSerializerOffset + OByteSerializer.BYTE_SIZE;
+
+    this.sysMagicOffset = endCreatedBuckets;
+    this.freeSpaceOffset = sysMagicOffset + OByteSerializer.BYTE_SIZE;
+    this.freeListHeadOffset = freeSpaceOffset + 2 * OIntegerSerializer.INT_SIZE;
+    this.freeListLengthOffset = freeListHeadOffset + 2 * OIntegerSerializer.INT_SIZE;
+
+    final int bucketIndex = pageOffset / maxBucketSizeInBytes;
     final int byteIndex = bucketIndex / BITS_IN_BYTE;
     final int bitIndex = bucketIndex - byteIndex * BITS_IN_BYTE;
 
@@ -108,10 +149,10 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
   }
 
   final void setDeleted(final int offset, @SuppressWarnings("SameParameterValue") final byte deletionFlag) {
-    final byte value = buffer.get(offset + FLAGS_OFFSET);
-    buffer.put(offset + FLAGS_OFFSET, (byte) (value | deletionFlag));
+    final byte value = buffer.get(offset + flagsOffset);
+    buffer.put(offset + flagsOffset, (byte) (value | deletionFlag));
 
-    final int bucketIndex = offset / MAX_BUCKET_SIZE_BYTES;
+    final int bucketIndex = offset / maxBucketSizeInBytes;
     final int byteIndex = bucketIndex / BITS_IN_BYTE;
     final int bitIndex = bucketIndex - byteIndex * BITS_IN_BYTE;
 
@@ -122,14 +163,14 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
   }
 
   boolean isDeleted(final int offset, @SuppressWarnings("SameParameterValue") final byte deletionFlag) {
-    return (buffer.get(offset + FLAGS_OFFSET) & deletionFlag) == deletionFlag;
+    return (buffer.get(offset + flagsOffset) & deletionFlag) == deletionFlag;
   }
 
   @Override
   public int serializedSize() {
     if (cacheEntry.getPageIndex() == OSBTreeBonsaiLocalV2.SYS_BUCKET.getPageIndex()) {
 
-      final int sysDataEnd = FREE_LIST_LENGTH_OFFSET + OLongSerializer.LONG_SIZE;
+      final int sysDataEnd = freeListLengthOffset + OLongSerializer.LONG_SIZE;
       int size = serializedBucketsSize();
       size += sysDataEnd + OByteSerializer.BYTE_SIZE;
 
@@ -144,7 +185,7 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
     assert buffer.limit() == buffer.capacity();
 
     if (cacheEntry.getPageIndex() == OSBTreeBonsaiLocalV2.SYS_BUCKET.getPageIndex()) {
-      final int sysDataEnd = FREE_LIST_LENGTH_OFFSET + OLongSerializer.LONG_SIZE;
+      final int sysDataEnd = freeListLengthOffset + OLongSerializer.LONG_SIZE;
 
       recordBuffer.put((byte) 0);
 
@@ -166,7 +207,7 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
     assert buffer.limit() == buffer.capacity();
 
     if (page[0] == 0) {
-      final int sysDataEnd = FREE_LIST_LENGTH_OFFSET + OLongSerializer.LONG_SIZE;
+      final int sysDataEnd = freeListLengthOffset + OLongSerializer.LONG_SIZE;
 
       buffer.position(0);
       buffer.put(page, 1, sysDataEnd);
@@ -185,18 +226,18 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
   }
 
   private int serializedBucketsSize() {
-    int size = BUCKETS_FILL_SIZE;
+    int size = bucketsFillSize;
 
     int bitCounter = 0;
     int byteCounter = 0;
 
-    final byte[] fillBytes = new byte[AMOUNT_OF_BUCKETS];
+    final byte[] fillBytes = new byte[amountOfBuckets];
     buffer.position(CREATED_BUCKETS_OFFSET);
     buffer.get(fillBytes);
 
     byte fillByte = fillBytes[byteCounter];
 
-    for (int i = 0; i < AMOUNT_OF_BUCKETS; i++, bitCounter++) {
+    for (int i = 0; i < amountOfBuckets; i++, bitCounter++) {
       if (bitCounter >= BITS_IN_BYTE) {
         byteCounter++;
         bitCounter = 0;
@@ -207,13 +248,13 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
         final int bitMask = 1 << bitCounter;
 
         if ((fillByte & bitMask) != 0) {
-          final int offset = i * MAX_BUCKET_SIZE_BYTES;
-          final int bucketSize = buffer.getInt(offset + SIZE_OFFSET);
+          final int offset = i * maxBucketSizeInBytes;
+          final int bucketSize = buffer.getInt(offset + sizeOffset);
           final int positionsSize = bucketSize * OIntegerSerializer.INT_SIZE;
 
-          size += POSITIONS_ARRAY_OFFSET + positionsSize;
-          final int freePointer = buffer.getInt(offset + FREE_POINTER_OFFSET);
-          final int dataSize = MAX_BUCKET_SIZE_BYTES - freePointer;
+          size += positionsArrayOffset + positionsSize;
+          final int freePointer = buffer.getInt(offset + freePointerOffset);
+          final int dataSize = maxBucketSizeInBytes - freePointer;
           size += dataSize;
 
           fillByte = (byte) (fillByte & (~bitMask));
@@ -231,7 +272,7 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
   }
 
   private void serializeBuckets(final ByteBuffer recordBuffer) {
-    final byte[] fillBytes = new byte[BUCKETS_FILL_SIZE];
+    final byte[] fillBytes = new byte[bucketsFillSize];
 
     buffer.position(CREATED_BUCKETS_OFFSET);
     buffer.get(fillBytes);
@@ -242,7 +283,7 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
 
     byte fillByte = fillBytes[byteCounter];
 
-    for (int i = 0; i < AMOUNT_OF_BUCKETS; i++, bitCounter++) {
+    for (int i = 0; i < amountOfBuckets; i++, bitCounter++) {
       if (bitCounter >= BITS_IN_BYTE) {
         byteCounter++;
         bitCounter = 0;
@@ -253,19 +294,19 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
         final int bitMask = 1 << bitCounter;
 
         if ((fillByte & bitMask) != 0) {
-          final int offset = i * MAX_BUCKET_SIZE_BYTES;
-          final int bucketSize = buffer.getInt(offset + SIZE_OFFSET);
+          final int offset = i * maxBucketSizeInBytes;
+          final int bucketSize = buffer.getInt(offset + sizeOffset);
           final int positionsSize = bucketSize * OIntegerSerializer.INT_SIZE;
 
-          final int headerSize = POSITIONS_ARRAY_OFFSET + positionsSize;
+          final int headerSize = positionsArrayOffset + positionsSize;
 
           buffer.position(offset);
           buffer.limit(offset + headerSize);
           recordBuffer.put(buffer);
           buffer.limit(buffer.capacity());
 
-          final int freePointer = buffer.getInt(offset + FREE_POINTER_OFFSET);
-          final int dataSize = MAX_BUCKET_SIZE_BYTES - freePointer;
+          final int freePointer = buffer.getInt(offset + freePointerOffset);
+          final int dataSize = maxBucketSizeInBytes - freePointer;
 
           if (dataSize > 0) {
             buffer.position(offset + freePointer);
@@ -289,16 +330,16 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
     final int startOffset = dataOffset;
 
     buffer.position(CREATED_BUCKETS_OFFSET);
-    buffer.put(content, dataOffset, BUCKETS_FILL_SIZE);
+    buffer.put(content, dataOffset, bucketsFillSize);
 
-    dataOffset += BUCKETS_FILL_SIZE;
+    dataOffset += bucketsFillSize;
 
     int bitCounter = 0;
     int byteCounter = 0;
 
     byte fillByte = content[startOffset + byteCounter];
 
-    for (int i = 0; i < AMOUNT_OF_BUCKETS; i++, bitCounter++) {
+    for (int i = 0; i < amountOfBuckets; i++, bitCounter++) {
       if (bitCounter >= BITS_IN_BYTE) {
         byteCounter++;
         bitCounter = 0;
@@ -308,21 +349,21 @@ public class OBonsaiBucketAbstractV2 extends ODurablePage {
 
       if (fillByte != 0) {
         if ((fillByte & (1 << bitCounter)) != 0) {
-          final int offset = i * MAX_BUCKET_SIZE_BYTES;
+          final int offset = i * maxBucketSizeInBytes;
           buffer.position(offset);
-          buffer.put(content, dataOffset, POSITIONS_ARRAY_OFFSET);
-          dataOffset += POSITIONS_ARRAY_OFFSET;
+          buffer.put(content, dataOffset, positionsArrayOffset);
+          dataOffset += positionsArrayOffset;
 
-          final int bucketSize = buffer.getInt(offset + SIZE_OFFSET);
+          final int bucketSize = buffer.getInt(offset + sizeOffset);
           final int positionsSize = bucketSize * OIntegerSerializer.INT_SIZE;
 
           if (positionsSize > 0) {
-            buffer.position(offset + POSITIONS_ARRAY_OFFSET);
+            buffer.position(offset + positionsArrayOffset);
             buffer.put(content, dataOffset, positionsSize);
             dataOffset += positionsSize;
 
-            final int freePointer = buffer.getInt(offset + FREE_POINTER_OFFSET);
-            final int dataSize = MAX_BUCKET_SIZE_BYTES - freePointer;
+            final int freePointer = buffer.getInt(offset + freePointerOffset);
+            final int dataSize = maxBucketSizeInBytes - freePointer;
 
             buffer.position(freePointer + offset);
             buffer.put(content, dataOffset, dataSize);

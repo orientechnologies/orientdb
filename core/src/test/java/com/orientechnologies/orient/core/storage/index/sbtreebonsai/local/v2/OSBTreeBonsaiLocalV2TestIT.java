@@ -50,7 +50,7 @@ public class OSBTreeBonsaiLocalV2TestIT {
     databaseDocumentTx.create();
 
     sbTree = new OSBTreeBonsaiLocalV2<>("actualSBTreeBonsaiLocalTest", ".irs",
-        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage(), 256);
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
 
