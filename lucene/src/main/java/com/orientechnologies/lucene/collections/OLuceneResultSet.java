@@ -13,7 +13,7 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
 package com.orientechnologies.lucene.collections;
@@ -67,7 +67,15 @@ public class OLuceneResultSet extends OLuceneAbstractResultSet {
 
     @Override
     public boolean hasNext() {
-      return index < totalHits;
+      final boolean hasNext = index < totalHits;
+      if (!hasNext) {
+        try {
+          queryContext.getSearcher().getIndexReader().decRef();
+        } catch (IOException e) {
+          throw new RuntimeException("Failed to release lucene index reader", e);
+        }
+      }
+      return hasNext;
     }
 
     @Override
