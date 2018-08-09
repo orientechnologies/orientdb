@@ -22,8 +22,14 @@ package com.orientechnologies.orient.core.storage.index.sbtree;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -61,7 +67,7 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
       public boolean addResult(final Map.Entry<K, V> entry) {
         final V value = entry.getValue();
         final V resultValue;
-        if (value instanceof OIndexRIDContainer)
+        if (value instanceof OIndexRIDContainer || value instanceof OMixedIndexRIDContainer)
           resultValue = (V) new HashSet<OIdentifiable>((Collection<? extends OIdentifiable>) value);
         else
           resultValue = value;
