@@ -200,7 +200,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public void waitForOnline() {
     try {
-      waitForOnline.await();
+      if(!databaseName.equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME))      
+        waitForOnline.await();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       // IGNORE IT
