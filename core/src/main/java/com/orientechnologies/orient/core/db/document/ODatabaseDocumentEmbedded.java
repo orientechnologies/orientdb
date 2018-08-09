@@ -44,6 +44,8 @@ import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
@@ -1051,4 +1053,16 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     }
   }
 
+  @Override
+  public OView getViewFromCluster(int cluster) {
+    OImmutableSchema schema = getMetadata().getImmutableSchemaSnapshot();
+    OView view = schema.getViewByClusterId(cluster);
+    if (view == null) {
+      String viewName = ((OSharedContextEmbedded) getSharedContext()).getViewManager().getViewFromOldCluster(cluster);
+      if (viewName != null) {
+        view = schema.getView(viewName);
+      }
+    }
+    return view;
+  }
 }

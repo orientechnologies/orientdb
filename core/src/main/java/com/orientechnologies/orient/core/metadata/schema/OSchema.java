@@ -116,6 +116,8 @@ public interface OSchema {
 
   OClass getClassByClusterId(int clusterId);
 
+  OView getViewByClusterId(int clusterId);
+
   OGlobalProperty getGlobalPropertyById(int id);
 
   List<OGlobalProperty> getGlobalProperties();

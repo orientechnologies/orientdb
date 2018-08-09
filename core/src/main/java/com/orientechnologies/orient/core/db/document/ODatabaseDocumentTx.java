@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
@@ -1486,6 +1487,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
+  public boolean isClusterView(int cluster) {
+    return internal.isClusterView(cluster);
+  }
+
+  @Override
   public OIdentifiable beforeCreateOperations(OIdentifiable id, String iClusterName) {
     return internal.beforeCreateOperations(id, iClusterName);
   }
@@ -1538,5 +1544,10 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public String getClusterName(ORecord record) {
     return internal.getClusterName(record);
+  }
+
+  @Override
+  public OView getViewFromCluster(int cluster) {
+    return internal.getViewFromCluster(cluster);
   }
 }

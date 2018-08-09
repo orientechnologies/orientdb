@@ -254,6 +254,11 @@ public class OImmutableSchema implements OSchema {
   }
 
   @Override
+  public OView getViewByClusterId(int clusterId) {
+    return clustersToViews.get(clusterId);
+  }
+
+  @Override
   public OGlobalProperty getGlobalPropertyById(int id) {
     if (id >= properties.size())
       return null;

@@ -239,6 +239,11 @@ public class OSchemaProxyObject implements OSchemaObject {
   }
 
   @Override
+  public OView getViewByClusterId(int clusterId) {
+    return underlying.getViewByClusterId(clusterId);
+  }
+
+  @Override
   public OClusterSelectionFactory getClusterSelectionFactory() {
     return underlying.getClusterSelectionFactory();
   }

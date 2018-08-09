@@ -299,7 +299,8 @@ public abstract class OSchemaShared implements OCloseable {
     }
   }
 
-  public OView getViewyClusterId(int clusterId) {
+
+  public OView getViewByClusterId(int clusterId) {
     acquireSchemaReadLock();
     try {
       return clustersToViews.get(clusterId);

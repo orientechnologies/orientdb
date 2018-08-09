@@ -236,6 +236,11 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   @Override
+  public OView getViewByClusterId(int clusterId) {
+    return delegate.getViewByClusterId(clusterId);
+  }
+
+  @Override
   public OGlobalProperty getGlobalPropertyById(int id) {
     return delegate.getGlobalPropertyById(id);
   }

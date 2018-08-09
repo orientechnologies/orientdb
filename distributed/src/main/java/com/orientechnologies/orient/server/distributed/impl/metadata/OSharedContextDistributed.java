@@ -138,4 +138,8 @@ public class OSharedContextDistributed extends OSharedContext {
       return null;
     });
   }
+
+  public ViewManager getViewManager() {
+    return viewManager;
+  }
 }

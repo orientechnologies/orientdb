@@ -31,8 +31,9 @@ public class ViewManager {
    * <p>
    * view -> cluster -> number of visitors
    */
-  ConcurrentMap<Integer, AtomicInteger> viewCluserVisitors = new ConcurrentHashMap<>();
-  List<Integer>                         clustersToDrop     = Collections.synchronizedList(new ArrayList<>());
+  ConcurrentMap<Integer, AtomicInteger> viewCluserVisitors  = new ConcurrentHashMap<>();
+  ConcurrentMap<Integer, String>        oldClustersPerViews = new ConcurrentHashMap<>();
+  List<Integer>                         clustersToDrop      = Collections.synchronizedList(new ArrayList<>());
 
   Map<String, Long> lastUpdateTimestampForView = new HashMap<>();
 
@@ -74,6 +75,7 @@ public class ViewManager {
     for (Integer cluster : toRemove) {
       viewCluserVisitors.remove(cluster);
       clustersToDrop.remove(cluster);
+      oldClustersPerViews.remove(cluster);
       db.dropCluster(cluster, false);
     }
   }
@@ -196,6 +198,7 @@ public class ViewManager {
       if (i != cluster) {
         clustersToDrop.add(i);
         viewCluserVisitors.put(i, new AtomicInteger(0));
+        oldClustersPerViews.put(i, view.getName());
         view.removeClusterId(i);
       }
     }
@@ -284,4 +287,7 @@ public class ViewManager {
     lastChangePerClass.put(clazz.getName().toLowerCase(Locale.ENGLISH), System.currentTimeMillis());
   }
 
+  public String getViewFromOldCluster(int clusterId){
+    return oldClustersPerViews.get(clusterId);
+  }
 }
