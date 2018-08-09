@@ -63,7 +63,7 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
     fileName = storage.getWriteCache().fileNameById(fileId);
 
     tree = new OSBTreeBonsaiLocalV2<>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
-        INDEX_FILE_EXTENSION, storage, 512);
+        INDEX_FILE_EXTENSION, storage, 128);
 
     tree.create(OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
   }
@@ -78,7 +78,7 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
           INDEX_FILE_EXTENSION, storage);
     } else if (rootPointer.getVersion() == OSBTreeBonsaiLocalV2.BINARY_VERSION) {
       tree = new OSBTreeBonsaiLocalV2<>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()),
-          INDEX_FILE_EXTENSION, storage, 512);
+          INDEX_FILE_EXTENSION, storage, 128);
     } else {
       throw new IllegalStateException("Invalid tree version " + rootPointer.getVersion());
     }

@@ -409,7 +409,7 @@ public enum OGlobalConfiguration {
   // INDEX
   INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("index.embeddedToSbtreeBonsaiThreshold",
       "Amount of values, after which the index implementation will use an sbtree as a values container. Set to -1, to disable and force using an sbtree",
-      Integer.class, 8, true),
+      Integer.class, 4, true),
 
   INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("index.sbtreeBonsaiToEmbeddedThreshold",
       "Amount of values, after which index implementation will use an embedded values container (disabled by default)",
