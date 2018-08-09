@@ -20,7 +20,6 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.thread.OThreadPoolExecutorWithLogging;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -92,8 +91,8 @@ public class OETLProcessor {
     context = iContext;
     factory = new OETLComponentFactory();
     stats = new OETLProcessorStats();
-
-    executor = new OThreadPoolExecutorWithLogging(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+    
+    executor = Executors.newCachedThreadPool();
 
     configRunBehaviour(context);
 
