@@ -36,6 +36,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.ONullSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -52,8 +53,7 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * This class is responsible for obtaining OBinarySerializer realization, by it's id of type of object that should be serialized.
- * 
- * 
+ *
  * @author Evgeniy Degtiarenko (gmandnepr-at-gmail.com)
  */
 public class OBinarySerializerFactory {
@@ -61,10 +61,10 @@ public class OBinarySerializerFactory {
   /**
    * Size of the type identifier block size
    */
-  public static final int                                               TYPE_IDENTIFIER_SIZE   = 1;
-  private final ConcurrentMap<Byte, OBinarySerializer<?>>               serializerIdMap        = new ConcurrentHashMap<Byte, OBinarySerializer<?>>();
-  private final ConcurrentMap<Byte, Class<? extends OBinarySerializer>> serializerClassesIdMap = new ConcurrentHashMap<Byte, Class<? extends OBinarySerializer>>();
-  private final ConcurrentMap<OType, OBinarySerializer<?>>              serializerTypeMap      = new ConcurrentHashMap<OType, OBinarySerializer<?>>();
+  public static final int                                                     TYPE_IDENTIFIER_SIZE   = 1;
+  private final       ConcurrentMap<Byte, OBinarySerializer<?>>               serializerIdMap        = new ConcurrentHashMap<Byte, OBinarySerializer<?>>();
+  private final       ConcurrentMap<Byte, Class<? extends OBinarySerializer>> serializerClassesIdMap = new ConcurrentHashMap<Byte, Class<? extends OBinarySerializer>>();
+  private final       ConcurrentMap<OType, OBinarySerializer<?>>              serializerTypeMap      = new ConcurrentHashMap<OType, OBinarySerializer<?>>();
 
   private OBinarySerializerFactory() {
   }
@@ -101,6 +101,8 @@ public class OBinarySerializerFactory {
     factory.registerSerializer(OCompactedLinkSerializer.INSTANCE, null);
     factory.registerSerializer(OMixedIndexRIDContainerSerializer.INSTANCE, null);
 
+    factory.registerSerializer(OUTF8Serializer.INSTANCE, null);
+
     return factory;
   }
 
@@ -131,9 +133,9 @@ public class OBinarySerializerFactory {
 
   /**
    * Obtain OBinarySerializer instance by it's id.
-   * 
-   * @param identifier
-   *          is serializes identifier.
+   *
+   * @param identifier is serializes identifier.
+   *
    * @return OBinarySerializer instance.
    */
   public OBinarySerializer<?> getObjectSerializer(final byte identifier) {
@@ -152,9 +154,9 @@ public class OBinarySerializerFactory {
 
   /**
    * Obtain OBinarySerializer realization for the OType
-   * 
-   * @param type
-   *          is the OType to obtain serializer algorithm for
+   *
+   * @param type is the OType to obtain serializer algorithm for
+   *
    * @return OBinarySerializer instance
    */
   @SuppressWarnings("unchecked")
