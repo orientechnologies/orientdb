@@ -11,7 +11,6 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai.OCreateSBTreeBonsaiRawOperation;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -73,7 +72,6 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
         return writeCache.fileIdByName(fileName);
 
       final long fileId = readCache.addFile(fileName, writeCache);
-      storage.getWALInstance().log(new OCreateSBTreeBonsaiRawOperation(atomicOperation.getOperationUnitId(), fileId, fileName));
       storage.getAtomicOperationsManager().endAtomicOperation(false, null);
 
       return fileId;
