@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 
 package com.orientechnologies.common.serialization.types;
 
@@ -39,6 +39,7 @@ public interface OBinarySerializer<T> {
    *
    * @param object is the object to measure its size
    * @param hints  List of parameters which may be used to choose appropriate serialization approach.
+   *
    * @return size of the serialized object
    */
   int getObjectSize(T object, Object... hints);
@@ -48,6 +49,7 @@ public interface OBinarySerializer<T> {
    *
    * @param stream        Serialized content.
    * @param startPosition Position from which serialized presentation of given object is stored.
+   *
    * @return Size serialized presentation of given object in bytes.
    */
   int getObjectSize(byte[] stream, int startPosition);
@@ -55,10 +57,9 @@ public interface OBinarySerializer<T> {
   /**
    * Writes object to the stream starting from the startPosition
    *
-   * @param object        is the object to serialize
-   * @param stream        is the stream where object will be written
-   * @param startPosition
-   * @param hints         List of parameters which may be used to choose appropriate serialization approach.
+   * @param object is the object to serialize
+   * @param stream is the stream where object will be written
+   * @param hints  List of parameters which may be used to choose appropriate serialization approach.
    */
   void serialize(T object, byte[] stream, int startPosition, Object... hints);
 
@@ -67,6 +68,7 @@ public interface OBinarySerializer<T> {
    *
    * @param stream        is the stream from object will be read
    * @param startPosition is the position to start reading from
+   *
    * @return instance of the deserialized object
    */
   T deserialize(byte[] stream, int startPosition);
@@ -91,10 +93,9 @@ public interface OBinarySerializer<T> {
    * Writes object to the stream starting from the startPosition using native acceleration. Serialized object presentation is
    * platform dependant.
    *
-   * @param object        is the object to serialize
-   * @param stream        is the stream where object will be written
-   * @param startPosition
-   * @param hints         List of parameters which may be used to choose appropriate serialization approach.
+   * @param object is the object to serialize
+   * @param stream is the stream where object will be written
+   * @param hints  List of parameters which may be used to choose appropriate serialization approach.
    */
   void serializeNativeObject(T object, byte[] stream, int startPosition, Object... hints);
 
@@ -104,6 +105,7 @@ public interface OBinarySerializer<T> {
    *
    * @param stream        is the stream from object will be read
    * @param startPosition is the position to start reading from
+   *
    * @return instance of the deserialized object
    */
   T deserializeNativeObject(byte[] stream, int startPosition);
@@ -114,6 +116,7 @@ public interface OBinarySerializer<T> {
    *
    * @param stream        Serialized content.
    * @param startPosition Position from which serialized presentation of given object is stored.
+   *
    * @return Size serialized presentation of given object in bytes.
    */
   int getObjectSizeNative(byte[] stream, int startPosition);
@@ -122,29 +125,23 @@ public interface OBinarySerializer<T> {
 
   /**
    * Serializes binary presentation of object to {@link ByteBuffer}.
-   * <p>
    * Position of buffer should be set before calling of given method.
-   * <p>
    * Serialization result is compatible with result of call of {@link #serializeNativeObject(Object, byte[], int, Object...)}  method.
    * So if we call:
    * <code>
    * buffer.position(10);
    * binarySerializer.serializeInByteBufferObject(object, buffer);
    * </code>
-   * <p>
    * and then
    * <code>
    * byte[] stream = new byte[serializedSize + 10];
    * buffer.position(10);
    * buffer.get(stream);
    * </code>
-   * <p>
    * following assert should pass
-   * <p>
    * <code>
    * assert object.equals(binarySerializer.deserializeNativeObject(stream, 10))
    * </code>
-   * <p>
    * Final position of <code>ByteBuffer</code> will be changed and will be equal to
    * sum of buffer start position and value returned by method {@link #getObjectSize(Object, Object...)}
    *
@@ -156,42 +153,36 @@ public interface OBinarySerializer<T> {
 
   /**
    * Converts binary presentation of object to object instance.
-   * <p>
    * Position of buffer should be set before call of this method.
    * Binary format of method is expected to be the same as binary format of {@link #serializeNativeObject(Object, byte[], int, Object...)}
-   * <p>
    * So if we call
    * <code>
    * byte[] stream = new byte[serializedSize];
    * binarySerializer.serializeNativeObject(object, stream, 0);
    * </code>
-   * <p>
    * following assert should pass
-   * <p>
    * <code>
    * byteBuffer.position(10);
    * byteBuffer.put(stream);
-   * <p>
    * byteBuffer.position(10);
    * assert object.equals(binarySerializer.deserializeFromByteBufferObject(buffer))
    * </code>
-   * <p>
    * Final position of <code>ByteBuffer</code> will be changed and will be equal to
    * sum of buffer start position and value returned by method {@link #getObjectSize(Object, Object...)}
    *
    * @param buffer Buffer which contains serialized presentation of object
+   *
    * @return Instance of object serialized in buffer.
    */
   T deserializeFromByteBufferObject(ByteBuffer buffer);
 
   /**
    * Returns amount of bytes which is consumed by object which is already serialized in buffer.
-   * <p>
    * Position of buffer should be set before call of this method.
-   * <p>
    * Result of call should be the same as result of call of {@link #getObjectSize(Object, Object...)} on deserialized object.
    *
    * @param buffer Buffer which contains serialized version of object
+   *
    * @return Size of serialized object.
    */
   int getObjectSizeInByteBuffer(ByteBuffer buffer);
@@ -199,18 +190,14 @@ public interface OBinarySerializer<T> {
   /**
    * Converts binary presentation of object to object instance taking in account changes which are done inside of atomic operation
    * {@link com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation}.
-   * <p>
    * Binary format of method is expected to be the same as binary format of method {@link #serializeNativeObject(Object, byte[], int, Object...)}.
-   * <p>
    * So if we call:
    * <code>
    * byte[] stream = new byte[serializedSize];
    * binarySerializer.serializeNativeObject(object, stream, 0);
    * walChanges.setBinaryValue(buffer, stream, 10);
    * </code>
-   * <p>
    * Then following assert should pass
-   * <p>
    * <code>
    * assert object.equals(binarySerializer.deserializeFromByteBufferObject(buffer, walChanges, 10));
    * </code>
@@ -218,6 +205,7 @@ public interface OBinarySerializer<T> {
    * @param buffer     Buffer which will contain serialized changes.
    * @param walChanges Changes are done during atomic operation.
    * @param offset     Offset of binary presentation of object inside of byte buffer/atomic operations changes.
+   *
    * @return Instance of object serialized in buffer.
    */
   T deserializeFromByteBufferObject(ByteBuffer buffer, OWALChanges walChanges, int offset);
@@ -226,13 +214,19 @@ public interface OBinarySerializer<T> {
    * Returns amount of bytes which is consumed by object which is already serialized in buffer taking in account
    * changes which are done inside of atomic operation
    * {@link com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation}.
-   * <p>
    * Result of call should be the same as result of call of {@link #getObjectSize(Object, Object...)} on deserialized object.
    *
    * @param buffer     Buffer which will contain serialized changes.
    * @param walChanges Changes are done during atomic operation.
    * @param offset     Offset of binary presentation of object inside of byte buffer/atomic operations changes.
+   *
    * @return Size of serialized object.
    */
   int getObjectSizeInByteBuffer(ByteBuffer buffer, OWALChanges walChanges, int offset);
+
+  default byte[] serializeNativeAsWhole(T object, Object... hints) {
+    final byte[] result = new byte[getObjectSize(object, hints)];
+    serializeNativeObject(object, result, 0, hints);
+    return result;
+  }
 }

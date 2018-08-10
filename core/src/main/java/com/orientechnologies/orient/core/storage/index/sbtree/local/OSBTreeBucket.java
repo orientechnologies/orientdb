@@ -344,16 +344,13 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
   }
 
   public boolean addEntry(int index, SBTreeEntry<K, V> treeEntry, boolean updateNeighbors) throws IOException {
+    final byte[] serializedKey = keySerializer.serializeNativeAsWhole(treeEntry.key, (Object[]) keyTypes);
     final int keySize;
     byte[] encryptedKey = null;
 
     if (encryption == null) {
       keySize = keySerializer.getObjectSize(treeEntry.key, (Object[]) keyTypes);
     } else {
-      final int serializedKeySize = keySerializer.getObjectSize(treeEntry.key, (Object[]) keyTypes);
-      final byte[] serializedKey = new byte[serializedKeySize];
-      keySerializer.serializeNativeObject(treeEntry.key, serializedKey, 0, (Object[]) keyTypes);
-
       encryptedKey = encryption.encrypt(serializedKey);
       keySize = encryptedKey.length + OIntegerSerializer.INT_SIZE;
     }
@@ -393,9 +390,6 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
     if (isLeaf) {
       if (encryption == null) {
-        byte[] serializedKey = new byte[keySize];
-        keySerializer.serializeNativeObject(treeEntry.key, serializedKey, 0, (Object[]) keyTypes);
-
         freePointer += setBinaryValue(freePointer, serializedKey);
       } else {
         setIntValue(freePointer, encryptedKey.length);
@@ -418,8 +412,6 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       freePointer += setLongValue(freePointer, treeEntry.rightChild);
 
       if (encryption == null) {
-        byte[] serializedKey = new byte[keySize];
-        keySerializer.serializeNativeObject(treeEntry.key, serializedKey, 0, (Object[]) keyTypes);
         setBinaryValue(freePointer, serializedKey);
       } else {
         setIntValue(freePointer, encryptedKey.length);

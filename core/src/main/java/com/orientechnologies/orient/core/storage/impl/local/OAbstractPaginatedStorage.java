@@ -2445,8 +2445,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           OCurrentStorageComponentsFactory currentStorageComponentsFactory = componentsFactory;
           if (currentStorageComponentsFactory != null)
-            keySerializer = currentStorageComponentsFactory.binarySerializerFactory
-                .getObjectSerializer(indexDefinition.getTypes()[0]);
+            keySerializer = currentStorageComponentsFactory.binarySerializerFactory.getObjectSerializer(keyType);
           else
             throw new IllegalStateException("Cannot load binary serializer, storage is not properly initialized");
         }
