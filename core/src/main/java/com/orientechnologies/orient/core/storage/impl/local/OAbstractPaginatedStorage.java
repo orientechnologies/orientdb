@@ -32,6 +32,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.AtomicLongOProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
@@ -2431,10 +2432,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (indexDefinition.getTypes().length > 1) {
           keySerializer = OCompositeKeySerializer.INSTANCE;
         } else {
+          final OType keyType = indexDefinition.getTypes()[0];
+          if (keyType == OType.STRING) {
+            return OUTF8Serializer.INSTANCE;
+          }
+
           OCurrentStorageComponentsFactory currentStorageComponentsFactory = componentsFactory;
           if (currentStorageComponentsFactory != null)
-            keySerializer = currentStorageComponentsFactory.binarySerializerFactory
-                .getObjectSerializer(indexDefinition.getTypes()[0]);
+            keySerializer = currentStorageComponentsFactory.binarySerializerFactory.getObjectSerializer(keyType);
           else
             throw new IllegalStateException("Cannot load binary serializer, storage is not properly initialized");
         }

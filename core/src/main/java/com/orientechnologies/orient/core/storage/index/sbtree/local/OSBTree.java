@@ -279,14 +279,15 @@ public class OSBTree<K, V> extends ODurableComponent {
         checkNullSupport(key);
 
         if (key != null) {
-          final int keySize = keySerializer.getObjectSize(key, (Object[]) keyTypes);
+
+          key = keySerializer.preprocess(key, (Object[]) keyTypes);
+          final byte[] serializedKey = keySerializer.serializeNativeAsWhole(key, (Object[]) keyTypes);
 
           if (keySize > MAX_KEY_SIZE)
             throw new OTooBigIndexKeyException(
                 "Key size is more than allowed, operation was canceled. Current key size " + keySize + ", allowed  " + MAX_KEY_SIZE,
                 getName());
 
-          key = keySerializer.preprocess(key, (Object[]) keyTypes);
           long valueLink = -1;
 
           BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
@@ -335,9 +336,6 @@ public class OSBTree<K, V> extends ODurableComponent {
             final int valueSize = valueSerializer.getObjectSize(value);
             final byte[] serializeValue = new byte[valueSize];
             valueSerializer.serializeNativeObject(value, serializeValue, 0);
-
-            final byte[] serializedKey = new byte[keySize];
-            keySerializer.serializeNativeObject(key, serializedKey, 0, (Object[]) keyTypes);
 
             final byte[] rawKey;
             if (encryption == null) {
