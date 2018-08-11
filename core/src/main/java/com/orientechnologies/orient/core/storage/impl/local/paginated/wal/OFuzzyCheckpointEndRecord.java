@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import java.nio.ByteBuffer;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 30.04.13
@@ -31,6 +33,10 @@ public class OFuzzyCheckpointEndRecord extends OAbstractWALRecord {
   @Override
   public int toStream(byte[] content, int offset) {
     return offset;
+  }
+
+  @Override
+  public void toStream(final ByteBuffer buffer) {
   }
 
   @Override
@@ -46,5 +52,10 @@ public class OFuzzyCheckpointEndRecord extends OAbstractWALRecord {
   @Override
   public boolean isUpdateMasterRecord() {
     return false;
+  }
+
+  @Override
+  public byte getId() {
+    return WALRecordTypes.FUZZY_CHECKPOINT_END_RECORD;
   }
 }

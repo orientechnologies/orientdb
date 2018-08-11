@@ -23,9 +23,11 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,6 +35,9 @@ import java.util.Map;
  * @since 6/25/14
  */
 public interface OWriteAheadLog {
+  String MASTER_RECORD_EXTENSION = ".wmr";
+  String WAL_SEGMENT_EXTENSION   = ".wal";
+
   OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn) throws IOException;
 
   OLogSequenceNumber logFuzzyCheckPointEnd() throws IOException;
@@ -44,7 +49,7 @@ public interface OWriteAheadLog {
 
   OLogSequenceNumber getLastCheckpoint();
 
-  OLogSequenceNumber begin() throws IOException;
+  OLogSequenceNumber begin();
 
   OLogSequenceNumber begin(long segmentId) throws IOException;
 
@@ -57,9 +62,7 @@ public interface OWriteAheadLog {
   OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn,
       Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadata) throws IOException;
 
-  OLogSequenceNumber log(OWALRecord record) throws IOException;
-
-  void truncate() throws IOException;
+  OLogSequenceNumber log(OWriteableWALRecord record) throws IOException;
 
   void close() throws IOException;
 
@@ -67,11 +70,9 @@ public interface OWriteAheadLog {
 
   void delete() throws IOException;
 
-  void delete(boolean flush) throws IOException;
+  List<OWriteableWALRecord> read(OLogSequenceNumber lsn, int limit) throws IOException;
 
-  OWALRecord read(OLogSequenceNumber lsn) throws IOException;
-
-  OLogSequenceNumber next(OLogSequenceNumber lsn) throws IOException;
+  List<OWriteableWALRecord> next(OLogSequenceNumber lsn, int limit) throws IOException;
 
   OLogSequenceNumber getFlushedLsn();
 
@@ -86,7 +87,7 @@ public interface OWriteAheadLog {
    */
   boolean cutTill(OLogSequenceNumber lsn) throws IOException;
 
-  void cutAllSegmentsSmallerThan(long segmentId) throws IOException;
+  boolean cutAllSegmentsSmallerThan(long segmentId) throws IOException;
 
   void addFullCheckpointListener(OCheckpointRequestListener listener);
 

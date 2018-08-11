@@ -21,10 +21,14 @@
 package com.orientechnologies.common.directmemory;
 
 import com.orientechnologies.common.exception.ODirectMemoryAllocationFailedException;
+import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.sun.jna.Native;
+import com.sun.jna.NativeLong;
+import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -88,6 +92,8 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
    */
   private final LongAdder memoryConsumption = new LongAdder();
 
+  private final boolean isLinux = Platform.isLinux();
+
   /**
    * @return singleton instance.
    */
@@ -120,18 +126,29 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
    *
    * @throws ODirectMemoryAllocationFailedException if it is impossible to allocate amount of direct memory of given size
    */
-  public OPointer allocate(int size) {
+  public OPointer allocate(int size, int align) {
     if (size <= 0) {
       throw new IllegalArgumentException("Size of allocated memory can not be less or equal to 0");
     }
 
-    final long pointer = Native.malloc(size);
-    if (pointer == 0) {
-      throw new ODirectMemoryAllocationFailedException("Can not allocate direct memory chunk of size " + size);
-    }
+    final OPointer ptr;
+    if (align <= 0) {
+      final long pointer = Native.malloc(size);
+      if (pointer == 0) {
+        throw new ODirectMemoryAllocationFailedException("Can not allocate direct memory chunk of size " + size);
+      }
 
-    final OPointer ptr = new OPointer(new Pointer(pointer), size);
-    memoryConsumption.add(size);
+      ptr = new OPointer(new Pointer(pointer), size);
+      memoryConsumption.add(size);
+    } else {
+      if (!isLinux) {
+        throw new ODirectMemoryAllocationFailedException("Alignment of pointers is allowed only on Linux platforms.");
+      }
+
+      final PointerByReference pointerByReference = new PointerByReference();
+      ONative.instance().posix_memalign(pointerByReference, new NativeLong(align), new NativeLong(size));
+      ptr = new OPointer(pointerByReference.getValue(), size);
+    }
 
     return track(ptr);
   }
@@ -328,5 +345,4 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
   private static int id(Object object) {
     return System.identityHashCode(object);
   }
-
 }

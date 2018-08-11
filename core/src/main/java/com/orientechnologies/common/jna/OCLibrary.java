@@ -2,9 +2,11 @@ package com.orientechnologies.common.jna;
 
 import com.sun.jna.LastErrorException;
 import com.sun.jna.Library;
+import com.sun.jna.NativeLong;
 import com.sun.jna.Structure;
-import com.sun.jna.platform.unix.Resource;
+import com.sun.jna.ptr.PointerByReference;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -55,9 +57,23 @@ public interface OCLibrary extends Library {
   // see man(2) rlimit
   int getrlimit(int resource, Rlimit rlim);
 
-  int open(String path, int flags) throws LastErrorException;
+  int open(String path, int flags, int mode) throws LastErrorException;
 
   int fallocate(int fd, int mode, long offset, long len) throws LastErrorException;
 
+  long write(int fd, ByteBuffer buffer, long count) throws LastErrorException;
+
+  long read(int fd, ByteBuffer buffer, long count) throws LastErrorException;
+
+  int posix_memalign(PointerByReference memptr, NativeLong alignment, NativeLong size) throws LastErrorException;
+
+  int fsync(int fd) throws LastErrorException;
+
   int close(int fd) throws LastErrorException;
+
+  long lseek(int fd, long offset, int whence) throws LastErrorException;
+
+  int getpagesize() throws LastErrorException;
+
+  int pathconf(String path, int name) throws LastErrorException;
 }
