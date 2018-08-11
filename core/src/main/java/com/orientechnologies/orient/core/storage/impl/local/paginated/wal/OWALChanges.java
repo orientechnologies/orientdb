@@ -66,6 +66,8 @@ public interface OWALChanges {
    */
   int toStream(int offset, byte[] stream);
 
+  void toStream(ByteBuffer byteBuffer);
+
   /**
    * Read changes from a stream.
    * Needed from restore from WAL.

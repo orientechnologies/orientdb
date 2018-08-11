@@ -31,7 +31,8 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Object of this class works at the same time as factory for <code>DirectByteBuffer</code> objects and pool for
@@ -137,7 +138,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     if (pointer != null) {
       pointersPoolSize.decrementAndGet();
     } else {
-      pointer = allocator.allocate(pageSize);
+      pointer = allocator.allocate(pageSize, -1);
     }
 
     if (clear) {

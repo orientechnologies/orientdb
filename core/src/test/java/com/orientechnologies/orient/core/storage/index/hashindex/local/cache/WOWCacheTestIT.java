@@ -14,11 +14,15 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
-import org.junit.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +30,11 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Random;
+import java.util.TreeMap;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -39,8 +47,8 @@ public class WOWCacheTestIT {
   private static OLocalPaginatedStorage storageLocal;
   private static String                 fileName;
 
-  private static ODiskWriteAheadLog writeAheadLog;
-  private static final OByteBufferPool bufferPool = new OByteBufferPool(pageSize);
+  private static       OCASDiskWriteAheadLog writeAheadLog;
+  private static final OByteBufferPool       bufferPool = new OByteBufferPool(pageSize);
 
   private static OWOWCache wowCache;
   private OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<>(1024);
@@ -52,12 +60,12 @@ public class WOWCacheTestIT {
     String buildDirectory = System.getProperty("buildDirectory", ".");
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().getRunningEngine("plocal").
-        createStorage(buildDirectory + "/WOWCacheTest", null);
+        createStorage(buildDirectory + "/WOWCacheTest", null, 125 * 1024 * 1024);
     storageLocal.create(new OContextConfiguration());
 
     fileName = "wowCacheTest.tst";
 
-    OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, WriteAheadLogTest.TestRecord.class);
+    OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, TestRecord.class);
   }
 
   @Before
@@ -506,5 +514,63 @@ public class WOWCacheTestIT {
 
     fileClassic.close();
   }
+
+  public static final class TestRecord extends OAbstractWALRecord {
+    private byte[] data;
+
+    @SuppressWarnings("unused")
+    public TestRecord() {
+    }
+
+    @SuppressWarnings("unused")
+    public TestRecord(byte[] data) {
+      this.data = data;
+    }
+
+    @Override
+    public int toStream(byte[] content, int offset) {
+      OIntegerSerializer.INSTANCE.serializeNative(data.length, content, offset);
+      offset += OIntegerSerializer.INT_SIZE;
+
+      System.arraycopy(data, 0, content, offset, data.length);
+      offset += data.length;
+
+      return offset;
+    }
+
+    @Override
+    public void toStream(ByteBuffer buffer) {
+      buffer.putInt(data.length);
+      buffer.put(data);
+    }
+
+    @Override
+    public int fromStream(byte[] content, int offset) {
+      int len = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+      offset += OIntegerSerializer.INT_SIZE;
+
+      data = new byte[len];
+      System.arraycopy(content, offset, data, 0, len);
+      offset += len;
+
+      return offset;
+    }
+
+    @Override
+    public int serializedSize() {
+      return data.length + OIntegerSerializer.INT_SIZE;
+    }
+
+    @Override
+    public boolean isUpdateMasterRecord() {
+      return false;
+    }
+
+    @Override
+    public byte getId() {
+      return (byte) 128;
+    }
+  }
+
 
 }
