@@ -41,7 +41,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
-import javax.management.*;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -53,7 +59,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -79,7 +89,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final AtomicReference<WaitingListNode> waitingTail = new AtomicReference<>();
 
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<>();
-  private final OPerformanceStatisticManager performanceStatisticManager;
+  private final           OPerformanceStatisticManager  performanceStatisticManager;
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -96,12 +106,12 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     });
   }
 
-  private final OAbstractPaginatedStorage storage;
-  private final OWriteAheadLog            writeAheadLog;
+  private final OAbstractPaginatedStorage          storage;
+  private final OWriteAheadLog                     writeAheadLog;
   private final OOneEntryPerKeyLockManager<String> lockManager = new OOneEntryPerKeyLockManager<>(true, -1,
       OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
-  private final OReadCache  readCache;
-  private final OWriteCache writeCache;
+  private final OReadCache                         readCache;
+  private final OWriteCache                        writeCache;
 
   private final Map<OOperationUnitId, OPair<String, StackTraceElement[]>> activeAtomicOperations = new ConcurrentHashMap<>();
 
@@ -389,7 +399,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         currentOperation.set(null);
       }
 
-
       final ONestedRollbackException nre = new ONestedRollbackException(writer.toString());
       throw OException.wrapException(nre, exception);
     }
@@ -505,6 +514,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public void unregisterMBean() {
+    if (storage == null || storage.getName() == null) {
+      OLogManager.instance().warnNoDb(this, "Can not unregister MBean for atomic operations manager, storage name is null");
+    }
+
     if (mbeanIsRegistered.compareAndSet(true, false)) {
       try {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();

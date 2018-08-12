@@ -149,7 +149,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected void pinPage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) {
     if (atomicOperation == null)
-      readCache.pinPage(cacheEntry);
+      readCache.pinPage(cacheEntry, writeCache);
     else
       atomicOperation.pinPage(cacheEntry);
   }
