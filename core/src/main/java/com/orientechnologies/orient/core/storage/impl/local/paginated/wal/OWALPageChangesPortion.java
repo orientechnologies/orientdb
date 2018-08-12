@@ -228,6 +228,7 @@ public class OWALPageChangesPortion implements OWALChanges {
     }
 
     int countPos = buffer.position();
+    buffer.position(countPos + OShortSerializer.SHORT_SIZE);
     int count = 0;
 
     for (int i = 0; i < pageChunks.length; i++) {
