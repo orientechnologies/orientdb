@@ -77,10 +77,20 @@ public class OrientDBEmbedded implements OrientDBInternal {
     memory = orient.getEngine("memory");
     disk = orient.getEngine("plocal");
     directoryPath = directoryPath.trim();
-    if (directoryPath.length() != 0)
-      this.basePath = new java.io.File(directoryPath).getAbsolutePath();
-    else
+    if (directoryPath.length() != 0) {
+      final File dirFile = new File(directoryPath);
+      if (!dirFile.exists()) {
+        OLogManager.instance().infoNoDb(this, "Directory " + dirFile + " does not exist, try to create it.");
+
+        if (!dirFile.mkdirs()) {
+          OLogManager.instance().errorNoDb(this, "Can not create directory " + dirFile, null);
+        }
+      }
+      this.basePath = dirFile.getAbsolutePath();
+    } else {
       this.basePath = null;
+    }
+
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
 
     if (basePath == null) {
