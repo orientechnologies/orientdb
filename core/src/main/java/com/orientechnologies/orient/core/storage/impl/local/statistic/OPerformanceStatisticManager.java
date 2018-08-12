@@ -428,6 +428,9 @@ public class OPerformanceStatisticManager {
    * @see OIdentifiableStorage#getId()
    */
   public void unregisterMBean(String storageName, int storageId) {
+    if (storageName == null) {
+      OLogManager.instance().warnNoDb(this, "Can not unregister MBean for performance statistics, storage name is null");
+    }
     if (mbeanIsRegistered.compareAndSet(true, false)) {
       try {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();

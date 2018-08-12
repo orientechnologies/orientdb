@@ -74,7 +74,7 @@ public interface OReadCache {
 
   void releaseFromWrite(OCacheEntry cacheEntry, OWriteCache writeCache);
 
-  void pinPage(OCacheEntry cacheEntry);
+  void pinPage(OCacheEntry cacheEntry, OWriteCache writeCache);
 
   OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums) throws IOException;
 

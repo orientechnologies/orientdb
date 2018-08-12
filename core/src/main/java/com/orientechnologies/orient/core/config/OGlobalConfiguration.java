@@ -227,7 +227,6 @@ public enum OGlobalConfiguration {
   STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL("storage.walPerformanceStatisticsInterval",
       "Interval in seconds between consequent reports of WAL performance statistics", Integer.class, 10),
 
-
   STORAGE_TRACK_CHANGED_RECORDS_IN_WAL("storage.trackChangedRecordsInWAL",
       "If this flag is set metadata which contains rids of changed records is added at the end of each atomic operation",
       Boolean.class, false),
@@ -248,7 +247,7 @@ public enum OGlobalConfiguration {
       3000),
 
   WAL_SEGMENTS_INTERVAL("storage.wal.segmentsInterval",
-      "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 10),
+      "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 30),
 
   WAL_FILE_AUTOCLOSE_INTERVAL("storage.wal.fileAutoCloseInterval",
       "Interval in seconds after which WAL file will be closed if there is no "
@@ -301,6 +300,16 @@ public enum OGlobalConfiguration {
 
   DISK_CACHE_STATISTICS_INTERVAL("storage.diskCache.cacheStatisticsInterval",
       "Period in sec. after which information about write cache performance metrics will be printed", Integer.class, 10),
+
+  DISK_CACHE_PRINT_FLUSH_TILL_SEGMENT_STATISTICS("storage.diskCache.printFlushTillSegmentStatistics",
+      "Print information about write cache state when it is requested to flush all data operations on which are logged "
+          + "till provided WAL segment", Boolean.class, true),
+
+  DISK_CACHE_PRINT_FLUSH_FILE_STATISTICS("storage.diskCache.printFlushFileStatistics",
+      "Print information about write cache state when it is requested to flush all data of file specified", Boolean.class, true),
+
+  DISK_CACHE_PRINT_FILE_REMOVE_STATISTICS("storage.diskCache.printFileRemoveStatistics",
+      "Print information about write cache state when it is requested to clear all data of file specified", Boolean.class, true),
 
   DISK_CACHE_WAL_SIZE_TO_START_FLUSH("storage.diskCache.walSizeToStartFlush",
       "WAL size after which pages in write cache will be started to flush", Long.class, 6 * 1024L * 1024 * 1024),

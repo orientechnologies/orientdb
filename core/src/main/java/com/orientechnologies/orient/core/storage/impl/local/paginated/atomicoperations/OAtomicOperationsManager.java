@@ -90,7 +90,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final AtomicReference<WaitingListNode> waitingTail = new AtomicReference<>();
 
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<>();
-  private final OPerformanceStatisticManager performanceStatisticManager;
+  private final           OPerformanceStatisticManager  performanceStatisticManager;
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -107,12 +107,12 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     });
   }
 
-  private final OAbstractPaginatedStorage storage;
-  private final OWriteAheadLog            writeAheadLog;
+  private final OAbstractPaginatedStorage          storage;
+  private final OWriteAheadLog                     writeAheadLog;
   private final OOneEntryPerKeyLockManager<String> lockManager = new OOneEntryPerKeyLockManager<>(true, -1,
       OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
-  private final OReadCache  readCache;
-  private final OWriteCache writeCache;
+  private final OReadCache                         readCache;
+  private final OWriteCache                        writeCache;
 
   private final Map<OOperationUnitId, OPair<String, StackTraceElement[]>> activeAtomicOperations = new ConcurrentHashMap<>();
 
@@ -411,7 +411,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         currentOperation.set(null);
       }
 
-
       final ONestedRollbackException nre = new ONestedRollbackException(writer.toString());
       throw OException.wrapException(nre, exception);
     }
@@ -538,6 +537,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public void unregisterMBean() {
+    if (storage == null || storage.getName() == null) {
+      OLogManager.instance().warnNoDb(this, "Can not unregister MBean for atomic operations manager, storage name is null");
+    }
+
     if (mbeanIsRegistered.compareAndSet(true, false)) {
       try {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();

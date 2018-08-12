@@ -4082,22 +4082,38 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return;
       }
 
-      final OLogSequenceNumber endLSN = writeAheadLog.end();
+      OLogSequenceNumber beginLSN = writeAheadLog.begin();
+      OLogSequenceNumber endLSN = writeAheadLog.end();
 
-      final OLogSequenceNumber minLSN = writeCache.getMinimalNotFlushedLSN();
+      final Long minLSNSegment = writeCache.getMinimalNotFlushedSegment();
+
       final long fuzzySegment;
 
-      if (minLSN != null) {
-        fuzzySegment = minLSN.getSegment();
+      if (minLSNSegment != null) {
+        fuzzySegment = minLSNSegment;
       } else {
-        if (endLSN == null)
+        if (endLSN == null) {
           return;
+        }
 
         fuzzySegment = endLSN.getSegment();
       }
 
-      writeCache.makeFuzzyCheckpoint(fuzzySegment);
+      OLogManager.instance().infoNoDb(this,
+          "Before fuzzy checkpoint: min LSN segment is " + minLSNSegment + ", WAL begin is " + beginLSN + ", WAL end is " + endLSN
+              + ", fuzzy segment is " + fuzzySegment);
 
+      if (fuzzySegment > beginLSN.getSegment() && beginLSN.getSegment() < endLSN.getSegment()) {
+        OLogManager.instance().infoNoDb(this, "Making fuzzy checkpoint");
+        writeCache.makeFuzzyCheckpoint(fuzzySegment);
+
+        beginLSN = writeAheadLog.begin();
+        endLSN = writeAheadLog.end();
+
+        OLogManager.instance().infoNoDb(this, "After fuzzy checkpoint: WAL begin is " + beginLSN + " WAL end is " + endLSN);
+      } else {
+        OLogManager.instance().infoNoDb(this, "No reason to make fuzzy checkpoint");
+      }
     } catch (IOException ioe) {
       throw OException.wrapException(new OIOException("Error during fuzzy checkpoint"), ioe);
     } finally {
@@ -5771,12 +5787,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           //we should take min lsn BEFORE min write cache LSN call
           //to avoid case when new data are changed before call
           OLogSequenceNumber endLSN = writeAheadLog.end();
-          OLogSequenceNumber minDirtyLSN = writeCache.getMinimalNotFlushedLSN();
+          Long minLSNSegment = writeCache.getMinimalNotFlushedSegment();
 
-          if (minDirtyLSN == null) {
+          if (minLSNSegment == null) {
             minDirtySegment = endLSN.getSegment();
           } else {
-            minDirtySegment = minDirtyLSN.getSegment();
+            minDirtySegment = minLSNSegment;
           }
         } while (minDirtySegment < flushTillSegmentId);
 
