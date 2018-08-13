@@ -52,7 +52,6 @@ import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
@@ -808,16 +807,23 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   @Override
-  public void updateDirtyPagesTable(final OCachePointer pointer) {
-    if (writeAheadLog == null)
+  public void updateDirtyPagesTable(final OCachePointer pointer, OLogSequenceNumber startLSN) {
+    if (writeAheadLog == null) {
       return;
+    }
 
     final long fileId = pointer.getFileId();
     final long pageIndex = pointer.getPageIndex();
 
     final PageKey pageKey = new PageKey(internalFileId(fileId), pageIndex);
 
-    OLogSequenceNumber dirtyLSN = writeAheadLog.end();
+    OLogSequenceNumber dirtyLSN;
+    if (startLSN != null) {
+      dirtyLSN = startLSN;
+    } else {
+      dirtyLSN = writeAheadLog.end();
+    }
+
     if (dirtyLSN == null) {
       dirtyLSN = new OLogSequenceNumber(0, 0);
     }
@@ -2247,7 +2253,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
-  private void flushPage(final int fileId, final long pageIndex, final ByteBuffer buffer) throws InterruptedException, IOException {
+  private void flushPage(final int fileId, final long pageIndex, final ByteBuffer buffer, OLogSequenceNumber endLSN)
+      throws InterruptedException, IOException {
     long startTs = 0;
     if (printCacheStatistics) {
       startTs = System.nanoTime();
@@ -2255,11 +2262,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     boolean waitedForWALFlush = false;
 
-    if (writeAheadLog != null) {
-      final OLogSequenceNumber lsn = ODurablePage.getLogSequenceNumberFromPage(buffer);
+    if (endLSN != null && writeAheadLog != null) {
       OLogSequenceNumber flushedLSN = writeAheadLog.getFlushedLsn();
 
-      while (flushedLSN == null || flushedLSN.compareTo(lsn) < 0) {
+      while (flushedLSN == null || flushedLSN.compareTo(endLSN) < 0) {
         writeAheadLog.flush();
         flushedLSN = writeAheadLog.getFlushedLsn();
         waitedForWALFlush = true;
@@ -2868,7 +2874,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             version = pointer.getVersion();
             final ByteBuffer buffer = pointer.getBufferDuplicate();
 
-            fullLogLSN = ODurablePage.getLogSequenceNumberFromPage(buffer);
+            fullLogLSN = pointer.getEndLSN();
 
             buffer.position(0);
             copy.position(0);
@@ -2882,7 +2888,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             pointer.releaseSharedLock();
           }
 
-          if (maxFullLogLSN == null || fullLogLSN.compareTo(maxFullLogLSN) > 0) {
+          if (fullLogLSN != null && (maxFullLogLSN == null || fullLogLSN.compareTo(maxFullLogLSN) > 0)) {
             maxFullLogLSN = fullLogLSN;
           }
 
@@ -3092,7 +3098,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               version = pointer.getVersion();
               final ByteBuffer buffer = pointer.getBufferDuplicate();
 
-              fullLSN = ODurablePage.getLogSequenceNumberFromPage(buffer);
+              fullLSN = pointer.getEndLSN();
 
               buffer.position(0);
               copy.position(0);
@@ -3106,7 +3112,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               pointer.releaseSharedLock();
             }
 
-            if (maxFullLogLSN == null || maxFullLogLSN.compareTo(fullLSN) < 0) {
+            if (fullLSN != null && (maxFullLogLSN == null || maxFullLogLSN.compareTo(fullLSN) < 0)) {
               maxFullLogLSN = fullLSN;
             }
 
@@ -3208,7 +3214,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                 buffer.position(0);
                 copy.put(buffer);
 
-                flushPage(pageKey.fileId, pageKey.pageIndex, copy);
+                final OLogSequenceNumber endLSN = pagePointer.getEndLSN();
+                flushPage(pageKey.fileId, pageKey.pageIndex, copy, endLSN);
               } finally {
                 bufferPool.release(copy);
               }
@@ -3319,25 +3326,5 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
       return thread;
     }
-  }
-
-  /**
-   * Mode of data flush in {@link PeriodicFlushTask}
-   */
-  private enum FLUSH_MODE {
-    /**
-     * No data are flushed
-     */
-    IDLE,
-
-    /**
-     * Pages flushed starting from page with the smallest LSN in dirty pages {@link #dirtyPages} table.
-     */
-    LSN,
-
-    /**
-     * Only exclusive pages are flushed
-     */
-    EXCLUSIVE
   }
 }

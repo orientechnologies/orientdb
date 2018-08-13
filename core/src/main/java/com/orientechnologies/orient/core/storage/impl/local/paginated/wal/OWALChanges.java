@@ -42,13 +42,6 @@ public interface OWALChanges {
   void applyChanges(ByteBuffer buffer);
 
   /**
-   * Reverts content of the page to the original values before changes were done.
-   *
-   * @param buffer Page instance
-   */
-  void applyOriginalValues(ByteBuffer buffer);
-
-  /**
    * Return the size of byte array is needed to serialize all data in it.
    *
    * @return the required size.

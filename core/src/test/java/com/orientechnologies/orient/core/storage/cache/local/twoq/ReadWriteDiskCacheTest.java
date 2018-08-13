@@ -209,9 +209,9 @@ public class ReadWriteDiskCacheTest {
     OCacheEntry[] entries = new OCacheEntry[4];
 
     for (int i = 0; i < 4; i++) {
-      entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true);
+      entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true, null);
       if (entries[i] == null) {
-        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
         Assert.assertEquals(entries[i].getPageIndex(), i);
       }
 
@@ -275,9 +275,9 @@ public class ReadWriteDiskCacheTest {
       for (int n = 0; n < 4; n++) {
         final long fileId = fileIds.get(n);
 
-        entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true);
+        entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true, null);
         if (entries[i] == null) {
-          entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+          entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
           Assert.assertEquals(entries[i].getPageIndex(), i);
         }
 
@@ -360,10 +360,10 @@ public class ReadWriteDiskCacheTest {
       for (int n = 0; n < 4; n++) {
         final long fileId = fileIds.get(n);
 
-        entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true);
+        entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true, null);
 
         if (entries[i] == null) {
-          entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+          entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
         }
 
         entries[i].getCachePointer().acquireExclusiveLock();
@@ -434,9 +434,9 @@ public class ReadWriteDiskCacheTest {
     OCacheEntry[] entries = new OCacheEntry[10];
 
     for (int i = 0; i < 10; i++) {
-      entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true);
+      entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true, null);
       if (entries[i] == null) {
-        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
         Assert.assertEquals(entries[i].getPageIndex(), i);
       }
 
@@ -508,9 +508,9 @@ public class ReadWriteDiskCacheTest {
     OCacheEntry[] entries = new OCacheEntry[10];
 
     for (int i = 0; i < 10; i++) {
-      entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true);
+      entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true, null);
       if (entries[i] == null) {
-        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
         Assert.assertEquals(entries[i].getPageIndex(), i);
       }
 
@@ -580,9 +580,9 @@ public class ReadWriteDiskCacheTest {
     OCacheEntry[] entries = new OCacheEntry[4];
 
     for (int i = 0; i < 4; i++) {
-      entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true);
+      entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true, null);
       if (entries[i] == null) {
-        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
         Assert.assertEquals(entries[i].getPageIndex(), i);
       }
 
@@ -628,7 +628,7 @@ public class ReadWriteDiskCacheTest {
     final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
 
     for (int i = 0; i < 4; i++) {
-      OCacheEntry cacheEntry = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+      OCacheEntry cacheEntry = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
       try {
         byte[] userData = new byte[userDataSize];
         for (int n = 0; n < userData.length; n++) {
@@ -694,7 +694,7 @@ public class ReadWriteDiskCacheTest {
 
     //create file with 8 pages, we will push some of them in different queues later
     for (int i = 0; i < 8; i++) {
-      OCacheEntry cacheEntry = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+      OCacheEntry cacheEntry = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
       try {
         byte[] userData = new byte[userDataSize];
         for (int n = 0; n < userData.length; n++) {
@@ -778,7 +778,7 @@ public class ReadWriteDiskCacheTest {
 
     //create file with 8 pages, we will push some of them in different queues later
     for (int i = 0; i < 8; i++) {
-      OCacheEntry cacheEntry = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+      OCacheEntry cacheEntry = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
       try {
         byte[] userData = new byte[userDataSize];
         for (int n = 0; n < userData.length; n++) {
@@ -873,9 +873,9 @@ public class ReadWriteDiskCacheTest {
   public void testLoadAndLockForReadShouldHitCache() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
-    OCacheEntry cacheEntry = readBuffer.loadForWrite(fileId, 0, false, writeBuffer, 1, true);
+    OCacheEntry cacheEntry = readBuffer.loadForWrite(fileId, 0, false, writeBuffer, 1, true, null);
     if (cacheEntry == null) {
-      cacheEntry = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+      cacheEntry = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
       Assert.assertEquals(cacheEntry.getPageIndex(), 0);
     }
 
@@ -903,9 +903,9 @@ public class ReadWriteDiskCacheTest {
     OCacheEntry[] entries = new OCacheEntry[4];
 
     for (int i = 0; i < 4; i++) {
-      entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true);
+      entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true, null);
       if (entries[i] == null) {
-        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
         Assert.assertEquals(entries[i].getPageIndex(), i);
       }
 
@@ -947,9 +947,9 @@ public class ReadWriteDiskCacheTest {
     byte[][] content = new byte[4][];
 
     for (int i = 0; i < 4; i++) {
-      entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true);
+      entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true, null);
       if (entries[i] == null) {
-        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
         Assert.assertEquals(entries[i].getPageIndex(), i);
       }
 
@@ -1032,9 +1032,9 @@ public class ReadWriteDiskCacheTest {
 
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; ++j) {
-        entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true);
+        entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true, null);
         if (entries[i] == null) {
-          entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+          entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
           Assert.assertEquals(entries[i].getPageIndex(), i);
         }
 
@@ -1078,9 +1078,9 @@ public class ReadWriteDiskCacheTest {
     OCacheEntry[] entries = new OCacheEntry[6];
 
     for (int i = 0; i < 6; i++) {
-      entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true);
+      entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true, null);
       if (entries[i] == null) {
-        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+        entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
         Assert.assertEquals(entries[i].getPageIndex(), i);
       }
 
@@ -1123,9 +1123,9 @@ public class ReadWriteDiskCacheTest {
     OCacheEntry[] entries = new OCacheEntry[5];
     try {
       for (int i = 0; i < 5; i++) {
-        entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true);
+        entries[i] = readBuffer.loadForWrite(fileId, i, false, writeBuffer, 1, true, null);
         if (entries[i] == null) {
-          entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true);
+          entries[i] = readBuffer.allocateNewPage(fileId, writeBuffer, true, null);
           Assert.assertEquals(entries[i].getPageIndex(), i);
         }
 
@@ -1134,7 +1134,7 @@ public class ReadWriteDiskCacheTest {
         buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 });
 
         if (i - 4 >= 0) {
-          readBuffer.loadForWrite(fileId, i - 4, false, writeBuffer, 0, true);
+          readBuffer.loadForWrite(fileId, i - 4, false, writeBuffer, 0, true, null);
 
           buffer = entries[i - 4].getCachePointer().getBufferDuplicate();
           buffer.position(systemOffset);

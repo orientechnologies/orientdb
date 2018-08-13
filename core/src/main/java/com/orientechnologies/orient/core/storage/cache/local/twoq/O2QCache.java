@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -236,12 +237,12 @@ public class O2QCache implements OReadCache {
 
   @Override
   public OCacheEntry loadForWrite(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
-      boolean verifyChecksums) throws IOException {
+      boolean verifyChecksums, OLogSequenceNumber startLSN) throws IOException {
     final OCacheEntry cacheEntry = doLoad(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, verifyChecksums);
 
     if (cacheEntry != null) {
       cacheEntry.acquireExclusiveLock();
-      writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer());
+      writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
     }
 
     return cacheEntry;
@@ -515,7 +516,8 @@ public class O2QCache implements OReadCache {
   }
 
   @Override
-  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums) throws IOException {
+  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums, OLogSequenceNumber startLSN)
+      throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
 
     UpdateCacheResult cacheResult;
@@ -553,7 +555,7 @@ public class O2QCache implements OReadCache {
 
     if (cacheEntry != null) {
       cacheEntry.acquireExclusiveLock();
-      writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer());
+      writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
     }
 
     assert cacheHit.getValue();

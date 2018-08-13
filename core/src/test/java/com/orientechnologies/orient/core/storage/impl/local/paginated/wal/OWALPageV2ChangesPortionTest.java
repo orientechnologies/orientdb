@@ -35,9 +35,6 @@ public class OWALPageV2ChangesPortionTest {
 
     changesCollector.applyChanges(pointer);
     Assert.assertEquals(42, pointer.getLong(64));
-
-    changesCollector.applyOriginalValues(pointer);
-    Assert.assertEquals(31, pointer.getLong(64));
   }
 
   @Test
@@ -52,9 +49,6 @@ public class OWALPageV2ChangesPortionTest {
 
     changesCollector.applyChanges(pointer);
     Assert.assertEquals(42, pointer.getLong(60));
-
-    changesCollector.applyOriginalValues(pointer);
-    Assert.assertEquals(31, pointer.getLong(60));
   }
 
   @Test
@@ -69,9 +63,6 @@ public class OWALPageV2ChangesPortionTest {
 
     changesCollector.applyChanges(pointer);
     Assert.assertEquals(42, pointer.getInt(64));
-
-    changesCollector.applyOriginalValues(pointer);
-    Assert.assertEquals(31, pointer.getInt(64));
   }
 
   @Test
@@ -87,9 +78,6 @@ public class OWALPageV2ChangesPortionTest {
 
     changesCollector.applyChanges(pointer);
     Assert.assertEquals((short) 42, pointer.getShort(64));
-
-    changesCollector.applyOriginalValues(pointer);
-    Assert.assertEquals((short) 31, pointer.getShort(64));
   }
 
   @Test
@@ -104,9 +92,6 @@ public class OWALPageV2ChangesPortionTest {
 
     changesCollector.applyChanges(pointer);
     Assert.assertEquals((byte) 42, pointer.get(64));
-
-    changesCollector.applyOriginalValues(pointer);
-    Assert.assertEquals((byte) 31, pointer.get(64));
   }
 
   @Test
@@ -140,18 +125,6 @@ public class OWALPageV2ChangesPortionTest {
     pointer.position(74);
     pointer.get(result);
     Assertions.assertThat(result).isEqualTo(values);
-
-    changesCollector.applyOriginalValues(pointer);
-
-    pointer.position(64);
-    pointer.get(result);
-
-    Assertions.assertThat(result).isEqualTo(new byte[] { 11, 12, 13, 14 });
-
-    pointer.position(74);
-    pointer.get(result);
-
-    Assertions.assertThat(result).isEqualTo(new byte[] { 21, 22, 23, 24 });
   }
 
   @Test
@@ -180,12 +153,6 @@ public class OWALPageV2ChangesPortionTest {
     pointer.get(result);
 
     Assertions.assertThat(result).isEqualTo(changes);
-
-    changesCollector.applyOriginalValues(pointer);
-    pointer.position(64);
-    pointer.get(result);
-
-    Assertions.assertThat(result).isEqualTo(Arrays.copyOfRange(originalData, 64, 192));
   }
 
   @Test
@@ -214,12 +181,6 @@ public class OWALPageV2ChangesPortionTest {
     pointer.get(result);
 
     Assertions.assertThat(result).isEqualTo(changes);
-
-    changesCollector.applyOriginalValues(pointer);
-    pointer.position(32);
-    pointer.get(result);
-
-    Assertions.assertThat(result).isEqualTo(Arrays.copyOfRange(originalData, 32, 160));
   }
 
   @Test
@@ -249,13 +210,6 @@ public class OWALPageV2ChangesPortionTest {
     pointer.get(result);
 
     Assertions.assertThat(result).isEqualTo(changes);
-
-    changesCollector.applyOriginalValues(pointer);
-
-    pointer.position(1000);
-    pointer.get(result);
-
-    Assertions.assertThat(result).isEqualTo(Arrays.copyOfRange(originalData, 1000, 2024));
   }
 
   @Test
@@ -283,13 +237,6 @@ public class OWALPageV2ChangesPortionTest {
     pointer.get(res);
 
     Assertions.assertThat(res).isEqualTo(changes);
-
-    changesCollector.applyOriginalValues(pointer);
-
-    pointer.position(32);
-    pointer.get(res);
-
-    Assertions.assertThat(res).isEqualTo(Arrays.copyOfRange(originalData, 32, 160));
   }
 
   @Test
@@ -325,11 +272,6 @@ public class OWALPageV2ChangesPortionTest {
     newBuffer.position(0);
     pointer.position(0);
     Assert.assertEquals(pointer.compareTo(newBuffer), 0);
-
-    changesCollectorRestored.applyOriginalValues(newBuffer);
-
-    newBuffer.position(0);
-    Assert.assertEquals(newBuffer.compareTo(ByteBuffer.wrap(originalData)), 0);
   }
 
   @Test
@@ -391,12 +333,6 @@ public class OWALPageV2ChangesPortionTest {
     pointer.get(result);
 
     Assertions.assertThat(result).isEqualTo(expected);
-
-    changesCollector.applyOriginalValues(pointer);
-    pointer.position(32);
-    pointer.get(result);
-
-    Assertions.assertThat(result).isEqualTo(Arrays.copyOfRange(originalData, 32, 160));
   }
 
   @Test
@@ -430,12 +366,5 @@ public class OWALPageV2ChangesPortionTest {
     pointer.get(result);
 
     Assertions.assertThat(result).isEqualTo(expected);
-
-    changes.applyOriginalValues(pointer);
-
-    pointer.position(0);
-    pointer.get(result);
-
-    Assertions.assertThat(result).isEqualTo(Arrays.copyOfRange(originalData, 0, OWALPageChangesPortion.PORTION_BYTES * 2));
   }
 }

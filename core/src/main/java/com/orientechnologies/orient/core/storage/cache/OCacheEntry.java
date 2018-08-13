@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.cache;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 /**
@@ -67,4 +68,7 @@ public interface OCacheEntry {
 
   OWALChanges getChanges();
 
+  OLogSequenceNumber getEndLSN();
+
+  void setEndLSN(OLogSequenceNumber endLSN);
 }

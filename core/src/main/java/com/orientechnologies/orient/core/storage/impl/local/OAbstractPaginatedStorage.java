@@ -185,7 +185,6 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -5254,15 +5253,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         records = writeAheadLog.next(records.get(records.size() - 1).getLsn(), 1_000);
       }
-
-      OLogManager.instance()
-          .infoNoDb(this, "There are %d unfinished atomic operations left, they will be rolled back", operationUnits.size());
-
-      if (!operationUnits.isEmpty()) {
-        for (List<OWALRecord> atomicOperation : operationUnits.values()) {
-          revertAtomicUnit(atomicOperation, atLeastOnePageUpdate);
-        }
-      }
     } catch (OWALPageBrokenException e) {
       OLogManager.instance()
           .errorNoDb(this, "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.",
@@ -5353,70 +5343,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private void revertAtomicUnit(List<OWALRecord> atomicUnit, OModifiableBoolean atLeastOnePageUpdate) throws IOException {
-    final ListIterator<OWALRecord> recordsIterator = atomicUnit.listIterator(atomicUnit.size());
-
-    while (recordsIterator.hasPrevious()) {
-      final OWALRecord record = recordsIterator.previous();
-
-      if (record instanceof OFileDeletedWALRecord) {
-        OLogManager.instance().infoNoDb(this, "Deletion of file can not be rolled back");
-      } else if (record instanceof OFileCreatedWALRecord) {
-        final OFileCreatedWALRecord fileCreatedWALRecord = (OFileCreatedWALRecord) record;
-        OLogManager.instance().infoNoDb(this, "File %s is going to be deleted", fileCreatedWALRecord.getFileName());
-
-        if (writeCache.exists(fileCreatedWALRecord.getFileId())) {
-          readCache.deleteFile(fileCreatedWALRecord.getFileId(), writeCache);
-          OLogManager.instance().infoNoDb(this, "File %s was deleted", fileCreatedWALRecord.getFileName());
-        } else {
-          OLogManager.instance().infoNoDb(this, "File %d is absent and can not be deleted", fileCreatedWALRecord.getFileName());
-        }
-      } else if (record instanceof OUpdatePageRecord) {
-        final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) record;
-
-        long fileId = updatePageRecord.getFileId();
-        if (!writeCache.exists(fileId)) {
-          final String fileName = writeCache.restoreFileById(fileId);
-
-          throw new OStorageException("File with id " + fileId + " and name " + fileName
-              + " was deleted from storage, the rest of operations can not be restored");
-
-        }
-
-        final long pageIndex = updatePageRecord.getPageIndex();
-        fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
-
-        OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, false);
-        if (cacheEntry == null) {
-          //page may not exist because it was not flushed that is OK, we just go forward
-          continue;
-        }
-
-        try {
-          final ODurablePage durablePage = new ODurablePage(cacheEntry);
-          durablePage.rollbackChanges(updatePageRecord.getChanges());
-          durablePage.setLsn(updatePageRecord.getPrevLsn());
-        } finally {
-          readCache.releaseFromWrite(cacheEntry, writeCache);
-        }
-
-        atLeastOnePageUpdate.setValue(true);
-      } else if (record instanceof OAtomicUnitStartRecord) {
-        //noinspection UnnecessaryContinue
-        continue;
-      } else if (record instanceof OAtomicUnitEndRecord) {
-        //noinspection UnnecessaryContinue
-        continue;
-      } else {
-        OLogManager.instance()
-            .errorNoDb(this, "Invalid WAL record type was passed %s. Given record will be skipped.", null, record.getClass());
-
-        assert false : "Invalid WAL record type was passed " + record.getClass().getName();
-      }
-    }
-
-  }
-
   @SuppressWarnings("WeakerAccess")
   protected void restoreAtomicUnit(List<OWALRecord> atomicUnit, OModifiableBoolean atLeastOnePageUpdate) throws IOException {
     assert atomicUnit.get(atomicUnit.size() - 1) instanceof OAtomicUnitEndRecord;
@@ -5451,13 +5377,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final long pageIndex = updatePageRecord.getPageIndex();
         fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
 
-        OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, false);
+        OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, false, null);
         if (cacheEntry == null) {
           do {
             if (cacheEntry != null)
               readCache.releaseFromWrite(cacheEntry, writeCache);
 
-            cacheEntry = readCache.allocateNewPage(fileId, writeCache, false);
+            cacheEntry = readCache.allocateNewPage(fileId, writeCache, false, null);
           } while (cacheEntry.getPageIndex() != pageIndex);
         }
 
