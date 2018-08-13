@@ -175,9 +175,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
     notifyInvolvedClasses(clusterIdsToIndex);
 
-    if (database.getConfiguration().getValueAsBoolean(OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE))
-      storage.synch();
-
     return preProcessBeforeReturn(database, index);
   }
 
