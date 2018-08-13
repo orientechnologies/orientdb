@@ -13,7 +13,10 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -56,6 +59,7 @@ public class OStorageTestIT {
 
     OLocalPaginatedStorage storage = (OLocalPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage();
     OWriteCache wowCache = storage.getWriteCache();
+    OSharedContext ctx = ((ODatabaseDocumentInternal) session).getSharedContext();
     session.close();
 
     final Path storagePath = storage.getStoragePath();
@@ -64,6 +68,7 @@ public class OStorageTestIT {
     String nativeFileName = wowCache.nativeFileNameById(fileId);
 
     storage.close(true, false);
+    ctx.close();
 
     int position = 3 * 1024;
 
@@ -116,6 +121,7 @@ public class OStorageTestIT {
 
     OLocalPaginatedStorage storage = (OLocalPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage();
     OWriteCache wowCache = storage.getWriteCache();
+    OSharedContext ctx = ((ODatabaseDocumentInternal) session).getSharedContext();
     session.close();
 
     final Path storagePath = storage.getStoragePath();
@@ -124,6 +130,7 @@ public class OStorageTestIT {
     String nativeFileName = wowCache.nativeFileNameById(fileId);
 
     storage.close(true, false);
+    ctx.close();
 
     int position = OFileClassic.HEADER_SIZE + ODurablePage.MAGIC_NUMBER_OFFSET;
 
@@ -173,6 +180,7 @@ public class OStorageTestIT {
 
     OLocalPaginatedStorage storage = (OLocalPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage();
     OWriteCache wowCache = storage.getWriteCache();
+    OSharedContext ctx = ((ODatabaseDocumentInternal) session).getSharedContext();
     session.close();
 
     final Path storagePath = storage.getStoragePath();
@@ -181,6 +189,7 @@ public class OStorageTestIT {
     String nativeFileName = wowCache.nativeFileNameById(fileId);
 
     storage.close(true, false);
+    ctx.close();
 
     int position = OFileClassic.HEADER_SIZE + ODurablePage.MAGIC_NUMBER_OFFSET;
 
@@ -225,6 +234,7 @@ public class OStorageTestIT {
 
     OLocalPaginatedStorage storage = (OLocalPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage();
     OWriteCache wowCache = storage.getWriteCache();
+    OSharedContext ctx = ((ODatabaseDocumentInternal) session).getSharedContext();
     session.close();
 
     final Path storagePath = storage.getStoragePath();
@@ -233,6 +243,7 @@ public class OStorageTestIT {
     String nativeFileName = wowCache.nativeFileNameById(fileId);
 
     storage.close(true, false);
+    ctx.close();
 
     int position = 3 * 1024;
 

@@ -2576,15 +2576,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @Override
   public OSharedContext getSharedContext() {
-    // NOW NEED TO GET THE CONTEXT FROM RESOURCES IN FUTURE WILL BE NOT NEEDED
-    if (sharedContext == null) {
-      sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-        @Override
-        public OSharedContext call() throws Exception {
-          throw new ODatabaseException("Accessing to the database context before the database has bean initialized");
-        }
-      });
-    }
     return sharedContext;
   }
 
