@@ -57,7 +57,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPo
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
@@ -992,7 +991,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
                           "Error on setting LSN after the installation of database '%s'", databaseName);
                     }
-                    notifyLsnAfterInstall(db, nodes);
+                    notifyDatabaseLsn(db, nodes);
                   } finally {
                     db.close();
                   }
@@ -1019,7 +1018,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
   }
 
-  private void notifyLsnAfterInstall(ODatabaseDocumentInternal db, Collection<String> nodes) {
+  public void notifyDatabaseLsn(ODatabaseDocumentInternal db, Collection<String> nodes) {
     OLogSequenceNumber lsn = ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN();
     if (!nodes.isEmpty()) {
       OUpdateDatabaseStatusTask statusTask = new OUpdateDatabaseStatusTask(db.getName(), DB_STATUS.ONLINE.toString(), lsn);

@@ -365,6 +365,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
     } else
       result = localResult;
+
+    ((ODistributedAbstractPlugin) getDistributedManager()).notifyDatabaseLsn(ODatabaseRecordThreadLocal.instance().get(), nodes);
     return result;
   }
 
@@ -683,7 +685,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   public OSBTreeCollectionManager getSBtreeCollectionManager() {
     return wrapped.getSBtreeCollectionManager();
   }
-
 
   @Override
   public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType) {
