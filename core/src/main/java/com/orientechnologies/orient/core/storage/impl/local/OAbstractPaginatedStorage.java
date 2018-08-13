@@ -2387,7 +2387,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize, clustersToIndex,
             engineProperties, metadata, encryption);
 
-        synch();
+        if(writeAheadLog != null) {
+          writeAheadLog.flush();
+        }
 
         indexEngineNameMap.put(engineName, engine);
 
@@ -4711,7 +4713,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (cluster != null) {
       cluster.create(-1);
 
-      synch();
+      if(writeAheadLog != null) {
+        writeAheadLog.flush();
+      }
 
       createdClusterId = registerCluster(cluster);
 
