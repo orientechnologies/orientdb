@@ -22,8 +22,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.serialization.OStreamable;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
@@ -49,31 +47,6 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
   private String             status;
   private OLogSequenceNumber lsn;
 
-  public static class OUpdateResult implements OStreamable {
-    private OLogSequenceNumber sequenceNumber;
-
-    public OUpdateResult() {
-    }
-
-    public OUpdateResult(OLogSequenceNumber sequenceNumber) {
-      this.sequenceNumber = sequenceNumber;
-    }
-
-    @Override
-    public void toStream(DataOutput out) throws IOException {
-      sequenceNumber.toStream(out);
-    }
-
-    @Override
-    public void fromStream(DataInput in) throws IOException {
-      sequenceNumber = new OLogSequenceNumber(in);
-    }
-
-    public OLogSequenceNumber getSequenceNumber() {
-      return sequenceNumber;
-    }
-  }
-
   public OUpdateDatabaseStatusTask() {
   }
 
@@ -88,14 +61,10 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
       final ODatabaseDocumentInternal database) throws Exception {
 
     ODistributedDatabase database1 = iManager.getMessageService().getDatabase(databaseName);
-    if (database1 != null) {
+    if(database1 != null) {
       database1.getSyncConfiguration().setLastLSN(getNodeSource(), lsn, false);
     }
-    if (((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN() != null) {
-      return new OUpdateResult(((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN());
-    } else {
-      return null;
-    }
+    return true;
   }
 
   @Override
@@ -154,5 +123,4 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
   public String toString() {
     return getName();
   }
-
 }
