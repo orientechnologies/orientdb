@@ -58,7 +58,7 @@ public final class OWALRecordsFactory {
   public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
 
   private static final LZ4Factory factory                    = LZ4Factory.fastestInstance();
-  private static final int        MIN_COMPRESSED_RECORD_SIZE = 2 * 1024;
+  private static final int        MIN_COMPRESSED_RECORD_SIZE = 1024;
 
   public static OPair<ByteBuffer, Long> toStream(final OWriteableWALRecord walRecord) {
     final int contentSize = walRecord.serializedSize() + 1;
