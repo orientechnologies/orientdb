@@ -420,18 +420,17 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       try {
         final boolean useWal = useWal();
 
-        if (!operation.isRollback())
-          operation.commitChanges(useWal ? writeAheadLog : null);
-
-        if (useWal)
-          lsn = writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(),
-              operation.getMetadata());
-        else
+        if (!operation.isRollback()) {
+          lsn = operation.commitChanges(useWal ? writeAheadLog : null);
+        } else {
           lsn = null;
+        }
 
-        // We have to decrement the counter after the disk operations, otherwise, if they
-        // fail, we will be unable to rollback the atomic operation later.
-        operation.decrementCounter();
+        if (useWal) {
+          // We have to decrement the counter after the disk operations, otherwise, if they
+          // fail, we will be unable to rollback the atomic operation later.
+          operation.decrementCounter();
+        }
 
         atomicOperationsCount.decrement();
         if (trackAtomicOperations) {
