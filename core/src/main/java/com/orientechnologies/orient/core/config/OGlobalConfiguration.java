@@ -222,7 +222,7 @@ public enum OGlobalConfiguration {
       true),
 
   STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS("storage.printWALPerformanceStatistics",
-      "Periodically prints statistics about WAL performance", Boolean.class, false),
+      "Periodically prints statistics about WAL performance", Boolean.class, true),
 
   STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL("storage.walPerformanceStatisticsInterval",
       "Interval in seconds between consequent reports of WAL performance statistics", Integer.class, 10),
