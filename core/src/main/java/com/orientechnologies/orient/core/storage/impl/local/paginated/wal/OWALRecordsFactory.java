@@ -93,15 +93,20 @@ public final class OWALRecordsFactory {
     compressedContent.position(5);
     final int compressedLength = compressor.compress(content, 1, contentSize - 1, compressedContent, 5, maxCompressedLength);
 
-    if (pointer > 0) {
-      Native.free(pointer);
+    if (compressedLength + 5 < contentSize) {
+      if (pointer > 0) {
+        Native.free(pointer);
+      }
+
+      compressedContent.limit(compressedLength + 5);
+      compressedContent.put(0, (byte) (-(recordId + 1)));
+      compressedContent.putInt(1, contentSize);
+
+      return new OPair<>(compressedContent, compressedPointer);
+    } else {
+      Native.free(compressedPointer);
+      return new OPair<>(content, pointer);
     }
-
-    compressedContent.limit(compressedLength + 5);
-    compressedContent.put(0, (byte) (-(recordId + 1)));
-    compressedContent.putInt(1, contentSize);
-
-    return new OPair<>(compressedContent, compressedPointer);
   }
 
   public OWriteableWALRecord fromStream(byte[] content) {
