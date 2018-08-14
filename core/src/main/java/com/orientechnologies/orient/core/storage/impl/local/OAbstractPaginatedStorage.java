@@ -5046,7 +5046,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (!fuzzyCheckPointIsComplete) {
           OLogManager.instance().warn(this, "FUZZY checkpoint is not complete.");
 
-          OLogSequenceNumber previousCheckpoint = ((OFuzzyCheckpointStartRecord) checkPointRecord).getPreviousCheckpoint();
+          OLogSequenceNumber previousCheckpoint = ((OFuzzyCheckpointStartRecord) checkPointRecord.get(0)).getPreviousCheckpoint();
           checkPointRecord = Collections.emptyList();
 
           if (previousCheckpoint != null) {
@@ -5061,7 +5061,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             return restoreFromBeginning();
           }
         } else
-          return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
+          return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord.get(0));
       }
 
       if (checkPointRecord.get(0) instanceof OFullCheckpointStartRecord) {
@@ -5071,7 +5071,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (!fullCheckPointIsComplete) {
           OLogManager.instance().warn(this, "FULL checkpoint has not completed.");
 
-          OLogSequenceNumber previousCheckpoint = ((OFullCheckpointStartRecord) checkPointRecord).getPreviousCheckpoint();
+          OLogSequenceNumber previousCheckpoint = ((OFullCheckpointStartRecord) checkPointRecord.get(0)).getPreviousCheckpoint();
           checkPointRecord = Collections.emptyList();
           if (previousCheckpoint != null) {
             checkPointRecord = writeAheadLog.read(previousCheckpoint, 1);
@@ -5085,10 +5085,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             return restoreFromBeginning();
           }
         } else
-          return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
+          return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord.get(0));
       }
 
-      throw new OStorageException("Unknown checkpoint record type " + checkPointRecord.getClass().getName());
+      throw new OStorageException("Unknown checkpoint record type " + checkPointRecord.get(0).getClass().getName());
     } finally {
       writeAheadLog.removeCutTillLimit(end);
     }
