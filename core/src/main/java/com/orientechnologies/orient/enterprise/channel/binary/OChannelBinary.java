@@ -40,17 +40,19 @@ import java.util.Arrays;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public abstract class OChannelBinary extends OChannel implements OChannelDataInput, OChannelDataOutput {
-  private static final int MAX_LENGTH_DEBUG = 150;
-  protected final boolean          debug;
-  private final   int              maxChunkSize;
-  public          DataInputStream  in;
-  public          DataOutputStream out;
+  private static final int              MAX_LENGTH_DEBUG = 150;
+  protected final      boolean          debug;
+  private final        int              maxChunkSize;
+  public               DataInputStream  in;
+  public               DataOutputStream out;
+  private              int              responseTimeout;
 
   public OChannelBinary(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
     super(iSocket, iConfig);
 
     maxChunkSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_BINARY_MAX_CONTENT_LENGTH) * 1024;
     debug = iConfig.getValueAsBoolean(OGlobalConfiguration.NETWORK_BINARY_DEBUG);
+    responseTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT);
 
     if (debug)
       OLogManager.instance().info(this, "%s - Connected", socket.getRemoteSocketAddress());
@@ -366,6 +368,6 @@ public abstract class OChannelBinary extends OChannel implements OChannelDataInp
   public void setWaitResponseTimeout() throws SocketException {
     final Socket s = socket;
     if (s != null)
-      s.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
+      s.setSoTimeout(responseTimeout);
   }
 }
