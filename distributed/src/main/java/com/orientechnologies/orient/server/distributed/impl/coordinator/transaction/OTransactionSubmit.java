@@ -13,10 +13,11 @@ import java.util.Collection;
 import java.util.List;
 
 public class OTransactionSubmit implements OSubmitRequest {
-
+  private       OSessionOperationId           operationId;
   private final List<ORecordOperationRequest> operations;
 
-  public OTransactionSubmit(Collection<ORecordOperation> ops) {
+  public OTransactionSubmit(OSessionOperationId operationId, Collection<ORecordOperation> ops) {
+    this.operationId = operationId;
     this.operations = genOps(ops);
   }
 
@@ -46,6 +47,7 @@ public class OTransactionSubmit implements OSubmitRequest {
 
   @Override
   public void begin(ODistributedMember member, ODistributedCoordinator coordinator) {
-    coordinator.sendOperation(this, new OTransactionFirstPhaseOperation(this.operations), new OTransactionFirstPhaseResponseHandler());
+    OTransactionFirstPhaseResponseHandler responseHandler = new OTransactionFirstPhaseResponseHandler(operationId, this, member);
+    coordinator.sendOperation(this, new OTransactionFirstPhaseOperation(this.operationId, this.operations), responseHandler);
   }
 }

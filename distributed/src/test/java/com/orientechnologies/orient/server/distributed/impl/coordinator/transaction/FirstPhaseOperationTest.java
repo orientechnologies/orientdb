@@ -56,7 +56,7 @@ public class FirstPhaseOperationTest {
       networkOps = OTransactionSubmit.genOps(txOps);
     }
 
-    OTransactionFirstPhaseOperation ops = new OTransactionFirstPhaseOperation(networkOps);
+    OTransactionFirstPhaseOperation ops = new OTransactionFirstPhaseOperation(new OSessionOperationId(), networkOps);
     try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
       ONodeResponse res = ops.execute(null, null, null, (ODatabaseDocumentInternal) session);
       assertEquals(((OTransactionFirstPhaseResult) res).getType(), OTransactionFirstPhaseResult.Type.SUCCESS);
@@ -92,7 +92,7 @@ public class FirstPhaseOperationTest {
       session.commit();
     }
 
-    OTransactionFirstPhaseOperation ops = new OTransactionFirstPhaseOperation(networkOps);
+    OTransactionFirstPhaseOperation ops = new OTransactionFirstPhaseOperation(new OSessionOperationId(), networkOps);
     try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
       ONodeResponse res = ops.execute(null, null, null, (ODatabaseDocumentInternal) session);
       assertEquals(((OTransactionFirstPhaseResult) res).getType(),
@@ -122,7 +122,7 @@ public class FirstPhaseOperationTest {
       networkOps = OTransactionSubmit.genOps(txOps);
     }
 
-    OTransactionFirstPhaseOperation ops = new OTransactionFirstPhaseOperation(networkOps);
+    OTransactionFirstPhaseOperation ops = new OTransactionFirstPhaseOperation(new OSessionOperationId(), networkOps);
     try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
       ONodeResponse res = ops.execute(null, null, null, (ODatabaseDocumentInternal) session);
       assertEquals(((OTransactionFirstPhaseResult) res).getType(), OTransactionFirstPhaseResult.Type.UNIQUE_KEY_VIOLATION);

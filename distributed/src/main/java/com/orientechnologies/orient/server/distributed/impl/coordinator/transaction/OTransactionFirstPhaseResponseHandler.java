@@ -3,6 +3,10 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.transac
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.ConcurrentModification;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.PessimisticLockTimeout;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.Success;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.UniqueKeyViolation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,14 +15,24 @@ import java.util.Map;
 
 public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
 
+  private OSessionOperationId                      operationId;
+  private OTransactionSubmit                       request;
+  private ODistributedMember                       requester;
   private int                                      responseCount   = 0;
-  private List<ODistributedMember>                 success         = new ArrayList<>();
+  private Map<ODistributedMember, Success>         success         = new HashMap<>();
   private Map<ORID, List<ODistributedMember>>      cme             = new HashMap<>();
   private Map<String, List<ODistributedMember>>    unique          = new HashMap<>();
   private Map<ORecordId, List<ODistributedMember>> pessimisticLock = new HashMap<>();
   private List<ODistributedMember>                 exceptions      = new ArrayList<>();
   private boolean                                  secondPhaseSent = false;
   private boolean                                  replySent       = false;
+
+  public OTransactionFirstPhaseResponseHandler(OSessionOperationId operationId, OTransactionSubmit request,
+      ODistributedMember requester) {
+    this.operationId = operationId;
+    this.request = request;
+    this.requester = requester;
+  }
 
   @Override
   public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
@@ -27,11 +41,10 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
     OTransactionFirstPhaseResult result = (OTransactionFirstPhaseResult) response;
     switch (result.getType()) {
     case SUCCESS:
-      success.add(member);
+      success.put(member, (Success) result.getResultMetadata());
       break;
     case CONCURRENT_MODIFICATION_EXCEPTION: {
-      OTransactionFirstPhaseResult.ConcurrentModification concurrentModification = (OTransactionFirstPhaseResult.ConcurrentModification) result
-          .getResultMetadata();
+      ConcurrentModification concurrentModification = (ConcurrentModification) result.getResultMetadata();
       List<ODistributedMember> members = cme.get(concurrentModification.getRecordId());
       if (members == null) {
         members = new ArrayList<>();
@@ -41,8 +54,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
     }
     break;
     case UNIQUE_KEY_VIOLATION: {
-      OTransactionFirstPhaseResult.UniqueKeyViolation uniqueKeyViolation = (OTransactionFirstPhaseResult.UniqueKeyViolation) result
-          .getResultMetadata();
+      UniqueKeyViolation uniqueKeyViolation = (UniqueKeyViolation) result.getResultMetadata();
       List<ODistributedMember> members = unique.get(uniqueKeyViolation.getKeyStringified());
       if (members == null) {
         members = new ArrayList<>();
@@ -52,8 +64,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
     }
     break;
     case PESSIMISTIC_LOCK_TIMEOUT: {
-      OTransactionFirstPhaseResult.PessimisticLockTimeout pessimisticLockTimeout = (OTransactionFirstPhaseResult.PessimisticLockTimeout) result
-          .getResultMetadata();
+      PessimisticLockTimeout pessimisticLockTimeout = (PessimisticLockTimeout) result.getResultMetadata();
       List<ODistributedMember> members = pessimisticLock.get(pessimisticLockTimeout.getRecordId());
       if (members == null) {
         members = new ArrayList<>();
@@ -69,7 +80,8 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
     int quorum = context.getQuorum();
     if (responseCount >= quorum && !secondPhaseSent) {
       if (success.size() >= quorum) {
-        sendSecondPhaseSuccess(coordinator);
+        Success ids = success.values().iterator().next();
+        sendSecondPhaseSuccess(coordinator, ids.getAllocatedIds());
       }
 
       for (Map.Entry<ORID, List<ODistributedMember>> entry : cme.entrySet()) {
@@ -95,12 +107,15 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
   }
 
   private void sendSecondPhaseError(ODistributedCoordinator coordinator) {
-    coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(false), new OTransactionSecondPhaseHandler(true));
+    OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(true, request, requester);
+    coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, false, new ArrayList<>()), responseHandler);
+    coordinator.reply(requester, new OTransactionResponse());
     secondPhaseSent = true;
   }
 
-  private void sendSecondPhaseSuccess(ODistributedCoordinator coordinator) {
-    coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(true), new OTransactionSecondPhaseHandler(false));
+  private void sendSecondPhaseSuccess(ODistributedCoordinator coordinator, List<ORecordId> allocatedIds) {
+    OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(false, request, requester);
+    coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, true, allocatedIds), responseHandler);
     secondPhaseSent = true;
   }
 

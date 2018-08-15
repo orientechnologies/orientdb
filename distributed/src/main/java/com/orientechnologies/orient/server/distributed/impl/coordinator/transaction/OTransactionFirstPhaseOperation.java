@@ -15,6 +15,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.*;
 import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
 
 import java.util.ArrayList;
@@ -22,9 +23,11 @@ import java.util.List;
 
 public class OTransactionFirstPhaseOperation implements ONodeRequest {
 
+  private OSessionOperationId           operationId;
   private List<ORecordOperationRequest> operations;
 
-  public OTransactionFirstPhaseOperation(List<ORecordOperationRequest> operations) {
+  public OTransactionFirstPhaseOperation(OSessionOperationId operationId, List<ORecordOperationRequest> operations) {
+    this.operationId = operationId;
     this.operations = operations;
   }
 
@@ -37,26 +40,28 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
     try {
       //TODO:Refactor this method to match the new api
       if (((ODatabaseDocumentDistributed) session).beginDistributedTx(new ODistributedRequestId(10, 10), tx, false, 2)) {
-        response = new OTransactionFirstPhaseResult(OTransactionFirstPhaseResult.Type.SUCCESS, null);
+        //TODO:get the allocated ids and send to the coordinator.
+        Success metadata = new Success(new ArrayList<>());
+        response = new OTransactionFirstPhaseResult(Type.SUCCESS, metadata);
       } else {
         //TODO: this was old retry, should be removed no retry in new architecture
         return null;
       }
     } catch (OConcurrentModificationException ex) {
-      OTransactionFirstPhaseResult.ConcurrentModification metadata = new OTransactionFirstPhaseResult.ConcurrentModification(
-          (ORecordId) ex.getRid().getIdentity(), ex.getEnhancedRecordVersion(), ex.getEnhancedDatabaseVersion());
-      response = new OTransactionFirstPhaseResult(OTransactionFirstPhaseResult.Type.CONCURRENT_MODIFICATION_EXCEPTION, metadata);
+      ConcurrentModification metadata = new ConcurrentModification((ORecordId) ex.getRid().getIdentity(),
+          ex.getEnhancedRecordVersion(), ex.getEnhancedDatabaseVersion());
+      response = new OTransactionFirstPhaseResult(Type.CONCURRENT_MODIFICATION_EXCEPTION, metadata);
     } catch (ODistributedLockException | OLockException ex) {
       //TODO: Resolve Id for the pessimistic lock error
-      OTransactionFirstPhaseResult.PessimisticLockTimeout metadata = new OTransactionFirstPhaseResult.PessimisticLockTimeout(null);
-      response = new OTransactionFirstPhaseResult(OTransactionFirstPhaseResult.Type.UNIQUE_KEY_VIOLATION, metadata);
+      PessimisticLockTimeout metadata = new PessimisticLockTimeout(null);
+      response = new OTransactionFirstPhaseResult(Type.UNIQUE_KEY_VIOLATION, metadata);
     } catch (ORecordDuplicatedException ex) {
-      OTransactionFirstPhaseResult.UniqueKeyViolation metadata = new OTransactionFirstPhaseResult.UniqueKeyViolation(
-          ex.getKey().toString(), null, (ORecordId) ex.getRid().getIdentity(), ex.getIndexName());
-      response = new OTransactionFirstPhaseResult(OTransactionFirstPhaseResult.Type.UNIQUE_KEY_VIOLATION, metadata);
+      UniqueKeyViolation metadata = new UniqueKeyViolation(ex.getKey().toString(), null, (ORecordId) ex.getRid().getIdentity(),
+          ex.getIndexName());
+      response = new OTransactionFirstPhaseResult(Type.UNIQUE_KEY_VIOLATION, metadata);
     } catch (RuntimeException ex) {
       //TODO: get action with some exception handler to offline the node or activate a recover operation
-      response = new OTransactionFirstPhaseResult(OTransactionFirstPhaseResult.Type.EXCEPTION, null);
+      response = new OTransactionFirstPhaseResult(Type.EXCEPTION, null);
     }
     return response;
   }

@@ -2,13 +2,17 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.transac
 
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
-public class OTransactionSecondPhaseHandler implements OResponseHandler {
+public class OTransactionSecondPhaseResponseHandler implements OResponseHandler {
 
-  private final boolean success;
-  private       int     responseCount = 0;
+  private       OTransactionSubmit request;
+  private       ODistributedMember requester;
+  private final boolean            success;
+  private       int                responseCount = 0;
 
-  public OTransactionSecondPhaseHandler(boolean success) {
+  public OTransactionSecondPhaseResponseHandler(boolean success, OTransactionSubmit request, ODistributedMember requester) {
     this.success = success;
+    this.request = request;
+    this.requester = requester;
   }
 
   @Override
@@ -17,7 +21,7 @@ public class OTransactionSecondPhaseHandler implements OResponseHandler {
     responseCount++;
     if (responseCount >= context.getQuorum()) {
       if (success) {
-        //coordinator
+        coordinator.reply(requester, new OTransactionResponse());
       }
     }
     return responseCount == context.getInvolvedMembers().size();

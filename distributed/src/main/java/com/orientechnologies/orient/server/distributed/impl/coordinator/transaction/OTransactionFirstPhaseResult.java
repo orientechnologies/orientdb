@@ -3,6 +3,8 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.transac
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeResponse;
 
+import java.util.List;
+
 public class OTransactionFirstPhaseResult implements ONodeResponse {
 
   public OTransactionFirstPhaseResult(Type type, Object resultMetadata) {
@@ -16,6 +18,18 @@ public class OTransactionFirstPhaseResult implements ONodeResponse {
 
   private Type   type;
   private Object resultMetadata;
+
+  public static class Success {
+    private List<ORecordId> allocatedIds;
+
+    public Success(List<ORecordId> allocatedIds) {
+      this.allocatedIds = allocatedIds;
+    }
+
+    public List<ORecordId> getAllocatedIds() {
+      return allocatedIds;
+    }
+  }
 
   public static class ConcurrentModification {
     private final ORecordId recordId;
