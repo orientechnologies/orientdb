@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
@@ -772,7 +773,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             reassignClustersOwnership(nodeName, databaseName, cfg, true);
 
             try {
-              ddb.getSyncConfiguration().setLastLSN(nodeName, ((OLocalPaginatedStorage) stg.getUnderlying()).getLSN(), false);
+              ddb.getSyncConfiguration().setLastLSN(nodeName, ((OAbstractPaginatedStorage) stg.getUnderlying()).getLSN(), false);
             } catch (IOException e) {
               ODistributedServerLog
                   .error(this, nodeName, null, DIRECTION.NONE, "Error on saving distributed LSN for database '%s' (err=%s).",

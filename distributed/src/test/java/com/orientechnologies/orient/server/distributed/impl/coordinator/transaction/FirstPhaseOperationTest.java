@@ -135,6 +135,7 @@ public class FirstPhaseOperationTest {
 
   @After
   public void after() {
+    orientDB.drop(FirstPhaseOperationTest.class.getSimpleName());
     server.shutdown();
   }
 

@@ -1019,7 +1019,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   public void notifyDatabaseLsn(ODatabaseDocumentInternal db, Collection<String> nodes) {
-    OLogSequenceNumber lsn = ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN();
+    OLogSequenceNumber lsn = ((OAbstractPaginatedStorage) db.getStorage().getUnderlying()).getLSN();
     if (!nodes.isEmpty()) {
       OUpdateDatabaseStatusTask statusTask = new OUpdateDatabaseStatusTask(db.getName(), DB_STATUS.ONLINE.toString(), lsn);
       ODistributedResponse result = sendRequest(db.getName(), null, nodes, statusTask, getNextMessageIdCounter(),
