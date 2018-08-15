@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.distributed.impl.transaction;
+package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;

@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.distributed.impl.transaction;
+package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeResponse;
