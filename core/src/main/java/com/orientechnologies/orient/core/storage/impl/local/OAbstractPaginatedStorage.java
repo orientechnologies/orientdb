@@ -2204,7 +2204,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw logAndPrepareForRethrow(ee);
     } catch (Error ee) {
       handleJVMError(ee);
-      atomicOperationsManager.alarmClearOfAtomicOperation();
+      OAtomicOperationsManager.alarmClearOfAtomicOperation();
       throw logAndPrepareForRethrow(ee);
     } catch (Throwable t) {
       throw logAndPrepareForRethrow(t);
