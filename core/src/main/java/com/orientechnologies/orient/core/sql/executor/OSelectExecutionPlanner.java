@@ -611,7 +611,7 @@ public class OSelectExecutionPlanner {
   }
 
   protected static void optimizeQuery(QueryPlanningInfo info, OCommandContext ctx) {
-    splitLet(info);
+    splitLet(info, ctx);
     rewriteIndexChainsAsSubqueries(info, ctx);
     extractSubQueries(info);
     if (info.projection != null && info.projection.isExpand()) {
@@ -624,7 +624,7 @@ public class OSelectExecutionPlanner {
       info.flattenedWhereClause = moveFlattededEqualitiesLeft(info.flattenedWhereClause);
     }
 
-    splitProjectionsForGroupBy(info);
+    splitProjectionsForGroupBy(info, ctx);
     addOrderByProjections(info);
   }
 
@@ -643,12 +643,12 @@ public class OSelectExecutionPlanner {
   /**
    * splits LET clauses in global (executed once) and local (executed once per record)
    */
-  private static void splitLet(QueryPlanningInfo info) {
+  private static void splitLet(QueryPlanningInfo info, OCommandContext ctx) {
     if (info.perRecordLetClause != null && info.perRecordLetClause.getItems() != null) {
       Iterator<OLetItem> iterator = info.perRecordLetClause.getItems().iterator();
       while (iterator.hasNext()) {
         OLetItem item = iterator.next();
-        if (item.getExpression() != null && item.getExpression().isEarlyCalculated()) {
+        if (item.getExpression() != null && item.getExpression().isEarlyCalculated(ctx)) {
           iterator.remove();
           addGlobalLet(info, item.getVarName(), item.getExpression());
         } else if (item.getQuery() != null && !item.getQuery().refersToParent()) {
@@ -772,7 +772,7 @@ public class OSelectExecutionPlanner {
   /**
    * splits projections in three parts (pre-aggregate, aggregate and final) to efficiently manage aggregations
    */
-  private static void splitProjectionsForGroupBy(QueryPlanningInfo info) {
+  private static void splitProjectionsForGroupBy(QueryPlanningInfo info, OCommandContext ctx) {
     if (info.projection == null) {
       return;
     }
@@ -792,7 +792,7 @@ public class OSelectExecutionPlanner {
       result.reset();
       if (isAggregate(item)) {
         isSplitted = true;
-        OProjectionItem post = item.splitForAggregation(result);
+        OProjectionItem post = item.splitForAggregation(result, ctx);
         OIdentifier postAlias = item.getProjectionAlias();
         postAlias = new OIdentifier(postAlias, true);
         post.setAlias(postAlias);
@@ -2133,7 +2133,7 @@ public class OSelectExecutionPlanner {
             String fieldName = left.getDefaultAlias().getStringValue();
             if (indexField.equals(fieldName)) {
               OBinaryCompareOperator operator = ((OBinaryCondition) singleExp).getOperator();
-              if (!((OBinaryCondition) singleExp).getRight().isEarlyCalculated()) {
+              if (!((OBinaryCondition) singleExp).getRight().isEarlyCalculated(ctx)) {
                 continue; //this cannot be used because the value depends on single record
               }
               if (operator instanceof OEqualsCompareOperator) {
@@ -2201,7 +2201,7 @@ public class OSelectExecutionPlanner {
           if (left.isBaseIdentifier()) {
             String fieldName = left.getDefaultAlias().getStringValue();
             if (indexField.equals(fieldName)) {
-              if (!((OContainsAnyCondition) singleExp).getRight().isEarlyCalculated()) {
+              if (!((OContainsAnyCondition) singleExp).getRight().isEarlyCalculated(ctx)) {
                 continue; //this cannot be used because the value depends on single record
               }
               found = true;
@@ -2221,7 +2221,7 @@ public class OSelectExecutionPlanner {
             if (indexField.equals(fieldName)) {
               if (((OInCondition) singleExp).getRightMathExpression() != null) {
 
-                if (!((OInCondition) singleExp).getRightMathExpression().isEarlyCalculated()) {
+                if (!((OInCondition) singleExp).getRightMathExpression().isEarlyCalculated(ctx)) {
                   continue; //this cannot be used because the value depends on single record
                 }
                 found = true;
