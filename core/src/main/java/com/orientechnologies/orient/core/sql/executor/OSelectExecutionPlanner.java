@@ -1830,7 +1830,7 @@ public class OSelectExecutionPlanner {
       } else if (!order.equals(item.getType())) {
         return false;
       }
-      orderItems.add(item.getAlias());
+      orderItems.add(item.getAlias() != null ? item.getAlias() : item.getRecordAttr());
     }
 
     List<String> conditionItems = new ArrayList<>();
