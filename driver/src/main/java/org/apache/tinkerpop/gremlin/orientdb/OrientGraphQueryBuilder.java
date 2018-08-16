@@ -1,5 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.common.log.OLogManager;
 import org.apache.tinkerpop.gremlin.process.traversal.Compare;
 import org.apache.tinkerpop.gremlin.process.traversal.Contains;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
@@ -15,8 +16,8 @@ import java.util.stream.Collectors;
  */
 public class OrientGraphQueryBuilder {
 
-  private final boolean vertexStep;
-  private List<String> classes = new ArrayList<>();
+  private final boolean      vertexStep;
+  private       List<String> classes = new ArrayList<>();
 
   private Map<String, P<?>> params = new LinkedHashMap<>();
 
@@ -49,19 +50,26 @@ public class OrientGraphQueryBuilder {
       }
     }
 
-    StringBuilder builder = new StringBuilder();
+    try {
+      StringBuilder builder = new StringBuilder();
 
-    Map<String, Object> parameters = new HashMap<>();
-    String whereCondition = fillParameters(parameters);
-    if (classes.size() > 1) {
-      builder.append("SELECT expand($union) ");
-      String lets = classes.stream().map((s) -> buildLetStatement(buildSingleQuery(s, whereCondition), classes.indexOf(s)))
-          .reduce("", (a, b) -> a.isEmpty() ? b : a + " , " + b);
-      builder.append(String.format("%s , $union = UNIONALL(%s)", lets, buildVariables(classes.size())));
-    } else {
-      builder.append(buildSingleQuery(classes.get(0), whereCondition));
+      Map<String, Object> parameters = new HashMap<>();
+      String whereCondition = fillParameters(parameters);
+      if (classes.size() > 1) {
+        builder.append("SELECT expand($union) ");
+        String lets = classes.stream().map((s) -> buildLetStatement(buildSingleQuery(s, whereCondition), classes.indexOf(s)))
+            .reduce("", (a, b) -> a.isEmpty() ? b : a + " , " + b);
+        builder.append(String.format("%s , $union = UNIONALL(%s)", lets, buildVariables(classes.size())));
+      } else {
+        builder.append(buildSingleQuery(classes.get(0), whereCondition));
+
+      }
+      return Optional.of(new OrientGraphQuery(builder.toString(), parameters, classes.size()));
+    } catch (UnsupportedOperationException e) {
+      OLogManager.instance().debug(this, "Cannot generate a query from the traversal", e);
     }
-    return Optional.of(new OrientGraphQuery(builder.toString(), parameters, classes.size()));
+    return Optional.empty();
+
   }
 
   private String fillParameters(Map<String, Object> parameters) {
