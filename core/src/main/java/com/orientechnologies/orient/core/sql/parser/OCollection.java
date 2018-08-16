@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,9 +61,16 @@ public class OCollection extends SimpleNode {
   public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
     List<Object> result = new ArrayList<Object>();
     for (OExpression exp : expressions) {
-      result.add(exp.execute(iCurrentRecord, ctx));
+      result.add(convert(exp.execute(iCurrentRecord, ctx)));
     }
     return result;
+  }
+
+  private Object convert(Object item) {
+    if (item instanceof OResultSet) {
+      return ((OResultSet) item).stream().collect(Collectors.toList());
+    }
+    return item;
   }
 
   public boolean needsAliases(Set<String> aliases) {
