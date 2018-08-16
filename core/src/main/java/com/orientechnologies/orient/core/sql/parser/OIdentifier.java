@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
@@ -172,5 +173,15 @@ public class OIdentifier extends SimpleNode {
     return result;
   }
 
+  public boolean isEarlyCalculated(OCommandContext ctx) {
+    if (internalAlias) {
+      return true;
+    }
+    String stringVal = getStringValue();
+    if (ctx.isScriptVariableDeclared(stringVal)) {
+      return true;//context variable, for batch scripts
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=691a2eb5096f7b5e634b2ca8ac2ded3a (do not edit this line) */

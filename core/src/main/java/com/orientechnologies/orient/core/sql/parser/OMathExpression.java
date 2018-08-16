@@ -880,9 +880,9 @@ public class OMathExpression extends SimpleNode {
     return null;
   }
 
-  public boolean isEarlyCalculated() {
+  public boolean isEarlyCalculated(OCommandContext ctx) {
     for (OMathExpression exp : childExpressions) {
-      if (!exp.isEarlyCalculated()) {
+      if (!exp.isEarlyCalculated(ctx)) {
         return false;
       }
     }
@@ -926,7 +926,7 @@ public class OMathExpression extends SimpleNode {
     return this.childExpressions.get(0).isCount();
   }
 
-  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
     if (isAggregate()) {
       OMathExpression result = new OMathExpression(-1);
       int i = 0;
@@ -934,10 +934,10 @@ public class OMathExpression extends SimpleNode {
         if (i > 0) {
           result.operators.add(operators.get(i - 1));
         }
-        SimpleNode splitResult = expr.splitForAggregation(aggregateProj);
+        SimpleNode splitResult = expr.splitForAggregation(aggregateProj, ctx);
         if (splitResult instanceof OMathExpression) {
           OMathExpression res = (OMathExpression) splitResult;
-          if (res.isEarlyCalculated() || res.isAggregate()) {
+          if (res.isEarlyCalculated(ctx) || res.isAggregate()) {
             result.childExpressions.add(res);
           } else {
             throw new OCommandExecutionException("Cannot mix aggregate and single record attribute values in the same projection");
