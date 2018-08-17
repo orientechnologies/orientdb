@@ -91,11 +91,12 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
     if (database1 != null) {
       database1.getSyncConfiguration().setLastLSN(getNodeSource(), lsn, false);
     }
-    if (((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN() != null) {
-      return new OUpdateResult(((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN());
-    } else {
-      return null;
+    if (database != null) {
+      if (((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN() != null) {
+        return new OUpdateResult(((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN());
+      }
     }
+    return null;
   }
 
   @Override
