@@ -528,7 +528,7 @@ final class OLogSegmentV2 implements OLogSegment {
     long pagesInCache = (filledUpTo - writtenUpTo) / OWALPage.PAGE_SIZE;
     if (pagesInCache > maxPagesCacheSize) {
       OLogManager.instance()
-          .info(this, "Max cache limit is reached (%d vs. %d), sync write is performed", maxPagesCacheSize, pagesInCache);
+          .debug(this, "Max cache limit is reached (%d vs. %d), sync write is performed", maxPagesCacheSize, pagesInCache);
 
       writeAheadLog.incrementCacheOverflowCount();
 
