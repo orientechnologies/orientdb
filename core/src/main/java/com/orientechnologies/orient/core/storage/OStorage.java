@@ -238,7 +238,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
   /**
    * @return Backup file name
    */
-  String incrementalBackup(String backupDirectory);
+  String incrementalBackup(String backupDirectory) throws UnsupportedOperationException;
 
   void restoreFromIncrementalBackup(String filePath);
 

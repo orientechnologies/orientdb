@@ -1078,7 +1078,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @since 2.2
    */
-  String incrementalBackup(String path);
+  String incrementalBackup(String path) throws UnsupportedOperationException;
 
   /**
    * Subscribe a query as a live query for future create/update event with the referred conditions

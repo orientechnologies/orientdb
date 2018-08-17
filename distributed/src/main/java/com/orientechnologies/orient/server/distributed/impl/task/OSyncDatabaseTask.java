@@ -125,21 +125,34 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
                       "Compressing database '%s' %d clusters %s...", databaseName, database.getClusterNames().size(),
                       database.getClusterNames());
 
-                  database.backup(fileOutputStream, null, new Callable<Object>() {
-                    @Override
-                    public Object call() throws Exception {
-                      momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
-                      return null;
-                    }
-                  }, ODistributedServerLog.isDebugEnabled() ? new OCommandOutputListener() {
-                    @Override
-                    public void onMessage(String iText) {
-                      if (iText.startsWith("\n"))
-                        iText = iText.substring(1);
 
-                      OLogManager.instance().debug(this, iText);
-                    }
-                  } : null, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+
+
+                  //TODO!!!
+//                  try {
+//                    File file = File.createTempFile("incrementalBackup_" + databaseName + System.currentTimeMillis(), ".ibu");
+//
+//                    database.incrementalBackup(file.getAbsolutePath());
+//
+//                  } catch (UnsupportedOperationException e) {
+                    database.backup(fileOutputStream, null, new Callable<Object>() {
+                      @Override
+                      public Object call() throws Exception {
+                        momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
+                        return null;
+                      }
+                    }, ODistributedServerLog.isDebugEnabled() ? new OCommandOutputListener() {
+                      @Override
+                      public void onMessage(String iText) {
+                        if (iText.startsWith("\n"))
+                          iText = iText.substring(1);
+
+                        OLogManager.instance().debug(this, iText);
+                      }
+                    } : null, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+//                  }
+
+                  
 
                   ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                       "Backup of database '%s' completed. lastOperationId=%s...", databaseName, requestId);

@@ -5079,13 +5079,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public String incrementalBackup(String backupDirectory) {
-    throw new IllegalStateException("Incremental backup is supported only in enterprise version");
+  public String incrementalBackup(String backupDirectory) throws UnsupportedOperationException{
+    throw new UnsupportedOperationException("Incremental backup is supported only in enterprise version");
   }
 
   @Override
   public void restoreFromIncrementalBackup(String filePath) {
-    throw new IllegalStateException("Incremental backup is supported only in enterprise version");
+    throw new UnsupportedOperationException("Incremental backup is supported only in enterprise version");
   }
 
   private boolean checkFuzzyCheckPointIsComplete(OLogSequenceNumber lastCheckPoint) throws IOException {
