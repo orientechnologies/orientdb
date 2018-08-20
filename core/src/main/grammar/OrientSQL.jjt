@@ -4942,6 +4942,8 @@ OCreateSequenceStatement CreateSequenceStatement():
         [ <START> jjtThis.start = Expression() ]
         [ <INCREMENT> jjtThis.increment = Expression() ]
         [ <CACHE> jjtThis.cache = Expression() ]
+        [ <DESC> { jjtThis.positive = false; } ]
+        [ <ASC> { jjtThis.positive = true; } ]
     )
     { return jjtThis; }
 }

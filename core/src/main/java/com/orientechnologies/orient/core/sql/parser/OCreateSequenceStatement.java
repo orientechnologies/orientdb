@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
+import com.orientechnologies.orient.core.metadata.sequence.SequenceOrderType;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -19,11 +20,14 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
   OIdentifier name;
 
   public boolean ifNotExists = false;
-
+  
   int         type;
   OExpression start;
   OExpression increment;
   OExpression cache;
+  boolean     positive = true;
+  boolean     cyclic = false;
+  OExpression limit;
 
   public OCreateSequenceStatement(int id) {
     super(id);
@@ -91,6 +95,20 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
         throw new OCommandExecutionException("Invalid cache value: " + o);
       }
     }
+    if (limit != null) {
+      Object o = limit.execute((OIdentifiable) null, ctx);
+      if (o instanceof Number) {
+        params.setLimitValue(((Number) o).intValue());
+        result.setProperty("limitValue", o);
+      } else {
+        throw new OCommandExecutionException("Invalid limit value: " + o);
+      }
+    }
+    
+    
+    params.setOrderType(positive ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.ORDER_NEGATIVE);
+    params.setRecyclable(cyclic);
+    
     return params;
   }
 
