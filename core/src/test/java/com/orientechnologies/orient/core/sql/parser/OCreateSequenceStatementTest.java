@@ -21,6 +21,8 @@ public class OCreateSequenceStatementTest extends OParserTestAbstract {
 
     checkRightSyntax("CREATE SEQUENCE Foo IF NOT EXISTS TYPE CACHED");
 
+    checkRightSyntax("CREATE SEQUENCE Foo type cached MINVALUE 10 MAXVALUE 1000 CYCLE");
+
     checkWrongSyntax("CREATE SEQUENCE Foo");
     checkWrongSyntax("CREATE SEQUENCE Foo TYPE foo");
 
