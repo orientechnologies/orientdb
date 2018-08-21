@@ -15,10 +15,7 @@ import java.util.Map;
 
 public class OCreateSequenceStatement extends OSimpleExecStatement {
   public static final int TYPE_CACHED  = 0;
-  public static final int TYPE_ORDERED = 1;
-
-  private static boolean cyclicDefaultValue = false;
-  private static boolean positiveDefaultValue = true;
+  public static final int TYPE_ORDERED = 1;  
   
   OIdentifier name;
 
@@ -28,8 +25,8 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
   OExpression start;
   OExpression increment;
   OExpression cache;
-  boolean     positive = positiveDefaultValue;
-  boolean     cyclic = cyclicDefaultValue;
+  boolean     positive = OSequence.DEFAULT_ORDER_TYPE == SequenceOrderType.ORDER_POSITIVE;
+  boolean     cyclic = OSequence.DEFAULT_RECYCLABLE_VALUE;
   OExpression minValue;
   OExpression maxValue;
   
@@ -165,7 +162,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       builder.append(" MAXVALUE ");
       maxValue.toString(params, builder);
     }
-    if (cyclic != cyclicDefaultValue) {
+    if (cyclic != OSequence.DEFAULT_RECYCLABLE_VALUE) {
       builder.append(" CYCLE");
     }
     if (positive){

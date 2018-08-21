@@ -31,9 +31,9 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.Random;
 import java.util.concurrent.Callable;
+
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -44,7 +44,7 @@ public abstract class OSequence {
   public static final int  DEFAULT_INCREMENT = 1;
   public static final int  DEFAULT_CACHE     = 20;
   public static final Integer  DEFAULT_LIMIT_VALUE = null;
-  public static final boolean DEFAULT_RECYCLABLE_VALUE = true;
+  public static final boolean DEFAULT_RECYCLABLE_VALUE = false;
   
   protected static final int    DEF_MAX_RETRY = OGlobalConfiguration.SEQUENCE_MAX_RETRY.getValueAsInteger();
   public static final    String CLASS_NAME    = "OSequence";
@@ -156,11 +156,10 @@ public abstract class OSequence {
       }
 
       initSequence(params);
-
+      allwaysInitSection();
       document = getDocument();
     }
-    cruacialValueChanged = true;
-    allwaysInitSection();    
+    cruacialValueChanged = true;    
   }
 
   protected abstract void allwaysInitSection();
@@ -320,6 +319,10 @@ public abstract class OSequence {
 
     sequenceClass.createProperty(OSequence.FIELD_NAME, OType.STRING, (OType) null, true);
     sequenceClass.createProperty(OSequence.FIELD_TYPE, OType.STRING, (OType) null, true);
+    
+    sequenceClass.createProperty(OSequence.FIELD_LIMIT_VALUE, OType.INTEGER, (OType)null, true);
+    sequenceClass.createProperty(OSequence.FIELD_ORDER_TYPE, OType.BYTE, (OType)null, true);
+    sequenceClass.createProperty(OSequence.FIELD_RECYCLABLE, OType.BOOLEAN, (OType)null, true);
   }
 
   /*

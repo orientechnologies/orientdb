@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
@@ -53,10 +54,13 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   @Test
   public void testDbExport() throws IOException {
     ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
-    database.open("admin", "admin");
+    database.open("admin", "admin");        
 
     // ADD A CUSTOM TO THE CLASS
     database.command(new OCommandSQL("alter class V custom onBeforeCreate=onBeforeCreateItem")).execute();
+    
+    OSequence seq = database.getMetadata().getSequenceLibrary().createSequence("testSeq", OSequence.SEQUENCE_TYPE.CACHED, null);
+    seq.save();
 
     ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + exportFilePath, this);
     export.exportDatabase();
