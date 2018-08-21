@@ -4,6 +4,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class OViewImpl extends OClassImpl implements OView {
@@ -25,6 +26,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     String query = document.getProperty("query");
     this.cfg = new OViewConfig(getName(), query);
     this.cfg.setUpdatable(Boolean.TRUE.equals(document.getProperty("updatable")));
+
     Map<String, Map<String, String>> idxData = document.getProperty("indexes");
     for (Map.Entry<String, Map<String, String>> idx : idxData.entrySet()) {
       OViewConfig.OViewIndexConfig indexConfig = this.cfg.addIndex(idx.getKey());
@@ -32,6 +34,22 @@ public abstract class OViewImpl extends OClassImpl implements OView {
         indexConfig.addProperty(prop.getKey(), OType.valueOf(prop.getValue()));
       }
     }
+    if (document.getProperty("updateIntervalSeconds") instanceof Integer) {
+      cfg.setUpdateIntervalSeconds(document.getProperty("updateIntervalSeconds"));
+    }
+    if (document.getProperty("updateStrategy") instanceof String) {
+      cfg.setUpdateStrategy(document.getProperty("updateStrategy"));
+    }
+    if (document.getProperty("watchClasses") instanceof List) {
+      cfg.setWatchClasses(document.getProperty("watchClasses"));
+    }
+    if (document.getProperty("originRidField") instanceof String) {
+      cfg.setOriginRidField(document.getProperty("originRidField"));
+    }
+    if (document.getProperty("nodes") instanceof List) {
+      cfg.setNodes(document.getProperty("nodes"));
+    }
+
   }
 
   @Override
@@ -39,6 +57,7 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     ODocument result = super.toStream();
     result.setProperty("query", cfg.getQuery());
     result.setProperty("updatable", cfg.isUpdatable());
+
     Map<String, Map<String, String>> indexes = new HashMap<>();
     for (OViewConfig.OViewIndexConfig idx : cfg.indexes) {
       Map<String, String> indexDescriptor = new HashMap<>();
@@ -48,6 +67,11 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       indexes.put(idx.name, indexDescriptor);
     }
     result.setProperty("indexes", indexes);
+    result.setProperty("updateIntervalSeconds", cfg.getUpdateIntervalSeconds());
+    result.setProperty("updateStrategy", cfg.getUpdateStrategy());
+    result.setProperty("watchClasses", cfg.getWatchClasses());
+    result.setProperty("originRidField", cfg.getOriginRidField());
+    result.setProperty("nodes", cfg.getNodes());
     return result;
   }
 
@@ -65,6 +89,11 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       indexes.put(idx.name, indexDescriptor);
     }
     result.setProperty("indexes", indexes);
+    result.setProperty("updateIntervalSeconds", cfg.getUpdateIntervalSeconds());
+    result.setProperty("updateStrategy", cfg.getUpdateStrategy());
+    result.setProperty("watchClasses", cfg.getWatchClasses());
+    result.setProperty("originRidField", cfg.getOriginRidField());
+    result.setProperty("nodes", cfg.getNodes());
     return result;
   }
 
@@ -73,4 +102,36 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     return cfg.getQuery();
   }
 
+  public long count(final boolean isPolymorphic) {
+    acquireSchemaReadLock();
+    try {
+      return getDatabase().countView(getName());
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
+  @Override
+  public int getUpdateIntervalSeconds() {
+    return cfg.updateIntervalSeconds;
+  }
+
+  public List<String> getWatchClasses() {
+    return cfg.getWatchClasses();
+  }
+
+  @Override
+  public String getOriginRidField() {
+    return cfg.getOriginRidField();
+  }
+
+  @Override
+  public boolean isUpdatable() {
+    return cfg.isUpdatable();
+  }
+
+  @Override
+  public List<String> getNodes() {
+    return cfg.getNodes();
+  }
 }

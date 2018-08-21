@@ -125,11 +125,11 @@ public class OJson extends SimpleNode {
     return false;
   }
 
-  public OJson splitForAggregation(AggregateProjectionSplit aggregateSplit) {
+  public OJson splitForAggregation(AggregateProjectionSplit aggregateSplit, OCommandContext ctx) {
     if (isAggregate()) {
       OJson result = new OJson(-1);
       for (OJsonItem item : items) {
-        result.items.add(item.splitForAggregation(aggregateSplit));
+        result.items.add(item.splitForAggregation(aggregateSplit, ctx));
       }
       return result;
     } else {

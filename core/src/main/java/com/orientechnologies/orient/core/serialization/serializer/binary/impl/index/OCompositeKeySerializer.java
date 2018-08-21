@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Serializer that is used for serialization of {@link OCompositeKey} keys in index.
@@ -241,7 +242,7 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
 
     final OBinarySerializerFactory factory = OBinarySerializerFactory.getInstance();
     for (int i = 0; i < keys.size(); i++) {
-      final Object key = keys.get(i);
+      Object key = keys.get(i);
 
       final OType type;
       if (types.length > i)
@@ -250,6 +251,10 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
         type = OType.getTypeByClass(key.getClass());
 
       OBinarySerializer<Object> keySerializer = ((OBinarySerializer<Object>) factory.getObjectSerializer(type));
+      if (key instanceof Map && !(type == OType.EMBEDDEDMAP || type == OType.LINKMAP) && ((Map) key).size() == 1 && ((Map) key)
+          .keySet().iterator().next().getClass().isAssignableFrom(type.getDefaultJavaType())) {
+        key = ((Map) key).keySet().iterator().next();
+      }
       compositeKey.addKey(keySerializer.preprocess(key));
     }
 

@@ -17,6 +17,9 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
   public static final int TYPE_CACHED  = 0;
   public static final int TYPE_ORDERED = 1;
 
+  private static boolean cyclicDefaultValue = false;
+  private static boolean positiveDefaultValue = true;
+  
   OIdentifier name;
 
   public boolean ifNotExists = false;
@@ -25,10 +28,11 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
   OExpression start;
   OExpression increment;
   OExpression cache;
-  boolean     positive = true;
-  boolean     cyclic = false;
-  OExpression limit;
-
+  boolean     positive = positiveDefaultValue;
+  boolean     cyclic = cyclicDefaultValue;
+  OExpression minValue;
+  OExpression maxValue;
+  
   public OCreateSequenceStatement(int id) {
     super(id);
   }
@@ -95,8 +99,9 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
         throw new OCommandExecutionException("Invalid cache value: " + o);
       }
     }
-    if (limit != null) {
-      Object o = limit.execute((OIdentifiable) null, ctx);
+    
+    if (minValue != null) {
+      Object o = minValue.execute((OIdentifiable) null, ctx);
       if (o instanceof Number) {
         params.setLimitValue(((Number) o).intValue());
         result.setProperty("limitValue", o);
@@ -105,6 +110,15 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       }
     }
     
+    if (maxValue != null) {
+      Object o = maxValue.execute((OIdentifiable) null, ctx);
+      if (o instanceof Number) {
+        params.setLimitValue(((Number) o).intValue());
+        result.setProperty("limitValue", o);
+      } else {
+        throw new OCommandExecutionException("Invalid limit value: " + o);
+      }
+    }
     
     params.setOrderType(positive ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.ORDER_NEGATIVE);
     params.setRecyclable(cyclic);
@@ -143,6 +157,23 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       builder.append(" CACHE ");
       cache.toString(params, builder);
     }
+    if (minValue != null) {
+      builder.append(" MINVALUE ");
+      minValue.toString(params, builder);
+    }
+    if (maxValue != null) {
+      builder.append(" MAXVALUE ");
+      maxValue.toString(params, builder);
+    }
+    if (cyclic != cyclicDefaultValue) {
+      builder.append(" CYCLE");
+    }
+    if (positive){
+      builder.append(" ASC");
+    }
+    else{
+      builder.append(" DESC");
+    }
   }
 
   @Override
@@ -154,6 +185,10 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     result.start = start == null ? null : start.copy();
     result.increment = increment == null ? null : increment.copy();
     result.cache = cache == null ? null : cache.copy();
+    result.minValue = minValue == null ? null : minValue.copy();
+    result.maxValue = maxValue == null ? null : maxValue.copy();
+    result.cyclic = cyclic;
+    result.positive = positive;
     return result;
   }
 
@@ -178,18 +213,28 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       return false;
     if (cache != null ? !cache.equals(that.cache) : that.cache != null)
       return false;
-
-    return true;
+    if (maxValue != null ? !maxValue.equals(that.maxValue) : that.maxValue != null)
+      return false;
+    if (minValue != null ? !minValue.equals(that.minValue) : that.minValue != null)
+      return false;
+    if (cyclic != that.cyclic){
+      return false;
+    }
+    return positive == that.positive;
   }
 
   @Override
   public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
-    result = 31 * result + (ifNotExists ? 0 : 1);
+    result = 31 * result + (ifNotExists ? 1 : 0);
     result = 31 * result + type;
     result = 31 * result + (start != null ? start.hashCode() : 0);
     result = 31 * result + (increment != null ? increment.hashCode() : 0);
     result = 31 * result + (cache != null ? cache.hashCode() : 0);
+    result = 31 * result + (maxValue != null ? maxValue.hashCode() : 0);
+    result = 31 * result + (minValue != null ? minValue.hashCode() : 0);
+    result = 31 * result + Boolean.hashCode(cyclic);
+    result = 31 * result + Boolean.hashCode(positive);
     return result;
   }
 }

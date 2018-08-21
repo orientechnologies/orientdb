@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPo
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
@@ -1022,8 +1023,26 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     OLogSequenceNumber lsn = ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN();
     if (!nodes.isEmpty()) {
       OUpdateDatabaseStatusTask statusTask = new OUpdateDatabaseStatusTask(db.getName(), DB_STATUS.ONLINE.toString(), lsn);
-      sendRequest(db.getName(), null, nodes, statusTask, getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
-          null, null, null);
+      ODistributedResponse result = sendRequest(db.getName(), null, nodes, statusTask, getNextMessageIdCounter(),
+          ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+      ODistributedDatabase database1 = getMessageService().getDatabase(db.getName());
+      Map<String, Object> payload = (Map<String, Object>) result.getPayload();
+      if (database1 != null) {
+        for (Map.Entry<String, Object> nodePayload : payload.entrySet()) {
+          if (nodePayload.getValue() instanceof OUpdateDatabaseStatusTask.OUpdateResult) {
+
+            try {
+              database1.getSyncConfiguration()
+                  .setLastLSN(nodePayload.getKey(), ((OUpdateDatabaseStatusTask.OUpdateResult) nodePayload.getValue()).getSequenceNumber(),
+                      false);
+            } catch (IOException e) {
+              OLogManager.instance().error(this, "error updating lsn", e);
+            }
+          }
+
+        }
+      }
+
     }
   }
 
@@ -1579,6 +1598,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       distrDatabase.getSyncConfiguration().load();
       distrDatabase.getSyncConfiguration()
           .setLastLSN(localNodeName, ((OLocalPaginatedStorage) db.getStorage().getUnderlying()).getLSN(), false);
+
     } catch (IOException e) {
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on loading %s file for database '%s'", e,
           DISTRIBUTED_SYNC_JSON_FILENAME, databaseName);

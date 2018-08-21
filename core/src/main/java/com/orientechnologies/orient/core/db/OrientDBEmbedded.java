@@ -40,23 +40,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.Callable;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
  * Created by tglman on 08/04/16.
  */
 public class OrientDBEmbedded implements OrientDBInternal {
-  protected final Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
-  protected final Set<ODatabasePoolInternal>             pools    = new HashSet<>();
-  protected final OrientDBConfig configurations;
-  protected final String         basePath;
-  protected final OEngine        memory;
-  protected final OEngine        disk;
-  protected final Orient         orient;
-  private volatile boolean                          open    = true;
-  private volatile OEmbeddedDatabaseInstanceFactory factory = new ODefaultEmbeddedDatabaseInstanceFactory();
-
+  protected final  Map<String, OAbstractPaginatedStorage> storages       = new HashMap<>();
+  protected final  Map<String, OSharedContext>            sharedContexts = new HashMap<>();
+  protected final  Set<ODatabasePoolInternal>             pools          = new HashSet<>();
+  protected final  OrientDBConfig                         configurations;
+  protected final  String                                 basePath;
+  protected final  OEngine                                memory;
+  protected final  OEngine                                disk;
+  protected final  Orient                                 orient;
+  private volatile boolean                                open           = true;
+  private          ExecutorService                        executor;
+  private          Timer                                  timer;
 
   public OrientDBEmbedded(String directoryPath, OrientDBConfig configurations, Orient orient) {
     super();
@@ -74,6 +75,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
 
     orient.addOrientDB(this);
+
+    executor = new ThreadPoolExecutor(1, Runtime.getRuntime().availableProcessors(), 30, TimeUnit.MINUTES,
+        new LinkedBlockingQueue<>());
+    timer = new Timer();
+
   }
 
   @Override
@@ -89,8 +95,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
         storage.open(config.getConfigurations());
-        embedded = factory.newInstance(storage);
-        embedded.init(config);
+        embedded = newSessionInstance(storage);
+        embedded.init(config, getOrCreateSharedContext(storage));
       }
       embedded.rebuildIndexes();
       embedded.internalOpen(user, "nopwd", false);
@@ -101,6 +107,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
+  protected ODatabaseDocumentEmbedded newSessionInstance(OAbstractPaginatedStorage storage) {
+    return new ODatabaseDocumentEmbedded(storage);
+  }
+
   public ODatabaseDocumentEmbedded openNoAuthorization(String name) {
     try {
       final ODatabaseDocumentEmbedded embedded;
@@ -109,8 +119,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
         storage.open(config.getConfigurations());
-        embedded = factory.newInstance(storage);
-        embedded.init(config);
+        embedded = newSessionInstance(storage);
+        embedded.init(config, getOrCreateSharedContext(storage));
       }
       embedded.rebuildIndexes();
       embedded.callOnOpenListeners();
@@ -130,8 +140,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
         storage.open(config.getConfigurations());
-        embedded = factory.newInstance(storage);
-        embedded.init(config);
+        embedded = newSessionInstance(storage);
+        embedded.init(config, getOrCreateSharedContext(storage));
       }
       embedded.rebuildIndexes();
       embedded.internalOpen(user, password);
@@ -159,13 +169,17 @@ public class OrientDBEmbedded implements OrientDBInternal {
       checkOpen();
       OAbstractPaginatedStorage storage = getOrInitStorage(name);
       storage.open(pool.getConfig().getConfigurations());
-      embedded = factory.newPoolInstance(pool, storage);
-      embedded.init(pool.getConfig());
+      embedded = newPooledSessionInstance(pool, storage);
+      embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
     }
     embedded.rebuildIndexes();
     embedded.internalOpen(user, password);
     embedded.callOnOpenListeners();
     return embedded;
+  }
+
+  protected ODatabaseDocumentEmbedded newPooledSessionInstance(ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
+    return new ODatabaseDocumentEmbeddedPooled(pool, storage);
   }
 
   protected OAbstractPaginatedStorage getOrInitStorage(String name) {
@@ -262,10 +276,24 @@ public class OrientDBEmbedded implements OrientDBInternal {
     storage.setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
 
     // No need to close
-    final ODatabaseDocumentEmbedded embedded = factory.newInstance(storage);
+    final ODatabaseDocumentEmbedded embedded = newSessionInstance(storage);
     embedded.setSerializer(serializer);
-    embedded.internalCreate(config, () -> openNoAuthorization(storage.getName()));
+    embedded.internalCreate(config, getOrCreateSharedContext(storage));
     return embedded;
+  }
+
+  protected synchronized OSharedContext getOrCreateSharedContext(OAbstractPaginatedStorage storage) {
+
+    OSharedContext result = sharedContexts.get(storage.getName());
+    if (result == null) {
+      result = createSharedContext(storage);
+      sharedContexts.put(storage.getName(), result);
+    }
+    return result;
+  }
+
+  protected OSharedContext createSharedContext(OAbstractPaginatedStorage storage) {
+    return new OSharedContextEmbedded(storage, this);
   }
 
   @Override
@@ -294,9 +322,12 @@ public class OrientDBEmbedded implements OrientDBInternal {
     synchronized (this) {
       if (exists(name, user, password)) {
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
-        ODatabaseDocumentEmbedded.deInit(storage);
+        OSharedContext sharedContext = sharedContexts.get(name);
+        if (sharedContext != null)
+          sharedContext.close();
         storage.delete();
         storages.remove(name);
+        sharedContexts.remove(name);
       }
     }
   }
@@ -344,21 +375,34 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
-  public synchronized void close() {
+  public void close() {
     if (!open)
       return;
-    removeShutdownHook();
-    internalClose();
+    timer.cancel();
+    executor.shutdown();
+    try {
+      if (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
+        OLogManager.instance().warn(this, "Failed waiting background operations termination");
+        executor.shutdownNow();
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    synchronized (this) {
+      removeShutdownHook();
+      internalClose();
+    }
   }
 
   public synchronized void internalClose() {
     if (!open)
       return;
+    open = false;
+    this.sharedContexts.values().forEach(x -> x.close());
     final List<OAbstractPaginatedStorage> storagesCopy = new ArrayList<>(storages.values());
     for (OAbstractPaginatedStorage stg : storagesCopy) {
       try {
         OLogManager.instance().info(this, "- shutdown storage: " + stg.getName() + "...");
-        ODatabaseDocumentEmbedded.deInit(stg);
         stg.shutdown();
       } catch (Exception e) {
         OLogManager.instance().warn(this, "-- error on shutdown storage", e);
@@ -367,9 +411,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
         throw e;
       }
     }
+    this.sharedContexts.clear();
     storages.clear();
     orient.onEmbeddedFactoryClose(this);
-    open = false;
   }
 
   public OrientDBConfig getConfigurations() {
@@ -427,7 +471,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public synchronized void forceDatabaseClose(String iDatabaseName) {
     OAbstractPaginatedStorage storage = storages.remove(iDatabaseName);
     if (storage != null) {
-      ODatabaseDocumentEmbedded.deInit(storage);
+      OSharedContext ctx = sharedContexts.get(iDatabaseName);
+      if (ctx != null) {
+        ctx.close();
+        sharedContexts.remove(iDatabaseName);
+      }
       storage.shutdown();
     }
   }
@@ -444,14 +492,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
       throw new ODatabaseException("OrientDB Instance is closed");
   }
 
-  public synchronized void replaceFactory(OEmbeddedDatabaseInstanceFactory factory) {
-    this.factory = factory;
-  }
-
-  public OEmbeddedDatabaseInstanceFactory getFactory() {
-    return factory;
-  }
-
   public boolean isOpen() {
     return open;
   }
@@ -459,6 +499,32 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public boolean isEmbedded() {
     return true;
+  }
+
+  public void schedule(TimerTask task, long delay, long period) {
+    timer.schedule(task, delay, period);
+  }
+
+  public void scheduleOnce(TimerTask task, long delay) {
+    timer.schedule(task, delay);
+  }
+
+  @Override
+  public <X> Future<X> execute(String database, String user, ODatabaseTask<X> task) {
+    return executor.submit(() -> {
+      try (ODatabaseSession session = openNoAuthenticate(database, user)) {
+        return task.call(session);
+      }
+    });
+  }
+
+  @Override
+  public <X> Future<X> executeNoAuthorization(String database, ODatabaseTask<X> task) {
+    return executor.submit(() -> {
+      try (ODatabaseSession session = openNoAuthorization(database)) {
+        return task.call(session);
+      }
+    });
   }
 
 }

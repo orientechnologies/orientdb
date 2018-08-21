@@ -160,7 +160,7 @@ public class ClassIteratorTest {
       createPerson("PersonMultipleClusters", name);
     }
 
-    final ORecordIteratorClass<ODocument> personIter = new ORecordIteratorClass<ODocument>(db, db, "PersonMultipleClusters", true);
+    final ORecordIteratorClass<ODocument> personIter = new ORecordIteratorClass<ODocument>(db, "PersonMultipleClusters", true);
 
     int docNum = 0;
 

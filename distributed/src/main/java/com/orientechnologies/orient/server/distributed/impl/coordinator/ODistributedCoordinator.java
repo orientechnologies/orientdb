@@ -24,6 +24,10 @@ public class ODistributedCoordinator implements AutoCloseable {
     });
   }
 
+  public void reply(ODistributedMember member, OSubmitResponse response) {
+    member.reply(response);
+  }
+
   public void receive(ODistributedMember member, OLogId relativeRequest, ONodeResponse response) {
     requestExecutor.execute(() -> {
       contexts.get(relativeRequest).receive(member, response);

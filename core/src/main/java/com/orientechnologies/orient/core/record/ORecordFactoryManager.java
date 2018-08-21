@@ -54,6 +54,8 @@ public class ORecordFactoryManager {
           return new OVertexDocument();
         } else if (database.isClusterEdge(cluster)) {
           return new OEdgeDocument();
+        } else if(database.isClusterView(cluster)){
+          return new OViewDocument(database, cluster);
         }
       }
       return new ODocument();

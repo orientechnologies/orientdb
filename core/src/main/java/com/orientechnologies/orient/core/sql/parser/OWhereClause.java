@@ -99,6 +99,10 @@ public class OWhereClause extends SimpleNode {
         Map<String, Object> conditions = getEqualityOperations(condition, ctx);
 
         for (OIndex index : indexes) {
+          if (index.getType().equals(OClass.INDEX_TYPE.FULLTEXT.name()) || index.getType()
+              .equals(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name())) {
+            continue;
+          }
           List<String> indexedFields = index.getDefinition().getFields();
           int nMatchingKeys = 0;
           for (String indexedField : indexedFields) {
@@ -269,7 +273,7 @@ public class OWhereClause extends SimpleNode {
       if (expression instanceof OBinaryCondition) {
         OBinaryCondition b = (OBinaryCondition) expression;
         if (b.operator instanceof OEqualsCompareOperator) {
-          if (b.left.isBaseIdentifier() && b.right.isEarlyCalculated()) {
+          if (b.left.isBaseIdentifier() && b.right.isEarlyCalculated(ctx)) {
             result.put(b.left.toString(), b.right.execute((OResult) null, ctx));
           }
         }

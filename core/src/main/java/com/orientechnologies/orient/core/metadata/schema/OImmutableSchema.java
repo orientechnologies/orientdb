@@ -23,6 +23,7 @@ import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
@@ -81,6 +82,18 @@ public class OImmutableSchema implements OSchema {
 
     clustersToViews = new HashMap<Integer, OView>(schemaShared.getViews(database).size() * 3);
     views = new HashMap<String, OView>(schemaShared.getViews(database).size());
+
+    for (OView oClass : schemaShared.getViews(database)) {
+      final OImmutableView immutableClass = new OImmutableView(oClass, this);
+
+      views.put(immutableClass.getName().toLowerCase(Locale.ENGLISH), immutableClass);
+      if (immutableClass.getShortName() != null)
+        views.put(immutableClass.getShortName().toLowerCase(Locale.ENGLISH), immutableClass);
+
+      for (int clusterId : immutableClass.getClusterIds())
+        clustersToViews.put(clusterId, immutableClass);
+    }
+
   }
 
   @Override
@@ -241,6 +254,11 @@ public class OImmutableSchema implements OSchema {
   }
 
   @Override
+  public OView getViewByClusterId(int clusterId) {
+    return clustersToViews.get(clusterId);
+  }
+
+  @Override
   public OGlobalProperty getGlobalPropertyById(int id) {
     if (id >= properties.size())
       return null;
@@ -287,12 +305,17 @@ public class OImmutableSchema implements OSchema {
     throw new UnsupportedOperationException();
   }
 
-  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable) {
+  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public OView createView(OViewConfig config) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OView createView(OViewConfig config, ViewCreationListener listener) {
     throw new UnsupportedOperationException();
   }
 

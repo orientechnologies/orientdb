@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -206,6 +207,11 @@ public class OSchemaRemote extends OSchemaShared {
     return result;
   }
 
+  public OView createView(ODatabaseDocumentInternal database, OViewConfig cfg, ViewCreationListener listener)
+      throws UnsupportedOperationException {
+    throw new UnsupportedOperationException();
+  }
+
   @Override
   public OView createView(ODatabaseDocumentInternal database, OViewConfig cfg) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(cfg.getName());
@@ -231,7 +237,7 @@ public class OSchemaRemote extends OSchemaShared {
       if (cfg.isUpdatable()) {
         cmd.append(" UPDATABLE");
       }
-      //TODO indexes
+      //TODO METADATA!!!
 
       database.command(cmd.toString()).close();
       reload(database);
@@ -252,7 +258,7 @@ public class OSchemaRemote extends OSchemaShared {
   }
 
   @Override
-  public OView createView(ODatabaseDocumentInternal database, String name, String statement, boolean updatable) {
+  public OView createView(ODatabaseDocumentInternal database, String name, String statement, Map<String, Object> metadata) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(name);
     if (wrongCharacter != null)
       throw new OSchemaException(
@@ -273,9 +279,9 @@ public class OSchemaRemote extends OSchemaShared {
       cmd.append(name);
       cmd.append('`');
       cmd.append(" FROM (" + statement + ") ");
-      if (updatable) {
-        cmd.append(" UPDATABLE");
-      }
+//      if (metadata!=null) {//TODO
+//        cmd.append(" METADATA");
+//      }
 
       database.command(cmd.toString()).close();
       reload(database);
@@ -402,6 +408,7 @@ public class OSchemaRemote extends OSchemaShared {
     if (!skipPush.get()) {
       this.document = schema;
       super.fromStream();
+      this.snapshot = null;
     }
   }
 

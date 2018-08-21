@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -159,8 +160,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   void setUseLightweightEdges(boolean b);
 
-  /**yep before in
-   * Hides records content by putting tombstone on the records position but does not delete record itself.
+  /**
+   * yep before in Hides records content by putting tombstone on the records position but does not delete record itself.
    * <p>
    * This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method. This
    * method can be used only if there is no active transaction in database.
@@ -238,6 +239,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   boolean isClusterEdge(int cluster);
 
+  boolean isClusterView(int cluster);
+
   default OTransaction swapTx(OTransaction newTx) {
     throw new UnsupportedOperationException();
   }
@@ -249,4 +252,9 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   String getClusterName(final ORecord record);
 
+  default OResultSet indexQuery(String indexName, String query, Object... args) {
+    return command(query, args);
+  }
+
+  OView getViewFromCluster(int cluster);
 }

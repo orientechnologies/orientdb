@@ -1774,7 +1774,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   private void scanClusterWithIterator(final ODatabaseDocumentInternal localDatabase, final OCommandContext iContext,
       final int iClusterId, final int current, final boolean[] results) {
-    final ORecordIteratorCluster it = new ORecordIteratorCluster(localDatabase, localDatabase, iClusterId);
+    final ORecordIteratorCluster it = new ORecordIteratorCluster(localDatabase, iClusterId);
 
     while (it.hasNext()) {
       final ORecord next = it.next();

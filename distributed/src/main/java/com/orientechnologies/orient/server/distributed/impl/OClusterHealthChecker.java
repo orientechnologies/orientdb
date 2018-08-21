@@ -23,15 +23,19 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OGossipTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORequestDatabaseConfigurationTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseStatusTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Timer task that checks periodically the cluster health status.
@@ -39,9 +43,10 @@ import java.util.*;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OClusterHealthChecker extends TimerTask {
-  private final ODistributedServerManager manager;
-  private final long                      healthCheckerEveryMs;
-  private long lastExecution = 0;
+  private final ODistributedServerManager       manager;
+  private final long                            healthCheckerEveryMs;
+  private       long                            lastExecution = 0;
+  private       Map<String, OLogSequenceNumber> sentLsn       = new ConcurrentHashMap<>();
 
   public OClusterHealthChecker(final ODistributedServerManager manager, final long healthCheckerEveryMs) {
     this.manager = manager;
@@ -60,6 +65,7 @@ public class OClusterHealthChecker extends TimerTask {
         checkServerStatus();
         checkServerInStall();
         checkServerList();
+        notifyCommittedLsn();
 
       } catch (HazelcastInstanceNotActiveException e) {
         // IGNORE IT
@@ -274,6 +280,58 @@ public class OClusterHealthChecker extends TimerTask {
         setDatabaseOffline(dbName, server);
       }
     }
+  }
+
+  private void notifyCommittedLsn() {
+    if (manager.getNodeStatus() != ODistributedServerManager.NODE_STATUS.ONLINE)
+      // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
+      return;
+
+    if (!manager.getServerInstance().isActive())
+      return;
+
+    for (String dbName : manager.getMessageService().getDatabases()) {
+      final ODistributedServerManager.DB_STATUS localNodeStatus = manager.getDatabaseStatus(manager.getLocalNodeName(), dbName);
+      if (localNodeStatus != ODistributedServerManager.DB_STATUS.ONLINE)
+        // ONLY NOT_AVAILABLE NODE/DB CAN BE RECOVERED
+        continue;
+      if (OSystemDatabase.SYSTEM_DB_NAME.equalsIgnoreCase(dbName))
+        // SKIP SYSTEM DATABASE FROM HEALTH CHECK
+        continue;
+
+      final Set<String> servers = manager.getAvailableNodeNames(dbName);
+      servers.remove(manager.getLocalNodeName());
+
+      if (servers.isEmpty())
+        continue;
+
+      try {
+        ODistributedDatabase sharedDb = manager.getMessageService().getDatabase(dbName);
+        OLogSequenceNumber updatedLsn = null;
+        updatedLsn = sharedDb.getSyncConfiguration().getLastLSN(manager.getLocalNodeName());
+        if (updatedLsn == null) {
+          return;
+        }
+        OLogSequenceNumber sent = sentLsn.get(dbName);
+        if (sent != null && updatedLsn.equals(sentLsn)) {
+          return;
+        }
+        sentLsn.put(dbName, updatedLsn);
+        ORemoteTask task = new OUpdateDatabaseStatusTask(dbName, "", updatedLsn);
+        final ODistributedResponse response = manager.sendRequest(dbName, null, servers, task, manager.getNextMessageIdCounter(),
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+      } catch (ODistributedException e) {
+        // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "Error on sending request for cluster health check", e);
+      } catch (ODistributedOperationException e) {
+        // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "Error on sending request for cluster health check", e);
+      }
+
+    }
+
   }
 
   private void setDatabaseOffline(final String dbName, final String server) {

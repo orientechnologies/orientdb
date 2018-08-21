@@ -45,15 +45,13 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   protected ORID    beginRange;
   protected ORID    endRange;
 
-  public ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
-      final int[] iClusterIds) {
-    this(iDatabase, iLowLevelDatabase, iClusterIds, false, OStorage.LOCKING_STRATEGY.NONE);
+  public ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final int[] iClusterIds) {
+    this(iDatabase, iClusterIds, OStorage.LOCKING_STRATEGY.NONE);
   }
 
   @Deprecated
-  public ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
-      final int[] iClusterIds, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    super(iDatabase, iLowLevelDatabase, iterateThroughTombstones, iLockingStrategy);
+  public ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final int[] iClusterIds, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    super(iDatabase, iLockingStrategy);
 
     checkForSystemClusters(iDatabase, iClusterIds);
 
@@ -65,9 +63,8 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   }
 
   @Deprecated
-  protected ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
-      final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    super(iDatabase, iLowLevelDatabase, iterateThroughTombstones, iLockingStrategy);
+  protected ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    super(iDatabase, iLockingStrategy);
   }
 
   public ORecordIteratorClusters<REC> setRange(final ORID iBegin, final ORID iEnd) {
@@ -428,7 +425,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
 
     updateClusterRange();
 
-    totalAvailableRecords = database.countClusterElements(clusterIds, isIterateThroughTombstones());
+    totalAvailableRecords = database.countClusterElements(clusterIds);
 
     txEntries = database.getTransaction().getNewRecordEntriesByClusterIds(clusterIds);
 

@@ -6,6 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OViewConfig {
+  /**
+   * default
+   */
+  public static String UPDATE_STRATEGY_BATCH = "batch";
+  public static String UPDATE_STRATEGY_LIVE  = "live";
 
   public static class OViewIndexConfig {
     protected String name;
@@ -23,7 +28,12 @@ public class OViewConfig {
   protected String  name;
   protected String  query;
   protected boolean updatable;
-  protected List<OViewIndexConfig> indexes = new ArrayList<>();
+  protected List<OViewIndexConfig> indexes               = new ArrayList<>();
+  protected String                 updateStrategy        = UPDATE_STRATEGY_BATCH;
+  protected List<String>           watchClasses          = new ArrayList<>();
+  protected List<String>           nodes                 = null;
+  protected int                    updateIntervalSeconds = 30;
+  protected String                 originRidField        = null;
 
   public OViewConfig(String name, String query) {
     this.name = name;
@@ -37,6 +47,11 @@ public class OViewConfig {
       OViewIndexConfig idx = result.addIndex(index.name);
       index.props.forEach(x -> idx.addProperty(x.key, x.value));
     }
+    result.updateStrategy = this.updateStrategy;
+    result.watchClasses = this.watchClasses == null ? null : new ArrayList<>(this.watchClasses);
+    result.updateIntervalSeconds = this.updateIntervalSeconds;
+    result.originRidField = this.originRidField;
+    result.nodes = this.nodes == null ? null : new ArrayList<>(this.nodes);
     return result;
   }
 
@@ -72,5 +87,45 @@ public class OViewConfig {
 
   public List<OViewIndexConfig> getIndexes() {
     return indexes;
+  }
+
+  public String getUpdateStrategy() {
+    return updateStrategy;
+  }
+
+  public void setUpdateStrategy(String updateStrategy) {
+    this.updateStrategy = updateStrategy;
+  }
+
+  public List<String> getWatchClasses() {
+    return watchClasses;
+  }
+
+  public void setWatchClasses(List<String> watchClasses) {
+    this.watchClasses = watchClasses;
+  }
+
+  public int getUpdateIntervalSeconds() {
+    return updateIntervalSeconds;
+  }
+
+  public void setUpdateIntervalSeconds(int updateIntervalSeconds) {
+    this.updateIntervalSeconds = updateIntervalSeconds;
+  }
+
+  public String getOriginRidField() {
+    return originRidField;
+  }
+
+  public void setOriginRidField(String originRidField) {
+    this.originRidField = originRidField;
+  }
+
+  public List<String> getNodes() {
+    return nodes;
+  }
+
+  public void setNodes(List<String> nodes) {
+    this.nodes = nodes;
   }
 }

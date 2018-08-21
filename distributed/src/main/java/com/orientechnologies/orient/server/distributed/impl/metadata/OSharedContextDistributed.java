@@ -3,7 +3,6 @@ package com.orientechnologies.orient.server.distributed.impl.metadata;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
@@ -19,8 +18,7 @@ import com.orientechnologies.orient.core.sql.executor.OQueryStats;
 import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.function.Supplier;
+import com.orientechnologies.orient.server.distributed.impl.ViewManagerDistributed;
 
 /**
  * Created by tglman on 22/06/17.
@@ -29,7 +27,9 @@ public class OSharedContextDistributed extends OSharedContext {
 
   private ViewManager viewManager;
 
-  public OSharedContextDistributed(OStorage storage, Supplier<ODatabaseDocument> adminDbSupplier) {
+  public OSharedContextDistributed(OStorage storage, OrientDBDistributed orientDB) {
+    this.orientDB = orientDB;
+    this.storage = storage;
     schema = new OSchemaDistributed(this);
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerDistributed(storage);
@@ -48,7 +48,7 @@ public class OSharedContextDistributed extends OSharedContext {
 
     queryStats = new OQueryStats();
 
-    this.viewManager = new ViewManager(adminDbSupplier);
+    this.viewManager = new ViewManagerDistributed(orientDB, storage.getName());
     this.viewManager.start();
 
   }
@@ -137,5 +137,9 @@ public class OSharedContextDistributed extends OSharedContext {
       loaded = true;
       return null;
     });
+  }
+
+  public ViewManager getViewManager() {
+    return viewManager;
   }
 }
