@@ -41,6 +41,7 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -144,11 +145,15 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
                     resultedBackupFile.delete();
 
                     database.incrementalBackup(finalBackupPath);
+                    File dir = new File(finalBackupPath);
+                    File file = new File(finalBackupPath, dir.listFiles()[0].getName() + ".completed");
+                    file.createNewFile();
                     wal.removeCutTillLimit(lsn);
 
                     incremental.setValue(true);
                     walSegment.setValue(lsn.getSegment());
                     walPosition.setValue(lsn.getPosition());
+                    OLogManager.instance().info(this, "Sending Enterprise backup (" + databaseName + ") for node sync");
 
                   } catch (UnsupportedOperationException e) {
 
@@ -227,7 +232,7 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
         backupFile = new File(backupPath);
         if (incremental.getValue()) {
-          backupFile = backupFile.listFiles()[0];
+          backupFile = backupFile.listFiles(pathname -> pathname.getName().endsWith(".ibu"))[0];
         }
 
         final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, momentum.get(), false,
@@ -237,9 +242,16 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
             "- transferring chunk #%d offset=%d size=%s lsn=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length),
             momentum.get());
 
-        if (chunk.last)
+        if (chunk.last) {
           // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
           iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+          if (incremental.getValue()) {
+            File dir = backupFile.getParentFile();
+            Arrays.stream(dir.listFiles()).forEach(x -> x.delete());
+            dir.delete();
+          }
+
+        }
 
         return chunk;
 
