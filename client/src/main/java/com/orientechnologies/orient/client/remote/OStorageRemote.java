@@ -27,6 +27,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.orient.client.ONotSendRequestException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.*;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -163,10 +164,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     return baseNetworkOperation((network, session) -> {
       // Send The request
       try {
-        network.beginRequest(request.getCommand(), session);
-        request.write(network, session);
-      } finally {
-        network.endRequest();
+        try {
+          network.beginRequest(request.getCommand(), session);
+          request.write(network, session);
+        } finally {
+          network.endRequest();
+        }
+      } catch (IOException e) {
+        throw new ONotSendRequestException("Cannot send request on this channel");
       }
       final T response = request.createResponse();
       T ret = null;
@@ -213,11 +218,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
       int retry, int timeout) {
     return baseNetworkOperation((network, session) -> {
       try {
-        network.beginRequest(request.getCommand(), session);
-        request.write(network, session);
-      } finally {
-        network.endRequest();
+        try {
+          network.beginRequest(request.getCommand(), session);
+          request.write(network, session);
+        } finally {
+          network.endRequest();
+        }
+      } catch (IOException e) {
+        throw new ONotSendRequestException("Cannot send request on this channel");
       }
+
       int prev = network.getSocketTimeout();
       T response = request.createResponse();
       try {
@@ -283,6 +293,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         }
 
         return operation.execute(network, session);
+      } catch (ONotSendRequestException e) {
+        connectionManager.remove(network);
+        serverUrl = null;
       } catch (ODistributedRedirectException e) {
         connectionManager.release(network);
         OLogManager.instance()
@@ -990,41 +1003,38 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   public List<ORecordOperation> commit(final OTransactionInternal iTx) {
-    try {
-      OCommit37Request request = new OCommit37Request(iTx.getId(), true, iTx.isUsingLog(), iTx.getRecordOperations(),
-          iTx.getIndexOperations());
+    unstickToSession();
+    OCommit37Request request = new OCommit37Request(iTx.getId(), true, iTx.isUsingLog(), iTx.getRecordOperations(),
+        iTx.getIndexOperations());
 
-      OCommit37Response response = networkOperationNoRetry(request, "Error on commit");
-      for (OCommit37Response.OCreatedRecordResponse created : response.getCreated()) {
-        iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
-        ORecordOperation rop = iTx.getRecordEntry(created.getCurrentRid());
-        if (rop != null) {
-          if (created.getVersion() > rop.getRecord().getVersion() + 1)
-            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
-            rop.getRecord().unload();
-          ORecordInternal.setVersion(rop.getRecord(), created.getVersion());
-        }
+    OCommit37Response response = networkOperationNoRetry(request, "Error on commit");
+    for (OCommit37Response.OCreatedRecordResponse created : response.getCreated()) {
+      iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
+      ORecordOperation rop = iTx.getRecordEntry(created.getCurrentRid());
+      if (rop != null) {
+        if (created.getVersion() > rop.getRecord().getVersion() + 1)
+          // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+          rop.getRecord().unload();
+        ORecordInternal.setVersion(rop.getRecord(), created.getVersion());
       }
-      for (OCommit37Response.OUpdatedRecordResponse updated : response.getUpdated()) {
-        ORecordOperation rop = iTx.getRecordEntry(updated.getRid());
-        if (rop != null) {
-          if (updated.getVersion() > rop.getRecord().getVersion() + 1)
-            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
-            rop.getRecord().unload();
-          ORecordInternal.setVersion(rop.getRecord(), updated.getVersion());
-        }
-      }
-      updateCollectionsFromChanges(((OTransactionOptimistic) iTx).getDatabase().getSbTreeCollectionManager(),
-          response.getCollectionChanges());
-      // SET ALL THE RECORDS AS UNDIRTY
-      for (ORecordOperation txEntry : iTx.getRecordOperations())
-        ORecordInternal.unsetDirty(txEntry.getRecord());
-
-      // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT.
-      OTransactionAbstract.updateCacheFromEntries(iTx.getDatabase(), iTx.getRecordOperations(), true);
-    } finally {
-      unstickToSession();
     }
+    for (OCommit37Response.OUpdatedRecordResponse updated : response.getUpdated()) {
+      ORecordOperation rop = iTx.getRecordEntry(updated.getRid());
+      if (rop != null) {
+        if (updated.getVersion() > rop.getRecord().getVersion() + 1)
+          // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+          rop.getRecord().unload();
+        ORecordInternal.setVersion(rop.getRecord(), updated.getVersion());
+      }
+    }
+    updateCollectionsFromChanges(((OTransactionOptimistic) iTx).getDatabase().getSbTreeCollectionManager(),
+        response.getCollectionChanges());
+    // SET ALL THE RECORDS AS UNDIRTY
+    for (ORecordOperation txEntry : iTx.getRecordOperations())
+      ORecordInternal.unsetDirty(txEntry.getRecord());
+
+    // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT.
+    OTransactionAbstract.updateCacheFromEntries(iTx.getDatabase(), iTx.getRecordOperations(), true);
     return null;
   }
 

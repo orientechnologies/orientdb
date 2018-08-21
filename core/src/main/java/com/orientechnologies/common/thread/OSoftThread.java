@@ -33,18 +33,6 @@ public abstract class OSoftThread extends Thread implements OService {
     setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
   }
 
-  public OSoftThread(final ThreadGroup iThreadGroup) {
-    super(iThreadGroup, OSoftThread.class.getSimpleName());
-    setDaemon(true);
-    setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-  }
-
-  public OSoftThread(final String name) {
-    super(name);
-    setDaemon(true);
-    setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-  }
-
   public OSoftThread(final ThreadGroup group, final String name) {
     super(group, name);
     setDaemon(true);
@@ -61,7 +49,6 @@ public abstract class OSoftThread extends Thread implements OService {
 
   public void sendShutdown() {
     shutdownFlag = true;
-    interrupt();
   }
 
   public void softShutdown() {
@@ -92,28 +79,6 @@ public abstract class OSoftThread extends Thread implements OService {
     }
 
     shutdown();
-  }
-
-  /**
-   * Pauses current thread until iTime timeout or a wake up by another thread.
-   *
-   * @return true if timeout has reached, otherwise false. False is the case of wake-up by another thread.
-   */
-  public static boolean pauseCurrentThread(long iTime) {
-    try {
-      if (iTime <= 0)
-        iTime = Long.MAX_VALUE;
-
-      Thread.sleep(iTime);
-      return true;
-    } catch (InterruptedException ignore) {
-      Thread.currentThread().interrupt();
-      return false;
-    }
-  }
-
-  public boolean isDumpExceptions() {
-    return dumpExceptions;
   }
 
   public void setDumpExceptions(final boolean dumpExceptions) {
