@@ -760,7 +760,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
               return false;
             }
           }
-          if (!(leftValues instanceof Iterable)) {
+          if (leftValues instanceof OIdentifiable || !(leftValues instanceof Iterable)) {
             leftValues = Collections.singleton(leftValues);
           }
 
