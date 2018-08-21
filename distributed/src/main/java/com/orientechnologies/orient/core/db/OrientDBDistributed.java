@@ -37,26 +37,27 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return plugin;
   }
 
-  public void fullSync(String dbName, String user, String password, ODatabaseType type, String backupPath, OrientDBConfig config) {
+  public void fullSync(String dbName, String backupPath, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
     synchronized (this) {
-      if (!exists(dbName, null, null)) {
-        try {
-          OAbstractPaginatedStorage storage = storages.get(dbName);
-          if (storage != null) {
-            storage.delete();
-            storages.remove(dbName);
-          }
-          storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(dbName), new HashMap<>());
-          embedded = internalCreate(config, storage);
-          storage.restoreFromIncrementalBackup(backupPath);
-          storages.put(dbName, storage);
-        } catch (Exception e) {
-          throw OException.wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
+
+//      if (exists(dbName, null, null)) {
+      try {
+        OAbstractPaginatedStorage storage = storages.get(dbName);
+
+        if (storage != null) {
+          storage.delete();
+          storages.remove(dbName);
         }
-      } else
-        throw new ODatabaseException("Cannot create new storage '" + dbName + "' because it already exists");
+        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(dbName), new HashMap<>());
+        embedded = internalCreate(config, storage);
+        storage.restoreFromIncrementalBackup(backupPath);
+        storages.put(dbName, storage);
+      } catch (Exception e) {
+        throw OException.wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
+      }
+//      } else
+//        throw new ODatabaseException("Cannot create new storage '" + dbName + "' because it already exists");
     }
-    embedded.callOnCreateListeners();
   }
 }

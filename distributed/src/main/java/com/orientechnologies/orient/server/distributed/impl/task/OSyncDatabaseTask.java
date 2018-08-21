@@ -22,6 +22,8 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.types.OModifiableBoolean;
+import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -29,6 +31,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -89,9 +92,16 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
         File backupFile = ((ODistributedStorage) database.getStorage()).getLastValidBackup();
 
+        OModifiableBoolean incremental = new OModifiableBoolean(false);
+        OModifiableLong walSegment = new OModifiableLong(0);
+        OModifiableLong walPosition = new OModifiableLong(0);
+
+        String backupPath = backupFile == null ? null : backupFile.getAbsolutePath();
+
         if (backupFile == null || !backupFile.exists()) {
           // CREATE A BACKUP OF DATABASE FROM SCRATCH
           backupFile = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
+          backupPath = backupFile.getAbsolutePath();
 
           final int compressionRate = OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger();
 
@@ -102,15 +112,16 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
           backupFile.createNewFile();
 
           final File resultedBackupFile = backupFile;
-          final FileOutputStream fileOutputStream = new FileOutputStream(resultedBackupFile);
 
           final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
           if (completedFile.exists())
             completedFile.delete();
 
+          final String finalBackupPath = backupPath;
+
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
               "Creating backup of database '%s' (compressionRate=%d) in directory: %s...", databaseName, compressionRate,
-              backupFile.getAbsolutePath());
+              backupPath);
 
           Thread t = new Thread(new Runnable() {
             @Override
@@ -125,34 +136,54 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
                       "Compressing database '%s' %d clusters %s...", databaseName, database.getClusterNames().size(),
                       database.getClusterNames());
 
+                  try {
+                    OWriteAheadLog wal = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getWALInstance();
+                    OLogSequenceNumber lsn = wal.end();
+                    wal.addCutTillLimit(lsn);
 
+                    resultedBackupFile.delete();
 
+                    database.incrementalBackup(finalBackupPath);
+                    wal.removeCutTillLimit(lsn);
 
-                  //TODO!!!
-//                  try {
-//                    File file = File.createTempFile("incrementalBackup_" + databaseName + System.currentTimeMillis(), ".ibu");
-//
-//                    database.incrementalBackup(file.getAbsolutePath());
-//
-//                  } catch (UnsupportedOperationException e) {
-                    database.backup(fileOutputStream, null, new Callable<Object>() {
-                      @Override
-                      public Object call() throws Exception {
-                        momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
-                        return null;
+                    incremental.setValue(true);
+                    walSegment.setValue(lsn.getSegment());
+                    walPosition.setValue(lsn.getPosition());
+
+                  } catch (UnsupportedOperationException e) {
+
+                    if (resultedBackupFile.exists())
+                      resultedBackupFile.delete();
+                    else
+                      resultedBackupFile.getParentFile().mkdirs();
+                    resultedBackupFile.createNewFile();
+
+                    final FileOutputStream fileOutputStream = new FileOutputStream(resultedBackupFile);
+                    try {
+                      database.backup(fileOutputStream, null, new Callable<Object>() {
+                        @Override
+                        public Object call() throws Exception {
+                          momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
+                          return null;
+                        }
+                      }, ODistributedServerLog.isDebugEnabled() ? new OCommandOutputListener() {
+                        @Override
+                        public void onMessage(String iText) {
+                          if (iText.startsWith("\n"))
+                            iText = iText.substring(1);
+
+                          OLogManager.instance().debug(this, iText);
+                        }
+                      } : null, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+                    } finally {
+                      try {
+                        fileOutputStream.close();
+                      } catch (IOException e2) {
+                        OLogManager.instance().debug(this, "Error performing backup ", e2);
                       }
-                    }, ODistributedServerLog.isDebugEnabled() ? new OCommandOutputListener() {
-                      @Override
-                      public void onMessage(String iText) {
-                        if (iText.startsWith("\n"))
-                          iText = iText.substring(1);
 
-                        OLogManager.instance().debug(this, iText);
-                      }
-                    } : null, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
-//                  }
-
-                  
+                    }
+                  }
 
                   ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
                       "Backup of database '%s' completed. lastOperationId=%s...", databaseName, requestId);
@@ -161,11 +192,6 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
                   OLogManager.instance().error(this, "Cannot execute backup of database '%s' for deploy database", e, databaseName);
                   throw e;
                 } finally {
-                  try {
-                    fileOutputStream.close();
-                  } catch (IOException e) {
-                  }
-
                   try {
                     completedFile.createNewFile();
                   } catch (IOException e) {
@@ -199,7 +225,13 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
         for (int retry = 0; momentum.get() == null && retry < 10; ++retry)
           Thread.sleep(300);
 
-        final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, momentum.get(), false);
+        backupFile = new File(backupPath);
+        if (incremental.getValue()) {
+          backupFile = backupFile.listFiles()[0];
+        }
+
+        final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, momentum.get(), false,
+            incremental.getValue());
 
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
             "- transferring chunk #%d offset=%d size=%s lsn=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length),
