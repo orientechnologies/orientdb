@@ -244,7 +244,7 @@ public enum OGlobalConfiguration {
 
   WAL_CACHE_SIZE("storage.wal.cacheSize",
       "Maximum size of WAL cache (in amount of WAL pages, each page is 4k) If set to 0, caching will be disabled", Integer.class,
-      65536),
+      419430),
 
   WAL_SEGMENTS_INTERVAL("storage.wal.segmentsInterval",
       "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 30),
