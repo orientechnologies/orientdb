@@ -155,14 +155,11 @@ public abstract class OSequence {
         params = new CreateParams().setDefaults();
       }
 
-      initSequence(params);
-      allwaysInitSection();
+      initSequence(params);      
       document = getDocument();
     }
     cruacialValueChanged = true;    
-  }
-
-  protected abstract void allwaysInitSection();
+  }  
   
   public void save() {
     ODocument doc = tlDocument.get();

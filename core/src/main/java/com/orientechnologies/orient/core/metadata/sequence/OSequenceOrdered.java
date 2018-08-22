@@ -46,11 +46,6 @@ public class OSequenceOrdered extends OSequence {
   }
 
   @Override
-  protected void allwaysInitSection(){
-    
-  }
-  
-  @Override
   public synchronized long next() throws OSequenceLimitReachedException{
     ODatabaseDocumentInternal mainDb = getDatabase();
     boolean tx = mainDb.getTransaction().isActive();

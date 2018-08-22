@@ -64,16 +64,12 @@ public class OSequenceCached extends OSequence {
   @Override
   protected void initSequence(OSequence.CreateParams params) {    
     super.initSequence(params);
-    setCacheSize(params.cacheSize);    
-  }
-  
-  @Override
-  protected void allwaysInitSection(){
+    setCacheSize(params.cacheSize);
     cacheStart = cacheEnd = 0L;
     firstCache = true;
     allocateCache(getCacheSize(), getDatabase());
   }
-
+    
   @Override
   public long next() throws OSequenceLimitReachedException{
     ODatabaseDocumentInternal mainDb = getDatabase();
@@ -238,4 +234,5 @@ public class OSequenceCached extends OSequence {
     }
     firstCache = false;
   }
+  
 }

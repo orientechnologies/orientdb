@@ -56,7 +56,7 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
   public void tearDown() throws Exception {
     closeResources();
 
-    OFileUtils.deleteRecursively(new File("./target/databases/"));    
+    OFileUtils.deleteRecursively(new File("./target/databases/"));
   }
 
   public void createClasses(ODatabaseDocument db) {
