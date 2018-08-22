@@ -1,10 +1,13 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.concurrent.CountDownLatch;
 
 public class OViewTest {
 
@@ -22,8 +25,21 @@ public class OViewTest {
   }
 
   @Test
-  public void testSimple() {
-    db.getMetadata().getSchema().createView("testSimple", "SELECT FROM V");
+  public void testSimple() throws InterruptedException {
+    CountDownLatch latch = new CountDownLatch(1);
+    db.getMetadata().getSchema().createView(new OViewConfig("testSimple", "SELECT FROM V"), new ViewCreationListener() {
+      @Override
+      public void afterCreate(String viewName) {
+        latch.countDown();
+      }
+
+      @Override
+      public void onError(String viewName, Exception exception) {
+
+      }
+    });
+    latch.await();
+
     Assert.assertNotNull(db.getMetadata().getSchema().getView("testSimple"));
     Assert.assertNull(db.getMetadata().getSchema().getClass("testSimple"));
     Assert.assertNull(db.getMetadata().getSchema().getView("V"));
