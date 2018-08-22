@@ -66,13 +66,8 @@ public final class OWALRecordsFactory {
     final long pointer;
     final ByteBuffer content;
 
-    if (contentSize >= MIN_COMPRESSED_RECORD_SIZE) {
-      pointer = Native.malloc(contentSize);
-      content = new Pointer(pointer).getByteBuffer(0, contentSize);
-    } else {
-      content = ByteBuffer.allocate(contentSize).order(ByteOrder.nativeOrder());
-      pointer = -1;
-    }
+    pointer = Native.malloc(contentSize);
+    content = new Pointer(pointer).getByteBuffer(0, contentSize);
 
     final byte recordId = walRecord.getId();
     content.put(recordId);
