@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -454,6 +455,37 @@ public class OSequenceTest {
     Byte exceptionsCought = 0;
     try{
       myseq.next();
+    }
+    catch (OSequenceLimitReachedException exc){
+      exceptionsCought++;
+    }
+    assertThat(exceptionsCought).isEqualTo((byte)1);
+    
+    sequences.dropSequence("MYSEQ");
+  }
+  
+  @Test
+  public void testReinitSequence() throws Exception {    
+    OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
+                                                                 setIncrement(1).
+                                                                 setLimitValue(5).
+                                                                 setCacheSize(3).
+                                                                 setOrderType(SequenceOrderType.ORDER_POSITIVE);                                                                 
+    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.CACHED, params);
+    OSequence myseq = sequences.getSequence("MYSEQ");
+    ODocument seqDoc = myseq.getDocument();
+    assertThat(myseq.current()).isEqualTo(0);
+    assertThat(myseq.next()).isEqualTo(1);
+    assertThat(myseq.next()).isEqualTo(2);
+    assertThat(myseq.next()).isEqualTo(3);
+    
+    OSequence newSeq = new OSequenceCached(seqDoc);
+    long val = newSeq.current();
+    assertThat(val).isEqualTo(5);    
+    
+    Byte exceptionsCought = 0;
+    try{
+      newSeq.next();
     }
     catch (OSequenceLimitReachedException exc){
       exceptionsCought++;

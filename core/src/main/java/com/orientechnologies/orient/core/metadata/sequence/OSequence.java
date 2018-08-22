@@ -108,6 +108,17 @@ public abstract class OSequence {
     public CreateParams() {
     }
 
+    public CreateParams resetNull(){
+      start = null;
+      increment = null;
+      cacheSize = null;
+      limitValue = null;
+      orderType = null;
+      recyclable = null;
+      
+      return this;
+    }
+    
     public CreateParams setDefaults() {
       this.start = this.start != null ? this.start : DEFAULT_START;
       this.increment = this.increment != null ? this.increment : DEFAULT_INCREMENT;
@@ -204,6 +215,21 @@ public abstract class OSequence {
       this.setIncrement(params.increment);
       any = true;
     }
+    
+    if (params.limitValue != null && this.getLimitValue() != params.limitValue){
+      this.setLimitValue(params.limitValue);
+      any = true;
+    }
+    
+    if (params.orderType != null && this.getOrderType() != params.orderType){
+      this.setOrderType(params.orderType);
+      any = true;
+    }
+    
+    if (params.recyclable != null && this.getRecyclable() != params.recyclable){
+      this.setRecyclable(params.recyclable);
+      any = true;
+    }
 
     save();
     reset();
@@ -216,8 +242,15 @@ public abstract class OSequence {
     this.tlDocument.set(iDocument);
   }
 
-  protected synchronized long getValue() {
-    return tlDocument.get().field(FIELD_VALUE, OType.LONG);
+  protected static Long getValue(ODocument doc){
+    if (!doc.containsField(FIELD_VALUE)){
+      return null;
+    }
+    return doc.field(FIELD_VALUE, OType.LONG);
+  }
+  
+  protected synchronized Long getValue() {
+    return getValue(tlDocument.get());
   }
 
   protected synchronized void setValue(long value) {

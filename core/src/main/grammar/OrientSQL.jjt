@@ -4993,9 +4993,23 @@ OAlterSequenceStatement AlterSequenceStatement():
     (
         <ALTER> <SEQUENCE>
         jjtThis.name = Identifier()
-        [ <START> jjtThis.start = Expression() ]
-        [ <INCREMENT> jjtThis.increment = Expression() ]
-        [ <CACHE> jjtThis.cache = Expression() ]
+        (
+            ( <START> jjtThis.start = Expression() )
+            |
+            ( <INCREMENT> jjtThis.increment = Expression() )
+            |
+            ( <MAXVALUE> jjtThis.maxValue = Expression() )
+            |
+            ( <MINVALUE> jjtThis.minValue = Expression() )
+            |
+            ( <CYCLE> { jjtThis.cyclic = true; } )
+            |
+            ( <CACHE> jjtThis.cache = Expression() )
+            |
+            ( <ASC> { jjtThis.positive = true; } ) 
+            |
+            ( <DESC> { jjtThis.positive = false; } )
+        )*
     )
     { return jjtThis; }
 }
