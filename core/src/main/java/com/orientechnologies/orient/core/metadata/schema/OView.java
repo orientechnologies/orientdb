@@ -14,4 +14,6 @@ public interface OView extends OClass {
   boolean isUpdatable();
 
   List<String> getNodes();
+
+  List<OViewConfig.OViewIndexConfig> getRequiredIndexesInfo();
 }

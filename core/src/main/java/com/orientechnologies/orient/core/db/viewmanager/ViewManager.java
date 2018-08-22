@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
@@ -169,9 +170,12 @@ public class ViewManager {
     String originRidField = view.getOriginRidField();
     String clusterName = db.getClusterNameById(cluster);
 
+    List<OIndex> indexes = createNewIndexesForView(view, cluster, db);
+
     OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
       @Override
       public Object call() {
+
         OResultSet rs = db.query(query);
         while (rs.hasNext()) {
           OResult item = rs.next();
@@ -182,6 +186,7 @@ public class ViewManager {
           }
           db.save(newRow, clusterName);
         }
+        
         return null;
       }
     });
@@ -204,6 +209,12 @@ public class ViewManager {
     }
     unlockView(view);
     cleanUnusedViewClusters(db);
+
+  }
+
+  private List<OIndex> createNewIndexesForView(OView view, int cluster, ODatabaseDocument db) {
+    //TODO
+    return null;
   }
 
   private synchronized void unlockView(OView view) {
@@ -287,7 +298,7 @@ public class ViewManager {
     lastChangePerClass.put(clazz.getName().toLowerCase(Locale.ENGLISH), System.currentTimeMillis());
   }
 
-  public String getViewFromOldCluster(int clusterId){
+  public String getViewFromOldCluster(int clusterId) {
     return oldClustersPerViews.get(clusterId);
   }
 }
