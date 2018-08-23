@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.sequence;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -61,7 +62,7 @@ public class OSequenceOrdered extends OSequence {
           @Override
           public Long call() throws Exception {
             long newValue;
-            Integer limitVlaue = getLimitValue();
+            Long limitVlaue = getLimitValue();
             if (getOrderType() == SequenceOrderType.ORDER_POSITIVE){
               newValue = getValue() + getIncrement();              
               if (limitVlaue != null && newValue > limitVlaue){
@@ -89,6 +90,18 @@ public class OSequenceOrdered extends OSequence {
 
             save(finalDb);
 
+            Long limitValue = getLimitValue();
+            if (limitValue != null && !getRecyclable()){
+              float increment = getIncrement();
+              float tillEnd = Math.abs(limitValue - newValue) / increment;
+              float delta = Math.abs(limitValue - getStart()) / increment;
+              //warning on 1%
+              if ((float)tillEnd <= ((float)delta / 100.f) || tillEnd <= 1){
+                String warningMessage = "Non-recyclable sequence: " + getName() + " reaching limt, current value: " + newValue + " limit value: " + limitValue + " with step: " + increment;
+                OLogManager.instance().warn(this, warningMessage);
+              }
+            }
+            
             return newValue;
           }
         }, "next");

@@ -100,7 +100,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     if (minValue != null) {
       Object o = minValue.execute((OIdentifiable) null, ctx);
       if (o instanceof Number) {
-        params.setLimitValue(((Number) o).intValue());
+        params.setLimitValue(((Number) o).longValue());
         result.setProperty("limitValue", o);
       } else {
         throw new OCommandExecutionException("Invalid limit value: " + o);
@@ -110,7 +110,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     if (maxValue != null) {
       Object o = maxValue.execute((OIdentifiable) null, ctx);
       if (o instanceof Number) {
-        params.setLimitValue(((Number) o).intValue());
+        params.setLimitValue(((Number) o).longValue());
         result.setProperty("limitValue", o);
       } else {
         throw new OCommandExecutionException("Invalid limit value: " + o);

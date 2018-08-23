@@ -24,6 +24,8 @@ public class OAlterSequenceStatement extends ODDLStatement {
   Boolean     cyclic;
   OExpression minValue;
   OExpression maxValue;
+  boolean     turnLimitOff = false;
+  boolean     turnCyCleOff = false;
 
   public OAlterSequenceStatement(int id) {
     super(id);
@@ -82,15 +84,19 @@ public class OAlterSequenceStatement extends ODDLStatement {
       if (!(val instanceof Number)) {
         throw new OCommandExecutionException("invalid cache value for a sequence: " + val);
       }
-      params.limitValue = ((Number) val).intValue();
+      params.limitValue = ((Number) val).longValue();
     }
     if (maxValue != null){
       Object val = maxValue.execute((OIdentifiable) null, ctx);
       if (!(val instanceof Number)) {
         throw new OCommandExecutionException("invalid cache value for a sequence: " + val);
       }
-      params.limitValue = ((Number) val).intValue();
+      params.limitValue = ((Number) val).longValue();
     }
+    if (turnLimitOff){
+      params.turnLimitOff = true;
+    }
+    
 
     sequence.updateParams(params);
     sequence.save(database);
@@ -116,6 +122,9 @@ public class OAlterSequenceStatement extends ODDLStatement {
     }
     if (params.recyclable != null){
       item.setProperty("recycable", params.recyclable);
+    }
+    if (params.turnLimitOff != null && params.turnLimitOff){
+      item.setProperty("turnLimitOff", params.turnLimitOff);
     }
     result.add(item);
     return result;
@@ -147,6 +156,9 @@ public class OAlterSequenceStatement extends ODDLStatement {
       if (cyclic){
         builder.append(" CYCLE");
       }
+      else{
+        builder.append(" NOCYCLE");
+      }
     }
     if (minValue != null){
       builder.append(" MINVALUE ");
@@ -155,6 +167,9 @@ public class OAlterSequenceStatement extends ODDLStatement {
     if (maxValue != null){
       builder.append(" MAXVALUE ");
       maxValue.toString(params, builder);
+    }
+    if (turnLimitOff){
+      builder.append(" NOLIMIT");
     }
   }
 

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.sequence;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -35,9 +36,11 @@ public class OSequenceCached extends OSequence {
   private              long   cacheEnd;  
   private boolean firstCache;
   private int increment;
-  private Integer limitValue = null;
+  private Long limitValue = null;
+  private Long startValue;
   private SequenceOrderType orderType;
   private boolean recyclable;
+  private String name = null;
 
   public OSequenceCached() {
     this(null, null);
@@ -88,6 +91,10 @@ public class OSequenceCached extends OSequence {
     limitValue = getLimitValue();
     orderType = getOrderType();    
     recyclable = getRecyclable();
+    startValue = getStart();
+    if (name == null){
+      name = getName();
+    }
   }
   
   @Override
@@ -156,6 +163,17 @@ public class OSequenceCached extends OSequence {
               if (detectedCrucialValueChange){
                 setCrucialValueChanged(false);
               }
+              
+              if (limitValue != null && !recyclable){
+                float tillEnd = Math.abs(limitValue - cacheStart) / (float)increment;
+                float delta = Math.abs(limitValue - startValue) / (float)increment;
+                //warning on 1%
+                if ((float)tillEnd <= ((float)delta / 100.f) || tillEnd <= 1){
+                  String warningMessage = "Non-recyclable sequence: " + name + " reaching limt, current value: " + cacheStart + " limit value: " + limitValue + " with step: " + increment;
+                  OLogManager.instance().warn(this, warningMessage);
+                }
+              }
+              
               return cacheStart;
             }
           }

@@ -43,7 +43,7 @@ public abstract class OSequence {
   public static final long DEFAULT_START     = 0;
   public static final int  DEFAULT_INCREMENT = 1;
   public static final int  DEFAULT_CACHE     = 20;
-  public static final Integer  DEFAULT_LIMIT_VALUE = null;
+  public static final Long  DEFAULT_LIMIT_VALUE = null;
   public static final boolean DEFAULT_RECYCLABLE_VALUE = false;
   
   protected static final int    DEF_MAX_RETRY = OGlobalConfiguration.SEQUENCE_MAX_RETRY.getValueAsInteger();
@@ -71,9 +71,10 @@ public abstract class OSequence {
     public Long    start     = DEFAULT_START;
     public Integer increment = DEFAULT_INCREMENT;
     public Integer cacheSize = DEFAULT_CACHE;
-    public Integer limitValue = DEFAULT_LIMIT_VALUE;
+    public Long limitValue = DEFAULT_LIMIT_VALUE;
     public SequenceOrderType orderType = DEFAULT_ORDER_TYPE;
     public Boolean recyclable = DEFAULT_RECYCLABLE_VALUE;
+    public Boolean turnLimitOff = false;
     
     public CreateParams setStart(Long start) {
       this.start = start;      
@@ -90,7 +91,7 @@ public abstract class OSequence {
       return this;
     }
     
-    public CreateParams setLimitValue(Integer limitValue){
+    public CreateParams setLimitValue(Long limitValue){
       this.limitValue = limitValue;
       return this;
     }
@@ -104,6 +105,11 @@ public abstract class OSequence {
       this.recyclable = recyclable;
       return this;
     }
+    
+    public CreateParams setTurnLimitOff(Boolean turnLimitOff){
+      this.turnLimitOff = turnLimitOff;
+      return this;
+    }        
         
     public CreateParams() {
     }
@@ -115,7 +121,7 @@ public abstract class OSequence {
       limitValue = null;
       orderType = null;
       recyclable = null;
-      
+      turnLimitOff = false;
       return this;
     }
     
@@ -126,6 +132,7 @@ public abstract class OSequence {
       limitValue = limitValue == null ? DEFAULT_LIMIT_VALUE : limitValue;
       orderType = orderType == null ? DEFAULT_ORDER_TYPE : orderType;
       recyclable = recyclable == null ? DEFAULT_RECYCLABLE_VALUE : recyclable;
+      turnLimitOff = turnLimitOff == null ? false : turnLimitOff;      
       
       return this;
     }
@@ -230,7 +237,11 @@ public abstract class OSequence {
       this.setRecyclable(params.recyclable);
       any = true;
     }
-
+    
+    if (params.turnLimitOff != null && params.turnLimitOff == true){
+      this.setLimitValue(null);
+    }    
+    
     save();
     reset();
 
@@ -262,13 +273,13 @@ public abstract class OSequence {
     return tlDocument.get().field(FIELD_INCREMENT, OType.INTEGER);
   }
   
-  protected synchronized void setLimitValue(Integer limitValue) {
+  protected synchronized void setLimitValue(Long limitValue) {
     tlDocument.get().field(FIELD_LIMIT_VALUE, limitValue);
     setCrucialValueChanged(true);
   }
   
-  protected synchronized Integer getLimitValue() {
-    return tlDocument.get().field(FIELD_LIMIT_VALUE);
+  protected synchronized Long getLimitValue() {
+    return tlDocument.get().field(FIELD_LIMIT_VALUE, OType.LONG);
   }
   
   protected synchronized void setOrderType(SequenceOrderType orderType) {
