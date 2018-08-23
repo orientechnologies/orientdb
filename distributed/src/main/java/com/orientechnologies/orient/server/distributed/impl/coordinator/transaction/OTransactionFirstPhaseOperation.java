@@ -23,8 +23,8 @@ import java.util.List;
 
 public class OTransactionFirstPhaseOperation implements ONodeRequest {
 
-  private OSessionOperationId           operationId;
-  private List<ORecordOperationRequest> operations;
+  private final OSessionOperationId           operationId;
+  private final List<ORecordOperationRequest> operations;
 
   public OTransactionFirstPhaseOperation(OSessionOperationId operationId, List<ORecordOperationRequest> operations) {
     this.operationId = operationId;
@@ -39,22 +39,15 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
     ONodeResponse response;
     try {
       //TODO:Refactor this method to match the new api
-      if (((ODatabaseDocumentDistributed) session).beginDistributedTx(new ODistributedRequestId(10, 10), tx, false, 2)) {
-        //TODO:get the allocated ids and send to the coordinator.
-        Success metadata = new Success(new ArrayList<>());
-        response = new OTransactionFirstPhaseResult(Type.SUCCESS, metadata);
-      } else {
-        //TODO: this was old retry, should be removed no retry in new architecture
-        return null;
-      }
+      ((ODatabaseDocumentDistributed) session).txFirstPhase(operationId, tx);
+      //TODO:get the allocated ids and send to the coordinator.
+      Success metadata = new Success(new ArrayList<>());
+      response = new OTransactionFirstPhaseResult(Type.SUCCESS, metadata);
+
     } catch (OConcurrentModificationException ex) {
       ConcurrentModification metadata = new ConcurrentModification((ORecordId) ex.getRid().getIdentity(),
           ex.getEnhancedRecordVersion(), ex.getEnhancedDatabaseVersion());
       response = new OTransactionFirstPhaseResult(Type.CONCURRENT_MODIFICATION_EXCEPTION, metadata);
-    } catch (ODistributedLockException | OLockException ex) {
-      //TODO: Resolve Id for the pessimistic lock error
-      PessimisticLockTimeout metadata = new PessimisticLockTimeout(null);
-      response = new OTransactionFirstPhaseResult(Type.UNIQUE_KEY_VIOLATION, metadata);
     } catch (ORecordDuplicatedException ex) {
       UniqueKeyViolation metadata = new UniqueKeyViolation(ex.getKey().toString(), null, (ORecordId) ex.getRid().getIdentity(),
           ex.getIndexName());
@@ -62,8 +55,7 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
     } catch (RuntimeException ex) {
       //TODO: get action with some exception handler to offline the node or activate a recover operation
       response = new OTransactionFirstPhaseResult(Type.EXCEPTION, null);
-    }
-    return response;
+    } return response;
   }
 
   private List<ORecordOperation> convert(ODatabaseDocumentInternal database, List<ORecordOperationRequest> operations) {

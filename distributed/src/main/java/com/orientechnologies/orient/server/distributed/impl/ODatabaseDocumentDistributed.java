@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
@@ -593,6 +594,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   }
 
+  public void txFirstPhase(OSessionOperationId requestId, OTransactionInternal tx) {
+    OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
+    sharedContext.getDistributedContext().registerTransaction(requestId, tx);
+    ((OTransactionOptimistic) tx).begin();
+    firstPhaseDataChecks(false, tx);
+  }
+
   public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local, int retryCount) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ONewDistributedTxContextImpl txContext = new ONewDistributedTxContextImpl((ODistributedDatabaseImpl) localDistributedDatabase,
@@ -759,6 +767,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     acquireLocksForTx(transaction, txContext);
 
+    firstPhaseDataChecks(local, transaction);
+
+  }
+
+  private void firstPhaseDataChecks(boolean local, OTransactionInternal transaction) {
     if (!local) {
       ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
     }
@@ -809,7 +822,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     }
-
   }
 
   public void afterCreateOperations(final OIdentifiable id) {

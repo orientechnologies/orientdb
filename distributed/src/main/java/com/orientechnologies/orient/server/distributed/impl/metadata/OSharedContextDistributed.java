@@ -25,7 +25,8 @@ import com.orientechnologies.orient.server.distributed.impl.ViewManagerDistribut
  */
 public class OSharedContextDistributed extends OSharedContext {
 
-  private ViewManager viewManager;
+  private ViewManager         viewManager;
+  private ODistributedContext distributedContext;
 
   public OSharedContextDistributed(OStorage storage, OrientDBDistributed orientDB) {
     this.orientDB = orientDB;
@@ -48,6 +49,7 @@ public class OSharedContextDistributed extends OSharedContext {
 
     queryStats = new OQueryStats();
 
+    distributedContext = new ODistributedContext();
     this.viewManager = new ViewManagerDistributed(orientDB, storage.getName());
     this.viewManager.start();
 
@@ -141,5 +143,9 @@ public class OSharedContextDistributed extends OSharedContext {
 
   public ViewManager getViewManager() {
     return viewManager;
+  }
+
+  public ODistributedContext getDistributedContext() {
+    return distributedContext;
   }
 }
