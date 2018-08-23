@@ -32,8 +32,8 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 public class OIndexNotUnique extends OIndexMultiValues {
 
   public OIndexNotUnique(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
+      String valueContainerAlgorithm, ODocument metadata, int binaryFormatVersion) {
+    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata, binaryFormatVersion);
   }
 
   public boolean canBeUsedInEqualityOperators() {
