@@ -33,10 +33,8 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
       String typeId,
       String algorithm,
       int version,
-      OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm,
-      ODocument metadata) {
-    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
+      OAbstractPaginatedStorage storage, String valueContainerAlgorithm, ODocument metadata, final int binaryFormatVersion) {
+    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata, binaryFormatVersion);
   }
 
   public Document buildDocument(final Object key) {

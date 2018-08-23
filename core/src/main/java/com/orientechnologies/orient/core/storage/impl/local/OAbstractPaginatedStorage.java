@@ -2433,7 +2433,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           keySerializer = OCompositeKeySerializer.INSTANCE;
         } else {
           final OType keyType = indexDefinition.getTypes()[0];
-          if (keyType == OType.STRING) {
+
+          if (keyType == OType.STRING && configuration.getBinaryFormatVersion() >= 13) {
             return OUTF8Serializer.INSTANCE;
           }
 

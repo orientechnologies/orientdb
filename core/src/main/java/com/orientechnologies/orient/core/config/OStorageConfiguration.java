@@ -11,7 +11,7 @@ public interface OStorageConfiguration {
   String DEFAULT_DATE_FORMAT           = "yyyy-MM-dd";
   String DEFAULT_DATETIME_FORMAT       = "yyyy-MM-dd HH:mm:ss";
   int    CURRENT_VERSION               = 20;
-  int    CURRENT_BINARY_FORMAT_VERSION = 12;
+  int    CURRENT_BINARY_FORMAT_VERSION = 13;
 
   SimpleDateFormat getDateTimeFormatInstance();
 
