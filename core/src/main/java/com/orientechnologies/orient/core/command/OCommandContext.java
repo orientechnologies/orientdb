@@ -31,7 +31,6 @@ import java.util.Map;
  */
 public interface OCommandContext {
 
-
   enum TIMEOUT_STRATEGY {
     RETURN, EXCEPTION
   }
