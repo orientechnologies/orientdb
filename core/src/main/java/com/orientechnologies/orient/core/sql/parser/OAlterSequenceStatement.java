@@ -24,8 +24,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
   Boolean     cyclic;
   OExpression minValue;
   OExpression maxValue;
-  boolean     turnLimitOff = false;
-  boolean     turnCyCleOff = false;
+  boolean turnLimitOff = false;
 
   public OAlterSequenceStatement(int id) {
     super(id);
@@ -73,30 +72,29 @@ public class OAlterSequenceStatement extends ODDLStatement {
       }
       params.cacheSize = ((Number) val).intValue();
     }
-    if (positive != null) {      
+    if (positive != null) {
       params.orderType = positive == true ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.ORDER_NEGATIVE;
     }
-    if (cyclic != null){
+    if (cyclic != null) {
       params.recyclable = cyclic;
     }
-    if (minValue != null){
+    if (minValue != null) {
       Object val = minValue.execute((OIdentifiable) null, ctx);
       if (!(val instanceof Number)) {
         throw new OCommandExecutionException("invalid cache value for a sequence: " + val);
       }
       params.limitValue = ((Number) val).longValue();
     }
-    if (maxValue != null){
+    if (maxValue != null) {
       Object val = maxValue.execute((OIdentifiable) null, ctx);
       if (!(val instanceof Number)) {
         throw new OCommandExecutionException("invalid cache value for a sequence: " + val);
       }
       params.limitValue = ((Number) val).longValue();
     }
-    if (turnLimitOff){
+    if (turnLimitOff) {
       params.turnLimitOff = true;
     }
-    
 
     sequence.updateParams(params);
     sequence.save(database);
@@ -105,25 +103,25 @@ public class OAlterSequenceStatement extends ODDLStatement {
     OResultInternal item = new OResultInternal();
     item.setProperty("operation", "alter sequence");
     item.setProperty("sequenceName", sequenceName);
-    if (params.start != null){
+    if (params.start != null) {
       item.setProperty("start", params.start);
     }
-    if (params.increment != null){
+    if (params.increment != null) {
       item.setProperty("increment", params.increment);
     }
-    if (params.cacheSize != null){
+    if (params.cacheSize != null) {
       item.setProperty("cacheSize", params.cacheSize);
     }
-    if (params.limitValue != null){
+    if (params.limitValue != null) {
       item.setProperty("limitValue", params.limitValue);
     }
-    if (params.orderType != null){
+    if (params.orderType != null) {
       item.setProperty("orderType", params.orderType.toString());
     }
-    if (params.recyclable != null){
+    if (params.recyclable != null) {
       item.setProperty("recycable", params.recyclable);
     }
-    if (params.turnLimitOff != null && params.turnLimitOff){
+    if (params.turnLimitOff != null && params.turnLimitOff) {
       item.setProperty("turnLimitOff", params.turnLimitOff);
     }
     result.add(item);
@@ -147,28 +145,27 @@ public class OAlterSequenceStatement extends ODDLStatement {
       builder.append(" CACHE ");
       cache.toString(params, builder);
     }
-    if (positive != null){
+    if (positive != null) {
       String appendString;
       appendString = positive == true ? " ASC" : " DESC";
       builder.append(appendString);
     }
-    if (cyclic != null){
-      if (cyclic){
+    if (cyclic != null) {
+      if (cyclic) {
         builder.append(" CYCLE");
-      }
-      else{
+      } else {
         builder.append(" NOCYCLE");
       }
     }
-    if (minValue != null){
+    if (minValue != null) {
       builder.append(" MINVALUE ");
       minValue.toString(params, builder);
     }
-    if (maxValue != null){
+    if (maxValue != null) {
       builder.append(" MAXVALUE ");
       maxValue.toString(params, builder);
     }
-    if (turnLimitOff){
+    if (turnLimitOff) {
       builder.append(" NOLIMIT");
     }
   }
@@ -204,16 +201,16 @@ public class OAlterSequenceStatement extends ODDLStatement {
       return false;
     if (cache != null ? !cache.equals(that.cache) : that.cache != null)
       return false;
-    if (!Objects.equals(positive, that.positive)){
+    if (!Objects.equals(positive, that.positive)) {
       return false;
     }
-    if (!Objects.equals(cyclic, that.cyclic)){
+    if (!Objects.equals(cyclic, that.cyclic)) {
       return false;
     }
-    if (!Objects.equals(minValue, that.minValue)){
+    if (!Objects.equals(minValue, that.minValue)) {
       return false;
     }
-    if (Objects.equals(maxValue, that.maxValue)){
+    if (Objects.equals(maxValue, that.maxValue)) {
       return false;
     }
 

@@ -15,21 +15,21 @@ import java.util.Map;
 
 public class OCreateSequenceStatement extends OSimpleExecStatement {
   public static final int TYPE_CACHED  = 0;
-  public static final int TYPE_ORDERED = 1;  
-  
+  public static final int TYPE_ORDERED = 1;
+
   OIdentifier name;
 
   public boolean ifNotExists = false;
-  
+
   int         type;
   OExpression start;
   OExpression increment;
   OExpression cache;
-  boolean     positive = OSequence.DEFAULT_ORDER_TYPE == SequenceOrderType.ORDER_POSITIVE;
-  boolean     cyclic = OSequence.DEFAULT_RECYCLABLE_VALUE;
+  boolean positive = OSequence.DEFAULT_ORDER_TYPE == SequenceOrderType.ORDER_POSITIVE;
+  boolean cyclic   = OSequence.DEFAULT_RECYCLABLE_VALUE;
   OExpression minValue;
   OExpression maxValue;
-  
+
   public OCreateSequenceStatement(int id) {
     super(id);
   }
@@ -96,7 +96,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
         throw new OCommandExecutionException("Invalid cache value: " + o);
       }
     }
-    
+
     if (minValue != null) {
       Object o = minValue.execute((OIdentifiable) null, ctx);
       if (o instanceof Number) {
@@ -106,7 +106,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
         throw new OCommandExecutionException("Invalid limit value: " + o);
       }
     }
-    
+
     if (maxValue != null) {
       Object o = maxValue.execute((OIdentifiable) null, ctx);
       if (o instanceof Number) {
@@ -116,12 +116,12 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
         throw new OCommandExecutionException("Invalid limit value: " + o);
       }
     }
-    
+
     params.setOrderType(positive ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.ORDER_NEGATIVE);
     result.setProperty("orderType", params.orderType.toString());
     params.setRecyclable(cyclic);
     result.setProperty("recycable", params.recyclable);
-    
+
     return params;
   }
 
@@ -167,10 +167,9 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     if (cyclic != OSequence.DEFAULT_RECYCLABLE_VALUE) {
       builder.append(" CYCLE");
     }
-    if (positive){
+    if (positive) {
       builder.append(" ASC");
-    }
-    else{
+    } else {
       builder.append(" DESC");
     }
   }
@@ -216,7 +215,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       return false;
     if (minValue != null ? !minValue.equals(that.minValue) : that.minValue != null)
       return false;
-    if (cyclic != that.cyclic){
+    if (cyclic != that.cyclic) {
       return false;
     }
     return positive == that.positive;

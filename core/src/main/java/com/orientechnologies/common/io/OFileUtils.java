@@ -156,8 +156,8 @@ public class OFileUtils {
       Path rootPath = Paths.get(rootFile.getCanonicalPath());
       Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
         @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {          
-          Files.deleteIfExists(file);          
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          Files.deleteIfExists(file);
           return FileVisitResult.CONTINUE;
         }
 
@@ -170,7 +170,7 @@ public class OFileUtils {
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
-    
+
 //    if (rootFile.isDirectory()){
 //      File[] subFiles = rootFile.listFiles();
 //      for (File subFile : subFiles){

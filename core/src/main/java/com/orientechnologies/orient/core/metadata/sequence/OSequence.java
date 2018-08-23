@@ -31,30 +31,30 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.Random;
 import java.util.concurrent.Callable;
-
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
  * @since 3/2/2015
  */
 public abstract class OSequence {
-  public static final long DEFAULT_START     = 0;
-  public static final int  DEFAULT_INCREMENT = 1;
-  public static final int  DEFAULT_CACHE     = 20;
-  public static final Long  DEFAULT_LIMIT_VALUE = null;
+  public static final long    DEFAULT_START            = 0;
+  public static final int     DEFAULT_INCREMENT        = 1;
+  public static final int     DEFAULT_CACHE            = 20;
+  public static final Long    DEFAULT_LIMIT_VALUE      = null;
   public static final boolean DEFAULT_RECYCLABLE_VALUE = false;
-  
+
   protected static final int    DEF_MAX_RETRY = OGlobalConfiguration.SEQUENCE_MAX_RETRY.getValueAsInteger();
   public static final    String CLASS_NAME    = "OSequence";
 
-  private static final String FIELD_START     = "start";
-  private static final String FIELD_INCREMENT = "incr";
-  private static final String FIELD_VALUE     = "value";
-  private static final String FIELD_LIMIT_VALUE     = "lvalue";
-  private static final String FIELD_ORDER_TYPE     = "otype";
-  private static final String FIELD_RECYCLABLE     = "recycle";
+  private static final String FIELD_START       = "start";
+  private static final String FIELD_INCREMENT   = "incr";
+  private static final String FIELD_VALUE       = "value";
+  private static final String FIELD_LIMIT_VALUE = "lvalue";
+  private static final String FIELD_ORDER_TYPE  = "otype";
+  private static final String FIELD_RECYCLABLE  = "recycle";
   //initialy set this value to true, so those one who read it can pull upper limit value from document  
 
   private static final String FIELD_NAME = "name";
@@ -62,22 +62,22 @@ public abstract class OSequence {
 
   private ODocument document;
   private ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();
-  
-  private boolean cruacialValueChanged = false;  
-  
+
+  private boolean cruacialValueChanged = false;
+
   public static final SequenceOrderType DEFAULT_ORDER_TYPE = SequenceOrderType.ORDER_POSITIVE;
-  
+
   public static class CreateParams {
-    public Long    start     = DEFAULT_START;
-    public Integer increment = DEFAULT_INCREMENT;
-    public Integer cacheSize = DEFAULT_CACHE;
-    public Long limitValue = DEFAULT_LIMIT_VALUE;
-    public SequenceOrderType orderType = DEFAULT_ORDER_TYPE;
-    public Boolean recyclable = DEFAULT_RECYCLABLE_VALUE;
-    public Boolean turnLimitOff = false;
-    
+    public Long              start        = DEFAULT_START;
+    public Integer           increment    = DEFAULT_INCREMENT;
+    public Integer           cacheSize    = DEFAULT_CACHE;
+    public Long              limitValue   = DEFAULT_LIMIT_VALUE;
+    public SequenceOrderType orderType    = DEFAULT_ORDER_TYPE;
+    public Boolean           recyclable   = DEFAULT_RECYCLABLE_VALUE;
+    public Boolean           turnLimitOff = false;
+
     public CreateParams setStart(Long start) {
-      this.start = start;      
+      this.start = start;
       return this;
     }
 
@@ -90,13 +90,13 @@ public abstract class OSequence {
       this.cacheSize = cacheSize;
       return this;
     }
-    
-    public CreateParams setLimitValue(Long limitValue){
+
+    public CreateParams setLimitValue(Long limitValue) {
       this.limitValue = limitValue;
       return this;
     }
-    
-    public CreateParams setOrderType(SequenceOrderType orderType){
+
+    public CreateParams setOrderType(SequenceOrderType orderType) {
       this.orderType = orderType;
       return this;
     }
@@ -105,16 +105,16 @@ public abstract class OSequence {
       this.recyclable = recyclable;
       return this;
     }
-    
-    public CreateParams setTurnLimitOff(Boolean turnLimitOff){
+
+    public CreateParams setTurnLimitOff(Boolean turnLimitOff) {
       this.turnLimitOff = turnLimitOff;
       return this;
-    }        
-        
+    }
+
     public CreateParams() {
     }
 
-    public CreateParams resetNull(){
+    public CreateParams resetNull() {
       start = null;
       increment = null;
       cacheSize = null;
@@ -124,7 +124,7 @@ public abstract class OSequence {
       turnLimitOff = false;
       return this;
     }
-    
+
     public CreateParams setDefaults() {
       this.start = this.start != null ? this.start : DEFAULT_START;
       this.increment = this.increment != null ? this.increment : DEFAULT_INCREMENT;
@@ -132,8 +132,8 @@ public abstract class OSequence {
       limitValue = limitValue == null ? DEFAULT_LIMIT_VALUE : limitValue;
       orderType = orderType == null ? DEFAULT_ORDER_TYPE : orderType;
       recyclable = recyclable == null ? DEFAULT_RECYCLABLE_VALUE : recyclable;
-      turnLimitOff = turnLimitOff == null ? false : turnLimitOff;      
-      
+      turnLimitOff = turnLimitOff == null ? false : turnLimitOff;
+
       return this;
     }
   }
@@ -148,18 +148,18 @@ public abstract class OSequence {
     this(null, null);
   }
 
-  protected void setCrucialValueChanged(boolean val){
-    synchronized(this){
+  protected void setCrucialValueChanged(boolean val) {
+    synchronized (this) {
       cruacialValueChanged = val;
     }
   }
-  
-  protected boolean getCrucilaValueChanged(){
-    synchronized(this){
+
+  protected boolean getCrucilaValueChanged() {
+    synchronized (this) {
       return cruacialValueChanged;
     }
   }
-  
+
   protected OSequence(final ODocument iDocument) {
     this(iDocument, null);
   }
@@ -173,12 +173,12 @@ public abstract class OSequence {
         params = new CreateParams().setDefaults();
       }
 
-      initSequence(params);      
+      initSequence(params);
       document = getDocument();
     }
-    cruacialValueChanged = true;    
-  }  
-  
+    cruacialValueChanged = true;
+  }
+
   public void save() {
     ODocument doc = tlDocument.get();
     doc.save();
@@ -206,7 +206,7 @@ public abstract class OSequence {
     setLimitValue(params.limitValue);
     setOrderType(params.orderType);
     setRecyclable(params.recyclable);
-    
+
     setSequenceType();
   }
 
@@ -222,26 +222,26 @@ public abstract class OSequence {
       this.setIncrement(params.increment);
       any = true;
     }
-    
-    if (params.limitValue != null && this.getLimitValue() != params.limitValue){
+
+    if (params.limitValue != null && this.getLimitValue() != params.limitValue) {
       this.setLimitValue(params.limitValue);
       any = true;
     }
-    
-    if (params.orderType != null && this.getOrderType() != params.orderType){
+
+    if (params.orderType != null && this.getOrderType() != params.orderType) {
       this.setOrderType(params.orderType);
       any = true;
     }
-    
-    if (params.recyclable != null && this.getRecyclable() != params.recyclable){
+
+    if (params.recyclable != null && this.getRecyclable() != params.recyclable) {
       this.setRecyclable(params.recyclable);
       any = true;
     }
-    
-    if (params.turnLimitOff != null && params.turnLimitOff == true){
+
+    if (params.turnLimitOff != null && params.turnLimitOff == true) {
       this.setLimitValue(null);
-    }    
-    
+    }
+
     save();
     reset();
 
@@ -253,13 +253,13 @@ public abstract class OSequence {
     this.tlDocument.set(iDocument);
   }
 
-  protected static Long getValue(ODocument doc){
-    if (!doc.containsField(FIELD_VALUE)){
+  protected static Long getValue(ODocument doc) {
+    if (!doc.containsField(FIELD_VALUE)) {
       return null;
     }
     return doc.field(FIELD_VALUE, OType.LONG);
   }
-  
+
   protected synchronized Long getValue() {
     return getValue(tlDocument.get());
   }
@@ -272,21 +272,21 @@ public abstract class OSequence {
   protected synchronized int getIncrement() {
     return tlDocument.get().field(FIELD_INCREMENT, OType.INTEGER);
   }
-  
+
   protected synchronized void setLimitValue(Long limitValue) {
     tlDocument.get().field(FIELD_LIMIT_VALUE, limitValue);
     setCrucialValueChanged(true);
   }
-  
+
   protected synchronized Long getLimitValue() {
     return tlDocument.get().field(FIELD_LIMIT_VALUE, OType.LONG);
   }
-  
+
   protected synchronized void setOrderType(SequenceOrderType orderType) {
     tlDocument.get().field(FIELD_ORDER_TYPE, orderType.getValue());
     setCrucialValueChanged(true);
   }
-  
+
   protected synchronized SequenceOrderType getOrderType() {
     byte val = tlDocument.get().field(FIELD_ORDER_TYPE);
     return SequenceOrderType.fromValue(val);
@@ -322,7 +322,7 @@ public abstract class OSequence {
     tlDocument.get().field(FIELD_NAME, name);
     return this;
   }
-  
+
   public synchronized boolean getRecyclable() {
     return tlDocument.get().field(FIELD_RECYCLABLE, OType.BOOLEAN);
   }
@@ -360,10 +360,10 @@ public abstract class OSequence {
 
     sequenceClass.createProperty(OSequence.FIELD_NAME, OType.STRING, (OType) null, true);
     sequenceClass.createProperty(OSequence.FIELD_TYPE, OType.STRING, (OType) null, true);
-    
-    sequenceClass.createProperty(OSequence.FIELD_LIMIT_VALUE, OType.INTEGER, (OType)null, true);
-    sequenceClass.createProperty(OSequence.FIELD_ORDER_TYPE, OType.BYTE, (OType)null, true);
-    sequenceClass.createProperty(OSequence.FIELD_RECYCLABLE, OType.BOOLEAN, (OType)null, true);
+
+    sequenceClass.createProperty(OSequence.FIELD_LIMIT_VALUE, OType.INTEGER, (OType) null, true);
+    sequenceClass.createProperty(OSequence.FIELD_ORDER_TYPE, OType.BYTE, (OType) null, true);
+    sequenceClass.createProperty(OSequence.FIELD_RECYCLABLE, OType.BOOLEAN, (OType) null, true);
   }
 
   /*
@@ -393,7 +393,7 @@ public abstract class OSequence {
     tlDocument.set(tlDocument.get().reload(null, true));
   }
 
-  protected <T> T callRetry(final Callable<T> callable, final String method){
+  protected <T> T callRetry(final Callable<T> callable, final String method) {
     for (int retry = 0; retry < maxRetry; ++retry) {
       try {
         reloadSequence();
@@ -414,14 +414,11 @@ public abstract class OSequence {
           throw OException
               .wrapException(new OSequenceException("Error in transactional processing of " + getName() + "." + method + "()"), e);
         }
-      }
-      catch (OSequenceLimitReachedException exc){
+      } catch (OSequenceLimitReachedException exc) {
         throw exc;
-      }
-      catch (OException ignore) {
+      } catch (OException ignore) {
         reloadSequence();
-      }      
-      catch (Exception e) {        
+      } catch (Exception e) {
         throw OException
             .wrapException(new OSequenceException("Error in transactional processing of " + getName() + "." + method + "()"), e);
       }
