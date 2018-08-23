@@ -176,7 +176,7 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
     if (stack instanceof List) {
       return (List) stack;
     }
-    
+
     return (List) stack.stream().collect(Collectors.toList());
   }
 
