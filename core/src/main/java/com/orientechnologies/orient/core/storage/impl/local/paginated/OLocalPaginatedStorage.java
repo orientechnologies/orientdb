@@ -629,7 +629,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         getStoragePath(), getName(), binarySerializerFactory.getObjectSerializer(OType.STRING), files, getId(),
         contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), true,
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC), exclusiveWriteCacheBoundary,
-        printCacheStatistics, statisticsPrintInterval, flushTillSegmentLogging, fileFlushLogging, fileRemovalLogging);
+        printCacheStatistics, statisticsPrintInterval, flushTillSegmentLogging, fileFlushLogging, fileRemovalLogging,
+        OGlobalConfiguration.MEMORY_LOCK.getValueAsBoolean());
 
     wowCache.addLowDiskSpaceListener(this);
     wowCache.loadRegisteredFiles();

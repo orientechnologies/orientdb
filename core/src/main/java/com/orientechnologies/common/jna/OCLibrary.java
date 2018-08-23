@@ -3,6 +3,7 @@ package com.orientechnologies.common.jna;
 import com.sun.jna.LastErrorException;
 import com.sun.jna.Library;
 import com.sun.jna.NativeLong;
+import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.ptr.PointerByReference;
 
@@ -76,4 +77,10 @@ public interface OCLibrary extends Library {
   int getpagesize() throws LastErrorException;
 
   int pathconf(String path, int name) throws LastErrorException;
+
+  int mlockall(int flags) throws LastErrorException;
+
+  int mlock(Pointer pointer, long len) throws LastErrorException;
+
+  int munlock(Pointer pointer, long len) throws LastErrorException;
 }

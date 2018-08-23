@@ -195,7 +195,7 @@ public class ReadWriteDiskCacheTest {
 
     writeBuffer = new OWOWCache(PAGE_SIZE, BUFFER_POOL, writeAheadLog, -1, WRITE_CACHE_MAX_SIZE, READ_CACHE_MAX_MEMORY, storagePath,
         storageName, OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndThrow, false, false, 0.9, true, 10, true, true,
-        true);
+        true, false);
     writeBuffer.loadRegisteredFiles();
 
     readBuffer = new O2QCache(READ_CACHE_MAX_MEMORY, PAGE_SIZE, false, 50, true, 10);

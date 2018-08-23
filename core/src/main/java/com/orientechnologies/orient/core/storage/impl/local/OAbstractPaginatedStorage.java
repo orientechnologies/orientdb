@@ -382,21 +382,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         preOpenSteps();
 
-        try {
-          performanceStatisticManager.registerMBean(name, id);
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "MBean for profiler cannot be registered.", e);
-        }
-
         initWalAndDiskCache(contextConfiguration);
 
         atomicOperationsManager = new OAtomicOperationsManager(this);
-        try {
-          atomicOperationsManager.registerMBean();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "MBean for atomic operations manager cannot be registered", e);
-        }
-
         recoverIfNeeded();
 
         openClusters();
@@ -571,20 +559,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         ((OStorageConfigurationImpl) configuration).initConfiguration(contextConfiguration);
         componentsFactory = new OCurrentStorageComponentsFactory(getConfiguration());
-        try {
-          performanceStatisticManager.registerMBean(name, id);
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "MBean for profiler cannot be registered.", e);
-        }
         transaction = new ThreadLocal<>();
         initWalAndDiskCache(contextConfiguration);
 
         atomicOperationsManager = new OAtomicOperationsManager(this);
-        try {
-          atomicOperationsManager.registerMBean();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "MBean for atomic operations manager cannot be registered", e);
-        }
 
         preCreateSteps();
 
@@ -4816,14 +4794,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         postCloseSteps(onDelete, jvmError.get() != null);
-
-        if (atomicOperationsManager != null)
-          try {
-            atomicOperationsManager.unregisterMBean();
-          } catch (Exception e) {
-            OLogManager.instance().error(this, "MBean for atomic operations manager cannot be unregistered", e);
-          }
-
         transaction = null;
       } else {
         OLogManager.instance()
