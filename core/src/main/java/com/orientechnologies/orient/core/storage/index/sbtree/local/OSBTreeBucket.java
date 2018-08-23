@@ -33,10 +33,8 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -406,18 +404,6 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       rawEntries.add(getRawEntry(i));
     }
 
-    final int oldSize = getIntValue(SIZE_OFFSET);
-    final List<byte[]> removedEntries;
-    if (newSize == oldSize) {
-      removedEntries = Collections.emptyList();
-    } else {
-      removedEntries = new ArrayList<>(oldSize - newSize);
-
-      for (int i = newSize; i < oldSize; i++) {
-        removedEntries.add(getRawEntry(i));
-      }
-    }
-
     setIntValue(FREE_POINTER_OFFSET, MAX_PAGE_SIZE_BYTES);
 
     int index = 0;
@@ -427,7 +413,6 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     }
 
     setIntValue(SIZE_OFFSET, newSize);
-
   }
 
   boolean addLeafEntry(final int index, final byte[] serializedKey, final byte[] serializedValue) {
