@@ -267,5 +267,6 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
     assertEquals(7, db.countClass("FriendMF"));
     db.close();
     pool.close();
+    proc.getLoader().close();
   }
 }
