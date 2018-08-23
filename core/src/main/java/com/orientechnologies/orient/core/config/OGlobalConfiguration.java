@@ -224,7 +224,7 @@ public enum OGlobalConfiguration {
       true),
 
   STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS("storage.printWALPerformanceStatistics",
-      "Periodically prints statistics about WAL performance", Boolean.class, true),
+      "Periodically prints statistics about WAL performance", Boolean.class, false),
 
   STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL("storage.walPerformanceStatisticsInterval",
       "Interval in seconds between consequent reports of WAL performance statistics", Integer.class, 10),
@@ -298,7 +298,7 @@ public enum OGlobalConfiguration {
       Integer.class, 64),
 
   DISK_CACHE_PRINT_CACHE_STATISTICS("storage.diskCache.printCacheStatistics",
-      "Print information about write cache performance metrics", Boolean.class, true),
+      "Print information about write cache performance metrics", Boolean.class, false),
 
   DISK_CACHE_STATISTICS_INTERVAL("storage.diskCache.cacheStatisticsInterval",
       "Period in sec. after which information about write cache performance metrics will be printed", Integer.class, 10),
