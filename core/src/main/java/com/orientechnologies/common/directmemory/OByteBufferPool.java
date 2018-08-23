@@ -68,7 +68,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   private final AtomicReferenceArray<LockedPointerHolder> lockedChuncks    = new AtomicReferenceArray<>(1024);
   private final AtomicInteger                             lockedChunkIndex = new AtomicInteger();
 
-  private final boolean isLinux = Platform.isLinux();
+  private final boolean memoryLockingIsAllowed;
 
   private final int osPageSize;
 
@@ -124,7 +124,9 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     this.allocator = ODirectMemoryAllocator.instance();
     this.poolSize = OGlobalConfiguration.DIRECT_MEMORY_POOL_LIMIT.getValueAsInteger();
 
-    if (isLinux) {
+    memoryLockingIsAllowed = Platform.isLinux() && ONative.instance().isUnlimitedMemoryLocking();
+
+    if (memoryLockingIsAllowed) {
       osPageSize = ONative.instance().getpagesize();
     } else {
       osPageSize = -1;
@@ -141,7 +143,9 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     this.allocator = allocator;
     this.poolSize = poolSize;
 
-    if (isLinux) {
+    memoryLockingIsAllowed = Platform.isLinux() && ONative.instance().isUnlimitedMemoryLocking();
+
+    if (memoryLockingIsAllowed) {
       osPageSize = ONative.instance().getpagesize();
     } else {
       osPageSize = -1;
@@ -161,7 +165,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   public ByteBuffer acquireDirect(boolean clear, boolean lockMemory) {
     OPointer pointer;
 
-    lockMemory = lockMemory && isLinux;
+    lockMemory = lockMemory && memoryLockingIsAllowed;
 
     if (lockMemory) {
       pointer = lockedPointersPool.poll();

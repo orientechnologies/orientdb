@@ -28,6 +28,7 @@ import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -54,6 +55,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListene
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.sun.jna.Platform;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -434,7 +436,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     this.flushTillSegmentLogging = flushTillSegmentLogging;
     this.fileFlushLogging = fileFlushLogging;
     this.fileRemovalLogging = fileRemovalLogging;
-    this.memoryLocking = memoryLocking;
+
+    this.memoryLocking = memoryLocking && Platform.isLinux() && ONative.instance().isUnlimitedMemoryLocking();
 
     filesLock.acquireWriteLock();
     try {
