@@ -148,48 +148,37 @@ public class OFileUtils {
       throw new IOException("Invalid file name '" + iFileName + "'");
   }
 
-  public static void deleteRecursively(final File rootFile) {    
+  public static void deleteRecursively(final File rootFile) {
     if (!rootFile.exists())
       return;
 
-    if (rootFile.isDirectory()){
-      File[] subFiles = rootFile.listFiles();
-      for (File subFile : subFiles){
-        deleteRecursively(subFile);
-      }
-    }
+    try {
+      Path rootPath = Paths.get(rootFile.getCanonicalPath());
+      Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {          
+          Files.deleteIfExists(file);          
+          return FileVisitResult.CONTINUE;
+        }
 
-    rootFile.delete();    
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+          Files.deleteIfExists(dir);
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
     
-//    try {
-//      Path rootPath = Paths.get(rootFile.getCanonicalPath());
-//      Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
-//        @Override
-//        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-//          Files.deleteIfExists(file);
-//          return FileVisitResult.CONTINUE;
-//        }
-//
-//        @Override
-//        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-//          Files.deleteIfExists(dir);
-//          return FileVisitResult.CONTINUE;
-//        }
-//        
-//        @Override
-//        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException
-//        {
-//            // try to delete the file anyway, even if its attributes
-//            // could not be read, since delete-only access is
-//            // theoretically possible
-//            Files.delete(file);
-//            return FileVisitResult.CONTINUE;
-//        }
-//
-//      });
-//    } catch (IOException e) {
-//      throw new IllegalStateException(e);
+//    if (rootFile.isDirectory()){
+//      File[] subFiles = rootFile.listFiles();
+//      for (File subFile : subFiles){
+//      deleteRecursively(subFile);
+//      }
 //    }
+//
+//    rootFile.delete();  
   }
 
   public static void deleteFolderIfEmpty(final File dir) {
