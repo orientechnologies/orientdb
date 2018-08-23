@@ -28,6 +28,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -367,7 +368,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     assert operation != null;
 
     if (rollback) {
-      operation.rollback(exception);
+      if (operation != null) {
+        operation.rollback(exception);
+      } else {
+        throw OException.wrapException(new ODatabaseException("Error during transaction execution"), exception);
+      }
     }
 
     final int counter = operation.getCounter();
