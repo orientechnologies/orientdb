@@ -16,12 +16,12 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
-import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
+import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -110,14 +110,20 @@ public class ODefaultIndexFactory implements OIndexFactory {
   private OIndexInternal<?> createSBTreeIndex(String name, String indexType, String valueContainerAlgorithm, ODocument metadata,
       OAbstractPaginatedStorage storage, int version) {
 
+    final int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
+
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
-      return new OIndexUnique(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OIndexUnique(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata,
+          binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
-      return new OIndexNotUnique(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OIndexNotUnique(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata,
+          binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OIndexFullText(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OIndexFullText(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata,
+          binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
-      return new OIndexDictionary(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OIndexDictionary(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata,
+          binaryFormatVersion);
     }
 
     throw new OConfigurationException("Unsupported type: " + indexType);
