@@ -18,6 +18,8 @@ public interface OCLibrary extends Library {
    */
   int RLIMIT_AS = 9;
 
+  int RLIMIT_MEMLOCK = 8;
+
   int RLIMIT_NOFILE = 7;
 
   /**
