@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,9 +61,16 @@ public class OCollection extends SimpleNode {
   public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
     List<Object> result = new ArrayList<Object>();
     for (OExpression exp : expressions) {
-      result.add(exp.execute(iCurrentRecord, ctx));
+      result.add(convert(exp.execute(iCurrentRecord, ctx)));
     }
     return result;
+  }
+
+  private Object convert(Object item) {
+    if (item instanceof OResultSet) {
+      return ((OResultSet) item).stream().collect(Collectors.toList());
+    }
+    return item;
   }
 
   public boolean needsAliases(Set<String> aliases) {
@@ -83,12 +91,12 @@ public class OCollection extends SimpleNode {
     return false;
   }
 
-  public OCollection splitForAggregation(AggregateProjectionSplit aggregateProj) {
+  public OCollection splitForAggregation(AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
     if (isAggregate()) {
       OCollection result = new OCollection(-1);
       for (OExpression exp : this.expressions) {
-        if (exp.isAggregate() || exp.isEarlyCalculated()) {
-          result.expressions.add(exp.splitForAggregation(aggregateProj));
+        if (exp.isAggregate() || exp.isEarlyCalculated(ctx)) {
+          result.expressions.add(exp.splitForAggregation(aggregateProj, ctx));
         } else {
           throw new OCommandExecutionException("Cannot mix aggregate and non-aggregate operations in a collection: " + toString());
         }
@@ -99,9 +107,9 @@ public class OCollection extends SimpleNode {
     }
   }
 
-  public boolean isEarlyCalculated() {
+  public boolean isEarlyCalculated(OCommandContext ctx) {
     for (OExpression exp : expressions) {
-      if (!exp.isEarlyCalculated()) {
+      if (!exp.isEarlyCalculated(ctx)) {
         return false;
       }
     }

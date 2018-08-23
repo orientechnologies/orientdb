@@ -207,21 +207,21 @@ public class OBaseIdentifier extends SimpleNode {
     return false;
   }
 
-  public boolean isEarlyCalculated() {
-    if (levelZero != null && levelZero.isEarlyCalculated()) {
+  public boolean isEarlyCalculated(OCommandContext ctx) {
+    if (levelZero != null && levelZero.isEarlyCalculated(ctx)) {
       return true;
     }
-    if (suffix != null && suffix.isEarlyCalculated()) {
+    if (suffix != null && suffix.isEarlyCalculated(ctx)) {
       return true;
     }
     return false;
   }
 
-  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
     if (isAggregate()) {
       OBaseIdentifier result = new OBaseIdentifier(-1);
       if (levelZero != null) {
-        SimpleNode splitResult = levelZero.splitForAggregation(aggregateProj);
+        SimpleNode splitResult = levelZero.splitForAggregation(aggregateProj, ctx);
         if (splitResult instanceof OLevelZeroIdentifier) {
           result.levelZero = (OLevelZeroIdentifier) splitResult;
         } else {

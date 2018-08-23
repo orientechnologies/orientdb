@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OErrorCode;
@@ -75,17 +76,17 @@ import java.util.function.Function;
 import java.util.logging.Level;
 
 public class ONetworkProtocolBinary extends ONetworkProtocol {
-  protected final    Level          logClientExceptions;
-  protected final    boolean        logClientFullStackTrace;
-  protected          OChannelBinary channel;
-  protected volatile int            requestType;
-  protected          int            clientTxId;
-  protected          boolean        okSent;
-  private boolean tokenConnection = true;
-  private long    requests        = 0;
-  private          HandshakeInfo       handshakeInfo;
-  private volatile OBinaryPushResponse expectedPushResponse;
-  private BlockingQueue<OBinaryPushResponse> pushResponse = new SynchronousQueue<OBinaryPushResponse>();
+  protected final    Level                              logClientExceptions;
+  protected final    boolean                            logClientFullStackTrace;
+  protected          OChannelBinary                     channel;
+  protected volatile int                                requestType;
+  protected          int                                clientTxId;
+  protected          boolean                            okSent;
+  private            boolean                            tokenConnection = true;
+  private            long                               requests        = 0;
+  private            HandshakeInfo                      handshakeInfo;
+  private volatile   OBinaryPushResponse                expectedPushResponse;
+  private            BlockingQueue<OBinaryPushResponse> pushResponse    = new SynchronousQueue<OBinaryPushResponse>();
 
   private Function<Integer, OBinaryRequest<? extends OBinaryResponse>> factory = ONetworkBinaryProtocolFactory.defaultProtocol();
 
@@ -165,6 +166,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       if (server.rejectRequests()) {
         // MAKE SURE THAT IF THE SERVER IS GOING DOWN THE CONNECTIONS ARE TERMINATED BEFORE HANDLE ANY OPERATIONS
         this.softShutdown();
+        if (requestType != OChannelBinaryProtocol.REQUEST_HANDSHAKE && isDistributed(requestType)
+            && requestType != OChannelBinaryProtocol.REQUEST_OK_PUSH) {
+          clientTxId = channel.readInt();
+          channel.clearInput();
+          sendError(null,clientTxId,new OOfflineNodeException("Node Shutting down"));
+        }
         return;
       }
 
@@ -604,9 +611,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             channel.writeBytes(new byte[] {});
         }
       }
-
       final Throwable current;
-      if (t instanceof OLockException && t.getCause() instanceof ODatabaseException)
+      if (t instanceof OException && t.getCause() instanceof InterruptedException && !server.isActive()) {
+        current = new OOfflineNodeException("Node shutting down");
+      } else if (t instanceof OLockException && t.getCause() instanceof ODatabaseException)
         // BYPASS THE DB POOL EXCEPTION TO PROPAGATE THE RIGHT SECURITY ONE
         current = t.getCause();
       else
@@ -737,13 +745,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   /**
-   * Write a OIdentifiable instance using this format:<br>
-   * - 2 bytes: class id [-2=no record, -3=rid, -1=no class id, > -1 = valid] <br>
-   * - 1 byte: record type [d,b,f] <br>
-   * - 2 bytes: cluster id <br>
-   * - 8 bytes: position in cluster <br>
-   * - 4 bytes: record version <br>
-   * - x bytes: record content <br>
+   * Write a OIdentifiable instance using this format:<br> - 2 bytes: class id [-2=no record, -3=rid, -1=no class id, > -1 = valid]
+   * <br> - 1 byte: record type [d,b,f] <br> - 2 bytes: cluster id <br> - 8 bytes: position in cluster <br> - 4 bytes: record
+   * version <br> - x bytes: record content <br>
    *
    * @param channel TODO
    */

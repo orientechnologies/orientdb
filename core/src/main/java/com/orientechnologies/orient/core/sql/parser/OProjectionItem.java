@@ -198,11 +198,11 @@ public class OProjectionItem extends SimpleNode {
    *
    * @param aggregateSplit
    */
-  public OProjectionItem splitForAggregation(AggregateProjectionSplit aggregateSplit) {
+  public OProjectionItem splitForAggregation(AggregateProjectionSplit aggregateSplit, OCommandContext ctx) {
     if (isAggregate()) {
       OProjectionItem result = new OProjectionItem(-1);
       result.alias = getProjectionAlias();
-      result.expression = expression.splitForAggregation(aggregateSplit);
+      result.expression = expression.splitForAggregation(aggregateSplit, ctx);
       result.nestedProjection = nestedProjection;
       return result;
     } else {

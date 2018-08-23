@@ -2399,7 +2399,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       throw new IllegalArgumentException("Configuration variable '" + iConfigName + "' wasn't found");
 
     final String value;
-    if (!OrientDBInternal.extract(orientDB).isEmbedded()) {
+    if (orientDB != null && !OrientDBInternal.extract(orientDB).isEmbedded()) {
       value = ((OrientDBRemote) OrientDBInternal.extract(orientDB))
           .getGlobalConfiguration(currentDatabaseUserName, currentDatabaseUserPassword, config);
       message("\nRemote configuration: ");
@@ -2426,7 +2426,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (config == null)
       throw new IllegalArgumentException("Configuration variable '" + iConfigName + "' not found");
 
-    if (!OrientDBInternal.extract(orientDB).isEmbedded()) {
+    if (orientDB != null && !OrientDBInternal.extract(orientDB).isEmbedded()) {
       ((OrientDBRemote) OrientDBInternal.extract(orientDB))
           .setGlobalConfiguration(currentDatabaseUserName, currentDatabaseUserPassword, config, iConfigValue);
       message("\nRemote configuration value changed correctly");
@@ -2439,7 +2439,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(description = "Return all the configuration values")
   public void config() throws IOException {
-    if (!OrientDBInternal.extract(orientDB).isEmbedded()) {
+    if (orientDB != null && !OrientDBInternal.extract(orientDB).isEmbedded()) {
       final Map<String, String> values = ((OrientDBRemote) OrientDBInternal.extract(orientDB))
           .getGlobalConfigurations(currentDatabaseUserName, currentDatabaseUserPassword);
 

@@ -523,7 +523,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
       } catch (HazelcastException e) {
         throw new OOfflineNodeException("Hazelcast instance is not available");
-      } catch (Exception e) {
+      }
+
+      catch (Exception e) {
         getStorageDistributed().handleDistributedException("Cannot route TX operation against distributed node", e);
       }
     }
@@ -730,7 +732,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
 
     for (Map.Entry<String, OTransactionIndexChanges> change : transaction.getIndexOperations().entrySet()) {
-      OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
+      OIndex<?> index = getSharedContext().getIndexManager().getRawIndex(change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
           .equals(index.getType())) {
         if (!change.getValue().nullKeyChanges.entries.isEmpty()) {

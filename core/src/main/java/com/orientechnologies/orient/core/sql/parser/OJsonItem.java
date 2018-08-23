@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
@@ -53,12 +54,12 @@ public class OJsonItem {
     return right.isAggregate();
   }
 
-  public OJsonItem splitForAggregation(AggregateProjectionSplit aggregateSplit) {
+  public OJsonItem splitForAggregation(AggregateProjectionSplit aggregateSplit, OCommandContext ctx) {
     if (isAggregate()) {
       OJsonItem item = new OJsonItem();
       item.leftIdentifier = leftIdentifier;
       item.leftString = leftString;
-      item.right = right.splitForAggregation(aggregateSplit);
+      item.right = right.splitForAggregation(aggregateSplit, ctx);
       return item;
     } else {
       return this;
