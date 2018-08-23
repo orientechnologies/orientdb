@@ -66,6 +66,8 @@ public enum OGlobalConfiguration {
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used, if it is present", Boolean.class, true),
 
+  MEMORY_LOCK("memory.lock", "Prevent OS from putting memory to the swap file if possible", Boolean.class, true),
+
   @Deprecated MEMORY_CHUNK_SIZE("memory.chunk.size",
       "Size of single memory chunk (in bytes) which will be preallocated by OrientDB", Integer.class, Integer.MAX_VALUE),
 

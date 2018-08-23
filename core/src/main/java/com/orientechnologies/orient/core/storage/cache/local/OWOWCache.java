@@ -413,6 +413,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private final int chunkSize;
 
+  private final boolean memoryLocking;
+
   /**
    * Listeners which are called when exception in background data flush thread is happened.
    */
@@ -423,7 +425,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       String storageName, OBinarySerializer<String> stringSerializer, final OClosableLinkedContainer<Long, OFileClassic> files,
       final int id, final OChecksumMode checksumMode, boolean allowDirectIO, boolean callFsync, double exclusiveWriteCacheBoundary,
       boolean printCacheStatistics, int statisticsPrintInterval, boolean flushTillSegmentLogging, boolean fileFlushLogging,
-      boolean fileRemovalLogging) {
+      boolean fileRemovalLogging, boolean memoryLocking) {
 
     this.callFsync = callFsync;
     this.exclusiveWriteCacheBoundary = exclusiveWriteCacheBoundary;
@@ -432,6 +434,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     this.flushTillSegmentLogging = flushTillSegmentLogging;
     this.fileFlushLogging = fileFlushLogging;
     this.fileRemovalLogging = fileRemovalLogging;
+    this.memoryLocking = memoryLocking;
 
     filesLock.acquireWriteLock();
     try {
@@ -1161,7 +1164,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               startAllocationIndex = fileSize / pageSize;
 
               for (long index = startAllocationIndex; index <= stopAllocationIndex; index++) {
-                final ByteBuffer buffer = bufferPool.acquireDirect(true);
+                final ByteBuffer buffer = bufferPool.acquireDirect(true, memoryLocking);
                 buffer.putLong(MAGIC_NUMBER_OFFSET, MAGIC_NUMBER_WITHOUT_CHECKSUM);
 
                 final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, fileId, index);
@@ -1544,7 +1547,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         final byte[] data = new byte[pageSize];
 
-        ByteBuffer byteBuffer = bufferPool.acquireDirect(true);
+        ByteBuffer byteBuffer = bufferPool.acquireDirect(true, memoryLocking);
         try {
           fileClassic.read(pos, byteBuffer, true);
           byteBuffer.rewind();
@@ -2122,7 +2125,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           try {
             if (pageCount == 1) {
-              final ByteBuffer buffer = bufferPool.acquireDirect(false);
+              final ByteBuffer buffer = bufferPool.acquireDirect(false, memoryLocking);
               assert buffer.position() == 0;
               fileClassic.read(firstPageStartPosition, buffer, false);
 
@@ -2142,7 +2145,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
             final ByteBuffer[] buffers = new ByteBuffer[realPageCount];
             for (int i = 0; i < buffers.length; i++) {
-              buffers[i] = bufferPool.acquireDirect(false);
+              buffers[i] = bufferPool.acquireDirect(false, memoryLocking);
               assert buffers[i].position() == 0;
             }
 
@@ -2350,14 +2353,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         }
 
         OLogManager.instance().infoNoDb(this,
-            "Write cache stat: Amount of flushed lsn pages %d, amount of flushed of exclusive pages %d, avg. "
+            "Write cache stat:%s:Amount of flushed lsn pages %d, amount of flushed of exclusive pages %d, avg. "
                 + " first dirty pages segment index %d, first dirty pages segment size %d,"
                 + " avg. LSN flush interval %d, total amount of flushed pages %d, write speed %d page/s, "
                 + "write speed is %d KB/s, %d times cache was waiting for WAL flush, avg %d ms. cache was waiting for WAL flush, "
                 + "%d pages were read from the disk, read speed is %d pages/s (%d KB/s), "
                 + "data threads were waiting because of cache overflow %d times, avg. wait time is %d ms., "
                 + "avg. chunk size %d, avg, chunk flush time %d ms., WAL begin %s, WAL end %s, %d percent of exclusive write cache is filled, "
-                + "LSN flush interval boundary %d ms", lsnPagesSum, exclusivePagesSum,
+                + "LSN flush interval boundary %d ms", storageName, lsnPagesSum, exclusivePagesSum,
             entry == null ? -1 : entry.getKey().intValue(), entry == null ? -1 : entry.getValue().size(),
             lsnFlushIntervalSum / lsnFlushIntervalCount / 1_000_000, flushedPagesSum,
             1_000_000_000L * flushedPagesSum / flushedPagesTime,
@@ -2869,7 +2872,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           final long version;
           final OLogSequenceNumber fullLogLSN;
 
-          final ByteBuffer copy = bufferPool.acquireDirect(false);
+          final ByteBuffer copy = bufferPool.acquireDirect(false, memoryLocking);
           try {
             version = pointer.getVersion();
             final ByteBuffer buffer = pointer.getBufferDuplicate();
@@ -3093,7 +3096,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         } else {
           if (pointer.tryAcquireSharedLock()) {
             final OLogSequenceNumber fullLSN;
-            final ByteBuffer copy = bufferPool.acquireDirect(false);
+            final ByteBuffer copy = bufferPool.acquireDirect(false, memoryLocking);
             try {
               version = pointer.getVersion();
               final ByteBuffer buffer = pointer.getBufferDuplicate();
@@ -3208,7 +3211,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
             try {
               final ByteBuffer buffer = pagePointer.getBufferDuplicate();
-              final ByteBuffer copy = bufferPool.acquireDirect(false);
+              final ByteBuffer copy = bufferPool.acquireDirect(false, memoryLocking);
 
               try {
                 buffer.position(0);

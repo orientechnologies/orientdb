@@ -25,7 +25,7 @@ public class SBTreeNonLeafBucketTest {
   @Test
   public void testInitialization() throws Exception {
     final OByteBufferPool bufferPool = OByteBufferPool.instance();
-    final ByteBuffer buffer = bufferPool.acquireDirect(true);
+    final ByteBuffer buffer = bufferPool.acquireDirect(true, false);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
@@ -60,7 +60,7 @@ public class SBTreeNonLeafBucketTest {
     }
 
     final OByteBufferPool bufferPool = OByteBufferPool.instance();
-    final ByteBuffer buffer = bufferPool.acquireDirect(true);
+    final ByteBuffer buffer = bufferPool.acquireDirect(true, false);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
@@ -126,7 +126,7 @@ public class SBTreeNonLeafBucketTest {
     }
 
     final OByteBufferPool bufferPool = OByteBufferPool.instance();
-    final ByteBuffer buffer = bufferPool.acquireDirect(true);
+    final ByteBuffer buffer = bufferPool.acquireDirect(true, false);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
