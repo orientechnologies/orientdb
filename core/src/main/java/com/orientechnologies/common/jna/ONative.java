@@ -294,6 +294,8 @@ public class ONative {
       return false;
     }
 
+    System.out.println("Memory locking limit " + rlimit.rlim_cur);
+
     return rlimit.rlim_cur == -1;
   }
 
