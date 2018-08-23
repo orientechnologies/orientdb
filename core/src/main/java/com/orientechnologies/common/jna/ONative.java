@@ -288,7 +288,7 @@ public class ONative {
 
   public boolean isUnlimitedMemoryLocking() {
     final OCLibrary.Rlimit rlimit = new OCLibrary.Rlimit();
-    final int result = C_LIBRARY.getrlimit(OCLibrary.RLIMIT_AS, rlimit);
+    final int result = C_LIBRARY.getrlimit(OCLibrary.RLIMIT_MEMLOCK, rlimit);
 
     if (result != 0) {
       return false;
