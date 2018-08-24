@@ -170,15 +170,6 @@ public class OFileUtils {
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
-
-//    if (rootFile.isDirectory()){
-//      File[] subFiles = rootFile.listFiles();
-//      for (File subFile : subFiles){
-//      deleteRecursively(subFile);
-//      }
-//    }
-//
-//    rootFile.delete();  
   }
 
   public static void deleteFolderIfEmpty(final File dir) {
