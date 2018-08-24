@@ -492,7 +492,7 @@ public class OSequenceTest {
   }
 
   @Test
-  public void testTurnLimitOff() throws Exception {
+  public void testTurnLimitOffCached() throws Exception {
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
         setIncrement(1).
         setLimitValue(3l).
@@ -514,9 +514,94 @@ public class OSequenceTest {
     params = new OSequence.CreateParams().setTurnLimitOff(true);
     myseq.updateParams(params);
     //there is reset after update params, so go from begining
+    assertThat(myseq.next()).isEqualTo(4);
+    assertThat(myseq.next()).isEqualTo(5);
+    assertThat(myseq.next()).isEqualTo(6);
+    assertThat(myseq.next()).isEqualTo(7);
+    
+    sequences.dropSequence("MYSEQ");
+  }
+  
+  @Test
+  public void testTurnLimitOnCached() throws Exception {
+    OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
+        setIncrement(1).        
+        setOrderType(SequenceOrderType.ORDER_POSITIVE);
+    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.CACHED, params);
+    OSequence myseq = sequences.getSequence("MYSEQ");
+    assertThat(myseq.current()).isEqualTo(0);
     assertThat(myseq.next()).isEqualTo(1);
     assertThat(myseq.next()).isEqualTo(2);
     assertThat(myseq.next()).isEqualTo(3);
+    
+    params = new OSequence.CreateParams().setLimitValue(3l);
+    myseq.updateParams(params);
+    
+    Byte exceptionsCought = 0;
+    try {
+      myseq.next();
+    } catch (OSequenceLimitReachedException exc) {
+      exceptionsCought++;
+    }
+    assertThat(exceptionsCought).isEqualTo((byte) 1);
+    
+    sequences.dropSequence("MYSEQ");
+  }
+  
+  @Test
+  public void testTurnLimitOffOrdered() throws Exception {
+    OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
+        setIncrement(1).
+        setLimitValue(3l).
+        setOrderType(SequenceOrderType.ORDER_POSITIVE);
+    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
+    OSequence myseq = sequences.getSequence("MYSEQ");
+    assertThat(myseq.current()).isEqualTo(0);
+    assertThat(myseq.next()).isEqualTo(1);
+    assertThat(myseq.next()).isEqualTo(2);
+    assertThat(myseq.next()).isEqualTo(3);
+    Byte exceptionsCought = 0;
+    try {
+      myseq.next();
+    } catch (OSequenceLimitReachedException exc) {
+      exceptionsCought++;
+    }
+    assertThat(exceptionsCought).isEqualTo((byte) 1);
+
+    params = new OSequence.CreateParams().setTurnLimitOff(true);
+    myseq.updateParams(params);
+    //there is reset after update params, so go from begining
     assertThat(myseq.next()).isEqualTo(4);
+    assertThat(myseq.next()).isEqualTo(5);
+    assertThat(myseq.next()).isEqualTo(6);
+    assertThat(myseq.next()).isEqualTo(7);
+    
+    sequences.dropSequence("MYSEQ");
+  }
+  
+  @Test
+  public void testTurnLimitOnOrdered() throws Exception {
+    OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
+        setIncrement(1).        
+        setOrderType(SequenceOrderType.ORDER_POSITIVE);
+    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
+    OSequence myseq = sequences.getSequence("MYSEQ");
+    assertThat(myseq.current()).isEqualTo(0);
+    assertThat(myseq.next()).isEqualTo(1);
+    assertThat(myseq.next()).isEqualTo(2);
+    assertThat(myseq.next()).isEqualTo(3);
+    
+    params = new OSequence.CreateParams().setLimitValue(3l);
+    myseq.updateParams(params);
+    
+    Byte exceptionsCought = 0;
+    try {
+      myseq.next();
+    } catch (OSequenceLimitReachedException exc) {
+      exceptionsCought++;
+    }
+    assertThat(exceptionsCought).isEqualTo((byte) 1);
+    
+    sequences.dropSequence("MYSEQ");
   }
 }

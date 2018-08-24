@@ -65,6 +65,7 @@ public class OSequenceCached extends OSequence {
       this.setCacheSize(params.cacheSize);
       any = true;
     }
+    firstCache = true;
     return any;
   }
 
