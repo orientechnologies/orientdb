@@ -18,4 +18,12 @@ public class ODistributedContext {
     transactions.put(requestId, new OTransactionContext(tx));
 
   }
+
+  public OTransactionContext getTransaction(OSessionOperationId operationId) {
+    return transactions.get(operationId);
+  }
+
+  public void close(OSessionOperationId operationId) {
+    transactions.remove(operationId);
+  }
 }

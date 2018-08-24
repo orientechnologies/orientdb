@@ -8,4 +8,8 @@ public class OTransactionContext {
   public OTransactionContext(OTransactionInternal tx) {
     transaction = tx;
   }
+
+  public OTransactionInternal getTransaction() {
+    return transaction;
+  }
 }

@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.id.ORID;
 public class ODistributedLockManagerImpl implements ODistributedLockManager {
 
   private OSimpleLockManager<ORID>   ridLocks;
-  private OSimpleLockManager<Object> keyLocks;
+  private OSimpleLockManager<String> keyLocks;
 
   public ODistributedLockManagerImpl(int timeout) {
     ridLocks = new OSimpleLockManagerImpl<>(timeout);
@@ -27,12 +27,13 @@ public class ODistributedLockManagerImpl implements ODistributedLockManager {
 
   @Override
   public OLockGuard lockIndexKey(String index, Object key) {
-    //TODO: Implement locking per index and key
-    keyLocks.unlock(key);
+    //TODO: Find a better way to do this.
+    String indexKey = index + key;
+    keyLocks.unlock(indexKey);
     return new OLockGuard() {
       @Override
       public void release() {
-        keyLocks.unlock(key);
+        keyLocks.unlock(indexKey);
       }
     };
   }
