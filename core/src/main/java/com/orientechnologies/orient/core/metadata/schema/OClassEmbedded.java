@@ -181,7 +181,7 @@ public class OClassEmbedded extends OClassImpl {
       releaseSchemaWriteLock();
     }
   }
-
+  
   public OClassImpl setCustom(final String name, final String value) {
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
@@ -190,7 +190,7 @@ public class OClassEmbedded extends OClassImpl {
     try {
       final OStorage storage = database.getStorage();
       if (isDistributedCommand(database)) {
-        final String cmd = String.format("alter class `%s` custom %s=%s", getName(), name, value);
+        final String cmd = String.format("alter class `%s` custom `%s`=%s", getName(), name, value);
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
