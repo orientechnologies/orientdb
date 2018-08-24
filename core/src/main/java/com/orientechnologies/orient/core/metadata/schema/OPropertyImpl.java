@@ -759,7 +759,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final String cmd = String.format("alter property %s custom %s=%s", getFullNameQuoted(), name, quoteString(value));
+      final String cmd = String.format("alter property %s custom `%s`=%s", getFullNameQuoted(), name, quoteString(value));
 
       final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
