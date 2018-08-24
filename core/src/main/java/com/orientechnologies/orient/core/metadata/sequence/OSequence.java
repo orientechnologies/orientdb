@@ -243,7 +243,6 @@ public abstract class OSequence {
     }
 
     save();
-//    reset();
 
     return any;
   }
