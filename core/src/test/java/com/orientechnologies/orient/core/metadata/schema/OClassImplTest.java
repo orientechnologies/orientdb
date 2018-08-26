@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static org.testng.Assert.*;
+import static org.testng.AssertJUnit.assertEquals;
 
 public class OClassImplTest {
 
@@ -531,5 +532,17 @@ public class OClassImplTest {
 
     List<?> result = db.query(new OSQLSynchQuery<Object>("select from " + className + " where name = 'foo'"));
     Assert.assertEquals(result.size(), 1);
+  }
+
+  @Test
+  public void testAlterCustomAttributeInClass() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass oClass = schema.createClass("TestCreateCustomAttributeClass");
+
+    oClass.setCustom("customAttribute", "value1");
+    assertEquals("value1", oClass.getCustom("customAttribute"));
+
+    oClass.setCustom("custom.attribute", "value2");
+    assertEquals("value2", oClass.getCustom("custom.attribute"));
   }
 }
