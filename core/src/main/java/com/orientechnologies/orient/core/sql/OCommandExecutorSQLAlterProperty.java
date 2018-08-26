@@ -84,8 +84,20 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
         throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, oldPos);
 
       String[] parts = word.toString().split("\\.");
-      if (parts.length != 2)
-        throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, oldPos);
+      if (parts.length != 2) {
+        if (parts[1].startsWith("`") && parts[parts.length - 1].endsWith("`")) {
+          StringBuilder fullName = new StringBuilder();
+          for (int i = 1; i < parts.length; i++) {
+            if (i > 1) {
+              fullName.append(".");
+            }
+            fullName.append(parts[i]);
+          }
+          parts = new String[] { parts[0], fullName.toString() };
+        } else {
+          throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, oldPos);
+        }
+      }
 
       className = decodeClassName(parts[0]);
       if (className == null)

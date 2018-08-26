@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -119,6 +121,33 @@ public class AlterPropertyTest {
     } catch (Exception e) {
     }
 
+  }
+
+  @Test
+  public void testAlterPropertyWithDot() {
+
+    OSchema schema = db.getMetadata().getSchema();
+    db.command(new OCommandSQL("create class testAlterPropertyWithDot")).execute();
+    db.command(new OCommandSQL("create property testAlterPropertyWithDot.`a.b` STRING")).execute();
+    schema.reload();
+    Assert.assertNotNull(schema.getClass("testAlterPropertyWithDot").getProperty("a.b"));
+    db.command(new OCommandSQL("alter property testAlterPropertyWithDot.`a.b` name c")).execute();
+    schema.reload();
+    Assert.assertNull(schema.getClass("testAlterPropertyWithDot").getProperty("a.b"));
+    Assert.assertNotNull(schema.getClass("testAlterPropertyWithDot").getProperty("c"));
+  }
+
+  @Test
+  public void testAlterCustomAttributeInProperty() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass oClass = schema.createClass("TestCreateCustomAttributeClass");
+    OProperty property = oClass.createProperty("property", OType.STRING);
+
+    property.setCustom("customAttribute", "value1");
+    assertEquals("value1", property.getCustom("customAttribute"));
+
+    property.setCustom("custom.attribute", "value2");
+    assertEquals("value2", property.getCustom("custom.attribute"));
   }
 
 }
