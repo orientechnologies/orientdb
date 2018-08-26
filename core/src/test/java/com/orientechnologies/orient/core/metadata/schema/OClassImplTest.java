@@ -514,4 +514,15 @@ public class OClassImplTest {
     assertEquals(result.size(), 1);
   }
 
+  @Test
+  public void testAlterCustomAttributeInClass() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass oClass = schema.createClass("TestCreateCustomAttributeClass");
+
+    oClass.setCustom("customAttribute", "value1");
+    assertEquals("value1", oClass.getCustom("customAttribute"));
+
+    oClass.setCustom("custom.attribute", "value2");
+    assertEquals("value2", oClass.getCustom("custom.attribute"));
+  }
 }
