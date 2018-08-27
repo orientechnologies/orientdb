@@ -730,6 +730,18 @@ public class OViewEmbedded extends OViewImpl {
 
     acquireSchemaWriteLock();
     try {
+      final OStorage storage = database.getStorage();
+
+      if (isDistributedCommand(database)) {
+
+        final String cmd = String.format("alter class `%s` addcluster %d", name, clusterId);
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+
+        addClusterIdInternal(database, clusterId);
+      } else
         addClusterIdInternal(database, clusterId);
 
     } finally {
@@ -747,6 +759,18 @@ public class OViewEmbedded extends OViewImpl {
 
     acquireSchemaWriteLock();
     try {
+
+      final OStorage storage = database.getStorage();
+      if (isDistributedCommand(database)) {
+        final String cmd = String.format("alter class `%s` removecluster %d", name, clusterId);
+
+        final OCommandSQL commandSQL = new OCommandSQL(cmd);
+        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+
+        database.command(commandSQL).execute();
+
+        removeClusterIdInternal(database, clusterId);
+      } else
         removeClusterIdInternal(database, clusterId);
     } finally {
       releaseSchemaWriteLock();
@@ -1028,5 +1052,4 @@ public class OViewEmbedded extends OViewImpl {
         getDatabase().getStorage().dropCluster(defaultClusterId, true);
     }
   }
-
 }
