@@ -12,8 +12,7 @@ public class OInsertBody extends SimpleNode {
   protected List<List<OExpression>>    valueExpressions;
   protected List<OInsertSetExpression> setExpressions;
 
-  protected OJson            content;
-
+  protected OJson content;
 
   public OInsertBody(int id) {
     super(id);
@@ -97,7 +96,8 @@ public class OInsertBody extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -117,7 +117,8 @@ public class OInsertBody extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = identifierList != null ? identifierList.hashCode() : 0;
     result = 31 * result + (valueExpressions != null ? valueExpressions.hashCode() : 0);
     result = 31 * result + (setExpressions != null ? setExpressions.hashCode() : 0);
@@ -139,6 +140,31 @@ public class OInsertBody extends SimpleNode {
 
   public OJson getContent() {
     return content;
+  }
+
+  public boolean isCacheable() {
+
+    if (this.valueExpressions != null) {
+      for (List<OExpression> valueExpression : valueExpressions) {
+        for (OExpression oExpression : valueExpression) {
+          if (!oExpression.isCacheable()) {
+            return false;
+          }
+        }
+      }
+    }
+    if (setExpressions != null) {
+      for (OInsertSetExpression setExpression : setExpressions) {
+        if (!setExpression.isCacheable()) {
+          return false;
+        }
+      }
+    }
+
+    if (content != null && !content.isCacheable()) {
+      return false;
+    }
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=7d2079a41a1fc63a812cb679e729b23a (do not edit this line) */

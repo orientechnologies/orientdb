@@ -101,4 +101,14 @@ public class CheckClassTypeStep extends AbstractExecutionStep {
   public long getCost() {
     return cost;
   }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new CheckClassTypeStep(targetClass, parentClass, ctx, profilingEnabled);
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
 }
