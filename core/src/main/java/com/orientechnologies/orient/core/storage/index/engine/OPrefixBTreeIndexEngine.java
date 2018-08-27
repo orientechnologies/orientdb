@@ -46,8 +46,8 @@ import java.util.Set;
 public class OPrefixBTreeIndexEngine implements OIndexEngine {
   public static final int VERSION = 1;
 
-  private static final String DATA_FILE_EXTENSION        = ".sbt";
-  private static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
+  private static final String DATA_FILE_EXTENSION        = ".pbt";
+  private static final String NULL_BUCKET_FILE_EXTENSION = ".npt";
 
   private final OPrefixBTree<Object> prefixTree;
   private final int                  version;
