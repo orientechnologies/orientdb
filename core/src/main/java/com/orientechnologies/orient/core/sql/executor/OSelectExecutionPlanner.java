@@ -119,7 +119,7 @@ public class OSelectExecutionPlanner {
       boolean enableProfiling) {
     handleProjectionsBeforeOrderBy(result, info, ctx, enableProfiling);
 
-    if (info.expand || info.unwind != null) {
+    if (info.expand || info.unwind != null || info.groupBy != null) {
 
       handleProjections(result, info, ctx, enableProfiling);
       handleExpand(result, info, ctx, enableProfiling);
@@ -133,7 +133,7 @@ public class OSelectExecutionPlanner {
       }
     } else {
       handleOrderBy(result, info, ctx, enableProfiling);
-      if (info.distinct) {
+      if (info.distinct || info.groupBy != null) {
         handleProjections(result, info, ctx, enableProfiling);
         handleDistinct(result, info, ctx, enableProfiling);
         if (info.skip != null) {
@@ -576,7 +576,9 @@ public class OSelectExecutionPlanner {
 
   private static void handleDistinct(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
       boolean profilingEnabled) {
-    result.chain(new DistinctExecutionStep(ctx, profilingEnabled));
+    if (info.distinct) {
+      result.chain(new DistinctExecutionStep(ctx, profilingEnabled));
+    }
   }
 
   private static void handleProjectionsBeforeOrderBy(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
