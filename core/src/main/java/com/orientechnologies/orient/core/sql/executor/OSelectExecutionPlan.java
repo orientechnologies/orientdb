@@ -122,7 +122,11 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
   @Override
   public OInternalExecutionPlan copy(OCommandContext ctx) {
     OSelectExecutionPlan copy = new OSelectExecutionPlan(ctx);
+    copyOn(copy, ctx);
+    return copy;
+  }
 
+  protected void copyOn(OSelectExecutionPlan copy, OCommandContext ctx) {
     OExecutionStep lastStep = null;
     for (OExecutionStep step : this.steps) {
       OExecutionStepInternal newStep = (OExecutionStepInternal) ((OExecutionStepInternal) step).copy(ctx);
@@ -136,7 +140,6 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     copy.lastStep = copy.steps.size() == 0 ? null : copy.steps.get(copy.steps.size() - 1);
     copy.location = this.location;
     copy.statement = this.statement;
-    return copy;
   }
 
   @Override

@@ -266,6 +266,18 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   public long getCost() {
     return cost;
   }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new CreateEdgesStep(targetClass == null ? null : targetClass.copy(), targetCluster == null ? null : targetCluster.copy(),
+        uniqueIndexName, fromAlias == null ? null : fromAlias.copy(), toAlias == null ? null : toAlias.copy(), wait, retry,
+        batch == null ? null : batch.copy(), ctx, profilingEnabled);
+  }
 }
 
 
