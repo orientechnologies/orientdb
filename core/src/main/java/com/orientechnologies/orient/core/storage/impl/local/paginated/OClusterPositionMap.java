@@ -45,7 +45,6 @@ public class OClusterPositionMap extends ODurableComponent {
   }
 
   public void open() throws IOException {
-    startOperation();
     try {
       acquireExclusiveLock();
       try {
@@ -55,12 +54,10 @@ public class OClusterPositionMap extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public void create() throws IOException {
-    startOperation();
     try {
       final OAtomicOperation atomicOperation = startAtomicOperation(false);
 
@@ -79,12 +76,10 @@ public class OClusterPositionMap extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public void flush() {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -98,12 +93,10 @@ public class OClusterPositionMap extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 
   public void close(boolean flush) throws IOException {
-    startOperation();
     try {
       acquireExclusiveLock();
       try {
@@ -112,12 +105,10 @@ public class OClusterPositionMap extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public void truncate() throws IOException {
-    startOperation();
     try {
       final OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
@@ -135,12 +126,10 @@ public class OClusterPositionMap extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public void delete() throws IOException {
-    startOperation();
     try {
       final OAtomicOperation atomicOperation = startAtomicOperation(false);
 
@@ -159,12 +148,10 @@ public class OClusterPositionMap extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public void rename(String newName) throws IOException {
-    startOperation();
     try {
       startAtomicOperation(true);
       acquireExclusiveLock();
@@ -183,12 +170,10 @@ public class OClusterPositionMap extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public long add(long pageIndex, int recordPosition) throws IOException {
-    startOperation();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation(true);
 
@@ -230,12 +215,10 @@ public class OClusterPositionMap extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public long allocate() throws IOException {
-    startOperation();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation(true);
 
@@ -278,12 +261,10 @@ public class OClusterPositionMap extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public void update(final long clusterPosition, final OClusterPositionMapBucket.PositionEntry entry) throws IOException {
-    startOperation();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation(true);
 
@@ -313,12 +294,10 @@ public class OClusterPositionMap extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public void resurrect(final long clusterPosition, final OClusterPositionMapBucket.PositionEntry entry) throws IOException {
-    startOperation();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation(true);
 
@@ -349,12 +328,10 @@ public class OClusterPositionMap extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public OClusterPositionMapBucket.PositionEntry get(final long clusterPosition, final int pageCount) throws IOException {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -382,12 +359,10 @@ public class OClusterPositionMap extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 
   public void remove(final long clusterPosition) throws IOException {
-    startOperation();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation(true);
 
@@ -418,12 +393,10 @@ public class OClusterPositionMap extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public long[] higherPositions(final long clusterPosition) throws IOException {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -440,13 +413,11 @@ public class OClusterPositionMap extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 
   public OClusterPositionEntry[] higherPositionsEntries(final long clusterPosition) throws IOException {
     long realPosition = clusterPosition + 1;
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -513,12 +484,10 @@ public class OClusterPositionMap extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 
   public long[] ceilingPositions(long clusterPosition) throws IOException {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -581,12 +550,10 @@ public class OClusterPositionMap extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 
   public long[] lowerPositions(final long clusterPosition) throws IOException {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -603,12 +570,10 @@ public class OClusterPositionMap extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 
   public long[] floorPositions(final long clusterPosition) throws IOException {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -675,12 +640,10 @@ public class OClusterPositionMap extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 
   public long getFirstPosition() throws IOException {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -712,12 +675,10 @@ public class OClusterPositionMap extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 
   public byte getStatus(final long clusterPosition) throws IOException {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -747,12 +708,10 @@ public class OClusterPositionMap extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 
   public long getLastPosition() throws IOException {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -784,7 +743,6 @@ public class OClusterPositionMap extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 
@@ -792,7 +750,6 @@ public class OClusterPositionMap extends ODurableComponent {
    * Returns the next position available.
    */
   public long getNextPosition() throws IOException {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -817,7 +774,6 @@ public class OClusterPositionMap extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 

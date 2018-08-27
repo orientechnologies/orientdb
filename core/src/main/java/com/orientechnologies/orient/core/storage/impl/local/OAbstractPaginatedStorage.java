@@ -149,6 +149,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OW
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.index.engine.OHashTableIndexEngine;
+import com.orientechnologies.orient.core.storage.index.engine.OPrefixBTreeIndexEngine;
 import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainerSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
@@ -2365,7 +2366,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize, clustersToIndex,
             engineProperties, metadata, encryption);
 
-        if(writeAheadLog != null) {
+        if (writeAheadLog != null) {
           writeAheadLog.flush();
         }
 
@@ -4692,7 +4693,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (cluster != null) {
       cluster.create(-1);
 
-      if(writeAheadLog != null) {
+      if (writeAheadLog != null) {
         writeAheadLog.flush();
       }
 
@@ -4744,7 +4745,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         // we close all files inside cache system so we only clear index metadata and close non core indexes
         for (OIndexEngine engine : indexEngines) {
-          if (engine != null && !(engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine)) {
+          if (engine != null && !(engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine
+              || engine instanceof OPrefixBTreeIndexEngine)) {
             if (onDelete)
               engine.delete();
             else
