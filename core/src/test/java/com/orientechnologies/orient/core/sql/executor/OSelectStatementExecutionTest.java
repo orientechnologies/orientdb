@@ -3714,6 +3714,7 @@ public class OSelectStatementExecutionTest {
 
       @Override
       public void onError(String viewName, Exception exception) {
+        latch.countDown();
       }
     });
 
