@@ -40,7 +40,7 @@ public class FirstPhaseResponseHandlerTest {
     members.add(member1);
     members.add(member2);
     members.add(member3);
-    OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1);
+    OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1, null);
     OLogId id = new OLogId(1);
     ORequestContext context = new ORequestContext(null, null, null, members, handler, id);
 
@@ -64,7 +64,7 @@ public class FirstPhaseResponseHandlerTest {
     members.add(member1);
     members.add(member2);
     members.add(member3);
-    OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1);
+    OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1, null);
     OLogId id = new OLogId(1);
     ORequestContext context = new ORequestContext(null, null, null, members, handler, id);
 
@@ -91,7 +91,7 @@ public class FirstPhaseResponseHandlerTest {
     members.add(member1);
     members.add(member2);
     members.add(member3);
-    OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1);
+    OTransactionFirstPhaseResponseHandler handler = new OTransactionFirstPhaseResponseHandler(operationId, null, member1, null);
     OLogId id = new OLogId(1);
     ORequestContext context = new ORequestContext(null, null, null, members, handler, id);
 

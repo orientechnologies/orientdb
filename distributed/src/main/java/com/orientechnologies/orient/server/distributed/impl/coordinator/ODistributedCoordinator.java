@@ -6,16 +6,18 @@ import java.util.concurrent.*;
 
 public class ODistributedCoordinator implements AutoCloseable {
 
-  private ExecutorService                        requestExecutor;
-  private OOperationLog                          operationLog;
-  private ConcurrentMap<OLogId, ORequestContext> contexts = new ConcurrentHashMap<>();
-  private Map<String, ODistributedMember>        members  = new ConcurrentHashMap<>();
-  private Timer                                  timer;
+  private final ExecutorService                        requestExecutor;
+  private final OOperationLog                          operationLog;
+  private final ConcurrentMap<OLogId, ORequestContext> contexts = new ConcurrentHashMap<>();
+  private final Map<String, ODistributedMember>        members  = new ConcurrentHashMap<>();
+  private final Timer                                  timer;
+  private final ODistributedLockManager                lockManager;
 
-  public ODistributedCoordinator(ExecutorService requestExecutor, OOperationLog operationLog) {
+  public ODistributedCoordinator(ExecutorService requestExecutor, OOperationLog operationLog, ODistributedLockManager lockManager) {
     this.requestExecutor = requestExecutor;
     this.operationLog = operationLog;
     this.timer = new Timer(true);
+    this.lockManager = lockManager;
   }
 
   public void submit(ODistributedMember member, OSubmitRequest request) {
@@ -77,4 +79,9 @@ public class ODistributedCoordinator implements AutoCloseable {
   protected ConcurrentMap<OLogId, ORequestContext> getContexts() {
     return contexts;
   }
+
+  public ODistributedLockManager getLockManager() {
+    return lockManager;
+  }
+
 }

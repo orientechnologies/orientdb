@@ -22,11 +22,7 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
   @Override
   public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
       ODatabaseDocumentInternal session) {
-    if (success) {
-      ((ODatabaseDocumentDistributed) session).commit2pcLocal(null);
-    } else {
-      ((ODatabaseDocumentDistributed) session).rollback2pc(null);
-    }
+    ((ODatabaseDocumentDistributed) session).txSecondPhase(operationId, success);
     return new OTransactionSecondPhaseResponse(true);
   }
 

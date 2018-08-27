@@ -50,7 +50,9 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
+import com.orientechnologies.orient.server.distributed.impl.metadata.OTransactionContext;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
@@ -593,6 +595,33 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   }
 
+  public void txFirstPhase(OSessionOperationId requestId, OTransactionInternal tx) {
+    OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
+    sharedContext.getDistributedContext().registerTransaction(requestId, tx);
+    ((OTransactionOptimistic) tx).begin();
+    firstPhaseDataChecks(false, tx);
+  }
+
+  public void txSecondPhase(OSessionOperationId operationId, boolean success) {
+    OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
+    OTransactionContext context = sharedContext.getDistributedContext().getTransaction(operationId);
+    try {
+      OTransactionInternal tx = context.getTransaction();
+      if (success) {
+        ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
+      } else {
+        //FOR NOW ROLLBACK DO NOTHING ON THE STORAGE ONLY THE CLOSE IS NEEDED
+      }
+    } catch (OLowDiskSpaceException ex) {
+      getStorageDistributed().getDistributedManager()
+          .setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      throw ex;
+    } finally {
+      sharedContext.getDistributedContext().close(operationId);
+    }
+
+  }
+
   public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local, int retryCount) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ONewDistributedTxContextImpl txContext = new ONewDistributedTxContextImpl((ODistributedDatabaseImpl) localDistributedDatabase,
@@ -759,6 +788,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     acquireLocksForTx(transaction, txContext);
 
+    firstPhaseDataChecks(local, transaction);
+
+  }
+
+  private void firstPhaseDataChecks(boolean local, OTransactionInternal transaction) {
     if (!local) {
       ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
     }
@@ -809,7 +843,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     }
-
   }
 
   public void afterCreateOperations(final OIdentifiable id) {
