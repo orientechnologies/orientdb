@@ -483,7 +483,7 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
         keySize = OIntegerSerializer.INT_SIZE + encryptedSize;
       }
 
-      return getBinaryValue(startEntryPosition, keySize + 2 * OLongSerializer.LONG_SIZE);
+      return getBinaryValue(startEntryPosition, keySize + 2 * OIntegerSerializer.INT_SIZE);
     }
   }
 
