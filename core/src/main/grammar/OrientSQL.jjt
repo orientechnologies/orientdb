@@ -194,11 +194,7 @@ TOKEN:
     < LET: ( "l" | "L" ) ( "e" | "E" ) ( "t" | "T" ) >
     |
     < CACHE: ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
-    |
-    < MAXVALUE: ( "m" | "M" ) ( "a" | "A" ) ( "x" | "X" ) ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) >
-    |
-    < MINVALUE: ( "m" | "M" ) ( "i" | "I" ) ( "n" | "N" ) ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) >
-    |
+    |    
     < CYCLE: ( "c" | "C" ) ( "y" | "Y" ) ( "c" | "C" ) ( "l" | "L" ) ( "e" | "E" ) >
     |
     < NOCACHE: ( "n" | "N" ) ( "o" | "O" ) ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
@@ -888,11 +884,7 @@ OIdentifier Identifier():
     token = <SEQUENCE>
     |
     token = <CACHE>
-    |
-    token = <MAXVALUE>
-    |
-    token = <MINVALUE>
-    |
+    |    
     token = <CYCLE>
     |
     token = <NOLIMIT>
@@ -4977,9 +4969,7 @@ OCreateSequenceStatement CreateSequenceStatement():
             |
             ( <INCREMENT> jjtThis.increment = Expression() )
             |
-            ( <MAXVALUE> jjtThis.maxValue = Expression() )
-            |
-            ( <MINVALUE> jjtThis.minValue = Expression() )
+            ( <LIMIT> jjtThis.limitValue = Expression() )            
             |
             ( <CYCLE> { jjtThis.cyclic = true; } )
             |
@@ -5006,10 +4996,8 @@ OAlterSequenceStatement AlterSequenceStatement():
             |
             ( <INCREMENT> jjtThis.increment = Expression() )
             |
-            ( <MAXVALUE> jjtThis.maxValue = Expression() )
-            |
-            ( <MINVALUE> jjtThis.minValue = Expression() )
-            |
+            ( <LIMIT> jjtThis.limitValue = Expression() )
+            |            
             ( <CYCLE> { jjtThis.cyclic = true; } )
             |
             ( <CACHE> jjtThis.cache = Expression() )

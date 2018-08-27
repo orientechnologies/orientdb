@@ -66,6 +66,7 @@ public class OSequenceCached extends OSequence {
       any = true;
     }
     firstCache = true;
+    save();
     return any;
   }
 
@@ -169,6 +170,7 @@ public class OSequenceCached extends OSequence {
                 }
               }
 
+              firstCache = false;
               return cacheStart;
             }
           }
@@ -264,15 +266,9 @@ public class OSequenceCached extends OSequence {
 
     this.cacheStart = value;
     if (orederType == SequenceOrderType.ORDER_POSITIVE) {
-      this.cacheEnd = newValue;
-      if (limitValue == null || newValue != limitValue) {
-        --this.cacheEnd;
-      }
+      this.cacheEnd = newValue - 1;
     } else {
-      this.cacheEnd = newValue;
-      if (limitValue == null || newValue != limitValue) {
-        ++this.cacheEnd;
-      }
+      this.cacheEnd = newValue + 1;
     }
     firstCache = false;
   }

@@ -22,8 +22,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
   OExpression cache;
   Boolean     positive;
   Boolean     cyclic;
-  OExpression minValue;
-  OExpression maxValue;
+  OExpression limitValue; 
   boolean turnLimitOff = false;
 
   public OAlterSequenceStatement(int id) {
@@ -78,20 +77,13 @@ public class OAlterSequenceStatement extends ODDLStatement {
     if (cyclic != null) {
       params.recyclable = cyclic;
     }
-    if (minValue != null) {
-      Object val = minValue.execute((OIdentifiable) null, ctx);
+    if (limitValue != null) {
+      Object val = limitValue.execute((OIdentifiable) null, ctx);
       if (!(val instanceof Number)) {
         throw new OCommandExecutionException("invalid cache value for a sequence: " + val);
       }
       params.limitValue = ((Number) val).longValue();
-    }
-    if (maxValue != null) {
-      Object val = maxValue.execute((OIdentifiable) null, ctx);
-      if (!(val instanceof Number)) {
-        throw new OCommandExecutionException("invalid cache value for a sequence: " + val);
-      }
-      params.limitValue = ((Number) val).longValue();
-    }
+    }    
     if (turnLimitOff) {
       params.turnLimitOff = true;
     }
@@ -157,14 +149,10 @@ public class OAlterSequenceStatement extends ODDLStatement {
         builder.append(" NOCYCLE");
       }
     }
-    if (minValue != null) {
-      builder.append(" MINVALUE ");
-      minValue.toString(params, builder);
-    }
-    if (maxValue != null) {
-      builder.append(" MAXVALUE ");
-      maxValue.toString(params, builder);
-    }
+    if (limitValue != null) {
+      builder.append(" LIMIT ");
+      limitValue.toString(params, builder);
+    }    
     if (turnLimitOff) {
       builder.append(" NOLIMIT");
     }
@@ -179,8 +167,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
     result.cache = cache == null ? null : cache.copy();
     result.positive = positive;
     result.cyclic = cyclic;
-    result.minValue = minValue == null ? null : minValue.copy();
-    result.maxValue = maxValue == null ? null : maxValue.copy();
+    result.limitValue = limitValue == null ? null : limitValue.copy();    
     return result;
   }
 
@@ -207,10 +194,10 @@ public class OAlterSequenceStatement extends ODDLStatement {
     if (!Objects.equals(cyclic, that.cyclic)) {
       return false;
     }
-    if (!Objects.equals(minValue, that.minValue)) {
+    if (!Objects.equals(limitValue, that.limitValue)) {
       return false;
-    }
-    if (Objects.equals(maxValue, that.maxValue)) {
+    }    
+    if (turnLimitOff != that.turnLimitOff){
       return false;
     }
 
@@ -225,8 +212,8 @@ public class OAlterSequenceStatement extends ODDLStatement {
     result = 31 * result + (cache != null ? cache.hashCode() : 0);
     result = 31 * result + (positive != null ? positive.hashCode() : 0);
     result = 31 * result + (cyclic != null ? cyclic.hashCode() : 0);
-    result = 31 * result + (minValue != null ? minValue.hashCode() : 0);
-    result = 31 * result + (maxValue != null ? maxValue.hashCode() : 0);
+    result = 31 * result + (limitValue != null ? limitValue.hashCode() : 0);    
+    result = 31 * result + Boolean.hashCode(turnLimitOff);
     return result;
   }
 }

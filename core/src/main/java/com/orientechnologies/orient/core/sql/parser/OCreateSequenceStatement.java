@@ -27,8 +27,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
   OExpression cache;
   boolean positive = OSequence.DEFAULT_ORDER_TYPE == SequenceOrderType.ORDER_POSITIVE;
   boolean cyclic   = OSequence.DEFAULT_RECYCLABLE_VALUE;
-  OExpression minValue;
-  OExpression maxValue;
+  OExpression limitValue;  
 
   public OCreateSequenceStatement(int id) {
     super(id);
@@ -97,25 +96,15 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       }
     }
 
-    if (minValue != null) {
-      Object o = minValue.execute((OIdentifiable) null, ctx);
+    if (limitValue != null) {
+      Object o = limitValue.execute((OIdentifiable) null, ctx);
       if (o instanceof Number) {
         params.setLimitValue(((Number) o).longValue());
         result.setProperty("limitValue", o);
       } else {
         throw new OCommandExecutionException("Invalid limit value: " + o);
       }
-    }
-
-    if (maxValue != null) {
-      Object o = maxValue.execute((OIdentifiable) null, ctx);
-      if (o instanceof Number) {
-        params.setLimitValue(((Number) o).longValue());
-        result.setProperty("limitValue", o);
-      } else {
-        throw new OCommandExecutionException("Invalid limit value: " + o);
-      }
-    }
+    }    
 
     params.setOrderType(positive ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.ORDER_NEGATIVE);
     result.setProperty("orderType", params.orderType.toString());
@@ -156,14 +145,10 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       builder.append(" CACHE ");
       cache.toString(params, builder);
     }
-    if (minValue != null) {
-      builder.append(" MINVALUE ");
-      minValue.toString(params, builder);
-    }
-    if (maxValue != null) {
-      builder.append(" MAXVALUE ");
-      maxValue.toString(params, builder);
-    }
+    if (limitValue != null) {
+      builder.append(" LIMIT ");
+      limitValue.toString(params, builder);
+    }    
     if (cyclic != OSequence.DEFAULT_RECYCLABLE_VALUE) {
       builder.append(" CYCLE");
     }
@@ -183,8 +168,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     result.start = start == null ? null : start.copy();
     result.increment = increment == null ? null : increment.copy();
     result.cache = cache == null ? null : cache.copy();
-    result.minValue = minValue == null ? null : minValue.copy();
-    result.maxValue = maxValue == null ? null : maxValue.copy();
+    result.limitValue = limitValue == null ? null : limitValue.copy();    
     result.cyclic = cyclic;
     result.positive = positive;
     return result;
@@ -211,10 +195,8 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       return false;
     if (cache != null ? !cache.equals(that.cache) : that.cache != null)
       return false;
-    if (maxValue != null ? !maxValue.equals(that.maxValue) : that.maxValue != null)
-      return false;
-    if (minValue != null ? !minValue.equals(that.minValue) : that.minValue != null)
-      return false;
+    if (limitValue != null ? !limitValue.equals(that.limitValue) : that.limitValue != null)
+      return false;    
     if (cyclic != that.cyclic) {
       return false;
     }
@@ -229,8 +211,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     result = 31 * result + (start != null ? start.hashCode() : 0);
     result = 31 * result + (increment != null ? increment.hashCode() : 0);
     result = 31 * result + (cache != null ? cache.hashCode() : 0);
-    result = 31 * result + (maxValue != null ? maxValue.hashCode() : 0);
-    result = 31 * result + (minValue != null ? minValue.hashCode() : 0);
+    result = 31 * result + (limitValue != null ? limitValue.hashCode() : 0);    
     result = 31 * result + Boolean.hashCode(cyclic);
     result = 31 * result + Boolean.hashCode(positive);
     return result;
