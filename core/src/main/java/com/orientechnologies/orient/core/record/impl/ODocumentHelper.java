@@ -77,6 +77,16 @@ public class ODocumentHelper {
   public static interface RIDMapper {
     ORID map(ORID rid);
   }
+  
+  public static Set<String> getReservedAttributes(){
+    Set<String> retSet = new HashSet<>();
+    retSet.add(ATTRIBUTE_THIS); retSet.add(ATTRIBUTE_RID);
+    retSet.add(ATTRIBUTE_RID_ID); retSet.add(ATTRIBUTE_RID_POS);
+    retSet.add(ATTRIBUTE_VERSION); retSet.add(ATTRIBUTE_CLASS);
+    retSet.add(ATTRIBUTE_TYPE); retSet.add(ATTRIBUTE_SIZE);
+    retSet.add(ATTRIBUTE_FIELDS); retSet.add(ATTRIBUTE_RAW);
+    return retSet;
+  }
 
   public static void sort(List<? extends OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria,
       OCommandContext context) {

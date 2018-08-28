@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
@@ -73,7 +74,7 @@ public class OJson extends SimpleNode {
     ODocument retDoc = new ODocument(className);
     for (OJsonItem item : items) {
       String name = item.getLeftValue();
-      if (name == null || name.trim().startsWith("@")) {
+      if (name == null || ODocumentHelper.getReservedAttributes().contains(name.toLowerCase(Locale.ENGLISH))) {
         continue;
       }        
       Object value = item.right.execute(source, ctx);
