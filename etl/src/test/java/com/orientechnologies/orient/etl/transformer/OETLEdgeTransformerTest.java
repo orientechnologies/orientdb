@@ -127,6 +127,35 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
 
   }
 
+
+  @Test
+  public void testDynamicEdgeClassMultipleValues() {
+    configure("{source: { content: { value: 'v1,edge,v2\nJay,friend,Luca' } }, extractor : { csv: {} },"
+        + " transformers: [{vertex: {class:'V1'}}, {edge:{class:'${input.edge}',joinFieldName:'v2',lookup:'V2.name'}},"
+        + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
+
+    OETLLoader loader = proc.getLoader();
+    ODatabasePool pool = loader.getPool();
+    ODatabaseDocument db = pool.acquire();
+    createClasses(db);
+    OVertex vertex = db.newVertex("v2");
+
+    vertex.setProperty("name", "Luca");
+    db.save(vertex);
+    db.commit();
+    db.close();
+
+    proc.execute();
+    db = pool.acquire();
+
+    assertEquals(1, db.countClass("V1"));
+    assertEquals(2, db.countClass("V2"));
+    assertEquals(2, db.countClass("Friend"));
+    db.close();
+    pool.close();
+
+  }
+
   @Test
   public void testEdgeWithProperties() {
     configure(
