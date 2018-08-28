@@ -1302,8 +1302,17 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeSubscribeDistributedConfiguration(OSubscribeDistributedConfigurationRequest request) {
     OPushManager manager = server.getPushManager();
-
     manager.subscribeDistributeConfig((ONetworkProtocolBinary) connection.getProtocol());
+
+    Set<String> dbs = server.listDatabases();
+    ODistributedServerManager plugin = server.getPlugin("cluster");
+    if (plugin != null) {
+      Orient.instance().submit(() -> {
+        for (String db : dbs) {
+          plugin.notifyClients(db);
+        }
+      });
+    }
     return new OSubscribeDistributedConfigurationResponse();
   }
 

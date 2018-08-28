@@ -31,5 +31,9 @@ public class OInsertSetExpression {
   public OExpression getRight() {
     return right;
   }
+
+  public boolean isCacheable() {
+    return right.isCacheable();
+  }
 }
 
