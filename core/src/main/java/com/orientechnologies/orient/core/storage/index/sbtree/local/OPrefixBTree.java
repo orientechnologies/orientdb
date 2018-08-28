@@ -230,10 +230,6 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
   @SuppressWarnings("unchecked")
   public boolean update(String key, OIndexKeyUpdater<V> updater, OIndexEngine.Validator<String, V> validator) {
-    if ("578930607".equals(key)) {
-      System.out.println();
-    }
-
     final OAtomicOperation atomicOperation;
     try {
       atomicOperation = startAtomicOperation(true);
@@ -1034,7 +1030,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
           separationKey = bucketToSplit.getBucketPrefix() + separationKeyRight;
         }
       } else {
-        separationKey = separationKeyRight;
+        separationKey = bucketToSplit.getBucketPrefix() + separationKeyRight;
       }
 
       if (pageIndex != ROOT_INDEX) {
