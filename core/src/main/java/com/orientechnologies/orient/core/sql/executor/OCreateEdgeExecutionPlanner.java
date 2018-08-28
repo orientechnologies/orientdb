@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.*;
@@ -14,10 +14,11 @@ import java.util.List;
  */
 public class OCreateEdgeExecutionPlanner {
 
-  protected OIdentifier targetClass;
-  protected OIdentifier targetClusterName;
-  protected OExpression leftExpression;
-  protected OExpression rightExpression;
+  private final OCreateEdgeStatement statement;
+  protected     OIdentifier          targetClass;
+  protected     OIdentifier          targetClusterName;
+  protected     OExpression          leftExpression;
+  protected     OExpression          rightExpression;
 
   protected boolean upsert = false;
 
@@ -27,6 +28,7 @@ public class OCreateEdgeExecutionPlanner {
   protected OBatch      batch;
 
   public OCreateEdgeExecutionPlanner(OCreateEdgeStatement statement) {
+    this.statement = statement;
     this.targetClass = statement.getTargetClass() == null ? null : statement.getTargetClass().copy();
     this.targetClusterName = statement.getTargetClusterName() == null ? null : statement.getTargetClusterName().copy();
     this.leftExpression = statement.getLeftExpression() == null ? null : statement.getLeftExpression().copy();
@@ -40,12 +42,20 @@ public class OCreateEdgeExecutionPlanner {
   }
 
   public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
+    if (!enableProfiling && statement.executinPlanCanBeCached()) {
+      OExecutionPlan plan = OExecutionPlanCache.get(statement.getOriginalStatement(), ctx, db);
+      if (plan != null) {
+        return (OInsertExecutionPlan) plan;
+      }
+    }
+
+    long planningStart = System.currentTimeMillis();
 
     if (targetClass == null) {
       if (targetClusterName == null) {
         targetClass = new OIdentifier("E");
       } else {
-        ODatabase db = ctx.getDatabase();
         OClass clazz = db.getMetadata().getSchema().getClassByClusterId(db.getClusterIdByName(targetClusterName.getStringValue()));
         if (clazz != null) {
           targetClass = new OIdentifier(clazz.getName());
@@ -85,6 +95,12 @@ public class OCreateEdgeExecutionPlanner {
     handleSetFields(result, body, ctx, enableProfiling);
     handleSave(result, targetClusterName, ctx, enableProfiling);
     //TODO implement batch, wait and retry
+
+    if (!enableProfiling && statement.executinPlanCanBeCached() && result.canBeCached()
+        && OExecutionPlanCache.getLastInvalidation(db) < planningStart) {
+      OExecutionPlanCache.put(statement.getOriginalStatement(), result, (ODatabaseDocumentInternal) ctx.getDatabase());
+    }
+
     return result;
   }
 

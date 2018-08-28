@@ -75,4 +75,14 @@ public class SaveElementStep extends AbstractExecutionStep {
     }
     return result.toString();
   }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new SaveElementStep(ctx, cluster == null ? null : cluster.copy(), profilingEnabled);
+  }
 }

@@ -227,7 +227,7 @@ public class OSelectStatement extends OStatement {
   @Override
   public boolean executinPlanCanBeCached() {
     if (originalStatement == null) {
-      return false;
+      setOriginalStatement(this.toString());
     }
     if (this.target != null && !this.target.isCacheable()) {
       return false;
