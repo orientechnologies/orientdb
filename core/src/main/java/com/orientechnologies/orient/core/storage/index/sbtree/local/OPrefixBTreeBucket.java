@@ -258,15 +258,12 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
       }
 
       boolean isLinkValue = getByteValue(entryPosition) > 0;
-      long link = -1;
-      V value = null;
+      V value;
 
-      if (isLinkValue)
-        link = deserializeFromDirectMemory(OLongSerializer.INSTANCE, entryPosition + OByteSerializer.BYTE_SIZE);
-      else
-        value = deserializeFromDirectMemory(valueSerializer, entryPosition + OByteSerializer.BYTE_SIZE);
+      assert !isLinkValue;
+      value = deserializeFromDirectMemory(valueSerializer, entryPosition + OByteSerializer.BYTE_SIZE);
 
-      return new SBTreeEntry<>(-1, -1, bucketPrefix + key, new OSBTreeValue<>(link >= 0, link, value));
+      return new SBTreeEntry<>(-1, -1, bucketPrefix + key, new OSBTreeValue<>(false, -1, value));
     } else {
       int leftChild = getIntValue(entryPosition);
       entryPosition += OIntegerSerializer.INT_SIZE;
