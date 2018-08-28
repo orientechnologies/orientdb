@@ -115,6 +115,28 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   private long calculateInitialMaxWALSegSize(OrientDBConfig configurations) throws IOException {
+    String walPath;
+
+    if (configurations != null) {
+      final OContextConfiguration config = configurations.getConfigurations();
+
+      if (config != null) {
+        walPath = config.getValueAsString(OGlobalConfiguration.WAL_LOCATION);
+      } else {
+        walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
+      }
+    } else {
+      walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
+    }
+
+    if (walPath == null) {
+      walPath = basePath;
+    }
+
+    final FileStore fileStore = Files.getFileStore(Paths.get(walPath));
+    final long freeSpace = fileStore.getUsableSpace();
+    final long filesSize = Files.walk(Paths.get(walPath)).mapToLong(p -> p.toFile().isFile() ? p.toFile().length() : 0).sum();
+
     long maxSegSize;
 
     if (configurations != null) {
@@ -146,30 +168,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
         throw new ODatabaseException("Invalid configuration settings. Can not set maximum size of WAL segment");
       }
 
-      String walPath;
-
-      if (configurations != null) {
-        final OContextConfiguration config = configurations.getConfigurations();
-
-        if (config != null) {
-          walPath = config.getValueAsString(OGlobalConfiguration.WAL_LOCATION);
-        } else {
-          walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
-        }
-      } else {
-        walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
-      }
-
-      if (walPath == null) {
-        walPath = basePath;
-      }
-
-      final FileStore fileStore = Files.getFileStore(Paths.get(walPath));
-      final long freeSpace = fileStore.getUsableSpace();
-      final long filesSize = Files.walk(Paths.get(walPath)).mapToLong(p -> p.toFile().isFile() ? p.toFile().length() : 0).sum();
-
       maxSegSize = (freeSpace + filesSize) / 100 * sizePercent;
     }
+
+    final long minSegSizeLimit = (long) (freeSpace * 0.25);
 
     long minSegSize = 0;
     if (configurations != null) {
@@ -181,6 +183,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
     if (minSegSize <= 0) {
       minSegSize = OGlobalConfiguration.WAL_MIN_SEG_SIZE.getValueAsLong() * 1024 * 1024;
+    }
+
+    if (minSegSize > minSegSizeLimit) {
+      minSegSize = minSegSizeLimit;
     }
 
     if (minSegSize > 0 && maxSegSize < minSegSize) {
