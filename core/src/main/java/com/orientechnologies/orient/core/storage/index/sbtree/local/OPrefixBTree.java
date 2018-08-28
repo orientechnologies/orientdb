@@ -230,7 +230,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
   @SuppressWarnings("unchecked")
   public boolean update(String key, OIndexKeyUpdater<V> updater, OIndexEngine.Validator<String, V> validator) {
-    if (key.equals("578930607")) {
+    if ("578930607".equals(key)) {
       System.out.println();
     }
 
