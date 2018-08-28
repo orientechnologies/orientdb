@@ -1038,8 +1038,9 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
         separator = separationKey;
       } else {
-        final int startSeparationIndex = indexToSplit - 2;
-        final int endSeparationIndex = indexToSplit + 3;
+        final int diff = ((int) (bucketSize * 0.1)) / 2;
+        final int startSeparationIndex = indexToSplit - diff;
+        final int endSeparationIndex = indexToSplit + diff + 1;
 
         if (splitLeaf) {
           String prevSeparationKey = bucketToSplit.getKeyWithoutPrefix(startSeparationIndex - 1);
@@ -1080,7 +1081,6 @@ public class OPrefixBTree<V> extends ODurableComponent {
         }
 
       }
-
 
       if (pageIndex != ROOT_INDEX) {
         final List<OPrefixBTreeBucket.SBTreeEntry<V>> rightEntries = new ArrayList<>(indexToSplit);
