@@ -1,16 +1,13 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -25,7 +22,12 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentModification;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxLockTimeout;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxUniqueIndex;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
 

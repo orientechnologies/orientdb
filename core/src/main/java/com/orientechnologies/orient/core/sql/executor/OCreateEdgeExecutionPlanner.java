@@ -4,7 +4,14 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.parser.*;
+import com.orientechnologies.orient.core.sql.parser.OBatch;
+import com.orientechnologies.orient.core.sql.parser.OCreateEdgeStatement;
+import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
+import com.orientechnologies.orient.core.sql.parser.OExpression;
+import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import com.orientechnologies.orient.core.sql.parser.OInsertBody;
+import com.orientechnologies.orient.core.sql.parser.OInsertSetExpression;
+import com.orientechnologies.orient.core.sql.parser.OUpdateItem;
 
 import java.util.ArrayList;
 import java.util.List;

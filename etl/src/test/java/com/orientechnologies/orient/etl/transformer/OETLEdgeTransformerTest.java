@@ -37,7 +37,9 @@ import java.io.File;
 import java.util.Iterator;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests ETL Field Transformer.
@@ -126,7 +128,6 @@ public class OETLEdgeTransformerTest extends OETLBaseTest {
     pool.close();
 
   }
-
 
   @Test
   public void testDynamicEdgeClassMultipleValues() {
