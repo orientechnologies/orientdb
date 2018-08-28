@@ -1019,19 +1019,68 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
       int indexToSplit = bucketSize >>> 1;
 
-      final String separationKeyRight = bucketToSplit.getKeyWithoutPrefix(indexToSplit);
+      final String separator;
 
-      final String separationKey;
-      if (splitLeaf) {
-        if (indexToSplit > 0) {
-          final String separationKeyLeft = bucketToSplit.getKeyWithoutPrefix(indexToSplit - 1);
-          separationKey = bucketToSplit.getBucketPrefix() + findMinSeparationKey(separationKeyLeft, separationKeyRight);
+      if (bucketSize < 100) {
+        final String separationKey;
+        final String separationKeyRight = bucketToSplit.getKeyWithoutPrefix(indexToSplit);
+
+        if (splitLeaf) {
+          if (indexToSplit > 0) {
+            final String separationKeyLeft = bucketToSplit.getKeyWithoutPrefix(indexToSplit - 1);
+            separationKey = bucketToSplit.getBucketPrefix() + findMinSeparationKey(separationKeyLeft, separationKeyRight);
+          } else {
+            separationKey = bucketToSplit.getBucketPrefix() + separationKeyRight;
+          }
         } else {
           separationKey = bucketToSplit.getBucketPrefix() + separationKeyRight;
         }
+
+        separator = separationKey;
       } else {
-        separationKey = bucketToSplit.getBucketPrefix() + separationKeyRight;
+        final int startSeparationIndex = indexToSplit - 2;
+        final int endSeparationIndex = indexToSplit + 3;
+
+        if (splitLeaf) {
+          String prevSeparationKey = bucketToSplit.getKeyWithoutPrefix(startSeparationIndex - 1);
+          String separationKey = bucketToSplit.getKeyWithoutPrefix(startSeparationIndex);
+          String minSeparationKey = findMinSeparationKey(prevSeparationKey, separationKey);
+
+          String absMinKey = minSeparationKey;
+          int absMinIndex = startSeparationIndex;
+
+          for (int i = startSeparationIndex + 1; i < endSeparationIndex; i++) {
+            separationKey = bucketToSplit.getKeyWithoutPrefix(i);
+            minSeparationKey = findMinSeparationKey(prevSeparationKey, separationKey);
+
+            if (absMinKey.length() > minSeparationKey.length()) {
+              absMinKey = separationKey;
+              absMinIndex = i;
+            }
+
+            prevSeparationKey = separationKey;
+          }
+
+          separator = bucketToSplit.getBucketPrefix() + absMinKey;
+          indexToSplit = absMinIndex;
+        } else {
+          String absMinKey = null;
+          int absMinIndex = -1;
+
+          for (int i = startSeparationIndex; i < endSeparationIndex; i++) {
+            String separationKey = bucketToSplit.getKeyWithoutPrefix(i);
+            if (absMinKey == null || absMinKey.length() > separationKey.length()) {
+              absMinKey = separationKey;
+              absMinIndex = i;
+            }
+          }
+
+          separator = bucketToSplit.getBucketPrefix() + absMinKey;
+          indexToSplit = absMinIndex;
+        }
+
       }
+
 
       if (pageIndex != ROOT_INDEX) {
         final List<OPrefixBTreeBucket.SBTreeEntry<V>> rightEntries = new ArrayList<>(indexToSplit);
@@ -1041,7 +1090,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
         }
 
         return splitNonRootBucket(path, leftBoundaries, rightBoundaries, keyIndex, keyToInsert, pageIndex, bucketToSplit, splitLeaf,
-            indexToSplit, separationKey, rightEntries, atomicOperation);
+            indexToSplit, separator, rightEntries, atomicOperation);
       } else {
         final List<byte[]> rightEntries = new ArrayList<>(indexToSplit);
 
@@ -1049,7 +1098,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
           rightEntries.add(bucketToSplit.getRawEntry(i));
         }
 
-        return splitRootBucket(path, keyIndex, keyToInsert, bucketEntry, bucketToSplit, splitLeaf, indexToSplit, separationKey,
+        return splitRootBucket(path, keyIndex, keyToInsert, bucketEntry, bucketToSplit, splitLeaf, indexToSplit, separator,
             rightEntries, atomicOperation);
       }
     } finally {
