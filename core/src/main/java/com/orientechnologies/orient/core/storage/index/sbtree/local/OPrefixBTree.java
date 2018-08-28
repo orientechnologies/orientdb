@@ -230,6 +230,10 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
   @SuppressWarnings("unchecked")
   public boolean update(String key, OIndexKeyUpdater<V> updater, OIndexEngine.Validator<String, V> validator) {
+    if (key.equals("578930607")) {
+      System.out.println();
+    }
+
     final OAtomicOperation atomicOperation;
     try {
       atomicOperation = startAtomicOperation(true);
