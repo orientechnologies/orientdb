@@ -1145,7 +1145,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
         final ArrayList<String> resultLeftBoundaries = new ArrayList<>(leftBoundaries.subList(0, leftBoundaries.size() - 1));
         final ArrayList<String> resultRightBoundaries = new ArrayList<>(rightBoundaries.subList(0, rightBoundaries.size() - 1));
 
-        if (comparator.compare(keyToInsert, separationKey) <= 0) {
+        if (comparator.compare(keyToInsert, separationKey) < 0) {
           resultPath.add(pageIndex);
 
           resultRightBoundaries.add(separationKey);
