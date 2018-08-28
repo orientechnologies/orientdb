@@ -43,9 +43,9 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
   private       CsvReporter                    csvReporter     = null;
   private       JmxReporter                    jmxReporter     = null;
 
-  private GraphiteReporter graphiteReporter = null;
-  private OrientDBMetricsSettings settings;
-  private Map<Class<? extends OMetric>, Function<String, Metric>> metricFactory = new HashMap<>();
+  private GraphiteReporter                                        graphiteReporter = null;
+  private OrientDBMetricsSettings                                 settings;
+  private Map<Class<? extends OMetric>, Function<String, Metric>> metricFactory    = new HashMap<>();
 
   private transient ObjectMapper mapper;
 
@@ -209,7 +209,12 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
       Function<String, Metric> function = metricFactory.get(klass);
       if (function != null) {
-        return new DropWizardGeneric(function.apply(k), k, description);
+        Metric apply = function.apply(k);
+        if (apply instanceof MetricSet) {
+          return new DropWizardGenericSet((MetricSet) apply, k, description);
+        } else {
+          return new DropWizardGeneric(apply, k, description);
+        }
       } else {
         return null;
       }
@@ -241,10 +246,18 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
         register(name(prefix, entry.getKey()), entry.getValue());
       }
     }
+    metrics.putIfAbsent(prefix, metricSet);
   }
 
   public boolean remove(String name) {
-    metrics.remove(name);
+    OMetric oMetric = metrics.remove(name);
+
+    if (oMetric instanceof OMetricSet) {
+      String prefix = ((OMetricSet) oMetric).prefix();
+      ((OMetricSet) oMetric).getMetrics().forEach((k, v) -> {
+        remove(prefix + "." + k);
+      });
+    }
     return registry.remove(name);
   }
 

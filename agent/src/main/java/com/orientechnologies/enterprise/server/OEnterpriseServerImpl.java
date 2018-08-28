@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
@@ -98,6 +99,11 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   public void onClientConnection(OClientConnection oClientConnection) {
 
     this.listeners.forEach((l) -> l.onClientConnection(oClientConnection));
+  }
+
+  @Override
+  public OSystemDatabase getSystemDatabase() {
+    return server.getSystemDatabase();
   }
 
   @Override

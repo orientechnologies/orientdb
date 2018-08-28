@@ -1,5 +1,6 @@
 package com.orientechnologies.agent.services.metrics;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.agent.profiler.OMetricsRegistry;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -9,6 +10,7 @@ import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collections;
 
@@ -17,21 +19,32 @@ import java.util.Collections;
  */
 public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbstract {
 
-  private static final String[] NAMES = { "GET|metrics", "GET|metrics/*" };
+  private static final String[] NAMES = { "GET|metrics", "GET|metrics/*", "POST|metrics/config" };
 
-  private OMetricsRegistry        registry;
-  private OrientDBMetricsSettings settings;
+  private OMetricsRegistry       registry;
+  private OrientDBMetricsService service;
+  private ObjectMapper mapper = new ObjectMapper();
 
-  public OrientDBMetricsCommand(OMetricsRegistry registry, OrientDBMetricsSettings settings) {
+  public OrientDBMetricsCommand(OMetricsRegistry registry, OrientDBMetricsService settings) {
     super("server.metrics");
     this.registry = registry;
-    this.settings = settings;
+    this.service = settings;
   }
 
   @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     final String[] parts = checkSyntax(iRequest.getUrl(), 1, "Syntax error: metrics");
 
+    if (iRequest.httpMethod.equalsIgnoreCase("GET")) {
+      doGet(iResponse, parts);
+    } else if (iRequest.httpMethod.equalsIgnoreCase("POST")) {
+      doPost(iRequest, iResponse, parts);
+    }
+
+    return false;
+  }
+
+  private void doGet(OHttpResponse iResponse, String[] parts) throws IOException {
     if (parts.length == 1) {
 
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -39,6 +52,8 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
       iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
     } else {
       String command = parts[1];
+
+      OrientDBMetricsSettings settings = service.getSettings();
       switch (command) {
       case "prometheus":
         if (settings.reporters.prometheus.enabled) {
@@ -50,9 +65,19 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
           }
         }
         break;
+      case "config":
+        String valueAsString = mapper.writeValueAsString(settings);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, valueAsString, null);
+        break;
       }
+
     }
-    return false;
+  }
+
+  private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String[] parts) throws IOException {
+    OrientDBMetricsSettings settings = mapper.readValue(iRequest.content, OrientDBMetricsSettings.class);
+    service.changeSettings(settings);
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, null, null);
   }
 
   @Override

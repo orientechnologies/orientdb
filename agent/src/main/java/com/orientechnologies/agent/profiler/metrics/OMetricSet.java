@@ -9,4 +9,6 @@ public interface OMetricSet extends OMetric {
 
   Map<String, OMetric> getMetrics();
 
+  String prefix();
+
 }

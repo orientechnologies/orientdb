@@ -17,4 +17,5 @@ public class DropWizardGeneric<T extends Metric> extends DropWizardBase {
   public T getMetric() {
     return metric;
   }
+
 }

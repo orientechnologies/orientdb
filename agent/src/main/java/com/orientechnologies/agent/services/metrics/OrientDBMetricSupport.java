@@ -17,7 +17,8 @@ public class OrientDBMetricSupport implements OrientDBMetric {
 
   @Override
   public void stop() {
-
+    metrics.forEach(m -> m.stop());
+    metrics.clear();
   }
 
   public boolean add(OrientDBMetric orientDBMetric) {

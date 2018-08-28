@@ -5,6 +5,7 @@ import com.orientechnologies.enterprise.server.listener.OEnterpriseStorageListen
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 import java.util.Collections;
@@ -43,4 +44,6 @@ public interface OEnterpriseServer {
   OrientDBInternal getDatabases();
 
   void interruptConnection(Integer connectionId);
+
+  OSystemDatabase getSystemDatabase();
 }
