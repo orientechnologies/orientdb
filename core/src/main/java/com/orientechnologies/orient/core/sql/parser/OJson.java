@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 
 import java.util.*;
 
@@ -66,11 +67,11 @@ public class OJson extends SimpleNode {
     return doc;
   }
   
-  private ODocument toDocument(OResult source, OCommandContext ctx, String className){
+  private ODocument toDocument(OIdentifiable source, OCommandContext ctx, String className){
     ODocument retDoc = new ODocument(className);
     for (OJsonItem item : items) {
       String name = item.getLeftValue();
-      if (name == null || name.trim().startsWith("@")) {
+      if (name == null || ODocumentHelper.getReservedAttributes().contains(name.toLowerCase(Locale.ENGLISH))) {
         continue;
       }        
       Object value = item.right.execute(source, ctx);
@@ -85,7 +86,7 @@ public class OJson extends SimpleNode {
    * @param ctx
    * @return 
    */
-  public Object toObjectDetermineType(OResult source, OCommandContext ctx){
+  public Object toObjectDetermineType(OIdentifiable source, OCommandContext ctx){
     String className = getClassNameForDocument(ctx);
     if (className != null){
       return toDocument(source, ctx, className);
