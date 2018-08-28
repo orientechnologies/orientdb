@@ -44,7 +44,6 @@ public class OExpression extends SimpleNode {
     }
 
     return value;
-
   }
 
   public boolean isBaseIdentifier() {
