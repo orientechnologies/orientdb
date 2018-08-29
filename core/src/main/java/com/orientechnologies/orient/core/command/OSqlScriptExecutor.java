@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OScriptExecutionPlan;
+import com.orientechnologies.orient.core.sql.parser.OLetStatement;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 
@@ -28,7 +29,7 @@ public class OSqlScriptExecutor implements OScriptExecutor {
       script += ";";
     }
     List<OStatement> statements = OSQLEngine.parseScript(script, database);
-    OResultSet rs = null;
+
     OCommandContext scriptContext = new OBasicCommandContext();
     ((OBasicCommandContext) scriptContext).setDatabase(database);
     Map<Object, Object> params = new HashMap<>();
@@ -42,14 +43,14 @@ public class OSqlScriptExecutor implements OScriptExecutor {
     OScriptExecutionPlan plan = new OScriptExecutionPlan(scriptContext);
 
     for (OStatement stm : statements) {
-      if (rs != null) {
-        rs.close();
-      }
       if (stm.getOriginalStatement() == null) {
         stm.setOriginalStatement(stm.toString());
       }
       OInternalExecutionPlan sub = stm.createExecutionPlan(scriptContext);
       plan.chain(sub, false);
+      if (stm instanceof OLetStatement) {
+        scriptContext.declareScriptVariable(((OLetStatement) stm).getName().getStringValue());
+      }
     }
     return new OLocalResultSet(plan);
   }

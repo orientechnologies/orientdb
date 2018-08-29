@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheHook;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -36,13 +35,17 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
@@ -50,10 +53,11 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryMonitorEmbedded;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
-import com.orientechnologies.orient.core.schedule.OScheduler;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.*;
@@ -68,7 +72,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
 
 /**
  * Created by tglman on 27/06/16.
@@ -108,7 +111,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     throw new UnsupportedOperationException("Use OrientDB");
   }
 
-  public void init(OrientDBConfig config) {
+  public void init(OrientDBConfig config, OSharedContext sharedContext) {
+    this.sharedContext = sharedContext;
     activateOnCurrentThread();
     this.config = config;
     applyAttributes(config);
@@ -131,7 +135,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
       localCache.startup();
 
-      loadMetadata();
+      loadMetadata(this.sharedContext);
 
       installHooksEmbedded();
       if (this.getMetadata().getCommandCache().isEnabled())
@@ -211,14 +215,15 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   /**
    * {@inheritDoc}
    */
-  public void internalCreate(OrientDBConfig config) {
+  public void internalCreate(OrientDBConfig config, OSharedContext ctx) {
+    this.sharedContext = ctx;
     this.status = STATUS.OPEN;
     // THIS IF SHOULDN'T BE NEEDED, CREATE HAPPEN ONLY IN EMBEDDED
     applyAttributes(config);
     applyListeners(config);
     metadata = new OMetadataDefault(this);
     installHooksEmbedded();
-    createMetadata();
+    createMetadata(ctx);
 
     if (this.getMetadata().getCommandCache().isEnabled())
       registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
@@ -237,29 +242,21 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       }
   }
 
-  protected void createMetadata() {
-    // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
-    OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextEmbedded(getStorage());
-        return shared;
-      }
-    });
+  protected void createMetadata(OSharedContext shared) {
     metadata.init(shared);
     ((OSharedContextEmbedded) shared).create(this);
   }
 
   @Override
   protected void loadMetadata() {
+    loadMetadata(this.sharedContext);
+  }
+
+  @Override
+  protected void loadMetadata(OSharedContext shared) {
     metadata = new OMetadataDefault(this);
-    sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextEmbedded(getStorage());
-        return shared;
-      }
-    });
+    sharedContext = shared;
+
     metadata.init(sharedContext);
     sharedContext.load(this);
   }
@@ -455,8 +452,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
    * instance. The database copy is not set in thread local.
    */
   public ODatabaseDocumentInternal copy() {
-    ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(storage);
-    database.init(config);
+    ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(getSharedContext().getStorage());
+    database.init(config, this.sharedContext);
     String user;
     if (getUser() != null) {
       user = getUser().getName();
@@ -476,7 +473,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public boolean isClosed() {
-    return status == STATUS.CLOSED || storage.isClosed();
+    return status == STATUS.CLOSED || getStorage().isClosed();
   }
 
   public void rebuildIndexes() {
@@ -496,6 +493,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public void replaceStorage(OStorage iNewStorage) {
+    this.getSharedContext().setStorage(iNewStorage);
     storage = iNewStorage;
   }
 
@@ -663,13 +661,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     return microTransaction;
   }
 
-  public static void deInit(OAbstractPaginatedStorage storage) {
-    OSharedContext sharedContext = storage.removeResource(OSharedContext.class.getName());
-    //This storage may not have been completely opened yet
-    if (sharedContext != null)
-      sharedContext.close();
-  }
-
   @Override
   public int addBlobCluster(final String iClusterName, final Object... iParameters) {
     int id;
@@ -714,37 +705,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     }
     endMicroTransaction(true);
     return;
-  }
-
-  /**
-   * This method is internal, it can be subject to signature change or be removed, do not use.
-   *
-   * @Internal
-   */
-  public <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
-      final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
-      ORecordCallback<Integer> recordUpdatedCallback) {
-
-    checkOpenness();
-    checkIfActive();
-    if (!record.isDirty())
-      return (RET) record;
-
-    final ORecordId rid = (ORecordId) record.getIdentity();
-
-    if (rid == null)
-      throw new ODatabaseException(
-          "Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
-
-    final OMicroTransaction microTx = beginMicroTransaction();
-    try {
-      microTx.saveRecord(record, clusterName, mode, forceCreate, recordCreatedCallback, recordUpdatedCallback);
-    } catch (Exception e) {
-      endMicroTransaction(false);
-      throw e;
-    }
-    endMicroTransaction(true);
-    return (RET) record;
   }
 
   private void endMicroTransaction(boolean success) {
@@ -905,7 +865,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterCreate(doc, this);
         }
+
+        ((OSharedContextEmbedded) getSharedContext()).getViewManager().recordAdded(clazz, doc, this);
       }
+
       OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, this);
     }
@@ -931,9 +894,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterUpdate(doc, this);
         }
+
+        ((OSharedContextEmbedded) getSharedContext()).getViewManager().recordUpdated(clazz, doc, this);
       }
       OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.UPDATED, this);
+
     }
     callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
   }
@@ -961,6 +927,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterDelete(doc, this);
         }
+
+        ((OSharedContextEmbedded) getSharedContext()).getViewManager().recordDeleted(clazz, doc, this);
       }
       OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, this);
@@ -1016,5 +984,85 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     super.afterRollbackOperations();
     OLiveQueryHook.removePendingDatabaseOps(this);
     OLiveQueryHookV2.removePendingDatabaseOps(this);
+  }
+
+  @Override
+  public ORecord saveAll(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
+
+    ORecord toRet = null;
+    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
+    Set<ORecord> newRecord = dirtyManager.getNewRecords();
+    Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
+    dirtyManager.clearForSave();
+    if (iRecord.getIdentity().isNew()) {
+      if (newRecord == null)
+        newRecord = Collections.newSetFromMap(new IdentityHashMap<>());
+      newRecord.add(iRecord);
+    } else {
+      if (updatedRecord == null)
+        updatedRecord = Collections.newSetFromMap(new IdentityHashMap<>());
+      updatedRecord.add(iRecord);
+    }
+
+    final OMicroTransaction microTx = beginMicroTransaction();
+    try {
+      if (newRecord != null) {
+        for (ORecord rn : newRecord) {
+          String cluster;
+          if (iRecord == rn)
+            cluster = iClusterName;
+          else
+            cluster = getClusterName(rn);
+          microTx.saveRecord(rn, cluster, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+        }
+      }
+      if (updatedRecord != null) {
+        for (ORecord rn : updatedRecord) {
+          microTx.saveRecord(rn, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+        }
+      }
+    } catch (Exception e) {
+      endMicroTransaction(false);
+      throw e;
+    }
+    endMicroTransaction(true);
+
+    return iRecord;
+  }
+
+  public String getClusterName(final ORecord record) {
+    int clusterId = record.getIdentity().getClusterId();
+    if (clusterId == ORID.CLUSTER_ID_INVALID) {
+      // COMPUTE THE CLUSTER ID
+      OClass schemaClass = null;
+      if (record instanceof ODocument)
+        schemaClass = ODocumentInternal.getImmutableSchemaClass(this, (ODocument) record);
+      if (schemaClass != null) {
+        // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
+        if (schemaClass.isAbstract())
+          throw new OSchemaException("Document belongs to abstract class '" + schemaClass.getName() + "' and cannot be saved");
+        clusterId = schemaClass.getClusterForNewInstance((ODocument) record);
+        return getClusterNameById(clusterId);
+      } else {
+        return getClusterNameById(getStorage().getDefaultClusterId());
+      }
+
+    } else {
+      return getClusterNameById(clusterId);
+    }
+  }
+
+  @Override
+  public OView getViewFromCluster(int cluster) {
+    OImmutableSchema schema = getMetadata().getImmutableSchemaSnapshot();
+    OView view = schema.getViewByClusterId(cluster);
+    if (view == null) {
+      String viewName = ((OSharedContextEmbedded) getSharedContext()).getViewManager().getViewFromOldCluster(cluster);
+      if (viewName != null) {
+        view = schema.getView(viewName);
+      }
+    }
+    return view;
   }
 }

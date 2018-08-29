@@ -277,10 +277,6 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     return genericClass;
   }
 
-  public void setGenericClass(Class<?> genericClass) {
-    this.genericClass = genericClass;
-  }
-
   private Object writeReplace() {
     return new ArrayList<T>(this);
   }

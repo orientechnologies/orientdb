@@ -473,7 +473,6 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
       studentClass.createIndex("studentSkillAndGroupIndex", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString(), null,
           metadata.copy(), new String[] { "skill", "group" });
 
-      schema.save();
     }
   }
 

@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.server;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.DateFormat;
@@ -27,18 +34,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
-
 /**
  * Returns information about the server.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OServerInfo {
@@ -102,6 +100,7 @@ public class OServerInfo {
       writeField(json, 2, "lastCommandDetail", stats.lastCommandDetail);
       writeField(json, 2, "lastExecutionTime", stats.lastCommandExecutionTime);
       writeField(json, 2, "totalWorkingTime", stats.totalCommandExecutionTime);
+      writeField(json, 2, "activeQueries", stats.activeQueries);
       writeField(json, 2, "connectedOn", connectedOn);
       writeField(json, 2, "protocol", c.getProtocol().getType());
       writeField(json, 2, "sessionId", data.sessionId);

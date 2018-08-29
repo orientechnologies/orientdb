@@ -1,18 +1,14 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import org.testng.Assert;
+import org.testng.annotations.*;
+
+import java.io.IOException;
 
 @Test
 public class OEmbeddedRidBagTest extends ORidBagTest {
@@ -22,6 +18,13 @@ public class OEmbeddedRidBagTest extends ORidBagTest {
   @Parameters(value = "url")
   public OEmbeddedRidBagTest(@Optional String url) {
     super(url);
+  }
+
+  @BeforeClass
+  @Override
+  public void beforeClass() throws Exception {
+    ODatabaseRecordThreadLocal.instance().remove();
+    super.beforeClass();
   }
 
   @BeforeMethod

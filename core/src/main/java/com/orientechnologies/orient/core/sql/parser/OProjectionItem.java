@@ -6,6 +6,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.OEdgeToVertexIterable;
+import com.orientechnologies.orient.core.record.impl.OEdgeToVertexIterator;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -116,6 +119,16 @@ public class OProjectionItem extends SimpleNode {
       ((ORidBag) value).forEach(x -> result.add(x));
       return result;
     }
+    if (value instanceof OEdgeToVertexIterable) {
+      value = ((OEdgeToVertexIterable) value).iterator();
+    }
+    if (value instanceof OEdgeToVertexIterator) {
+      List<ORID> result = new ArrayList<>();
+      while (((OEdgeToVertexIterator) value).hasNext()) {
+        result.add(((OEdgeToVertexIterator) value).next().getIdentity());
+      }
+      return result;
+    }
     return value;
   }
 
@@ -185,11 +198,11 @@ public class OProjectionItem extends SimpleNode {
    *
    * @param aggregateSplit
    */
-  public OProjectionItem splitForAggregation(AggregateProjectionSplit aggregateSplit) {
+  public OProjectionItem splitForAggregation(AggregateProjectionSplit aggregateSplit, OCommandContext ctx) {
     if (isAggregate()) {
       OProjectionItem result = new OProjectionItem(-1);
       result.alias = getProjectionAlias();
-      result.expression = expression.splitForAggregation(aggregateSplit);
+      result.expression = expression.splitForAggregation(aggregateSplit, ctx);
       result.nestedProjection = nestedProjection;
       return result;
     } else {

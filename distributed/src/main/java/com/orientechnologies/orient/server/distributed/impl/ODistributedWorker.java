@@ -15,7 +15,7 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://orientdb.com
- *  
+ *
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
@@ -61,13 +61,13 @@ public class ODistributedWorker extends Thread {
 
   protected volatile ODatabaseDocumentInternal database;
   protected volatile OUser                     lastUser;
-  protected volatile boolean running = true;
+  protected volatile boolean                   running = true;
 
   private AtomicLong    processedRequests     = new AtomicLong(0);
   private AtomicBoolean waitingForNextRequest = new AtomicBoolean(true);
 
-  private static final long MAX_SHUTDOWN_TIMEOUT = 5000l;
-  private volatile ODistributedRequest currentExecuting;
+  private static final long                MAX_SHUTDOWN_TIMEOUT = 5000l;
+  private volatile     ODistributedRequest currentExecuting;
 
   public ODistributedWorker(final ODistributedDatabaseImpl iDistributed, final String iDatabaseName, final int i,
       final boolean acceptsWhileNotOnline) {
@@ -317,33 +317,33 @@ public class ODistributedWorker extends Thread {
 
       distributed.waitIsReady(task);
 
-      if (task.isUsingDatabase()) {
-        initDatabaseInstance();
-        if (database == null)
-          throw new ODistributedOperationException(
-              "Error on executing remote request because the database '" + databaseName + "' is not available");
-      }
-
-      // keep original user in database, check the username passed in request and set new user in DB, after document saved,
-      // reset to original user
-      if (database != null) {
-        database.activateOnCurrentThread();
-        origin = database.getUser();
-        try {
-          if (iRequest.getUserRID() != null && iRequest.getUserRID().isValid() && (lastUser == null || !(lastUser.getIdentity())
-              .equals(iRequest.getUserRID()))) {
-            lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserRID());
-            database.setUser(lastUser);// set to new user
-          } else
-            origin = null;
-
-        } catch (Exception ex) {
-          OLogManager.instance().error(this, "Failed on user switching database. ", ex);
-        }
-      }
-
       // EXECUTE THE TASK
       for (int retry = 1; running; ++retry) {
+        if (task.isUsingDatabase()) {
+          initDatabaseInstance();
+          if (database == null)
+            throw new ODistributedOperationException(
+                "Error on executing remote request because the database '" + databaseName + "' is not available");
+          // keep original user in database, check the username passed in request and set new user in DB, after document saved,
+          // reset to original user
+          if (database != null) {
+            database.activateOnCurrentThread();
+            origin = database.getUser();
+            try {
+              if (iRequest.getUserRID() != null && iRequest.getUserRID().isValid() && (lastUser == null || !(lastUser.getIdentity())
+                  .equals(iRequest.getUserRID()))) {
+                lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserRID());
+                database.setUser(lastUser);// set to new user
+              } else
+                origin = null;
+
+            } catch (Exception ex) {
+              OLogManager.instance().error(this, "Failed on user switching database. ", ex);
+            }
+          }
+
+        }
+
         responsePayload = manager.executeOnLocalNode(iRequest.getId(), iRequest.getTask(), database);
 
         if (responsePayload instanceof OModificationOperationProhibitedException) {

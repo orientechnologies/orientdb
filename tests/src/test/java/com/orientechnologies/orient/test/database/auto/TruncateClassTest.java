@@ -47,7 +47,6 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     OClass testClass = getOrCreateClass(schema);
 
     final OIndex<?> index = getOrCreateIndex(testClass);
-    schema.save();
 
     database.command(new OCommandSQL("truncate class test_class")).execute();
 
@@ -166,7 +165,6 @@ public class TruncateClassTest extends DocumentDBBaseTest {
     } else {
       testClass = schema.createClass("test_class");
     }
-    schema.save();
     return testClass;
   }
 

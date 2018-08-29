@@ -158,8 +158,7 @@ public class ONestedProjectionItem extends SimpleNode {
       expansion.deserialize(fromResult.getProperty("expansion"));
     }
     if (fromResult.getProperty("alias") != null) {
-      alias = new OIdentifier(-1);
-      alias.deserialize(fromResult.getProperty("alias"));
+      alias = OIdentifier.deserialize(fromResult.getProperty("alias"));
     }
   }
 }

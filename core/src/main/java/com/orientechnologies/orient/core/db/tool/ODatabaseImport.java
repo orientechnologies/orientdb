@@ -31,20 +31,29 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODocumentFieldWalker;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.tool.importer.*;
+import com.orientechnologies.orient.core.db.tool.importer.OConverterData;
+import com.orientechnologies.orient.core.db.tool.importer.OLinksRewriter;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexFactory;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexes;
+import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
@@ -59,12 +68,29 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexFactory;
+import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
-import java.util.*;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -118,8 +144,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       inStream = bf;
     }
 
-    OMurmurHash3HashFunction<OIdentifiable> keyHashFunction = new OMurmurHash3HashFunction<OIdentifiable>();
-    keyHashFunction.setValueSerializer(OLinkSerializer.INSTANCE);
+    OMurmurHash3HashFunction<OIdentifiable> keyHashFunction = new OMurmurHash3HashFunction<OIdentifiable>(OLinkSerializer.INSTANCE);
 
     jsonReader = new OJSONReader(new InputStreamReader(inStream));
     database.declareIntent(new OIntentMassiveInsert());
@@ -345,7 +370,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       schema.dropClass("ORIDs");
     if (schema.existsClass(OClassTrigger.CLASSNAME))
       schema.dropClass(OClassTrigger.CLASSNAME);
-    schema.save();
 
     database.dropCluster(OStorage.CLUSTER_DEFAULT_NAME, true);
 
@@ -438,7 +462,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
     }
 
-    schema.save();
     schema.reload();
 
     listener.onMessage("\nRemoved " + removedClasses + " classes.");
@@ -713,8 +736,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       for (Map.Entry<OPropertyImpl, String> entry : linkedClasses.entrySet()) {
         entry.getKey().setLinkedClass(database.getMetadata().getSchema().getClass(entry.getValue()));
       }
-
-      database.getMetadata().getSchema().save();
 
       if (exporterVersion < 11) {
         OClass role = database.getMetadata().getSchema().getClass("ORole");

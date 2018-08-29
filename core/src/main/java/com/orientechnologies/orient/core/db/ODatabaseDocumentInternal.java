@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -115,14 +116,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
       final boolean ignoreCache, final boolean iUpdateCache, final boolean loadTombstones,
       final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader);
 
-  <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver, final OPERATION_MODE mode,
-      boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
-      ORecordCallback<Integer> recordUpdatedCallback);
-
   void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired, final OPERATION_MODE iMode,
       boolean prohibitTombstones);
-
-  <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName);
 
   void setDefaultTransactionMode();
 
@@ -155,6 +150,10 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
     throw new UnsupportedOperationException();
   }
 
+  default Map<String, OResultSet> getActiveQueries() {
+    throw new UnsupportedOperationException();
+  }
+
   boolean isUseLightweightEdges();
 
   OEdge newLightweightEdge(String iClassName, OVertex from, OVertex to);
@@ -162,7 +161,7 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   void setUseLightweightEdges(boolean b);
 
   /**
-   * Hides records content by putting tombstone on the records position but does not delete record itself.
+   * yep before in Hides records content by putting tombstone on the records position but does not delete record itself.
    * <p>
    * This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method. This
    * method can be used only if there is no active transaction in database.
@@ -240,4 +239,22 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   boolean isClusterEdge(int cluster);
 
+  boolean isClusterView(int cluster);
+
+  default OTransaction swapTx(OTransaction newTx) {
+    throw new UnsupportedOperationException();
+  }
+
+  void internalClose(boolean recycle);
+
+  ORecord saveAll(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback);
+
+  String getClusterName(final ORecord record);
+
+  default OResultSet indexQuery(String indexName, String query, Object... args) {
+    return command(query, args);
+  }
+
+  OView getViewFromCluster(int cluster);
 }

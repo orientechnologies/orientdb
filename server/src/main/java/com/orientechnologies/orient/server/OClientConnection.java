@@ -24,6 +24,9 @@ import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
@@ -33,28 +36,26 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
 
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class OClientConnection {
-  private final int                          id;
-  private final long                         since;
-  private Set<ONetworkProtocol>              protocols = Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
+  private final int  id;
+  private final long since;
+  private Set<ONetworkProtocol> protocols = Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
   private volatile ONetworkProtocol          protocol;
   private volatile ODatabaseDocumentInternal database;
   private volatile OServerUserConfiguration  serverUser;
-  private ONetworkProtocolData               data      = new ONetworkProtocolData();
-  private OClientConnectionStats             stats     = new OClientConnectionStats();
-  private Lock                               lock      = new ReentrantLock();
-  private Boolean                            tokenBased;
-  private byte[]                             tokenBytes;
-  private OToken                             token;
-  private boolean                            disconnectOnAfter;
-  private OBinaryRequestExecutor             executor;
+  private ONetworkProtocolData   data  = new ONetworkProtocolData();
+  private OClientConnectionStats stats = new OClientConnectionStats();
+  private Lock                   lock  = new ReentrantLock();
+  private Boolean                tokenBased;
+  private byte[]                 tokenBytes;
+  private OToken                 token;
+  private boolean                disconnectOnAfter;
+  private OBinaryRequestExecutor executor;
 
   public OClientConnection(final int id, final ONetworkProtocol protocol) {
     this.id = id;
@@ -95,10 +96,10 @@ public class OClientConnection {
 
   @Override
   public String toString() {
-    return "OClientConnection [id=" + getId() + ", source="
-        + (getProtocol() != null && getProtocol().getChannel() != null && getProtocol().getChannel().socket != null
-            ? getProtocol().getChannel().socket.getRemoteSocketAddress() : "?")
-        + ", since=" + getSince() + "]";
+    return "OClientConnection [id=" + getId() + ", source=" + (
+        getProtocol() != null && getProtocol().getChannel() != null && getProtocol().getChannel().socket != null ?
+            getProtocol().getChannel().socket.getRemoteSocketAddress() :
+            "?") + ", since=" + getSince() + "]";
   }
 
   /**
@@ -161,7 +162,7 @@ public class OClientConnection {
     } else {
       // IF the byte from the network are the same of the one i have a don't check them
       if (tokenBytes != null && tokenBytes.length > 0) {
-        if (tokenBytes.equals(tokenFromNetwork)) // SAME SESSION AND TOKEN DO
+        if (Arrays.equals(tokenBytes, tokenFromNetwork)) // SAME SESSION AND TOKEN NO NEED CHECK VALIDITY
           return;
       }
 
@@ -304,6 +305,7 @@ public class OClientConnection {
       database.activateOnCurrentThread();
       stats.lastDatabase = database.getName();
       stats.lastUser = database.getUser() != null ? database.getUser().getName() : null;
+      stats.activeQueries = getActiveQueries(database);
     } else {
       stats.lastDatabase = null;
       stats.lastUser = null;
@@ -313,6 +315,29 @@ public class OClientConnection {
     data.commandInfo = "Listening";
     data.commandDetail = "-";
     stats.lastCommandReceived = System.currentTimeMillis();
+  }
+
+  private List<String> getActiveQueries(ODatabaseDocumentInternal database) {
+    try {
+      List<String> result = new ArrayList<>();
+      Map<String, OResultSet> queries = database.getActiveQueries();
+      for (OResultSet oResultSet : queries.values()) {
+        Optional<OExecutionPlan> plan = oResultSet.getExecutionPlan();
+        if (!plan.isPresent()) {
+          continue;
+        }
+        OExecutionPlan p = plan.get();
+        if (p instanceof OInternalExecutionPlan) {
+          String stm = ((OInternalExecutionPlan) p).getStatement();
+          if (stm != null) {
+            result.add(stm);
+          }
+        }
+      }
+      return result;
+    } catch (Exception e) {
+    }
+    return null;
   }
 
   public void setDisconnectOnAfter(boolean disconnectOnAfter) {
@@ -325,5 +350,14 @@ public class OClientConnection {
 
   public OBinaryRequestExecutor getExecutor() {
     return executor;
+  }
+
+  public boolean tryAcquireForExpire() {
+    try {
+      return lock.tryLock(1, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    return false;
   }
 }

@@ -5,9 +5,18 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -42,11 +51,11 @@ public class LocalHashTableIterationTestIT {
     };
 
     localHashTable = new OLocalHashTable<Integer, String>("localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
-        hashFunction, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
+        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
     localHashTable
         .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().<String>getObjectSerializer(OType.STRING), null,
-            true);
+            null, hashFunction, true);
   }
 
   @After

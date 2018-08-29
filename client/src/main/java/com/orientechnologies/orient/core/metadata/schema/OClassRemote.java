@@ -80,8 +80,8 @@ public class OClassRemote extends OClassImpl {
       if (unsafe)
         cmd.append(" unsafe ");
 
-      database.command(cmd.toString());
-      reload();
+      database.command(cmd.toString()).close();
+      getOwner().reload(database);
 
       return getProperty(propertyName);
     } finally {
@@ -111,7 +111,7 @@ public class OClassRemote extends OClassImpl {
     try {
       final ODatabaseDocumentInternal database = getDatabase();
       final String cmd = String.format("alter class `%s` clusterselection '%s'", name, value);
-      database.command(cmd);
+      database.command(cmd).close();
       return this;
     } finally {
       releaseSchemaWriteLock();
@@ -125,7 +125,7 @@ public class OClassRemote extends OClassImpl {
     try {
       final ODatabaseDocumentInternal database = getDatabase();
       final String cmd = String.format("alter class `%s` custom %s = ?", getName(), name);
-      database.command(cmd, value);
+      database.command(cmd, value).close();
       return this;
     } finally {
       releaseSchemaWriteLock();
@@ -139,7 +139,7 @@ public class OClassRemote extends OClassImpl {
     try {
       final ODatabaseDocumentInternal database = getDatabase();
       final String cmd = String.format("alter class `%s` custom clear", getName());
-      database.command(cmd);
+      database.command(cmd).close();
     } finally {
       releaseSchemaWriteLock();
     }
@@ -166,7 +166,7 @@ public class OClassRemote extends OClassImpl {
         sb.append("null");
 
       final String cmd = String.format("alter class `%s` superclasses %s", name, sb);
-      database.command(cmd);
+      database.command(cmd).close();
     } finally {
       releaseSchemaWriteLock();
     }
@@ -182,7 +182,7 @@ public class OClassRemote extends OClassImpl {
     try {
 
       final String cmd = String.format("alter class `%s` superclass +`%s`", name, superClass != null ? superClass.getName() : null);
-      database.command(cmd);
+      database.command(cmd).close();
 
     } finally {
       releaseSchemaWriteLock();
@@ -197,7 +197,7 @@ public class OClassRemote extends OClassImpl {
     acquireSchemaWriteLock();
     try {
       final String cmd = String.format("alter class `%s` superclass -`%s`", name, superClass != null ? superClass.getName() : null);
-      database.command(cmd);
+      database.command(cmd).close();
     } finally {
       releaseSchemaWriteLock();
     }
@@ -266,7 +266,7 @@ public class OClassRemote extends OClassImpl {
     try {
 
       final String cmd = String.format("truncate cluster %s", clusterName);
-      database.command(cmd);
+      database.command(cmd).close();
     } finally {
       releaseSchemaReadLock();
     }
@@ -300,7 +300,7 @@ public class OClassRemote extends OClassImpl {
     acquireSchemaWriteLock();
     try {
       final String cmd = String.format("alter class `%s` description ?", name);
-      database.command(cmd, iDescription);
+      database.command(cmd, iDescription).close();
     } finally {
       releaseSchemaWriteLock();
     }
@@ -318,7 +318,7 @@ public class OClassRemote extends OClassImpl {
     acquireSchemaWriteLock();
     try {
       final String cmd = String.format("alter class `%s` addcluster %d", name, clusterId);
-      database.command(cmd);
+      database.command(cmd).close();
 
     } finally {
       releaseSchemaWriteLock();
@@ -336,7 +336,7 @@ public class OClassRemote extends OClassImpl {
     acquireSchemaWriteLock();
     try {
       final String cmd = String.format("alter class `%s` removecluster %d", name, clusterId);
-      database.command(cmd);
+      database.command(cmd).close();
     } finally {
       releaseSchemaWriteLock();
     }
@@ -356,7 +356,7 @@ public class OClassRemote extends OClassImpl {
       if (!properties.containsKey(propertyName))
         throw new OSchemaException("Property '" + propertyName + "' not found in class " + name + "'");
 
-      database.command("drop property " + name + '.' + propertyName);
+      database.command("drop property " + name + '.' + propertyName).close();
 
     } finally {
       releaseSchemaWriteLock();
@@ -375,7 +375,7 @@ public class OClassRemote extends OClassImpl {
     acquireSchemaWriteLock();
     try {
       final String cmd = String.format("alter class `%s` addcluster `%s`", name, clusterNameOrId);
-      database.command(cmd);
+      database.command(cmd).close();
 
     } finally {
       releaseSchemaWriteLock();
@@ -391,7 +391,7 @@ public class OClassRemote extends OClassImpl {
     try {
       // FORMAT FLOAT LOCALE AGNOSTIC
       final String cmd = String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
-      database.command(cmd);
+      database.command(cmd).close();
     } finally {
       releaseSchemaWriteLock();
     }
@@ -406,7 +406,7 @@ public class OClassRemote extends OClassImpl {
     acquireSchemaWriteLock();
     try {
       final String cmd = String.format("alter class `%s` abstract %s", name, isAbstract);
-      database.command(cmd);
+      database.command(cmd).close();
     } finally {
       releaseSchemaWriteLock();
     }

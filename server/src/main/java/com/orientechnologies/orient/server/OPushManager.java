@@ -112,13 +112,13 @@ public class OPushManager implements OMetadataUpdateListener {
 
   @Override
   public void onSchemaUpdate(String database, OSchemaShared schema) {
-    OPushSchemaRequest request = new OPushSchemaRequest(schema.toStream());
+    OPushSchemaRequest request = new OPushSchemaRequest(schema.toNetworkStream());
     genericNotify(this.schema, database, request);
   }
 
   @Override
   public void onIndexManagerUpdate(String database, OIndexManager indexManager) {
-    OPushIndexManagerRequest request = new OPushIndexManagerRequest(((OIndexManagerShared) indexManager).toStream());
+    OPushIndexManagerRequest request = new OPushIndexManagerRequest(((OIndexManagerShared) indexManager).toNetworkStream());
     genericNotify(this.indexManager, database, request);
   }
 

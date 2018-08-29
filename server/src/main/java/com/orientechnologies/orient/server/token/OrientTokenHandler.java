@@ -88,7 +88,17 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public byte[] getDistributedToken(ONetworkProtocolData data) {
+    throw new UnsupportedOperationException();
+  }
+
   public OToken parseBinaryToken(final byte[] binaryToken) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OToken parseNotVerifyBinaryToken(byte[] tokenBytes) {
     throw new UnsupportedOperationException();
   }
 

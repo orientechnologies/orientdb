@@ -54,14 +54,11 @@ import java.util.function.Function;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
- * Limits:
- * <ul>
- * <li>Maximum records per cluster/class = <b>9.223.372.036 Billions</b>: 2^63 = 9.223.372.036.854.775.808 records</li>
+ * Limits: <ul> <li>Maximum records per cluster/class = <b>9.223.372.036 Billions</b>: 2^63 = 9.223.372.036.854.775.808 records</li>
  * <li>Maximum records per database = <b>302.231.454.903.657 Billions</b>: 2^15 clusters x 2^63 records = (2^78) 32.768 *
- * 9,223.372.036.854.775.808 = 302.231,454.903.657.293.676.544 records</li>
- * <li>Maximum storage per database = <b>19.807.040.628.566.084 Terabytes</b>: 2^31 data-segments x 2^63 bytes = (2^94)
- * 2.147.483.648 x 9,223.372.036.854.775.808 Exabytes = 19.807,040.628.566.084.398.385.987.584 Yottabytes</li>
- * </ul>
+ * 9,223.372.036.854.775.808 = 302.231,454.903.657.293.676.544 records</li> <li>Maximum storage per database =
+ * <b>19.807.040.628.566.084 Terabytes</b>: 2^31 data-segments x 2^63 bytes = (2^94) 2.147.483.648 x 9,223.372.036.854.775.808
+ * Exabytes = 19.807,040.628.566.084.398.385.987.584 Yottabytes</li> </ul>
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -95,8 +92,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   <DB extends ODatabase> DB create();
 
   /**
-   * Creates new database from database backup.
-   * Only incremental backups are supported.
+   * Creates new database from database backup. Only incremental backups are supported.
    *
    * @param incrementalBackupPath Path to incremental backup
    * @param <DB>                  Concrete database instance type.
@@ -116,7 +112,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
 
   /**
    * Activate current database instance on current thread. Call this method before using the database if you switch between multiple
-   * databas instances on the same thread or if you pass them across threads.
+   * databases instances on the same thread or if you pass them across threads.
    */
   ODatabase activateOnCurrentThread();
 
@@ -169,7 +165,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   boolean exists();
 
   /**
-   * Closes an opened database, if the database is already closed does nothing, if a transaction is active will be rollbacked.
+   * Closes an opened database, if the database is already closed does nothing, if a transaction is active will be rollback.
    */
   void close();
 
@@ -179,8 +175,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   STATUS getStatus();
 
   /**
-   * Returns the current status of database.
-   * deprecated since 2.2
+   * Set the current status of database. deprecated since 2.2
    */
   @Deprecated
   <DB extends ODatabase> DB setStatus(STATUS iStatus);
@@ -288,8 +283,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   boolean isClosed();
 
   /**
-   * Removes all data in the cluster with given name.
-   * As result indexes for this class will be rebuilt.
+   * Removes all data in the cluster with given name. As result indexes for this class will be rebuilt.
    *
    * @param clusterName Name of cluster to be truncated.
    */
@@ -304,6 +298,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    */
   long countClusterElements(int iCurrentClusterId);
 
+  @Deprecated
   long countClusterElements(int iCurrentClusterId, boolean countTombstones);
 
   /**
@@ -315,6 +310,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    */
   long countClusterElements(int[] iClusterIds);
 
+  @Deprecated
   long countClusterElements(int[] iClusterIds, boolean countTombstones);
 
   /**
@@ -389,7 +385,9 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param iValue new value to set
    *
    * @return The previous value if any, otherwise null
-   * @deprecated use <code>OrientDBConfig.builder().setConfig(propertyName, propertyValue).build();</code> instead if you use >=3.0 API.
+   *
+   * @deprecated use <code>OrientDBConfig.builder().setConfig(propertyName, propertyValue).build();</code> instead if you use >=3.0
+   * API.
    */
   @Deprecated
   Object setProperty(String iName, Object iValue);
@@ -400,6 +398,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param iName Property name
    *
    * @return The previous value if any, otherwise null
+   *
    * @deprecated use {@link ODatabase#getConfiguration()} instead if you use >=3.0 API.
    */
   @Deprecated
@@ -407,6 +406,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
 
   /**
    * Returns an iterator of the property entries
+   *
    * @deprecated use {@link ODatabase#getConfiguration()} instead if you use >=3.0 API.
    */
   @Deprecated
@@ -775,18 +775,16 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   OTransaction getTransaction();
 
   /**
-   * Begins a new transaction. By default the type is OPTIMISTIC. If a previous transaction was started it will be rollbacked and
-   * closed before to start a new one. A transaction once begun has to be closed by calling the {@link #commit()} or
-   * {@link #rollback()}.
+   * Begins a new transaction. By default the type is OPTIMISTIC. If a previous transaction is running a nested call counter is
+   * incremented. A transaction once begun has to be closed by calling the {@link #commit()} or {@link #rollback()}.
    *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   ODatabase<T> begin();
 
   /**
-   * Begins a new transaction specifying the transaction type. If a previous transaction was started it will be rollbacked and
-   * closed before to start a new one. A transaction once begun has to be closed by calling the {@link #commit()} or
-   * {@link #rollback()}.
+   * Begins a new transaction specifying the transaction type. If a previous transaction is running a nested call counter is
+   * incremented. A transaction once begun has to be closed by calling the {@link #commit()} or {@link #rollback()}.
    *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
@@ -802,8 +800,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
 
   /**
    * Commits the current transaction. The approach is all or nothing. All changes will be permanent following the storage type. If
-   * the operation succeed all the entities changed inside the transaction context will be effectives. If the operation fails, all
-   * the changed entities will be restored in the datastore. Memory instances are not guaranteed to being restored as well.
+   * the operation succeed all the entities changed inside the transaction context will be effective. If the operation fails, all
+   * the changed entities will be restored in the data store.
    *
    * @return
    */
@@ -812,8 +810,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   ODatabase<T> commit(boolean force) throws OTransactionException;
 
   /**
-   * Aborts the current running transaction. All the pending changed entities will be restored in the datastore. Memory instances
-   * are not guaranteed to being restored as well.
+   * Aborts the current running transaction. All the pending changed entities will be restored in the data store.
    *
    * @return
    */
@@ -850,18 +847,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   <RET extends OCommandRequest> RET command(OCommandRequest iCommand);
 
   /**
-   * Executes an SQL query. The result set has to be closed after usage
-   * <br><br>
-   * Sample usage:
+   * Executes an SQL query. The result set has to be closed after usage <br><br> Sample usage:
    * <p>
-   * <code>
-   * OResultSet rs = db.query("SELECT FROM V where name = ?", "John");
-   * while(rs.hasNext()){
-   * OResult item = rs.next();
-   * ...
-   * }
-   * rs.close();
-   * </code>
+   * <code> OResultSet rs = db.query("SELECT FROM V where name = ?", "John"); while(rs.hasNext()){ OResult item = rs.next(); ... }
+   * rs.close(); </code>
    *
    * @param query the query string
    * @param args  query parameters (positional)
@@ -873,20 +862,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   }
 
   /**
-   * Executes an SQL query (idempotent). The result set has to be closed after usage
-   * <br><br>
-   * Sample usage:
+   * Executes an SQL query (idempotent). The result set has to be closed after usage <br><br> Sample usage:
    * <p>
-   * <code>
-   * Map&lt;String, Object&gt params = new HashMapMap&lt;&gt();
-   * params.put("name", "John");
-   * OResultSet rs = db.query("SELECT FROM V where name = :name", params);
-   * while(rs.hasNext()){
-   * OResult item = rs.next();
-   * ...
-   * }
-   * rs.close();
-   * </code>
+   * <code> Map&lt;String, Object&gt params = new HashMapMap&lt;&gt(); params.put("name", "John"); OResultSet rs = db.query("SELECT
+   * FROM V where name = :name", params); while(rs.hasNext()){ OResult item = rs.next(); ... } rs.close(); </code>
    *
    * @param query the query string
    * @param args  query parameters (named)
@@ -898,16 +877,9 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   }
 
   /**
-   * Executes a generic (idempotent or non idempotent) command.
-   * The result set has to be closed after usage
-   * <br><br>
-   * Sample usage:
+   * Executes a generic (idempotent or non idempotent) command. The result set has to be closed after usage <br><br> Sample usage:
    * <p>
-   * <code>
-   * OResultSet rs = db.command("INSERT INTO Person SET name = ?", "John");
-   * ...
-   * rs.close();
-   * </code>
+   * <code> OResultSet rs = db.command("INSERT INTO Person SET name = ?", "John"); ... rs.close(); </code>
    *
    * @param query
    * @param args  query arguments
@@ -919,18 +891,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   }
 
   /**
-   * Executes a generic (idempotent or non idempotent) command.
-   * The result set has to be closed after usage
-   * <br><br>
-   * Sample usage:
+   * Executes a generic (idempotent or non idempotent) command. The result set has to be closed after usage <br><br> Sample usage:
    * <p>
-   * <code>
-   * Map&lt;String, Object&gt params = new HashMapMap&lt;&gt();
-   * params.put("name", "John");
-   * OResultSet rs = db.query("INSERT INTO Person SET name = :name", params);
-   * ...
-   * rs.close();
-   * </code>
+   * <code> Map&lt;String, Object&gt params = new HashMapMap&lt;&gt(); params.put("name", "John"); OResultSet rs = db.query("INSERT
+   * INTO Person SET name = :name", params); ... rs.close(); </code>
    *
    * @param query
    * @param args
@@ -942,21 +906,12 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   }
 
   /**
-   * Execute a script in a specified query language.
-   * The result set has to be closed after usage
-   * <br><br>
-   * Sample usage:
+   * Execute a script in a specified query language. The result set has to be closed after usage <br><br> Sample usage:
    * <p>
-   * <code>
-   * String script =
-   * "INSERT INTO Person SET name = 'foo', surname = ?;"+
-   * "INSERT INTO Person SET name = 'bar', surname = ?;"+
-   * "INSERT INTO Person SET name = 'baz', surname = ?;";
+   * <code> String script = "INSERT INTO Person SET name = 'foo', surname = ?;"+ "INSERT INTO Person SET name = 'bar', surname =
+   * ?;"+ "INSERT INTO Person SET name = 'baz', surname = ?;";
    * <p>
-   * OResultSet rs = db.execute("sql", script, "Surname1", "Surname2", "Surname3");
-   * ...
-   * rs.close();
-   * </code>
+   * OResultSet rs = db.execute("sql", script, "Surname1", "Surname2", "Surname3"); ... rs.close(); </code>
    *
    * @param language
    * @param script
@@ -970,26 +925,15 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   }
 
   /**
-   * Execute a script of a specified query language
-   * The result set has to be closed after usage
-   * <br><br>
-   * Sample usage:
+   * Execute a script of a specified query language The result set has to be closed after usage <br><br> Sample usage:
    * <p>
-   * <code>
-   * Map&lt;String, Object&gt params = new HashMapMap&lt;&gt();
-   * params.put("surname1", "Jones");
-   * params.put("surname2", "May");
-   * params.put("surname3", "Ali");
+   * <code> Map&lt;String, Object&gt params = new HashMapMap&lt;&gt(); params.put("surname1", "Jones"); params.put("surname2",
+   * "May"); params.put("surname3", "Ali");
    * <p>
-   * String script =
-   * "INSERT INTO Person SET name = 'foo', surname = :surname1;"+
-   * "INSERT INTO Person SET name = 'bar', surname = :surname2;"+
-   * "INSERT INTO Person SET name = 'baz', surname = :surname3;";
+   * String script = "INSERT INTO Person SET name = 'foo', surname = :surname1;"+ "INSERT INTO Person SET name = 'bar', surname =
+   * :surname2;"+ "INSERT INTO Person SET name = 'baz', surname = :surname3;";
    * <p>
-   * OResultSet rs = db.execute("sql", script, params);
-   * ...
-   * rs.close();
-   * </code>
+   * OResultSet rs = db.execute("sql", script, params); ... rs.close(); </code>
    *
    * @param language
    * @param script
@@ -1132,8 +1076,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * <p>
    * If the DB does not have an active transaction, after the execution you will still be out of tx.
    * <p>
-   * If the DB has an active transaction, then the transaction has to be empty (no operations executed yet)
-   * and after the execution you will be in a new transaction.
+   * If the DB has an active transaction, then the transaction has to be empty (no operations executed yet) and after the execution
+   * you will be in a new transaction.
    *
    * @param nRetries the maximum number of retries (> 0)
    * @param function a lambda containing application code to execute in a commit/retry loop
@@ -1141,12 +1085,12 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return The result of the execution of the lambda
    *
-   * @throws IllegalStateException    if there are operations in the current transaction
-   * @throws ONeedRetryException      if the maximum number of retries is executed and all failed with an ONeedRetryException
-   * @throws IllegalArgumentException if nRetries is <= 0
+   * @throws IllegalStateException         if there are operations in the current transaction
+   * @throws ONeedRetryException           if the maximum number of retries is executed and all failed with an ONeedRetryException
+   * @throws IllegalArgumentException      if nRetries is <= 0
    * @throws UnsupportedOperationException if this type of database does not support automatic commit/retry
    */
-    default <T> T executeWithRetry(int nRetries, Function<ODatabaseSession, T> function)
+  default <T> T executeWithRetry(int nRetries, Function<ODatabaseSession, T> function)
       throws IllegalStateException, IllegalArgumentException, ONeedRetryException, UnsupportedOperationException {
     if (nRetries < 1) {
       throw new IllegalArgumentException("invalid number of retries: " + nRetries);

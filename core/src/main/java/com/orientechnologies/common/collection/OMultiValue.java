@@ -656,6 +656,8 @@ public class OMultiValue {
         }
         return copy;
 
+      } else if (iObject instanceof Map) {
+        ((Map) iObject).remove(iToRemove);
       } else
         throw new IllegalArgumentException("Object " + iObject + " is not a multi value");
     }

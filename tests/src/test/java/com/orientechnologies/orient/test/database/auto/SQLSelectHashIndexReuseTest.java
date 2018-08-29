@@ -89,7 +89,6 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
     oClass.createIndex("sqlSelectHashIndexReuseTestEmbeddedListTwoProp8", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX,
         "fEmbeddedListTwo", "prop8");
 
-    schema.save();
 
     final String fullTextIndexStrings[] = { "Alice : What is the use of a book, without pictures or conversations?",
         "Rabbit : Oh my ears and whiskers, how late it's getting!",
@@ -2141,7 +2140,6 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
     oClass.createIndex("sqlSelectHashIndexReuseTestOnPropertiesFromClassAndSuperclass", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX,
         "prop0", "prop1");
 
-    schema.save();
 
     long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
     long oldcompositeIndexUsed = profiler.getCounter("db.demo.query.compositeIndexUsed");

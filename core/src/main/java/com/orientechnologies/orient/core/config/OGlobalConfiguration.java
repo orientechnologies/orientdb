@@ -172,7 +172,7 @@ public enum OGlobalConfiguration {
    */
   STORAGE_KEEP_DISK_CACHE_STATE("storage.diskCache.keepState",
       "Keep disk cache state between moment when storage is closed and moment when it is opened again. true by default",
-      Boolean.class, true),
+      Boolean.class, false),
 
   STORAGE_CHECKSUM_MODE("storage.diskCache.checksumMode", "Controls the per-page checksum storage and verification done by "
       + "the file cache. Possible modes: 'off' – checksums are completely off; 'store' – checksums are calculated and stored "
@@ -639,7 +639,7 @@ public enum OGlobalConfiguration {
   // QUERY
   QUERY_REMOTE_RESULTSET_PAGE_SIZE("query.remoteResultSet.pageSize",
       "The size of a remote ResultSet page, ie. the number of records"
-          + "that are fetched together during remote query execution. This has to be set on the client.", Integer.class, 100),
+          + "that are fetched together during remote query execution. This has to be set on the client.", Integer.class, 1000),
 
   QUERY_REMOTE_SEND_EXECUTION_PLAN("query.remoteResultSet.sendExecutionPlan",
       "Send the execution plan details or not. False by default", Boolean.class, false),

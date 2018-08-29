@@ -207,6 +207,11 @@ public class OMatchStatementTest {
   }
 
   @Test
+  public void testNot() {
+    checkRightSyntax("MATCH {cluster:v, as: foo}, NOT {as:foo}-->{as:bar} RETURN $elements");
+  }
+
+  @Test
   public void testSkip() {
     checkRightSyntax("MATCH {class: 'V', as: foo}-->{as:bar} RETURN foo.name, bar.name skip 10 limit 10");
   }

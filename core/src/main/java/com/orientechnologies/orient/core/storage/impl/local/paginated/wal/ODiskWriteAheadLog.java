@@ -55,8 +55,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Condition;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
@@ -119,8 +129,30 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final List<WeakReference<OLowDiskSpaceListener>>      lowDiskSpaceListeners   = new CopyOnWriteArrayList<>();
   private final List<WeakReference<OCheckpointRequestListener>> fullCheckpointListeners = new CopyOnWriteArrayList<>();
 
-  private final OScheduledThreadPoolExecutorWithLogging autoFileCloser;
-  private final OScheduledThreadPoolExecutorWithLogging commitExecutor;
+  private static final OScheduledThreadPoolExecutorWithLogging autoFileCloser;
+  private static final OScheduledThreadPoolExecutorWithLogging commitExecutor;
+
+  static {
+    autoFileCloser = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
+      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
+      thread.setDaemon(true);
+      thread.setName("WAL Closer Task");
+      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+      return thread;
+    });
+
+    autoFileCloser.setMaximumPoolSize(1);
+
+    commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
+      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
+      thread.setDaemon(true);
+      thread.setName("OrientDB WAL Flush Task");
+      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
+      return thread;
+    });
+
+    commitExecutor.setMaximumPoolSize(1);
+  }
 
   private final ConcurrentNavigableMap<OLogSequenceNumber, Runnable> events = new ConcurrentSkipListMap<>();
 
@@ -181,23 +213,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     this.maxSegmentSize = maxSegmentSize;
     this.storage = storage;
     this.performanceStatisticManager = storage.getPerformanceStatisticManager();
-    this.autoFileCloser = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
-      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
-      thread.setDaemon(true);
-      thread.setName("WAL Closer Task (" + getStorage().getName() + ")");
-      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-      return thread;
-    });
-    this.autoFileCloser.setMaximumPoolSize(1);
 
-    commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, r -> {
-      final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
-      thread.setDaemon(true);
-      thread.setName("OrientDB WAL Flush Task (" + getStorage().getName() + ")");
-      thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
-      return thread;
-    });
-    commitExecutor.setMaximumPoolSize(1);
 
     try {
       this.walLocation = calculateWalPath(this.storage, walPath);
@@ -765,26 +781,16 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   public void close(boolean flush) throws IOException {
     syncObject.lock();
     try {
-      if (closed)
+      if (closed) {
         return;
+      }
 
       closed = true;
 
       cutTillLimits.clear();
 
-      for (OLogSegment logSegment : logSegments)
+      for (OLogSegment logSegment : logSegments) {
         logSegment.close(flush);
-
-      if (!commitExecutor.isShutdown()) {
-        commitExecutor.shutdown();
-        try {
-          if (!commitExecutor
-              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
-            throw new OStorageException("WAL flush task for '" + getStorage().getName() + "' storage cannot be stopped");
-
-        } catch (InterruptedException e) {
-          OLogManager.instance().error(this, "Cannot shutdown background WAL commit thread", e);
-        }
       }
 
       if (!events.isEmpty()) {
@@ -792,17 +798,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         assert false;
       }
 
-      if (!autoFileCloser.isShutdown()) {
-        autoFileCloser.shutdown();
-        try {
-          if (!autoFileCloser
-              .awaitTermination(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.MILLISECONDS))
-            throw new OStorageException("WAL file auto close tasks '" + getStorage().getName() + "' storage cannot be stopped");
-
-        } catch (InterruptedException e) {
-          OLogManager.instance().error(this, "Shutdown of file auto close tasks was interrupted", e);
-        }
-      }
 
       masterRecordLSNHolder.close();
     } finally {

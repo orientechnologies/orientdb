@@ -575,7 +575,6 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     personClass.createProperty("surname", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     personClass.createProperty("version", OType.INTEGER);
 
-    database.getMetadata().getSchema().save();
     database.close();
 
     final int cnt = 4;

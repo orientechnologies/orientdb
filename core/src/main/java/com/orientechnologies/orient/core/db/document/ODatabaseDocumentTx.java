@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.core.db.document;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -13,7 +11,6 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -27,13 +24,18 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.record.*;
-import com.orientechnologies.orient.core.record.impl.*;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -47,7 +49,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
 
@@ -74,23 +75,23 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   protected static ConcurrentMap<String, OrientDBInternal> embedded = new ConcurrentHashMap<>();
   protected static ConcurrentMap<String, OrientDBInternal> remote   = new ConcurrentHashMap<>();
 
-  protected       ODatabaseDocumentInternal internal;
-  private final   String                    url;
-  private         OrientDBInternal          factory;
-  private final   String                    type;
-  private final   String                    dbName;
-  private final   String                    baseUrl;
-  private final   Map<String, Object>       preopenProperties = new HashMap<>();
-  private final   Map<ATTRIBUTES, Object>   preopenAttributes = new HashMap<>();
+  protected     ODatabaseDocumentInternal internal;
+  private final String                    url;
+  private       OrientDBInternal          factory;
+  private final String                    type;
+  private final String                    dbName;
+  private final String                    baseUrl;
+  private final Map<String, Object>     preopenProperties = new HashMap<>();
+  private final Map<ATTRIBUTES, Object> preopenAttributes = new HashMap<>();
   // TODO review for the case of browseListener before open.
-  private final   Set<ODatabaseListener>    preopenListener   = new HashSet<>();
-  private         ODatabaseInternal<?>      databaseOwner;
-  private         OIntent                   intent;
-  private         OStorage                  delegateStorage;
-  private         ORecordConflictStrategy   conflictStrategy;
-  private         ORecordSerializer         serializer;
-  protected final AtomicReference<Thread>   owner             = new AtomicReference<Thread>();
-  private final   boolean                   ownerProtection;
+  private final Set<ODatabaseListener>  preopenListener   = new HashSet<>();
+  private ODatabaseInternal<?>    databaseOwner;
+  private OIntent                 intent;
+  private OStorage                delegateStorage;
+  private ORecordConflictStrategy conflictStrategy;
+  private ORecordSerializer       serializer;
+  protected final AtomicReference<Thread> owner = new AtomicReference<Thread>();
+  private final boolean ownerProtection;
 
   private static OShutdownHandler shutdownHandler = new OShutdownHandler() {
     @Override
@@ -255,24 +256,10 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <RET extends ORecord> RET executeSaveRecord(ORecord record, String clusterName, int ver, OPERATION_MODE mode,
-      boolean forceCreate, ORecordCallback<? extends Number> recordCreatedCallback,
-      ORecordCallback<Integer> recordUpdatedCallback) {
-    checkOpenness();
-    return internal.executeSaveRecord(record, clusterName, ver, mode, forceCreate, recordCreatedCallback, recordUpdatedCallback);
-  }
-
-  @Override
   public void executeDeleteRecord(OIdentifiable record, int iVersion, boolean iRequired, OPERATION_MODE iMode,
       boolean prohibitTombstones) {
     checkOpenness();
     internal.executeDeleteRecord(record, iVersion, iRequired, iMode, prohibitTombstones);
-  }
-
-  @Override
-  public <RET extends ORecord> RET executeSaveEmptyRecord(ORecord record, String clusterName) {
-    checkOpenness();
-    return internal.executeSaveEmptyRecord(record, clusterName);
   }
 
   @Override
@@ -1334,6 +1321,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
+  public long countView(String viewName) {
+    return internal.countView(viewName);
+  }
+
+  @Override
   public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
       OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     checkOpenness();
@@ -1495,6 +1487,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
+  public boolean isClusterView(int cluster) {
+    return internal.isClusterView(cluster);
+  }
+
+  @Override
   public OIdentifiable beforeCreateOperations(OIdentifiable id, String iClusterName) {
     return internal.beforeCreateOperations(id, iClusterName);
   }
@@ -1534,4 +1531,23 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return internal.beforeReadOperations(identifiable);
   }
 
+  @Override
+  public void internalClose(boolean recycle) {
+    internal.internalClose(true);
+  }
+
+  public ORecord saveAll(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+      ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<Integer> iRecordUpdatedCallback) {
+    return internal.saveAll(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+  }
+
+  @Override
+  public String getClusterName(ORecord record) {
+    return internal.getClusterName(record);
+  }
+
+  @Override
+  public OView getViewFromCluster(int cluster) {
+    return internal.getViewFromCluster(cluster);
+  }
 }

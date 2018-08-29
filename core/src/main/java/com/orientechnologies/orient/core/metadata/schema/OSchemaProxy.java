@@ -22,14 +22,11 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Proxy class to use the shared OSchemaShared instance. Before to delegate each operations it sets the current database in the
@@ -46,7 +43,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 
   @Override
   public OImmutableSchema makeSnapshot() {
-    return delegate.makeSnapshot();
+    return delegate.makeSnapshot(database);
   }
 
   public void create() {
@@ -55,6 +52,10 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 
   public int countClasses() {
     return delegate.countClasses(database);
+  }
+
+  public int countViews() {
+    return delegate.countViews(database);
   }
 
   public OClass createClass(final String iClassName) {
@@ -128,6 +129,17 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     return delegate.existsClass(iClassName.toLowerCase(Locale.ENGLISH));
   }
 
+  public boolean existsView(final String name) {
+    if (name == null)
+      return false;
+
+    return delegate.existsView(name.toLowerCase(Locale.ENGLISH));
+  }
+
+  public void dropView(final String name) {
+    delegate.dropView(database, name);
+  }
+
   public OClass getClass(final Class<?> iClass) {
     if (iClass == null)
       return null;
@@ -146,6 +158,10 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     return delegate.getClasses(database);
   }
 
+  public Collection<OView> getViews() {
+    return delegate.getViews(database);
+  }
+
   @Deprecated
   public void load() {
 
@@ -153,17 +169,35 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 
   }
 
-  public <RET extends ODocumentWrapper> RET reload() {
+  public OView getView(final String name) {
+    if (name == null)
+      return null;
 
-    delegate.reload();
-
-    return (RET) delegate;
+    return delegate.getView(name);
   }
 
-  @Deprecated
-  public <RET extends ODocumentWrapper> RET save() {
+  @Override
+  public OView createView(String viewName, String statement) {
+    return createView(database, viewName, statement, new HashMap<>());
+  }
 
-    return (RET) delegate.save();
+  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement,
+      Map<String, Object> metadata) {
+    return delegate.createView(database, viewName, statement, metadata);
+  }
+
+  @Override
+  public OView createView(OViewConfig config) {
+    return delegate.createView(database, config);
+  }
+
+  public OView createView(OViewConfig config, ViewCreationListener listener) {
+    return delegate.createView(database, config, listener);
+  }
+
+  public OSchema reload() {
+    delegate.reload(database);
+    return this;
   }
 
   public int getVersion() {
@@ -199,6 +233,11 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   @Override
   public OClass getClassByClusterId(int clusterId) {
     return delegate.getClassByClusterId(clusterId);
+  }
+
+  @Override
+  public OView getViewByClusterId(int clusterId) {
+    return delegate.getViewByClusterId(clusterId);
   }
 
   @Override

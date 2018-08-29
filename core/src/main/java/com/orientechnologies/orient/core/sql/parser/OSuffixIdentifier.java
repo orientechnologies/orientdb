@@ -245,8 +245,8 @@ public class OSuffixIdentifier extends SimpleNode {
     return this;
   }
 
-  public boolean isEarlyCalculated() {
-    if (identifier != null && identifier.internalAlias) {
+  public boolean isEarlyCalculated(OCommandContext ctx) {
+    if (identifier != null && identifier.isEarlyCalculated(ctx)) {
       return true;
     }
     return false;
@@ -392,8 +392,7 @@ public class OSuffixIdentifier extends SimpleNode {
 
   public void deserialize(OResult fromResult) {
     if (fromResult.getProperty("identifier") != null) {
-      identifier = new OIdentifier(-1);
-      identifier.deserialize(fromResult.getProperty("identifier"));
+      identifier = OIdentifier.deserialize(fromResult.getProperty("identifier"));
     }
     if (fromResult.getProperty("recordAttribute") != null) {
       recordAttribute = new ORecordAttribute(-1);
@@ -417,7 +416,7 @@ public class OSuffixIdentifier extends SimpleNode {
   }
 
   public OCollate getCollate(OResult currentRecord, OCommandContext ctx) {
-    if (identifier != null) {
+    if (identifier != null && currentRecord != null) {
       return currentRecord.getRecord().map(x -> (OElement) x).flatMap(elem -> elem.getSchemaType())
           .map(clazz -> clazz.getProperty(identifier.getStringValue())).map(prop -> prop.getCollate()).orElse(null);
     }

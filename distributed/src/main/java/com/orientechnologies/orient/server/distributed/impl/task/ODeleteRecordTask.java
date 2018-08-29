@@ -109,30 +109,6 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public ORemoteTask getFixTask(final ODistributedRequest iRequest, final ORemoteTask iOriginalTask, final Object iBadResponse,
-      final Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
-    return ((OFixCreateRecordTask) dManager.getTaskFactoryManager().getFactoryByServerName(executorNodeName)
-        .createTask(OFixCreateRecordTask.FACTORYID)).init(rid, version);
-  }
-
-  @Override
-  public ORemoteTask getUndoTask(ODistributedServerManager dManager, final ODistributedRequestId reqId, List<String> servers) {
-    if (previousRecord == null)
-      return null;
-
-    // RECREATE PREVIOUS RECORD
-    previousRecord = Orient.instance().getRecordFactoryManager()
-        .newInstance(ORecordInternal.getRecordType(previousRecord), rid.getClusterId(),
-            ODatabaseRecordThreadLocal.instance().get());
-    ORecordInternal.fill(previousRecord, rid, previousRecordVersion, previousRecordContent, true);
-
-    final OResurrectRecordTask task = ((OResurrectRecordTask) dManager.getTaskFactoryManager().getFactoryByServerNames(servers)
-        .createTask(OResurrectRecordTask.FACTORYID)).init(previousRecord);
-    task.setLockRecords(false);
-    return task;
-  }
-
-  @Override
   public void checkRecordExists() {
     // AVOID TO RETURN RECORD NOT FOUND IF ALREADY DELETED
   }

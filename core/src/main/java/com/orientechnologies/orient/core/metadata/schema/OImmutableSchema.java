@@ -19,26 +19,18 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.*;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -49,14 +41,16 @@ public class OImmutableSchema implements OSchema {
   private final Map<String, OClass>  classes;
   private final Set<Integer>         blogClusters;
 
+  private final Map<Integer, OView> clustersToViews;
+  private final Map<String, OView>  views;
+
   public final  int                      version;
   private final ORID                     identity;
   private final List<OGlobalProperty>    properties;
   private final OClusterSelectionFactory clusterSelectionFactory;
 
-  public OImmutableSchema(OSchemaShared schemaShared) {
-    ODatabaseDocumentInternal database = getDatabase();
-    assert database.getSharedContext().getSchema().getDocument().getInternalStatus() == ORecordElement.STATUS.LOADED;
+  public OImmutableSchema(OSchemaShared schemaShared, ODatabaseDocumentInternal database) {
+    assert schemaShared.getDocument().getInternalStatus() == ORecordElement.STATUS.LOADED;
     assert database.getSharedContext().getIndexManager().getDocument().getInternalStatus() == ORecordElement.STATUS.LOADED;
 
     version = schemaShared.getVersion();
@@ -85,6 +79,21 @@ public class OImmutableSchema implements OSchema {
       ((OImmutableClass) cl).init();
     }
     this.blogClusters = Collections.unmodifiableSet(new HashSet<Integer>(schemaShared.getBlobClusters()));
+
+    clustersToViews = new HashMap<Integer, OView>(schemaShared.getViews(database).size() * 3);
+    views = new HashMap<String, OView>(schemaShared.getViews(database).size());
+
+    for (OView oClass : schemaShared.getViews(database)) {
+      final OImmutableView immutableClass = new OImmutableView(oClass, this);
+
+      views.put(immutableClass.getName().toLowerCase(Locale.ENGLISH), immutableClass);
+      if (immutableClass.getShortName() != null)
+        views.put(immutableClass.getShortName().toLowerCase(Locale.ENGLISH), immutableClass);
+
+      for (int clusterId : immutableClass.getClusterIds())
+        clustersToViews.put(clusterId, immutableClass);
+    }
+
   }
 
   @Override
@@ -95,6 +104,11 @@ public class OImmutableSchema implements OSchema {
   @Override
   public int countClasses() {
     return classes.size();
+  }
+
+  @Override
+  public int countViews() {
+    return views.size();
   }
 
   @Override
@@ -148,7 +162,7 @@ public class OImmutableSchema implements OSchema {
   }
 
   @Override
-  public <RET extends ODocumentWrapper> RET reload() {
+  public OSchema reload() {
     throw new UnsupportedOperationException();
   }
 
@@ -199,6 +213,12 @@ public class OImmutableSchema implements OSchema {
   }
 
   @Override
+  public Collection<OView> getViews() {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
+    return new HashSet<OView>(views.values());
+  }
+
+  @Override
   public void create() {
     throw new UnsupportedOperationException();
   }
@@ -211,11 +231,6 @@ public class OImmutableSchema implements OSchema {
   @Override
   public ORID getIdentity() {
     return new ORecordId(identity);
-  }
-
-  @Override
-  public <RET extends ODocumentWrapper> RET save() {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -236,6 +251,11 @@ public class OImmutableSchema implements OSchema {
   public OClass getClassByClusterId(int clusterId) {
     return clustersToClasses.get(clusterId);
 
+  }
+
+  @Override
+  public OView getViewByClusterId(int clusterId) {
+    return clustersToViews.get(clusterId);
   }
 
   @Override
@@ -266,6 +286,47 @@ public class OImmutableSchema implements OSchema {
 
   public Set<Integer> getBlobClusters() {
     return blogClusters;
+  }
+
+  @Override
+  public OView getView(String name) {
+    if (name == null)
+      return null;
+
+    OView cls = views.get(name.toLowerCase(Locale.ENGLISH));
+    if (cls != null)
+      return cls;
+
+    return null;
+  }
+
+  @Override
+  public OView createView(String viewName, String statement) {
+    throw new UnsupportedOperationException();
+  }
+
+  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OView createView(OViewConfig config) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OView createView(OViewConfig config, ViewCreationListener listener) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean existsView(String name) {
+    return views.containsKey(name.toLowerCase(Locale.ENGLISH));
+  }
+
+  @Override
+  public void dropView(String name) {
+    throw new UnsupportedOperationException();
   }
 
 }

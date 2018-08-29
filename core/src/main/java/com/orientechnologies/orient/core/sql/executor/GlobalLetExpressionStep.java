@@ -40,4 +40,14 @@ public class GlobalLetExpressionStep extends AbstractExecutionStep {
     return spaces + "+ LET (once)\n" +
         spaces + "  " + varname + " = " + expression;
   }
+
+  @Override
+  public OExecutionStep copy(OCommandContext ctx) {
+    return new GlobalLetExpressionStep(varname.copy(), expression.copy(), ctx, profilingEnabled);
+  }
+
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
 }

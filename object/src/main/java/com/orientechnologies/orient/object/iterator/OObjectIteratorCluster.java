@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.object.iterator;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClusterInterface;
@@ -38,7 +37,7 @@ public class OObjectIteratorCluster<T> implements OObjectIteratorClusterInterfac
   public OObjectIteratorCluster(final OObjectDatabaseTx iDatabase, final ODatabaseDocumentInternal iUnderlyingDatabase,
       final int iClusterId) {
     database = iDatabase;
-    underlying = new ORecordIteratorCluster<ODocument>(iDatabase.getUnderlying(), iUnderlyingDatabase, iClusterId);
+    underlying = new ORecordIteratorCluster<ODocument>(iDatabase.getUnderlying(), iClusterId);
   }
 
   public boolean hasNext() {

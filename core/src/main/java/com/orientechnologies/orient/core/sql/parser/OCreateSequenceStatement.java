@@ -24,6 +24,9 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
   OExpression start;
   OExpression increment;
   OExpression cache;
+  OExpression maxValue;
+  OExpression minValue;
+  Boolean     cycle;
 
   public OCreateSequenceStatement(int id) {
     super(id);
@@ -91,6 +94,32 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
         throw new OCommandExecutionException("Invalid cache value: " + o);
       }
     }
+
+    //TODO MAX VALUE, MIN VALUE, CYCLE
+    if (minValue != null) {
+      Object o = minValue.execute((OIdentifiable) null, ctx);
+      if (o instanceof Number) {
+//        params.setMinValue(((Number) o).intValue());
+        result.setProperty("minValue", o);
+      } else {
+        throw new OCommandExecutionException("Invalid minValue: " + o);
+      }
+    }
+
+    if (minValue != null) {
+      Object o = maxValue.execute((OIdentifiable) null, ctx);
+      if (o instanceof Number) {
+//        params.setMaxValue(((Number) o).intValue());
+        result.setProperty("maxValue", o);
+      } else {
+        throw new OCommandExecutionException("Invalid minValue: " + o);
+      }
+    }
+
+    if (cycle != null) {
+      //    params.setCycle(cycle);
+      result.setProperty("cycle", cycle);
+    }
     return params;
   }
 
@@ -125,6 +154,17 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       builder.append(" CACHE ");
       cache.toString(params, builder);
     }
+    if (minValue != null) {
+      builder.append(" MINVALUE ");
+      minValue.toString(params, builder);
+    }
+    if (maxValue != null) {
+      builder.append(" MAXVALUE ");
+      maxValue.toString(params, builder);
+    }
+    if (cycle != null) {
+      builder.append(" CYCLE");
+    }
   }
 
   @Override
@@ -136,6 +176,10 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     result.start = start == null ? null : start.copy();
     result.increment = increment == null ? null : increment.copy();
     result.cache = cache == null ? null : cache.copy();
+    result.minValue = minValue == null ? null : minValue.copy();
+    result.maxValue = maxValue == null ? null : maxValue.copy();
+    result.cycle = this.cycle;
+
     return result;
   }
 
@@ -160,18 +204,24 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       return false;
     if (cache != null ? !cache.equals(that.cache) : that.cache != null)
       return false;
-
-    return true;
+    if (maxValue != null ? !maxValue.equals(that.maxValue) : that.maxValue != null)
+      return false;
+    if (minValue != null ? !minValue.equals(that.minValue) : that.minValue != null)
+      return false;
+    return cycle != null ? cycle.equals(that.cycle) : that.cycle == null;
   }
 
   @Override
   public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
-    result = 31 * result + (ifNotExists ? 0 : 1);
+    result = 31 * result + (ifNotExists ? 1 : 0);
     result = 31 * result + type;
     result = 31 * result + (start != null ? start.hashCode() : 0);
     result = 31 * result + (increment != null ? increment.hashCode() : 0);
     result = 31 * result + (cache != null ? cache.hashCode() : 0);
+    result = 31 * result + (maxValue != null ? maxValue.hashCode() : 0);
+    result = 31 * result + (minValue != null ? minValue.hashCode() : 0);
+    result = 31 * result + (cycle != null ? cycle.hashCode() : 0);
     return result;
   }
 }

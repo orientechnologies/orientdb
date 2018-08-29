@@ -21,6 +21,7 @@ public class OMatchExecutionPlanner {
   static final String DEFAULT_ALIAS_PREFIX = "$ORIENT_DEFAULT_ALIAS_";
 
   protected List<OMatchExpression>  matchExpressions;
+  protected List<OMatchExpression>  notMatchExpressions;
   protected List<OExpression>       returnItems;
   protected List<OIdentifier>       returnAliases;
   protected List<ONestedProjection> returnNestedProjections;
@@ -47,6 +48,7 @@ public class OMatchExecutionPlanner {
 
   public OMatchExecutionPlanner(OMatchStatement stm) {
     this.matchExpressions = stm.getMatchExpressions().stream().map(x -> x.copy()).collect(Collectors.toList());
+    this.notMatchExpressions = stm.getNotMatchExpressions().stream().map(x -> x.copy()).collect(Collectors.toList());
     this.returnItems = stm.getReturnItems().stream().map(x -> x.copy()).collect(Collectors.toList());
     this.returnAliases = stm.getReturnAliases().stream().map(x -> x == null ? null : x.copy()).collect(Collectors.toList());
     this.returnNestedProjections = stm.getReturnNestedProjections().stream().map(x -> x == null ? null : x.copy())
@@ -93,6 +95,8 @@ public class OMatchExecutionPlanner {
         result.chain((OExecutionStepInternal) step);
       }
     }
+
+    manageNotPatterns(result, pattern, notMatchExpressions, context, enableProfiling);
 
     if (foundOptional) {
       result.chain(new RemoveEmptyOptionalsStep(context, enableProfiling));
@@ -150,6 +154,41 @@ public class OMatchExecutionPlanner {
 
     return result;
 
+  }
+
+  private void manageNotPatterns(OSelectExecutionPlan result, Pattern pattern, List<OMatchExpression> notMatchExpressions,
+      OCommandContext context, boolean enableProfiling) {
+    for (OMatchExpression exp : notMatchExpressions) {
+      if (pattern.aliasToNode.get(exp.getOrigin().getAlias()) == null) {
+        throw new OCommandExecutionException("This kind of NOT expression is not supported (yet). "
+            + "The first alias in a NOT expression has to be present in the positive pattern");
+      }
+
+      if (exp.getOrigin().getFilter() != null) {
+        throw new OCommandExecutionException(
+            "This kind of NOT expression is not supported (yet): " + "WHERE condition on the initial alias");
+        //TODO implement his
+      }
+
+      OMatchFilter lastFilter = exp.getOrigin();
+      List<AbstractExecutionStep> steps = new ArrayList<>();
+      for (OMatchPathItem item : exp.getItems()) {
+        if (item instanceof OMultiMatchPathItem) {
+          throw new OCommandExecutionException("This kind of NOT expression is not supported (yet): " + item.toString());
+        }
+        PatternEdge edge = new PatternEdge();
+        edge.item = item;
+        edge.out = new PatternNode();
+        edge.out.alias = lastFilter.getAlias();
+        edge.in = new PatternNode();
+        edge.in.alias = item.getFilter().getAlias();
+        EdgeTraversal traversal = new EdgeTraversal(edge, true);
+        MatchStep step = new MatchStep(context, traversal, enableProfiling);
+        steps.add(step);
+        lastFilter = item.getFilter();
+      }
+      result.chain(new FilterNotMatchPatternStep(steps, context, enableProfiling));
+    }
   }
 
   private void addReturnStep(OSelectExecutionPlan result, OCommandContext context, boolean profilingEnabled) {
@@ -544,10 +583,15 @@ public class OMatchExecutionPlanner {
     if (this.pattern != null) {
       return;
     }
-    assignDefaultAliases(this.matchExpressions);
+    List<OMatchExpression> allPatterns = new ArrayList<>();
+    allPatterns.addAll(this.matchExpressions);
+    allPatterns.addAll(this.notMatchExpressions);
+
+    assignDefaultAliases(allPatterns);
+
     pattern = new Pattern();
     for (OMatchExpression expr : this.matchExpressions) {
-      pattern.addExpression(expr.copy());
+      pattern.addExpression(expr);
     }
 
     Map<String, OWhereClause> aliasFilters = new LinkedHashMap<>();

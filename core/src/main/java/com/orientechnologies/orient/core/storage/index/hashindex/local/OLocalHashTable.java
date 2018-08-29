@@ -4,6 +4,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OLocalHashTableException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
@@ -88,17 +89,17 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
   private static final int LEVEL_MASK = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
-  private final OHashFunction<K> keyHashFunction;
+  private OHashFunction<K> keyHashFunction;
 
   private OBinarySerializer<K> keySerializer;
   private OBinarySerializer<V> valueSerializer;
   private OType[]              keyTypes;
 
-  private final OHashTable.KeyHashCodeComparator<K> comparator;
+  private OHashTable.KeyHashCodeComparator<K> comparator;
 
-  private boolean nullKeyIsSupported;
-  private long nullBucketFileId = -1;
-  private final String nullBucketFileExtension;
+  private       boolean nullKeyIsSupported;
+  private       long    nullBucketFileId = -1;
+  private final String  nullBucketFileExtension;
 
   private long fileStateId;
   private long fileId;
@@ -107,23 +108,21 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
   private OHashTableDirectory directory;
 
+  private OEncryption encryption;
+
   public OLocalHashTable(String name, String metadataConfigurationFileExtension, String treeStateFileExtension,
-      String bucketFileExtension, String nullBucketFileExtension, OHashFunction<K> keyHashFunction,
-      OAbstractPaginatedStorage abstractPaginatedStorage) {
+      String bucketFileExtension, String nullBucketFileExtension, OAbstractPaginatedStorage abstractPaginatedStorage) {
     super(abstractPaginatedStorage, name, bucketFileExtension, name + bucketFileExtension);
 
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
-    this.keyHashFunction = keyHashFunction;
     this.nullBucketFileExtension = nullBucketFileExtension;
-
-    this.comparator = new OHashTable.KeyHashCodeComparator<>(this.keyHashFunction);
   }
 
   @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
   @Override
   public void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
-      boolean nullKeyIsSupported) {
+      OEncryption encryption, OHashFunction<K> keyHashFunction, boolean nullKeyIsSupported) {
     startOperation();
     try {
       final OAtomicOperation atomicOperation;
@@ -136,6 +135,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       acquireExclusiveLock();
       try {
         try {
+          this.keyHashFunction = keyHashFunction;
+          this.comparator = new OHashTable.KeyHashCodeComparator<>(this.keyHashFunction);
+          this.encryption = encryption;
 
           if (keyTypes != null)
             this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
@@ -340,7 +342,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
             OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
             try {
-              final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+              final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
+                  encryption);
 
               OHashIndexBucket.Entry<K, V> entry = bucket.find(key, hashCode);
               if (entry == null)
@@ -420,7 +423,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false);
           try {
-            final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+            final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
+                encryption);
             final int positionIndex = bucket.getIndex(hashCode, key);
             found = positionIndex >= 0;
 
@@ -561,7 +565,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
           try {
-            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
+                encryption);
 
             while (bucket.size() == 0 || comparator.compare(bucket.getKey(bucket.size() - 1), key) <= 0) {
               bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
@@ -577,7 +582,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
               pageIndex = getPageIndex(nextPointer);
 
               cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
             }
 
             final int index = bucket.getIndex(hashCode, key);
@@ -612,16 +617,20 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void load(String name, OType[] keyTypes, boolean nullKeyIsSupported) {
+  public void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OEncryption encryption,
+      OHashFunction<K> keyHashFunction) {
     startOperation();
     try {
       acquireExclusiveLock();
       try {
+        this.keyHashFunction = keyHashFunction;
+        this.comparator = new OHashTable.KeyHashCodeComparator<>(this.keyHashFunction);
         if (keyTypes != null)
           this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
         else
           this.keyTypes = null;
 
+        this.encryption = encryption;
         this.nullKeyIsSupported = nullKeyIsSupported;
 
         OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
@@ -844,7 +853,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
           try {
-            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
+                encryption);
             while (bucket.size() == 0) {
               bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
               if (bucketPath == null)
@@ -858,7 +868,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
               pageIndex = getPageIndex(nextPointer);
 
               cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
             }
 
             final int index = bucket.getIndex(hashCode, key);
@@ -902,7 +912,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
           try {
-            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
+                encryption);
 
             while (bucket.size() == 0) {
               bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
@@ -916,7 +927,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
               pageIndex = getPageIndex(nextPointer);
 
               cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
             }
 
             return bucket.getEntry(0);
@@ -953,7 +964,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
           try {
-            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
+                encryption);
 
             while (bucket.size() == 0) {
               final OHashTable.BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
@@ -968,7 +980,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
               cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
 
-              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
 
               bucketPath = prevBucketPath;
             }
@@ -1011,7 +1023,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
           try {
-            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
+                encryption);
             while (bucket.size() == 0 || comparator.compare(bucket.getKey(0), key) >= 0) {
               final OHashTable.BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
               if (prevBucketPath == null)
@@ -1026,7 +1039,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
               pageIndex = getPageIndex(prevPointer);
 
               cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
 
               bucketPath = prevBucketPath;
             }
@@ -1077,7 +1090,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
           try {
-            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
+                encryption);
             while (bucket.size() == 0) {
               final OHashTable.BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
               if (prevBucketPath == null)
@@ -1093,7 +1107,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
               cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
 
-              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
 
               bucketPath = prevBucketPath;
             }
@@ -1449,7 +1463,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
       final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false);
       try {
-        final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+        final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
+            encryption);
         final int index = bucket.getIndex(hashCode, key);
 
         if (validator != null) {
@@ -1861,7 +1876,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
     try {
       final OHashIndexBucket<K, V> newBucket = new OHashIndexBucket<>(newBucketDepth, newBucketCacheEntry, keySerializer,
-          valueSerializer, keyTypes);
+          valueSerializer, keyTypes, encryption);
 
       splitBucketContent(bucket, newBucket, newBucketDepth);
 
@@ -1918,7 +1933,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       try {
         @SuppressWarnings("unused")
         final OHashIndexBucket<K, V> emptyBucket = new OHashIndexBucket<>(MAX_LEVEL_DEPTH, cacheEntry, keySerializer,
-            valueSerializer, keyTypes);
+            valueSerializer, keyTypes, encryption);
       } finally {
         releasePageFromWrite(atomicOperation, cacheEntry);
       }

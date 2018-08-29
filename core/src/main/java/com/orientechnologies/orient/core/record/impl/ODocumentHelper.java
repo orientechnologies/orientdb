@@ -77,6 +77,16 @@ public class ODocumentHelper {
   public static interface RIDMapper {
     ORID map(ORID rid);
   }
+  
+  public static Set<String> getReservedAttributes(){
+    Set<String> retSet = new HashSet<>();
+    retSet.add(ATTRIBUTE_THIS); retSet.add(ATTRIBUTE_RID);
+    retSet.add(ATTRIBUTE_RID_ID); retSet.add(ATTRIBUTE_RID_POS);
+    retSet.add(ATTRIBUTE_VERSION); retSet.add(ATTRIBUTE_CLASS);
+    retSet.add(ATTRIBUTE_TYPE); retSet.add(ATTRIBUTE_SIZE);
+    retSet.add(ATTRIBUTE_FIELDS); retSet.add(ATTRIBUTE_RAW);
+    return retSet;
+  }
 
   public static void sort(List<? extends OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria,
       OCommandContext context) {
@@ -502,7 +512,7 @@ public class ODocumentHelper {
         else if (fieldName.contains("(")) {
           boolean executedMethod = false;
           if (!firstInChain && fieldName.endsWith("()")) {
-            OSQLMethod method = OSQLEngine.getInstance().getMethod(fieldName.substring(0, fieldName.length() - 2));
+            OSQLMethod method = OSQLEngine.getMethod(fieldName.substring(0, fieldName.length() - 2));
             if (method != null) {
               value = method.execute(value, currentRecord, iContext, value, new Object[] {});
               executedMethod = true;
@@ -888,8 +898,8 @@ public class ODocumentHelper {
 
     if (fieldValue != null) {
       if (fieldValue instanceof ODocument && ((ODocument) fieldValue).isEmbedded()) {
-          // EMBEDDED DOCUMENT
-          return ((ODocument) fieldValue).copy();
+        // EMBEDDED DOCUMENT
+        return ((ODocument) fieldValue).copy();
       } else if (fieldValue instanceof ORidBag) {
         ORidBag newBag = ((ORidBag) fieldValue).copy();
         newBag.setOwner(null);

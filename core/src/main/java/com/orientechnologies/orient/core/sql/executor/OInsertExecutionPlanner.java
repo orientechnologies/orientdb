@@ -46,7 +46,6 @@ public class OInsertExecutionPlanner {
       }
       handleTargetClass(result, targetClass, ctx, enableProfiling);
       handleSetFields(result, insertBody, ctx, enableProfiling);
-      handleReturn(result, returnStatement, ctx, enableProfiling);
       if (targetCluster != null) {
         String name = targetCluster.getClusterName();
         if (name == null) {
@@ -56,6 +55,7 @@ public class OInsertExecutionPlanner {
       } else {
         handleSave(result, targetClusterName, ctx, enableProfiling);
       }
+      handleReturn(result, returnStatement, ctx, enableProfiling);
     }
     return result;
   }

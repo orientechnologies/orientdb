@@ -100,6 +100,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   public static final String                  KEYWORD_MATCH           = "MATCH";
   // parsed data
   protected           List<OMatchExpression>  matchExpressions        = new ArrayList<>();
+  protected           List<OMatchExpression>  notMatchExpressions     = new ArrayList<>();
   protected           List<OExpression>       returnItems             = new ArrayList<>();
   protected           List<OIdentifier>       returnAliases           = new ArrayList<>();
   protected           List<ONestedProjection> returnNestedProjections = new ArrayList<>();
@@ -225,6 +226,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     try {
       OMatchStatement result = (OMatchStatement) osql.parse();
       this.matchExpressions = result.matchExpressions;
+      this.notMatchExpressions = result.notMatchExpressions;
       this.returnItems = result.returnItems;
       this.returnAliases = result.returnAliases;
       this.limit = result.limit;
@@ -758,7 +760,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
               return false;
             }
           }
-          if (!(leftValues instanceof Iterable)) {
+          if (leftValues instanceof OIdentifiable || !(leftValues instanceof Iterable)) {
             leftValues = Collections.singleton(leftValues);
           }
 
@@ -1423,6 +1425,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     result.matchExpressions = matchExpressions == null ?
         null :
         matchExpressions.stream().map(x -> x == null ? null : x.copy()).collect(Collectors.toList());
+    result.notMatchExpressions = notMatchExpressions == null ?
+        null :
+        notMatchExpressions.stream().map(x -> x == null ? null : x.copy()).collect(Collectors.toList());
     result.returnItems =
         returnItems == null ? null : returnItems.stream().map(x -> x == null ? null : x.copy()).collect(Collectors.toList());
     result.returnAliases =
@@ -1450,6 +1455,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     OMatchStatement that = (OMatchStatement) o;
 
     if (matchExpressions != null ? !matchExpressions.equals(that.matchExpressions) : that.matchExpressions != null)
+      return false;
+    if (notMatchExpressions != null ? !notMatchExpressions.equals(that.notMatchExpressions) : that.notMatchExpressions != null)
       return false;
     if (returnItems != null ? !returnItems.equals(that.returnItems) : that.returnItems != null)
       return false;
@@ -1479,6 +1486,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   @Override
   public int hashCode() {
     int result = matchExpressions != null ? matchExpressions.hashCode() : 0;
+    result = 31 * result + (notMatchExpressions != null ? notMatchExpressions.hashCode() : 0);
     result = 31 * result + (returnItems != null ? returnItems.hashCode() : 0);
     result = 31 * result + (returnAliases != null ? returnAliases.hashCode() : 0);
     result = 31 * result + (returnNestedProjections != null ? returnNestedProjections.hashCode() : 0);
@@ -1522,6 +1530,14 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     this.matchExpressions = matchExpressions;
   }
 
+  public List<OMatchExpression> getNotMatchExpressions() {
+    return notMatchExpressions;
+  }
+
+  public void setNotMatchExpressions(List<OMatchExpression> notMatchExpressions) {
+    this.notMatchExpressions = notMatchExpressions;
+  }
+
   public boolean isReturnDistinct() {
     return returnDistinct;
   }
@@ -1560,6 +1576,12 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
   public void setSkip(OSkip skip) {
     this.skip = skip;
+  }
+
+  @Override
+  public boolean refersToParent() {
+    //TODO check this!
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=6ff0afbe9d31f08b72159fcf24070c9f (do not edit this line) */

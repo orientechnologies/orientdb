@@ -3,25 +3,20 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.OEdgeToVertexIterable;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 
@@ -500,6 +495,56 @@ public class OSelectStatementExecutionTest {
         Assert.assertNotNull(next);
         Assert.assertEquals(2L, (Object) next.getProperty("count(*)"));
       }
+      Assert.assertFalse(result.hasNext());
+      result.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void testCountStarEmptyNoIndex() {
+    String className = "testCountStarEmptyNoIndex";
+    db.getMetadata().getSchema().createClass(className);
+
+    OElement elem = db.newElement(className);
+    elem.setProperty("name", "bar");
+    elem.save();
+
+    try {
+      OResultSet result = db.query("select count(*) from " + className + " where name = 'foo'");
+      printExecutionPlan(result);
+      Assert.assertNotNull(result);
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      Assert.assertEquals(0L, (Object) next.getProperty("count(*)"));
+      Assert.assertFalse(result.hasNext());
+      result.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void testCountStarEmptyNoIndexWithAlias() {
+    String className = "testCountStarEmptyNoIndexWithAlias";
+    db.getMetadata().getSchema().createClass(className);
+
+    OElement elem = db.newElement(className);
+    elem.setProperty("name", "bar");
+    elem.save();
+
+    try {
+      OResultSet result = db.query("select count(*) as a from " + className + " where name = 'foo'");
+      printExecutionPlan(result);
+      Assert.assertNotNull(result);
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      Assert.assertEquals(0L, (Object) next.getProperty("a"));
       Assert.assertFalse(result.hasNext());
       result.close();
     } catch (Exception e) {
@@ -2116,10 +2161,10 @@ public class OSelectStatementExecutionTest {
     int counter = 0;
     while (resultSet.hasNext()) {
       OResult result = resultSet.next();
-      OEdgeToVertexIterable edge = result.getProperty("$x");
-      Iterator<OVertex> iter = edge.iterator();
+      Iterable edge = result.getProperty("$x");
+      Iterator<OIdentifiable> iter = edge.iterator();
       while (iter.hasNext()) {
-        OVertex toVertex = iter.next();
+        OVertex toVertex = db.load(iter.next().getIdentity());
         if (doc2Id.equals(toVertex.getIdentity())) {
           ++counter;
         }
@@ -3642,6 +3687,123 @@ public class OSelectStatementExecutionTest {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Assert.assertEquals("right", item.getProperty("name"));
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
+
+  @Test
+  public void testQueryView() throws InterruptedException {
+    String className = "testQueryView_Class";
+    String viewName = "testQueryView_View";
+    db.createClass(className);
+    for (int i = 0; i < 10; i++) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("counter", i);
+      elem.save();
+    }
+
+    OViewConfig cfg = new OViewConfig(viewName, "SELECT FROM " + className);
+    final CountDownLatch latch = new CountDownLatch(1);
+    db.getMetadata().getSchema().createView(cfg, new ViewCreationListener() {
+
+      @Override
+      public void afterCreate(String viewName) {
+        latch.countDown();
+      }
+
+      @Override
+      public void onError(String viewName, Exception exception) {
+        latch.countDown();
+      }
+    });
+
+    latch.await();
+
+    OResultSet result = db.query("SELECT FROM " + viewName);
+    int count = result.stream().map(x -> (Integer) x.getProperty("counter")).reduce((x, y) -> x + y).get();
+    Assert.assertEquals(45, count);
+    result.close();
+  }
+
+  @Test
+  public void testMapByKeyIndex() {
+    String className = "testMapByKeyIndex";
+
+    OClass clazz1 = db.createClassIfNotExist(className);
+    OProperty prop = clazz1.createProperty("themap", OType.EMBEDDEDMAP);
+
+    db.command("CREATE INDEX " + className + ".themap ON " + className + "(themap by key) NOTUNIQUE");
+
+    for (int i = 0; i < 100; i++) {
+      Map<String, Object> theMap = new HashMap<>();
+      theMap.put("key" + i, "val" + i);
+      OElement elem1 = db.newElement(className);
+      elem1.setProperty("themap", theMap);
+      elem1.save();
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where themap CONTAINSKEY ?", "key10")) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Map<String, Object> map = item.getProperty("themap");
+      Assert.assertEquals("key10", map.keySet().iterator().next());
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
+
+  @Test
+  public void testMapByKeyIndexMultiple() {
+    String className = "testMapByKeyIndexMultiple";
+
+    OClass clazz1 = db.createClassIfNotExist(className);
+    clazz1.createProperty("themap", OType.EMBEDDEDMAP);
+    clazz1.createProperty("thestring", OType.STRING);
+
+    db.command("CREATE INDEX " + className + ".themap_thestring ON " + className + "(themap by key, thestring) NOTUNIQUE");
+
+    for (int i = 0; i < 100; i++) {
+      Map<String, Object> theMap = new HashMap<>();
+      theMap.put("key" + i, "val" + i);
+      OElement elem1 = db.newElement(className);
+      elem1.setProperty("themap", theMap);
+      elem1.setProperty("thestring", "thestring" + i);
+      elem1.save();
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where themap CONTAINSKEY ? AND thestring = ?", "key10", "thestring10")) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Map<String, Object> map = item.getProperty("themap");
+      Assert.assertEquals("key10", map.keySet().iterator().next());
+      Assert.assertFalse(result.hasNext());
+      Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
+    }
+  }
+
+  @Test
+  public void testMapByValueIndex() {
+    String className = "testMapByValueIndex";
+
+    OClass clazz1 = db.createClassIfNotExist(className);
+    OProperty prop = clazz1.createProperty("themap", OType.EMBEDDEDMAP, OType.STRING);
+
+    db.command("CREATE INDEX " + className + ".themap ON " + className + "(themap by value) NOTUNIQUE");
+
+    for (int i = 0; i < 100; i++) {
+      Map<String, Object> theMap = new HashMap<>();
+      theMap.put("key" + i, "val" + i);
+      OElement elem1 = db.newElement(className);
+      elem1.setProperty("themap", theMap);
+      elem1.save();
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where themap CONTAINSVALUE ?", "val10")) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Map<String, Object> map = item.getProperty("themap");
+      Assert.assertEquals("key10", map.keySet().iterator().next());
       Assert.assertFalse(result.hasNext());
       Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
     }

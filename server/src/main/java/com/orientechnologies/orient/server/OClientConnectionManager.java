@@ -52,8 +52,8 @@ public class OClientConnectionManager {
   protected final ConcurrentMap<Integer, OClientConnection>  connections      = new ConcurrentHashMap<Integer, OClientConnection>();
   protected       AtomicInteger                              connectionSerial = new AtomicInteger(0);
   protected final ConcurrentMap<OHashToken, OClientSessions> sessions         = new ConcurrentHashMap<OHashToken, OClientSessions>();
-  protected final TimerTask timerTask;
-  private         OServer   server;
+  protected final TimerTask                                  timerTask;
+  private         OServer                                    server;
 
   public OClientConnectionManager(OServer server) {
     final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
@@ -86,35 +86,42 @@ public class OClientConnectionManager {
     while (iterator.hasNext()) {
       final Entry<Integer, OClientConnection> entry = iterator.next();
 
-      final Socket socket;
-      if (entry.getValue().getProtocol() == null || entry.getValue().getProtocol().getChannel() == null)
-        socket = null;
-      else
-        socket = entry.getValue().getProtocol().getChannel().socket;
-
-      if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
-        OLogManager.instance()
-            .debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)", entry.getKey(), socket);
+      if (entry.getValue().tryAcquireForExpire()) {
         try {
-          OCommandRequestText command = entry.getValue().getData().command;
-          if (command != null && command.isIdempotent()) {
-            entry.getValue().getProtocol().sendShutdown();
-            entry.getValue().getProtocol().interrupt();
-          }
-          removeConnectionFromSession(entry.getValue());
-          entry.getValue().close();
 
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during close of connection for close channel", e);
-        }
-        iterator.remove();
-      } else if (Boolean.TRUE.equals(entry.getValue().getTokenBased())) {
-        if (entry.getValue().getToken() != null && !entry.getValue().getToken().isNowValid() && !entry.getValue().getToken()
-            .getIsValid()) {
-          // Close the current session but not the network because can be used by another session.
-          removeConnectionFromSession(entry.getValue());
-          entry.getValue().close();
-          iterator.remove();
+          final Socket socket;
+          if (entry.getValue().getProtocol() == null || entry.getValue().getProtocol().getChannel() == null)
+            socket = null;
+          else
+            socket = entry.getValue().getProtocol().getChannel().socket;
+
+          if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
+            OLogManager.instance()
+                .debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)", entry.getKey(), socket);
+            try {
+              OCommandRequestText command = entry.getValue().getData().command;
+              if (command != null && command.isIdempotent()) {
+                entry.getValue().getProtocol().sendShutdown();
+                entry.getValue().getProtocol().interrupt();
+              }
+              removeConnectionFromSession(entry.getValue());
+              entry.getValue().close();
+
+            } catch (Exception e) {
+              OLogManager.instance().error(this, "Error during close of connection for close channel", e);
+            }
+            iterator.remove();
+          } else if (Boolean.TRUE.equals(entry.getValue().getTokenBased())) {
+            if (entry.getValue().getToken() != null && !entry.getValue().getToken().isNowValid() && !entry.getValue().getToken()
+                .getIsValid()) {
+              // Close the current session but not the network because can be used by another session.
+              removeConnectionFromSession(entry.getValue());
+              entry.getValue().close();
+              iterator.remove();
+            }
+          }
+        } finally {
+          entry.getValue().release();
         }
       }
     }
@@ -477,7 +484,11 @@ public class OClientConnectionManager {
 
     for (ONetworkProtocol protocol : toWait) {
       try {
-        protocol.join();
+        protocol.join(server.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY));
+        if (protocol.isAlive()) {
+          protocol.interrupt();
+          protocol.join();
+        }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }

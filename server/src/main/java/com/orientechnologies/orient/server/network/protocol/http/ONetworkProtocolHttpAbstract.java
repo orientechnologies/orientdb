@@ -24,11 +24,14 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
@@ -48,6 +51,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.put.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
+import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -58,6 +62,7 @@ import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
@@ -175,7 +180,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             }
 
         } catch (Exception e) {
-          handleError(e,request);
+          handleError(e, request);
         }
       else {
         try {
@@ -194,8 +199,29 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     connection.getStats().lastCommandInfo = connection.getData().commandInfo;
     connection.getStats().lastCommandDetail = connection.getData().commandDetail;
 
+    connection.getStats().activeQueries = getActiveQueries(connection.getDatabase());
+
     connection.getStats().lastCommandExecutionTime = System.currentTimeMillis() - begin;
     connection.getStats().totalCommandExecutionTime += connection.getStats().lastCommandExecutionTime;
+
+    // request type does not have
+    OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) -1);
+  }
+
+  private List<String> getActiveQueries(ODatabaseDocumentInternal database) {
+    if (database == null) {
+      return null;
+    }
+    try {
+
+      Map<String, OResultSet> queries = database.getActiveQueries();
+      return queries.values().stream().map(x -> x.getExecutionPlan())
+          .filter(x -> (x.isPresent() && x.get() instanceof OInternalExecutionPlan)).map(OInternalExecutionPlan.class::cast)
+          .map(x -> x.getStatement()).collect(Collectors.toList());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
   }
 
   @Override
@@ -776,6 +802,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     for (OServerCommand c : iListener.getStatelessCommands())
       cmdManager.registerCommand(c);
+  }
+
+  public OClientConnection getConnection() {
+    return connection;
   }
 
   private String getCommandString(final String command) {

@@ -83,6 +83,10 @@ public class OLocalResultSet implements OResultSet {
     }
   }
 
+  public long getTotalExecutionTime() {
+    return totalExecutionTime;
+  }
+
   @Override
   public void close() {
     executionPlan.close();

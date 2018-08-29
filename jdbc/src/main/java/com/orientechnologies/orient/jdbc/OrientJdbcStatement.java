@@ -88,7 +88,6 @@ public class OrientJdbcStatement implements Statement {
   @Override
   public boolean execute(final String sqlCommand) throws SQLException {
 
-
     if ("".equals(sqlCommand))
       return false;
 
@@ -127,18 +126,21 @@ public class OrientJdbcStatement implements Statement {
 
   @Override
   public int executeUpdate(final String sql) throws SQLException {
-    oResultSet = executeCommand(sql);
+    try {
+      oResultSet = executeCommand(sql);
 
-    Optional<OResult> res = oResultSet.stream()
-        .findFirst();
+      Optional<OResult> res = oResultSet.stream().findFirst();
 
-    if (res.isPresent()) {
-      if (res.get().getProperty("count") != null) {
-        return Math.toIntExact((Long)res.get().getProperty("count"));
-      } else
-        return 1;
-    } else {
-      return 0;
+      if (res.isPresent()) {
+        if (res.get().getProperty("count") != null) {
+          return Math.toIntExact((Long) res.get().getProperty("count"));
+        } else
+          return 1;
+      } else {
+        return 0;
+      }
+    } finally {
+      oResultSet.close();
     }
 
   }

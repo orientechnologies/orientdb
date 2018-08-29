@@ -75,6 +75,13 @@ public class OLevelZeroIdentifier extends SimpleNode {
     return false;
   }
 
+  public boolean isFunctionAny() {
+    if (functionCall != null) {
+      return functionCall.getName().getStringValue().equalsIgnoreCase("any") && functionCall.params.size() == 0;
+    }
+    return false;
+  }
+
   public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
     if (functionCall != null) {
       return functionCall.estimateIndexedFunction(target, context, operator, right);
@@ -98,7 +105,9 @@ public class OLevelZeroIdentifier extends SimpleNode {
    * @param context  the execution context
    * @param operator
    * @param right
-   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false otherwise
+   *
+   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false
+   * otherwise
    */
   public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
       Object right) {
@@ -110,14 +119,16 @@ public class OLevelZeroIdentifier extends SimpleNode {
 
   /**
    * tests if current expression is an indexed function AND that function can be used on this target
-   * @param target the query target
-   * @param context the execution context
+   *
+   * @param target   the query target
+   * @param context  the execution context
    * @param operator
    * @param right
+   *
    * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
    */
-  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right){
+  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
     if (this.functionCall == null) {
       return false;
     }
@@ -125,15 +136,17 @@ public class OLevelZeroIdentifier extends SimpleNode {
   }
 
   /**
-   * tests if current expression is an indexed function AND the function has also to be executed after the index search.
-   * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
-   * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
-   * @param target the query target
+   * tests if current expression is an indexed function AND the function has also to be executed after the index search. In some
+   * cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases the result from
+   * the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   *
+   * @param target  the query target
    * @param context the execution context
+   *
    * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
    */
-  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right){
+  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
     if (this.functionCall == null) {
       return false;
     }
@@ -175,34 +188,34 @@ public class OLevelZeroIdentifier extends SimpleNode {
   }
 
   public boolean isCount() {
-    return functionCall!=null && functionCall.name.getStringValue().equalsIgnoreCase("count");
+    return functionCall != null && functionCall.name.getStringValue().equalsIgnoreCase("count");
   }
 
-  public boolean isEarlyCalculated() {
-    if (functionCall != null && functionCall.isEarlyCalculated()) {
+  public boolean isEarlyCalculated(OCommandContext ctx) {
+    if (functionCall != null && functionCall.isEarlyCalculated(ctx)) {
       return true;
     }
     if (Boolean.TRUE.equals(self)) {
       return false;
     }
-    if (collection != null && collection.isEarlyCalculated()) {
+    if (collection != null && collection.isEarlyCalculated(ctx)) {
       return true;
     }
     return false;
   }
 
-  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
     if (isAggregate()) {
       OLevelZeroIdentifier result = new OLevelZeroIdentifier(-1);
       if (functionCall != null) {
-        SimpleNode node = functionCall.splitForAggregation(aggregateProj);
+        SimpleNode node = functionCall.splitForAggregation(aggregateProj, ctx);
         if (node instanceof OFunctionCall) {
           result.functionCall = (OFunctionCall) node;
         } else {
           return node;
         }
       } else if (collection != null) {
-        result.collection = collection.splitForAggregation(aggregateProj);
+        result.collection = collection.splitForAggregation(aggregateProj, ctx);
         return result;
       } else {
         throw new IllegalStateException();
@@ -225,13 +238,14 @@ public class OLevelZeroIdentifier extends SimpleNode {
 
   public OLevelZeroIdentifier copy() {
     OLevelZeroIdentifier result = new OLevelZeroIdentifier(-1);
-    result.functionCall=  functionCall==null?null:functionCall.copy();
+    result.functionCall = functionCall == null ? null : functionCall.copy();
     result.self = self;
-    result.collection = collection==null?null:collection.copy();
+    result.collection = collection == null ? null : collection.copy();
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -249,7 +263,8 @@ public class OLevelZeroIdentifier extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = functionCall != null ? functionCall.hashCode() : 0;
     result = 31 * result + (self != null ? self.hashCode() : 0);
     result = 31 * result + (collection != null ? collection.hashCode() : 0);
@@ -261,10 +276,10 @@ public class OLevelZeroIdentifier extends SimpleNode {
   }
 
   public boolean refersToParent() {
-    if(functionCall!=null && functionCall.refersToParent()){
+    if (functionCall != null && functionCall.refersToParent()) {
       return true;
     }
-    if(collection!=null && collection.refersToParent()){
+    if (collection != null && collection.refersToParent()) {
       return true;
     }
     return false;
@@ -319,10 +334,10 @@ public class OLevelZeroIdentifier extends SimpleNode {
   }
 
   public boolean isCacheable() {
-    if(functionCall!=null){
+    if (functionCall != null) {
       return functionCall.isCacheable();
     }
-    if(collection!=null){
+    if (collection != null) {
       return collection.isCacheable();
     }
     return false;

@@ -44,6 +44,26 @@ OrientDB Community Edition is free for any use (Apache 2 license). If you are in
 [Get started with OrientDB](http://orientdb.com/getting-started/).
 
 --------
+
+## Licensing
+OrientDB is licensed by OrientDB LTD under the Apache 2 license. OrientDB relies on the following 3rd party libraries, which are compatible with the Apache license:
+
+- Javamail: CDDL license (http://www.oracle.com/technetwork/java/faq-135477.html)
+- java persistence 2.0: CDDL license
+- JNA: Apache 2 (https://github.com/twall/jna/blob/master/LICENSE)
+- Hibernate JPA 2.0 API: Eclipse Distribution License 1.0
+- ASM: OW2
+
+References:
+- Apache 2 license (Apache2):
+  http://www.apache.org/licenses/LICENSE-2.0.html
+
+- Common Development and Distribution License (CDDL-1.0):
+  http://opensource.org/licenses/CDDL-1.0
+
+- Eclipse Distribution License (EDL-1.0):
+  http://www.eclipse.org/org/documents/edl-v10.php (http://www.eclipse.org/org/documents/edl-v10.php)
+  
 ### Sponsors
 
 |[![](https://www.yourkit.com/images/yklogo.png)](https://www.yourkit.com/.net/profiler/index.jsp)|YourKit supports open source projects with its full-featured Java Profiler. YourKit, LLC is the creator of <a href="https://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a> and <a href="https://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>, innovative and intelligent tools for profiling Java and .NET applications.|

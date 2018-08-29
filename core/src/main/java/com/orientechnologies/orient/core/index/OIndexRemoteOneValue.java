@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
-  protected final static String QUERY_GET = "select rid from index:%s where key = ?";
+  protected final static String QUERY_GET = "select rid from index:`%s` where key = ?";
 
   public OIndexRemoteOneValue(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
       final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex, String database) {
@@ -44,7 +45,7 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
   }
 
   public OIdentifiable get(final Object iKey) {
-    try (final OResultSet result = getDatabase().command(String.format(QUERY_GET, name), iKey)) {
+    try (final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_GET, name), iKey)) {
       if (result != null && result.hasNext())
         return ((OIdentifiable) result.next().getProperty("rid"));
       return null;
@@ -52,7 +53,7 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
   }
 
   public Iterator<Entry<Object, OIdentifiable>> iterator() {
-    try (final OResultSet result = getDatabase().command(String.format(QUERY_ENTRIES, name))) {
+    try (final OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_ENTRIES, name))) {
 
       final Map<Object, OIdentifiable> map = result.stream()
           .collect(Collectors.toMap((res) -> res.getProperty("key"), (res) -> res.getProperty("rid")));

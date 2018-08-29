@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -617,8 +618,8 @@ public class OSelectStatementTest {
     List<OAndBlock> flattended = stm.whereClause.flatten();
     assertTrue(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).left.isBaseIdentifier());
     assertFalse(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).right.isBaseIdentifier());
-    assertFalse(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).left.isEarlyCalculated());
-    assertTrue(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).right.isEarlyCalculated());
+    assertFalse(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).left.isEarlyCalculated(new OBasicCommandContext()));
+    assertTrue(((OBinaryCondition) flattended.get(0).subBlocks.get(0)).right.isEarlyCalculated(new OBasicCommandContext()));
 
   }
 

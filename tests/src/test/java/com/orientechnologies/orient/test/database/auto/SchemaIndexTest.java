@@ -34,7 +34,6 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
     test.createProperty("prop1", OType.DOUBLE);
     test.createProperty("prop2", OType.DOUBLE);
 
-    schema.save();
   }
 
   @AfterMethod

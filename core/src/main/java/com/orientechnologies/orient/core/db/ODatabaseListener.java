@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 
 /**
  * Listener Interface for all the events of the Database instances.
@@ -62,6 +63,14 @@ public interface ODatabaseListener {
 
   }
 
+  default void onCreateView(ODatabase database, OView view) {
+
+  }
+
+  default void onDropView(ODatabase database, OView view) {
+
+  }
+
   /**
    * Callback to decide if repair the database upon corruption.
    *
@@ -75,4 +84,5 @@ public interface ODatabaseListener {
   default boolean onCorruptionRepairDatabase(final ODatabase iDatabase, final String iReason, String iWhatWillbeFixed) {
     return false;
   }
+
 }

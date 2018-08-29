@@ -57,7 +57,6 @@ public class OrientDbWriteLotsOfDataTest {
         OClass oc = schema.createClass(CLASSNAME);
         oc.createProperty(PROPKEY, OType.STRING);
         oc.setStrictMode(true);
-        schema.save();
       }
     } finally {
       db.close();

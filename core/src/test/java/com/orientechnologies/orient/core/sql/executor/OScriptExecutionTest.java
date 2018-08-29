@@ -33,7 +33,7 @@ public class OScriptExecutionTest {
     Assert.assertEquals((Object) 2L, rs.next().getProperty("count"));
   }
 
-   @Test
+  @Test
   public void testIf() {
     String className = "testIf";
     db.createClass(className);
@@ -52,7 +52,6 @@ public class OScriptExecutionTest {
     Assert.assertEquals((Object) 2L, rs.next().getProperty("count"));
   }
 
-
   @Test
   public void testReturnInIf() {
     String className = "testReturnInIf";
@@ -70,4 +69,58 @@ public class OScriptExecutionTest {
     Assert.assertEquals((Object) 2L, rs.next().getProperty("count"));
   }
 
+  @Test
+  public void testReturnInIf2() {
+    String className = "testReturnInIf2";
+    db.createClass(className);
+    String script = "";
+    script += "INSERT INTO " + className + " SET name = 'foo';";
+    script += "LET $1 = SELECT count(*) as count FROM " + className + " WHERE name ='foo';";
+    script += "IF($1.size() > 0 ){";
+    script += "   RETURN 'OK';";
+    script += "}";
+    script += "RETURN 'FAIL';";
+    OResultSet result = db.execute("SQL", script);
+
+    OResult item = result.next();
+
+    Assert.assertEquals("OK", item.getProperty("value"));
+    result.close();
+  }
+
+  @Test
+  public void testReturnInIf3() {
+    String className = "testReturnInIf3";
+    db.createClass(className);
+    String script = "";
+    script += "INSERT INTO " + className + " SET name = 'foo';";
+    script += "LET $1 = SELECT count(*) as count FROM " + className + " WHERE name ='foo';";
+    script += "IF($1.size() = 0 ){";
+    script += "   RETURN 'FAIL';";
+    script += "}";
+    script += "RETURN 'OK';";
+    OResultSet result = db.execute("SQL", script);
+
+    OResult item = result.next();
+
+    Assert.assertEquals("OK", item.getProperty("value"));
+    result.close();
+  }
+
+  @Test
+  public void testLazyExecutionPlanning() {
+    String script = "";
+    script += "LET $1 = SELECT FROM (select expand(classes) from metadata:schema) where name = 'nonExistingClass';";
+    script += "IF($1.size() > 0) {";
+    script += "   SELECT FROM nonExistingClass;";
+    script += "   RETURN 'FAIL';";
+    script += "}";
+    script += "RETURN 'OK';";
+    OResultSet result = db.execute("SQL", script);
+
+    OResult item = result.next();
+
+    Assert.assertEquals("OK", item.getProperty("value"));
+    result.close();
+  }
 }

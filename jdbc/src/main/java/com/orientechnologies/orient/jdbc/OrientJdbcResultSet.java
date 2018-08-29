@@ -70,6 +70,7 @@ public class OrientJdbcResultSet implements ResultSet {
     } catch (Exception e) {
       throw new SQLException("Error occourred while mapping results ", e);
     }
+    oResultSet.close();
     rowCount = records.size();
 
     if (records.size() >= 1) {

@@ -4,27 +4,39 @@ import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OOfflineNodeException;
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
+import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
@@ -35,12 +47,18 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginated
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
+import com.orientechnologies.orient.server.distributed.impl.metadata.OTransactionContext;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OToLeaderTransactionTask;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OToLeaderTransactionTaskResponse;
+import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
@@ -49,9 +67,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Callable;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
+import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
 
 /**
  * Created by tglman on 30/03/17.
@@ -122,14 +140,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   protected void loadMetadata() {
+    loadMetadata(this.getSharedContext());
+  }
+
+  @Override
+  protected void loadMetadata(OSharedContext ctx) {
     metadata = new OMetadataDefault(this);
-    sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextDistributed(getStorage());
-        return shared;
-      }
-    });
+    sharedContext = ctx;
     metadata.init(sharedContext);
     sharedContext.load(this);
   }
@@ -174,7 +191,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentDistributed database = new ODatabaseDocumentDistributed(getStorage(), hazelcastPlugin);
-    database.init(getConfig());
+    database.init(getConfig(), getSharedContext());
     database.internalOpen(getUser().getName(), null, false);
     database.callOnOpenListeners();
     this.activateOnCurrentThread();
@@ -203,12 +220,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public Map<String, Object> getHaStatus(boolean servers, boolean db, boolean latency, boolean messages) {
     checkSecurity(ORule.ResourceGeneric.SERVER, "status", ORole.PERMISSION_READ);
 
-    final String dbUrl = getURL();
-
-    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
-    final OServer serverInstance = OServer.getInstanceByPath(path);
-
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) serverInstance.getDistributedManager();
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) getStorageDistributed().getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
@@ -234,12 +246,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public boolean removeHaServer(String serverName) {
     checkSecurity(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE);
 
-    final String dbUrl = getURL();
-
-    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
-    final OServer serverInstance = OServer.getInstanceByPath(path);
-
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) serverInstance.getDistributedManager();
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) getStorageDistributed().getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
@@ -255,18 +262,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public Map<String, Object> syncCluster(String clusterName) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, "sync", ORole.PERMISSION_UPDATE);
 
-    final String dbUrl = getURL();
-
-    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
-    final OServer serverInstance = OServer.getInstanceByPath(path);
-
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) serverInstance.getDistributedManager();
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) getStorageDistributed().getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
     final String databaseName = getName();
 
     final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
+    OServer serverInstance = getStorageDistributed().getServer();
     final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
 
     final String nodeName = dManager.getLocalNodeName();
@@ -429,22 +432,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   @Override
-  public void init(OrientDBConfig config) {
+  public void init(OrientDBConfig config, OSharedContext sharedContext) {
     OScenarioThreadLocal.executeAsDistributed(() -> {
-      super.init(config);
+      super.init(config, sharedContext);
       return null;
     });
   }
 
-  protected void createMetadata() {
+  protected void createMetadata(OSharedContext ctx) {
     // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
-    OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextDistributed(getStorage());
-        return shared;
-      }
-    });
+    OSharedContext shared = ctx;
     metadata.init(shared);
     ((OSharedContextDistributed) shared).create(this);
   }
@@ -496,36 +493,76 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       //Exclusive for handling schema manipulation, remove after refactor for distributed schema
       super.internalCommit(iTx);
     } else {
-      //This is future may handle a retry
-      try {
-        for (ORecordOperation txEntry : iTx.getRecordOperations()) {
-          if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
-            final ORecord record = txEntry.getRecord();
-            if (record instanceof ODocument)
-              ((ODocument) record).validate();
-          }
-        }
-        final ODistributedConfiguration dbCfg = getStorageDistributed().getDistributedConfiguration();
+      //Disabled forward of transaction to make sure that tests run correctly, will be re-enabled when the rest of refactor is done
+      if (true) {
+        realCommit(iTx);
+      } else {
+        OToLeaderTransactionTask message = new OToLeaderTransactionTask(iTx.getRecordOperations());
         ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
-        final String localNodeName = dManager.getLocalNodeName();
-        getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
-        ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(), dManager,
-            getStorageDistributed().getLocalDistributedDatabase());
-        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(iTx);
-
-        txManager.commit(this, iTx, getStorageDistributed().getEventListener());
-        return;
-      } catch (OValidationException e) {
-        throw e;
-      } catch (HazelcastInstanceNotActiveException e) {
-        throw new OOfflineNodeException("Hazelcast instance is not available");
-
-      } catch (HazelcastException e) {
-        throw new OOfflineNodeException("Hazelcast instance is not available");
-      } catch (Exception e) {
-        getStorageDistributed().handleDistributedException("Cannot route TX operation against distributed node", e);
+        // SYNCHRONOUS CALL: REPLICATE IT
+        final Set<String> servers = new HashSet<String>();
+        servers.add(dManager.getLockManagerServer());
+        ODistributedResponse response = dManager.sendRequest(getName(), null, servers, message, dManager.getNextMessageIdCounter(),
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+        for (OToLeaderTransactionTaskResponse.OCreatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
+            .getPayload()).getCreated()) {
+          iTx.updateIdentityAfterCommit(entry.getCurrentRid(), entry.getCreatedRid());
+          ORecordInternal.setVersion(iTx.getRecordEntry(entry.getCurrentRid()).getRecord(), entry.getVersion());
+        }
+        for (OToLeaderTransactionTaskResponse.OUpdatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
+            .getPayload()).getUpdated()) {
+          ORecordInternal.setVersion(iTx.getRecordEntry(entry.getRid()).getRecord(), entry.getVersion());
+        }
+        for (OToLeaderTransactionTaskResponse.ODeletedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
+            .getPayload()).getDeleted()) {
+          this.getLocalCache().deleteRecord(entry.getRid());
+        }
+        for (OToLeaderTransactionTaskResponse.OUpdatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
+            .getPayload()).getUpdated()) {
+          ORecordInternal.setVersion(iTx.getRecordEntry(entry.getRid()).getRecord(), entry.getVersion());
+        }
       }
     }
+  }
+
+  public void realCommit(OTransactionInternal iTx) {
+    //This is future may handle a retry
+    try {
+      for (ORecordOperation txEntry : iTx.getRecordOperations()) {
+        if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+          final ORecord record = txEntry.getRecord();
+          if (record instanceof ODocument)
+            ((ODocument) record).validate();
+        }
+      }
+      final ODistributedConfiguration dbCfg = getStorageDistributed().getDistributedConfiguration();
+      ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
+      final String localNodeName = dManager.getLocalNodeName();
+      getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
+      ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(), dManager,
+          getStorageDistributed().getLocalDistributedDatabase());
+      Set<String> otherNodesInQuorum = txManager
+          .getAvailableNodesButLocal(dbCfg, txManager.getInvolvedClusters(iTx.getRecordOperations()), getLocalNodeName());
+      List<String> online = dManager.getOnlineNodes(getName());
+      if (online.size() < ((otherNodesInQuorum.size() + 1) / 2) + 1) {
+        throw new ODistributedException("No enough nodes online to execute the operation, online nodes: " + online);
+      }
+
+      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(iTx);
+
+      txManager.commit(this, iTx);
+      return;
+    } catch (OValidationException e) {
+      throw e;
+    } catch (HazelcastInstanceNotActiveException e) {
+      throw new OOfflineNodeException("Hazelcast instance is not available");
+
+    } catch (HazelcastException e) {
+      throw new OOfflineNodeException("Hazelcast instance is not available");
+    } catch (Exception e) {
+      getStorageDistributed().handleDistributedException("Cannot route TX operation against distributed node", e);
+    }
+
   }
 
   public void acquireLocksForTx(OTransactionInternal tx, ODistributedTxContext txContext) {
@@ -548,7 +585,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           keys.add(new OPair<>(String.valueOf(changesPerKey.key), changesPerKey.key));
         }
         if (!change.getValue().nullKeyChanges.entries.isEmpty()) {
-          keys.add(new OPair<>(String.valueOf(null), null));
+          keys.add(new OPair<>("null", null));
         }
       }
     }
@@ -558,28 +595,91 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   }
 
+  public void txFirstPhase(OSessionOperationId requestId, OTransactionInternal tx) {
+    OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
+    sharedContext.getDistributedContext().registerTransaction(requestId, tx);
+    ((OTransactionOptimistic) tx).begin();
+    firstPhaseDataChecks(false, tx);
+  }
+
+  public void txSecondPhase(OSessionOperationId operationId, boolean success) {
+    OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
+    OTransactionContext context = sharedContext.getDistributedContext().getTransaction(operationId);
+    try {
+      OTransactionInternal tx = context.getTransaction();
+      if (success) {
+        ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
+      } else {
+        //FOR NOW ROLLBACK DO NOTHING ON THE STORAGE ONLY THE CLOSE IS NEEDED
+      }
+    } catch (OLowDiskSpaceException ex) {
+      getStorageDistributed().getDistributedManager()
+          .setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      throw ex;
+    } finally {
+      sharedContext.getDistributedContext().close(operationId);
+    }
+
+  }
+
   public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local, int retryCount) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
-    ODistributedTxContext txContext = new ONewDistributedTxContextImpl((ODistributedDatabaseImpl) localDistributedDatabase,
+    ONewDistributedTxContextImpl txContext = new ONewDistributedTxContextImpl((ODistributedDatabaseImpl) localDistributedDatabase,
         requestId, tx);
     try {
-      txContext.begin(this, local);
+      internalBegin2pc(txContext, local);
+      txContext.setStatus(SUCCESS);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
     } catch (OConcurrentCreateException ex) {
-      if (retryCount >= 0 || retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
+      if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
+          OLogManager.instance()
+              .debug(this, "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue request", ex.getExpectedRid(),
+                  ex.getActualRid());
+          txContext.unlock();
           return false;
         }
       }
+      txContext.setStatus(FAILED);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
       throw ex;
     } catch (OConcurrentModificationException ex) {
-      if (retryCount >= 0 || retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
+      if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getEnhancedRecordVersion() > ex.getEnhancedDatabaseVersion()) {
+          OLogManager.instance()
+              .info(this, "Persistent version not match, record:%s expected:%s actual:%s waiting for re-enqueue request",
+                  ex.getRid(), ex.getEnhancedRecordVersion(), ex.getEnhancedDatabaseVersion());
+          txContext.unlock();
           return false;
         }
       }
+      txContext.setStatus(FAILED);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      throw ex;
+    } catch (ORecordNotFoundException e) {
+      // This error can happen only in deserialization before locks happen, no need to unlock
+      if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
+        return false;
+      }
+      txContext.setStatus(FAILED);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      throw e;
+    } catch (ODistributedLockException | OLockException ex) {
+      txContext.unlock();
+      /// ?? do i've to save this state as well ?
+      txContext.setStatus(TIMEDOUT);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      throw ex;
+    } catch (ORecordDuplicatedException ex) {
+      txContext.setStatus(FAILED);
+      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      throw ex;
+    } catch (OLowDiskSpaceException ex) {
+      getStorageDistributed().getDistributedManager()
+          .setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
     }
-    localDistributedDatabase.registerTxContext(requestId, txContext);
+    getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
     return true;
   }
 
@@ -595,23 +695,62 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public boolean commit2pc(ODistributedRequestId transactionId) {
     getStorageDistributed().resetLastValidBackup();
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
-    ODistributedTxContext txContext = localDistributedDatabase.getTxContext(transactionId);
+    ODistributedServerManager manager = getStorageDistributed().getDistributedManager();
+    ONewDistributedTxContextImpl txContext = (ONewDistributedTxContextImpl) localDistributedDatabase.getTxContext(transactionId);
     if (txContext != null) {
-      try {
-        txContext.commit(this);
-        localDistributedDatabase.popTxContext(transactionId);
-        OLiveQueryHook.notifyForTxChanges(this);
-        OLiveQueryHookV2.notifyForTxChanges(this);
-      } finally {
-        OLiveQueryHook.removePendingDatabaseOps(this);
-        OLiveQueryHookV2.removePendingDatabaseOps(this);
+      if (SUCCESS.equals(txContext.getStatus())) {
+        try {
+          txContext.commit(this);
+          localDistributedDatabase.popTxContext(transactionId);
+          OLiveQueryHook.notifyForTxChanges(this);
+          OLiveQueryHookV2.notifyForTxChanges(this);
+        } finally {
+          OLiveQueryHook.removePendingDatabaseOps(this);
+          OLiveQueryHookV2.removePendingDatabaseOps(this);
+        }
+        return true;
+      } else if (TIMEDOUT.equals(txContext.getStatus())) {
+        for (int i = 0; i < 10; i++) {
+          try {
+            internalBegin2pc(txContext, false);
+            txContext.setStatus(SUCCESS);
+            break;
+          } catch (Exception ex) {
+            OLogManager.instance()
+                .warn(ODatabaseDocumentDistributed.this, "Error beginning timed out transaction: %s", ex, transactionId);
+          }
+        }
+        if (!SUCCESS.equals(txContext.getStatus())) {
+          Orient.instance().submit(() -> {
+            OLogManager.instance()
+                .warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install",
+                    transactionId);
+            manager.installDatabase(false, ODatabaseDocumentDistributed.this.getName(), true, true);
+          });
+        }
+        try {
+          txContext.commit(this);
+          localDistributedDatabase.popTxContext(transactionId);
+          OLiveQueryHook.notifyForTxChanges(this);
+          OLiveQueryHookV2.notifyForTxChanges(this);
+        } finally {
+          OLiveQueryHook.removePendingDatabaseOps(this);
+          OLiveQueryHookV2.removePendingDatabaseOps(this);
+        }
+
+      } else {
+        Orient.instance().submit(() -> {
+          OLogManager.instance()
+              .warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install",
+                  transactionId);
+          manager.installDatabase(false, ODatabaseDocumentDistributed.this.getName(), true, true);
+        });
       }
-      return true;
     }
     return false;
   }
 
-  public void rollback2pc(ODistributedRequestId transactionId) {
+  public boolean rollback2pc(ODistributedRequestId transactionId) {
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
     if (txContext != null) {
@@ -620,13 +759,19 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
       OLiveQueryHook.removePendingDatabaseOps(this);
       OLiveQueryHookV2.removePendingDatabaseOps(this);
+      return true;
     }
+    return false;
   }
 
   public void internalCommit2pc(ONewDistributedTxContextImpl txContext) {
     try {
       OTransactionInternal tx = txContext.getTransaction();
       ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
+    } catch (OLowDiskSpaceException ex) {
+      getStorageDistributed().getDistributedManager()
+          .setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      throw ex;
     } finally {
       txContext.destroy();
     }
@@ -635,10 +780,25 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   public void internalBegin2pc(ONewDistributedTxContextImpl txContext, boolean local) {
     getStorageDistributed().resetLastValidBackup();
-    acquireLocksForTx(txContext.getTransaction(), txContext);
+    OTransactionInternal transaction = txContext.getTransaction();
+    //This is moved before checks because also the coordinator first node allocate before checks
+    if (!local) {
+      ((OTransactionOptimistic) transaction).begin();
+    }
 
-    for (Map.Entry<String, OTransactionIndexChanges> change : txContext.getTransaction().getIndexOperations().entrySet()) {
-      OIndex<?> index = getMetadata().getIndexManager().getIndex(change.getKey());
+    acquireLocksForTx(transaction, txContext);
+
+    firstPhaseDataChecks(local, transaction);
+
+  }
+
+  private void firstPhaseDataChecks(boolean local, OTransactionInternal transaction) {
+    if (!local) {
+      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(transaction);
+    }
+
+    for (Map.Entry<String, OTransactionIndexChanges> change : transaction.getIndexOperations().entrySet()) {
+      OIndex<?> index = getSharedContext().getIndexManager().getRawIndex(change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
           .equals(index.getType())) {
         if (!change.getValue().nullKeyChanges.entries.isEmpty()) {
@@ -665,7 +825,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
     }
 
-    for (ORecordOperation entry : txContext.getTransaction().getRecordOperations()) {
+    for (ORecordOperation entry : transaction.getRecordOperations()) {
       if (entry.getType() != ORecordOperation.CREATED) {
         int changeVersion = entry.getRecord().getVersion();
         ORecordMetadata metadata = getStorage().getRecordMetadata(entry.getRID());
@@ -683,12 +843,98 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     }
+  }
 
-    //This has to be the last one because does persistent opertations
-    if (!local) {
-      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(txContext.getTransaction());
+  public void afterCreateOperations(final OIdentifiable id) {
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        OClassIndexManager.checkIndexesAfterCreate(doc, this);
+        if (clazz.isFunction()) {
+          this.getSharedContext().getFunctionLibrary().createdFunction(doc);
+          Orient.instance().getScriptManager().close(this.getName());
+        }
+        if (clazz.isOuser() || clazz.isOrole()) {
+          getMetadata().getSecurity().incrementVersion();
+        }
+        if (clazz.isSequence()) {
+          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceCreated(this, doc);
+        }
+        if (clazz.isScheduler()) {
+          getMetadata().getScheduler().scheduleEvent(new OScheduledEvent(doc));
+        }
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordAfterCreate(doc, this);
+        }
+      }
     }
+    callbackHooks(ORecordHook.TYPE.AFTER_CREATE, id);
+  }
 
+  public void afterUpdateOperations(final OIdentifiable id) {
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        OClassIndexManager.checkIndexesAfterUpdate((ODocument) id, this);
+        if (clazz.isFunction()) {
+          this.getSharedContext().getFunctionLibrary().updatedFunction(doc);
+          Orient.instance().getScriptManager().close(this.getName());
+        }
+        if (clazz.isOuser() || clazz.isOrole()) {
+          getMetadata().getSecurity().incrementVersion();
+        }
+        if (clazz.isSequence()) {
+          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(this, doc);
+        }
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordAfterUpdate(doc, this);
+        }
+      }
+    }
+    callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
+  }
+
+  public void afterDeleteOperations(final OIdentifiable id) {
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null) {
+        OClassIndexManager.checkIndexesAfterDelete(doc, this);
+        if (clazz.isFunction()) {
+          this.getSharedContext().getFunctionLibrary().droppedFunction(doc);
+          Orient.instance().getScriptManager().close(this.getName());
+        }
+        if (clazz.isOuser() || clazz.isOrole()) {
+          getMetadata().getSecurity().incrementVersion();
+        }
+        if (clazz.isSequence()) {
+          ((OSequenceLibraryProxy) getMetadata().getSequenceLibrary()).getDelegate().onSequenceDropped(this, doc);
+        }
+        if (clazz.isScheduler()) {
+          final String eventName = doc.field(OScheduledEvent.PROP_NAME);
+          getSharedContext().getScheduler().removeEventInternal(eventName);
+        }
+        if (clazz.isTriggered()) {
+          OClassTrigger.onRecordAfterDelete(doc, this);
+        }
+      }
+    }
+    callbackHooks(ORecordHook.TYPE.AFTER_DELETE, id);
+  }
+
+  @Override
+  public OView getViewFromCluster(int cluster) {
+    OImmutableSchema schema = getMetadata().getImmutableSchemaSnapshot();
+    OView view = schema.getViewByClusterId(cluster);
+    if (view == null) {
+      String viewName = ((OSharedContextDistributed) getSharedContext()).getViewManager().getViewFromOldCluster(cluster);
+      if (viewName != null) {
+        view = schema.getView(viewName);
+      }
+    }
+    return view;
   }
 
 }

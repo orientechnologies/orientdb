@@ -18,9 +18,18 @@ import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
 import org.assertj.core.api.Assertions;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -773,112 +782,6 @@ public class ReadWriteDiskCacheTest {
     Assert.assertNotNull(a1out.get(fileId, 6));
 
     Assert.assertNotNull(a1in.get(fileId, 0));
-  }
-
-  @Test
-  public void testStoreCacheState() throws Exception {
-    final long fileId = readBuffer.addFile(fileName, writeBuffer);
-    final String nativeFileName = writeBuffer.nativeFileNameById(fileId);
-
-    Assert.assertEquals(readBuffer.getMaxSize(), 4);
-
-    //create file with 8 pages, we will push some of them in different queues later
-    for (int i = 0; i < 8; i++) {
-      OCacheEntry cacheEntry = readBuffer.allocateNewPage(fileId, writeBuffer, true);
-      try {
-        byte[] userData = new byte[userDataSize];
-        for (int n = 0; n < userData.length; n++) {
-          userData[n] = (byte) (i + 1);
-        }
-
-        final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
-        buffer.position(systemOffset);
-        buffer.put(userData);
-
-        setLsn(buffer, new OLogSequenceNumber(1, i));
-
-        cacheEntry.markDirty();
-      } finally {
-        readBuffer.releaseFromWrite(cacheEntry, writeBuffer);
-      }
-    }
-
-    readBuffer.clear();
-    writeBuffer.flush();
-
-    for (int i = 0; i < 8; i++) {
-      byte[] userData = new byte[userDataSize];
-      for (int n = 0; n < userData.length; n++) {
-        userData[n] = (byte) (i + 1);
-      }
-      assertFile(i, userData, new OLogSequenceNumber(1, i), nativeFileName);
-    }
-
-    LRUList am = readBuffer.getAm();
-    LRUList a1in = readBuffer.getA1in();
-    LRUList a1out = readBuffer.getA1out();
-
-    Assert.assertEquals(am.size(), 0);
-    Assert.assertEquals(a1out.size(), 0);
-    Assert.assertEquals(a1in.size(), 0);
-
-    //put 1 and 2  pages to the a1out queue, page 0 is dropped from buffer
-    for (int i = 0; i < 7; i++) {
-      OCacheEntry cacheEntry = readBuffer.loadForRead(fileId, i, false, writeBuffer, 1, true);
-      readBuffer.releaseFromRead(cacheEntry, writeBuffer);
-    }
-
-    Assert.assertEquals(am.size(), 0);
-    Assert.assertEquals(a1out.size(), 2); // pages 1 - 2
-    Assert.assertEquals(a1in.size(), 4); // pages 3 - 6
-
-    //put 1-th page to the am queue
-    OCacheEntry cacheEntry = readBuffer.loadForRead(fileId, 1, false, writeBuffer, 1, true);
-    readBuffer.releaseFromRead(cacheEntry, writeBuffer);
-
-    Assert.assertEquals(am.size(), 1); //page 1
-    Assert.assertEquals(a1out.size(), 2); // page 2 - 3 (removed from a1in because of size limit)
-    Assert.assertEquals(a1in.size(), 3); // pages 4 - 6
-
-    readBuffer.storeCacheState(writeBuffer);
-    readBuffer.closeStorage(writeBuffer);
-
-    final File stateFile = new File(storagePath, O2QCache.CACHE_STATE_FILE);
-    Assert.assertTrue(stateFile.exists());
-
-    initBuffer();
-    readBuffer.loadCacheState(writeBuffer);
-
-    am = readBuffer.getAm();
-    a1in = readBuffer.getA1in();
-    a1out = readBuffer.getA1out();
-
-    Assert.assertEquals(am.size(), 1); //page 1
-    Assert.assertEquals(a1out.size(), 2); // page 2 - 3 (removed from a1in because of size limit)
-    Assert.assertEquals(a1in.size(), 3); // pages 4 - 6
-
-    for (OCacheEntry entry : am) {
-      Assert.assertEquals(entry.getFileId(), fileId);
-      Assert.assertEquals(entry.getPageIndex(), 1);
-      Assert.assertNotNull(entry.getCachePointer());
-    }
-
-    int counter = 3;
-    for (OCacheEntry entry : a1out) {
-      Assert.assertEquals(entry.getFileId(), fileId);
-      Assert.assertEquals(entry.getPageIndex(), counter);
-      Assert.assertNull(entry.getCachePointer());
-      counter--;
-    }
-
-    counter = 6;
-    for (OCacheEntry entry : a1in) {
-      Assert.assertEquals(entry.getFileId(), fileId);
-      Assert.assertEquals(entry.getPageIndex(), counter);
-      Assert.assertNotNull(entry.getCachePointer());
-      counter--;
-    }
-
   }
 
   @Test

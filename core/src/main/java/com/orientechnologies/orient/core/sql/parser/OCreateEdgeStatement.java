@@ -14,8 +14,8 @@ import java.util.Map;
 
 public class OCreateEdgeStatement extends OStatement {
 
-  protected OIdentifier       targetClass;
-  protected OIdentifier       targetClusterName;
+  protected OIdentifier targetClass;
+  protected OIdentifier targetClusterName;
 
   protected boolean upsert = false;
 
@@ -23,10 +23,10 @@ public class OCreateEdgeStatement extends OStatement {
 
   protected OExpression rightExpression;
 
-  protected OInsertBody       body;
-  protected Number            retry;
-  protected Number            wait;
-  protected OBatch            batch;
+  protected OInsertBody body;
+  protected Number      retry;
+  protected Number      wait;
+  protected OBatch      batch;
 
   public OCreateEdgeStatement(int id) {
     super(id);
@@ -36,7 +36,8 @@ public class OCreateEdgeStatement extends OStatement {
     super(p, id);
   }
 
-  @Override public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
+  @Override
+  public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -54,7 +55,8 @@ public class OCreateEdgeStatement extends OStatement {
     return new OLocalResultSet(executionPlan);
   }
 
-  @Override public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
+  @Override
+  public OResultSet execute(ODatabase db, Map params, OCommandContext parentCtx) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     if (parentCtx != null) {
       ctx.setParentWithoutOverridingChild(parentCtx);
@@ -83,7 +85,7 @@ public class OCreateEdgeStatement extends OStatement {
         targetClusterName.toString(params, builder);
       }
     }
-    if(upsert){
+    if (upsert) {
       builder.append(" UPSERT");
     }
     builder.append(" FROM ");
@@ -109,7 +111,22 @@ public class OCreateEdgeStatement extends OStatement {
     }
   }
 
-  @Override public OCreateEdgeStatement copy() {
+  @Override
+  public boolean executinPlanCanBeCached() {
+    if (this.leftExpression != null && !this.leftExpression.isCacheable()) {
+      return false;
+    }
+    if (this.rightExpression != null && !this.rightExpression.isCacheable()) {
+      return false;
+    }
+    if (this.body != null && !body.isCacheable()) {
+      return false;
+    }
+    return true;
+  }
+
+  @Override
+  public OCreateEdgeStatement copy() {
     OCreateEdgeStatement result = null;
     try {
       result = getClass().getConstructor(Integer.TYPE).newInstance(-1);
@@ -117,19 +134,19 @@ public class OCreateEdgeStatement extends OStatement {
       throw new RuntimeException(e);
     }
 
-    result.targetClass = targetClass==null?null:targetClass.copy();
-    result.targetClusterName = targetClusterName==null?null:targetClusterName.copy();
+    result.targetClass = targetClass == null ? null : targetClass.copy();
+    result.targetClusterName = targetClusterName == null ? null : targetClusterName.copy();
 
     result.upsert = this.upsert;
 
-    result.leftExpression = leftExpression==null?null:leftExpression.copy();
+    result.leftExpression = leftExpression == null ? null : leftExpression.copy();
 
-    result.rightExpression = rightExpression==null?null:rightExpression.copy();
+    result.rightExpression = rightExpression == null ? null : rightExpression.copy();
 
-    result.body = body==null?null:body.copy();
+    result.body = body == null ? null : body.copy();
     result.retry = retry;
     result.wait = wait;
-    result.batch = batch==null?null:batch.copy();
+    result.batch = batch == null ? null : batch.copy();
     return result;
   }
 

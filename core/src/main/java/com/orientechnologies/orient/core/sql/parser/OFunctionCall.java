@@ -128,6 +128,7 @@ public class OFunctionCall extends SimpleNode {
       }
     }
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
+    function.config(this.params.toArray());
     if (function != null) {
       if (record instanceof OIdentifiable) {
         return function.execute(targetObjects, (OIdentifiable) record, null, paramValues.toArray(), ctx);
@@ -273,7 +274,7 @@ public class OFunctionCall extends SimpleNode {
     return false;
   }
 
-  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
     if (isAggregate()) {
       OFunctionCall newFunct = new OFunctionCall(-1);
       newFunct.name = this.name;
@@ -309,7 +310,7 @@ public class OFunctionCall extends SimpleNode {
           }
         } else {
           for (OExpression param : params) {
-            newFunct.getParams().add(param.splitForAggregation(aggregateProj));
+            newFunct.getParams().add(param.splitForAggregation(aggregateProj, ctx));
           }
         }
       }
@@ -339,13 +340,13 @@ public class OFunctionCall extends SimpleNode {
     return item;
   }
 
-  public boolean isEarlyCalculated() {
+  public boolean isEarlyCalculated(OCommandContext ctx) {
 
     if (isTraverseFunction())
       return false;
 
     for (OExpression param : params) {
-      if (!param.isEarlyCalculated()) {
+      if (!param.isEarlyCalculated(ctx)) {
         return false;
       }
     }
@@ -439,8 +440,7 @@ public class OFunctionCall extends SimpleNode {
 
   public void deserialize(OResult fromResult) {
     if (fromResult.getProperty("name") != null) {
-      name = new OIdentifier(-1);
-      name.deserialize(fromResult.getProperty("name"));
+      name = OIdentifier.deserialize(fromResult.getProperty("name"));
     }
     if (fromResult.getProperty("params") != null) {
       params = new ArrayList<>();

@@ -33,12 +33,13 @@ import java.util.Collection;
  */
 public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager {
   private final ODistributedServerManager dManager;
-  private ORemoteTaskFactory[] factories = new ODefaultRemoteTaskFactoryV0[2];
+  private ORemoteTaskFactory[] factories = new ODefaultRemoteTaskFactoryV0[3];
 
   public ORemoteTaskFactoryManagerImpl(final ODistributedServerManager dManager) {
     this.dManager = dManager;
     factories[0] = new ODefaultRemoteTaskFactoryV0();
     factories[1] = new ODefaultRemoteTaskFactoryV1();
+    factories[2] = new ODefaultRemoteTaskFactoryV2();
   }
 
   @Override

@@ -59,27 +59,28 @@ import java.util.concurrent.Callable;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public abstract class OClassImpl extends ODocumentWrapperNoClass implements OClass {
-  private static final   long serialVersionUID        = 1L;
-  protected static final int  NOT_EXISTENT_CLUSTER_ID = -1;
-  protected final OSchemaShared owner;
-  protected final Map<String, OProperty> properties       = new HashMap<String, OProperty>();
-  protected       int                    defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
-  protected String name;
-  protected String description;
-  protected int[]  clusterIds;
-  protected List<OClassImpl> superClasses = new ArrayList<OClassImpl>();
-  protected int[]        polymorphicClusterIds;
-  protected List<OClass> subclasses;
-  protected float overSize = 0f;
-  protected String shortName;
-  protected boolean strictMode    = false;                           // @SINCE v1.0rc8
-  protected boolean abstractClass = false;                           // @SINCE v1.2.0
-  protected          Map<String, String>       customFields;
-  protected volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
-  protected volatile int                       hashCode;
+public abstract class OClassImpl implements OClass {
+  private static final   long                      serialVersionUID        = 1L;
+  protected static final int                       NOT_EXISTENT_CLUSTER_ID = -1;
+  protected final        OSchemaShared             owner;
+  protected final        Map<String, OProperty>    properties              = new HashMap<String, OProperty>();
+  protected              int                       defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
+  protected              String                    name;
+  protected              String                    description;
+  protected              int[]                     clusterIds;
+  protected              List<OClassImpl>          superClasses            = new ArrayList<OClassImpl>();
+  protected              int[]                     polymorphicClusterIds;
+  protected              List<OClass>              subclasses;
+  protected              float                     overSize                = 0f;
+  protected              String                    shortName;
+  protected              boolean                   strictMode              = false;                           // @SINCE v1.0rc8
+  protected              boolean                   abstractClass           = false;                           // @SINCE v1.2.0
+  protected              Map<String, String>       customFields;
+  protected volatile     OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
+  protected volatile     int                       hashCode;
 
   private static Set<String> reserved = new HashSet<String>();
+  protected      ODocument   document;
 
   static {
     // reserved.add("select");
@@ -175,11 +176,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
   @Override
   public OClass setClusterSelection(final OClusterSelectionStrategy clusterSelection) {
     return setClusterSelection(clusterSelection.getName());
-  }
-
-  @Override
-  public <RET extends ODocumentWrapper> RET reload() {
-    return (RET) owner.reload();
   }
 
   public String getCustom(final String iName) {
@@ -475,7 +471,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     }
   }
 
-  @Override
   public void fromStream() {
     subclasses = null;
     superClasses.clear();
@@ -552,7 +547,6 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
 
   protected abstract OPropertyImpl createPropertyInstance(ODocument p);
 
-  @Override
   public ODocument toStream() {
     document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
@@ -1454,7 +1448,7 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     if (!hasClusterId(clusterId))
       return;
 
-    database.command("alter cluster `" + oldName + "` NAME \"" + newName + "\"");
+    database.command("alter cluster `" + oldName + "` NAME \"" + newName + "\"").close();
   }
 
   protected void addPolymorphicClusterId(int clusterId) {
@@ -1676,4 +1670,52 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     return s;
   }
 
+  public void fromStream(ODocument document) {
+    this.document = document;
+    fromStream();
+  }
+
+  public ODocument toNetworkStream() {
+    ODocument document = new ODocument();
+    document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
+
+    try {
+      document.field("name", name);
+      document.field("shortName", shortName);
+      document.field("description", description);
+      document.field("defaultClusterId", defaultClusterId);
+      document.field("clusterIds", clusterIds);
+      document.field("clusterSelection", clusterSelection.getName());
+      document.field("overSize", overSize);
+      document.field("strictMode", strictMode);
+      document.field("abstract", abstractClass);
+
+      final Set<ODocument> props = new LinkedHashSet<ODocument>();
+      for (final OProperty p : properties.values()) {
+        props.add(((OPropertyImpl) p).toNetworkStream());
+      }
+      document.field("properties", props, OType.EMBEDDEDSET);
+
+      if (superClasses.isEmpty()) {
+        // Single super class is deprecated!
+        document.field("superClass", null, OType.STRING);
+        document.field("superClasses", null, OType.EMBEDDEDLIST);
+      } else {
+        // Single super class is deprecated!
+        document.field("superClass", superClasses.get(0).getName(), OType.STRING);
+        List<String> superClassesNames = new ArrayList<String>();
+        for (OClassImpl superClass : superClasses) {
+          superClassesNames.add(superClass.getName());
+        }
+        document.field("superClasses", superClassesNames, OType.EMBEDDEDLIST);
+      }
+
+      document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
+
+    } finally {
+      document.setInternalStatus(ORecordElement.STATUS.LOADED);
+    }
+
+    return document;
+  }
 }

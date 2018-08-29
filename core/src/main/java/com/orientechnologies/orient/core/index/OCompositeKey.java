@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://orientdb.com
-  *
-  */
+ *
+ *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://orientdb.com
+ *
+ */
 package com.orientechnologies.orient.core.index;
 
 import java.io.IOException;
@@ -33,15 +33,13 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * Container for the list of heterogeneous values that are going to be stored in in index as composite keys.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com), Artem Orobets
- * @see com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree.PartialSearchMode
  */
 @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED")
 public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, ODocumentSerializable {
-  private static final long  serialVersionUID = 1L;
+  private static final long         serialVersionUID = 1L;
   /**
-   * List of heterogeneous values that are going to be stored in {@link com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree}.
    */
-  private final List<Object> keys;
+  private final        List<Object> keys;
 
   private final transient Comparator<Object> comparator;
 
@@ -75,8 +73,6 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
   }
 
   /**
-   * @return List of heterogeneous values that are going to be stored in
-   *         {@link com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree}.
    */
   public List<Object> getKeys() {
     return Collections.unmodifiableList(keys);
@@ -88,8 +84,7 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
    * If passed in value is {@link OCompositeKey} itself then its values will be copied in current index. But key itself will not be
    * added.
    *
-   * @param key
-   *          Key to add.
+   * @param key Key to add.
    */
   public void addKey(final Object key) {
     if (key instanceof OCompositeKey) {
@@ -108,10 +103,10 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
    * Two objects will be equal if the common subset of their keys is equal. For example if first object contains two keys and second
    * contains four keys then only first two keys will be compared.
    *
-   * @param otherKey
-   *          Key to compare.
+   * @param otherKey Key to compare.
+   *
    * @return a negative integer, zero, or a positive integer as this object is less than, equal to, or greater than the specified
-   *         object.
+   * object.
    */
   public int compareTo(final OCompositeKey otherKey) {
     final Iterator<Object> inIter = keys.iterator();

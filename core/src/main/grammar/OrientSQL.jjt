@@ -195,6 +195,12 @@ TOKEN:
     |
     < CACHE: ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
     |
+    < MAXVALUE: ( "m" | "M" ) ( "a" | "A" ) ( "x" | "X" ) ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) >
+    |
+    < MINVALUE: ( "m" | "M" ) ( "i" | "I" ) ( "n" | "N" ) ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) >
+    |
+    < CYCLE: ( "c" | "C" ) ( "y" | "Y" ) ( "c" | "C" ) ( "l" | "L" ) ( "e" | "E" ) >
+    |
     < NOCACHE: ( "n" | "N" ) ( "o" | "O" ) ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
     |
     < UNSAFE: ( "u" | "U" ) ( "n" | "N" ) ( "s" | "S" ) ( "a" | "A" ) ( "f" | "F" ) ( "e" | "E" ) >
@@ -226,6 +232,10 @@ TOKEN:
 	< CLASSES: ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) ( "e" | "E" ) ( "s" | "S" ) >
 	|
 	< SUPERCLASSES: ( "s" | "S" ) ( "u" | "U" ) ( "p" | "P" ) ( "e" | "E" ) ( "r" | "R" ) ( "c" | "C" ) ( "l" | "L" ) ( "a" | "A" ) ( "s" | "S" ) ( "s" | "S" ) ( "e" | "E" ) ( "s" | "S" )>
+	|
+	< VIEW: ( "v" | "V" ) ( "i" | "I" ) ( "e" | "E" ) ( "w" | "W" ) >
+	|
+	< UPDATABLE: ( "u" | "U" ) ( "p" | "P" ) ( "d" | "D" ) ( "a" | "A" ) ( "t" | "T" ) ( "a" | "A" ) ( "b" | "B" ) ( "l" | "L" ) ( "e" | "E" )  >
     |
 	< EXCEPTION: ( "e" | "E" ) ( "x" | "X" ) ( "c" | "C" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "i" | "I" ) ( "o" | "O" ) ( "n" | "N" ) >
 	|
@@ -675,6 +685,8 @@ List<OStatement> parseScript() :
         |
         last = ForEachBlock() {result.add(last);}
         |
+        last = WhileBlock() {result.add(last);}
+        |
         <SEMICOLON>
     )*
 
@@ -740,6 +752,10 @@ OIdentifier Identifier():
     token = <CLASS>
     |
     token = <CLASSES>
+    |
+    token = <VIEW>
+    |
+    token = <UPDATABLE>
     |
     token = <MINDEPTH>
     |
@@ -868,6 +884,12 @@ OIdentifier Identifier():
     token = <SEQUENCE>
     |
     token = <CACHE>
+    |
+    token = <MAXVALUE>
+    |
+    token = <MINVALUE>
+    |
+    token = <CYCLE>
     |
     token = <START>
     |
@@ -1006,6 +1028,9 @@ OStatement StatementInternal():
                 result = CreateClassStatement()
                 |
                 LOOKAHEAD(2)
+                result = CreateViewStatement()
+                |
+                LOOKAHEAD(2)
                 result = CreatePropertyStatement()
                 |
                 LOOKAHEAD(2)
@@ -1022,6 +1047,9 @@ OStatement StatementInternal():
                 |
                 LOOKAHEAD(2)
                 result = CreateUserStatement()
+                |
+                LOOKAHEAD(2)
+                result = DropUserStatement()
                 |
                 LOOKAHEAD(2)
                 result = CreateSequenceStatement()
@@ -1072,6 +1100,9 @@ OStatement StatementInternal():
                 |
                 LOOKAHEAD(DropClassStatement())
                 result = DropClassStatement()
+                |
+                LOOKAHEAD(DropViewStatement())
+                result = DropViewStatement()
                 |
                 LOOKAHEAD(AlterPropertyStatement())
                 result = AlterPropertyStatement()
@@ -1277,7 +1308,13 @@ OMatchStatement MatchStatement():
         lastMatchExpr = MatchExpression() { jjtThis.matchExpressions.add(lastMatchExpr); }
         (
             <COMMA>
-            lastMatchExpr = MatchExpression() { jjtThis.matchExpressions.add(lastMatchExpr); }
+            (
+               lastMatchExpr = MatchExpression() { jjtThis.matchExpressions.add(lastMatchExpr); }
+               |
+               (
+                  <NOT> lastMatchExpr = MatchExpression() { jjtThis.notMatchExpressions.add(lastMatchExpr); }
+               )
+            )
         )*
         <RETURN>
         (
@@ -4060,6 +4097,22 @@ OCreateClassStatement CreateClassStatement():
 	{ return jjtThis; }
 }
 
+OCreateViewStatement CreateViewStatement():
+{}
+{
+	<CREATE> <VIEW>
+	(
+		jjtThis.name = Identifier()
+		[ <IF> <NOT> <EXISTS> { jjtThis.ifNotExists = true; }]
+		<FROM> <LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
+		[ <METADATA> jjtThis.metadata = Json() ]
+	)
+	{
+	  jjtThis.checkMetadataSyntax();
+	  return jjtThis;
+	}
+}
+
 OAlterClassStatement AlterClassStatement():
 {
 	OIdentifier lastIdentifier;
@@ -4229,6 +4282,16 @@ ODropClassStatement DropClassStatement():
 	[ <UNSAFE> { jjtThis.unsafe = true; } ]
 	{ return jjtThis; }
 }
+
+ODropViewStatement DropViewStatement():
+{}
+{
+	<DROP> <VIEW>
+	jjtThis.name = Identifier()
+	[ <IF> <EXISTS> { jjtThis.ifExists = true; } ]
+	{ return jjtThis; }
+}
+
 
 void IfNotExists():{}
 {
@@ -4764,6 +4827,18 @@ OCreateUserStatement CreateUserStatement():
     { return jjtThis; }
 }
 
+ODropUserStatement DropUserStatement():
+{
+    Token token;
+}
+{
+    (
+        <DROP> <USER>
+        jjtThis.name = Identifier()
+    )
+    { return jjtThis; }
+}
+
 
 OLetStatement LetStatement():
 { }
@@ -4840,6 +4915,10 @@ OIfStatement IfStatement():
             |
             last = IfStatement() { jjtThis.statements.add(last); }
             |
+            last = WhileBlock() {jjtThis.statements.add(last); }
+            |
+            last = ForEachBlock() {jjtThis.statements.add(last); }
+            |
             <SEMICOLON>
         )*
         <RBRACE>
@@ -4888,9 +4967,19 @@ OCreateSequenceStatement CreateSequenceStatement():
             }
         }
 
-        [ <START> jjtThis.start = Expression() ]
-        [ <INCREMENT> jjtThis.increment = Expression() ]
-        [ <CACHE> jjtThis.cache = Expression() ]
+        (
+            ( <START> jjtThis.start = Expression() )
+            |
+            ( <INCREMENT> jjtThis.increment = Expression() )
+            |
+            ( <MAXVALUE> jjtThis.maxValue = Expression() )
+            |
+            ( <MINVALUE> jjtThis.minValue = Expression() )
+            |
+            ( <CYCLE> { jjtThis.cycle = true; } )
+            |
+            ( <CACHE> jjtThis.cache = Expression() )
+        )*
     )
     { return jjtThis; }
 }
@@ -5016,7 +5105,36 @@ OForEachBlock ForEachBlock():
         |
         lastStatement = ForEachBlock() {jjtThis.statements.add(lastStatement); }
         |
+        lastStatement = WhileBlock() {jjtThis.statements.add(lastStatement); }
+        |
         <SEMICOLON>
     )*
     <RBRACE>
+    { return jjtThis; }
+}
+
+
+OWhileBlock WhileBlock():
+{
+    OStatement lastStatement;
+}
+{
+    <WHILE> <LPAREN>
+    jjtThis.condition = OrBlock()
+    <RPAREN>
+    <LBRACE>
+    (
+        LOOKAHEAD(StatementSemicolon())
+        lastStatement = StatementSemicolon() {jjtThis.statements.add(lastStatement); }
+        |
+        lastStatement = IfStatement() {jjtThis.statements.add(lastStatement); }
+        |
+        lastStatement = ForEachBlock() {jjtThis.statements.add(lastStatement); }
+        |
+        lastStatement = WhileBlock() {jjtThis.statements.add(lastStatement); }
+        |
+        <SEMICOLON>
+    )*
+    <RBRACE>
+    { return jjtThis; }
 }

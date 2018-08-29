@@ -91,7 +91,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
         if (ownedClusters.isEmpty()) {
           // CREATE A NEW CLUSTER WHERE THE LOCAL NODE IS THE MASTER
           String newClusterName;
-          for (int i = 0; ; ++i) {
+          for (int i = 1; ; ++i) {
             newClusterName = iClass.getName().toLowerCase(Locale.ENGLISH) + "_" + i;
             if (!allClusterNames.contains(newClusterName) && !serversToCreateANewCluster.contains(newClusterName))
               break;
@@ -154,7 +154,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
       if (targetClustersPerNode == 0 || (nodesLeft > 0 && (clusterNames.size() - clusterAssigned) % nodesLeft > 0))
         targetClustersPerNode++;
 
-      if (ownedClusters.size() > targetClustersPerNode) {
+      if (ownedClusters.size() > targetClustersPerNode && ownedClusters.size() > 0) {
         // REMOVE CLUSTERS IF THERE IS NO STATIC CFG OF THE OWNER
         while (ownedClusters.size() > targetClustersPerNode) {
           clustersOfClassToReassign.add(ownedClusters.remove(ownedClusters.size() - 1));

@@ -19,11 +19,7 @@ public class ODatabaseDocumentRemotePooled extends ODatabaseDocumentRemote {
   public void close() {
     if (isClosed())
       return;
-    closeActiveQueries();
-    rollback(true);
-    super.setStatus(ODatabase.STATUS.CLOSED);
-    getLocalCache().clear();
-    ODatabaseRecordThreadLocal.instance().remove();
+    internalClose(true);
     pool.release(this);
   }
 

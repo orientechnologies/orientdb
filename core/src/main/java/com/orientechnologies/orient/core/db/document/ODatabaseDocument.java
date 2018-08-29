@@ -109,6 +109,8 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
    */
   long countClass(String iClassName, final boolean iPolymorphic);
 
+  long countView(String iClassName);
+
   /**
    * Flush all indexes and cached storage content to the disk.
    * <p>

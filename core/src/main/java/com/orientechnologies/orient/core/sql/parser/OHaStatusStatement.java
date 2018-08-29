@@ -63,8 +63,10 @@ public class OHaStatusStatement extends OStatement {
   public OResultSet execute(ODatabase db, Object[] args, OCommandContext parentContext) {
     StringBuilder builder = new StringBuilder();
     Map<Object, Object> pars = new HashMap<>();
-    for (int i = 0; i < args.length; i++) {
-      pars.put(Integer.toString(i + 1), args[i]);
+    if (args != null) {
+      for (int i = 0; i < args.length; i++) {
+        pars.put(Integer.toString(i + 1), args[i]);
+      }
     }
     toString(pars, builder);
     Object result = db.command(new OCommandSQL(builder.toString())).execute();

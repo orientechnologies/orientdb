@@ -24,7 +24,7 @@ public class IteratorSpeedTest {
       document.save();
     }
 
-    ORecordIteratorClass iterator = new ORecordIteratorClass(db, db, "SpeedTest", true);
+    ORecordIteratorClass iterator = new ORecordIteratorClass(db, "SpeedTest", true);
     iterator.setRange(new ORecordId(oClass.getDefaultClusterId(), 999998), new ORecordId(oClass.getDefaultClusterId(), 999999));
 
     long start = System.nanoTime();

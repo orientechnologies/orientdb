@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -102,7 +101,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
       OHttpSession currentSession;
       if (iRequest.sessionId != null && iRequest.sessionId.length() > 1) {
-        currentSession = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
+        currentSession = server.getHttpSessionManager().getSession(iRequest.sessionId);
         if (currentSession != null && authenticationParts != null) {
           if (!currentSession.getUserName().equals(authenticationParts.get(0))) {
             // CHANGED USER, INVALIDATE THE SESSION
@@ -129,7 +128,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
           OLogManager.instance().warn(this,
               "Session %s is trying to access to the database '%s', but has been authenticated against the database '%s'",
               iRequest.sessionId, iRequest.databaseName, currentSession.getDatabaseName());
-          OHttpSessionManager.getInstance().removeSession(iRequest.sessionId);
+          server.getHttpSessionManager().removeSession(iRequest.sessionId);
           sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
           return false;
 
@@ -139,7 +138,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
           OLogManager.instance().warn(this,
               "Session %s is trying to access to the database '%s' with user '%s', but has been authenticated with user '%s'",
               iRequest.sessionId, iRequest.databaseName, authenticationParts.get(0), currentSession.getUserName());
-          OHttpSessionManager.getInstance().removeSession(iRequest.sessionId);
+          server.getHttpSessionManager().removeSession(iRequest.sessionId);
           sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
           return false;
         }
@@ -152,6 +151,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   @Override
   public boolean afterExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
     ODatabaseRecordThreadLocal.instance().remove();
+    iRequest.executor.getConnection().setDatabase(null);
     return true;
   }
 
@@ -168,7 +168,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       iRequest.data.currentUserId = db.getUser() == null ? "<server user>" : db.getUser().getIdentity().toString();
 
       // AUTHENTICATED: CREATE THE SESSION
-      iRequest.sessionId = OHttpSessionManager.getInstance()
+      iRequest.sessionId = server.getHttpSessionManager()
           .createSession(iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1));
       iResponse.sessionId = iRequest.sessionId;
       return true;
@@ -239,7 +239,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   }
 
   protected ODatabaseDocumentInternal getProfiledDatabaseInstanceBasic(final OHttpRequest iRequest) throws InterruptedException {
-    final OHttpSession session = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
+    final OHttpSession session = server.getHttpSessionManager().getSession(iRequest.sessionId);
 
     if (session == null)
       throw new OSecurityAccessException(iRequest.databaseName, "No session active");
@@ -262,6 +262,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
     iRequest.data.lastDatabase = localDatabase.getName();
     iRequest.data.lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
+    iRequest.executor.getConnection().setDatabase(localDatabase);
     return (ODatabaseDocumentInternal) localDatabase.getDatabaseOwner();
   }
 

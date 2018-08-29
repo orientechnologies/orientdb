@@ -35,22 +35,23 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIterator<REC> {
   private ORecord currentRecord;
 
-  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
-      final int iClusterId) {
-    this(iDatabase, iLowLevelDatabase, iClusterId, ORID.CLUSTER_POS_INVALID, ORID.CLUSTER_POS_INVALID, false,
-        OStorage.LOCKING_STRATEGY.DEFAULT);
+  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final int iClusterId) {
+    this(iDatabase, iClusterId, ORID.CLUSTER_POS_INVALID, ORID.CLUSTER_POS_INVALID, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
-  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
-      final int iClusterId, final long firstClusterEntry, final long lastClusterEntry) {
-    this(iDatabase, iLowLevelDatabase, iClusterId, firstClusterEntry, lastClusterEntry, false, OStorage.LOCKING_STRATEGY.NONE);
+  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final int iClusterId, final long firstClusterEntry,
+      final long lastClusterEntry) {
+    this(iDatabase, iClusterId, firstClusterEntry, lastClusterEntry, OStorage.LOCKING_STRATEGY.NONE);
+  }
+
+  protected ORecordIteratorCluster(final ODatabaseDocumentInternal database) {
+    super(database, OStorage.LOCKING_STRATEGY.NONE);
   }
 
   @Deprecated
-  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
-      final int iClusterId, final long firstClusterEntry, final long lastClusterEntry, final boolean iterateThroughTombstones,
-      final OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    super(iDatabase, iLowLevelDatabase, iterateThroughTombstones, iLockingStrategy);
+  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final int iClusterId, final long firstClusterEntry,
+      final long lastClusterEntry, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    super(iDatabase, iLockingStrategy);
 
     if (iClusterId == ORID.CLUSTER_ID_INVALID)
       throw new IllegalArgumentException("The clusterId is invalid");
@@ -70,7 +71,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
     else
       this.lastClusterEntry = lastClusterEntry < range[1] ? lastClusterEntry : range[1];
 
-    totalAvailableRecords = database.countClusterElements(current.getClusterId(), iterateThroughTombstones);
+    totalAvailableRecords = database.countClusterElements(current.getClusterId());
 
     txEntries = iDatabase.getTransaction().getNewRecordEntriesByClusterIds(new int[] { iClusterId });
 
@@ -258,8 +259,8 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
    * Tell to the iterator that the upper limit must be checked at every cycle. Useful when concurrent deletes or additions change
    * the size of the cluster while you're browsing it. Default is false.
    *
-   * @param iLiveUpdated
-   *          True to activate it, otherwise false (default)
+   * @param iLiveUpdated True to activate it, otherwise false (default)
+   *
    * @see #isLiveUpdated()
    */
   @Override
@@ -276,7 +277,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
       lastClusterEntry = range[1];
     }
 
-    totalAvailableRecords = database.countClusterElements(current.getClusterId(), isIterateThroughTombstones());
+    totalAvailableRecords = database.countClusterElements(current.getClusterId());
 
     return this;
   }

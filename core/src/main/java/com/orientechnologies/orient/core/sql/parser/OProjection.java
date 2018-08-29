@@ -115,6 +115,12 @@ public class OProjection extends SimpleNode {
       }
 
     }
+
+    for (String key : iRecord.getMetadataKeys()) {
+      if (!result.getMetadataKeys().contains(key)) {
+        result.setMetadata(key, iRecord.getMetadata(key));
+      }
+    }
     return result;
   }
 

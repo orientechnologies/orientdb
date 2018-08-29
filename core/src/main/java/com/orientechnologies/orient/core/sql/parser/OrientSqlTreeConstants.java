@@ -150,47 +150,51 @@ public interface OrientSqlTreeConstants
   public int JJTTRUNCATERECORDSTATEMENT = 144;
   public int JJTFINDREFERENCESSTATEMENT = 145;
   public int JJTCREATECLASSSTATEMENT = 146;
-  public int JJTALTERCLASSSTATEMENT = 147;
-  public int JJTDROPCLASSSTATEMENT = 148;
-  public int JJTIFNOTEXISTS = 149;
-  public int JJTCREATEPROPERTYSTATEMENT = 150;
-  public int JJTCREATEPROPERTYATTRIBUTESTATEMENT = 151;
-  public int JJTALTERPROPERTYSTATEMENT = 152;
-  public int JJTDROPPROPERTYSTATEMENT = 153;
-  public int JJTCREATEINDEXSTATEMENT = 154;
-  public int JJTREBUILDINDEXSTATEMENT = 155;
-  public int JJTDROPINDEXSTATEMENT = 156;
-  public int JJTCREATECLUSTERSTATEMENT = 157;
-  public int JJTALTERCLUSTERSTATEMENT = 158;
-  public int JJTDROPCLUSTERSTATEMENT = 159;
-  public int JJTALTERDATABASESTATEMENT = 160;
-  public int JJTCOMMANDLINEOPTION = 161;
-  public int JJTOPTIMIZEDATABASESTATEMENT = 162;
-  public int JJTCREATELINKSTATEMENT = 163;
-  public int JJTEXPLAINSTATEMENT = 164;
-  public int JJTPROFILESTATEMENT = 165;
-  public int JJTPERMISSION = 166;
-  public int JJTRESOURCEPATHITEM = 167;
-  public int JJTGRANTSTATEMENT = 168;
-  public int JJTREVOKESTATEMENT = 169;
-  public int JJTCREATEFUNCTIONSTATEMENT = 170;
-  public int JJTCREATEUSERSTATEMENT = 171;
-  public int JJTLETSTATEMENT = 172;
-  public int JJTBEGINSTATEMENT = 173;
-  public int JJTCOMMITSTATEMENT = 174;
-  public int JJTROLLBACKSTATEMENT = 175;
-  public int JJTRETURNSTATEMENT = 176;
-  public int JJTIFSTATEMENT = 177;
-  public int JJTSLEEPSTATEMENT = 178;
-  public int JJTCONSOLESTATEMENT = 179;
-  public int JJTCREATESEQUENCESTATEMENT = 180;
-  public int JJTALTERSEQUENCESTATEMENT = 181;
-  public int JJTDROPSEQUENCESTATEMENT = 182;
-  public int JJTHASTATUSSTATEMENT = 183;
-  public int JJTHAREMOVESERVERSTATEMENT = 184;
-  public int JJTHASYNCDATABASESTATEMENT = 185;
-  public int JJTHASYNCCLUSTERSTATEMENT = 186;
-  public int JJTFOREACHBLOCK = 187;
+  public int JJTCREATEVIEWSTATEMENT = 147;
+  public int JJTALTERCLASSSTATEMENT = 148;
+  public int JJTDROPCLASSSTATEMENT = 149;
+  public int JJTDROPVIEWSTATEMENT = 150;
+  public int JJTIFNOTEXISTS = 151;
+  public int JJTCREATEPROPERTYSTATEMENT = 152;
+  public int JJTCREATEPROPERTYATTRIBUTESTATEMENT = 153;
+  public int JJTALTERPROPERTYSTATEMENT = 154;
+  public int JJTDROPPROPERTYSTATEMENT = 155;
+  public int JJTCREATEINDEXSTATEMENT = 156;
+  public int JJTREBUILDINDEXSTATEMENT = 157;
+  public int JJTDROPINDEXSTATEMENT = 158;
+  public int JJTCREATECLUSTERSTATEMENT = 159;
+  public int JJTALTERCLUSTERSTATEMENT = 160;
+  public int JJTDROPCLUSTERSTATEMENT = 161;
+  public int JJTALTERDATABASESTATEMENT = 162;
+  public int JJTCOMMANDLINEOPTION = 163;
+  public int JJTOPTIMIZEDATABASESTATEMENT = 164;
+  public int JJTCREATELINKSTATEMENT = 165;
+  public int JJTEXPLAINSTATEMENT = 166;
+  public int JJTPROFILESTATEMENT = 167;
+  public int JJTPERMISSION = 168;
+  public int JJTRESOURCEPATHITEM = 169;
+  public int JJTGRANTSTATEMENT = 170;
+  public int JJTREVOKESTATEMENT = 171;
+  public int JJTCREATEFUNCTIONSTATEMENT = 172;
+  public int JJTCREATEUSERSTATEMENT = 173;
+  public int JJTDROPUSERSTATEMENT = 174;
+  public int JJTLETSTATEMENT = 175;
+  public int JJTBEGINSTATEMENT = 176;
+  public int JJTCOMMITSTATEMENT = 177;
+  public int JJTROLLBACKSTATEMENT = 178;
+  public int JJTRETURNSTATEMENT = 179;
+  public int JJTIFSTATEMENT = 180;
+  public int JJTSLEEPSTATEMENT = 181;
+  public int JJTCONSOLESTATEMENT = 182;
+  public int JJTCREATESEQUENCESTATEMENT = 183;
+  public int JJTALTERSEQUENCESTATEMENT = 184;
+  public int JJTDROPSEQUENCESTATEMENT = 185;
+  public int JJTHASTATUSSTATEMENT = 186;
+  public int JJTHAREMOVESERVERSTATEMENT = 187;
+  public int JJTHASYNCDATABASESTATEMENT = 188;
+  public int JJTHASYNCCLUSTERSTATEMENT = 189;
+  public int JJTFOREACHBLOCK = 190;
+  public int JJTWHILEBLOCK = 191;
 
 
   public String[] jjtNodeName = {
@@ -341,8 +345,10 @@ public interface OrientSqlTreeConstants
     "TruncateRecordStatement",
     "FindReferencesStatement",
     "CreateClassStatement",
+    "CreateViewStatement",
     "AlterClassStatement",
     "DropClassStatement",
+    "DropViewStatement",
     "IfNotExists",
     "CreatePropertyStatement",
     "CreatePropertyAttributeStatement",
@@ -366,6 +372,7 @@ public interface OrientSqlTreeConstants
     "RevokeStatement",
     "CreateFunctionStatement",
     "CreateUserStatement",
+    "DropUserStatement",
     "LetStatement",
     "BeginStatement",
     "CommitStatement",
@@ -382,6 +389,7 @@ public interface OrientSqlTreeConstants
     "HaSyncDatabaseStatement",
     "HaSyncClusterStatement",
     "ForEachBlock",
+    "WhileBlock",
   };
 }
-/* JavaCC - OriginalChecksum=ecb8d71d7cb844b98f04e2f8c5558053 (do not edit this line) */
+/* JavaCC - OriginalChecksum=19b913c5af6c8106b37c02be1ca5cd2f (do not edit this line) */

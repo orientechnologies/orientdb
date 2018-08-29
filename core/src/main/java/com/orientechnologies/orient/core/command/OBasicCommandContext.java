@@ -54,6 +54,8 @@ public class OBasicCommandContext implements OCommandContext {
 
   protected Map<Object, Object> inputParameters;
 
+  protected Set<String> declaredScriptVariables = new HashSet<>();
+
   // MANAGES THE TIMEOUT
   private long                                                                       executionStartedOn;
   private long                                                                       timeoutMs;
@@ -166,7 +168,11 @@ public class OBasicCommandContext implements OCommandContext {
       if (variables.containsKey(iName)) {
         variables.put(iName, iValue);//this is a local existing variable, so it's bound to current contex
       } else if (parent != null && parent instanceof OBasicCommandContext && ((OBasicCommandContext) parent).hasVariable(iName)) {
-        parent.setVariable(iName, iValue);// it is an existing variable in parent context, so it's bound to parent context
+        if ("current".equalsIgnoreCase(iName) || "parent".equalsIgnoreCase(iName)) {
+          variables.put(iName, iValue);
+        } else {
+          parent.setVariable(iName, iValue);// it is an existing variable in parent context, so it's bound to parent context
+        }
       } else {
         variables.put(iName, iValue); //it's a new variable, so it's created in this context
       }
@@ -184,7 +190,8 @@ public class OBasicCommandContext implements OCommandContext {
     return false;
   }
 
-  @Override public OCommandContext incrementVariable(String iName) {
+  @Override
+  public OCommandContext incrementVariable(String iName) {
     if (iName != null) {
       if (iName.startsWith("$"))
         iName = iName.substring(1);
@@ -278,7 +285,8 @@ public class OBasicCommandContext implements OCommandContext {
     return this;
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return getVariables().toString();
   }
 
@@ -291,7 +299,8 @@ public class OBasicCommandContext implements OCommandContext {
     return this;
   }
 
-  @Override public void beginExecution(final long iTimeout, final TIMEOUT_STRATEGY iStrategy) {
+  @Override
+  public void beginExecution(final long iTimeout, final TIMEOUT_STRATEGY iStrategy) {
     if (iTimeout > 0) {
       executionStartedOn = System.currentTimeMillis();
       timeoutMs = iTimeout;
@@ -317,7 +326,8 @@ public class OBasicCommandContext implements OCommandContext {
     return true;
   }
 
-  @Override public OCommandContext copy() {
+  @Override
+  public OCommandContext copy() {
     final OBasicCommandContext copy = new OBasicCommandContext();
     copy.init();
 
@@ -330,7 +340,8 @@ public class OBasicCommandContext implements OCommandContext {
     return copy;
   }
 
-  @Override public void merge(final OCommandContext iContext) {
+  @Override
+  public void merge(final OCommandContext iContext) {
     // TODO: SOME VALUES NEED TO BE MERGED
   }
 
@@ -365,6 +376,7 @@ public class OBasicCommandContext implements OCommandContext {
    * adds an item to the unique result set
    *
    * @param o the result item to add
+   *
    * @return true if the element is successfully added (it was not present yet), false otherwise (it was already present)
    */
   public synchronized boolean addToUniqueResult(Object o) {
@@ -387,5 +399,21 @@ public class OBasicCommandContext implements OCommandContext {
 
   public void setDatabase(ODatabase database) {
     this.database = database;
+  }
+
+  @Override
+  public void declareScriptVariable(String varName) {
+    this.declaredScriptVariables.add(varName);
+  }
+
+  @Override
+  public boolean isScriptVariableDeclared(String varName) {
+    if (!varName.startsWith("$")) {
+      varName = "$" + varName;
+    }
+    if (variables != null && variables.containsKey(varName.substring(1))) {
+      return true;
+    }
+    return declaredScriptVariables.contains(varName) || (parent != null && parent.isScriptVariableDeclared(varName));
   }
 }

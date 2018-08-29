@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
@@ -30,7 +31,11 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   private Map<String, DistributedQueryContext> activeDistributedQueries;
 
-  public OSharedContextEmbedded(OStorage storage) {
+  private ViewManager viewManager;
+
+  public OSharedContextEmbedded(OStorage storage, OrientDBEmbedded orientDB) {
+    this.orientDB = orientDB;
+    this.storage = storage;
     schema = new OSchemaEmbedded(this);
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerShared(storage);
@@ -39,7 +44,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     sequenceLibrary = new OSequenceLibraryImpl();
     liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
     liveQueryOpsV2 = new OLiveQueryHookV2.OLiveQueryOps();
-    commandCache = new OCommandCacheSoftRefs(storage);
+    commandCache = new OCommandCacheSoftRefs(storage.getUnderlying());
     statementCache = new OStatementCache(
         storage.getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
 
@@ -54,6 +59,9 @@ public class OSharedContextEmbedded extends OSharedContext {
         listener.onStorageConfigurationUpdate(storage.getName(), update);
       }
     });
+
+    this.viewManager = new ViewManager(orientDB, storage.getName());
+    this.viewManager.start();
   }
 
   public synchronized void load(ODatabaseDocumentInternal database) {
@@ -64,7 +72,7 @@ public class OSharedContextEmbedded extends OSharedContext {
         schema.load(database);
         indexManager.load(database);
         //The Immutable snapshot should be after index and schema that require and before everything else that use it
-        schema.forceSnapshot();
+        schema.forceSnapshot(database);
         security.load();
         functionLibrary.load(database);
         scheduler.load(database);
@@ -81,26 +89,27 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   @Override
   public synchronized void close() {
+    viewManager.close();
     schema.close();
     security.close(false);
     indexManager.close();
     functionLibrary.close();
     scheduler.close();
     sequenceLibrary.close();
-    commandCache.clear();
     commandCache.shutdown();
     statementCache.clear();
     executionPlanCache.invalidate();
     liveQueryOps.close();
     liveQueryOpsV2.close();
     activeDistributedQueries.values().forEach(x -> x.close());
+    loaded =false;
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
-    schema.reload();
+    schema.reload(database);
     indexManager.reload();
     //The Immutable snapshot should be after index and schema that require and before everything else that use it
-    schema.forceSnapshot();
+    schema.forceSnapshot(database);
     security.load();
     functionLibrary.load(database);
     sequenceLibrary.load(database);
@@ -116,7 +125,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     sequenceLibrary.create(database);
     security.createClassTrigger();
     scheduler.create(database);
-    schema.forceSnapshot();
+    schema.forceSnapshot(database);
 
     // CREATE BASE VERTEX AND EDGE CLASSES
     schema.createClass(database, "V");
@@ -138,5 +147,10 @@ public class OSharedContextEmbedded extends OSharedContext {
   public Map<String, DistributedQueryContext> getActiveDistributedQueries() {
     return activeDistributedQueries;
   }
+
+  public ViewManager getViewManager() {
+    return viewManager;
+  }
+
 
 }

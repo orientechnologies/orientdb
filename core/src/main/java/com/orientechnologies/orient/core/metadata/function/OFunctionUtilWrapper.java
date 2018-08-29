@@ -38,14 +38,6 @@ public class OFunctionUtilWrapper {
     return false;
   }
 
-  public boolean containsArray(final Object[] iArray, final Object value) {
-    if (iArray != null && value != null)
-      for (Object o : iArray)
-        if (o != null && o.equals(value))
-          return true;
-    return false;
-  }
-
   public Object value(final Object iValue) {
     return iValue != null ? iValue : null;
   }

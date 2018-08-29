@@ -243,7 +243,7 @@ final class OLogSegmentV2 implements OLogSegment {
   @Override
   public void startBackgroundWrite() {
     if (writeAheadLog.getCommitDelay() > 0) {
-      commitExecutor.scheduleAtFixedRate(new WriteTask(), 100, 100, TimeUnit.MICROSECONDS);
+      commitExecutor.scheduleAtFixedRate(new WriteTask(), 5, 5, TimeUnit.MILLISECONDS);
       commitExecutor.scheduleAtFixedRate(new SyncTask(), writeAheadLog.getCommitDelay(), writeAheadLog.getCommitDelay(),
           TimeUnit.MILLISECONDS);
     }

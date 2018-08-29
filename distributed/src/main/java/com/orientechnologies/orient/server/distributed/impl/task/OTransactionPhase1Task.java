@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
@@ -9,6 +10,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -40,10 +42,10 @@ import java.util.Map;
 public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public static final int FACTORYID = 43;
 
-  private volatile boolean                       hasResponse;
-  private          OLogSequenceNumber            lastLSN;
-  private          List<ORecordOperation>        ops;
-  private          List<ORecordOperationRequest> operations;
+  private volatile  boolean                                         hasResponse;
+  private           OLogSequenceNumber                              lastLSN;
+  private           List<ORecordOperation>                          ops;
+  private           List<ORecordOperationRequest>                   operations;
   private           OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   private transient int                                             retryCount = 0;
 
@@ -99,7 +101,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     if (res1 == null) {
       retryCount++;
       ((ODatabaseDocumentDistributed) database).getStorageDistributed().getLocalDistributedDatabase()
-          .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this);
+          .reEnqueue(requestId.getNodeId(), requestId.getMessageId(), database.getName(), this, retryCount);
       hasResponse = false;
       return null;
     }
@@ -126,7 +128,6 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     } catch (ODistributedLockException | OLockException ex) {
       payload = new OTxLockTimeout();
     } catch (ORecordDuplicatedException ex) {
-      //TODO:Check if can get out the key
       payload = new OTxUniqueIndex((ORecordId) ex.getRid(), ex.getIndexName(), ex.getKey());
     } catch (RuntimeException ex) {
       payload = new OTxException(ex);
@@ -144,6 +145,9 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     }
 
     lastLSN = new OLogSequenceNumber(in);
+    if (lastLSN.getSegment() == -1 && lastLSN.getSegment() == -1) {
+      lastLSN = null;
+    }
   }
 
   private void convert(ODatabaseDocumentInternal database) {
@@ -184,7 +188,11 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     for (ORecordOperationRequest operation : operations) {
       OMessageHelper.writeTransactionEntry(out, operation);
     }
-    lastLSN.toStream(out);
+    if (lastLSN == null) {
+      new OLogSequenceNumber(-1, -1).toStream(out);
+    } else {
+      lastLSN.toStream(out);
+    }
   }
 
   @Override
@@ -224,5 +232,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       return operations.stream().mapToInt((x) -> x.getId().getClusterId()).toArray();
     else
       return ops.stream().mapToInt((x) -> x.getRID().getClusterId()).toArray();
+  }
+
+  @Override
+  public long getDistributedTimeout() {
+    return super.getDistributedTimeout() + (operations.size() / 10);
   }
 }
