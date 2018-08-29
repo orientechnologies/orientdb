@@ -1,14 +1,13 @@
 package com.orientechnologies.orient.core.db.viewmanager;
 
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OView;
+import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -185,9 +184,23 @@ public class ViewManager {
             newRow.setProperty("@view", viewName);
           }
           db.save(newRow, clusterName);
+
+          indexes.forEach(idx -> idx.put(indexedKeyFor(idx, newRow), newRow));
         }
-        
+
         return null;
+      }
+
+      private Object indexedKeyFor(OIndex idx, OElement newRow) {
+        List<String> fieldsToIndex = idx.getDefinition().getFieldsToIndex();
+        if (fieldsToIndex.size() == 1) {
+          return idx.getDefinition().createValue((Object) newRow.getProperty(fieldsToIndex.get(0)));
+        }
+        Object[] vals = new Object[fieldsToIndex.size()];
+        for (int i = 0; i < fieldsToIndex.size(); i++) {
+          vals[i] = newRow.getProperty(fieldsToIndex.get(i));
+        }
+        return idx.getDefinition().createValue(vals);
       }
     });
 
@@ -208,13 +221,43 @@ public class ViewManager {
       }
     }
     unlockView(view);
+    cleanUnusedViewIndexes(db);
     cleanUnusedViewClusters(db);
 
   }
 
-  private List<OIndex> createNewIndexesForView(OView view, int cluster, ODatabaseDocument db) {
+  private void cleanUnusedViewIndexes(ODatabaseDocument db) {
     //TODO
-    return null;
+  }
+
+  private List<OIndex> createNewIndexesForView(OView view, int cluster, ODatabaseDocument db) {
+    try {
+      List<OIndex> result = new ArrayList<>();
+      OIndexManager idxMgr = db.getMetadata().getIndexManager();
+      for (OViewConfig.OViewIndexConfig cfg : view.getRequiredIndexesInfo()) {
+        OIndexDefinition definition = createIndexDefinition(view.getName(), cfg.getProperties());
+        String indexName = view.getName() + "_" + UUID.randomUUID().toString().replaceAll("-", "_");
+        String type = "NOTUNIQUE";//TODO allow other types!
+        OIndex<?> idx = idxMgr.createIndex(indexName, type, definition, new int[] { cluster }, null, null);
+
+        result.add(idx);
+      }
+      return result;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  private OIndexDefinition createIndexDefinition(String viewName, List<OPair<String, OType>> requiredIndexesInfo) {
+    if (requiredIndexesInfo.size() == 1) {
+      return new OPropertyIndexDefinition(viewName, requiredIndexesInfo.get(0).getKey(), requiredIndexesInfo.get(0).getValue());
+    }
+    OCompositeIndexDefinition result = new OCompositeIndexDefinition();
+    for (OPair<String, OType> pair : requiredIndexesInfo) {
+      result.addIndex(new OPropertyIndexDefinition(viewName, pair.getKey(), pair.getValue()));
+    }
+    return result;
   }
 
   private synchronized void unlockView(OView view) {

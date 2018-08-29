@@ -18,6 +18,10 @@ public class OViewConfig {
     public void addProperty(String name, OType type) {
       this.props.add(new OPair<>(name, type));
     }
+
+    public List<OPair<String, OType>> getProperties() {
+      return props;
+    }
   }
 
   protected String  name;

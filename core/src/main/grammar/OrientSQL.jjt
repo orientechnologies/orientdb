@@ -4107,7 +4107,10 @@ OCreateViewStatement CreateViewStatement():
 		<FROM> <LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
 		[ <METADATA> jjtThis.metadata = Json() ]
 	)
-	{ return jjtThis; }
+	{
+	  jjtThis.checkMetadataSyntax();
+	  return jjtThis;
+	}
 }
 
 OAlterClassStatement AlterClassStatement():

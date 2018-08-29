@@ -1,16 +1,18 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class OViewImpl extends OClassImpl implements OView {
 
   private OViewConfig cfg;
+  private Set<String>  activeIndexNames   = new HashSet<>();
+  private List<String> inactiveIndexNames = new ArrayList<>();
 
   protected OViewImpl(OSchemaShared iOwner, String iName, OViewConfig cfg, int[] iClusterIds) {
     super(iOwner, iName, iClusterIds);
@@ -50,6 +52,12 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     if (document.getProperty("nodes") instanceof List) {
       cfg.setNodes(document.getProperty("nodes"));
     }
+    if (document.getProperty("activeIndexNames") instanceof Set) {
+      activeIndexNames = document.getProperty("activeIndexNames");
+    }
+    if (document.getProperty("inactiveIndexNames") instanceof List) {
+      inactiveIndexNames = document.getProperty("inactiveIndexNames");
+    }
 
   }
 
@@ -73,6 +81,8 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     result.setProperty("watchClasses", cfg.getWatchClasses());
     result.setProperty("originRidField", cfg.getOriginRidField());
     result.setProperty("nodes", cfg.getNodes());
+    result.setProperty("activeIndexNames", activeIndexNames);
+    result.setProperty("inactiveIndexNames", inactiveIndexNames);
     return result;
   }
 
@@ -95,6 +105,8 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     result.setProperty("watchClasses", cfg.getWatchClasses());
     result.setProperty("originRidField", cfg.getOriginRidField());
     result.setProperty("nodes", cfg.getNodes());
+    result.setProperty("activeIndexNames", activeIndexNames);
+    result.setProperty("inactiveIndexNames", inactiveIndexNames);
     return result;
   }
 
@@ -139,5 +151,37 @@ public abstract class OViewImpl extends OClassImpl implements OView {
   @Override
   public List<OViewConfig.OViewIndexConfig> getRequiredIndexesInfo() {
     return cfg.getIndexes();
+  }
+
+  public Set<OIndex<?>> getClassIndexes() {
+    if (activeIndexNames == null || activeIndexNames.isEmpty()) {
+      return new HashSet<>();
+    }
+    acquireSchemaReadLock();
+    try {
+
+      final OIndexManager idxManager = getDatabase().getMetadata().getIndexManager();
+      if (idxManager == null)
+        return new HashSet<>();
+
+      return activeIndexNames.stream().map(name -> idxManager.getIndex(name)).filter(Objects::nonNull).collect(Collectors.toSet());
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
+  @Override
+  public void getClassIndexes(final Collection<OIndex<?>> indexes) {
+    acquireSchemaReadLock();
+    try {
+      final OIndexManager idxManager = getDatabase().getMetadata().getIndexManager();
+      if (idxManager == null)
+        return;
+
+      activeIndexNames.stream().map(name -> idxManager.getIndex(name)).filter(Objects::nonNull).forEach(x -> indexes.add(x));
+      idxManager.getClassIndexes(name, indexes);
+    } finally {
+      releaseSchemaReadLock();
+    }
   }
 }

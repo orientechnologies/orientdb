@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -53,6 +54,10 @@ public class OCreateViewStatement extends ODDLStatement {
     OInternalResultSet rs = new OInternalResultSet();
     rs.add(result);
     return rs;
+  }
+
+  public void checkMetadataSyntax() throws OCommandSQLParsingException {
+    //TODO
   }
 
   @Override

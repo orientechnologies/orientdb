@@ -100,7 +100,7 @@ public class OJson extends SimpleNode {
   }
 
   public Map<String, Object> toMap(OIdentifiable source, OCommandContext ctx) {
-    Map<String, Object> doc = new HashMap<String, Object>();
+    Map<String, Object> doc = new LinkedHashMap<String, Object>();
     for (OJsonItem item : items) {
       String name = item.getLeftValue();
       if (name == null) {
@@ -114,7 +114,7 @@ public class OJson extends SimpleNode {
   }
 
   public Map<String, Object> toMap(OResult source, OCommandContext ctx) {
-    Map<String, Object> doc = new HashMap<String, Object>();
+    Map<String, Object> doc = new LinkedHashMap<String, Object>();
     for (OJsonItem item : items) {
       String name = item.getLeftValue();
       if (name == null) {
