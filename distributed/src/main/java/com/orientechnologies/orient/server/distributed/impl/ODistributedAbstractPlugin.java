@@ -1272,7 +1272,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     final Set<ORecordId> changedRecords = stg.recordsChangedRecently(checkIntegrityLastTxs);
     int av = getAvailableNodes(distrDatabase.getDatabaseName());
-    if (!changedRecords.isEmpty()) {
+    if (changedRecords != null && !changedRecords.isEmpty()) {
       ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
           "Executing the realignment of the last records modified before last close %s...", changedRecords);
       ODistributedConfiguration config = getDatabaseConfiguration(distrDatabase.getDatabaseName());
@@ -1825,7 +1825,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return result;
   }
 
-  protected abstract void notifyClients(String databaseName);
+  public abstract void notifyClients(String databaseName);
 
   protected void onDatabaseEvent(final String nodeName, final String databaseName, final DB_STATUS status) {
     updateLastClusterChange();

@@ -841,7 +841,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return updated;
   }
 
-  protected void notifyClients(String databaseName) {
+  public void notifyClients(String databaseName) {
     List<String> hosts = new ArrayList<>();
     for (Member member : activeNodes.values()) {
       ODocument memberConfig = getNodeConfigurationByUuid(member.getUuid(), true);
