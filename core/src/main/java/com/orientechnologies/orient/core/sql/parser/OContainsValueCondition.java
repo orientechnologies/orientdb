@@ -220,5 +220,13 @@ public class OContainsValueCondition extends OBooleanExpression {
 
     return true;
   }
+
+  public OExpression getExpression() {
+    return expression;
+  }
+
+  public OExpression getLeft() {
+    return left;
+  }
 }
 /* JavaCC - OriginalChecksum=6fda752f10c8d8731f43efa706e39459 (do not edit this line) */

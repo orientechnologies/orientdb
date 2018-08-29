@@ -153,6 +153,9 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     }
 
     lastLSN = new OLogSequenceNumber(in);
+    if (lastLSN.getSegment() == -1 && lastLSN.getSegment() == -1) {
+      lastLSN = null;
+    }
   }
 
   private void convert(ODatabaseDocumentInternal database) {
@@ -209,7 +212,11 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     for (ORecordOperationRequest operation : operations) {
       OMessageHelper.writeTransactionEntry(out, operation);
     }
-    lastLSN.toStream(out);
+    if (lastLSN == null) {
+      new OLogSequenceNumber(-1, -1).toStream(out);
+    } else {
+      lastLSN.toStream(out);
+    }
   }
 
   @Override

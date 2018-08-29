@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
+import com.orientechnologies.orient.core.db.document.OSharedContextRemote;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 import static com.orientechnologies.orient.client.remote.OStorageRemote.ADDRESS_SEPARATOR;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_LOCK_TIMEOUT;
@@ -46,13 +48,14 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETW
  * Created by tglman on 08/04/16.
  */
 public class OrientDBRemote implements OrientDBInternal {
-  private final      Map<String, OStorageRemote> storages = new HashMap<>();
-  private final      Set<ODatabasePoolInternal>  pools    = new HashSet<>();
+  protected final    Map<String, OSharedContext> sharedContexts = new HashMap<>();
+  private final      Map<String, OStorageRemote> storages       = new HashMap<>();
+  private final      Set<ODatabasePoolInternal>  pools          = new HashSet<>();
   private final      String[]                    hosts;
   private final      OrientDBConfig              configurations;
   private final      Orient                      orient;
   protected volatile ORemoteConnectionManager    connectionManager;
-  private volatile   boolean                     open     = true;
+  private volatile   boolean                     open           = true;
 
   public OrientDBRemote(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
@@ -82,7 +85,7 @@ public class OrientDBRemote implements OrientDBInternal {
         storages.put(name, storage);
       }
       ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
-      db.internalOpen(user, password, solveConfig(config));
+      db.internalOpen(user, password, solveConfig(config), getOrCreateSharedContext(storage));
       return db;
     } catch (Exception e) {
       throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
@@ -120,11 +123,16 @@ public class OrientDBRemote implements OrientDBInternal {
       }
     }
     ODatabaseDocumentRemotePooled db = new ODatabaseDocumentRemotePooled(pool, storage);
-    db.internalOpen(user, password, pool.getConfig());
+    db.internalOpen(user, password, pool.getConfig(), getOrCreateSharedContext(storage));
     return db;
   }
 
   public synchronized void closeStorage(OStorageRemote remote) {
+    OSharedContext ctx = sharedContexts.get(remote.getName());
+    if (ctx != null) {
+      ctx.close();
+      sharedContexts.remove(remote.getName());
+    }
     ODatabaseDocumentRemote.deInit(remote);
     storages.remove(remote.getName());
     remote.shutdown();
@@ -207,6 +215,13 @@ public class OrientDBRemote implements OrientDBInternal {
       // TODO: check for memory cases
       return admin.dropDatabase(name, null);
     });
+
+    OSharedContext ctx = sharedContexts.get(name);
+    if (ctx != null) {
+      ctx.close();
+      sharedContexts.remove(name);
+    }
+    storages.remove(name);
   }
 
   @Override
@@ -253,10 +268,12 @@ public class OrientDBRemote implements OrientDBInternal {
   public void internalClose() {
     if (!open)
       return;
+
     final List<OStorageRemote> storagesCopy;
     synchronized (this) {
       // SHUTDOWN ENGINES AVOID OTHER OPENS
       open = false;
+      this.sharedContexts.values().forEach(x -> x.close());
       storagesCopy = new ArrayList<>(storages.values());
     }
 
@@ -273,6 +290,7 @@ public class OrientDBRemote implements OrientDBInternal {
       }
     }
     synchronized (this) {
+      this.sharedContexts.clear();
       storages.clear();
 
       connectionManager.close();
@@ -331,23 +349,11 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   @Override
-  public void replaceFactory(OEmbeddedDatabaseInstanceFactory instanceFactory) {
-    throw new UnsupportedOperationException("instance factory is not supported in remote");
-  }
-
-  @Override
   public synchronized void forceDatabaseClose(String databaseName) {
     OStorageRemote remote = storages.get(databaseName);
     if (remote != null)
       closeStorage(remote);
   }
-
-  @Override
-  public OEmbeddedDatabaseInstanceFactory getFactory() {
-    throw new UnsupportedOperationException("instance factory is not supported in remote");
-  }
-
-
 
   @Override
   public void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
@@ -360,4 +366,40 @@ public class OrientDBRemote implements OrientDBInternal {
     throw new UnsupportedOperationException("impossible skip authentication and authorization in remote");
   }
 
+  protected synchronized OSharedContext getOrCreateSharedContext(OStorage storage) {
+
+    OSharedContext result = sharedContexts.get(storage.getName());
+    if (result == null) {
+      result = createSharedContext(storage);
+      sharedContexts.put(storage.getName(), result);
+    }
+    return result;
+  }
+
+  private OSharedContext createSharedContext(OStorage storage) {
+    OSharedContextRemote result = new OSharedContextRemote(storage, this);
+    storage.getResource(OSharedContext.class.getName(), () -> result);
+    return result;
+
+  }
+
+  @Override
+  public void schedule(TimerTask task, long delay, long period) {
+    throw new UnsupportedOperationException("schedule not available in remote");
+  }
+
+  @Override
+  public void scheduleOnce(TimerTask task, long delay) {
+    throw new UnsupportedOperationException("schedule not available in remote");
+  }
+
+  @Override
+  public <X> Future<X> executeNoAuthorization(String database, ODatabaseTask<X> task) {
+    throw new UnsupportedOperationException("execute with no session not available in remote");
+  }
+
+  @Override
+  public <X> Future<X> execute(String database, String user, ODatabaseTask<X> task) {
+    throw new UnsupportedOperationException("execute with no session not available in remote");
+  }
 }

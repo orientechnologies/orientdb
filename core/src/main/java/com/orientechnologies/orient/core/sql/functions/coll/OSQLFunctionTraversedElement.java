@@ -29,8 +29,10 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Returns a traversed element from the stack. Use it with SQL traverse only.
@@ -75,9 +77,9 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
     final int beginIndex = (Integer) iParams[0];
     final int items = iParams.length > 1 ? (Integer) iParams[1] : 1;
 
-    List stack = (List) iContext.getVariable("stack");
+    Collection stack = (Collection) iContext.getVariable("stack");
     if (stack == null && iThis instanceof OResult) {
-      stack = (List) ((OResult) iThis).getMetadata("$stack");
+      stack = (Collection) ((OResult) iThis).getMetadata("$stack");
     }
     if (stack == null)
       throw new OCommandExecutionException("Cannot invoke " + getName() + "() against non traverse command");
@@ -125,8 +127,9 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
       }
     } else {
       int i = 0;
-      for (int x = stack.size(); x >= 0; x--) {
-        final Object o = stack.get(x);
+      List listStack = stackToList(stack);
+      for (int x = listStack.size(); x >= 0; x--) {
+        final Object o = listStack.get(x);
         if (o instanceof OTraverseRecordProcess) {
           final OIdentifiable record = ((OTraverseRecordProcess) o).getTarget();
 
@@ -168,4 +171,13 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
       return result;
     return null;
   }
+
+  private List stackToList(Collection stack) {
+    if (stack instanceof List) {
+      return (List) stack;
+    }
+    
+    return (List) stack.stream().collect(Collectors.toList());
+  }
+
 }

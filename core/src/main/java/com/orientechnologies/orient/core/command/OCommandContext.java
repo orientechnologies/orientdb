@@ -26,11 +26,12 @@ import java.util.Map;
 
 /**
  * Basic interface for commands. Manages the context variables during execution.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public interface OCommandContext {
+
+
   enum TIMEOUT_STRATEGY {
     RETURN, EXCEPTION
   }
@@ -53,11 +54,10 @@ public interface OCommandContext {
 
   /**
    * Updates a counter. Used to record metrics.
-   * 
-   * @param iName
-   *          Metric's name
-   * @param iValue
-   *          delta to add or subtract
+   *
+   * @param iName  Metric's name
+   * @param iValue delta to add or subtract
+   *
    * @return
    */
   long updateMetric(String iName, long iValue);
@@ -70,10 +70,10 @@ public interface OCommandContext {
 
   /**
    * Check if timeout is elapsed, if defined.
-   * 
+   *
    * @return false if it the timeout is elapsed and strategy is "return"
-   * @exception OTimeoutException
-   *              if the strategy is "exception" (default)
+   *
+   * @throws OTimeoutException if the strategy is "exception" (default)
    */
   public boolean checkTimeout();
 
@@ -88,11 +88,14 @@ public interface OCommandContext {
 
   /**
    * Merges a context with current one.
-   * 
+   *
    * @param iContext
    */
   void merge(OCommandContext iContext);
 
-  public ODatabase getDatabase();
+  ODatabase getDatabase();
 
+  void declareScriptVariable(String varName);
+
+  boolean isScriptVariableDeclared(String varName);
 }

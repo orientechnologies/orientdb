@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
@@ -24,7 +23,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 
 /**
  * Created by tglman on 13/06/17.
@@ -35,7 +33,9 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   private ViewManager viewManager;
 
-  public OSharedContextEmbedded(OStorage storage, Supplier<ODatabaseDocument> adminDbSupplier) {
+  public OSharedContextEmbedded(OStorage storage, OrientDBEmbedded orientDB) {
+    this.orientDB = orientDB;
+    this.storage = storage;
     schema = new OSchemaEmbedded(this);
     security = OSecurityManager.instance().newSecurity();
     indexManager = new OIndexManagerShared(storage);
@@ -60,7 +60,7 @@ public class OSharedContextEmbedded extends OSharedContext {
       }
     });
 
-    this.viewManager = new ViewManager(adminDbSupplier);
+    this.viewManager = new ViewManager(orientDB, storage.getName());
     this.viewManager.start();
   }
 
@@ -102,6 +102,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     liveQueryOps.close();
     liveQueryOpsV2.close();
     activeDistributedQueries.values().forEach(x -> x.close());
+    loaded =false;
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
@@ -146,5 +147,10 @@ public class OSharedContextEmbedded extends OSharedContext {
   public Map<String, DistributedQueryContext> getActiveDistributedQueries() {
     return activeDistributedQueries;
   }
+
+  public ViewManager getViewManager() {
+    return viewManager;
+  }
+
 
 }

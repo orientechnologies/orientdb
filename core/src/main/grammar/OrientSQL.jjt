@@ -195,6 +195,12 @@ TOKEN:
     |
     < CACHE: ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
     |
+    < MAXVALUE: ( "m" | "M" ) ( "a" | "A" ) ( "x" | "X" ) ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) >
+    |
+    < MINVALUE: ( "m" | "M" ) ( "i" | "I" ) ( "n" | "N" ) ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) >
+    |
+    < CYCLE: ( "c" | "C" ) ( "y" | "Y" ) ( "c" | "C" ) ( "l" | "L" ) ( "e" | "E" ) >
+    |
     < NOCACHE: ( "n" | "N" ) ( "o" | "O" ) ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
     |
     < UNSAFE: ( "u" | "U" ) ( "n" | "N" ) ( "s" | "S" ) ( "a" | "A" ) ( "f" | "F" ) ( "e" | "E" ) >
@@ -879,6 +885,12 @@ OIdentifier Identifier():
     |
     token = <CACHE>
     |
+    token = <MAXVALUE>
+    |
+    token = <MINVALUE>
+    |
+    token = <CYCLE>
+    |
     token = <START>
     |
     token = <OPTIONAL>
@@ -1088,6 +1100,9 @@ OStatement StatementInternal():
                 |
                 LOOKAHEAD(DropClassStatement())
                 result = DropClassStatement()
+                |
+                LOOKAHEAD(DropViewStatement())
+                result = DropViewStatement()
                 |
                 LOOKAHEAD(AlterPropertyStatement())
                 result = AlterPropertyStatement()
@@ -4090,9 +4105,12 @@ OCreateViewStatement CreateViewStatement():
 		jjtThis.name = Identifier()
 		[ <IF> <NOT> <EXISTS> { jjtThis.ifNotExists = true; }]
 		<FROM> <LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
-		[ <UPDATABLE> { jjtThis.updatable = true; } ]
+		[ <METADATA> jjtThis.metadata = Json() ]
 	)
-	{ return jjtThis; }
+	{
+	  jjtThis.checkMetadataSyntax();
+	  return jjtThis;
+	}
 }
 
 OAlterClassStatement AlterClassStatement():
@@ -4264,6 +4282,16 @@ ODropClassStatement DropClassStatement():
 	[ <UNSAFE> { jjtThis.unsafe = true; } ]
 	{ return jjtThis; }
 }
+
+ODropViewStatement DropViewStatement():
+{}
+{
+	<DROP> <VIEW>
+	jjtThis.name = Identifier()
+	[ <IF> <EXISTS> { jjtThis.ifExists = true; } ]
+	{ return jjtThis; }
+}
+
 
 void IfNotExists():{}
 {
@@ -4939,9 +4967,19 @@ OCreateSequenceStatement CreateSequenceStatement():
             }
         }
 
-        [ <START> jjtThis.start = Expression() ]
-        [ <INCREMENT> jjtThis.increment = Expression() ]
-        [ <CACHE> jjtThis.cache = Expression() ]
+        (
+            ( <START> jjtThis.start = Expression() )
+            |
+            ( <INCREMENT> jjtThis.increment = Expression() )
+            |
+            ( <MAXVALUE> jjtThis.maxValue = Expression() )
+            |
+            ( <MINVALUE> jjtThis.minValue = Expression() )
+            |
+            ( <CYCLE> { jjtThis.cycle = true; } )
+            |
+            ( <CACHE> jjtThis.cache = Expression() )
+        )*
     )
     { return jjtThis; }
 }

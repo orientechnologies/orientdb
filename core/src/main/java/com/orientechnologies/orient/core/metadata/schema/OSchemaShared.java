@@ -28,8 +28,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -44,8 +44,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -95,7 +93,6 @@ public abstract class OSchemaShared implements OCloseable {
     internalClasses.add("oschedule");
     internalClasses.add("orids");
   }
-
 
   static final class ClusterIdsAreEmptyException extends Exception {
   }
@@ -258,9 +255,12 @@ public abstract class OSchemaShared implements OCloseable {
   public abstract OClass createClass(ODatabaseDocumentInternal database, final String className, int clusters,
       OClass... superClasses);
 
-  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable);
+  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata);
 
   public abstract OView createView(ODatabaseDocumentInternal database, OViewConfig cfg);
+
+  public abstract OView createView(ODatabaseDocumentInternal database, OViewConfig cfg, ViewCreationListener listener)
+      throws UnsupportedOperationException;
 
   public abstract void checkEmbedded();
 
@@ -281,9 +281,9 @@ public abstract class OSchemaShared implements OCloseable {
 
       final OView existingView = clustersToViews.get(clusterId);
 
-      if (existingView != null && (cls == null || !cls.equals(existingCls)))
+      if (existingView != null && (cls == null || !cls.equals(existingView)))
         throw new OSchemaException(
-            "Cluster with id " + clusterId + " already belongs to the view '" + clustersToClasses.get(clusterId) + "'");
+            "Cluster with id " + clusterId + " already belongs to the view '" + clustersToViews.get(clusterId) + "'");
 
     } finally {
       releaseSchemaReadLock();
@@ -299,7 +299,8 @@ public abstract class OSchemaShared implements OCloseable {
     }
   }
 
-  public OView getViewyClusterId(int clusterId) {
+
+  public OView getViewByClusterId(int clusterId) {
     acquireSchemaReadLock();
     try {
       return clustersToViews.get(clusterId);
@@ -423,7 +424,8 @@ public abstract class OSchemaShared implements OCloseable {
         if (iSave) {
           if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
             saveInternal(database);
-          } else {
+          }
+          else {
             reload(database);
           }
         } else {
@@ -592,7 +594,7 @@ public abstract class OSchemaShared implements OCloseable {
 
       clustersToViews.clear();
       Collection<ODocument> storedViews = document.field("views");
-      if (storedViews != null){
+      if (storedViews != null) {
         for (ODocument v : storedViews) {
 
           String name = v.field("name");

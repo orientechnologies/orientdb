@@ -22,6 +22,7 @@ import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -34,10 +35,7 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import javassist.util.proxy.Proxy;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
@@ -191,12 +189,17 @@ public class OSchemaProxyObject implements OSchemaObject {
     return underlying.createView(viewName, statement);
   }
 
-  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable) {
-    return underlying.createView(database, viewName, statement, updatable);
+  public OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata) {
+    return underlying.createView(database, viewName, statement, metadata);
   }
 
   @Override
   public OView createView(OViewConfig config) {
+    return underlying.createView(config);
+  }
+
+  @Override
+  public OView createView(OViewConfig config, ViewCreationListener listener) {
     return underlying.createView(config);
   }
 
@@ -233,6 +236,11 @@ public class OSchemaProxyObject implements OSchemaObject {
   @Override
   public OClass getClassByClusterId(int clusterId) {
     return underlying.getClassByClusterId(clusterId);
+  }
+
+  @Override
+  public OView getViewByClusterId(int clusterId) {
+    return underlying.getViewByClusterId(clusterId);
   }
 
   @Override

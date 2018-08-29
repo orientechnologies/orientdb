@@ -6,19 +6,20 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OView;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class OCreateViewStatement extends ODDLStatement {
 
   protected OIdentifier name;
   protected OStatement  statement;
-  protected boolean updatable   = false;
   protected boolean ifNotExists = false;
+  protected OJson metadata;
 
   public OCreateViewStatement(int id) {
     super(id);
@@ -47,12 +48,16 @@ public class OCreateViewStatement extends ODDLStatement {
     result.setProperty("operation", "create view");
     result.setProperty("viewName", name.getStringValue());
 
-    OView view = null;
-    view = schema.createView((ODatabaseDocumentInternal) ctx.getDatabase(), name.getStringValue(), statement.toString(), updatable);
+    schema.createView((ODatabaseDocumentInternal) ctx.getDatabase(), name.getStringValue(), statement.toString(),
+        metadata == null ? new HashMap<>() : metadata.toMap(new OResultInternal(), ctx));
 
     OInternalResultSet rs = new OInternalResultSet();
     rs.add(result);
     return rs;
+  }
+
+  public void checkMetadataSyntax() throws OCommandSQLParsingException {
+    //TODO
   }
 
   @Override
@@ -60,8 +65,8 @@ public class OCreateViewStatement extends ODDLStatement {
     OCreateViewStatement result = new OCreateViewStatement(-1);
     result.name = this.name.copy();
     result.statement = this.statement.copy();
-    result.updatable = this.updatable;
     result.ifNotExists = this.ifNotExists;
+    result.metadata = metadata == null ? null : metadata.copy();
     return result;
   }
 
@@ -75,8 +80,9 @@ public class OCreateViewStatement extends ODDLStatement {
     builder.append(" FROM (");
     statement.toString(params, builder);
     builder.append(")");
-    if (updatable) {
-      builder.append(" UPDATABLE");
+    if (metadata != null) {
+      builder.append(" METADATA ");
+      metadata.toString(params, builder);
     }
   }
 
@@ -89,21 +95,21 @@ public class OCreateViewStatement extends ODDLStatement {
 
     OCreateViewStatement that = (OCreateViewStatement) o;
 
-    if (updatable != that.updatable)
-      return false;
     if (ifNotExists != that.ifNotExists)
       return false;
     if (name != null ? !name.equals(that.name) : that.name != null)
       return false;
-    return statement != null ? statement.equals(that.statement) : that.statement == null;
+    if (statement != null ? !statement.equals(that.statement) : that.statement != null)
+      return false;
+    return metadata != null ? metadata.equals(that.metadata) : that.metadata == null;
   }
 
   @Override
   public int hashCode() {
     int result = name != null ? name.hashCode() : 0;
     result = 31 * result + (statement != null ? statement.hashCode() : 0);
-    result = 31 * result + (updatable ? 1 : 0);
     result = 31 * result + (ifNotExists ? 1 : 0);
+    result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
     return result;
   }
 }

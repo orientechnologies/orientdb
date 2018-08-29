@@ -20,11 +20,13 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface OSchema {
@@ -87,9 +89,11 @@ public interface OSchema {
 
   OView createView(final String viewName, String statement);
 
-  OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, boolean updatable);
+  OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata);
 
   OView createView(OViewConfig config);
+
+  OView createView(OViewConfig config, ViewCreationListener listener);
 
   boolean existsView(String name);
 
@@ -111,6 +115,8 @@ public interface OSchema {
   Set<OClass> getClassesRelyOnCluster(String iClusterName);
 
   OClass getClassByClusterId(int clusterId);
+
+  OView getViewByClusterId(int clusterId);
 
   OGlobalProperty getGlobalPropertyById(int id);
 

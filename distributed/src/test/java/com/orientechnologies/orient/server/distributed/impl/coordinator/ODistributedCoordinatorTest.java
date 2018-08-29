@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -16,7 +17,7 @@ public class ODistributedCoordinatorTest {
     CountDownLatch responseReceived = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog);
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null);
     MockChannel channel = new MockChannel();
     channel.coordinator = coordinator;
     ODistributedMember one = new ODistributedMember("one", channel);
@@ -55,7 +56,7 @@ public class ODistributedCoordinatorTest {
     CountDownLatch responseReceived = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog);
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null);
     MockChannel channel = new MockChannel();
     channel.coordinator = coordinator;
     channel.reply = responseReceived;
@@ -74,7 +75,8 @@ public class ODistributedCoordinatorTest {
             if (context.getResponses().size() == 1) {
               coordinator.sendOperation(null, new ONodeRequest() {
                 @Override
-                public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor) {
+                public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
+                    ODatabaseDocumentInternal session) {
                   return null;
                 }
               }, new OResponseHandler() {
@@ -115,7 +117,7 @@ public class ODistributedCoordinatorTest {
     CountDownLatch timedOut = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog);
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null);
     MockChannel channel = new MockChannel();
     channel.coordinator = coordinator;
     ODistributedMember one = new ODistributedMember("one", channel);
@@ -173,7 +175,8 @@ public class ODistributedCoordinatorTest {
   private static class MockNodeRequest implements ONodeRequest {
 
     @Override
-    public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor) {
+    public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
+        ODatabaseDocumentInternal session) {
       return null;
     }
   }

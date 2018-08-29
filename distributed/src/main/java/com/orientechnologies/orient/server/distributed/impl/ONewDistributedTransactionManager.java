@@ -87,7 +87,7 @@ public class ONewDistributedTransactionManager {
 
     try {
       localDistributedDatabase.getSyncConfiguration()
-          .setLastLSN(localNodeName, ((OLocalPaginatedStorage) storage.getUnderlying()).getLSN(), true);
+          .setLastLSN(localNodeName, ((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN(), true);
     } catch (IOException e) {
       ODistributedServerLog
           .debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.NONE,

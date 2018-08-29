@@ -3,12 +3,12 @@ package com.orientechnologies.orient.core.encryption.impl;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -67,9 +67,10 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
       db.close();
 
       db.open("admin", "admin");
+      OrientDBInternal orientDB = ((ODatabaseDocumentTx) db).getSharedContext().getOrientDB();
       db.close();
-
-      db.getStorage().close(true, false);
+      orientDB.forceDatabaseClose(db.getName());
+//      db.getStorage().close(true, false);
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
       db.open("admin", "admin");
@@ -77,7 +78,8 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
       Assert.assertEquals(result.size(), 1);
       db.close();
 
-      db.getStorage().close(true, false);
+//      db.getStorage().close(true, false);
+      orientDB.forceDatabaseClose(db.getName());
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "invalidPassword");
       try {
@@ -88,7 +90,8 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
       } finally {
         db.activateOnCurrentThread();
         db.close();
-        db.getStorage().close(true, false);
+//        db.getStorage().close(true, false);
+        orientDB.forceDatabaseClose(db.getName());
       }
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA=-");
@@ -100,7 +103,8 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
       } finally {
         db.activateOnCurrentThread();
         db.close();
-        db.getStorage().close(true, false);
+//        db.getStorage().close(true, false);
+        orientDB.forceDatabaseClose(db.getName());
       }
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
@@ -134,9 +138,11 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
       db.close();
 
       db.open("admin", "admin");
+      OrientDBInternal orientDB = ((ODatabaseDocumentTx) db).getSharedContext().getOrientDB();
       db.close();
 
-      db.getStorage().close(true, false);
+      orientDB.forceDatabaseClose(db.getName());
+//      db.getStorage().close(true, false);
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
       db.open("admin", "admin");
@@ -144,7 +150,8 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
       Assert.assertEquals(result.size(), 1);
       db.close();
 
-      db.getStorage().close(true, false);
+//      db.getStorage().close(true, false);
+      orientDB.forceDatabaseClose(db.getName());
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "invalidPassword");
       try {
@@ -160,7 +167,8 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
       } finally {
         db.activateOnCurrentThread();
         db.close();
-        db.getStorage().close(true, false);
+//        db.getStorage().close(true, false);
+        orientDB.forceDatabaseClose(db.getName());
       }
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA=-");
@@ -173,7 +181,8 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
       } finally {
         db.activateOnCurrentThread();
         db.close();
-        db.getStorage().close(true, false);
+//        db.getStorage().close(true, false);
+        orientDB.forceDatabaseClose(db.getName());
       }
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");

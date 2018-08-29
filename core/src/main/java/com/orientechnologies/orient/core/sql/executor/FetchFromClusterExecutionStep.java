@@ -50,8 +50,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
       if (iterator == null) {
         long minClusterPosition = calculateMinClusterPosition();
         long maxClusterPosition = calculateMaxClusterPosition();
-        iterator = new ORecordIteratorCluster((ODatabaseDocumentInternal) ctx.getDatabase(),
-            (ODatabaseDocumentInternal) ctx.getDatabase(), clusterId, minClusterPosition, maxClusterPosition);
+        iterator = new ORecordIteratorCluster((ODatabaseDocumentInternal) ctx.getDatabase(), clusterId, minClusterPosition, maxClusterPosition);
         if (ORDER_DESC == order) {
           iterator.last();
         }

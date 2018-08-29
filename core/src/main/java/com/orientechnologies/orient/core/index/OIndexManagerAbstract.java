@@ -197,9 +197,14 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     throw new UnsupportedOperationException();
   }
 
-  public OIndex<?> getIndex(final String iName) {
-    final Locale locale = getServerLocale();
+  public OIndex<?> getRawIndex(final String iName) {
+    final OIndex<?> index = indexes.get(iName);
+    if (index == null)
+      return null;
+    return index;
+  }
 
+  public OIndex<?> getIndex(final String iName) {
     final OIndex<?> index = indexes.get(iName);
     if (index == null)
       return null;

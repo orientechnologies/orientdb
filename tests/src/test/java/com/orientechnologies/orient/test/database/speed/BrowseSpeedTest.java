@@ -92,7 +92,7 @@ public class BrowseSpeedTest {
     ODatabaseDocumentTx db = openDatabase();
     final long total = db.countClass(className);
 
-    ORecordIteratorClass iterator = new ORecordIteratorClass(db, db, className, true);
+    ORecordIteratorClass iterator = new ORecordIteratorClass(db, className, true);
 
     long start = System.currentTimeMillis();
 

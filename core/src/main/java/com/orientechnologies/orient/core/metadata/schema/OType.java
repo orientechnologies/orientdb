@@ -42,8 +42,8 @@ import java.text.ParseException;
 import java.util.*;
 
 /**
- * Generic representation of a type.<br>
- * allowAssignmentFrom accepts any class, but Array.class means that the type accepts generic Arrays.
+ * Generic representation of a type.<br> allowAssignmentFrom accepts any class, but Array.class means that the type accepts generic
+ * Arrays.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
@@ -444,6 +444,10 @@ public enum OType implements OTypeInterface {
           }
         }
       } else if (iTargetClass.equals(String.class)) {
+        if (iValue instanceof Collection && ((Collection) iValue).size() == 1 && ((Collection) iValue).iterator()
+            .next() instanceof String) {
+          return ((Collection) iValue).iterator().next();
+        }
         return iValue.toString();
       } else if (iTargetClass.equals(OIdentifiable.class)) {
         if (OMultiValue.isMultiValue(iValue)) {

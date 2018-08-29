@@ -2,10 +2,8 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
@@ -206,23 +204,71 @@ public class OSchemaEmbedded extends OSchemaShared {
   }
 
   @Override
-  public OView createView(ODatabaseDocumentInternal database, String viewName, String statement, boolean updatable) {
+  public OView createView(ODatabaseDocumentInternal database, String viewName, String statement, Map<String, Object> metadata) {
     OViewConfig cfg = new OViewConfig(viewName, statement);
-    cfg.setUpdatable(updatable);
+    if (metadata != null) {
+      cfg.setUpdatable(Boolean.TRUE.equals(metadata.get("updatable")));
+
+      Object updateInterval = metadata.get("updateIntervalSeconds");
+      if (updateInterval instanceof Integer) {
+        cfg.setUpdateIntervalSeconds((Integer) updateInterval);
+      }
+
+      Object updateStrategy = metadata.get("updateStrategy");
+      if (updateStrategy instanceof String) {
+        cfg.setUpdateStrategy((String) updateStrategy);
+      }
+
+      Object watchClasses = metadata.get("watchClasses");
+      if (watchClasses instanceof List) {
+        cfg.setWatchClasses((List) watchClasses);
+      }
+
+      Object nodes = metadata.get("nodes");
+      if (nodes instanceof List) {
+        cfg.setNodes((List) nodes);
+      }
+
+      Object originRidField = metadata.get("originRidField");
+      if (originRidField instanceof String) {
+        cfg.setOriginRidField((String) originRidField);
+      }
+
+      Object indexes = metadata.get("indexes");
+      if (indexes instanceof Collection) {
+        for (Object index : (Collection) indexes) {
+          if (index instanceof Map) {
+            OViewConfig.OViewIndexConfig idxConfig = cfg.addIndex();
+            for (Map.Entry<String, String> entry : ((Map<String, String>) index).entrySet()) {
+              OType val = OType.valueOf(entry.getValue());
+              if (val == null) {
+                throw new IllegalArgumentException("Invalid value for index key type: " + entry.getValue());
+              }
+              idxConfig.addProperty(entry.getKey(), val);
+            }
+          }
+        }
+      }
+
+    }
     return createView(database, cfg);
   }
 
   @Override
   public OView createView(ODatabaseDocumentInternal database, OViewConfig cfg) {
+    return createView(database, cfg, null);
+  }
+
+  public OView createView(ODatabaseDocumentInternal database, OViewConfig cfg, ViewCreationListener listener) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(cfg.getName());
     if (wrongCharacter != null)
       throw new OSchemaException(
           "Invalid class name found. Character '" + wrongCharacter + "' cannot be used in view name '" + cfg.getName() + "'");
 
-    return doCreateView(database, cfg);
+    return doCreateView(database, cfg, listener);
   }
 
-  private OView doCreateView(ODatabaseDocumentInternal database, final OViewConfig config) {
+  private OView doCreateView(ODatabaseDocumentInternal database, final OViewConfig config, ViewCreationListener listener) {
     OView result;
 
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
@@ -230,7 +276,7 @@ public class OSchemaEmbedded extends OSchemaShared {
     try {
 
       final String key = config.getName().toLowerCase(Locale.ENGLISH);
-      if (classes.containsKey(key))
+      if (classes.containsKey(key) || views.containsKey(key))
         throw new OSchemaException("View (or class) '" + config.getName() + "' already exists in current database");
 
       if (executeThroughDistributedStorage(database)) {
@@ -272,6 +318,8 @@ public class OSchemaEmbedded extends OSchemaShared {
 
       for (Iterator<ODatabaseListener> it = database.getListeners().iterator(); it.hasNext(); )
         it.next().onCreateView(database, result);
+
+      ((OSharedContextEmbedded) database.getSharedContext()).getViewManager().updateViewAsync(result.getName(), listener);
 
     } catch (ClusterIdsAreEmptyException e) {
       throw OException.wrapException(new OSchemaException("Cannot create view '" + config.getName() + "'"), e);
@@ -786,8 +834,7 @@ public class OSchemaEmbedded extends OSchemaShared {
 
       final OView existingView = clustersToViews.get(clusterId);
       if (existingView != null && !view.equals(existingView))
-        throw new OSchemaException(
-            "Cluster with id " + clusterId + " already belongs to view " + clustersToViews.get(clusterId));
+        throw new OSchemaException("Cluster with id " + clusterId + " already belongs to view " + clustersToViews.get(clusterId));
 
       clustersToViews.put(clusterId, view);
     } finally {
@@ -809,4 +856,17 @@ public class OSchemaEmbedded extends OSchemaShared {
     }
   }
 
+  void removeClusterForView(ODatabaseDocumentInternal database, int clusterId, OView view) {
+    acquireSchemaWriteLock(database);
+    try {
+      if (clusterId < 0)
+        return;
+
+      checkEmbedded();
+
+      clustersToViews.remove(clusterId);
+    } finally {
+      releaseSchemaWriteLock(database);
+    }
+  }
 }

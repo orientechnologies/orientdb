@@ -730,18 +730,6 @@ public class OViewEmbedded extends OViewImpl {
 
     acquireSchemaWriteLock();
     try {
-      final OStorage storage = database.getStorage();
-
-      if (isDistributedCommand(database)) {
-
-        final String cmd = String.format("alter class `%s` addcluster %d", name, clusterId);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        addClusterIdInternal(database, clusterId);
-      } else
         addClusterIdInternal(database, clusterId);
 
     } finally {
@@ -759,18 +747,6 @@ public class OViewEmbedded extends OViewImpl {
 
     acquireSchemaWriteLock();
     try {
-
-      final OStorage storage = database.getStorage();
-      if (isDistributedCommand(database)) {
-        final String cmd = String.format("alter class `%s` removecluster %d", name, clusterId);
-
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        removeClusterIdInternal(database, clusterId);
-      } else
         removeClusterIdInternal(database, clusterId);
     } finally {
       releaseSchemaWriteLock();
@@ -815,7 +791,7 @@ public class OViewEmbedded extends OViewImpl {
           defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
       }
 
-      ((OSchemaEmbedded) owner).removeClusterForClass(database, clusterToRemove, this);
+      ((OSchemaEmbedded) owner).removeClusterForView(database, clusterToRemove, this);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -1012,7 +988,7 @@ public class OViewEmbedded extends OViewImpl {
           for (int clusterId : getClusterIds()) {
             tryDropCluster(clusterId);
             removePolymorphicClusterId(clusterId);
-            ((OSchemaEmbedded) owner).removeClusterForClass(database, clusterId, this);
+            ((OSchemaEmbedded) owner).removeClusterForView(database, clusterId, this);
           }
 
           setClusterIds(new int[] { NOT_EXISTENT_CLUSTER_ID });
@@ -1052,4 +1028,5 @@ public class OViewEmbedded extends OViewImpl {
         getDatabase().getStorage().dropCluster(defaultClusterId, true);
     }
   }
+
 }

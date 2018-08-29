@@ -1,10 +1,14 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
-import com.orientechnologies.orient.server.OServerLifecycleListener;
 import com.orientechnologies.orient.server.OSystemDatabase;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
+import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 /**
@@ -31,5 +35,33 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         plugin = server.getPlugin("cluster");
     }
     return plugin;
+  }
+
+  protected OSharedContext createSharedContext(OAbstractPaginatedStorage storage) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isEnabled()) {
+      return new OSharedContextEmbedded(storage, this);
+    }
+    return new OSharedContextDistributed(storage, this);
+  }
+
+  protected ODatabaseDocumentEmbedded newSessionInstance(OAbstractPaginatedStorage storage) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isEnabled()) {
+      return new ODatabaseDocumentEmbedded(storage);
+    }
+    plugin.registerNewDatabaseIfNeeded(storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
+    return new ODatabaseDocumentDistributed(plugin.getStorage(storage.getName(), storage), plugin);
+  }
+
+  protected ODatabaseDocumentEmbedded newPooledSessionInstance(ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isEnabled()) {
+      return new ODatabaseDocumentEmbeddedPooled(pool, storage);
+    }
+    plugin.registerNewDatabaseIfNeeded(storage.getName(), plugin.getDatabaseConfiguration(storage.getName()));
+    return new ODatabaseDocumentDistributedPooled(pool, plugin.getStorage(storage.getName(), storage), plugin);
+
+  }
+
+  public void setPlugin(OHazelcastPlugin plugin) {
+    this.plugin = plugin;
   }
 }

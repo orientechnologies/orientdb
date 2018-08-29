@@ -20,6 +20,7 @@ import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -48,6 +49,13 @@ public class OSBTreeRidBagTest extends ORidBagTest {
   @Parameters(value = "url")
   public OSBTreeRidBagTest(@Optional String url) {
     super(url);
+  }
+
+  @BeforeClass
+  @Override
+  public void beforeClass() throws Exception {
+    ODatabaseRecordThreadLocal.instance().remove();
+    super.beforeClass();
   }
 
   @BeforeMethod

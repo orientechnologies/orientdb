@@ -113,7 +113,7 @@ public class OExpression extends SimpleNode {
       return arrayConcatExpression.execute(iCurrentRecord, ctx);
     }
     if (json != null) {
-      return json.toMap(iCurrentRecord, ctx);
+      return json.toObjectDetermineType(iCurrentRecord, ctx);
     }
     if (booleanValue != null) {
       return booleanValue;
@@ -152,12 +152,12 @@ public class OExpression extends SimpleNode {
     return false;
   }
 
-  public boolean isEarlyCalculated() {
+  public boolean isEarlyCalculated(OCommandContext ctx) {
     if (this.mathExpression != null) {
-      return this.mathExpression.isEarlyCalculated();
+      return this.mathExpression.isEarlyCalculated(ctx);
     }
     if (this.arrayConcatExpression != null) {
-      return this.arrayConcatExpression.isEarlyCalculated();
+      return this.arrayConcatExpression.isEarlyCalculated(ctx);
     }
 
     if (booleanValue != null) {
@@ -170,7 +170,7 @@ public class OExpression extends SimpleNode {
       return true;
     }
     if (value instanceof OMathExpression) {
-      return ((OMathExpression) value).isEarlyCalculated();
+      return ((OMathExpression) value).isEarlyCalculated(ctx);
     }
 
     return false;
@@ -391,11 +391,11 @@ public class OExpression extends SimpleNode {
     return false;
   }
 
-  public OExpression splitForAggregation(AggregateProjectionSplit aggregateSplit) {
+  public OExpression splitForAggregation(AggregateProjectionSplit aggregateSplit, OCommandContext ctx) {
     if (isAggregate()) {
       OExpression result = new OExpression(-1);
       if (mathExpression != null) {
-        SimpleNode splitResult = mathExpression.splitForAggregation(aggregateSplit);
+        SimpleNode splitResult = mathExpression.splitForAggregation(aggregateSplit, ctx);
         if (splitResult instanceof OMathExpression) {
           result.mathExpression = (OMathExpression) splitResult;
         } else if (splitResult instanceof OExpression) {
@@ -415,7 +415,7 @@ public class OExpression extends SimpleNode {
         }
       }
       if (json != null) {
-        result.json = json.splitForAggregation(aggregateSplit);
+        result.json = json.splitForAggregation(aggregateSplit, ctx);
       }
       return result;
     } else {

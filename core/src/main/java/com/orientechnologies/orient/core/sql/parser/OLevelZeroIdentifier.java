@@ -191,31 +191,31 @@ public class OLevelZeroIdentifier extends SimpleNode {
     return functionCall != null && functionCall.name.getStringValue().equalsIgnoreCase("count");
   }
 
-  public boolean isEarlyCalculated() {
-    if (functionCall != null && functionCall.isEarlyCalculated()) {
+  public boolean isEarlyCalculated(OCommandContext ctx) {
+    if (functionCall != null && functionCall.isEarlyCalculated(ctx)) {
       return true;
     }
     if (Boolean.TRUE.equals(self)) {
       return false;
     }
-    if (collection != null && collection.isEarlyCalculated()) {
+    if (collection != null && collection.isEarlyCalculated(ctx)) {
       return true;
     }
     return false;
   }
 
-  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
     if (isAggregate()) {
       OLevelZeroIdentifier result = new OLevelZeroIdentifier(-1);
       if (functionCall != null) {
-        SimpleNode node = functionCall.splitForAggregation(aggregateProj);
+        SimpleNode node = functionCall.splitForAggregation(aggregateProj, ctx);
         if (node instanceof OFunctionCall) {
           result.functionCall = (OFunctionCall) node;
         } else {
           return node;
         }
       } else if (collection != null) {
-        result.collection = collection.splitForAggregation(aggregateProj);
+        result.collection = collection.splitForAggregation(aggregateProj, ctx);
         return result;
       } else {
         throw new IllegalStateException();

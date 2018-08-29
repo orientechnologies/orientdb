@@ -88,9 +88,9 @@ public class OParenthesisExpression extends OMathExpression {
   }
 
   @Override
-  public boolean isEarlyCalculated() {
+  public boolean isEarlyCalculated(OCommandContext ctx) {
     // TODO implement query execution and early calculation;
-    return expression != null && expression.isEarlyCalculated();
+    return expression != null && expression.isEarlyCalculated(ctx);
   }
 
   public boolean needsAliases(Set<String> aliases) {
@@ -121,10 +121,10 @@ public class OParenthesisExpression extends OMathExpression {
     return false;
   }
 
-  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
     if (isAggregate()) {
       OParenthesisExpression result = new OParenthesisExpression(-1);
-      result.expression = expression.splitForAggregation(aggregateProj);
+      result.expression = expression.splitForAggregation(aggregateProj, ctx);
       return result;
     } else {
       return this;

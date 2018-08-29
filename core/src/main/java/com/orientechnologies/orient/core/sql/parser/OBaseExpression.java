@@ -230,11 +230,11 @@ public class OBaseExpression extends OMathExpression {
     return identifier != null && modifier == null ? identifier.getCollate(currentRecord, ctx) : null;
   }
 
-  public boolean isEarlyCalculated() {
+  public boolean isEarlyCalculated(OCommandContext ctx) {
     if (number != null || inputParam != null || string != null) {
       return true;
     }
-    if (identifier != null && identifier.isEarlyCalculated()) {
+    if (identifier != null && identifier.isEarlyCalculated(ctx)) {
       return true;
     }
     return false;
@@ -279,9 +279,9 @@ public class OBaseExpression extends OMathExpression {
     return false;
   }
 
-  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj, OCommandContext ctx) {
     if (isAggregate()) {
-      SimpleNode splitResult = identifier.splitForAggregation(aggregateProj);
+      SimpleNode splitResult = identifier.splitForAggregation(aggregateProj, ctx);
       if (splitResult instanceof OBaseIdentifier) {
         OBaseExpression result = new OBaseExpression(-1);
         result.identifier = (OBaseIdentifier) splitResult;

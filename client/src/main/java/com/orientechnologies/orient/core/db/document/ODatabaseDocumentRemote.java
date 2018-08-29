@@ -35,8 +35,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -44,6 +46,7 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -52,13 +55,11 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.function.Supplier;
 
 /**
  * Created by tglman on 30/06/16.
@@ -177,7 +178,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     database.storage.addUser();
     database.status = STATUS.OPEN;
     database.applyAttributes(config);
-    database.initAtFirstOpen();
+    database.initAtFirstOpen(this.getSharedContext());
     database.user = this.user;
     this.activateOnCurrentThread();
     return database;
@@ -188,7 +189,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     throw new UnsupportedOperationException("use OrientDB");
   }
 
-  public void internalOpen(String user, String password, OrientDBConfig config) {
+  public void internalOpen(String user, String password, OrientDBConfig config, OSharedContext ctx) {
     this.config = config;
     applyAttributes(config);
     applyListeners(config);
@@ -198,7 +199,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
       status = STATUS.OPEN;
 
-      initAtFirstOpen();
+      initAtFirstOpen(ctx);
       this.user = new OImmutableUser(-1,
           new OUser(user, password).addRole(new ORole("passthrough", null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
 
@@ -220,7 +221,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     }
   }
 
-  private void initAtFirstOpen() {
+  private void initAtFirstOpen(OSharedContext ctx) {
     if (initialized)
       return;
 
@@ -230,25 +231,19 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     componentsFactory = getStorage().getComponentsFactory();
     user = null;
 
-    loadMetadata();
+    loadMetadata(ctx);
 
     initialized = true;
   }
 
   @Override
   protected void loadMetadata() {
-    loadMetadata(() -> this.copy());
+    loadMetadata(this.getSharedContext());
   }
 
-  protected void loadMetadata(Supplier<ODatabaseDocument> adminDbSupplier) {
+  protected void loadMetadata(OSharedContext ctx) {
     metadata = new OMetadataDefault(this);
-    sharedContext = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextRemote(getStorage());
-        return shared;
-      }
-    });
+    sharedContext = ctx;
     metadata.init(sharedContext);
     sharedContext.load(this);
   }
@@ -361,6 +356,23 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
+  public OResultSet indexQuery(String indexName, String query, Object... args) {
+    checkOpenness();
+
+    if (getTransaction().isActive()) {
+      OTransactionIndexChanges changes = getTransaction().getIndexChanges(indexName);
+      Set<String> changedIndexes = ((OTransactionOptimisticClient) getTransaction()).getIndexChanged();
+      if (changedIndexes.contains(indexName) || changes != null) {
+        checkAndSendTransaction();
+      }
+    }
+    ORemoteQueryResult result = storage.command(this, query, args);
+    if (result.isReloadMetadata())
+      reload();
+    return result.getResult();
+  }
+
+  @Override
   public OResultSet command(String query, Object... args) {
     checkOpenness();
     checkAndSendTransaction();
@@ -416,6 +428,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   public void fetchNextPage(ORemoteResultSet rs) {
+    checkOpenness();
+    checkAndSendTransaction();
     storage.fetchNextPage(this, rs);
   }
 
@@ -447,46 +461,29 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   public static void updateSchema(OStorageRemote storage, ODocument schema) {
 //    storage.get
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextRemote(storage);
-        return shared;
-      }
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> {
+      throw new IllegalStateException("No shared context set on remote storage!");
     });
     ((OSchemaRemote) shared.getSchema()).update(schema);
   }
 
   public static void updateIndexManager(OStorageRemote storage, ODocument indexManager) {
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextRemote(storage);
-        return shared;
-      }
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> {
+      throw new IllegalStateException("No shared context set on remote storage!");
     });
     ((OIndexManagerRemote) shared.getIndexManager()).update(indexManager);
   }
 
   public static void updateFunction(OStorageRemote storage) {
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextRemote(storage);
-        return shared;
-      }
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> {
+      throw new IllegalStateException("No shared context set on remote storage!");
     });
     (shared.getFunctionLibrary()).update();
-
   }
 
   public static void updateSequences(OStorageRemote storage) {
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContextRemote(storage);
-        return shared;
-      }
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> {
+      throw new IllegalStateException("No shared context set on remote storage!");
     });
     (shared.getSequenceLibrary()).update();
   }
@@ -563,14 +560,51 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   public void afterUpdateOperations(final OIdentifiable id) {
     callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null && getTransaction().isActive()) {
+        List<OClassIndexManager.IndexChange> indexChanges = new ArrayList<>();
+        OClassIndexManager.processIndexOnDelete(this, doc, indexChanges);
+        OTransactionOptimisticClient tx = (OTransactionOptimisticClient) getTransaction();
+        for (OClassIndexManager.IndexChange indexChange : indexChanges) {
+          tx.addIndexChanged(indexChange.index.getName());
+        }
+      }
+    }
   }
 
   public void afterCreateOperations(final OIdentifiable id) {
     callbackHooks(ORecordHook.TYPE.AFTER_CREATE, id);
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null && getTransaction().isActive()) {
+        List<OClassIndexManager.IndexChange> indexChanges = new ArrayList<>();
+        OClassIndexManager.processIndexOnCreate(this, doc, indexChanges);
+        OTransactionOptimisticClient tx = (OTransactionOptimisticClient) getTransaction();
+        for (OClassIndexManager.IndexChange indexChange : indexChanges) {
+          tx.addIndexChanged(indexChange.index.getName());
+        }
+
+      }
+    }
   }
 
   public void afterDeleteOperations(final OIdentifiable id) {
     callbackHooks(ORecordHook.TYPE.AFTER_DELETE, id);
+    if (id instanceof ODocument) {
+      ODocument doc = (ODocument) id;
+      OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(this, doc);
+      if (clazz != null && getTransaction().isActive()) {
+        List<OClassIndexManager.IndexChange> indexChanges = new ArrayList<>();
+        OClassIndexManager.processIndexOnDelete(this, doc, indexChanges);
+        OTransactionOptimisticClient tx = (OTransactionOptimisticClient) getTransaction();
+        for (OClassIndexManager.IndexChange indexChange : indexChanges) {
+          tx.addIndexChanged(indexChange.index.getName());
+        }
+      }
+    }
   }
 
   @Override
