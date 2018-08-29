@@ -36,7 +36,7 @@ public class OExpression extends SimpleNode {
     } else if (value instanceof OMathExpression) {
       return ((OMathExpression) value).execute(iCurrentRecord, ctx);
     } else if (value instanceof OJson) {
-      return ((OJson) value).toMap(iCurrentRecord, ctx);
+      return ((OJson) value).toObjectDetermineType(iCurrentRecord, ctx);
     } else if (value instanceof String) {
       return value;
     } else if (value instanceof Number) {
@@ -44,7 +44,6 @@ public class OExpression extends SimpleNode {
     }
 
     return value;
-
   }
 
   public boolean isBaseIdentifier() {
