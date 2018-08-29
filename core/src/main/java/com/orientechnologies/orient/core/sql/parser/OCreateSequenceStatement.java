@@ -150,7 +150,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       limitValue.toString(params, builder);
     }    
     if (cyclic != OSequence.DEFAULT_RECYCLABLE_VALUE) {
-      builder.append(" CYCLE");
+      builder.append(" CYCLE ").append(Boolean.toString(cyclic).toUpperCase());
     }
     if (positive) {
       builder.append(" ASC");

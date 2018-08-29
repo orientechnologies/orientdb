@@ -4974,7 +4974,18 @@ OCreateSequenceStatement CreateSequenceStatement():
             |
             ( <LIMIT> jjtThis.limitValue = Expression() )            
             |
-            ( <CYCLE> { jjtThis.cyclic = true; } )
+            ( 
+                <CYCLE> 
+                (
+                    ( 
+                        <TRUE> { jjtThis.cyclic = true; } 
+                    )
+                    | 
+                    (
+                        <FALSE> { jjtThis.cyclic = false; } 
+                    )
+                )
+            )
             |
             ( <CACHE> jjtThis.cache = Expression() )
             |
@@ -5001,7 +5012,18 @@ OAlterSequenceStatement AlterSequenceStatement():
             |
             ( <LIMIT> jjtThis.limitValue = Expression() )
             |            
-            ( <CYCLE> { jjtThis.cyclic = true; } )
+            ( 
+                <CYCLE> 
+                (
+                    ( 
+                        <TRUE> { jjtThis.cyclic = true; } 
+                    )
+                    | 
+                    (
+                        <FALSE> { jjtThis.cyclic = false; } 
+                    )
+                )
+            )
             |
             ( <CACHE> jjtThis.cache = Expression() )
             |
@@ -5009,9 +5031,7 @@ OAlterSequenceStatement AlterSequenceStatement():
             |
             ( <DESC> { jjtThis.positive = false; } )
             |
-            ( <NOLIMIT> { jjtThis.turnLimitOff = true; } )
-            |
-            ( <NOCYCLE> { jjtThis.cyclic = false; } )
+            ( <NOLIMIT> { jjtThis.turnLimitOff = true; } )                        
         )*
     )
     { return jjtThis; }

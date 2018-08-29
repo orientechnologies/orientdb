@@ -143,11 +143,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
       builder.append(appendString);
     }
     if (cyclic != null) {
-      if (cyclic) {
-        builder.append(" CYCLE");
-      } else {
-        builder.append(" NOCYCLE");
-      }
+      builder.append(" CYCLE ").append(cyclic.toString().toUpperCase());
     }
     if (limitValue != null) {
       builder.append(" LIMIT ");
