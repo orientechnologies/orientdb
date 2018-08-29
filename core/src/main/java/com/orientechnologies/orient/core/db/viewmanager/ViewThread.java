@@ -35,7 +35,9 @@ public class ViewThread extends Thread {
       } catch (Exception e) {
         e.printStackTrace();
       } finally {
-        db.close();
+        if (db != null) {
+          db.close();
+        }
       }
       try {
         Thread.sleep(5_000);

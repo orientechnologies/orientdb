@@ -113,13 +113,13 @@ public interface OrientSqlConstants {
   /** RegularExpression Id. */
   int CACHE = 59;
   /** RegularExpression Id. */
-  int MAXVALUE = 60;
+  int CYCLE = 60;
   /** RegularExpression Id. */
-  int MINVALUE = 61;
+  int NOCACHE = 61;
   /** RegularExpression Id. */
-  int CYCLE = 62;
+  int NOLIMIT = 62;
   /** RegularExpression Id. */
-  int NOCACHE = 63;
+  int NOCYCLE = 63;
   /** RegularExpression Id. */
   int UNSAFE = 64;
   /** RegularExpression Id. */
@@ -588,10 +588,10 @@ public interface OrientSqlConstants {
     "<RETRY>",
     "<LET>",
     "<CACHE>",
-    "<MAXVALUE>",
-    "<MINVALUE>",
     "<CYCLE>",
     "<NOCACHE>",
+    "<NOLIMIT>",
+    "<NOCYCLE>",
     "<UNSAFE>",
     "<PARALLEL>",
     "<STRATEGY>",
