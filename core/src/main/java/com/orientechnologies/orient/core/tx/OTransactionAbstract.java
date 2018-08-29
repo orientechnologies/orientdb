@@ -35,12 +35,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class OTransactionAbstract implements OTransaction {
-  protected final ODatabaseDocumentInternal           database;
-  protected       TXSTATUS                            status         = TXSTATUS.INVALID;
-  protected       ISOLATION_LEVEL                     isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
-  protected       HashMap<ORID, LockedRecordMetadata> locks          = new HashMap<ORID, LockedRecordMetadata>();
+  protected final ODatabaseDocumentInternal       database;
+  protected       TXSTATUS                        status         = TXSTATUS.INVALID;
+  protected       ISOLATION_LEVEL                 isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
+  protected       Map<ORID, LockedRecordMetadata> locks          = new HashMap<ORID, LockedRecordMetadata>();
 
-  private static final class LockedRecordMetadata {
+  public static final class LockedRecordMetadata {
     private final OStorage.LOCKING_STRATEGY strategy;
     private       int                       locksCount;
 
@@ -199,5 +199,13 @@ public abstract class OTransactionAbstract implements OTransaction {
       throw new OLockException("Cannot unlock a never acquired lock");
     }
     return null;
+  }
+
+  public Map<ORID, LockedRecordMetadata> getInternalLocks() {
+    return locks;
+  }
+
+  protected void setLocks(Map<ORID, LockedRecordMetadata> locks) {
+    this.locks = locks;
   }
 }

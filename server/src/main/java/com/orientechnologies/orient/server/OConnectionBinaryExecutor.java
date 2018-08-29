@@ -518,7 +518,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeCommand(OCommandRequest request) {
     OTransaction oldTx = connection.getDatabase().getTransaction();
     try {
-      connection.getDatabase().swapTx(new OTransactionNoTx(connection.getDatabase()));
+      connection.getDatabase().swapTx(new OTransactionNoTx(connection.getDatabase(), null));
 
       final boolean live = request.isLive();
       final boolean asynch = request.isAsynch();

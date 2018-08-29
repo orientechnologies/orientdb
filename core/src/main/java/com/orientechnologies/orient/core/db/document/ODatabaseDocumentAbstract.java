@@ -1222,6 +1222,13 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     if (currentTx.isActive() && iTx.equals(currentTx)) {
       currentTx.begin();
+      return;
+    }
+
+    Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLockedRecords = null;
+
+    if (!currentTx.isActive() && iTx instanceof OTransactionOptimistic) {
+      noTxLockedRecords = ((OTransactionAbstract) currentTx).getInternalLocks();
     }
 
     currentTx.rollback(true, 0);
@@ -1238,6 +1245,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       }
 
     currentTx = iTx;
+    if (iTx instanceof OTransactionOptimistic) {
+      ((OTransactionOptimistic) iTx).setNoTxLocks(noTxLockedRecords);
+    }
     currentTx.begin();
   }
 
@@ -1388,7 +1398,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     switch (iType) {
     case NOTX:
-      setDefaultTransactionMode();
+      setDefaultTransactionMode(null);
       break;
 
     case OPTIMISTIC:
@@ -1403,9 +1413,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return this;
   }
 
-  public void setDefaultTransactionMode() {
+  public void setDefaultTransactionMode(Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLocks) {
     if (!(currentTx instanceof OTransactionNoTx))
-      currentTx = new OTransactionNoTx(this);
+      currentTx = new OTransactionNoTx(this, noTxLocks);
   }
 
   /**
@@ -2412,7 +2422,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   protected void init() {
-    currentTx = new OTransactionNoTx(this);
+    currentTx = new OTransactionNoTx(this, null);
   }
 
   private OFreezableStorageComponent getFreezableStorage() {
