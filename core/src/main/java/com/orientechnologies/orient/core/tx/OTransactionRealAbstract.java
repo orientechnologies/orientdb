@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
@@ -43,19 +44,19 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract implements OTransactionInternal {
-  protected Map<ORID, ORID>                                   updatedRids           = new HashMap<ORID, ORID>();
-  protected Map<ORID, ORecordOperation>                       allEntries            = new LinkedHashMap<ORID, ORecordOperation>();
-  protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
-  protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
-  protected int id;
-  protected int                 newObjectCounter = -2;
-  protected Map<String, Object> userData         = new HashMap<String, Object>();
-
+  protected       Map<ORID, ORID>                                   updatedRids           = new HashMap<ORID, ORID>();
+  protected       Map<ORID, ORecordOperation>                       allEntries            = new LinkedHashMap<ORID, ORecordOperation>();
+  protected       Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
+  protected       Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
+  protected       int                                               id;
+  protected       int                                               newObjectCounter      = -2;
+  protected       Map<String, Object>                               userData              = new HashMap<String, Object>();
+  private         Map<ORID, LockedRecordMetadata>                   noTxLocks;
   /**
    * This set is used to track which documents are changed during tx, if documents are changed but not saved all changes are made
    * during tx will be undone.
    */
-  protected final Set<ODocument> changedDocuments = new HashSet<ODocument>();
+  protected final Set<ODocument>                                    changedDocuments      = new HashSet<ODocument>();
 
   protected OTransactionRealAbstract(ODatabaseDocumentInternal database, int id) {
     super(database);
@@ -106,7 +107,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
     newObjectCounter = -2;
     status = TXSTATUS.INVALID;
 
-    database.setDefaultTransactionMode();
+    database.setDefaultTransactionMode(getNoTxLocks());
 
     userData.clear();
   }
@@ -564,5 +565,13 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
 
   public int getNewObjectCounter() {
     return newObjectCounter;
+  }
+
+  public void setNoTxLocks(Map<ORID, LockedRecordMetadata> noTxLocks) {
+    this.noTxLocks = noTxLocks;
+  }
+
+  public Map<ORID, LockedRecordMetadata> getNoTxLocks() {
+    return noTxLocks;
   }
 }

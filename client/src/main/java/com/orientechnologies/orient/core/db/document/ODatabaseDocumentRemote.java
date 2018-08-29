@@ -292,7 +292,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
     switch (iType) {
     case NOTX:
-      setDefaultTransactionMode();
+      setDefaultTransactionMode(null);
       break;
 
     case OPTIMISTIC:

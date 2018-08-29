@@ -25,6 +25,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.LatestVersionRecordReader;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.document.RecordReader;
 import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -46,6 +47,7 @@ import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -401,7 +403,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       break;
       case ORecordOperation.LOADED:
         /**
-         * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord}
+         * Read hooks already invoked in {@link ODatabaseDocumentTx#executeReadRecord}
          */
         break;
       case ORecordOperation.UPDATED: {
@@ -476,7 +478,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         case ORecordOperation.LOADED:
           /**
            * Read hooks already invoked in
-           * {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord} .
+           * {@link ODatabaseDocumentTx#executeReadRecord} .
            */
           break;
         case ORecordOperation.UPDATED:

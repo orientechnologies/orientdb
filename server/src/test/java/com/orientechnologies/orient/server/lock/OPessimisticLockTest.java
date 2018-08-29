@@ -40,7 +40,6 @@ public class OPessimisticLockTest {
   }
 
   @Test
-  @Ignore
   public void lockHappyPathNoCrashNoTx() {
     ORecord rid = session.save(new ODocument("ToLock"));
     session.getTransaction().lockRecord(rid, OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK);

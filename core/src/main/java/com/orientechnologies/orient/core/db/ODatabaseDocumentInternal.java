@@ -40,8 +40,10 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseInternal<ORecord> {
@@ -119,7 +121,7 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   void executeDeleteRecord(OIdentifiable record, final int iVersion, final boolean iRequired, final OPERATION_MODE iMode,
       boolean prohibitTombstones);
 
-  void setDefaultTransactionMode();
+  void setDefaultTransactionMode(Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLocks);
 
   @Override
   OMetadataInternal getMetadata();
