@@ -42,7 +42,8 @@ public class CoordinatorTxTest {
     ODistributedExecutor eThree = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(), this.three,
         "none");
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), new MockOperationLog());
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), new MockOperationLog(),
+        null);
 
     MemberChannel cOne = new MemberChannel(eOne, coordinator);
     ODistributedMember mOne = new ODistributedMember("one", cOne);

@@ -234,7 +234,22 @@ public class OSchemaEmbedded extends OSchemaShared {
         cfg.setOriginRidField((String) originRidField);
       }
 
-//      result.setProperty("indexes", indexes);
+      Object indexes = metadata.get("indexes");
+      if (indexes instanceof Collection) {
+        for (Object index : (Collection) indexes) {
+          if (index instanceof Map) {
+            OViewConfig.OViewIndexConfig idxConfig = cfg.addIndex();
+            for (Map.Entry<String, String> entry : ((Map<String, String>) index).entrySet()) {
+              OType val = OType.valueOf(entry.getValue());
+              if (val == null) {
+                throw new IllegalArgumentException("Invalid value for index key type: " + entry.getValue());
+              }
+              idxConfig.addProperty(entry.getKey(), val);
+            }
+          }
+        }
+      }
+
     }
     return createView(database, cfg);
   }

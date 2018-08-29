@@ -88,7 +88,7 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
       final ODatabaseDocumentInternal database) throws Exception {
 
     ODistributedDatabase database1 = iManager.getMessageService().getDatabase(databaseName);
-    if (database1 != null) {
+    if (database1 != null && lsn != null) {
       database1.getSyncConfiguration().setLastLSN(getNodeSource(), lsn, false);
     }
     if (database != null) {
@@ -118,8 +118,13 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
   public void toStream(final DataOutput out) throws IOException {
     out.writeUTF(databaseName);
     out.writeUTF(status);
-    out.writeLong(lsn.getSegment());
-    out.writeLong(lsn.getPosition());
+    if (lsn == null) {
+      out.writeLong(-1);
+      out.writeLong(-1);
+    } else {
+      out.writeLong(lsn.getSegment());
+      out.writeLong(lsn.getPosition());
+    }
   }
 
   @Override
@@ -128,7 +133,11 @@ public class OUpdateDatabaseStatusTask extends OAbstractRemoteTask {
     status = in.readUTF();
     long seg = in.readLong();
     long pos = in.readLong();
-    lsn = new OLogSequenceNumber(seg, pos);
+    if (seg == -1 && pos == -1) {
+      lsn = null;
+    } else {
+      lsn = new OLogSequenceNumber(seg, pos);
+    }
   }
 
   @Override

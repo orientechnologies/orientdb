@@ -13,7 +13,7 @@ public class OTransactionFirstPhaseResult implements ONodeResponse {
   }
 
   public enum Type {
-    SUCCESS, CONCURRENT_MODIFICATION_EXCEPTION, UNIQUE_KEY_VIOLATION, PESSIMISTIC_LOCK_TIMEOUT, EXCEPTION
+    SUCCESS, CONCURRENT_MODIFICATION_EXCEPTION, UNIQUE_KEY_VIOLATION, EXCEPTION
   }
 
   private Type   type;
@@ -82,18 +82,6 @@ public class OTransactionFirstPhaseResult implements ONodeResponse {
 
     public String getIndexName() {
       return indexName;
-    }
-  }
-
-  public static class PessimisticLockTimeout {
-    private ORecordId recordId;
-
-    public PessimisticLockTimeout(ORecordId recordId) {
-      this.recordId = recordId;
-    }
-
-    public ORecordId getRecordId() {
-      return recordId;
     }
   }
 

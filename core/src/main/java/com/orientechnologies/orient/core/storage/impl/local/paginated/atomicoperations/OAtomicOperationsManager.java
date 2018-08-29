@@ -41,7 +41,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
-import javax.management.*;
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import javax.management.ObjectName;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -49,11 +55,16 @@ import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -201,8 +212,14 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     try {
       storage.checkReadOnlyConditions();
     } catch (RuntimeException | Error e) {
-      for (String lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+      final Iterator<String> lockedObjectIterator = operation.lockedObjects().iterator();
+
+      while (lockedObjectIterator.hasNext()) {
+        final String lockedObject = lockedObjectIterator.next();
+        lockedObjectIterator.remove();
+
+        lockManager.releaseLock(this, lockedObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+      }
 
       throw e;
     }
@@ -210,7 +227,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     return operation;
   }
 
-  public void alarmClearOfAtomicOperation() {
+  public static void alarmClearOfAtomicOperation() {
     final OAtomicOperation current = currentOperation.get();
 
     if (current != null) {
@@ -382,8 +399,13 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       operation.decrementCounter();
 
       if (counter == 1) {
-        for (String lockObject : operation.lockedObjects()) {
-          lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+        final Iterator<String> lockedObjectIterator = operation.lockedObjects().iterator();
+
+        while (lockedObjectIterator.hasNext()) {
+          final String lockedObject = lockedObjectIterator.next();
+          lockedObjectIterator.remove();
+
+          lockManager.releaseLock(this, lockedObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
         }
 
         currentOperation.set(null);
@@ -420,8 +442,14 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         storage.handleJVMError(e);
         throw e;
       } finally {
-        for (String lockObject : operation.lockedObjects())
-          lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+        final Iterator<String> lockedObjectIterator = operation.lockedObjects().iterator();
+
+        while (lockedObjectIterator.hasNext()) {
+          final String lockedObject = lockedObjectIterator.next();
+          lockedObjectIterator.remove();
+
+          lockManager.releaseLock(this, lockedObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+        }
 
         currentOperation.set(null);
       }
@@ -437,8 +465,13 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   public void ensureThatComponentsUnlocked() {
     final OAtomicOperation operation = currentOperation.get();
     if (operation != null) {
-      for (String lockObject : operation.lockedObjects()) {
-        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+      final Iterator<String> lockedObjectIterator = operation.lockedObjects().iterator();
+
+      while (lockedObjectIterator.hasNext()) {
+        final String lockedObject = lockedObjectIterator.next();
+        lockedObjectIterator.remove();
+
+        lockManager.releaseLock(this, lockedObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
       }
     }
   }

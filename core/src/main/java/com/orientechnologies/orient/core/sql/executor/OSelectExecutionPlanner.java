@@ -12,11 +12,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OView;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
 
@@ -121,7 +117,7 @@ public class OSelectExecutionPlanner {
       boolean enableProfiling) {
     handleProjectionsBeforeOrderBy(result, info, ctx, enableProfiling);
 
-    if (info.expand || info.unwind != null) {
+    if (info.expand || info.unwind != null || info.groupBy != null) {
 
       handleProjections(result, info, ctx, enableProfiling);
       handleExpand(result, info, ctx, enableProfiling);
@@ -135,7 +131,7 @@ public class OSelectExecutionPlanner {
       }
     } else {
       handleOrderBy(result, info, ctx, enableProfiling);
-      if (info.distinct) {
+      if (info.distinct || info.groupBy != null) {
         handleProjections(result, info, ctx, enableProfiling);
         handleDistinct(result, info, ctx, enableProfiling);
         if (info.skip != null) {
@@ -581,7 +577,9 @@ public class OSelectExecutionPlanner {
 
   private static void handleDistinct(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
       boolean profilingEnabled) {
-    result.chain(new DistinctExecutionStep(ctx, profilingEnabled));
+    if (info.distinct) {
+      result.chain(new DistinctExecutionStep(ctx, profilingEnabled));
+    }
   }
 
   private static void handleProjectionsBeforeOrderBy(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
@@ -1768,7 +1766,7 @@ public class OSelectExecutionPlanner {
     if (result == null) {
       result = new ArrayList<>();
       OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass);
-      if(clazz==null){
+      if (clazz == null) {
         clazz = ctx.getDatabase().getMetadata().getSchema().getView(targetClass);
       }
       if (clazz == null) {
