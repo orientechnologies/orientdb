@@ -1825,7 +1825,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return result;
   }
 
-  protected abstract void notifyClients(String databaseName);
+  public abstract void notifyClients(String databaseName);
 
   protected void onDatabaseEvent(final String nodeName, final String databaseName, final DB_STATUS status) {
     updateLastClusterChange();
