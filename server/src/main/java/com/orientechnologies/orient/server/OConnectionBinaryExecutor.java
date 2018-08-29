@@ -1399,4 +1399,16 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeExperimental(OExperimentalRequest request) {
     return new OExperimentalResponse(request.getRequest().execute(this));
   }
+
+  @Override
+  public OBinaryResponse executeLockRecord(OLockRecordRequest request) {
+    connection.getDatabase().getTransaction().lockRecord(request.getIdentity(), request.getLockingStrategy());
+    return new OLockRecordResponse();
+  }
+
+  @Override
+  public OBinaryResponse executeUnlockRecord(OUnlockRecordRequest request) {
+    connection.getDatabase().getTransaction().unlockRecord(request.getIdentity());
+    return new OUnlockRecordResponse();
+  }
 }

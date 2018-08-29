@@ -257,4 +257,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   }
 
   OView getViewFromCluster(int cluster);
+
+  void internalLockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY lockingStrategy);
+
+  void internalUnlockRecord(OIdentifiable iRecord);
 }

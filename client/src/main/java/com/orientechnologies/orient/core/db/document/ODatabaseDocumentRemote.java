@@ -758,4 +758,17 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     // DON'T ASSIGN CLUSTER WITH REMOTE: SERVER KNOWS THE RIGHT CLUSTER BASED ON LOCALITY
     return null;
   }
+
+  @Override
+  public void internalLockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY lockingStrategy) {
+    checkAndSendTransaction();
+    OStorageRemote remote = getStorage();
+    remote.lockRecord(iRecord, lockingStrategy);
+  }
+
+  @Override
+  public void internalUnlockRecord(OIdentifiable iRecord) {
+    OStorageRemote remote = getStorage();
+    remote.unlockRecord(iRecord.getIdentity());
+  }
 }
