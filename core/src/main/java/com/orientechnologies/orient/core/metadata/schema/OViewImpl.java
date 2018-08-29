@@ -184,4 +184,37 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       releaseSchemaReadLock();
     }
   }
+
+  public void inactivateIndexes() {
+    acquireSchemaReadLock();
+    try {
+      this.inactiveIndexNames.addAll(activeIndexNames);
+      this.activeIndexNames.clear();
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
+  public void inactivateIndex(String name) {
+    acquireSchemaReadLock();
+    try {
+      this.activeIndexNames.remove(name);
+      this.inactiveIndexNames.add(name);
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
+  public List<String> getInactiveIndexes() {
+    return inactiveIndexNames;
+  }
+
+  public void addActiveIndexes(List<String> names) {
+    acquireSchemaReadLock();
+    try {
+      this.activeIndexNames.addAll(names);
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
 }

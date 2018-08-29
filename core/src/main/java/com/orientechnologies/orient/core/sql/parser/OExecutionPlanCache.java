@@ -1,9 +1,11 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
@@ -79,20 +81,23 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
     return result;
   }
 
-
   public static void put(String statement, OExecutionPlan plan, ODatabaseDocumentInternal db) {
     if (db == null) {
       throw new IllegalArgumentException("DB cannot be null");
     }
 
     OExecutionPlanCache resource = db.getSharedContext().getExecutionPlanCache();
-    resource.putInternal(statement, plan);
+    resource.putInternal(statement, plan, db);
   }
 
-  public void putInternal(String statement, OExecutionPlan plan) {
+  public void putInternal(String statement, OExecutionPlan plan, ODatabaseDocument db) {
     synchronized (map) {
       OInternalExecutionPlan internal = (OInternalExecutionPlan) plan;
-      internal = internal.copy(null);
+      OBasicCommandContext ctx = new OBasicCommandContext();
+      ctx.setDatabase(db);
+      internal = internal.copy(ctx);
+      //this copy is never used, so it has to be closed to free resources
+      internal.close();
       map.put(statement, internal);
     }
   }

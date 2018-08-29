@@ -8,7 +8,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
+import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -57,6 +59,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     this.condition = condition;
     this.additionalRangeCondition = additionalRangeCondition;
     this.orderAsc = orderAsc;
+
+    OSharedContext sharedContext = ((ODatabaseDocumentInternal) ctx.getDatabase()).getSharedContext();
+    ViewManager viewManager = sharedContext.getViewManager();
+    viewManager.startUsingViewIndex(indexName);
   }
 
   public FetchFromIndexStep(String indexName, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
@@ -66,6 +72,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     this.condition = condition;
     this.additionalRangeCondition = additionalRangeCondition;
     this.orderAsc = orderAsc;
+
+    OSharedContext sharedContext = ((ODatabaseDocumentInternal) ctx.getDatabase()).getSharedContext();
+    ViewManager viewManager = sharedContext.getViewManager();
+    viewManager.startUsingViewIndex(indexName);
   }
 
   @Override
@@ -813,4 +823,14 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         this.profilingEnabled);
     return result;
   }
+
+  @Override
+  public void close() {
+    super.close();
+    OSharedContext sharedContext = ((ODatabaseDocumentInternal) ctx.getDatabase()).getSharedContext();
+    ViewManager viewManager = sharedContext.getViewManager();
+    viewManager.endUsingViewIndex(indexName);
+
+  }
+
 }
