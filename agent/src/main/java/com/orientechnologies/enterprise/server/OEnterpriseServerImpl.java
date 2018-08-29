@@ -22,6 +22,7 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -208,6 +209,12 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
     if (listener != null) {
       listener.unregisterStatelessCommand(iCommandClass);
     }
+  }
+
+  @Override
+  public Collection<OServerCommand> listCommands() {
+    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    return listener.getStatelessCommands();
   }
 
   @Override

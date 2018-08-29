@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.agent.proxy.HttpProxyListener;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -30,7 +30,7 @@ import java.util.Date;
 
 public class OServerCommandPostBackupDatabase extends OServerCommandDistributedScope implements OCommandOutputListener {
   public OServerCommandPostBackupDatabase() {
-    super("database.backup");
+    super(EnterprisePermissions.SERVER_BACKUP.toString());
   }
 
   private static final String[] NAMES = { "GET|backup/*", "POST|backup/*" };

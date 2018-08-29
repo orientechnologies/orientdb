@@ -27,6 +27,7 @@ import java.lang.StringBuilder;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -48,7 +49,7 @@ public class OServerCommandGetSecurityConfig extends OServerCommandAuthenticated
 
 	public OServerCommandGetSecurityConfig(OServerSecurity serverSec)
 	{
-		super("*");
+		super(EnterprisePermissions.SERVER_SECURITY.toString());
 		
 		_ServerSecurity = serverSec;
 	}

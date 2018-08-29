@@ -1,22 +1,23 @@
 /*
  * Copyright 2010-2013 Orient Technologies LTD (info--at--orientechnologies.com)
  * All Rights Reserved. Commercial License.
- * 
+ *
  * NOTICE:  All information contained herein is, and remains the property of
  * Orient Technologies LTD and its suppliers, if any.  The intellectual and
  * technical concepts contained herein are proprietary to
  * Orient Technologies LTD and its suppliers and may be covered by United
  * Kingdom and Foreign Patents, patents in process, and are protected by trade
  * secret or copyright law.
- * 
+ *
  * Dissemination of this information or reproduction of this material
  * is strictly forbidden unless prior written permission is obtained
  * from Orient Technologies LTD.
- * 
+ *
  * For more information: http://www.orientechnologies.com
  */
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -31,7 +32,7 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
   private static final String[] NAMES = { "GET|profiler/*", "POST|profiler/*" };
 
   public OServerCommandGetProfiler() {
-    super("server.profiler");
+    super(EnterprisePermissions.SERVER_PROFILER.toString());
   }
 
   @Override
@@ -55,8 +56,8 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
 
       } else if (command.equalsIgnoreCase("configure")) {
         Orient.instance().getProfiler().configure(parts[2]);
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Profiler configured with: " + parts[2],
-            null);
+        iResponse
+            .send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Profiler configured with: " + parts[2], null);
 
       } else if (command.equalsIgnoreCase("status")) {
         final String status = Orient.instance().getProfiler().isRecording() ? "on" : "off";
@@ -72,8 +73,8 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, "profiler restarted", null);
 
       } else if (command.equalsIgnoreCase("metadata")) {
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, Orient.instance().getProfiler().metadataToJSON(),
-            null);
+        iResponse
+            .send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, Orient.instance().getProfiler().metadataToJSON(), null);
       } else {
         final StringWriter jsonBuffer = new StringWriter();
         final OJSONWriter json = new OJSONWriter(jsonBuffer);

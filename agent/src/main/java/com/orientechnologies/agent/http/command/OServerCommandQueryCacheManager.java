@@ -18,6 +18,7 @@
 
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -40,7 +41,7 @@ public class OServerCommandQueryCacheManager extends OServerCommandDistributedSc
   private static final String[] NAMES = { "GET|commandCache/*", "PUT|commandCache/*", "POST|commandCache/*" };
 
   public OServerCommandQueryCacheManager() {
-    super("server.profiler");
+    super(EnterprisePermissions.SERVER_CONFIGURATION.toString());
   }
 
   @Override
@@ -68,7 +69,6 @@ public class OServerCommandQueryCacheManager extends OServerCommandDistributedSc
 
     if (urlParts.length > 2) {
       String command = urlParts[2];
-
 
       final ODatabaseDocumentInternal profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
       try {
@@ -109,7 +109,7 @@ public class OServerCommandQueryCacheManager extends OServerCommandDistributedSc
   private void doPut(OHttpRequest iRequest, OHttpResponse iResponse, String[] urlParts) throws InterruptedException, IOException {
 
     iRequest.databaseName = urlParts[1];
-      ODatabaseDocumentInternal profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
+    ODatabaseDocumentInternal profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
     try {
       OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
 

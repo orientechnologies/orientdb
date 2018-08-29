@@ -1,22 +1,23 @@
 /*
  * Copyright 2010-2013 Orient Technologies LTD (info--at--orientechnologies.com)
  * All Rights Reserved. Commercial License.
- * 
+ *
  * NOTICE:  All information contained herein is, and remains the property of
  * Orient Technologies LTD and its suppliers, if any.  The intellectual and
  * technical concepts contained herein are proprietary to
  * Orient Technologies LTD and its suppliers and may be covered by United
  * Kingdom and Foreign Patents, patents in process, and are protected by trade
  * secret or copyright law.
- * 
+ *
  * Dissemination of this information or reproduction of this material
  * is strictly forbidden unless prior written permission is obtained
  * from Orient Technologies LTD.
- * 
+ *
  * For more information: http://www.orientechnologies.com
  */
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -31,24 +32,24 @@ import java.util.*;
 
 public class OServerCommandGetLog extends OServerCommandDistributedScope {
 
-  private static final String[] NAMES         = { "GET|log/*" };
+  private static final String[] NAMES = { "GET|log/*" };
 
-  private static final String   TAIL          = "tail";
+  private static final String TAIL = "tail";
 
-  private static final String   FILE          = "file";
+  private static final String FILE = "file";
 
-  private static final String   SEARCH        = "search";
+  private static final String SEARCH = "search";
 
-  private static final String   ALLFILES      = "files";
+  private static final String ALLFILES = "files";
 
-  SimpleDateFormat              dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
+  SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
 
   public OServerCommandGetLog(final OServerCommandConfiguration iConfiguration) {
     super("log"); // TODO: CHECK WHAT TO PASS
   }
 
   public OServerCommandGetLog() {
-    super("server.log");
+    super(EnterprisePermissions.SERVER_LOG.toString());
   }
 
   @Override

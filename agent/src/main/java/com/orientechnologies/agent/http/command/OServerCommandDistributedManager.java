@@ -1,22 +1,23 @@
 /*
  * Copyright 2010-2013 Orient Technologies LTD (info--at--orientechnologies.com)
  * All Rights Reserved. Commercial License.
- * 
+ *
  * NOTICE:  All information contained herein is, and remains the property of
  * Orient Technologies LTD and its suppliers, if any.  The intellectual and
  * technical concepts contained herein are proprietary to
  * Orient Technologies LTD and its suppliers and may be covered by United
  * Kingdom and Foreign Patents, patents in process, and are protected by trade
  * secret or copyright law.
- * 
+ *
  * Dissemination of this information or reproduction of this material
  * is strictly forbidden unless prior written permission is obtained
  * from Orient Technologies LTD.
- * 
+ *
  * For more information: http://www.orientechnologies.com
  */
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.agent.ha.sql.OCommandExecutorSQLHAStartReplication;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
@@ -48,7 +49,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
   private static final String[] NAMES = { "GET|distributed/*", "PUT|distributed/*", "POST|distributed/*" };
 
   public OServerCommandDistributedManager() {
-    super("server.profiler");
+    super(EnterprisePermissions.SERVER_DISTRIBUTED.toString());
   }
 
   @Override
@@ -131,7 +132,6 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       String database = parts[2];
       String cluster = parts[3];
 
-
       final ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
       try {
         String localNodeName = server.getDistributedManager().getLocalNodeName();
@@ -183,7 +183,6 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     final String database = parts[2];
     final String cluster = parts[3];
 
-
     ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
     try {
       Object result = db.command(new OCommandSQL(String.format("ha sync cluster  %s ", cluster))).execute();
@@ -203,7 +202,6 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     final String database = parts[2];
 
-
     ODatabaseDocumentInternal db = server.openDatabase(database, "", "", null, true);
     try {
       final OStorage stg = db.getStorage();
@@ -215,7 +213,6 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       final OHazelcastPlugin dManager = (OHazelcastPlugin) dStg.getDistributedManager();
       if (dManager == null || !dManager.isEnabled())
         throw new OCommandExecutionException("OrientDB is not started in distributed mode");
-
 
       boolean installDatabase = dManager.installDatabase(true, database, false,
           OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
@@ -298,7 +295,6 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     return doc;
   }
 
-
   public ODocument getClusterConfig(final ODistributedServerManager manager) {
     final ODocument doc = manager.getClusterConfiguration();
 
@@ -308,7 +304,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       servers.add((String) document.field("name"));
 
     Set<String> databases = manager.getServerInstance().listDatabases();
-    if(databases.isEmpty()){
+    if (databases.isEmpty()) {
       OLogManager.instance().warn(this, "Cannot load stats, no databases on this server");
       return doc;
     }
@@ -354,7 +350,6 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     }
     return entries;
   }
-
 
   public ODocument doGetDatabaseInfo(final OServer server, final String id) {
     final ODistributedConfiguration cfg = server.getDistributedManager().getDatabaseConfiguration(id);

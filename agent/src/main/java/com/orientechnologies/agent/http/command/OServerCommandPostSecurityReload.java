@@ -17,6 +17,7 @@
  */
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -39,7 +40,7 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
   }
 
   public OServerCommandPostSecurityReload(OServerSecurity serverSec) {
-    super("*");
+    super(EnterprisePermissions.SERVER_SECURITY.toString());
 
     serverSecurity = serverSec;
   }

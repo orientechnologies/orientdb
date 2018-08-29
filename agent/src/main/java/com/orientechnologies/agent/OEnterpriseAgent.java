@@ -27,6 +27,7 @@ import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.agent.profiler.OEnterpriseProfilerListener;
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsService;
+import com.orientechnologies.agent.services.studio.StudioService;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
@@ -67,12 +68,12 @@ import java.util.*;
 
 public class OEnterpriseAgent extends OServerPluginAbstract
     implements ODatabaseLifecycleListener, OPluginLifecycleListener, OServerLifecycleListener {
-  public static final String EE                = "ee.";
-  private             String enterpriseVersion = "";
-  public              OServer server;
-  private             String  license;
-  public static final String  TOKEN;
-  private Properties properties = new Properties();
+  public static final String     EE                = "ee.";
+  private             String     enterpriseVersion = "";
+  public              OServer    server;
+  private             String     license;
+  public static final String     TOKEN;
+  private             Properties properties        = new Properties();
 
   private List<OEnterpriseService> services = new ArrayList<>();
 
@@ -119,11 +120,9 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   }
 
   private void registerAndInitServices() {
-
+    this.services.add(new StudioService());
     this.services.add(new OrientDBMetricsService());
-
     this.services.add(new OAgentFunctionFactory());
-
     this.services.forEach((s) -> s.init(this.enterpriseServer));
 
   }

@@ -8,6 +8,7 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,8 @@ public interface OEnterpriseServer {
   void registerStatelessCommand(final OServerCommand iCommand);
 
   void unregisterStatelessCommand(final Class<? extends OServerCommand> iCommandClass);
+
+  Collection<OServerCommand> listCommands();
 
   void unregisterFunction(String function);
 

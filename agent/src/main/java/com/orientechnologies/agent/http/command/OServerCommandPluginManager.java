@@ -18,6 +18,7 @@
 
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -37,7 +38,7 @@ public class OServerCommandPluginManager extends OServerCommandDistributedScope 
   private static final String[] NAMES = { "GET|plugins", "GET|plugins/*", "PUT|plugins/*" };
 
   public OServerCommandPluginManager() {
-    super("server.profiler");
+    super(EnterprisePermissions.SERVER_PLUGINS.toString());
   }
 
   @Override

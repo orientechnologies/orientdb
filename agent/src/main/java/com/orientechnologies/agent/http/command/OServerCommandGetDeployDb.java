@@ -1,5 +1,6 @@
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -15,14 +16,13 @@ public class OServerCommandGetDeployDb extends OServerCommandAuthenticatedServer
   private static final String[] NAMES = { "GET|deployDb/*" };
 
   public OServerCommandGetDeployDb() {
-    super("server.profiler");
+    super(EnterprisePermissions.SERVER_DISTRIBUTED.toString());
   }
 
   @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     final String[] parts = checkSyntax(iRequest.url, 2, "Syntax error: distributed/<cluster>/<db>");
     String db = parts[1];
-
 
     final ODistributedServerManager manager = OServerMain.server().getDistributedManager();
     manager.installDatabase(true, db, false, OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
