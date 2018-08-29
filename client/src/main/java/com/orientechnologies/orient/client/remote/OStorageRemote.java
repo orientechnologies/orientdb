@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal
 import com.orientechnologies.orient.core.db.document.OLiveQueryMonitorRemote;
 import com.orientechnologies.orient.core.db.document.OTransactionOptimisticClient;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
@@ -2152,6 +2153,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         }
       }
     }
+  }
+
+  public void lockRecord(OIdentifiable iRecord, LOCKING_STRATEGY lockingStrategy) {
+    OExperimentalRequest request = new OExperimentalRequest(new OLockRecordRequest(iRecord.getIdentity(), lockingStrategy));
+    OExperimentalResponse response = networkOperation(request, "Error locking record");
+    OLockRecordResponse realResponse = (OLockRecordResponse) response.getResponse();
+  }
+
+  public void unlockRecord(OIdentifiable iRecord) {
+    OExperimentalRequest request = new OExperimentalRequest(new OUnlockRecordRequest(iRecord.getIdentity()));
+    OExperimentalResponse response = networkOperation(request, "Error locking record");
+    OUnlockRecordResponse realResponse = (OUnlockRecordResponse) response.getResponse();
   }
 
   @Override

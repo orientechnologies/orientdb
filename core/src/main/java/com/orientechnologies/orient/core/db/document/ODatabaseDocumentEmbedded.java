@@ -73,6 +73,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
+import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -1198,4 +1199,33 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   }
 
 
+  @Override
+  public void internalLockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY lockingStrategy) {
+
+    final ORID rid = new ORecordId(iRecord.getIdentity());
+    OTransactionAbstract transaction = (OTransactionAbstract) getTransaction();
+    if (!transaction.isLockedRecord(iRecord)) {
+      if (lockingStrategy == OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)
+        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).acquireWriteLock(rid);
+      else if (lockingStrategy == OStorage.LOCKING_STRATEGY.SHARED_LOCK)
+        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).acquireReadLock(rid);
+      else
+        throw new IllegalStateException("Unsupported locking strategy " + lockingStrategy);
+    }
+    transaction.trackLockedRecord(iRecord.getIdentity(), lockingStrategy);
+
+  }
+
+  @Override
+  public void internalUnlockRecord(OIdentifiable iRecord) {
+    final ORID rid = iRecord.getIdentity();
+    OTransactionAbstract transaction = (OTransactionAbstract) getTransaction();
+    OStorage.LOCKING_STRATEGY strategy = transaction.trackUnlockRecord(rid);
+
+    if (strategy == OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)
+      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).releaseWriteLock(rid);
+    else if (strategy == OStorage.LOCKING_STRATEGY.SHARED_LOCK)
+      ((OAbstractPaginatedStorage) getStorage().getUnderlying()).releaseReadLock(rid);
+
+  }
 }

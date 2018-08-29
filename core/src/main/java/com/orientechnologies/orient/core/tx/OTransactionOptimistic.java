@@ -572,4 +572,5 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   public boolean isAlreadyCleared() {
     return alreadyCleared;
   }
+
 }
