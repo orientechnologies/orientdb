@@ -269,8 +269,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       response = new OReadRecordResponse(OBlob.RECORD_TYPE, 0, record, new HashSet<>());
 
     } else {
-      final ORecord record = connection.getDatabase()
-          .load(rid, fetchPlanString, ignoreCache, loadTombstones, OStorage.LOCKING_STRATEGY.NONE);
+      final ORecord record = connection.getDatabase().load(rid, fetchPlanString, ignoreCache);
       if (record != null) {
         byte[] bytes = getRecordBytes(connection, record);
         final Set<ORecord> recordsToSend = new HashSet<ORecord>();
