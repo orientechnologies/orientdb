@@ -155,18 +155,6 @@ public abstract class OTransactionAbstract implements OTransaction {
     return this;
   }
 
-  @Override
-  public HashMap<ORID, OStorage.LOCKING_STRATEGY> getLockedRecords() {
-    final HashMap<ORID, OStorage.LOCKING_STRATEGY> lockedRecords = new HashMap<ORID, OStorage.LOCKING_STRATEGY>();
-
-    for (Map.Entry<ORID, LockedRecordMetadata> entry : locks.entrySet()) {
-      if (entry.getValue().locksCount > 0)
-        lockedRecords.put(entry.getKey(), entry.getValue().strategy);
-    }
-
-    return lockedRecords;
-  }
-
   public abstract void internalRollback();
 
   public void trackLockedRecord(ORID rid, OStorage.LOCKING_STRATEGY lockingStrategy) {

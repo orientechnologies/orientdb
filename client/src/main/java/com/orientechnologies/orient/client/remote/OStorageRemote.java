@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OTokenException;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
@@ -81,6 +82,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -2155,10 +2157,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
     }
   }
 
-  public void lockRecord(OIdentifiable iRecord, LOCKING_STRATEGY lockingStrategy) {
-    OExperimentalRequest request = new OExperimentalRequest(new OLockRecordRequest(iRecord.getIdentity(), lockingStrategy));
+  public OLockRecordResponse lockRecord(OIdentifiable iRecord, LOCKING_STRATEGY lockingStrategy, long timeout) {
+    OExperimentalRequest request = new OExperimentalRequest(
+        new OLockRecordRequest(iRecord.getIdentity(), lockingStrategy, timeout));
     OExperimentalResponse response = networkOperation(request, "Error locking record");
     OLockRecordResponse realResponse = (OLockRecordResponse) response.getResponse();
+    return realResponse;
   }
 
   public void unlockRecord(OIdentifiable iRecord) {

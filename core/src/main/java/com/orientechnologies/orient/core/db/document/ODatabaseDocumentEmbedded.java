@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -1199,7 +1200,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     }
   }
 
-
   @Override
   public void internalLockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY lockingStrategy) {
 
@@ -1232,16 +1232,27 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public <RET extends ORecord> RET lock(ORID recordId) throws OLockException {
-    return null;
+    checkOpenness();
+    checkIfActive();
+    pessimisticLockChecks(recordId);
+    internalLockRecord(recordId, OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK);
+    return load(recordId, null, true);
   }
 
   @Override
   public <RET extends ORecord> RET lock(ORID recordId, long timeout, TimeUnit timeoutUnit) throws OLockException {
-    return null;
+    checkOpenness();
+    checkIfActive();
+    pessimisticLockChecks(recordId);
+    //TODO: add support for customizable timeout
+    internalLockRecord(recordId, OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK);
+    return load(recordId, null, true);
   }
 
   @Override
   public void unlock(ORID recordId) throws OLockException {
-
+    checkOpenness();
+    checkIfActive();
+    internalUnlockRecord(recordId);
   }
 }

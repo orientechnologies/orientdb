@@ -15,14 +15,16 @@ import java.io.IOException;
 public class OLockRecordRequest implements OBinaryRequest<OLockRecordResponse> {
   private ORID                      identity;
   private OStorage.LOCKING_STRATEGY lockingStrategy;
+  private long                      timeout;
 
   public OLockRecordRequest() {
 
   }
 
-  public OLockRecordRequest(ORID identity, OStorage.LOCKING_STRATEGY lockingStrategy) {
+  public OLockRecordRequest(ORID identity, OStorage.LOCKING_STRATEGY lockingStrategy, long timeout) {
     this.identity = identity;
     this.lockingStrategy = lockingStrategy;
+    this.timeout = timeout;
   }
 
   @Override
@@ -33,6 +35,7 @@ public class OLockRecordRequest implements OBinaryRequest<OLockRecordResponse> {
     } else if (lockingStrategy == OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK) {
       network.writeByte((byte) 2);
     }
+    network.writeLong(timeout);
   }
 
   @Override
@@ -44,6 +47,7 @@ public class OLockRecordRequest implements OBinaryRequest<OLockRecordResponse> {
     } else if (lockKind == 2) {
       this.lockingStrategy = OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;
     }
+    timeout = channel.readLong();
   }
 
   @Override
@@ -72,5 +76,9 @@ public class OLockRecordRequest implements OBinaryRequest<OLockRecordResponse> {
 
   public ORID getIdentity() {
     return identity;
+  }
+
+  public long getTimeout() {
+    return timeout;
   }
 }
