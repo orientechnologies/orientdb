@@ -859,18 +859,17 @@ public class OPrefixBTree<V> extends ODurableComponent {
               return null;
             }
           } else {
-
             if (itemIndex < bucket.size()) {
+              path.add(new PagePathItemUnit(bucketIndex, -(itemIndex + 1)));
+
               OPrefixBTreeBucket.SBTreeEntry<V> entry = bucket.getEntry(itemIndex);
               bucketIndex = entry.leftChild;
 
-              path.add(new PagePathItemUnit(bucketIndex, -(itemIndex + 1)));
-
             } else {
+              path.add(new PagePathItemUnit(bucketIndex, itemIndex));
+
               OPrefixBTreeBucket.SBTreeEntry<V> entry = bucket.getEntry(itemIndex - 1);
               bucketIndex = entry.rightChild;
-
-              path.add(new PagePathItemUnit(bucketIndex, itemIndex));
             }
 
             //jump to next page and start from first item
@@ -938,14 +937,15 @@ public class OPrefixBTree<V> extends ODurableComponent {
           } else {
             if (itemIndex > -1) {
               OPrefixBTreeBucket.SBTreeEntry<V> entry = bucket.getEntry(itemIndex);
+              path.add(new PagePathItemUnit(bucketIndex, itemIndex + 1));
+
               bucketIndex = entry.rightChild;
 
-              path.add(new PagePathItemUnit(bucketIndex, itemIndex + 1));
             } else {
+              path.add(new PagePathItemUnit(bucketIndex, -(itemIndex + 1)));
+
               OPrefixBTreeBucket.SBTreeEntry<V> entry = bucket.getEntry(0);
               bucketIndex = entry.leftChild;
-
-              path.add(new PagePathItemUnit(bucketIndex, -(itemIndex + 1)));
             }
 
             itemIndex = OPrefixBTreeBucket.MAX_PAGE_SIZE_BYTES + 1;
@@ -957,8 +957,9 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
               bucketIndex = pagePathItemUnit.pageIndex;
               itemIndex = Math.abs(pagePathItemUnit.itemIndex) - 2;
-            } else
+            } else {
               return null;
+            }
           } else {
             final ArrayList<Long> resultPath = new ArrayList<>(path.size() + 1);
             final ArrayList<Integer> items = new ArrayList<>(path.size() + 1);
@@ -1600,7 +1601,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
           int itemIndex;
           if (bucketSearchResult.itemIndex >= 0) {
-            itemIndex = bucketSearchResult.itemIndex;
+            itemIndex = lastKey == null ? bucketSearchResult.itemIndex : bucketSearchResult.itemIndex + 1;
           } else {
             itemIndex = -bucketSearchResult.itemIndex - 1;
           }
@@ -1642,20 +1643,13 @@ public class OPrefixBTree<V> extends ODurableComponent {
                     if (cItemIndex >= parentBucket.size()) {
                       pathItem = currentPath.peekLast();
                     } else {
-                      //before we test right child so now from the next item left child
-                      OPrefixBTreeBucket.SBTreeEntry<V> entry = parentBucket.getEntry(cItemIndex);
-
-                      if (pathItemIndex > 0) {
-                        cacheEntry = loadPageForRead(atomicOperation, fileId, entry.leftChild, false);
-                        bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
-                        pathItem = new ORawPair<>(pageIndex, -(cItemIndex + 1));
-                      } else {
-                        cacheEntry = loadPageForRead(atomicOperation, fileId, entry.rightChild, false);
-                        bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
-                        pathItem = new ORawPair<>(pageIndex, cItemIndex + 1);
-                      }
-
+                      pathItem = new ORawPair<>(pathIndex, cItemIndex + 1);
                       currentPath.add(pathItem);
+
+                      OPrefixBTreeBucket.SBTreeEntry<V> entry = parentBucket.getEntry(cItemIndex);
+                      cacheEntry = loadPageForRead(atomicOperation, fileId, entry.rightChild, false);
+
+                      bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
                       break;
                     }
                   } finally {
@@ -1673,7 +1667,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
                   keysIterator = keysCache.iterator();
 
-                  return keysIterator.next();
+                  lastKey = keysIterator.next();
+                  return lastKey;
                 }
 
                 //go by the left branch till leaf page
@@ -1683,6 +1678,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
                     itemIndex = 0;
                     break;
                   } else {
+                    currentPath.add(new ORawPair<>(cacheEntry.getPageIndex(), -1));
+
                     OPrefixBTreeBucket.SBTreeEntry<V> entry = bucket.getEntry(0);
                     final long childIndex = entry.leftChild;
 
@@ -1833,20 +1830,13 @@ public class OPrefixBTree<V> extends ODurableComponent {
                     if (cItemIndex >= parentBucket.size()) {
                       pathItem = currentPath.peekLast();
                     } else {
-                      //before we test right child so now from the next item left child
-                      OPrefixBTreeBucket.SBTreeEntry<V> entry = parentBucket.getEntry(cItemIndex);
-
-                      if (pathItemIndex > 0) {
-                        cacheEntry = loadPageForRead(atomicOperation, fileId, entry.leftChild, false);
-                        bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
-                        pathItem = new ORawPair<>(pageIndex, -(cItemIndex + 1));
-                      } else {
-                        cacheEntry = loadPageForRead(atomicOperation, fileId, entry.rightChild, false);
-                        bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
-                        pathItem = new ORawPair<>(pageIndex, cItemIndex + 1);
-                      }
-
+                      pathItem = new ORawPair<>(pathIndex, cItemIndex + 1);
                       currentPath.add(pathItem);
+
+                      OPrefixBTreeBucket.SBTreeEntry<V> entry = parentBucket.getEntry(cItemIndex);
+                      cacheEntry = loadPageForRead(atomicOperation, fileId, entry.rightChild, false);
+                      bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
+
                       break;
                     }
                   } finally {
@@ -1877,7 +1867,9 @@ public class OPrefixBTree<V> extends ODurableComponent {
                     itemIndex = 0;
                     break;
                   } else {
+                    currentPath.add(new ORawPair<>(cacheEntry.getPageIndex(), -1));
                     OPrefixBTreeBucket.SBTreeEntry<V> entry = bucket.getEntry(0);
+
                     final long childIndex = entry.leftChild;
 
                     releasePageFromRead(atomicOperation, cacheEntry);
@@ -1940,9 +1932,9 @@ public class OPrefixBTree<V> extends ODurableComponent {
     private final boolean fromKeyInclusive;
     private       boolean toKeyInclusive;
 
-    private List<Map.Entry<String, V>>     dataCache         = new ArrayList<>();
+    private final List<Map.Entry<String, V>>     dataCache         = new ArrayList<>();
     @SuppressWarnings("unchecked")
-    private Iterator<Map.Entry<String, V>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
+    private       Iterator<Map.Entry<String, V>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
 
     private OSBTreeCursorBackward(String fromKey, String toKey, boolean fromKeyInclusive, boolean toKeyInclusive) {
       this.fromKey = fromKey;
@@ -2038,19 +2030,13 @@ public class OPrefixBTree<V> extends ODurableComponent {
                     if (cItemIndex < 0) {
                       pathItem = currentPath.peekLast();
                     } else {
+                      pathItem = new ORawPair<>(pathIndex, -(cItemIndex + 1));
+                      currentPath.add(pathItem);
+
                       OPrefixBTreeBucket.SBTreeEntry<V> entry = parentBucket.getEntry(cItemIndex);
 
-                      if (pathItemIndex > 0) {
-                        cacheEntry = loadPageForRead(atomicOperation, fileId, entry.leftChild, false);
-                        bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
-                        pathItem = new ORawPair<>(pageIndex, -(cItemIndex + 1));
-                      } else {
-                        cacheEntry = loadPageForRead(atomicOperation, fileId, entry.rightChild, false);
-                        bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
-                        pathItem = new ORawPair<>(pageIndex, cItemIndex + 1);
-                      }
-
-                      currentPath.add(pathItem);
+                      cacheEntry = loadPageForRead(atomicOperation, fileId, entry.leftChild, false);
+                      bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
                       break;
                     }
                   } finally {
