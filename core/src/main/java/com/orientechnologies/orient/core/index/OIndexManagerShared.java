@@ -125,7 +125,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     if (algorithm == null) {
       final OType[] types = indexDefinition.getTypes();
 
-      if (types.length == 1 && types[0] == OType.STRING) {
+      if ((type.equals(OClass.INDEX_TYPE.NOTUNIQUE.name()) || type.equals(OClass.INDEX_TYPE.UNIQUE.name())) && types.length == 1
+          && types[0] == OType.STRING) {
         algorithm = ODefaultIndexFactory.PREFIX_BTREE_ALGORITHM;
       } else {
         algorithm = OIndexes.chooseDefaultIndexAlgorithm(type);
