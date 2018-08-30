@@ -43,7 +43,7 @@ public class CoordinatorTxTest {
         "none");
 
     ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), new MockOperationLog(),
-        null);
+        null, null);
 
     MemberChannel cOne = new MemberChannel(eOne, coordinator);
     ODistributedMember mOne = new ODistributedMember("one", cOne);

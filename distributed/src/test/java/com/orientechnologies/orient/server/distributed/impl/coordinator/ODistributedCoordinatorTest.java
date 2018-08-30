@@ -17,7 +17,7 @@ public class ODistributedCoordinatorTest {
     CountDownLatch responseReceived = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null);
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null, null);
     MockChannel channel = new MockChannel();
     channel.coordinator = coordinator;
     ODistributedMember one = new ODistributedMember("one", channel);
@@ -56,7 +56,7 @@ public class ODistributedCoordinatorTest {
     CountDownLatch responseReceived = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null);
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null, null);
     MockChannel channel = new MockChannel();
     channel.coordinator = coordinator;
     channel.reply = responseReceived;
@@ -117,7 +117,7 @@ public class ODistributedCoordinatorTest {
     CountDownLatch timedOut = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null);
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null, null);
     MockChannel channel = new MockChannel();
     channel.coordinator = coordinator;
     ODistributedMember one = new ODistributedMember("one", channel);
