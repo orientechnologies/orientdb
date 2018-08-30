@@ -591,7 +591,7 @@ public class OSelectExecutionPlanner {
   private boolean isMinimalQuery(QueryPlanningInfo info) {
     if (info.projectionAfterOrderBy != null || info.globalLetClause != null || info.perRecordLetClause != null
         || info.whereClause != null || info.flattenedWhereClause != null || info.groupBy != null || info.orderBy != null
-        || info.unwind != null || info.skip != null || info.limit != null) {
+        || info.unwind != null || info.skip != null) {
       return false;
     }
     return true;
