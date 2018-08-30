@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_ACQUIRE_TIMEOUT;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_MAX;
@@ -57,7 +58,7 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
   }
 
   @Override
-  public synchronized ODatabaseSession acquire() {
+  public synchronized ODatabaseSession acquire() throws OAcquireTimeoutException {
     return pool.getResource(null, config.getConfigurations().getValueAsLong(DB_POOL_ACQUIRE_TIMEOUT));
   }
 
