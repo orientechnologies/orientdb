@@ -159,20 +159,20 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
     return bucketPrefix;
   }
 
-  public int find(String stripedKey) {
+  public int find(String key) {
     int low = 0;
     int high = size() - 1;
 
-    if (stripedKey.length() < bucketPrefix.length() || !stripedKey.substring(0, bucketPrefix.length()).equals(bucketPrefix)) {
+    if (key.length() < bucketPrefix.length() || !key.substring(0, bucketPrefix.length()).equals(bucketPrefix)) {
       return -(low + 1);
     }
 
-    stripedKey = stripedKey.substring(bucketPrefix.length());
+    key = key.substring(bucketPrefix.length());
 
     while (low <= high) {
       int mid = (low + high) >>> 1;
       String midVal = getKeyWithoutPrefix(mid);
-      int cmp = comparator.compare(midVal, stripedKey);
+      int cmp = comparator.compare(midVal, key);
 
       if (cmp < 0)
         low = mid + 1;
