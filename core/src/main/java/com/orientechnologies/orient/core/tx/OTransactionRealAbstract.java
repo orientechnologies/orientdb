@@ -62,7 +62,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
     super(database);
     this.id = id;
   }
-  
+
   @Override
   public void addChangedDocument(ODocument document) {
     if (getRecord(document.getIdentity()) == null) {
