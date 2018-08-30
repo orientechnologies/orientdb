@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OLiveQueryClientListener;
@@ -40,6 +41,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -68,6 +70,7 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by tglman on 30/06/16.
@@ -769,5 +772,20 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   public void internalUnlockRecord(OIdentifiable iRecord) {
     OStorageRemote remote = getStorage();
     remote.unlockRecord(iRecord.getIdentity());
+  }
+
+  @Override
+  public <RET extends ORecord> RET lock(ORID recordId) throws OLockException {
+    return null;
+  }
+
+  @Override
+  public <RET extends ORecord> RET lock(ORID recordId, long timeout, TimeUnit timeoutUnit) throws OLockException {
+    return null;
+  }
+
+  @Override
+  public void unlock(ORID recordId) throws OLockException {
+
   }
 }

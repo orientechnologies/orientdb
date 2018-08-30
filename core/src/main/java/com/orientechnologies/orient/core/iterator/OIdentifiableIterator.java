@@ -283,9 +283,9 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       try {
         if (iRecord != null) {
           ORecordInternal.setIdentity(iRecord, new ORecordId(current.getClusterId(), current.getClusterPosition()));
-          iRecord = database.load(iRecord, fetchPlan, false, true, lockingStrategy);
+          iRecord = database.load(iRecord, fetchPlan, false);
         } else
-          iRecord = database.load(current, fetchPlan, false, true, lockingStrategy);
+          iRecord = database.load(current, fetchPlan, false);
       } catch (ODatabaseException e) {
         if (Thread.interrupted() || database.isClosed())
           // THREAD INTERRUPTED: RETURN

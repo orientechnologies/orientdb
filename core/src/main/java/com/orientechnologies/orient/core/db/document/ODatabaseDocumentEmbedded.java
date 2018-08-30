@@ -78,6 +78,7 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by tglman on 27/06/16.
@@ -1226,6 +1227,21 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       ((OAbstractPaginatedStorage) getStorage().getUnderlying()).releaseWriteLock(rid);
     else if (strategy == OStorage.LOCKING_STRATEGY.SHARED_LOCK)
       ((OAbstractPaginatedStorage) getStorage().getUnderlying()).releaseReadLock(rid);
+
+  }
+
+  @Override
+  public <RET extends ORecord> RET lock(ORID recordId) throws OLockException {
+    return null;
+  }
+
+  @Override
+  public <RET extends ORecord> RET lock(ORID recordId, long timeout, TimeUnit timeoutUnit) throws OLockException {
+    return null;
+  }
+
+  @Override
+  public void unlock(ORID recordId) throws OLockException {
 
   }
 }

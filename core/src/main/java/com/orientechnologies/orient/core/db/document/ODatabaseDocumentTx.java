@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -61,6 +62,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal.closeAllOnShutdown;
@@ -566,20 +568,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   @Override
-  public <RET extends ORecord> RET load(ORecord iObject, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
-      OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    checkOpenness();
-    return internal.load(iObject, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
-  }
-
-  @Override
-  public <RET extends ORecord> RET load(ORecord iObject, String iFetchPlan, boolean iIgnoreCache, boolean iUpdateCache,
-      boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    checkOpenness();
-    return internal.load(iObject, iFetchPlan, iIgnoreCache, iUpdateCache, loadTombstone, iLockingStrategy);
-  }
-
-  @Override
   public <RET extends ORecord> RET load(ORecord iObject, String iFetchPlan, boolean iIgnoreCache) {
     checkOpenness();
     return internal.load(iObject, iFetchPlan, iIgnoreCache);
@@ -613,20 +601,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public <RET extends ORecord> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache) {
     checkOpenness();
     return internal.load(iRecordId, iFetchPlan, iIgnoreCache);
-  }
-
-  @Override
-  public <RET extends ORecord> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
-      OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    checkOpenness();
-    return internal.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
-  }
-
-  @Override
-  public <RET extends ORecord> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean iUpdateCache,
-      boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    checkOpenness();
-    return internal.load(iRecordId, iFetchPlan, iIgnoreCache, iUpdateCache, loadTombstone, iLockingStrategy);
   }
 
   @Override
@@ -1560,5 +1534,23 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public void internalUnlockRecord(OIdentifiable iRecord) {
     internal.internalUnlockRecord(iRecord);
+  }
+
+  @Override
+  public <RET extends ORecord> RET lock(ORID recordId) throws OLockException {
+    checkOpenness();
+    return internal.lock(recordId);
+  }
+
+  @Override
+  public <RET extends ORecord> RET lock(ORID recordId, long timeout, TimeUnit timeoutUnit) throws OLockException {
+    checkOpenness();
+    return internal.lock(recordId, timeout, timeoutUnit);
+  }
+
+  @Override
+  public void unlock(ORID recordId) throws OLockException {
+    checkOpenness();
+    internal.unlock(recordId);
   }
 }
