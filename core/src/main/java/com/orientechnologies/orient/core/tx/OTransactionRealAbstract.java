@@ -62,16 +62,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract impl
     super(database);
     this.id = id;
   }
-
-  @Override
-  public boolean hasRecordCreation() {
-    for (ORecordOperation op : allEntries.values()) {
-      if (op.type == ORecordOperation.CREATED)
-        return true;
-    }
-    return false;
-  }
-
+  
   @Override
   public void addChangedDocument(ODocument document) {
     if (getRecord(document.getIdentity()) == null) {

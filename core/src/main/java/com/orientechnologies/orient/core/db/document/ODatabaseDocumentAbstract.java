@@ -1078,7 +1078,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
-
   @SuppressWarnings("unchecked")
   @Override
   public <RET extends ORecord> RET load(final ORecord iRecord) {
@@ -2607,6 +2606,16 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   public OView getViewFromCluster(int cluster) {
     return getMetadata().getImmutableSchemaSnapshot().getViewByClusterId(cluster);
+  }
+
+  protected void pessimisticLockChecks(ORID recordId) {
+    ORecord record = getTransaction().getRecord(recordId);
+    if (record != null && record.isDirty()) {
+      throw new ODatabaseException("Impossible to lock a record modified in transaction");
+    }
+    if (!recordId.isPersistent()) {
+      throw new ODatabaseException("Impossible to lock an not persistent record");
+    }
   }
 
 }

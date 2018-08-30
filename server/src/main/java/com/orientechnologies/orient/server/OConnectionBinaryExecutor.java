@@ -55,7 +55,10 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
@@ -80,6 +83,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
@@ -1401,8 +1405,10 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeLockRecord(OLockRecordRequest request) {
-    connection.getDatabase().getTransaction().lockRecord(request.getIdentity(), request.getLockingStrategy());
-    return new OLockRecordResponse();
+    //TODO: support properly the locking strategies.
+    ORecord record = connection.getDatabase().lock(request.getIdentity(), request.getTimeout(), TimeUnit.MILLISECONDS);
+    byte[] bytes = getRecordBytes(connection, record);
+    return new OLockRecordResponse(ORecordInternal.getRecordType(record), record.getVersion(), bytes);
   }
 
   @Override

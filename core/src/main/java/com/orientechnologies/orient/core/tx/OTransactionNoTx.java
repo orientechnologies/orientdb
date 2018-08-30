@@ -70,11 +70,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
-  public boolean hasRecordCreation() {
-    return false;
-  }
-
-  @Override
   public void commit(boolean force) {
   }
 
