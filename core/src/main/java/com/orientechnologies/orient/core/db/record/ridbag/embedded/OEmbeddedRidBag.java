@@ -147,6 +147,23 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
           new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null,
               nextValue));
     }
+    
+    protected void swapValueOnCurrent(OIdentifiable newValue){
+      if (currentRemoved)
+        throw new IllegalStateException("Current element has already been removed");
+
+      if (currentIndex == -1)
+        throw new IllegalStateException("Next method was not called for given iterator");
+      
+      final OIdentifiable oldValue = (OIdentifiable) entries[currentIndex];
+      entries[currentIndex] = newValue;
+      
+      contentWasChanged = true;
+      
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<>(OMultiValueChangeEvent.OChangeType.UPDATE, oldValue, oldValue,
+              newValue));
+    }
 
     @Override
     public void reset() {
@@ -266,6 +283,45 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
           new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null,
               identifiable));
     }
+  }
+  
+  /**
+   * for internal use only
+   * @param index
+   * @return 
+   */
+  public boolean remove(int index){
+    Iterator<OIdentifiable> iter = rawIterator();
+    int currIndex = 0;
+    while (iter.hasNext()){
+      iter.next();
+      if (index == currIndex){
+        iter.remove();        
+        return true;
+      }
+      currIndex++;
+    }
+    return false;
+  }
+  
+  /**
+   * for internal use only
+   * @param index
+   * @param newValue
+   * @return 
+   */
+  public boolean swap(int index, OIdentifiable newValue){
+    EntriesIterator iter = (EntriesIterator)rawIterator();
+    int currIndex = 0;
+    while (iter.hasNext()){
+      iter.next();
+      if (index == currIndex){
+        iter.swapValueOnCurrent(newValue);
+        return true;
+      }
+      currIndex++;
+    }
+    return false;
   }
 
   @Override

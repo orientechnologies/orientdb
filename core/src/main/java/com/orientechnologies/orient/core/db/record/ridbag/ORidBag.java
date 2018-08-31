@@ -150,12 +150,38 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     delegate.addAll(values);
   }
 
+  @Override
   public void add(OIdentifiable identifiable) {
     delegate.add(identifiable);
   }
 
+  @Override
   public void remove(OIdentifiable identifiable) {
     delegate.remove(identifiable);
+  }
+  
+  public boolean remove(int index){
+    if (isEmbedded()){
+      return ((OEmbeddedRidBag)delegate).remove(index);
+    }
+    else{
+      throw new UnsupportedOperationException("Operation not supported for SB Tree ridbags");
+    }
+  }
+  
+  /**
+   * for internal use only
+   * @param index
+   * @param newValue
+   * @return 
+   */
+  public boolean changeValue(int index, OIdentifiable newValue){
+    if (isEmbedded()){
+      return ((OEmbeddedRidBag)delegate).swap(index, newValue);
+    }
+    else{
+      throw new UnsupportedOperationException("Operation not supported for SB Tree ridbags");
+    }
   }
 
   public boolean isEmpty() {

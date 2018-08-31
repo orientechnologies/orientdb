@@ -1638,6 +1638,32 @@ public class ODocument extends ORecordAbstract
           }
         }
       }
+      else if (deltaType == UpdateDeltaValueType.RIDBAG_UPDATE){
+        List deltaList = (List) deltaVal;
+        ORidBag originalRidbag = to.field(fieldName);
+        int removed = 0;
+        for (int i = 0; i < deltaList.size(); i++) {
+          ODocumentDelta deltaUpdateListElement = (ODocumentDelta) deltaList.get(i);
+          UpdateDeltaValueType listElementUpdateType = UpdateDeltaValueType.fromOrd(deltaUpdateListElement.field("t").getValue());
+          OIdentifiable val;
+          int index;
+          switch (listElementUpdateType) {
+          case LIST_ELEMENT_ADD:
+            val = deltaUpdateListElement.field("v").getValue();
+            originalRidbag.add(val);
+            break;
+          case LIST_ELEMENT_CHANGE:
+            val = deltaUpdateListElement.field("v").getValue();
+            index = deltaUpdateListElement.field("i").getValue();
+            originalRidbag.changeValue(index, val);                        
+            break;
+          case LIST_ELEMENT_REMOVE:
+            index = deltaUpdateListElement.field("i").getValue();
+            originalRidbag.remove(index - removed++);
+            break;          
+          }
+        }
+      }
     }
   }
 
@@ -3492,6 +3518,54 @@ public class ODocument extends ORecordAbstract
     }
     return retVal;
   }
+  
+  private UpdateTypeValueType getUpdateForRidbagWithPreviousValue(ORidBag currentValue, ORidBag previousValue) {
+    UpdateTypeValueType retVal = null;
+    if (currentValue != null && previousValue != null && 
+        currentValue.isEmbedded() && previousValue.isEmbedded()) {
+      retVal = new UpdateTypeValueType();
+      retVal.setUpdateType(UpdateDeltaValueType.RIDBAG_UPDATE);
+      List deltaList = new ArrayList();
+      retVal.setValue(deltaList);
+      retVal.setValueType(OType.EMBEDDEDLIST);
+      //now find a diff
+      int i = 0;
+      Iterator<OIdentifiable> currentRidbagIter = currentValue.rawIterator();
+      Iterator<OIdentifiable> previousRidbagIter = previousValue.rawIterator();
+      while (currentRidbagIter.hasNext()) {
+        OIdentifiable currentElement = currentRidbagIter.next();
+        if (previousRidbagIter.hasNext() == false) {
+          //these elements doesn't have pair in original list
+          ODocumentDelta deltaElement = new ODocumentDelta();
+          deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd(), OType.BYTE));
+          deltaElement.field("v", new ValueType(currentElement, OType.LINK));              
+          deltaList.add(deltaElement);
+          continue;
+        }
+        //these elements have pairs in original list, so we need to calculate deltas
+        OIdentifiable originalElement = previousRidbagIter.next();
+        //check if can we go just with value change                
+        if (!Objects.equals(currentElement, originalElement)) {
+            ODocumentDelta deltaElement = new ODocumentDelta();
+            deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_CHANGE.getOrd(), OType.BYTE));
+            deltaElement.field("v", new ValueType(currentElement, OType.LINK));
+            deltaElement.field("i", new ValueType(i, OType.INTEGER));
+            deltaList.add(deltaElement);          
+        } 
+        //this means that elements are equal so nothig to do        
+        i++;
+      }
+      //these element are contained only in original list , so they should be removed
+      while (previousRidbagIter.hasNext()) {
+        ODocumentDelta deltaElement = new ODocumentDelta();
+        deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd(), OType.BYTE));
+        deltaElement.field("i", new ValueType(i, OType.INTEGER));
+        deltaList.add(deltaElement);
+        ++i;
+      }
+    }
+    return retVal;
+  }
 
   private UpdateTypeValueType getUpdateForListWithoutPreviousValue(Object currentValue, ODocumentEntry parent,
       List<Object> ownersTrace, OType currentValueLinkedType) {
@@ -3574,7 +3648,7 @@ public class ODocument extends ORecordAbstract
     return retVal;
   }
 
-  //this method is callen only for changed fields
+  //this method is callen only for changed fields or directly and undirectly changed lists
   private UpdateTypeValueType getUpdateDeltaValue(Object currentValue, Object previousValue, boolean changed, ODocumentEntry parent,
       List<Object> ownersTrace, OType currentValueType, OType currentValueLinkedType, OType previousValueType,
       OType previousValueLinkedType) {
@@ -3603,6 +3677,10 @@ public class ODocument extends ORecordAbstract
         return getUpdateForListWithoutPreviousValue(currentValue, parent, ownersTrace, currentValueLinkedType);
       }
 
+      if (currentValueType == OType.LINKBAG && previousValue != null && previousValueType == OType.LINKBAG){
+        //do something with embedded ridbags
+      }
+      
       //check for nested document
       if (currentValueType == OType.LINK && previousValueType != null && previousValueType == OType.LINK) {
         return getUpdateForNestedDocument(currentValue);

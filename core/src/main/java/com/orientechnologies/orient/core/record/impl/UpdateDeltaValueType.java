@@ -19,7 +19,7 @@ package com.orientechnologies.orient.core.record.impl;
  * @author mdjurovi
  */
 public enum UpdateDeltaValueType {
-  UPDATE, LIST_UPDATE, LIST_ELEMENT_ADD, LIST_ELEMENT_REMOVE, LIST_ELEMENT_UPDATE, LIST_ELEMENT_CHANGE, CHANGE, UNKNOWN;
+  UPDATE, LIST_UPDATE, LIST_ELEMENT_ADD, LIST_ELEMENT_REMOVE, LIST_ELEMENT_UPDATE, LIST_ELEMENT_CHANGE, CHANGE, RIDBAG_UPDATE, UNKNOWN;
 
   public byte getOrd() {
     switch (this) {
@@ -37,6 +37,8 @@ public enum UpdateDeltaValueType {
       return 6;
     case CHANGE:
       return 7;
+    case RIDBAG_UPDATE:
+      return 8;
     default:
       return 0;
     }
@@ -61,6 +63,8 @@ public enum UpdateDeltaValueType {
       return LIST_ELEMENT_CHANGE;
     case 7:
       return CHANGE;
+    case 8:
+      return RIDBAG_UPDATE;
     case 0:
     default:
       return UNKNOWN;
