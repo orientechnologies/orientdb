@@ -43,6 +43,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -136,15 +137,18 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
     final FileStore fileStore = Files.getFileStore(Paths.get(walPath));
     final long freeSpace = fileStore.getUsableSpace();
-    final long filesSize = Files.walk(Paths.get(walPath)).mapToLong(p -> {
-      long fileSize = 0;
+
+    final Iterator<Path> pathFiles = Files.walk(Paths.get(walPath)).iterator();
+
+    long filesSize = 0;
+    while (pathFiles.hasNext()) {
       try {
-        fileSize = p.toFile().isFile() ? p.toFile().length() : 0;
+        final Path currentPath = pathFiles.next();
+        filesSize += currentPath.toFile().isFile() ? currentPath.toFile().length() : 0;
       } catch (UncheckedIOException e) {
         //ignore
       }
-      return fileSize;
-    }).sum();
+    }
 
     long maxSegSize;
 
