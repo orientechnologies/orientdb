@@ -1202,14 +1202,17 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
 
   @Override
   public void internalLockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY lockingStrategy) {
+    internalLockRecord(iRecord, lockingStrategy, 0);
+  }
 
+  public void internalLockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY lockingStrategy, long timeout) {
     final ORID rid = new ORecordId(iRecord.getIdentity());
     OTransactionAbstract transaction = (OTransactionAbstract) getTransaction();
     if (!transaction.isLockedRecord(iRecord)) {
       if (lockingStrategy == OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)
-        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).acquireWriteLock(rid);
+        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).acquireWriteLock(rid, timeout);
       else if (lockingStrategy == OStorage.LOCKING_STRATEGY.SHARED_LOCK)
-        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).acquireReadLock(rid);
+        ((OAbstractPaginatedStorage) getStorage().getUnderlying()).acquireReadLock(rid, timeout);
       else
         throw new IllegalStateException("Unsupported locking strategy " + lockingStrategy);
     }
@@ -1244,8 +1247,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkOpenness();
     checkIfActive();
     pessimisticLockChecks(recordId);
-    //TODO: add support for customizable timeout
-    internalLockRecord(recordId, OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK);
+    internalLockRecord(recordId, OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK, timeoutUnit.toMillis(timeout));
     return load(recordId, null, true);
   }
 

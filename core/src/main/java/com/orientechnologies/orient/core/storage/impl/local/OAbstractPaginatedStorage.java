@@ -21,10 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.concur.lock.OComparableLockManager;
-import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
-import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
+import com.orientechnologies.common.concur.lock.*;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.io.OIOException;
@@ -264,7 +261,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     fuzzyCheckpointExecutor.setMaximumPoolSize(1);
   }
 
-  private final OComparableLockManager<ORID> lockManager;
+  private final OSimpleRWLockManager<ORID> lockManager;
 
   /**
    * Lock is used to atomically update record versions.
@@ -337,7 +334,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     super(name, filePath, mode);
 
     this.id = id;
-    lockManager = new ORIDOLockManager();
+    lockManager = new ONotThreadRWLockManager<>();
     recordVersionManager = new OPartitionedLockManager<>();
 
     registerProfilerHooks();
@@ -1071,13 +1068,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * This method finds all the records which were updated starting from (but not including) current LSN and write result in provided
    * output stream. In output stream will be included all thw records which were updated/deleted/created since passed in LSN till
-   * the current moment.
-   * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
-   * Data format: <ol> <li>Amount of records (single entry) - 8 bytes</li> <li>Record's cluster id - 4 bytes</li> <li>Record's
-   * cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only if record is
-   * not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary presentation of
-   * record, only if record is not deleted - 4 bytes</li> <li>Binary presentation of the record, only if record is not deleted -
-   * length of content is provided in above entity</li> </ol>
+   * the current moment. Deleted records are written in output stream first, then created/updated records. All records are sorted by
+   * record id. Data format: <ol> <li>Amount of records (single entry) - 8 bytes</li> <li>Record's cluster id - 4 bytes</li>
+   * <li>Record's cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only
+   * if record is not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary
+   * presentation of record, only if record is not deleted - 4 bytes</li> <li>Binary presentation of the record, only if record is
+   * not deleted - length of content is provided in above entity</li> </ol>
    *
    * @param lsn    LSN from which we should find changed records
    * @param stream Stream which will contain found records
@@ -2075,6 +2071,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               recordLocks.add(recordOperation.getRID());
             }
           }
+          Set<ORID> locked = transaction.getLockedRecords();
+          if (locked != null) {
+            recordLocks.removeAll(locked);
+          }
           Collections.sort(recordLocks);
           for (ORID rid : recordLocks) {
             acquireWriteLock(rid);
@@ -2182,10 +2182,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       } finally {
         try {
           if (pessimisticLock) {
+            List<ORID> recordLocks = new ArrayList<>();
             for (ORecordOperation recordOperation : recordOperations) {
               if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
-                releaseWriteLock(recordOperation.getRID());
+                recordLocks.add(recordOperation.getRID());
               }
+            }
+
+            Set<ORID> locked = transaction.getLockedRecords();
+            if (locked != null) {
+              recordLocks.removeAll(locked);
+            }
+
+            for (ORID rid : recordLocks) {
+              releaseWriteLock(rid);
             }
           }
         } finally {
@@ -2385,7 +2395,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize, clustersToIndex,
             engineProperties, metadata, encryption);
 
-        if(writeAheadLog != null) {
+        if (writeAheadLog != null) {
           writeAheadLog.flush();
         }
 
@@ -3945,9 +3955,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  public void acquireWriteLock(final ORID rid, long timeout) {
+    try {
+      lockManager.acquireWriteLock(rid, timeout);
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
   public void acquireWriteLock(final ORID rid) {
     try {
-      lockManager.acquireLock(rid, OComparableLockManager.LOCK.EXCLUSIVE, RECORD_LOCK_TIMEOUT);
+      lockManager.acquireWriteLock(rid, 0);
     } catch (RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (Error ee) {
@@ -3959,7 +3981,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public void releaseWriteLock(final ORID rid) {
     try {
-      lockManager.releaseLock(this, rid, OComparableLockManager.LOCK.EXCLUSIVE);
+      lockManager.releaseWriteLock(rid);
     } catch (RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (Error ee) {
@@ -3971,7 +3993,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public void acquireReadLock(final ORID rid) {
     try {
-      lockManager.acquireLock(rid, OComparableLockManager.LOCK.SHARED, RECORD_LOCK_TIMEOUT);
+      lockManager.acquireReadLock(rid, 0);
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  public void acquireReadLock(final ORID rid, long timeout) {
+    try {
+      lockManager.acquireReadLock(rid, timeout);
     } catch (RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (Error ee) {
@@ -3983,7 +4017,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public void releaseReadLock(final ORID rid) {
     try {
-      lockManager.releaseLock(this, rid, OComparableLockManager.LOCK.SHARED);
+      lockManager.releaseReadLock(rid);
     } catch (RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (Error ee) {
@@ -4691,7 +4725,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         cluster.open();
       }
 
-      if(writeAheadLog != null) {
+      if (writeAheadLog != null) {
         writeAheadLog.flush();
       }
 

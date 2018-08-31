@@ -732,4 +732,8 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   public ORecordOperation getRecordEntry(ORID currentRid) {
     return recordOperations.get(currentRid);
   }
+
+  public Set<ORID> getLockedRecords() {
+    return null;
+  }
 }
