@@ -11,12 +11,10 @@ import java.util.Objects;
 public class OTransactionSecondPhaseOperation implements ONodeRequest {
   private OSessionOperationId operationId;
   private boolean             success;
-  private List<ORecordId>     allocatedIds;
 
-  public OTransactionSecondPhaseOperation(OSessionOperationId operationId, boolean success, List<ORecordId> allocatedIds) {
+  public OTransactionSecondPhaseOperation(OSessionOperationId operationId, boolean success) {
     this.operationId = operationId;
     this.success = success;
-    this.allocatedIds = allocatedIds;
   }
 
   @Override
@@ -26,10 +24,6 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
     return new OTransactionSecondPhaseResponse(true);
   }
 
-  public List<ORecordId> getAllocatedIds() {
-    return allocatedIds;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o)
@@ -37,12 +31,11 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
     if (o == null || getClass() != o.getClass())
       return false;
     OTransactionSecondPhaseOperation that = (OTransactionSecondPhaseOperation) o;
-    return success == that.success && Objects.equals(allocatedIds, that.allocatedIds);
+    return success == that.success;
   }
 
   @Override
   public int hashCode() {
-
-    return Objects.hash(success, allocatedIds);
+    return Objects.hash(success);
   }
 }
