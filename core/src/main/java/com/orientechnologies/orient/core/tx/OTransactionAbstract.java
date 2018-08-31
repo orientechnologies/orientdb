@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class OTransactionAbstract implements OTransaction {
   protected final ODatabaseDocumentInternal       database;
@@ -106,13 +107,9 @@ public abstract class OTransactionAbstract implements OTransaction {
         final LockedRecordMetadata lockedRecordMetadata = lock.getValue();
 
         if (lockedRecordMetadata.strategy.equals(OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)) {
-          for (int i = 0; i < lockedRecordMetadata.locksCount; i++) {
-            ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).releaseWriteLock(lock.getKey());
-          }
+          ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).releaseWriteLock(lock.getKey());
         } else if (lockedRecordMetadata.strategy.equals(OStorage.LOCKING_STRATEGY.SHARED_LOCK)) {
-          for (int i = 0; i < lockedRecordMetadata.locksCount; i++) {
-            ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).releaseReadLock(lock.getKey());
-          }
+          ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).releaseReadLock(lock.getKey());
         }
       } catch (Exception e) {
         OLogManager.instance().debug(this, "Error on releasing lock against record " + lock.getKey(), e);
@@ -195,5 +192,9 @@ public abstract class OTransactionAbstract implements OTransaction {
 
   protected void setLocks(Map<ORID, LockedRecordMetadata> locks) {
     this.locks = locks;
+  }
+
+  public Set<ORID> getLockedRecords() {
+    return locks.keySet();
   }
 }
