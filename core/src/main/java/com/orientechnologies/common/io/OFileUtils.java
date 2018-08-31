@@ -157,13 +157,17 @@ public class OFileUtils {
       Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-          Files.deleteIfExists(file);
+          if (file.toFile().exists()){
+            file.toFile().delete();
+          }          
           return FileVisitResult.CONTINUE;
         }
 
         @Override
         public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-          Files.deleteIfExists(dir);
+          if (dir.toFile().exists()){
+            dir.toFile().delete();
+          }
           return FileVisitResult.CONTINUE;
         }
       });
