@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -140,16 +139,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
     final Iterator<Path> pathFiles = Files.walk(Paths.get(walPath)).iterator();
 
-    long filesSize = 0;
-    while (pathFiles.hasNext()) {
-      try {
-        final Path currentPath = pathFiles.next();
-        filesSize += currentPath.toFile().isFile() ? currentPath.toFile().length() : 0;
-      } catch (UncheckedIOException e) {
-        //ignore
-      }
-    }
-
+    final long filesSize = Files.walk(Paths.get(walPath)).mapToLong(p -> p.toFile().isFile() ? p.toFile().length() : 0).sum();
     long maxSegSize;
 
     if (configurations != null) {
