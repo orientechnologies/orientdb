@@ -316,16 +316,19 @@ public class OPrefixBTree<V> extends ODurableComponent {
           while (!keyBucket
               .addEntry(insertionIndex, new OPrefixBTreeBucket.SBTreeEntry<>(-1, -1, key, new OSBTreeValue<>(false, -1, value)),
                   true)) {
-            releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
 
-            bucketSearchResult = splitBucket(bucketSearchResult.path, bucketSearchResult.leftBoundaries,
-                bucketSearchResult.rightBoundaries, insertionIndex, key, atomicOperation);
+            bucketSearchResult = splitBucket(keyBucketCacheEntry, keyBucket, bucketSearchResult.path,
+                bucketSearchResult.leftBoundaries, bucketSearchResult.rightBoundaries, insertionIndex, key, atomicOperation);
 
             insertionIndex = bucketSearchResult.itemIndex;
 
-            keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false);
+            if (bucketSearchResult.getLastPathItem() != keyBucketCacheEntry.getPageIndex()) {
+              releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
 
-            keyBucket = new OPrefixBTreeBucket<>(keyBucketCacheEntry, keySerializer, valueSerializer, encryption);
+              keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false);
+
+              keyBucket = new OPrefixBTreeBucket<>(keyBucketCacheEntry, keySerializer, valueSerializer, encryption);
+            }
           }
 
           releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
@@ -1007,103 +1010,97 @@ public class OPrefixBTree<V> extends ODurableComponent {
     return new OSBTreeCursorBackward(keyFrom, keyTo, fromInclusive, toInclusive);
   }
 
-  private BucketUpdateSearchResult splitBucket(List<Long> path, List<String> leftBoundaries, List<String> rightBoundaries,
-      int keyIndex, String keyToInsert, OAtomicOperation atomicOperation) throws IOException {
+  private BucketUpdateSearchResult splitBucket(OCacheEntry bucketToSplitEntry, OPrefixBTreeBucket<V> bucketToSplit, List<Long> path,
+      List<String> leftBoundaries, List<String> rightBoundaries, int keyIndex, String keyToInsert, OAtomicOperation atomicOperation)
+      throws IOException {
     long pageIndex = path.get(path.size() - 1);
 
-    OCacheEntry bucketEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false);
-    try {
-      OPrefixBTreeBucket<V> bucketToSplit = new OPrefixBTreeBucket<>(bucketEntry, keySerializer, valueSerializer, encryption);
+    final boolean splitLeaf = bucketToSplit.isLeaf();
+    final int bucketSize = bucketToSplit.size();
 
-      final boolean splitLeaf = bucketToSplit.isLeaf();
-      final int bucketSize = bucketToSplit.size();
+    int indexToSplit = bucketSize >>> 1;
 
-      int indexToSplit = bucketSize >>> 1;
+    final String separator;
 
-      final String separator;
+    if (bucketSize < 100) {
+      final String separationKey;
+      final String separationKeyRight = bucketToSplit.getKeyWithoutPrefix(indexToSplit);
 
-      if (bucketSize < 100) {
-        final String separationKey;
-        final String separationKeyRight = bucketToSplit.getKeyWithoutPrefix(indexToSplit);
-
-        if (splitLeaf) {
-          if (indexToSplit > 0) {
-            final String separationKeyLeft = bucketToSplit.getKeyWithoutPrefix(indexToSplit - 1);
-            separationKey = bucketToSplit.getBucketPrefix() + findMinSeparationKey(separationKeyLeft, separationKeyRight);
-          } else {
-            separationKey = bucketToSplit.getBucketPrefix() + separationKeyRight;
-          }
+      if (splitLeaf) {
+        if (indexToSplit > 0) {
+          final String separationKeyLeft = bucketToSplit.getKeyWithoutPrefix(indexToSplit - 1);
+          separationKey = bucketToSplit.getBucketPrefix() + findMinSeparationKey(separationKeyLeft, separationKeyRight);
         } else {
           separationKey = bucketToSplit.getBucketPrefix() + separationKeyRight;
         }
-
-        separator = separationKey;
       } else {
-        final int diff = ((int) (bucketSize * 0.1)) / 2;
-        final int startSeparationIndex = indexToSplit - diff;
-        final int endSeparationIndex = indexToSplit + diff + 1;
-
-        if (splitLeaf) {
-          String prevSeparationKey = bucketToSplit.getKeyWithoutPrefix(startSeparationIndex - 1);
-          String separationKey = bucketToSplit.getKeyWithoutPrefix(startSeparationIndex);
-          String minSeparationKey = findMinSeparationKey(prevSeparationKey, separationKey);
-
-          String absMinKey = minSeparationKey;
-          int absMinIndex = startSeparationIndex;
-
-          for (int i = startSeparationIndex + 1; i < endSeparationIndex; i++) {
-            separationKey = bucketToSplit.getKeyWithoutPrefix(i);
-            minSeparationKey = findMinSeparationKey(prevSeparationKey, separationKey);
-
-            if (absMinKey.length() > minSeparationKey.length()) {
-              absMinKey = separationKey;
-              absMinIndex = i;
-            }
-
-            prevSeparationKey = separationKey;
-          }
-
-          separator = bucketToSplit.getBucketPrefix() + absMinKey;
-          indexToSplit = absMinIndex;
-        } else {
-          String absMinKey = null;
-          int absMinIndex = -1;
-
-          for (int i = startSeparationIndex; i < endSeparationIndex; i++) {
-            String separationKey = bucketToSplit.getKeyWithoutPrefix(i);
-            if (absMinKey == null || absMinKey.length() > separationKey.length()) {
-              absMinKey = separationKey;
-              absMinIndex = i;
-            }
-          }
-
-          separator = bucketToSplit.getBucketPrefix() + absMinKey;
-          indexToSplit = absMinIndex;
-        }
-
+        separationKey = bucketToSplit.getBucketPrefix() + separationKeyRight;
       }
 
-      if (pageIndex != ROOT_INDEX) {
-        final List<OPrefixBTreeBucket.SBTreeEntry<V>> rightEntries = new ArrayList<>(indexToSplit);
+      separator = separationKey;
+    } else {
+      final int diff = ((int) (bucketSize * 0.1)) / 2;
+      final int startSeparationIndex = indexToSplit - diff;
+      final int endSeparationIndex = indexToSplit + diff + 1;
 
-        for (int i = indexToSplit; i < bucketSize; i++) {
-          rightEntries.add(bucketToSplit.getEntry(i));
+      if (splitLeaf) {
+        String prevSeparationKey = bucketToSplit.getKeyWithoutPrefix(startSeparationIndex - 1);
+        String separationKey = bucketToSplit.getKeyWithoutPrefix(startSeparationIndex);
+        String minSeparationKey = findMinSeparationKey(prevSeparationKey, separationKey);
+
+        String absMinKey = minSeparationKey;
+        int absMinIndex = startSeparationIndex;
+
+        for (int i = startSeparationIndex + 1; i < endSeparationIndex; i++) {
+          separationKey = bucketToSplit.getKeyWithoutPrefix(i);
+          minSeparationKey = findMinSeparationKey(prevSeparationKey, separationKey);
+
+          if (absMinKey.length() > minSeparationKey.length()) {
+            absMinKey = separationKey;
+            absMinIndex = i;
+          }
+
+          prevSeparationKey = separationKey;
         }
 
-        return splitNonRootBucket(path, leftBoundaries, rightBoundaries, keyIndex, keyToInsert, pageIndex, bucketToSplit, splitLeaf,
-            indexToSplit, separator, rightEntries, atomicOperation);
+        separator = bucketToSplit.getBucketPrefix() + absMinKey;
+        indexToSplit = absMinIndex;
       } else {
-        final List<byte[]> rightEntries = new ArrayList<>(indexToSplit);
+        String absMinKey = null;
+        int absMinIndex = -1;
 
-        for (int i = indexToSplit; i < bucketSize; i++) {
-          rightEntries.add(bucketToSplit.getRawEntry(i));
+        for (int i = startSeparationIndex; i < endSeparationIndex; i++) {
+          String separationKey = bucketToSplit.getKeyWithoutPrefix(i);
+          if (absMinKey == null || absMinKey.length() > separationKey.length()) {
+            absMinKey = separationKey;
+            absMinIndex = i;
+          }
         }
 
-        return splitRootBucket(path, keyIndex, keyToInsert, bucketEntry, bucketToSplit, splitLeaf, indexToSplit, separator,
-            rightEntries, atomicOperation);
+        separator = bucketToSplit.getBucketPrefix() + absMinKey;
+        indexToSplit = absMinIndex;
       }
-    } finally {
-      releasePageFromWrite(atomicOperation, bucketEntry);
+
+    }
+
+    if (pageIndex != ROOT_INDEX) {
+      final List<OPrefixBTreeBucket.SBTreeEntry<V>> rightEntries = new ArrayList<>(indexToSplit);
+
+      for (int i = indexToSplit; i < bucketSize; i++) {
+        rightEntries.add(bucketToSplit.getEntry(i));
+      }
+
+      return splitNonRootBucket(path, leftBoundaries, rightBoundaries, keyIndex, keyToInsert, pageIndex, bucketToSplit, splitLeaf,
+          indexToSplit, separator, rightEntries, atomicOperation);
+    } else {
+      final List<byte[]> rightEntries = new ArrayList<>(indexToSplit);
+
+      for (int i = indexToSplit; i < bucketSize; i++) {
+        rightEntries.add(bucketToSplit.getRawEntry(i));
+      }
+
+      return splitRootBucket(path, keyIndex, keyToInsert, bucketToSplitEntry, bucketToSplit, splitLeaf, indexToSplit, separator,
+          rightEntries, atomicOperation);
     }
   }
 
@@ -1169,9 +1166,9 @@ public class OPrefixBTree<V> extends ODurableComponent {
           releasePageFromWrite(atomicOperation, parentCacheEntry);
           parentCacheEntry = null;
 
-          BucketUpdateSearchResult bucketSearchResult = splitBucket(path.subList(0, path.size() - 1),
-              leftBoundaries.subList(0, leftBoundaries.size() - 1), rightBoundaries.subList(0, rightBoundaries.size() - 1),
-              insertionIndex, separationKey, atomicOperation);
+          BucketUpdateSearchResult bucketSearchResult = splitBucket(parentCacheEntry, parentBucket,
+              path.subList(0, path.size() - 1), leftBoundaries.subList(0, leftBoundaries.size() - 1),
+              rightBoundaries.subList(0, rightBoundaries.size() - 1), insertionIndex, separationKey, atomicOperation);
 
           parentIndex = bucketSearchResult.getLastPathItem();
 
