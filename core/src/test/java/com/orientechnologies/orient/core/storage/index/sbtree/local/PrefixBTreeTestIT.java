@@ -47,7 +47,7 @@ public class PrefixBTreeTestIT {
 
     databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
-    prefixTree = new OPrefixBTree<>("prefixBTree", ".sbt", ".nbt",
+    prefixTree = new OPrefixBTree<>("prefixBTree", ".pbt", ".npt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     prefixTree.create(OUTF8Serializer.INSTANCE, OLinkSerializer.INSTANCE, false, null);
   }
