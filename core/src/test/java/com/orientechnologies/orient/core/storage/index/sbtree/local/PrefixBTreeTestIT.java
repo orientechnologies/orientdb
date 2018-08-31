@@ -36,7 +36,7 @@ public class PrefixBTreeTestIT {
 
   @Before
   public void before() {
-    buildDirectory = System.getProperty("buildDirectory", ".") + File.separator + SBTreeTestIT.class.getSimpleName();
+    buildDirectory = System.getProperty("buildDirectory", ".") + File.separator + PrefixBTreeTestIT.class.getSimpleName();
 
     dbName = "localPrefixBTreeTest";
     final File dbDirectory = new File(buildDirectory, dbName);
@@ -60,7 +60,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testKeyPut() {
-    final int keysCount = 100_000_000;
+    final int keysCount = 1_000_000;
 
     String lastKey = null;
 
@@ -231,7 +231,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testKeyDelete() {
-    final int keysCount = 100_000_000;
+    final int keysCount = 1_000_000;
 
     for (int i = 0; i < keysCount; i++) {
       prefixTree.put(Integer.toString(i), new ORecordId(i % 32000, i));
@@ -254,7 +254,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testKeyAddDelete() {
-    final int keysCount = 100_000_000;
+    final int keysCount = 1_000_000;
 
     for (int i = 0; i < keysCount; i++) {
       prefixTree.put(Integer.toString(i), new ORecordId(i % 32000, i));
@@ -288,7 +288,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testKeyCursor() {
-    final int keysCount = 100_000_000;
+    final int keysCount = 1_000_000;
 
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     final long seed = System.nanoTime();
@@ -323,7 +323,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testIterateEntriesMajor() {
-    final int keysCount = 100_000_000;
+    final int keysCount = 1_000_000;
 
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     final long seed = System.nanoTime();
@@ -351,7 +351,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testIterateEntriesMinor() {
-    final int keysCount = 100_000_000;
+    final int keysCount = 1_000_000;
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 
@@ -375,7 +375,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testIterateEntriesBetween() {
-    final int keysCount = 100_000_000;
+    final int keysCount = 1_000_000;
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 
