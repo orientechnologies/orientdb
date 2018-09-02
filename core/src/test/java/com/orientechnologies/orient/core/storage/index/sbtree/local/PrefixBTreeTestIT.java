@@ -54,8 +54,8 @@ public class PrefixBTreeTestIT {
 
   @After
   public void afterMethod() throws Exception {
-    orientDB.drop(dbName);
-    orientDB.close();
+//    orientDB.drop(dbName);
+//    orientDB.close();
   }
 
   @Test
