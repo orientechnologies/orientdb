@@ -288,7 +288,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testKeyCursor() {
-    final int keysCount = 1_000_000;
+    final int keysCount = 100_000_000;
 
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     final long seed = System.nanoTime();
@@ -309,15 +309,9 @@ public class PrefixBTreeTestIT {
 
     final OPrefixBTree.OSBTreeKeyCursor<String> cursor = prefixTree.keyCursor();
 
-    int counter = 0;
     for (String entryKey : keyValues.keySet()) {
-      if (counter == 10_000) {
-        System.out.println();
-      }
-
       final String indexKey = cursor.next(-1);
       Assert.assertEquals(entryKey, indexKey);
-      counter++;
     }
   }
 
