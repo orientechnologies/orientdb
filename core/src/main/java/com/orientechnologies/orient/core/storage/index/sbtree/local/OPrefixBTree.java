@@ -1163,13 +1163,9 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
         insertionIndex = -insertionIndex - 1;
         while (!parentBucket.addEntry(insertionIndex, parentEntry, true)) {
-          releasePageFromWrite(atomicOperation, parentCacheEntry);
-          parentCacheEntry = null;
-
           BucketUpdateSearchResult bucketSearchResult = splitBucket(parentCacheEntry, parentBucket,
               path.subList(0, path.size() - 1), leftBoundaries.subList(0, leftBoundaries.size() - 1),
               rightBoundaries.subList(0, rightBoundaries.size() - 1), insertionIndex, separationKey, atomicOperation);
-
           parentIndex = bucketSearchResult.getLastPathItem();
 
           path = bucketSearchResult.path;
@@ -1181,11 +1177,15 @@ public class OPrefixBTree<V> extends ODurableComponent {
           leftBoundaries.add(null);
           rightBoundaries.add(null);
 
-          parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false);
+          if (parentIndex != parentCacheEntry.getPageIndex()) {
+            releasePageFromWrite(atomicOperation, parentCacheEntry);
 
-          insertionIndex = bucketSearchResult.itemIndex;
+            parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false);
 
-          parentBucket = new OPrefixBTreeBucket<>(parentCacheEntry, keySerializer, valueSerializer, encryption);
+            insertionIndex = bucketSearchResult.itemIndex;
+
+            parentBucket = new OPrefixBTreeBucket<>(parentCacheEntry, keySerializer, valueSerializer, encryption);
+          }
         }
 
         final ArrayList<Long> resultPath = new ArrayList<>(path.subList(0, path.size() - 1));
