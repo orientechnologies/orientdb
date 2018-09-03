@@ -35,12 +35,12 @@ public class StudioPermissionCommand extends OServerCommandAuthenticatedServerAb
     final String[] parts = checkSyntax(iRequest.getUrl(), 1, "Syntax error: metrics");
 
     if (iRequest.httpMethod.equalsIgnoreCase("GET")) {
-      doGet(iResponse, parts);
+      doGet(iRequest, iResponse, parts);
     }
     return false;
   }
 
-  private void doGet(OHttpResponse iResponse, String[] parts) throws IOException {
+  private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String[] parts) throws IOException {
 
     if (parts.length == 2) {
 
@@ -57,11 +57,18 @@ public class StudioPermissionCommand extends OServerCommandAuthenticatedServerAb
             mapper.writeValueAsString(m), null);
         break;
       case "mine":
-        permissions = Arrays.asList(EnterprisePermissions.values()).stream()
-            .filter((c) -> server.isAllowed(serverUser, c.toString())).map((c) -> c.toString()).collect(Collectors.toSet());
-        m.put("permissions", permissions);
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON,
-            mapper.writeValueAsString(m), null);
+        String user = getUser(iRequest);
+
+        if (user != null) {
+          permissions = Arrays.asList(EnterprisePermissions.values()).stream()
+              .filter((c) -> server.isAllowed(user, c.toString())).map((c) -> c.toString()).collect(Collectors.toSet());
+          m.put("permissions", permissions);
+          iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON,
+              mapper.writeValueAsString(m), null);
+
+        } else {
+          sendNotAuthorizedResponse(iRequest, iResponse);
+        }
         break;
 
       default:

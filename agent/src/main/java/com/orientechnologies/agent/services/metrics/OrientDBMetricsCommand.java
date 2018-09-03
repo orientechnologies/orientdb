@@ -4,6 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.agent.profiler.OMetricsRegistry;
 import com.orientechnologies.agent.profiler.metrics.OMetric;
 import com.orientechnologies.agent.profiler.metrics.OMetricSet;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.impl.task.OEnterpriseStatsTask;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -14,9 +21,7 @@ import io.prometheus.client.exporter.common.TextFormat;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Enrico Risa on 06/08/2018.
@@ -48,12 +53,74 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
     return false;
   }
 
+  private ODocument calculateDBStatus(final ODistributedServerManager manager, final ODocument cfg) {
+
+    final ODocument doc = new ODocument();
+    final Collection<ODocument> members = cfg.field("members");
+
+    Set<String> databases = new HashSet<String>();
+    for (ODocument m : members) {
+      final Collection<String> dbs = m.field("databases");
+      for (String db : dbs) {
+        databases.add(db);
+      }
+    }
+    for (String database : databases) {
+      doc.field(database, singleDBStatus(manager, database));
+    }
+    return doc;
+  }
+
+  private ODocument singleDBStatus(ODistributedServerManager manager, String database) {
+    final ODocument entries = new ODocument();
+    final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(database, false);
+    final Set<String> servers = dbCfg.getAllConfiguredServers();
+    for (String serverName : servers) {
+      final ODistributedServerManager.DB_STATUS databaseStatus = manager.getDatabaseStatus(serverName, database);
+      entries.field(serverName, databaseStatus.toString());
+    }
+    return entries;
+  }
+
   private void doGet(OHttpResponse iResponse, String[] parts) throws IOException {
     if (parts.length == 1) {
 
-      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-      registry.toJSON(buffer);
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, buffer.toString(), null);
+      ODocument metrics = new ODocument();
+      ODistributedServerManager manager = server.getDistributedManager();
+
+      if (manager != null) {
+        final ODocument doc = manager.getClusterConfiguration();
+        final Collection<ODocument> documents = doc.field("members");
+        List<String> servers = new ArrayList<String>(documents.size());
+        for (ODocument document : documents)
+          servers.add(document.field("name"));
+
+        Set<String> databases = manager.getServerInstance().listDatabases();
+        if (databases.isEmpty()) {
+          OLogManager.instance().warn(this, "Cannot load stats, no databases on this server");
+
+        } else {
+          final ODistributedResponse dResponse = manager
+              .sendRequest(databases.iterator().next(), null, servers, new OEnterpriseStatsTask(),
+                  manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+          final Object payload = dResponse.getPayload();
+          if (payload != null && payload instanceof Map) {
+            doc.field("clusterStats", payload);
+          }
+
+          doc.field("databasesStatus", calculateDBStatus(manager, doc));
+        }
+
+      } else {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        Map<String, ODocument> singleNodeStats = new HashMap<>();
+        registry.toJSON(buffer);
+        singleNodeStats.put("orientdb", new ODocument().fromJSON(buffer.toString()));
+        metrics.field("clusterStats", singleNodeStats);
+      }
+      metrics.setProperty("distributed", manager != null);
+      iResponse
+          .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, metrics.toJSON(""), null);
     } else {
       String command = parts[1];
 
