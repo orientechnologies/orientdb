@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.storage.index.sbtree.local;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -41,13 +42,13 @@ public class PrefixBTreeTestIT {
     //OFileUtils.deleteRecursively(dbDirectory);
 
     orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
-    //orientDB.create(dbName, ODatabaseType.PLOCAL);
+    orientDB.create(dbName, ODatabaseType.PLOCAL);
 
     databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
     prefixTree = new OPrefixBTree<>("prefixBTree", ".pbt", ".npt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
-    prefixTree.load(dbName, OUTF8Serializer.INSTANCE, OLinkSerializer.INSTANCE, false, null);
+    prefixTree.create(OUTF8Serializer.INSTANCE, OLinkSerializer.INSTANCE, false, null);
   }
 
   @After
