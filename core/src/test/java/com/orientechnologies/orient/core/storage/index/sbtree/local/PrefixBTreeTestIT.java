@@ -1,10 +1,8 @@
 package com.orientechnologies.orient.core.storage.index.sbtree.local;
 
-import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -40,16 +38,16 @@ public class PrefixBTreeTestIT {
 
     dbName = "localPrefixBTreeTest";
     final File dbDirectory = new File(buildDirectory, dbName);
-    OFileUtils.deleteRecursively(dbDirectory);
+//  OFileUtils.deleteRecursively(dbDirectory);
 
     orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
-    orientDB.create(dbName, ODatabaseType.PLOCAL);
+//  orientDB.create(dbName, ODatabaseType.PLOCAL);
 
     databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
     prefixTree = new OPrefixBTree<>("prefixBTree", ".pbt", ".npt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
-    prefixTree.create(OUTF8Serializer.INSTANCE, OLinkSerializer.INSTANCE, false, null);
+    prefixTree.load(dbName, OUTF8Serializer.INSTANCE, OLinkSerializer.INSTANCE, false, null);
   }
 
   @After
@@ -291,7 +289,7 @@ public class PrefixBTreeTestIT {
     final int keysCount = 100_000_000;
 
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
-    final long seed = System.nanoTime();
+    final long seed = 643392840749364L;//System.nanoTime();
 
     System.out.println("testKeyCursor: " + seed);
     Random random = new Random(seed);
@@ -300,7 +298,7 @@ public class PrefixBTreeTestIT {
       int val = random.nextInt(Integer.MAX_VALUE);
       String key = Integer.toString(val);
 
-      prefixTree.put(key, new ORecordId(val % 32000, val));
+//      prefixTree.put(key, new ORecordId(val % 32000, val));
       keyValues.put(key, new ORecordId(val % 32000, val));
     }
 
@@ -309,8 +307,12 @@ public class PrefixBTreeTestIT {
 
     final OPrefixBTree.OSBTreeKeyCursor<String> cursor = prefixTree.keyCursor();
 
+    int counter = 0;
     for (String entryKey : keyValues.keySet()) {
       final String indexKey = cursor.next(-1);
+      if (!entryKey.equals(indexKey)) {
+        System.out.println("Counter value = " + counter);
+      }
       Assert.assertEquals(entryKey, indexKey);
     }
   }
