@@ -49,7 +49,7 @@ public class PrefixBTreeTestIT {
 
     prefixTree = new OPrefixBTree<>("prefixBTree", ".pbt", ".npt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
-    prefixTree.load(dbName, OUTF8Serializer.INSTANCE, OLinkSerializer.INSTANCE, false, null);
+    prefixTree.create(OUTF8Serializer.INSTANCE, OLinkSerializer.INSTANCE, false, null);
   }
 
   @After
