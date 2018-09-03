@@ -631,7 +631,11 @@ public class OSelectExecutionPlanner {
       return;
     }
     if (info.whereClause != null && info.target != null && info.target.getItem().getIdentifier() != null) {
-      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(info.target.getItem().getIdentifier().getStringValue());
+      String className = info.target.getItem().getIdentifier().getStringValue();
+      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(className);
+      if(clazz==null){
+        clazz = ctx.getDatabase().getMetadata().getSchema().getView(className);
+      }
       if (clazz != null) {
         info.whereClause.getBaseExpression().rewriteIndexChainsAsSubqueries(ctx, clazz);
       }

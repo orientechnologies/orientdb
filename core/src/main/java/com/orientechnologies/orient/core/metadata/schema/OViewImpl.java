@@ -30,10 +30,12 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     this.cfg = new OViewConfig(getName(), query);
     this.cfg.setUpdatable(Boolean.TRUE.equals(document.getProperty("updatable")));
 
-    List<Map<String, String>> idxData = document.getProperty("indexes");
-    for (Map<String, String> idx : idxData) {
-      OViewConfig.OViewIndexConfig indexConfig = this.cfg.addIndex();
-      for (Map.Entry<String, String> prop : idx.entrySet()) {
+    List<Map<String, Object>> idxData = document.getProperty("indexes");
+    for (Map<String, Object> idx : idxData) {
+      String type = (String) idx.get("type");
+      String engine = (String) idx.get("engine");
+      OViewConfig.OViewIndexConfig indexConfig = this.cfg.addIndex(type, engine);
+      for (Map.Entry<String, String> prop : ((Map<String, String>) idx.get("properties")).entrySet()) {
         indexConfig.addProperty(prop.getKey(), OType.valueOf(prop.getValue()));
       }
     }
@@ -67,12 +69,16 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     result.setProperty("query", cfg.getQuery());
     result.setProperty("updatable", cfg.isUpdatable());
 
-    List<Map<String, String>> indexes = new ArrayList<>();
+    List<Map<String, Object>> indexes = new ArrayList<>();
     for (OViewConfig.OViewIndexConfig idx : cfg.indexes) {
-      Map<String, String> indexDescriptor = new HashMap<>();
+      Map<String, Object> indexDescriptor = new HashMap<>();
+      indexDescriptor.put("type", idx.type);
+      indexDescriptor.put("engine", idx.engine);
+      Map<String, String> properties = new HashMap<>();
       for (OPair<String, OType> s : idx.props) {
-        indexDescriptor.put(s.key, s.value.toString());
+        properties.put(s.key, s.value.toString());
       }
+      indexDescriptor.put("properties", properties);
       indexes.add(indexDescriptor);
     }
     result.setProperty("indexes", indexes);
@@ -91,12 +97,16 @@ public abstract class OViewImpl extends OClassImpl implements OView {
     ODocument result = super.toNetworkStream();
     result.setProperty("query", cfg.getQuery());
     result.setProperty("updatable", cfg.isUpdatable());
-    List<Map<String, String>> indexes = new ArrayList<>();
+    List<Map<String, Object>> indexes = new ArrayList<>();
     for (OViewConfig.OViewIndexConfig idx : cfg.indexes) {
-      Map<String, String> indexDescriptor = new HashMap<>();
+      Map<String, Object> indexDescriptor = new HashMap<>();
+      indexDescriptor.put("type", idx.type);
+      indexDescriptor.put("engine", idx.engine);
+      Map<String, String> properties = new HashMap<>();
       for (OPair<String, OType> s : idx.props) {
-        indexDescriptor.put(s.key, s.value.toString());
+        properties.put(s.key, s.value.toString());
       }
+      indexDescriptor.put("properties", properties);
       indexes.add(indexDescriptor);
     }
     result.setProperty("indexes", indexes);
