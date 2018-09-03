@@ -1,8 +1,10 @@
 package com.orientechnologies.orient.core.storage.index.sbtree.local;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -38,10 +40,10 @@ public class PrefixBTreeTestIT {
 
     dbName = "localPrefixBTreeTest";
     final File dbDirectory = new File(buildDirectory, dbName);
-//  OFileUtils.deleteRecursively(dbDirectory);
+    OFileUtils.deleteRecursively(dbDirectory);
 
     orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
-//  orientDB.create(dbName, ODatabaseType.PLOCAL);
+    orientDB.create(dbName, ODatabaseType.PLOCAL);
 
     databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
@@ -298,7 +300,7 @@ public class PrefixBTreeTestIT {
       int val = random.nextInt(Integer.MAX_VALUE);
       String key = Integer.toString(val);
 
-//      prefixTree.put(key, new ORecordId(val % 32000, val));
+      prefixTree.put(key, new ORecordId(val % 32000, val));
       keyValues.put(key, new ORecordId(val % 32000, val));
     }
 
