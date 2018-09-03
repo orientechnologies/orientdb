@@ -3586,13 +3586,13 @@ public class ODocument extends ORecordAbstract
           if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD){
             ODocumentDelta deltaElement = new ODocumentDelta();
             deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd(), OType.BYTE));
-            deltaElement.field("v", new ValueType(event.getValue(), OType.LINK));              
+            deltaElement.field("v", new ValueType(event.getKey(), OType.LINK));              
             deltaList.add(deltaElement);
           }
           else if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.REMOVE){
             ODocumentDelta deltaElement = new ODocumentDelta();
             deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd(), OType.BYTE));
-            deltaElement.field("v", new ValueType(event.getValue(), OType.LINK));              
+            deltaElement.field("v", new ValueType(event.getKey(), OType.LINK));              
             deltaList.add(deltaElement);
           }
         }
