@@ -56,11 +56,11 @@ import "../views/server/distributed/events/logwhen.html";
 import "../views/server/distributed/events/metricwhen.html";
 
 import { POLLING } from "../constants";
-import Utilities from '../util/library';
+import Utilities from "../util/library";
 import EEServices from "../services/ee-services";
 import angular from "angular";
 
-let ee = angular.module("ee.controller", [EEServices]);
+let ee = angular.module("ee.controller", ["permissions.services", EEServices]);
 
 ee.controller("GeneralMonitorController", [
   "$scope",
@@ -519,7 +519,7 @@ ee.controller("ClusterOverviewController", [
         });
 
         $scope.cpu = (cpu / keys.length).toFixed(2);
-        $scope.disk = Math.floor(100 - diskUsable * 100 / diskTotal);
+        $scope.disk = Math.floor(100 - (diskUsable * 100) / diskTotal);
 
         $scope.latency = latency / keys.length;
 
@@ -528,12 +528,12 @@ ee.controller("ClusterOverviewController", [
         $scope.maxRam = maxMemory;
         $scope.usedRam = used;
 
-        $scope.ram = Math.floor(used * 100 / maxMemory);
+        $scope.ram = Math.floor((used * 100) / maxMemory);
 
         $scope.maxDiskCacke = maxDiskCache;
         $scope.totalDiskCache = totalDiskCache;
 
-        $scope.diskCache = Math.floor(totalDiskCache * 100 / maxDiskCache);
+        $scope.diskCache = Math.floor((totalDiskCache * 100) / maxDiskCache);
 
         $scope.activeConnections = connections;
 
@@ -1335,71 +1335,78 @@ ee.controller("EEDashboardController", [
   "$rootScope",
   "$routeParams",
   "Database",
-  function($scope, $rootScope, $routeParams, Database) {
+  "PermissionService",
+  function($scope, $rootScope, $routeParams, Database, PermissionService) {
+    $scope.menus = [];
     $rootScope.$on("servermgmt:open", function() {
+      $scope.menus = PermissionService.getSideMenu();
+
+      // if (data.permissions.indexOf("server.studio.dashboard") != -1) {
+      //   $scope.menus.push({
+      //     name: "stats",
+      //     title: "Dashboard",
+      //     template: "stats",
+      //     icon: "fa-dashboard"
+      //   });
+      // }
+      // $scope.menus = [
+      //   {
+      //     name: "general",
+      //     title: "Servers Management",
+      //     template: "general",
+      //     icon: "fa-desktop"
+      //   },
+      //   {
+      //     name: "cluster",
+      //     title: "Cluster Management",
+      //     template: "distributed",
+      //     icon: "fa-sitemap"
+      //   },
+      //   {
+      //     name: "backup",
+      //     title: "Backup Management",
+      //     template: "backup",
+      //     icon: "fa-clock-o"
+      //   },
+      //   {
+      //     name: "profiler",
+      //     title: "Query Profiler",
+      //     template: "profiler",
+      //     icon: "fa-rocket"
+      //   },
+      //   {
+      //     name: "security",
+      //     title: "Security",
+      //     template: "security",
+      //     icon: "fa-lock"
+      //   },
+      //   // {
+      //   //   name: "alerts",
+      //   //   title: "Alerts Management",
+      //   //   template: "events",
+      //   //   icon: "fa-bell"
+      //   // },
+      //   {
+      //     name: "importers",
+      //     title: "Importer",
+      //     template: "importersManager",
+      //     icon: "fa-plug"
+      //   }
+      //   // {
+      //   //   name: "cloud",
+      //   //   title: "Cloud Management",
+      //   //   template: "cloud",
+      //   //   icon: "fa-cloud",
+      //   //   wiki: "OrientDB-Cloud.html"
+      //   // }
+      // ];
       $scope.show = "ee-view-show";
     });
+
     $rootScope.$on("servermgmt:close", function() {
       $scope.show = "";
+      $scope.menus = [];
     });
-
-    $scope.menus = [
-      {
-        name: "stats",
-        title: "Dashboard",
-        template: "stats",
-        icon: "fa-dashboard"
-      },
-      {
-        name: "general",
-        title: "Servers Management",
-        template: "general",
-        icon: "fa-desktop"
-      },
-      {
-        name: "cluster",
-        title: "Cluster Management",
-        template: "distributed",
-        icon: "fa-sitemap"
-      },
-      {
-        name: "backup",
-        title: "Backup Management",
-        template: "backup",
-        icon: "fa-clock-o"
-      },
-      {
-        name: "profiler",
-        title: "Query Profiler",
-        template: "profiler",
-        icon: "fa-rocket"
-      },
-      {
-        name: "security",
-        title: "Security",
-        template: "security",
-        icon: "fa-lock"
-      },
-      // {
-      //   name: "alerts",
-      //   title: "Alerts Management",
-      //   template: "events",
-      //   icon: "fa-bell"
-      // },
-      {
-        name: "importers",
-        title: "Importer",
-        template: "importersManager",
-        icon: "fa-plug"
-      },
-      // {
-      //   name: "cloud",
-      //   title: "Cloud Management",
-      //   template: "cloud",
-      //   icon: "fa-cloud",
-      //   wiki: "OrientDB-Cloud.html"
-      // }
-    ];
 
     $rootScope.$on("$routeChangeStart", function(event, next, current) {
       if (next.params.tab) {
@@ -1409,7 +1416,9 @@ ee.controller("EEDashboardController", [
           }
         });
       } else {
-        $scope.activeTab = $scope.menus[0];
+        if ($scope.menus && $scope.menus.length > 0) {
+          $scope.activeTab = $scope.menus[0];
+        }
       }
     });
   }

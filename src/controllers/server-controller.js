@@ -70,7 +70,10 @@ ServerModule.controller("ServerController", [
     });
 
     $scope.getTemplate = function(tab) {
-      return "views/server/" + tab + ".html";
+      if (tab) {
+        return "views/server/" + tab + ".html";
+      }
+      return null;
     };
   }
 ]);
@@ -130,6 +133,7 @@ ServerModule.controller("MultipleServerController", [
     $scope.agentActive = AgentService.active;
 
     var singlePoll = function() {
+
       Profiler.realtime().then(function(data) {
         data.status = "ONLINE";
         data.name = "orientdb";
@@ -352,7 +356,7 @@ ServerModule.controller("SingleServerController", [
 
         $scope.usedRam = used;
         $scope.maxRam = maxMemory;
-        $scope.ramPercent = Math.floor(used * 100 / maxMemory);
+        $scope.ramPercent = Math.floor((used * 100) / maxMemory);
         $scope.anotherPercent = -45;
         $scope.ramOptions = {
           barColor: "#E67E22",
@@ -363,7 +367,7 @@ ServerModule.controller("SingleServerController", [
 
         var total = realtime["sizes"]["system.disk./.totalSpace"];
         var usable = realtime["sizes"]["system.disk./.usableSpace"];
-        $scope.diskPercent = Math.floor(100 - usable * 100 / total);
+        $scope.diskPercent = Math.floor(100 - (usable * 100) / total);
         $scope.anotherPercent = -45;
         $scope.diskOptions = {
           barColor: "#E67E22",
@@ -394,7 +398,7 @@ ServerModule.controller("SingleServerController", [
         $scope.maxDiskCacke = maxDiskCache;
         $scope.totalDiskCache = totalDiskCache;
 
-        $scope.diskCache = Math.floor(totalDiskCache * 100 / maxDiskCache);
+        $scope.diskCache = Math.floor((totalDiskCache * 100) / maxDiskCache);
 
         $scope.connections = realtime["counters"]["server.connections.actives"];
 
@@ -455,6 +459,7 @@ ServerModule.controller("ServerDashboardController", [
   "$q",
   "Notification",
   "Database",
+  "PermissionService",
   function(
     $scope,
     $routeParams,
@@ -463,150 +468,90 @@ ServerModule.controller("ServerDashboardController", [
     ngTableParams,
     $q,
     Notification,
-    Database
+    Database,
+    PermissionService
   ) {
-    $scope.version = Database.getVersion();
+  //   $scope.version = Database.getVersion();
 
-    $scope.dirtyProperties = [];
+  $scope.tab = $routeParams.tab;
+  //   $scope.dirtyProperties = [];
 
-    $scope.menus = [
-      {
-        name: "stats",
-        title: "Dashboard",
-        template: "stats",
-        icon: "fa-dashboard",
-        wiki: "Studio-Dashboard.html"
-      },
-      {
-        name: "general",
-        title: "Servers Management",
-        template: "general",
-        icon: "fa-desktop",
-        wiki: "Studio-Server-Management.html"
-      },
-      {
-        name: "cluster",
-        title: "Cluster Management",
-        template: "distributed",
-        icon: "fa-sitemap",
-        wiki: "Studio-Cluster-Management.html"
-      },
-      {
-        name: "profiler",
-        title: "Query Profiler",
-        template: "profiler",
-        icon: "fa-rocket",
-        wiki: "Studio-Query-Profiler.html"
-      },
-      {
-        name: "backup",
-        title: "Backup Management",
-        template: "backup",
-        icon: "fa-clock-o",
-        wiki: "Studio-Backup-Management.html"
-      },
-      {
-        name: "security",
-        title: "Security",
-        template: "security",
-        icon: "fa-lock",
-        wiki: "Security-Config.html"
-      },
-      {
-        name: "plugins",
-        title: "Plugins Management",
-        template: "plugins",
-        icon: "fa-plug"
-      },
-      {
-        name: "importers",
-        title: "Importer",
-        template: "importersManager",
-        icon: "fa-plug"
-      },
-      // {
-      //   name: "alerts",
-      //   title: "Alerts Management",
-      //   template: "events",
-      //   icon: "fa-bell",
-      //   wiki: "Studio-Alert-Management.html"
-      // },
-      // {
-      //   name: "cloud",
-      //   title: "Cloud Management",
-      //   template: "cloud",
-      //   icon: "fa-cloud",
-      //   wiki: "OrientDB-Cloud.html"
-      // }
-    ];
-    if ($routeParams.tab) {
-      $scope.menus.forEach(function(e) {
-        if (e.name == $routeParams.tab) {
-          $scope.active = e.template;
-          $scope.current = e;
-        }
-      });
-    }
+  //   $scope.menus = PermissionService.getSideMenu();
 
-    if (!$scope.active) {
-      $scope.active = "stats";
-      $scope.current = $scope.menus[0];
-    }
+  //   if ($routeParams.tab) {
+  //     $scope.menus.forEach(function(e) {
+  //       if (e.name == $routeParams.tab) {
+  //         $scope.active = e.template;
+  //         $scope.current = e;
+  //       }
+  //     });
+  //   }
 
-    $scope.getWiki = function(c) {
-      return Database.resolveWiki(c.wiki);
-    };
+  //   if (!$scope.active && $scope.menus && $scope.menus.length > 0) {
+      
+  //     $scope.active = $scope.menus[0].template;
+  //     $scope.current = $scope.menus[0];
+  //   }
 
-    $scope.getTemplate = function(tab) {
-      return "views/server/stats/" + tab + ".html";
-    };
+  //   $scope.getWiki = function(c) {
+  //     if (c) {
+  //       return Database.resolveWiki(c.wiki);
+  //     }
+  //     return null;
+  //   };
 
-    $scope.changeGlobal = function(prop) {
-      if ($scope.dirtyProperties.indexOf(prop) == -1) {
-        $scope.dirtyProperties.push(prop);
-      }
-    };
+  //   $scope.getTemplate = function(tab) {
+  //     if (tab) {
+  //       return "views/server/stats/" + tab + ".html";
+  //     }
+  //     return null;
+  //   };
 
-    $scope.getType = function(val) {
-      var type = typeof val;
+  //   $scope.changeGlobal = function(prop) {
+  //     if ($scope.dirtyProperties.indexOf(prop) == -1) {
+  //       $scope.dirtyProperties.push(prop);
+  //     }
+  //   };
 
-      var formType = "text";
-      switch (type) {
-        case "boolean":
-          formType = "checkbox";
-          break;
-        case "number":
-          formType = "number";
-          break;
-        default:
-      }
+  //   $scope.getType = function(val) {
+  //     var type = typeof val;
 
-      return formType;
-    };
+  //     var formType = "text";
+  //     switch (type) {
+  //       case "boolean":
+  //         formType = "checkbox";
+  //         break;
+  //       case "number":
+  //         formType = "number";
+  //         break;
+  //       default:
+  //     }
 
-    $scope.isNumber = function(val) {};
-    $scope.isBoolean = function(val) {
-      return typeof val === "boolean";
-    };
-    $scope.isText = function(val) {};
-    $scope.saveGlobalProperties = function() {
-      var promises = [];
-      if ($scope.dirtyProperties.length > 0) {
-        $scope.dirtyProperties.forEach(function(p) {
-          promises.push(ServerApi.changeConfiguration(p.key, p.value));
-        });
+  //     return formType;
+  //   };
 
-        $q
-          .all(promises)
-          .then(function(data) {
-            $scope.dirtyProperties = [];
-            Notification.push({ content: data, autoHide: true });
-          })
-          .catch(function(data) {
-            Notification.push({ content: data, error: true, autoHide: true });
-          });
-      }
-    };
+  //   $scope.isNumber = function(val) {};
+  //   $scope.isBoolean = function(val) {
+  //     return typeof val === "boolean";
+  //   };
+  //   $scope.isText = function(val) {};
+  //   $scope.saveGlobalProperties = function() {
+  //     var promises = [];
+  //     if ($scope.dirtyProperties.length > 0) {
+  //       $scope.dirtyProperties.forEach(function(p) {
+  //         promises.push(ServerApi.changeConfiguration(p.key, p.value));
+  //       });
+
+  //       $q.all(promises)
+  //         .then(function(data) {
+  //           $scope.dirtyProperties = [];
+  //           Notification.push({ content: data, autoHide: true });
+  //         })
+  //         .catch(function(data) {
+  //           Notification.push({ content: data, error: true, autoHide: true });
+  //         });
+  //     }
+  //   };
   }
 ]);
 

@@ -1,7 +1,21 @@
-import {ImportExportComponent} from './dbconfiguration';
-import {ImportManagerComponent, TeleporterComponent, GraphModelPanelComponent, DetailPanelComponent, SchedulerComponent, NewsBoxComponent, Neo4jImporterComponent, EtlComponent} from './administration';
-import {DualListComponent, GraphComponent, AddEdgeModal} from './util';
+import { ImportExportComponent } from "./dbconfiguration";
 
+import {
+  ImportManagerComponent,
+  TeleporterComponent,
+  GraphModelPanelComponent,
+  DetailPanelComponent,
+  SchedulerComponent,
+  NewsBoxComponent,
+  Neo4jImporterComponent,
+  EtlComponent,
+  DashboardComponent,
+  DashboardStatsComponent,
+  ServerStatsComponent,
+  GaugeComponent
+} from "./administration";
+
+import { DualListComponent, GraphComponent, AddEdgeModal } from "./util";
 
 export const APP_DECLARATIONS = [
   ImportExportComponent,
@@ -15,5 +29,9 @@ export const APP_DECLARATIONS = [
   DualListComponent,
   GraphComponent,
   AddEdgeModal,
-  NewsBoxComponent
+  NewsBoxComponent,
+  DashboardComponent,
+  DashboardStatsComponent,
+  ServerStatsComponent,
+  GaugeComponent
 ];

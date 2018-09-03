@@ -1,41 +1,45 @@
-import {downgradeInjectable} from '@angular/upgrade/static';
-import {Http} from '@angular/http';
-import 'rxjs/add/operator/toPromise';
+import { downgradeInjectable } from "@angular/upgrade/static";
+import { Http } from "@angular/http";
+import "rxjs/add/operator/toPromise";
 
-import {Injectable} from "@angular/core";
-import {ProfilerService} from '../../core/services/profiler.service';
-declare var angular: any
+import { Injectable } from "@angular/core";
+declare var angular: any;
+import { API } from "../../../constants";
 
 @Injectable()
 class AgentService {
-
   private agent;
+  public active = false;
 
-  constructor(private http: Http, private profilerService: ProfilerService) {
+  constructor(private http: Http) {
     this.agent = {
       active: null
-    }
+    };
   }
 
-  isActive():any {
-
+  isActive(): any {
     if (this.agent.active == null) {
-      return this.profilerService.metadata().then((data) => {
-        this.agent.active = true;
-      }).catch(function (err) {
-        this.agent.active = false;
-      })
+      let url = API + "isEE";
+      return this.http
+        .get(url)
+        .toPromise()
+        .then(data => {
+          return data.json();
+        })
+        .then(response => {
+          this.agent.active = response.enterprise;
+          this.active = response.enterprise;
+          return this.agent;
+        });
     }
     return new Promise((resolve, reject) => {
-      resolve(this.agent.active);
-    })
-
+      resolve(this.agent);
+    });
   }
-
 }
 
-angular.module('command.services', []).factory(
-  `AgentService`,
-  downgradeInjectable(AgentService));
+angular
+  .module("agent.services", [])
+  .factory(`AgentService`, downgradeInjectable(AgentService));
 
-export {AgentService};
+export { AgentService };

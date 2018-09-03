@@ -585,29 +585,6 @@ ee.factory('Teleporter', ["$http", "$q", function ($http, $q) {
   return teleporter;
 }])
 
-ee.factory("AgentService", ["Profiler", "$q", function (Profiler, $q) {
-  var agent = {
-    active: null
-  }
-  agent.isActive = function () {
-
-    var deferred = $q.defer();
-    if (agent.active == null) {
-      Profiler.metadata().then(function (data) {
-        agent.active = true;
-        deferred.resolve();
-      }).catch(function (err) {
-        agent.active = false;
-        deferred.resolve();
-      })
-    } else {
-      deferred.resolve();
-    }
-    return deferred.promise;
-  }
-  return agent;
-}])
-
 ee.factory("BackupService", ["Profiler", "$q", "$http", function (Profiler, $q, $http) {
   var backups = {}
 

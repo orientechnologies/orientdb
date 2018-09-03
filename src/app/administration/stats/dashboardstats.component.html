@@ -1,0 +1,6 @@
+<div class="row">
+    <div [ngClass]="serversClass" *ngFor="let server of servers">
+        <server-stats [name]="server" [stats]="clusterStats[server]">
+        </server-stats>
+    </div>
+</div>
