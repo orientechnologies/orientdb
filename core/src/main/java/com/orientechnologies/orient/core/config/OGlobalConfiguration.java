@@ -228,8 +228,7 @@ public enum OGlobalConfiguration {
       Integer.class, null),
 
   STORAGE_PESSIMISTIC_LOCKING("storage.pessimisticLock",
-      "Set the approach of the pessimistic locking, valid options: none, modification, readwrite", String.class,
-      OrientDBConfig.LOCK_TYPE_MODIFICATION),
+      "Set the approach of the pessimistic locking, valid options: none, modification, readwrite", String.class, "none"),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 

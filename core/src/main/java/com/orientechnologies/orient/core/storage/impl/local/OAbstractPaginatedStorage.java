@@ -3968,6 +3968,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void acquireWriteLock(final ORID rid, long timeout) {
+    if (!modificationLock) {
+      throw new ODatabaseException(
+          "Record write locks are off by configuration, set the configuration \"storage.pessimisticLock\" to \""
+              + OrientDBConfig.LOCK_TYPE_READWRITE + "\" for enable them");
+    }
+
     try {
       lockManager.acquireWriteLock(rid, timeout);
     } catch (RuntimeException ee) {
@@ -3980,6 +3986,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void acquireWriteLock(final ORID rid) {
+    if (!modificationLock) {
+      throw new ODatabaseException(
+          "Record write locks are off by configuration, set the configuration \"storage.pessimisticLock\" to \""
+              + OrientDBConfig.LOCK_TYPE_MODIFICATION + "\" for enable them");
+    }
+
     try {
       lockManager.acquireWriteLock(rid, 0);
     } catch (RuntimeException ee) {
@@ -4004,6 +4016,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void acquireReadLock(final ORID rid) {
+    if (!readLock) {
+      throw new ODatabaseException(
+          "Record read locks are off by configuration, set the configuration \"storage.pessimisticLock\" to \""
+              + OrientDBConfig.LOCK_TYPE_READWRITE + "\" for enable them");
+    }
+
     try {
       lockManager.acquireReadLock(rid, 0);
     } catch (RuntimeException ee) {
@@ -4016,6 +4034,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void acquireReadLock(final ORID rid, long timeout) {
+    if (!readLock) {
+      throw new ODatabaseException(
+          "Record read locks are off by configuration, set the configuration \"storage.pessimisticLock\" to \""
+              + OrientDBConfig.LOCK_TYPE_READWRITE + "\" for enable them");
+    }
+
     try {
       lockManager.acquireReadLock(rid, timeout);
     } catch (RuntimeException ee) {
@@ -5128,7 +5152,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public String incrementalBackup(String backupDirectory) throws UnsupportedOperationException{
+  public String incrementalBackup(String backupDirectory) throws UnsupportedOperationException {
     throw new UnsupportedOperationException("Incremental backup is supported only in enterprise version");
   }
 
