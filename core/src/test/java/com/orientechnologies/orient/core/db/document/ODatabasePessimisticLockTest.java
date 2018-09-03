@@ -25,7 +25,8 @@ public class ODatabasePessimisticLockTest {
 
   @Before
   public void before() {
-    OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING, true).build();
+    OrientDBConfig config = OrientDBConfig.builder()
+        .addConfig(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING, OrientDBConfig.LOCK_TYPE_READWRITE).build();
     orientDB = new OrientDB("embedded:", config);
     orientDB.create("test", ODatabaseType.MEMORY);
     ODatabaseSession session = orientDB.open("test", "admin", "admin");
