@@ -23,6 +23,7 @@ public class NodesManager {
 
   private void initCommands() {
     NodeOperationTask.register(1, () -> new EnterpriseStatsTask(), () -> new EnterpriseStatsResponse());
+    NodeOperationTask.register(2, () -> new NewEnterpriseStatsTask(), () -> new EnterpriseStatsResponse());
     NodeOperationTask.register(10, () -> new AddBackupTask(), () -> new AddBackupTaskResponse());
     NodeOperationTask.register(11, () -> new ListBackupTask(), () -> new ListBackupTaskResponse());
     NodeOperationTask.register(12, () -> new RemoveBackupTask(), () -> new OkEmptyResponse());

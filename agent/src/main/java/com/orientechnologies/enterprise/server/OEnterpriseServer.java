@@ -1,5 +1,6 @@
 package com.orientechnologies.enterprise.server;
 
+import com.orientechnologies.agent.operation.NodesManager;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseConnectionListener;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseStorageListener;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -49,4 +50,7 @@ public interface OEnterpriseServer {
   void interruptConnection(Integer connectionId);
 
   OSystemDatabase getSystemDatabase();
+
+
+  NodesManager getNodesManager() ;
 }

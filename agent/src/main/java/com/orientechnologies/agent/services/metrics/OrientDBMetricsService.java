@@ -17,6 +17,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -78,7 +79,7 @@ public class OrientDBMetricsService implements OEnterpriseService {
 
     configAndStart();
 
-    server.registerStatelessCommand(new OrientDBMetricsCommand(registry, this));
+    server.registerStatelessCommand(new OrientDBMetricsCommand(server,registry, this));
 
   }
 
@@ -211,5 +212,16 @@ public class OrientDBMetricsService implements OEnterpriseService {
       return null;
     });
 
+  }
+
+  public  String toJson() {
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    try {
+      this.registry.toJSON(buffer);
+      return buffer.toString();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return null;
   }
 }

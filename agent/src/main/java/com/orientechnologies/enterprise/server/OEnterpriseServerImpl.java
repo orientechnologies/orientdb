@@ -1,5 +1,7 @@
 package com.orientechnologies.enterprise.server;
 
+import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.operation.NodesManager;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseConnectionListener;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseStorageListener;
 import com.orientechnologies.orient.core.Orient;
@@ -32,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, ODatabaseLifecycleListener {
 
+  private final OEnterpriseAgent agent;
   private OServer server;
 
   private List<OEnterpriseConnectionListener> listeners = new ArrayList<>();
@@ -40,8 +43,9 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
 
   private Map<String, OEnterpriseLocalPaginatedStorage> storages = new ConcurrentHashMap<>();
 
-  public OEnterpriseServerImpl(OServer server) {
+  public OEnterpriseServerImpl(OServer server, OEnterpriseAgent agent) {
     this.server = server;
+    this.agent = agent;
     server.getPluginManager().registerPlugin(new OServerPluginInfo("Enterprise Server", null, null, null, this, null, 0, null));
     Orient.instance().addDbLifecycleListener(this);
   }
@@ -106,6 +110,11 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   public OSystemDatabase getSystemDatabase() {
     return server.getSystemDatabase();
   }
+
+  public NodesManager getNodesManager() {
+    return agent.getNodesManager();
+  }
+
 
   @Override
   public void onClientDisconnection(OClientConnection oClientConnection) {

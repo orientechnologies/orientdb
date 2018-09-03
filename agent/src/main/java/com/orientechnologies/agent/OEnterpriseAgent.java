@@ -105,7 +105,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     enabled = false;
     server = oServer;
 
-    enterpriseServer = new OEnterpriseServerImpl(server);
+    enterpriseServer = new OEnterpriseServerImpl(server,this);
     for (OServerParameterConfiguration p : iParams) {
       if (p.name.equals("license"))
         license = p.value;
@@ -580,6 +580,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   @Override
   public void onAfterClientRequest(OClientConnection iConnection, byte iRequestType) {
     super.onAfterClientRequest(iConnection, iRequestType);
+  }
+
+  public <T extends OEnterpriseService> Optional<T> getServiceByClass(Class<T> klass) {
+    return (Optional<T>) this.services.stream().filter(c -> c.getClass().equals(klass)).findFirst();
   }
 
 }
