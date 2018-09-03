@@ -12,7 +12,9 @@ import {
   DashboardComponent,
   DashboardStatsComponent,
   ServerStatsComponent,
-  GaugeComponent
+  GaugeComponent,
+  ServerStatsGauges,
+  ServerStatsText
 } from "./administration";
 
 import { DualListComponent, GraphComponent, AddEdgeModal } from "./util";
@@ -33,5 +35,7 @@ export const APP_DECLARATIONS = [
   DashboardComponent,
   DashboardStatsComponent,
   ServerStatsComponent,
-  GaugeComponent
+  GaugeComponent,
+  ServerStatsGauges,
+  ServerStatsText
 ];
