@@ -309,6 +309,10 @@ public class PrefixBTreeTestIT {
 
     int counter = 0;
     for (String entryKey : keyValues.keySet()) {
+      if (counter == 2363215) {
+        System.out.println();
+      }
+
       final String indexKey = cursor.next(-1);
       if (!entryKey.equals(indexKey)) {
         System.out.println("Counter value = " + counter);
