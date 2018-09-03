@@ -3714,19 +3714,17 @@ public class ODocument extends ORecordAbstract
       if (currentValueType == OType.LINKBAG && previousValue != null && previousValueType == OType.LINKBAG){
         ORidBag currentRidbag = (ORidBag)currentValue;
         ORidBag previousRidbag = (ORidBag)previousValue;
-        UpdateTypeValueType ridBagUPdate = getUpdateForRidbagWithPreviousValue(currentRidbag, previousRidbag, changed);
-        if (ridBagUPdate != null){
-          return ridBagUPdate;
+        UpdateTypeValueType ridBagUpdate = getUpdateForRidbagWithPreviousValue(currentRidbag, previousRidbag, changed);
+        if (ridBagUpdate != null){
+          return ridBagUpdate;
         }
       }
       
       if (currentValueType == OType.LINKBAG && previousValue == null){
         ORidBag currentRidbag = (ORidBag)currentValue;
-        if (ODocumentHelper.isChangedRidbag(currentRidbag, parent)){
-          UpdateTypeValueType ridBagUPdate = getUpdateForRidbagWithPreviousValue(currentRidbag, previousRidbag, changed);
-          if (ridBagUPdate != null){
-            return ridBagUPdate;
-          }
+        UpdateTypeValueType ridBagUpdate = getUpdateForRidbagWithoutPreviousValue(currentRidbag, parent);
+        if (ridBagUpdate != null){
+          return ridBagUpdate;
         }
       }
       
