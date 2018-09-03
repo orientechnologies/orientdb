@@ -324,6 +324,8 @@ public enum OGlobalConfiguration {
 
   DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 100),
 
+  DB_POOL_ACQUIRE_TIMEOUT("db.pool.acquireTimeout", "Default database pool timeout in milliseconds", Integer.class, 60000),
+
   DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Timeout for checking for free databases in the pool", Integer.class, 0),
 
   DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Delay time on checking for idle databases", Integer.class, 0),
