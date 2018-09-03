@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -301,7 +302,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected volatile OAtomicOperationsManager atomicOperationsManager;
   private volatile   boolean                  wereNonTxOperationsPerformedInPreviousOpen = false;
   private volatile   OLowDiskSpaceInformation lowDiskSpace                               = null;
-  private volatile   boolean                  pessimisticLock                            = false;
+  private volatile   boolean                  modificationLock                           = false;
+  private volatile   boolean                  readLock                                   = false;
   /**
    * Set of pages which were detected as broken and need to be repaired.
    */
@@ -369,7 +371,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (!exists())
           throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
-        pessimisticLock = contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
+        initLockingStrategy(contextConfiguration);
 
         transaction = new ThreadLocal<>();
         ((OStorageConfigurationImpl) configuration).load(contextConfiguration);
@@ -444,6 +446,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     OLogManager.instance()
         .infoNoDb(this, "Storage '%s' is opened under OrientDB distribution : %s", getURL(), OConstants.getVersion());
+  }
+
+  private void initLockingStrategy(OContextConfiguration contextConfiguration) {
+    String lockKind = contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
+    if (OrientDBConfig.LOCK_TYPE_MODIFICATION.equals(lockKind)) {
+      modificationLock = true;
+    } else if (OrientDBConfig.LOCK_TYPE_READWRITE.equals(lockKind)) {
+      modificationLock = true;
+      readLock = true;
+    }
   }
 
   /**
@@ -564,7 +576,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (exists())
           throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it already exists");
 
-        pessimisticLock = contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
+        initLockingStrategy(contextConfiguration);
 
         ((OStorageConfigurationImpl) configuration).initConfiguration(contextConfiguration);
         componentsFactory = new OCurrentStorageComponentsFactory(getConfiguration());
@@ -2064,7 +2076,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final List<ORecordOperation> result = new ArrayList<>();
       stateLock.acquireReadLock();
       try {
-        if (pessimisticLock) {
+        if (modificationLock) {
           List<ORID> recordLocks = new ArrayList<>();
           for (ORecordOperation recordOperation : recordOperations) {
             if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
@@ -2181,7 +2193,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
       } finally {
         try {
-          if (pessimisticLock) {
+          if (modificationLock) {
             List<ORID> recordLocks = new ArrayList<>();
             for (ORecordOperation recordOperation : recordOperations) {
               if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
@@ -4217,7 +4229,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     stateLock.acquireReadLock();
     try {
-      if (pessimisticLock) {
+      if (readLock) {
         acquireReadLock(rid);
       }
 
@@ -4228,7 +4240,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       return buff;
     } finally {
       try {
-        if (pessimisticLock) {
+        if (readLock) {
           releaseReadLock(rid);
         }
       } finally {
@@ -4252,14 +4264,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     stateLock.acquireReadLock();
     try {
-      if (pessimisticLock) {
+      if (readLock) {
         acquireReadLock(rid);
       }
       checkOpenness();
       return doReadRecord(clusterSegment, rid, prefetchRecords);
     } finally {
       try {
-        if (pessimisticLock) {
+        if (readLock) {
           releaseReadLock(rid);
         }
       } finally {
