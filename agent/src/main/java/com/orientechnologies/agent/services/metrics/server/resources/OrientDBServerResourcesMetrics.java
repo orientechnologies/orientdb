@@ -10,11 +10,14 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.sun.management.OperatingSystemMXBean;
 
+import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,14 +27,18 @@ public class OrientDBServerResourcesMetrics implements OrientDBMetric {
 
   private final OEnterpriseServer server;
   private final OMetricsRegistry  registry;
+  private       List<File>        roots;
 
   public OrientDBServerResourcesMetrics(OEnterpriseServer server, OMetricsRegistry registry) {
     this.server = server;
     this.registry = registry;
+
   }
 
   @Override
   public void start() {
+
+    this.roots = Arrays.asList(File.listRoots());
 
     this.registry.register(OGlobalMetrics.SERVER_RUNTIME_GC.name, OGlobalMetrics.SERVER_RUNTIME_GC.description, GCMetric.class);
     this.registry
@@ -68,6 +75,37 @@ public class OrientDBServerResourcesMetrics implements OrientDBMetric {
         return OGlobalMetrics.SERVER_RUNTIME_DISK_CACHE.description;
       }
     });
+
+    this.registry.registerAll(OGlobalMetrics.SERVER_DISK_SPACE.name, new OMetricSet() {
+      @Override
+      public Map<String, OMetric> getMetrics() {
+        Map<String, OMetric> metrics = new HashMap<>();
+        metrics
+            .put("totalSpace", registry.newGauge("totalSpace", "Total used disk space", OrientDBServerResourcesMetrics.this::getDiskTotal));
+        metrics
+            .put("freeSpace", registry.newGauge("freeSpace", "Total free disk space", OrientDBServerResourcesMetrics.this::getDiskFree));
+
+        metrics
+            .put("usableSpace", registry.newGauge("usableSpace", "Total usable disk space", OrientDBServerResourcesMetrics.this::getDiskUsable));
+
+        return metrics;
+      }
+
+      @Override
+      public String prefix() {
+        return OGlobalMetrics.SERVER_DISK_SPACE.name;
+      }
+
+      @Override
+      public String getName() {
+        return OGlobalMetrics.SERVER_DISK_SPACE.name;
+      }
+
+      @Override
+      public String getDescription() {
+        return OGlobalMetrics.SERVER_DISK_SPACE.description;
+      }
+    });
   }
 
   protected long getDiskCacheTotal() {
@@ -79,6 +117,20 @@ public class OrientDBServerResourcesMetrics implements OrientDBMetric {
       }
     }
     return diskCacheTotal;
+  }
+
+  protected long getDiskTotal() {
+    return this.roots.stream().map((f) -> f.getTotalSpace()).reduce(0l, (a, b) -> a + b);
+
+  }
+
+  protected long getDiskFree() {
+    return this.roots.stream().map((f) -> f.getFreeSpace()).reduce(0l, (a, b) -> a + b);
+
+  }
+  protected long getDiskUsable() {
+    return this.roots.stream().map((f) -> f.getUsableSpace()).reduce(0l, (a, b) -> a + b);
+
   }
 
   public long getDiskCacheUsed() {
