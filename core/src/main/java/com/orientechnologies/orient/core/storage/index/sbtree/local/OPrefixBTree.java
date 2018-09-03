@@ -1691,6 +1691,10 @@ public class OPrefixBTree<V> extends ODurableComponent {
               final Map.Entry<String, V> entry = convertToMapEntry(bucket.getEntry(itemIndex), atomicOperation);
               itemIndex++;
 
+              if (entry.getKey().equals("104569996")) {
+                System.out.println();
+              }
+
               keysCache.add(entry.getKey());
             }
           } finally {
