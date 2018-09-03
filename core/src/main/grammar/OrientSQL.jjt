@@ -194,14 +194,14 @@ TOKEN:
     < LET: ( "l" | "L" ) ( "e" | "E" ) ( "t" | "T" ) >
     |
     < CACHE: ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
-    |
-    < MAXVALUE: ( "m" | "M" ) ( "a" | "A" ) ( "x" | "X" ) ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) >
-    |
-    < MINVALUE: ( "m" | "M" ) ( "i" | "I" ) ( "n" | "N" ) ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) >
-    |
+    |    
     < CYCLE: ( "c" | "C" ) ( "y" | "Y" ) ( "c" | "C" ) ( "l" | "L" ) ( "e" | "E" ) >
     |
     < NOCACHE: ( "n" | "N" ) ( "o" | "O" ) ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
+    |
+    < NOLIMIT: ( "n" | "N" ) ( "o" | "O" ) ( "l" | "L" ) ( "i" | "I" ) ( "m" | "M" ) ( "i" | "I" ) ( "t" | "T" ) >
+    |
+    < NOCYCLE: ( "n" | "N" ) ( "o" | "O" ) ( "c" | "C" ) ( "y" | "Y" ) ( "c" | "C" ) ( "l" | "L" ) ( "e" | "E" ) >
     |
     < UNSAFE: ( "u" | "U" ) ( "n" | "N" ) ( "s" | "S" ) ( "a" | "A" ) ( "f" | "F" ) ( "e" | "E" ) >
     |
@@ -884,12 +884,12 @@ OIdentifier Identifier():
     token = <SEQUENCE>
     |
     token = <CACHE>
-    |
-    token = <MAXVALUE>
-    |
-    token = <MINVALUE>
-    |
+    |    
     token = <CYCLE>
+    |
+    token = <NOLIMIT>
+    |
+    token = <NOCYCLE>
     |
     token = <START>
     |
@@ -4972,13 +4972,26 @@ OCreateSequenceStatement CreateSequenceStatement():
             |
             ( <INCREMENT> jjtThis.increment = Expression() )
             |
-            ( <MAXVALUE> jjtThis.maxValue = Expression() )
+            ( <LIMIT> jjtThis.limitValue = Expression() )            
             |
-            ( <MINVALUE> jjtThis.minValue = Expression() )
-            |
-            ( <CYCLE> { jjtThis.cycle = true; } )
+            ( 
+                <CYCLE> 
+                (
+                    ( 
+                        <TRUE> { jjtThis.cyclic = true; } 
+                    )
+                    | 
+                    (
+                        <FALSE> { jjtThis.cyclic = false; } 
+                    )
+                )
+            )
             |
             ( <CACHE> jjtThis.cache = Expression() )
+            |
+            ( <ASC> { jjtThis.positive = true; } ) 
+            |
+            ( <DESC> { jjtThis.positive = false; } )
         )*
     )
     { return jjtThis; }
@@ -4992,9 +5005,34 @@ OAlterSequenceStatement AlterSequenceStatement():
     (
         <ALTER> <SEQUENCE>
         jjtThis.name = Identifier()
-        [ <START> jjtThis.start = Expression() ]
-        [ <INCREMENT> jjtThis.increment = Expression() ]
-        [ <CACHE> jjtThis.cache = Expression() ]
+        (
+            ( <START> jjtThis.start = Expression() )
+            |
+            ( <INCREMENT> jjtThis.increment = Expression() )
+            |
+            ( <LIMIT> jjtThis.limitValue = Expression() )
+            |            
+            ( 
+                <CYCLE> 
+                (
+                    ( 
+                        <TRUE> { jjtThis.cyclic = true; } 
+                    )
+                    | 
+                    (
+                        <FALSE> { jjtThis.cyclic = false; } 
+                    )
+                )
+            )
+            |
+            ( <CACHE> jjtThis.cache = Expression() )
+            |
+            ( <ASC> { jjtThis.positive = true; } ) 
+            |
+            ( <DESC> { jjtThis.positive = false; } )
+            |
+            ( <NOLIMIT> { jjtThis.turnLimitOff = true; } )                        
+        )*
     )
     { return jjtThis; }
 }

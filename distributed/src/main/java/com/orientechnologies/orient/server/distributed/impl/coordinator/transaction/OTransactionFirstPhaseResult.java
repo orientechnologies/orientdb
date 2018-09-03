@@ -19,18 +19,6 @@ public class OTransactionFirstPhaseResult implements ONodeResponse {
   private Type   type;
   private Object resultMetadata;
 
-  public static class Success {
-    private List<ORecordId> allocatedIds;
-
-    public Success(List<ORecordId> allocatedIds) {
-      this.allocatedIds = allocatedIds;
-    }
-
-    public List<ORecordId> getAllocatedIds() {
-      return allocatedIds;
-    }
-  }
-
   public static class ConcurrentModification {
     private final ORecordId recordId;
     private final int       updateVersion;

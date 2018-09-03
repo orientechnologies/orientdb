@@ -12,12 +12,15 @@ public class ODistributedCoordinator implements AutoCloseable {
   private final Map<String, ODistributedMember>        members  = new ConcurrentHashMap<>();
   private final Timer                                  timer;
   private final ODistributedLockManager                lockManager;
+  private final OClusterPositionAllocator              allocator;
 
-  public ODistributedCoordinator(ExecutorService requestExecutor, OOperationLog operationLog, ODistributedLockManager lockManager) {
+  public ODistributedCoordinator(ExecutorService requestExecutor, OOperationLog operationLog, ODistributedLockManager lockManager,
+      OClusterPositionAllocator allocator) {
     this.requestExecutor = requestExecutor;
     this.operationLog = operationLog;
     this.timer = new Timer(true);
     this.lockManager = lockManager;
+    this.allocator = allocator;
   }
 
   public void submit(ODistributedMember member, OSubmitRequest request) {
@@ -84,4 +87,7 @@ public class ODistributedCoordinator implements AutoCloseable {
     return lockManager;
   }
 
+  public OClusterPositionAllocator getAllocator() {
+    return allocator;
+  }
 }

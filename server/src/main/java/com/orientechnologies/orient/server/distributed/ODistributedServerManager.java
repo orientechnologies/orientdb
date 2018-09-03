@@ -295,4 +295,6 @@ public interface ODistributedServerManager {
    * @return
    */
   boolean isWriteQuorumPresent(String databaseName);
+
+  void notifyClients(String databaseName);
 }

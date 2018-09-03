@@ -1587,7 +1587,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
 
     final ODatabaseDocumentInternal db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta,
-        uniqueClustersBackupDirectory, cfg);
+        uniqueClustersBackupDirectory, cfg, firstChunk.incremental, firstChunk.walSegment, firstChunk.walPosition);
 
     if (db == null)
       return;
@@ -1788,7 +1788,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return result;
   }
 
-  protected abstract void notifyClients(String databaseName);
+  public abstract void notifyClients(String databaseName);
 
   protected void onDatabaseEvent(final String nodeName, final String databaseName, final DB_STATUS status) {
     updateLastClusterChange();
@@ -1919,7 +1919,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   protected ODatabaseDocumentInternal installDatabaseOnLocalNode(final String databaseName, final String dbPath, final String iNode,
       final String iDatabaseCompressedFile, final boolean delta, final File uniqueClustersBackupDirectory,
-      final OModifiableDistributedConfiguration cfg) {
+      final OModifiableDistributedConfiguration cfg, boolean incremental, long walSegment, long walPosition) {
     ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN, "Installing database '%s' to: %s...", databaseName, dbPath);
 
     try {
@@ -1988,7 +1988,56 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           @Override
           public Void call(final OModifiableDistributedConfiguration cfg) {
             try {
-              if (delta) {
+              if (incremental) {
+                File dir = File.createTempFile("tmp", Long.toString(System.currentTimeMillis()));
+                if (dir.exists()) {
+                  dir.delete();
+                }
+                dir.mkdir();
+                File file = new File(iDatabaseCompressedFile);
+                file.renameTo(new File(dir, databaseName + "_full.ibu"));
+                serverInstance.getDatabases().fullSync(databaseName, dir.getAbsolutePath(), OrientDBConfig.defaultConfig());
+                file.delete();
+                dir.delete();
+                if (uniqueClustersBackupDirectory != null && uniqueClustersBackupDirectory.exists()) {
+                  // RESTORE UNIQUE FILES FROM THE BACKUP FOLDERS. THOSE FILES ARE THE CLUSTERS OWNED EXCLUSIVELY BY CURRENT
+                  // NODE THAT WOULD BE LOST IF NOT REPLACED
+                  for (File f : uniqueClustersBackupDirectory.listFiles()) {
+                    final File oldFile = new File(dbPath + "/" + f.getName());
+                    if (oldFile.exists())
+                      oldFile.delete();
+
+                    // REPLACE IT
+                    if (!f.renameTo(oldFile))
+                      throw new ODistributedException(
+                          "Cannot restore exclusive cluster file '" + f.getAbsolutePath() + "' into " + oldFile.getAbsolutePath());
+                  }
+
+                  uniqueClustersBackupDirectory.delete();
+                }
+                OLogSequenceNumber lsn = new OLogSequenceNumber(walSegment, walPosition);
+                final OSyncDatabaseDeltaTask deployTask = new OSyncDatabaseDeltaTask(lsn,
+                    getMessageService().getDatabase(databaseName).getSyncConfiguration().getLastOperationTimestamp());
+
+                final Set<String> clustersOnLocalServer = cfg.getClustersOnServer(getLocalNodeName());
+                for (String c : clustersOnLocalServer)
+                  deployTask.includeClusterName(c);
+
+                final List<String> targetNodes = new ArrayList<String>(1);
+                targetNodes.add(iNode);
+
+                ODistributedServerLog
+                    .info(this, nodeName, iNode, DIRECTION.OUT, "Requesting database delta sync for '%s' LSN=%s...", databaseName,
+                        lsn);
+
+                try {
+                  final ODistributedResponse response = sendRequest(databaseName, null, targetNodes, deployTask,
+                      getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+                } catch (Exception e) {
+                  e.printStackTrace();//TODO
+                }
+
+              } else if (delta) {
 
                 new OIncrementalServerSync().importDelta(serverInstance, databaseName, in, iNode);
 

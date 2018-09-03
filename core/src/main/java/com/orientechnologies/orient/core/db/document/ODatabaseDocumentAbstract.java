@@ -85,26 +85,26 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected final Map<String, Object> properties = new HashMap<String, Object>();
-  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
-  protected ORecordSerializer    serializer;
-  protected String               url;
-  protected STATUS               status;
-  protected OIntent              currentIntent;
-  protected ODatabaseInternal<?> databaseOwner;
-  protected OMetadataDefault     metadata;
-  protected OImmutableUser       user;
+  protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
+  protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
+  protected       ORecordSerializer                           serializer;
+  protected       String                                      url;
+  protected       STATUS                                      status;
+  protected       OIntent                                     currentIntent;
+  protected       ODatabaseInternal<?>                        databaseOwner;
+  protected       OMetadataDefault                            metadata;
+  protected       OImmutableUser                              user;
   protected final byte                                        recordType    = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
-  protected OLocalRecordCache                localCache;
-  protected OCurrentStorageComponentsFactory componentsFactory;
-  protected boolean initialized = false;
-  protected OTransaction currentTx;
+  protected       OLocalRecordCache                           localCache;
+  protected       OCurrentStorageComponentsFactory            componentsFactory;
+  protected       boolean                                     initialized   = false;
+  protected       OTransaction                                currentTx;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected OSharedContext sharedContext;
+  protected       OSharedContext  sharedContext;
 
   private boolean prefetchRecords;
 
@@ -1264,126 +1264,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    *
    * @Internal
    */
-  public <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final int recordVersion,
+  public abstract <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final int recordVersion,
       final String fetchPlan, final boolean ignoreCache, final boolean iUpdateCache, final boolean loadTombstones,
-      final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader) {
-    checkOpenness();
-    checkIfActive();
-
-    getMetadata().makeThreadLocalSchemaSnapshot();
-    ORecordSerializationContext.pushContext();
-    try {
-      checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(rid.getClusterId()));
-
-      // either regular or micro tx must be active or both inactive
-      assert !(getTransaction().isActive() && (microTransaction != null && microTransaction.isActive()));
-
-      // SEARCH IN LOCAL TX
-      ORecord record = getTransaction().getRecord(rid);
-      if (record == OBasicTransaction.DELETED_RECORD)
-        // DELETED IN TX
-        return null;
-
-      if (record == null) {
-        if (microTransaction != null && microTransaction.isActive()) {
-          record = microTransaction.getRecord(rid);
-          if (record == OBasicTransaction.DELETED_RECORD)
-            return null;
-        }
-      }
-
-      if (record == null && !ignoreCache)
-        // SEARCH INTO THE CACHE
-        record = getLocalCache().findRecord(rid);
-
-      if (record != null) {
-        if (iRecord != null) {
-          iRecord.fromStream(record.toStream());
-          ORecordInternal.setVersion(iRecord, record.getVersion());
-          record = iRecord;
-        }
-
-        OFetchHelper.checkFetchPlanValid(fetchPlan);
-        if (beforeReadOperations(record))
-          return null;
-
-        if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-          record.reload();
-
-        if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
-          OLogManager.instance()
-              .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
-          record.lock(false);
-
-        } else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
-          OLogManager.instance()
-              .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
-          record.lock(true);
-        }
-
-        afterReadOperations(record);
-        if (record instanceof ODocument)
-          ODocumentInternal.checkClass((ODocument) record, this);
-        return (RET) record;
-      }
-
-      final ORawBuffer recordBuffer;
-      if (!rid.isValid())
-        recordBuffer = null;
-      else {
-        OFetchHelper.checkFetchPlanValid(fetchPlan);
-
-        int version;
-        if (iRecord != null)
-          version = iRecord.getVersion();
-        else
-          version = recordVersion;
-
-        recordBuffer = recordReader.readRecord(getStorage(), rid, fetchPlan, ignoreCache, version);
-      }
-
-      if (recordBuffer == null)
-        return null;
-
-      if (iRecord == null || ORecordInternal.getRecordType(iRecord) != recordBuffer.recordType)
-        // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
-        iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType, rid.getClusterId(), this);
-
-      ORecordInternal.setRecordSerializer(iRecord, getSerializer());
-      ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false, this);
-
-      if (iRecord instanceof ODocument)
-        ODocumentInternal.checkClass((ODocument) iRecord, this);
-
-      if (ORecordVersionHelper.isTombstone(iRecord.getVersion()))
-        return (RET) iRecord;
-
-      if (beforeReadOperations(iRecord))
-        return null;
-
-      iRecord.fromStream(recordBuffer.buffer);
-
-      afterReadOperations(iRecord);
-      if (iUpdateCache)
-        getLocalCache().updateRecord(iRecord);
-
-      return (RET) iRecord;
-    } catch (OOfflineClusterException t) {
-      throw t;
-    } catch (ORecordNotFoundException t) {
-      throw t;
-    } catch (Exception t) {
-      if (rid.isTemporary())
-        throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RID: " + rid), t);
-      else
-        throw OException.wrapException(new ODatabaseException(
-            "Error on retrieving record " + rid + " (cluster: " + getStorage().getPhysicalClusterNameById(rid.getClusterId())
-                + ")"), t);
-    } finally {
-      ORecordSerializationContext.pullContext();
-      getMetadata().clearThreadLocalSchemaSnapshot();
-    }
-  }
+      final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader);
 
   public int assignAndCheckCluster(ORecord record, String iClusterName) {
     ORecordId rid = (ORecordId) record.getIdentity();
@@ -2399,7 +2282,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
-  public String incrementalBackup(final String path) {
+  public String incrementalBackup(final String path) throws UnsupportedOperationException{
     checkOpenness();
     checkIfActive();
 

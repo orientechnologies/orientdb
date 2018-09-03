@@ -540,7 +540,7 @@ public class OSelectExecutionPlanner {
   private boolean isMinimalQuery(QueryPlanningInfo info) {
     if (info.projectionAfterOrderBy != null || info.globalLetClause != null || info.perRecordLetClause != null
         || info.whereClause != null || info.flattenedWhereClause != null || info.groupBy != null || info.orderBy != null
-        || info.unwind != null || info.skip != null || info.limit != null) {
+        || info.unwind != null || info.skip != null) {
       return false;
     }
     return true;
@@ -631,7 +631,11 @@ public class OSelectExecutionPlanner {
       return;
     }
     if (info.whereClause != null && info.target != null && info.target.getItem().getIdentifier() != null) {
-      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(info.target.getItem().getIdentifier().getStringValue());
+      String className = info.target.getItem().getIdentifier().getStringValue();
+      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(className);
+      if(clazz==null){
+        clazz = ctx.getDatabase().getMetadata().getSchema().getView(className);
+      }
       if (clazz != null) {
         info.whereClause.getBaseExpression().rewriteIndexChainsAsSubqueries(ctx, clazz);
       }

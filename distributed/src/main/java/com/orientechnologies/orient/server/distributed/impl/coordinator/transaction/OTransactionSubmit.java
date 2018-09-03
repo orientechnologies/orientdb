@@ -4,6 +4,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -72,8 +73,15 @@ public class OTransactionSubmit implements OSubmitRequest {
 
     //Sort and lock transaction entry in distributed environment
     Set<ORID> rids = new TreeSet<>();
+    Map<ORID, ORID> newIds = new HashMap<>();
     for (ORecordOperationRequest entry : operations) {
-      rids.add(entry.getId());
+      if (ORecordOperation.CREATED == entry.getType()) {
+        int clusterId = entry.getId().getClusterId();
+        long pos = coordinator.getAllocator().allocate(clusterId);
+        newIds.put(entry.getId(), new ORecordId(clusterId, pos));
+      } else {
+        rids.add(entry.getId());
+      }
     }
 
     List<OLockGuard> guards = new ArrayList<>();

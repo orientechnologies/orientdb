@@ -13,7 +13,15 @@ public class OViewConfig {
   public static String UPDATE_STRATEGY_LIVE  = "live";
 
   public static class OViewIndexConfig {
+
+    protected final String type;
+    protected final String engine;
     protected List<OPair<String, OType>> props = new ArrayList<>();
+
+    OViewIndexConfig(String type, String engine) {
+      this.type = type;
+      this.engine = engine;
+    }
 
     public void addProperty(String name, OType type) {
       this.props.add(new OPair<>(name, type));
@@ -22,6 +30,7 @@ public class OViewConfig {
     public List<OPair<String, OType>> getProperties() {
       return props;
     }
+
   }
 
   protected String  name;
@@ -43,7 +52,7 @@ public class OViewConfig {
     OViewConfig result = new OViewConfig(this.name, this.query);
     result.updatable = this.updatable;
     for (OViewIndexConfig index : indexes) {
-      OViewIndexConfig idx = result.addIndex();
+      OViewIndexConfig idx = result.addIndex(index.type, index.engine);
       index.props.forEach(x -> idx.addProperty(x.key, x.value));
     }
     result.updateStrategy = this.updateStrategy;
@@ -54,8 +63,8 @@ public class OViewConfig {
     return result;
   }
 
-  public OViewIndexConfig addIndex() {
-    OViewIndexConfig result = new OViewIndexConfig();
+  public OViewIndexConfig addIndex(String type, String engine) {
+    OViewIndexConfig result = new OViewIndexConfig(type, engine);
     indexes.add(result);
     return result;
   }

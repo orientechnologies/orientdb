@@ -19,29 +19,41 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.orient.core.serialization.OStreamable;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.server.distributed.ODistributedMomentum;
+
 import java.io.*;
 import java.util.zip.GZIPInputStream;
 
-import com.orientechnologies.orient.core.serialization.OStreamable;
-import com.orientechnologies.orient.server.distributed.ODistributedMomentum;
-
 public class ODistributedDatabaseChunk implements OStreamable {
-  public String                filePath;
-  public long                  offset;
-  public byte[]                buffer;
-  public boolean               gzipCompressed;
-  public boolean               last;
+  public  String               filePath;
+  public  long                 offset;
+  public  byte[]               buffer;
+  public  boolean              gzipCompressed;
+  public  boolean              last;
   private ODistributedMomentum momentum;
+  public  boolean              incremental;
+  public  long                 walSegment;
+  public  long                 walPosition;
 
   public ODistributedDatabaseChunk() {
   }
 
   public ODistributedDatabaseChunk(final File iFile, final long iOffset, final int iMaxSize, final ODistributedMomentum momentum,
-      final boolean gzipCompressed) throws IOException {
+      final boolean gzipCompressed, boolean incremental) throws IOException {
+    this(iFile, iOffset, iMaxSize, momentum, gzipCompressed, incremental, -1, -1);
+  }
+
+  public ODistributedDatabaseChunk(final File iFile, final long iOffset, final int iMaxSize, final ODistributedMomentum momentum,
+      final boolean gzipCompressed, boolean incremental, long walSegment, long walPosition) throws IOException {
     filePath = iFile.getAbsolutePath();
     offset = iOffset;
     this.momentum = momentum;
     this.gzipCompressed = gzipCompressed;
+    this.incremental = incremental;
+    this.walSegment = walSegment;
+    this.walPosition = walPosition;
 
     long fileSize = iFile.length();
 
@@ -107,6 +119,9 @@ public class ODistributedDatabaseChunk implements OStreamable {
 
     out.writeBoolean(gzipCompressed);
     out.writeBoolean(last);
+    out.writeBoolean(incremental);
+    out.writeLong(walSegment);
+    out.writeLong(walPosition);
   }
 
   @Override
@@ -125,9 +140,16 @@ public class ODistributedDatabaseChunk implements OStreamable {
 
     gzipCompressed = in.readBoolean();
     last = in.readBoolean();
+    incremental = in.readBoolean();
+    walSegment = in.readLong();
+    walPosition = in.readLong();
   }
 
   public ODistributedMomentum getMomentum() {
     return momentum;
+  }
+
+  public OLogSequenceNumber getLastWal() {
+    return new OLogSequenceNumber(walSegment, walPosition);
   }
 }

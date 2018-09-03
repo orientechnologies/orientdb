@@ -27,33 +27,41 @@ import com.orientechnologies.orient.client.remote.ORemoteQueryResult;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
-import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.storage.OBasicTransaction;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -631,6 +639,120 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
     return iRecord;
   }
+
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not use.
+   *
+   * @Internal
+   */
+  public <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final int recordVersion,
+      final String fetchPlan, final boolean ignoreCache, final boolean iUpdateCache, final boolean loadTombstones,
+      final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader) {
+    checkOpenness();
+    checkIfActive();
+
+    getMetadata().makeThreadLocalSchemaSnapshot();
+    try {
+      checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(rid.getClusterId()));
+
+      // SEARCH IN LOCAL TX
+      ORecord record = getTransaction().getRecord(rid);
+      if (record == OBasicTransaction.DELETED_RECORD)
+        // DELETED IN TX
+        return null;
+
+      if (record == null && !ignoreCache)
+        // SEARCH INTO THE CACHE
+        record = getLocalCache().findRecord(rid);
+
+      if (record != null) {
+        if (iRecord != null) {
+          iRecord.fromStream(record.toStream());
+          ORecordInternal.setVersion(iRecord, record.getVersion());
+          record = iRecord;
+        }
+
+        OFetchHelper.checkFetchPlanValid(fetchPlan);
+        if (beforeReadOperations(record))
+          return null;
+
+        if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
+          record.reload();
+
+        if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+          OLogManager.instance()
+              .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
+          record.lock(false);
+
+        } else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
+          OLogManager.instance()
+              .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
+          record.lock(true);
+        }
+
+        afterReadOperations(record);
+        if (record instanceof ODocument)
+          ODocumentInternal.checkClass((ODocument) record, this);
+        return (RET) record;
+      }
+
+      final ORawBuffer recordBuffer;
+      if (!rid.isValid())
+        recordBuffer = null;
+      else {
+        OFetchHelper.checkFetchPlanValid(fetchPlan);
+
+        int version;
+        if (iRecord != null)
+          version = iRecord.getVersion();
+        else
+          version = recordVersion;
+
+        recordBuffer = recordReader.readRecord(getStorage(), rid, fetchPlan, ignoreCache, version);
+      }
+
+      if (recordBuffer == null)
+        return null;
+
+      if (iRecord == null || ORecordInternal.getRecordType(iRecord) != recordBuffer.recordType)
+        // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
+        iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType, rid.getClusterId(), this);
+
+      ORecordInternal.setRecordSerializer(iRecord, getSerializer());
+      ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false, this);
+
+      if (iRecord instanceof ODocument)
+        ODocumentInternal.checkClass((ODocument) iRecord, this);
+
+      if (ORecordVersionHelper.isTombstone(iRecord.getVersion()))
+        return (RET) iRecord;
+
+      if (beforeReadOperations(iRecord))
+        return null;
+
+      iRecord.fromStream(recordBuffer.buffer);
+
+      afterReadOperations(iRecord);
+      if (iUpdateCache)
+        getLocalCache().updateRecord(iRecord);
+
+      return (RET) iRecord;
+    } catch (OOfflineClusterException t) {
+      throw t;
+    } catch (ORecordNotFoundException t) {
+      throw t;
+    } catch (Exception t) {
+      if (rid.isTemporary())
+        throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RID: " + rid), t);
+      else
+        throw OException.wrapException(new ODatabaseException(
+            "Error on retrieving record " + rid + " (cluster: " + getStorage().getPhysicalClusterNameById(rid.getClusterId())
+                + ")"), t);
+    } finally {
+      getMetadata().clearThreadLocalSchemaSnapshot();
+    }
+  }
+
 
   public String getClusterName(final ORecord record) {
     // DON'T ASSIGN CLUSTER WITH REMOTE: SERVER KNOWS THE RIGHT CLUSTER BASED ON LOCALITY

@@ -53,6 +53,9 @@ public class CountFromClassStep extends AbstractExecutionStep {
         try {
           OClass clazz = ctx.getDatabase().getClass(target.getStringValue());
           if (clazz == null) {
+            clazz = ctx.getDatabase().getMetadata().getSchema().getView(target.getStringValue());
+          }
+          if (clazz == null) {
             throw new OCommandExecutionException("Class " + target.getStringValue() + " does not exist in the database schema");
           }
           long size = clazz.count();

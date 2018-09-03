@@ -38,11 +38,8 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
     OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(session, operations);
     ONodeResponse response;
     try {
-      //TODO:Refactor this method to match the new api
       ((ODatabaseDocumentDistributed) session).txFirstPhase(operationId, tx);
-      //TODO:get the allocated ids and send to the coordinator.
-      Success metadata = new Success(new ArrayList<>());
-      response = new OTransactionFirstPhaseResult(Type.SUCCESS, metadata);
+      response = new OTransactionFirstPhaseResult(Type.SUCCESS, null);
 
     } catch (OConcurrentModificationException ex) {
       ConcurrentModification metadata = new ConcurrentModification((ORecordId) ex.getRid().getIdentity(),
@@ -55,7 +52,8 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
     } catch (RuntimeException ex) {
       //TODO: get action with some exception handler to offline the node or activate a recover operation
       response = new OTransactionFirstPhaseResult(Type.EXCEPTION, null);
-    } return response;
+    }
+    return response;
   }
 
   private List<ORecordOperation> convert(ODatabaseDocumentInternal database, List<ORecordOperationRequest> operations) {

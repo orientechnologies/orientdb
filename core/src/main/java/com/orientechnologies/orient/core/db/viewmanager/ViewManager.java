@@ -35,6 +35,15 @@ public class ViewManager {
   ConcurrentMap<Integer, String>        oldClustersPerViews = new ConcurrentHashMap<>();
   List<Integer>                         clustersToDrop      = Collections.synchronizedList(new ArrayList<>());
 
+  /**
+   * To retain indexes that are being used in queries until the queries are closed.
+   * <p>
+   * view -> index -> number of visitors
+   */
+  ConcurrentMap<String, AtomicInteger> viewIndexVisitors  = new ConcurrentHashMap<>();
+  ConcurrentMap<String, String>        oldIndexesPerViews = new ConcurrentHashMap<>();
+  List<String>                         indexesToDrop      = Collections.synchronizedList(new ArrayList<>());
+
   Map<String, Long> lastUpdateTimestampForView = new HashMap<>();
 
   Map<String, Long> lastChangePerClass = new ConcurrentHashMap<>();
@@ -77,6 +86,22 @@ public class ViewManager {
       clustersToDrop.remove(cluster);
       oldClustersPerViews.remove(cluster);
       db.dropCluster(cluster, false);
+    }
+  }
+
+  public synchronized void cleanUnusedViewIndexes(ODatabaseDocument db) {
+    List<String> toRemove = new ArrayList<>();
+    for (String index : indexesToDrop) {
+      AtomicInteger visitors = viewIndexVisitors.get(index);
+      if (visitors == null || visitors.get() <= 0) {
+        toRemove.add(index);
+      }
+    }
+    for (String index : toRemove) {
+      viewIndexVisitors.remove(index);
+      indexesToDrop.remove(index);
+      oldIndexesPerViews.remove(index);
+      db.getMetadata().getIndexManager().dropIndex(index);
     }
   }
 
@@ -191,23 +216,13 @@ public class ViewManager {
         return null;
       }
 
-      private Object indexedKeyFor(OIndex idx, OElement newRow) {
-        List<String> fieldsToIndex = idx.getDefinition().getFieldsToIndex();
-        if (fieldsToIndex.size() == 1) {
-          return idx.getDefinition().createValue((Object) newRow.getProperty(fieldsToIndex.get(0)));
-        }
-        Object[] vals = new Object[fieldsToIndex.size()];
-        for (int i = 0; i < fieldsToIndex.size(); i++) {
-          vals[i] = newRow.getProperty(fieldsToIndex.get(i));
-        }
-        return idx.getDefinition().createValue(vals);
-      }
     });
 
     view = db.getMetadata().getSchema().getView(view.getName());
     if (view == null) {
       //the view was dropped in the meantime
       db.dropCluster(clusterName, false);
+      indexes.forEach(x -> x.delete());
       return;
     }
     lockView(view);
@@ -220,14 +235,32 @@ public class ViewManager {
         view.removeClusterId(i);
       }
     }
+
+    final OViewImpl viewImpl = ((OViewImpl) view);
+    viewImpl.getInactiveIndexes().forEach(idx -> {
+      indexesToDrop.add(idx);
+      viewIndexVisitors.put(idx, new AtomicInteger(0));
+      oldIndexesPerViews.put(idx, viewName);
+    });
+    viewImpl.inactivateIndexes();
+    viewImpl.addActiveIndexes(indexes.stream().map(x -> x.getName()).collect(Collectors.toList()));
+
     unlockView(view);
     cleanUnusedViewIndexes(db);
     cleanUnusedViewClusters(db);
 
   }
 
-  private void cleanUnusedViewIndexes(ODatabaseDocument db) {
-    //TODO
+  private Object indexedKeyFor(OIndex idx, OElement newRow) {
+    List<String> fieldsToIndex = idx.getDefinition().getFieldsToIndex();
+    if (fieldsToIndex.size() == 1) {
+      return idx.getDefinition().createValue((Object) newRow.getProperty(fieldsToIndex.get(0)));
+    }
+    Object[] vals = new Object[fieldsToIndex.size()];
+    for (int i = 0; i < fieldsToIndex.size(); i++) {
+      vals[i] = newRow.getProperty(fieldsToIndex.get(i));
+    }
+    return idx.getDefinition().createValue(vals);
   }
 
   private List<OIndex> createNewIndexesForView(OView view, int cluster, ODatabaseDocument db) {
@@ -343,5 +376,22 @@ public class ViewManager {
 
   public String getViewFromOldCluster(int clusterId) {
     return oldClustersPerViews.get(clusterId);
+  }
+
+  public void endUsingViewIndex(String indexName) {
+    AtomicInteger item = viewIndexVisitors.get(indexName);
+    if (item == null) {
+      return;
+    }
+    item.decrementAndGet();
+  }
+
+  public void startUsingViewIndex(String indexName) {
+    AtomicInteger item = viewIndexVisitors.get(indexName);
+    if (item == null) {
+      item = new AtomicInteger(0);
+      viewIndexVisitors.put(indexName, item);
+    }
+    item.incrementAndGet();
   }
 }
