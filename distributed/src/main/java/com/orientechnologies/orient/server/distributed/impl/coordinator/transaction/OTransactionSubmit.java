@@ -13,12 +13,15 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.*;
 
 public class OTransactionSubmit implements OSubmitRequest {
-  private final OSessionOperationId           operationId;
-  private final List<ORecordOperationRequest> operations;
-  private final List<OIndexOperationRequest>  indexes;
+  private OSessionOperationId           operationId;
+  private List<ORecordOperationRequest> operations;
+  private List<OIndexOperationRequest>  indexes;
 
   public OTransactionSubmit(OSessionOperationId operationId, Collection<ORecordOperation> ops,
       List<OIndexOperationRequest> indexes) {
@@ -90,6 +93,43 @@ public class OTransactionSubmit implements OSubmitRequest {
     }
     OTransactionFirstPhaseResponseHandler responseHandler = new OTransactionFirstPhaseResponseHandler(operationId, this, member,
         guards);
-    coordinator.sendOperation(this, new OTransactionFirstPhaseOperation(this.operationId, this.operations), responseHandler);
+    OTransactionFirstPhaseOperation request = new OTransactionFirstPhaseOperation(this.operationId, this.operations, indexes);
+    coordinator.sendOperation(this, request, responseHandler);
+  }
+
+  @Override
+  public void deserialize(DataInput input) throws IOException {
+    operationId = new OSessionOperationId();
+    operationId.deserialize(input);
+
+    int size = input.readInt();
+    operations = new ArrayList<>(size);
+    while (size-- > 0) {
+      ORecordOperationRequest op = new ORecordOperationRequest();
+      op.deserialize(input);
+      operations.add(op);
+    }
+
+    size = input.readInt();
+    indexes = new ArrayList<>(size);
+    while (size-- > 0) {
+      OIndexOperationRequest change = new OIndexOperationRequest();
+      change.deserialize(input);
+      indexes.add(change);
+    }
+
+  }
+
+  @Override
+  public void serialize(DataOutput output) throws IOException {
+    operationId.serialize(output);
+    output.writeInt(operations.size());
+    for (ORecordOperationRequest operation : operations) {
+      operation.serialize(output);
+    }
+    output.writeInt(indexes.size());
+    for (OIndexOperationRequest change : indexes) {
+      change.serialize(output);
+    }
   }
 }

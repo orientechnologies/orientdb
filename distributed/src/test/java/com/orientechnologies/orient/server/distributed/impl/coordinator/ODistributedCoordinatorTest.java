@@ -3,6 +3,9 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import org.junit.Test;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -17,7 +20,8 @@ public class ODistributedCoordinatorTest {
     CountDownLatch responseReceived = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null, null);
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
+        null);
     MockChannel channel = new MockChannel();
     channel.coordinator = coordinator;
     ODistributedMember one = new ODistributedMember("one", channel);
@@ -45,6 +49,15 @@ public class ODistributedCoordinatorTest {
         });
       }
 
+      @Override
+      public void serialize(DataOutput output) {
+
+      }
+
+      @Override
+      public void deserialize(DataInput input) {
+
+      }
     });
     assertTrue(responseReceived.await(1, TimeUnit.SECONDS));
     coordinator.close();
@@ -56,7 +69,8 @@ public class ODistributedCoordinatorTest {
     CountDownLatch responseReceived = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null, null);
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
+        null);
     MockChannel channel = new MockChannel();
     channel.coordinator = coordinator;
     channel.reply = responseReceived;
@@ -78,6 +92,16 @@ public class ODistributedCoordinatorTest {
                 public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
                     ODatabaseDocumentInternal session) {
                   return null;
+                }
+
+                @Override
+                public void serialize(DataOutput output) {
+
+                }
+
+                @Override
+                public void deserialize(DataInput input) {
+
                 }
               }, new OResponseHandler() {
                 @Override
@@ -105,6 +129,16 @@ public class ODistributedCoordinatorTest {
           }
         });
       }
+
+      @Override
+      public void serialize(DataOutput output) {
+
+      }
+
+      @Override
+      public void deserialize(DataInput input) {
+
+      }
     });
 
     assertTrue(responseReceived.await(1, TimeUnit.SECONDS));
@@ -117,7 +151,8 @@ public class ODistributedCoordinatorTest {
     CountDownLatch timedOut = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null, null);
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
+        null);
     MockChannel channel = new MockChannel();
     channel.coordinator = coordinator;
     ODistributedMember one = new ODistributedMember("one", channel);
@@ -142,6 +177,16 @@ public class ODistributedCoordinatorTest {
           }
         });
       }
+
+      @Override
+      public void serialize(DataOutput output) throws IOException {
+        
+      }
+
+      @Override
+      public void deserialize(DataInput input) throws IOException {
+
+      }
     });
 
     //This is 2 seconds because timeout is hard coded with 1 sec now
@@ -158,6 +203,15 @@ public class ODistributedCoordinatorTest {
     @Override
     public void sendRequest(OLogId id, ONodeRequest request) {
       coordinator.receive(member, id, new ONodeResponse() {
+        @Override
+        public void serialize(DataOutput output) throws IOException {
+
+        }
+
+        @Override
+        public void deserialize(DataInput input) throws IOException {
+
+        }
       });
     }
 
@@ -178,6 +232,16 @@ public class ODistributedCoordinatorTest {
     public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
         ODatabaseDocumentInternal session) {
       return null;
+    }
+
+    @Override
+    public void serialize(DataOutput output) throws IOException {
+
+    }
+
+    @Override
+    public void deserialize(DataInput input) throws IOException {
+
     }
   }
 }

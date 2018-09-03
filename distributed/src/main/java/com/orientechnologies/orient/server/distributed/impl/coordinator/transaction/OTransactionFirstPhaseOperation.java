@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
-import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -11,24 +10,31 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.*;
-import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results.OConcurrentModificationResult;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results.OExceptionResult;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results.OUniqueKeyViolationResult;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class OTransactionFirstPhaseOperation implements ONodeRequest {
 
-  private final OSessionOperationId           operationId;
-  private final List<ORecordOperationRequest> operations;
+  private OSessionOperationId           operationId;
+  private List<ORecordOperationRequest> operations;
+  private List<OIndexOperationRequest>  indexes;
 
-  public OTransactionFirstPhaseOperation(OSessionOperationId operationId, List<ORecordOperationRequest> operations) {
+  public OTransactionFirstPhaseOperation(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
+      List<OIndexOperationRequest> indexes) {
     this.operationId = operationId;
     this.operations = operations;
+    this.indexes = indexes;
   }
 
   @Override
@@ -42,16 +48,16 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
       response = new OTransactionFirstPhaseResult(Type.SUCCESS, null);
 
     } catch (OConcurrentModificationException ex) {
-      ConcurrentModification metadata = new ConcurrentModification((ORecordId) ex.getRid().getIdentity(),
+      OConcurrentModificationResult metadata = new OConcurrentModificationResult((ORecordId) ex.getRid().getIdentity(),
           ex.getEnhancedRecordVersion(), ex.getEnhancedDatabaseVersion());
       response = new OTransactionFirstPhaseResult(Type.CONCURRENT_MODIFICATION_EXCEPTION, metadata);
     } catch (ORecordDuplicatedException ex) {
-      UniqueKeyViolation metadata = new UniqueKeyViolation(ex.getKey().toString(), null, (ORecordId) ex.getRid().getIdentity(),
-          ex.getIndexName());
+      OUniqueKeyViolationResult metadata = new OUniqueKeyViolationResult(ex.getKey().toString(), null,
+          (ORecordId) ex.getRid().getIdentity(), ex.getIndexName());
       response = new OTransactionFirstPhaseResult(Type.UNIQUE_KEY_VIOLATION, metadata);
     } catch (RuntimeException ex) {
       //TODO: get action with some exception handler to offline the node or activate a recover operation
-      response = new OTransactionFirstPhaseResult(Type.EXCEPTION, null);
+      response = new OTransactionFirstPhaseResult(Type.EXCEPTION, new OExceptionResult(ex));
     }
     return response;
   }
@@ -89,4 +95,39 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
     return ops;
   }
 
+  @Override
+  public void serialize(DataOutput output) throws IOException {
+    operationId.serialize(output);
+    output.writeInt(operations.size());
+    for (ORecordOperationRequest operation : operations) {
+      operation.serialize(output);
+    }
+    output.writeInt(indexes.size());
+    for (OIndexOperationRequest change : indexes) {
+      change.serialize(output);
+    }
+  }
+
+  @Override
+  public void deserialize(DataInput input) throws IOException {
+    operationId = new OSessionOperationId();
+    operationId.deserialize(input);
+
+    int size = input.readInt();
+    operations = new ArrayList<>(size);
+    while (size-- > 0) {
+      ORecordOperationRequest op = new ORecordOperationRequest();
+      op.deserialize(input);
+      operations.add(op);
+    }
+
+    size = input.readInt();
+    indexes = new ArrayList<>(size);
+    while (size-- > 0) {
+      OIndexOperationRequest change = new OIndexOperationRequest();
+      change.deserialize(input);
+      indexes.add(change);
+    }
+
+  }
 }

@@ -1,11 +1,10 @@
-package com.orientechnologies.orient.server.distributed.impl.coordinator;
+package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public interface OSubmitRequest {
-  void begin(ODistributedMember member, ODistributedCoordinator coordinator);
+public interface OTransactionResult {
 
   void serialize(DataOutput output) throws IOException;
 

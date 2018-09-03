@@ -1,10 +1,9 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.ConcurrentModification;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.UniqueKeyViolation;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results.OConcurrentModificationResult;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results.OUniqueKeyViolationResult;
 
 import java.util.*;
 
@@ -40,7 +39,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
       success.add(member);
       break;
     case CONCURRENT_MODIFICATION_EXCEPTION: {
-      ConcurrentModification concurrentModification = (ConcurrentModification) result.getResultMetadata();
+      OConcurrentModificationResult concurrentModification = (OConcurrentModificationResult) result.getResultMetadata();
       List<ODistributedMember> members = cme.get(concurrentModification.getRecordId());
       if (members == null) {
         members = new ArrayList<>();
@@ -50,7 +49,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
     }
     break;
     case UNIQUE_KEY_VIOLATION: {
-      UniqueKeyViolation uniqueKeyViolation = (UniqueKeyViolation) result.getResultMetadata();
+      OUniqueKeyViolationResult uniqueKeyViolation = (OUniqueKeyViolationResult) result.getResultMetadata();
       List<ODistributedMember> members = unique.get(uniqueKeyViolation.getKeyStringified());
       if (members == null) {
         members = new ArrayList<>();

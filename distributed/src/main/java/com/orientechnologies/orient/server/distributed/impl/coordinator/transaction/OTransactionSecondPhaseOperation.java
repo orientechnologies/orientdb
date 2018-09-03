@@ -5,6 +5,9 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
@@ -37,5 +40,18 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
   @Override
   public int hashCode() {
     return Objects.hash(success);
+  }
+
+  @Override
+  public void serialize(DataOutput output) throws IOException {
+    operationId.serialize(output);
+    output.writeBoolean(success);
+  }
+
+  @Override
+  public void deserialize(DataInput input) throws IOException {
+    operationId = new OSessionOperationId();
+    operationId.deserialize(input);
+    success = input.readBoolean();
   }
 }

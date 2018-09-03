@@ -354,4 +354,15 @@ public class ORecordId implements ORID {
   public void setClusterPosition(long clusterPosition) {
     this.clusterPosition = clusterPosition;
   }
+
+  public static void serialize(ORID id, DataOutput output) throws IOException {
+    output.writeInt(id.getClusterId());
+    output.writeLong(id.getClusterPosition());
+  }
+
+  public static ORecordId deserialize(DataInput input) throws IOException {
+    int cluster = input.readInt();
+    long pos = input.readLong();
+    return new ORecordId(cluster, pos);
+  }
 }
