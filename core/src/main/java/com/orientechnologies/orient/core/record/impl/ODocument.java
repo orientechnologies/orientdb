@@ -1640,8 +1640,7 @@ public class ODocument extends ORecordAbstract
       }
       else if (deltaType == UpdateDeltaValueType.RIDBAG_UPDATE){
         List deltaList = (List) deltaVal;
-        ORidBag originalRidbag = to.field(fieldName);
-        int removed = 0;
+        ORidBag originalRidbag = to.field(fieldName);        
         for (int i = 0; i < deltaList.size(); i++) {
           ODocumentDelta deltaUpdateListElement = (ODocumentDelta) deltaList.get(i);
           UpdateDeltaValueType listElementUpdateType = UpdateDeltaValueType.fromOrd(deltaUpdateListElement.field("t").getValue());
@@ -1658,8 +1657,8 @@ public class ODocument extends ORecordAbstract
             originalRidbag.changeValue(index, val);                        
             break;
           case LIST_ELEMENT_REMOVE:
-            index = deltaUpdateListElement.field("i").getValue();
-            originalRidbag.remove(index - removed++);
+            val = deltaUpdateListElement.field("v").getValue();
+            originalRidbag.remove(val);
             break;          
           }
         }
@@ -3519,10 +3518,13 @@ public class ODocument extends ORecordAbstract
     return retVal;
   }
   
-  private UpdateTypeValueType getUpdateForRidbagWithPreviousValue(ORidBag currentValue, ORidBag previousValue) {
+  private UpdateTypeValueType getUpdateForRidbagWithPreviousValue(ORidBag currentValue, ORidBag previousValue,
+          boolean changed) {
     UpdateTypeValueType retVal = null;
-    if (currentValue != null && previousValue != null && 
-        currentValue.isEmbedded() && previousValue.isEmbedded()) {
+    if (currentValue != null && 
+        previousValue != null && 
+        currentValue.isEmbedded() && previousValue.isEmbedded() &&
+        changed) {
       retVal = new UpdateTypeValueType();
       retVal.setUpdateType(UpdateDeltaValueType.RIDBAG_UPDATE);
       List deltaList = new ArrayList();
@@ -3557,11 +3559,43 @@ public class ODocument extends ORecordAbstract
       }
       //these element are contained only in original list , so they should be removed
       while (previousRidbagIter.hasNext()) {
+        OIdentifiable element = previousRidbagIter.next();
         ODocumentDelta deltaElement = new ODocumentDelta();
         deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd(), OType.BYTE));
-        deltaElement.field("i", new ValueType(i, OType.INTEGER));
+        deltaElement.field("v", new ValueType(element, OType.LINK));
         deltaList.add(deltaElement);
         ++i;
+      }
+    }
+    return retVal;
+  }
+  
+  private UpdateTypeValueType getUpdateForRidbagWithoutPreviousValue(ORidBag currentValue, ODocumentEntry parent){
+    UpdateTypeValueType retVal = null;
+    if (currentValue != null &&        
+        ODocumentHelper.isChangedRidbag(currentValue, parent)) {
+      retVal = new UpdateTypeValueType();
+      retVal.setUpdateType(UpdateDeltaValueType.RIDBAG_UPDATE);
+      List deltaList = new ArrayList();
+      retVal.setValue(deltaList);
+      retVal.setValueType(OType.EMBEDDEDLIST);
+      //now create diff from multi value change events
+      if (parent.timeLine != null) {
+        List<OMultiValueChangeEvent<Object, Object>> timeline = parent.timeLine.getMultiValueChangeEvents();
+        for (OMultiValueChangeEvent<Object, Object> event : timeline){
+          if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.ADD){
+            ODocumentDelta deltaElement = new ODocumentDelta();
+            deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_ADD.getOrd(), OType.BYTE));
+            deltaElement.field("v", new ValueType(event.getValue(), OType.LINK));              
+            deltaList.add(deltaElement);
+          }
+          else if (event.getChangeType() == OMultiValueChangeEvent.OChangeType.REMOVE){
+            ODocumentDelta deltaElement = new ODocumentDelta();
+            deltaElement.field("t", new ValueType(UpdateDeltaValueType.LIST_ELEMENT_REMOVE.getOrd(), OType.BYTE));
+            deltaElement.field("v", new ValueType(event.getValue(), OType.LINK));              
+            deltaList.add(deltaElement);
+          }
+        }
       }
     }
     return retVal;
@@ -3678,7 +3712,22 @@ public class ODocument extends ORecordAbstract
       }
 
       if (currentValueType == OType.LINKBAG && previousValue != null && previousValueType == OType.LINKBAG){
-        //do something with embedded ridbags
+        ORidBag currentRidbag = (ORidBag)currentValue;
+        ORidBag previousRidbag = (ORidBag)previousValue;
+        UpdateTypeValueType ridBagUPdate = getUpdateForRidbagWithPreviousValue(currentRidbag, previousRidbag, changed);
+        if (ridBagUPdate != null){
+          return ridBagUPdate;
+        }
+      }
+      
+      if (currentValueType == OType.LINKBAG && previousValue == null){
+        ORidBag currentRidbag = (ORidBag)currentValue;
+        if (ODocumentHelper.isChangedRidbag(currentRidbag, parent)){
+          UpdateTypeValueType ridBagUPdate = getUpdateForRidbagWithPreviousValue(currentRidbag, previousRidbag, changed);
+          if (ridBagUPdate != null){
+            return ridBagUPdate;
+          }
+        }
       }
       
       //check for nested document

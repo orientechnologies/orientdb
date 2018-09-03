@@ -1658,6 +1658,18 @@ public class ODocumentHelper {
 
     return false;
   }
+  
+  public static boolean isChangedRidbag(ORidBag ridbag, ODocumentEntry entry) {    
+
+    if (entry.timeLine != null) {
+      List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
+      if (timeline != null){
+        return !timeline.isEmpty();
+      }
+    }
+
+    return false;
+  }
 
   public static boolean isChangedMap(Map<Object, Object> map, ODocumentEntry entry, List<Object> ownersTrace,
       int ownersTraceOffset) {

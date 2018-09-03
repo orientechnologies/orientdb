@@ -283,26 +283,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
           new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null,
               identifiable));
     }
-  }
-  
-  /**
-   * for internal use only
-   * @param index
-   * @return 
-   */
-  public boolean remove(int index){
-    Iterator<OIdentifiable> iter = rawIterator();
-    int currIndex = 0;
-    while (iter.hasNext()){
-      iter.next();
-      if (index == currIndex){
-        iter.remove();        
-        return true;
-      }
-      currIndex++;
-    }
-    return false;
-  }
+  }   
   
   /**
    * for internal use only

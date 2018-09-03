@@ -159,16 +159,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   public void remove(OIdentifiable identifiable) {
     delegate.remove(identifiable);
   }
-  
-  public boolean remove(int index){
-    if (isEmbedded()){
-      return ((OEmbeddedRidBag)delegate).remove(index);
-    }
-    else{
-      throw new UnsupportedOperationException("Operation not supported for SB Tree ridbags");
-    }
-  }
-  
+   
   /**
    * for internal use only
    * @param index
@@ -513,5 +504,36 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   @Override
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     //not needed do nothing
+  }
+  
+  @Override
+  public boolean equals(Object other){
+    if (!(other instanceof ORidBag)){
+      return false;
+    }
+    
+    ORidBag otherRidbag = (ORidBag)other;
+    if (!delegate.getClass().equals(otherRidbag.delegate.getClass())){
+      return false;
+    }
+    
+    Iterator<OIdentifiable> firstIter = delegate.rawIterator();
+    Iterator<OIdentifiable> secondIter = otherRidbag.delegate.rawIterator();
+    while (firstIter.hasNext()){
+      if (!secondIter.hasNext()){
+        return false;
+      }
+      
+      OIdentifiable firstElement = firstIter.next();
+      OIdentifiable secondElement = secondIter.next();
+      if (!Objects.equals(firstElement, secondElement)){
+        return false;
+      }
+    }
+    if (secondIter.hasNext()){
+      return false;
+    }
+    
+    return true;
   }
 }
