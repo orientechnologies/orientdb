@@ -1165,6 +1165,11 @@ public class OPrefixBTree<V> extends ODurableComponent {
         assert insertionIndex < 0;
 
         insertionIndex = -insertionIndex - 1;
+
+        if (parentIndex == 0 && separationKey.equals("10457")) {
+          System.out.println();
+        }
+
         while (!parentBucket.addEntry(insertionIndex, parentEntry, true)) {
           releasePageFromWrite(atomicOperation, parentCacheEntry);
           parentCacheEntry = null;
@@ -1285,6 +1290,10 @@ public class OPrefixBTree<V> extends ODurableComponent {
       newRightBucket.addAllNoPrefix(rightEntries);
     } finally {
       releasePageFromWrite(atomicOperation, rightBucketEntry);
+    }
+
+    if (keyToInsert.equals("10457")) {
+      System.out.println();
     }
 
     bucketToSplit = new OPrefixBTreeBucket<>(bucketEntry, false, keySerializer, valueSerializer, encryption, "");
