@@ -1083,10 +1083,12 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
       }
 
+      final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
+
       if (pageIndex != ROOT_INDEX) {
         final List<OPrefixBTreeBucket.SBTreeEntry<V>> rightEntries = new ArrayList<>(indexToSplit);
 
-        for (int i = indexToSplit; i < bucketSize; i++) {
+        for (int i = startRightIndex; i < bucketSize; i++) {
           rightEntries.add(bucketToSplit.getEntry(i));
         }
 
@@ -1095,7 +1097,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       } else {
         final List<byte[]> rightEntries = new ArrayList<>(indexToSplit);
 
-        for (int i = indexToSplit; i < bucketSize; i++) {
+        for (int i = startRightIndex; i < bucketSize; i++) {
           rightEntries.add(bucketToSplit.getRawEntry(i));
         }
 
@@ -1147,10 +1149,6 @@ public class OPrefixBTree<V> extends ODurableComponent {
       rightBucketPrefix = "";
     }
 
-    if (path.size() == 2) {
-      System.out.println();
-    }
-
     try {
       OPrefixBTreeBucket<V> newRightBucket = new OPrefixBTreeBucket<>(rightBucketEntry, splitLeaf, keySerializer, valueSerializer,
           encryption, rightBucketPrefix);
@@ -1170,9 +1168,6 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
         insertionIndex = -insertionIndex - 1;
 
-        if (parentIndex == 0 && separationKey.equals("10457")) {
-          System.out.println();
-        }
 
         while (!parentBucket.addEntry(insertionIndex, parentEntry, true)) {
           releasePageFromWrite(atomicOperation, parentCacheEntry);
@@ -1226,7 +1221,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
           resultRightBoundaries.add(null);
         }
 
-        return new BucketUpdateSearchResult(keyIndex - indexToSplit, resultPath, resultLeftBoundaries, resultRightBoundaries);
+        return new BucketUpdateSearchResult(splitLeaf ? keyIndex - indexToSplit : keyIndex - indexToSplit - 1, resultPath,
+            resultLeftBoundaries, resultRightBoundaries);
       } finally {
         if (parentCacheEntry != null) {
           releasePageFromWrite(atomicOperation, parentCacheEntry);
@@ -1296,10 +1292,6 @@ public class OPrefixBTree<V> extends ODurableComponent {
       releasePageFromWrite(atomicOperation, rightBucketEntry);
     }
 
-    if (keyToInsert.equals("10457")) {
-      System.out.println();
-    }
-
     bucketToSplit = new OPrefixBTreeBucket<>(bucketEntry, false, keySerializer, valueSerializer, encryption, "");
 
     bucketToSplit.setTreeSize(treeSize);
@@ -1328,7 +1320,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
     resultPath.add(rightBucketEntry.getPageIndex());
 
     //in left bucket we have indexToSplit + 1 buckets, so if items in next bucket
-    return new BucketUpdateSearchResult(keyIndex - indexToSplit, resultPath, resultLeftBoundaries, resultRightBoundaries);
+    return new BucketUpdateSearchResult(splitLeaf ? keyIndex - indexToSplit : keyIndex - indexToSplit - 1, resultPath,
+        resultLeftBoundaries, resultRightBoundaries);
   }
 
   private BucketUpdateSearchResult findBucketForUpdate(String key, OAtomicOperation atomicOperation) throws IOException {
@@ -1706,10 +1699,6 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
               final Map.Entry<String, V> entry = convertToMapEntry(bucket.getEntry(itemIndex), atomicOperation);
               itemIndex++;
-
-              if (entry.getKey().equals("104569996")) {
-                System.out.println();
-              }
 
               keysCache.add(entry.getKey());
             }

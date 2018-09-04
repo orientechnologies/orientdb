@@ -54,13 +54,13 @@ public class PrefixBTreeTestIT {
 
   @After
   public void afterMethod() throws Exception {
-//    orientDB.drop(dbName);
-//    orientDB.close();
+    orientDB.drop(dbName);
+    orientDB.close();
   }
 
   @Test
   public void testKeyPut() {
-    final int keysCount = 1_000_000;
+    final int keysCount = 100_000_000;
 
     String lastKey = null;
 
@@ -291,7 +291,7 @@ public class PrefixBTreeTestIT {
     final int keysCount = 100_000_000;
 
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
-    final long seed = 643392840749364L;//System.nanoTime();
+    final long seed = System.nanoTime();
 
     System.out.println("testKeyCursor: " + seed);
     Random random = new Random(seed);
@@ -309,25 +309,15 @@ public class PrefixBTreeTestIT {
 
     final OPrefixBTree.OSBTreeKeyCursor<String> cursor = prefixTree.keyCursor();
 
-    int counter = 0;
     for (String entryKey : keyValues.keySet()) {
-      if (counter == 2363214) {
-        System.out.println();
-      }
-
       final String indexKey = cursor.next(-1);
-
-      if (!entryKey.equals(indexKey)) {
-        System.out.println("Counter value = " + counter);
-      }
       Assert.assertEquals(entryKey, indexKey);
-      counter++;
     }
   }
 
   @Test
   public void testIterateEntriesMajor() {
-    final int keysCount = 1_000_000;
+    final int keysCount = 100_000_000;
 
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     final long seed = System.nanoTime();
@@ -355,9 +345,13 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testIterateEntriesMinor() {
-    final int keysCount = 1_000_000;
+    final int keysCount = 100_000_000;
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
-    Random random = new Random();
+
+    final long seed = System.nanoTime();
+
+    System.out.println("testIterateEntriesMinor: " + seed);
+    Random random = new Random(seed);
 
     while (keyValues.size() < keysCount) {
       int val = random.nextInt(Integer.MAX_VALUE);
@@ -379,7 +373,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testIterateEntriesBetween() {
-    final int keysCount = 1_000_000;
+    final int keysCount = 100_000_000;
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 
