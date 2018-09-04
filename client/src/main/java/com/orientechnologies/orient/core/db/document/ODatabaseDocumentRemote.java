@@ -20,12 +20,14 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OLiveQueryClientListener;
 import com.orientechnologies.orient.client.remote.ORemoteQueryResult;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
+import com.orientechnologies.orient.client.remote.message.OLockRecordResponse;
 import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -40,6 +42,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -59,6 +62,7 @@ import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
@@ -68,6 +72,9 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+
+import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.*;
 
 /**
  * Created by tglman on 30/06/16.
@@ -292,7 +299,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
     switch (iType) {
     case NOTX:
-      setDefaultTransactionMode();
+      setDefaultTransactionMode(null);
       break;
 
     case OPTIMISTIC:
@@ -647,7 +654,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
    */
   public <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final int recordVersion,
       final String fetchPlan, final boolean ignoreCache, final boolean iUpdateCache, final boolean loadTombstones,
-      final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader) {
+      final LOCKING_STRATEGY lockingStrategy, RecordReader recordReader) {
     checkOpenness();
     checkIfActive();
 
@@ -679,12 +686,12 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
         if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
           record.reload();
 
-        if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+        if (lockingStrategy == KEEP_SHARED_LOCK) {
           OLogManager.instance()
               .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
           record.lock(false);
 
-        } else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
+        } else if (lockingStrategy == KEEP_EXCLUSIVE_LOCK) {
           OLogManager.instance()
               .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
           record.lock(true);
@@ -753,9 +760,65 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     }
   }
 
-
   public String getClusterName(final ORecord record) {
     // DON'T ASSIGN CLUSTER WITH REMOTE: SERVER KNOWS THE RIGHT CLUSTER BASED ON LOCALITY
     return null;
+  }
+
+  @Override
+  public void internalLockRecord(OIdentifiable iRecord, LOCKING_STRATEGY lockingStrategy) {
+    checkAndSendTransaction();
+    OStorageRemote remote = getStorage();
+    // -1 value means default timeout
+    remote.lockRecord(iRecord, lockingStrategy, -1);
+  }
+
+  @Override
+  public void internalUnlockRecord(OIdentifiable iRecord) {
+    OStorageRemote remote = getStorage();
+    remote.unlockRecord(iRecord.getIdentity());
+  }
+
+  @Override
+  public <RET extends ORecord> RET lock(ORID recordId) throws OLockException {
+    checkOpenness();
+    checkIfActive();
+    pessimisticLockChecks(recordId);
+    checkAndSendTransaction();
+    OStorageRemote remote = getStorage();
+    // -1 value means default timeout
+    OLockRecordResponse response = remote.lockRecord(recordId, EXCLUSIVE_LOCK, -1);
+    ORecord record = fillRecordFromNetwork(recordId, response.getRecordType(), response.getVersion(), response.getRecord());
+    return (RET) record;
+  }
+
+  @Override
+  public <RET extends ORecord> RET lock(ORID recordId, long timeout, TimeUnit timeoutUnit) throws OLockException {
+    checkOpenness();
+    checkIfActive();
+    pessimisticLockChecks(recordId);
+    checkAndSendTransaction();
+    OStorageRemote remote = getStorage();
+    OLockRecordResponse response = remote.lockRecord(recordId, EXCLUSIVE_LOCK, timeoutUnit.toMillis(timeout));
+    ORecord record = fillRecordFromNetwork(recordId, response.getRecordType(), response.getVersion(), response.getRecord());
+    return (RET) record;
+  }
+
+  private ORecord fillRecordFromNetwork(ORID recordId, byte recordType, int version, byte[] buffer) {
+    beforeReadOperations(recordId);
+    ORecord toFillRecord = getLocalCache().findRecord(recordId);
+    if (toFillRecord == null)
+      toFillRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType, recordId.getClusterId(), this);
+    ORecordInternal.fill(toFillRecord, recordId, version, buffer, false);
+    getLocalCache().updateRecord(toFillRecord);
+    afterReadOperations(recordId);
+    return toFillRecord;
+  }
+
+  @Override
+  public void unlock(ORID recordId) throws OLockException {
+    checkOpenness();
+    checkIfActive();
+    internalUnlockRecord(recordId);
   }
 }

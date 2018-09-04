@@ -55,7 +55,10 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
@@ -80,6 +83,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
@@ -269,8 +273,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       response = new OReadRecordResponse(OBlob.RECORD_TYPE, 0, record, new HashSet<>());
 
     } else {
-      final ORecord record = connection.getDatabase()
-          .load(rid, fetchPlanString, ignoreCache, loadTombstones, OStorage.LOCKING_STRATEGY.NONE);
+      final ORecord record = connection.getDatabase().load(rid, fetchPlanString, ignoreCache);
       if (record != null) {
         byte[] bytes = getRecordBytes(connection, record);
         final Set<ORecord> recordsToSend = new HashSet<ORecord>();
@@ -518,7 +521,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeCommand(OCommandRequest request) {
     OTransaction oldTx = connection.getDatabase().getTransaction();
     try {
-      connection.getDatabase().swapTx(new OTransactionNoTx(connection.getDatabase()));
+      connection.getDatabase().swapTx(new OTransactionNoTx(connection.getDatabase(), null));
 
       final boolean live = request.isLive();
       final boolean asynch = request.isAsynch();
@@ -1398,5 +1401,19 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeExperimental(OExperimentalRequest request) {
     return new OExperimentalResponse(request.getRequest().execute(this));
+  }
+
+  @Override
+  public OBinaryResponse executeLockRecord(OLockRecordRequest request) {
+    //TODO: support properly the locking strategies.
+    ORecord record = connection.getDatabase().lock(request.getIdentity(), request.getTimeout(), TimeUnit.MILLISECONDS);
+    byte[] bytes = getRecordBytes(connection, record);
+    return new OLockRecordResponse(ORecordInternal.getRecordType(record), record.getVersion(), bytes);
+  }
+
+  @Override
+  public OBinaryResponse executeUnlockRecord(OUnlockRecordRequest request) {
+    connection.getDatabase().getTransaction().unlockRecord(request.getIdentity());
+    return new OUnlockRecordResponse();
   }
 }

@@ -1,0 +1,71 @@
+package com.orientechnologies.orient.server.lock;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.OServer;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.File;
+
+public class OPessimisticLockRemoteTest {
+
+  private static final String            SERVER_DIRECTORY = "./target/lock";
+  private              OServer           server;
+  private              OrientDB          orientDB;
+  private              ODatabaseDocument session;
+
+  @Before
+  public void before() throws Exception {
+    OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.setValue(1);
+    server = new OServer(false);
+    server.setServerRootDirectory(SERVER_DIRECTORY);
+    server.startup(getClass().getClassLoader().getResourceAsStream("orientdb-server-config.xml"));
+    server.activate();
+
+    orientDB = new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
+    orientDB.create(OPessimisticLockRemoteTest.class.getSimpleName(), ODatabaseType.MEMORY);
+    session = orientDB.open(OPessimisticLockRemoteTest.class.getSimpleName(), "admin", "admin");
+    session.createVertexClass("ToLock");
+  }
+
+  @Test
+  public void lockHappyPathNoCrashNoTx() {
+    ORecord rid = session.save(new ODocument("ToLock"));
+    OElement record = session.lock(rid.getIdentity());
+    record.setProperty("one", "value");
+    session.save(record);
+    session.unlock(record.getIdentity());
+  }
+
+  @Test
+  public void lockHappyPathNoCrashTx() {
+    ORecord rid = session.save(new ODocument("ToLock"));
+    session.begin();
+    ODocument record = session.lock(rid.getIdentity());
+    record.setProperty("one", "value");
+    session.save(record);
+    session.commit();
+
+  }
+
+  @After
+  public void after() {
+    session.close();
+    orientDB.drop(OPessimisticLockRemoteTest.class.getSimpleName());
+    orientDB.close();
+    server.shutdown();
+
+    OFileUtils.deleteRecursively(new File(SERVER_DIRECTORY));
+    Orient.instance().startup();
+  }
+}
