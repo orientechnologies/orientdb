@@ -1147,6 +1147,10 @@ public class OPrefixBTree<V> extends ODurableComponent {
       rightBucketPrefix = "";
     }
 
+    if (path.size() == 2) {
+      System.out.println();
+    }
+
     try {
       OPrefixBTreeBucket<V> newRightBucket = new OPrefixBTreeBucket<>(rightBucketEntry, splitLeaf, keySerializer, valueSerializer,
           encryption, rightBucketPrefix);
