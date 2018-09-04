@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db.document;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -10,6 +11,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING;
+import static com.orientechnologies.orient.core.db.OrientDBConfig.LOCK_TYPE_MODIFICATION;
+import static com.orientechnologies.orient.core.db.OrientDBConfig.LOCK_TYPE_READWRITE;
+
 public class OPessimisticLockTest {
 
   private static final String            SERVER_DIRECTORY = "./target/lock";
@@ -18,7 +23,8 @@ public class OPessimisticLockTest {
 
   @Before
   public void before() throws Exception {
-    orientDB = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
+    orientDB = new OrientDB("embedded:",
+        OrientDBConfig.builder().addConfig(STORAGE_PESSIMISTIC_LOCKING, LOCK_TYPE_READWRITE).build());
     orientDB.create(OPessimisticLockTest.class.getSimpleName(), ODatabaseType.MEMORY);
     session = orientDB.open(OPessimisticLockTest.class.getSimpleName(), "admin", "admin");
     session.createVertexClass("ToLock");

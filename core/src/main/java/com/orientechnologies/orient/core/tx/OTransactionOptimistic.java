@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -547,7 +548,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     for (ORecordOperation recordOperation : allEntries.values()) {
       final ORecord record = recordOperation.getRecord();
       final ORID identity = record.getIdentity();
-
+      locks.keySet();
       if (recordOperation.type == ORecordOperation.CREATED && recordOperation.createdCallback != null)
         recordOperation.createdCallback.call(new ORecordId(identity), identity.getClusterPosition());
       else if (recordOperation.type == ORecordOperation.UPDATED && recordOperation.updatedCallback != null)
@@ -573,6 +574,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   public boolean isAlreadyCleared() {
     return alreadyCleared;
+  }
+
+  public Set<ORID> getLockedRecords() {
+    if (getNoTxLocks() != null) {
+      HashSet<ORID> rids = new HashSet<ORID>(getNoTxLocks().keySet());
+      rids.addAll(locks.keySet());
+      return rids;
+    } else {
+      return locks.keySet();
+    }
   }
 
 }

@@ -88,6 +88,8 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   private int     level        = 0;
   private int     recordSerial = -2;
 
+  private Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLocks;
+
   /**
    * Instantiates a new micro-transaction.
    *
@@ -733,7 +735,14 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
     return recordOperations.get(currentRid);
   }
 
+  public void setNoTxLocks(Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLocks) {
+    this.noTxLocks = noTxLocks;
+  }
+
   public Set<ORID> getLockedRecords() {
+    if (noTxLocks != null) {
+      return noTxLocks.keySet();
+    }
     return null;
   }
 }

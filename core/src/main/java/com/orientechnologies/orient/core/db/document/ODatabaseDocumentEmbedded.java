@@ -75,6 +75,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -666,6 +667,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
       microTransaction = new OMicroTransaction(abstractPaginatedStorage, this);
 
     microTransaction.begin();
+    microTransaction.setNoTxLocks(((OTransactionAbstract) getTransaction()).getInternalLocks());
     return microTransaction;
   }
 

@@ -17,6 +17,9 @@ import org.junit.Test;
 
 import java.io.File;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING;
+import static com.orientechnologies.orient.core.db.OrientDBConfig.LOCK_TYPE_READWRITE;
+
 public class OPessimisticLockRemoteTest {
 
   private static final String            SERVER_DIRECTORY = "./target/lock";
@@ -27,6 +30,7 @@ public class OPessimisticLockRemoteTest {
   @Before
   public void before() throws Exception {
     OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.setValue(1);
+    STORAGE_PESSIMISTIC_LOCKING.setValue(LOCK_TYPE_READWRITE);
     server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getClassLoader().getResourceAsStream("orientdb-server-config.xml"));

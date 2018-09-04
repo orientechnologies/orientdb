@@ -153,6 +153,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollection
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.BufferedInputStream;
@@ -4254,7 +4255,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireReadLock();
     try {
       if (readLock) {
-        acquireReadLock(rid);
+        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+        if (db == null || !((OTransactionAbstract) db.getTransaction()).getLockedRecords().contains(rid)) {
+          acquireReadLock(rid);
+        }
       }
 
       ORawBuffer buff;
@@ -4265,7 +4269,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } finally {
       try {
         if (readLock) {
-          releaseReadLock(rid);
+          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+          if (db == null || !((OTransactionAbstract) db.getTransaction()).getLockedRecords().contains(rid)) {
+            releaseReadLock(rid);
+          }
         }
       } finally {
         stateLock.releaseReadLock();
@@ -4289,14 +4296,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireReadLock();
     try {
       if (readLock) {
-        acquireReadLock(rid);
+        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+        if (db == null || !((OTransactionAbstract) db.getTransaction()).getLockedRecords().contains(rid)) {
+          acquireReadLock(rid);
+        }
       }
       checkOpenness();
       return doReadRecord(clusterSegment, rid, prefetchRecords);
     } finally {
       try {
         if (readLock) {
-          releaseReadLock(rid);
+          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+          if (db == null || !((OTransactionAbstract) db.getTransaction()).getLockedRecords().contains(rid)) {
+            releaseReadLock(rid);
+          }
         }
       } finally {
         stateLock.releaseReadLock();

@@ -20,11 +20,15 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.assertj.core.api.Assertions;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
@@ -32,6 +36,12 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 public class OCommandExecutorSQLUpdateTest {
+
+  @Before
+  public void before() {
+    OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING.setValue(OrientDBConfig.LOCK_TYPE_MODIFICATION);
+  }
+
   @Test
   public void testUpdateRemoveAll() throws Exception {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTest");
@@ -553,4 +563,10 @@ public class OCommandExecutorSQLUpdateTest {
       db.close();
     }
   }
+
+  @After
+  public void after() {
+    OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING.setValue("none");
+  }
+
 }
