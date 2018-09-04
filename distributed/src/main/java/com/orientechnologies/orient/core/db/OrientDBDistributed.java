@@ -71,11 +71,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public void fullSync(String dbName, String backupPath, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
+    OAbstractPaginatedStorage storage;
     synchronized (this) {
 
-//      if (exists(dbName, null, null)) {
       try {
-        OAbstractPaginatedStorage storage = storages.get(dbName);
+        storage = storages.get(dbName);
 
         if (storage != null) {
           storage.delete();
@@ -83,14 +83,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         }
         storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(dbName), new HashMap<>());
         embedded = internalCreate(config, storage);
-        storage.restoreFromIncrementalBackup(backupPath);
         storages.put(dbName, storage);
       } catch (Exception e) {
         throw OException.wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
       }
-//      } else
-//        throw new ODatabaseException("Cannot create new storage '" + dbName + "' because it already exists");
     }
+    storage.restoreFromIncrementalBackup(backupPath);
   }
 
 }
