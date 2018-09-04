@@ -290,6 +290,20 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
     }
   }
 
+  public int getLeft(int entryIndex) {
+    assert !isLeaf;
+
+    final int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + positionsArrayOffset);
+    return getIntValue(entryPosition);
+  }
+
+  public int getRight(int entryIndex) {
+    assert !isLeaf;
+
+    final int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + positionsArrayOffset);
+    return getIntValue(entryPosition + OIntegerSerializer.INT_SIZE);
+  }
+
   /**
    * Obtains the value stored under the given entry index in this bucket.
    *

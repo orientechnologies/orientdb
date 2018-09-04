@@ -316,16 +316,18 @@ public class OPrefixBTree<V> extends ODurableComponent {
           while (!keyBucket
               .addEntry(insertionIndex, new OPrefixBTreeBucket.SBTreeEntry<>(-1, -1, key, new OSBTreeValue<>(false, -1, value)),
                   true)) {
-            releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
-
-            bucketSearchResult = splitBucket(bucketSearchResult.path, bucketSearchResult.leftBoundaries,
-                bucketSearchResult.rightBoundaries, insertionIndex, key, atomicOperation);
+            bucketSearchResult = splitBucket(keyBucket, keyBucketCacheEntry, bucketSearchResult.path,
+                bucketSearchResult.leftBoundaries, bucketSearchResult.rightBoundaries, insertionIndex, key, atomicOperation);
 
             insertionIndex = bucketSearchResult.itemIndex;
+            final long parentIndex = bucketSearchResult.getLastPathItem();
 
-            keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false);
+            if (parentIndex != keyBucketCacheEntry.getPageIndex()) {
+              releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
 
-            keyBucket = new OPrefixBTreeBucket<>(keyBucketCacheEntry, keySerializer, valueSerializer, encryption);
+              keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false);
+              keyBucket = new OPrefixBTreeBucket<>(keyBucketCacheEntry, keySerializer, valueSerializer, encryption);
+            }
           }
 
           releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
@@ -862,14 +864,11 @@ public class OPrefixBTree<V> extends ODurableComponent {
             if (itemIndex < bucket.size()) {
               path.add(new PagePathItemUnit(bucketIndex, -(itemIndex + 1)));
 
-              OPrefixBTreeBucket.SBTreeEntry<V> entry = bucket.getEntry(itemIndex);
-              bucketIndex = entry.leftChild;
-
+              bucketIndex = bucket.getLeft(itemIndex);
             } else {
               path.add(new PagePathItemUnit(bucketIndex, itemIndex));
 
-              OPrefixBTreeBucket.SBTreeEntry<V> entry = bucket.getEntry(itemIndex - 1);
-              bucketIndex = entry.rightChild;
+              bucketIndex = bucket.getRight(itemIndex - 1);
             }
 
             //jump to next page and start from first item
@@ -936,16 +935,14 @@ public class OPrefixBTree<V> extends ODurableComponent {
             }
           } else {
             if (itemIndex > -1) {
-              OPrefixBTreeBucket.SBTreeEntry<V> entry = bucket.getEntry(itemIndex);
               path.add(new PagePathItemUnit(bucketIndex, itemIndex + 1));
 
-              bucketIndex = entry.rightChild;
+              bucketIndex = bucket.getRight(itemIndex);
 
             } else {
-              path.add(new PagePathItemUnit(bucketIndex, -(itemIndex + 1)));
+              path.add(new PagePathItemUnit(bucketIndex, -1));
 
-              OPrefixBTreeBucket.SBTreeEntry<V> entry = bucket.getEntry(0);
-              bucketIndex = entry.leftChild;
+              bucketIndex = bucket.getLeft(0);
             }
 
             itemIndex = OPrefixBTreeBucket.MAX_PAGE_SIZE_BYTES + 1;
@@ -1007,105 +1004,98 @@ public class OPrefixBTree<V> extends ODurableComponent {
     return new OSBTreeCursorBackward(keyFrom, keyTo, fromInclusive, toInclusive);
   }
 
-  private BucketUpdateSearchResult splitBucket(List<Long> path, List<String> leftBoundaries, List<String> rightBoundaries,
-      int keyIndex, String keyToInsert, OAtomicOperation atomicOperation) throws IOException {
+  private BucketUpdateSearchResult splitBucket(OPrefixBTreeBucket<V> bucketToSplit, OCacheEntry bucketToSplitEntry, List<Long> path,
+      List<String> leftBoundaries, List<String> rightBoundaries, int keyIndex, String keyToInsert, OAtomicOperation atomicOperation)
+      throws IOException {
     long pageIndex = path.get(path.size() - 1);
+    final boolean splitLeaf = bucketToSplit.isLeaf();
+    final int bucketSize = bucketToSplit.size();
 
-    OCacheEntry bucketEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false);
-    try {
-      OPrefixBTreeBucket<V> bucketToSplit = new OPrefixBTreeBucket<>(bucketEntry, keySerializer, valueSerializer, encryption);
+    int indexToSplit = bucketSize >>> 1;
 
-      final boolean splitLeaf = bucketToSplit.isLeaf();
-      final int bucketSize = bucketToSplit.size();
+    final String separator;
 
-      int indexToSplit = bucketSize >>> 1;
+    if (bucketSize < 100) {
+      final String separationKey;
+      final String separationKeyRight = bucketToSplit.getKeyWithoutPrefix(indexToSplit);
 
-      final String separator;
-
-      if (bucketSize < 100) {
-        final String separationKey;
-        final String separationKeyRight = bucketToSplit.getKeyWithoutPrefix(indexToSplit);
-
-        if (splitLeaf) {
-          if (indexToSplit > 0) {
-            final String separationKeyLeft = bucketToSplit.getKeyWithoutPrefix(indexToSplit - 1);
-            separationKey = bucketToSplit.getBucketPrefix() + findMinSeparationKey(separationKeyLeft, separationKeyRight);
-          } else {
-            separationKey = bucketToSplit.getBucketPrefix() + separationKeyRight;
-          }
+      if (splitLeaf) {
+        if (indexToSplit > 0) {
+          final String separationKeyLeft = bucketToSplit.getKeyWithoutPrefix(indexToSplit - 1);
+          separationKey = bucketToSplit.getBucketPrefix() + findMinSeparationKey(separationKeyLeft, separationKeyRight);
         } else {
           separationKey = bucketToSplit.getBucketPrefix() + separationKeyRight;
         }
-
-        separator = separationKey;
       } else {
-        final int diff = ((int) (bucketSize * 0.1)) / 2;
-        final int startSeparationIndex = indexToSplit - diff;
-        final int endSeparationIndex = indexToSplit + diff + 1;
-
-        if (splitLeaf) {
-          String prevSeparationKey = bucketToSplit.getKeyWithoutPrefix(startSeparationIndex - 1);
-          String separationKey = bucketToSplit.getKeyWithoutPrefix(startSeparationIndex);
-          String minSeparationKey = findMinSeparationKey(prevSeparationKey, separationKey);
-
-          String absMinKey = minSeparationKey;
-          int absMinIndex = startSeparationIndex;
-
-          for (int i = startSeparationIndex + 1; i < endSeparationIndex; i++) {
-            separationKey = bucketToSplit.getKeyWithoutPrefix(i);
-            minSeparationKey = findMinSeparationKey(prevSeparationKey, separationKey);
-
-            if (absMinKey.length() > minSeparationKey.length()) {
-              absMinKey = separationKey;
-              absMinIndex = i;
-            }
-
-            prevSeparationKey = separationKey;
-          }
-
-          separator = bucketToSplit.getBucketPrefix() + absMinKey;
-          indexToSplit = absMinIndex;
-        } else {
-          String absMinKey = null;
-          int absMinIndex = -1;
-
-          for (int i = startSeparationIndex; i < endSeparationIndex; i++) {
-            String separationKey = bucketToSplit.getKeyWithoutPrefix(i);
-            if (absMinKey == null || absMinKey.length() > separationKey.length()) {
-              absMinKey = separationKey;
-              absMinIndex = i;
-            }
-          }
-
-          separator = bucketToSplit.getBucketPrefix() + absMinKey;
-          indexToSplit = absMinIndex;
-        }
-
+        separationKey = bucketToSplit.getBucketPrefix() + separationKeyRight;
       }
 
-      final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
+      separator = separationKey;
+    } else {
+      final int diff = ((int) (bucketSize * 0.1)) / 2;
+      final int startSeparationIndex = indexToSplit - diff;
+      final int endSeparationIndex = indexToSplit + diff + 1;
 
-      if (pageIndex != ROOT_INDEX) {
-        final List<OPrefixBTreeBucket.SBTreeEntry<V>> rightEntries = new ArrayList<>(indexToSplit);
+      if (splitLeaf) {
+        String prevSeparationKey = bucketToSplit.getKeyWithoutPrefix(startSeparationIndex - 1);
+        String separationKey = bucketToSplit.getKeyWithoutPrefix(startSeparationIndex);
+        String minSeparationKey = findMinSeparationKey(prevSeparationKey, separationKey);
 
-        for (int i = startRightIndex; i < bucketSize; i++) {
-          rightEntries.add(bucketToSplit.getEntry(i));
+        String absMinKey = minSeparationKey;
+        int absMinIndex = startSeparationIndex;
+
+        for (int i = startSeparationIndex + 1; i < endSeparationIndex; i++) {
+          separationKey = bucketToSplit.getKeyWithoutPrefix(i);
+          minSeparationKey = findMinSeparationKey(prevSeparationKey, separationKey);
+
+          if (absMinKey.length() > minSeparationKey.length()) {
+            absMinKey = separationKey;
+            absMinIndex = i;
+          }
+
+          prevSeparationKey = separationKey;
         }
 
-        return splitNonRootBucket(path, leftBoundaries, rightBoundaries, keyIndex, keyToInsert, pageIndex, bucketToSplit, splitLeaf,
-            indexToSplit, separator, rightEntries, atomicOperation);
+        separator = bucketToSplit.getBucketPrefix() + absMinKey;
+        indexToSplit = absMinIndex;
       } else {
-        final List<byte[]> rightEntries = new ArrayList<>(indexToSplit);
+        String absMinKey = null;
+        int absMinIndex = -1;
 
-        for (int i = startRightIndex; i < bucketSize; i++) {
-          rightEntries.add(bucketToSplit.getRawEntry(i));
+        for (int i = startSeparationIndex; i < endSeparationIndex; i++) {
+          String separationKey = bucketToSplit.getKeyWithoutPrefix(i);
+          if (absMinKey == null || absMinKey.length() > separationKey.length()) {
+            absMinKey = separationKey;
+            absMinIndex = i;
+          }
         }
 
-        return splitRootBucket(path, keyIndex, keyToInsert, bucketEntry, bucketToSplit, splitLeaf, indexToSplit, separator,
-            rightEntries, atomicOperation);
+        separator = bucketToSplit.getBucketPrefix() + absMinKey;
+        indexToSplit = absMinIndex;
       }
-    } finally {
-      releasePageFromWrite(atomicOperation, bucketEntry);
+
+    }
+
+    final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
+
+    if (pageIndex != ROOT_INDEX) {
+      final List<OPrefixBTreeBucket.SBTreeEntry<V>> rightEntries = new ArrayList<>(indexToSplit);
+
+      for (int i = startRightIndex; i < bucketSize; i++) {
+        rightEntries.add(bucketToSplit.getEntry(i));
+      }
+
+      return splitNonRootBucket(path, leftBoundaries, rightBoundaries, keyIndex, keyToInsert, pageIndex, bucketToSplit, splitLeaf,
+          indexToSplit, separator, rightEntries, atomicOperation);
+    } else {
+      final List<byte[]> rightEntries = new ArrayList<>(indexToSplit);
+
+      for (int i = startRightIndex; i < bucketSize; i++) {
+        rightEntries.add(bucketToSplit.getRawEntry(i));
+      }
+
+      return splitRootBucket(path, keyIndex, keyToInsert, bucketToSplitEntry, bucketToSplit, splitLeaf, indexToSplit, separator,
+          rightEntries, atomicOperation);
     }
   }
 
@@ -1168,14 +1158,10 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
         insertionIndex = -insertionIndex - 1;
 
-
         while (!parentBucket.addEntry(insertionIndex, parentEntry, true)) {
-          releasePageFromWrite(atomicOperation, parentCacheEntry);
-          parentCacheEntry = null;
-
-          BucketUpdateSearchResult bucketSearchResult = splitBucket(path.subList(0, path.size() - 1),
-              leftBoundaries.subList(0, leftBoundaries.size() - 1), rightBoundaries.subList(0, rightBoundaries.size() - 1),
-              insertionIndex, separationKey, atomicOperation);
+          BucketUpdateSearchResult bucketSearchResult = splitBucket(parentBucket, parentCacheEntry,
+              path.subList(0, path.size() - 1), leftBoundaries.subList(0, leftBoundaries.size() - 1),
+              rightBoundaries.subList(0, rightBoundaries.size() - 1), insertionIndex, separationKey, atomicOperation);
 
           parentIndex = bucketSearchResult.getLastPathItem();
 
@@ -1183,16 +1169,19 @@ public class OPrefixBTree<V> extends ODurableComponent {
           leftBoundaries = bucketSearchResult.leftBoundaries;
           rightBoundaries = bucketSearchResult.rightBoundaries;
 
+          insertionIndex = bucketSearchResult.itemIndex;
+
           //add placeholder which will be removed later, just for consistency of algorithm
           path.add(null);
           leftBoundaries.add(null);
           rightBoundaries.add(null);
 
-          parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false);
+          if (parentIndex != parentCacheEntry.getPageIndex()) {
+            releasePageFromWrite(atomicOperation, parentCacheEntry);
 
-          insertionIndex = bucketSearchResult.itemIndex;
-
-          parentBucket = new OPrefixBTreeBucket<>(parentCacheEntry, keySerializer, valueSerializer, encryption);
+            parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false);
+            parentBucket = new OPrefixBTreeBucket<>(parentCacheEntry, keySerializer, valueSerializer, encryption);
+          }
         }
 
         final ArrayList<Long> resultPath = new ArrayList<>(path.subList(0, path.size() - 1));
@@ -1408,8 +1397,6 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
       path.add(pageIndex);
       final OCacheEntry bucketEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-      final OPrefixBTreeBucket.SBTreeEntry<V> entry;
-
       final int entryIndex;
       try {
         final OPrefixBTreeBucket<V> keyBucket = new OPrefixBTreeBucket<>(bucketEntry, keySerializer, valueSerializer, encryption);
@@ -1439,11 +1426,10 @@ public class OPrefixBTree<V> extends ODurableComponent {
           items.add(itemIndex);
         }
 
-        entry = keyBucket.getEntry(entryIndex);
         if (itemIndex > 0) {
-          pageIndex = entry.rightChild;
+          pageIndex = keyBucket.getRight(entryIndex);
         } else {
-          pageIndex = entry.leftChild;
+          pageIndex = keyBucket.getLeft(entryIndex);
         }
       } finally {
         releasePageFromRead(atomicOperation, bucketEntry);
@@ -1652,8 +1638,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
                       pathItem = new ORawPair<>(pathIndex, cItemIndex + 1);
                       currentPath.add(pathItem);
 
-                      OPrefixBTreeBucket.SBTreeEntry<V> entry = parentBucket.getEntry(cItemIndex);
-                      cacheEntry = loadPageForRead(atomicOperation, fileId, entry.rightChild, false);
+                      cacheEntry = loadPageForRead(atomicOperation, fileId, parentBucket.getRight(cItemIndex), false);
 
                       bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
                       break;
@@ -1686,8 +1671,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
                   } else {
                     currentPath.add(new ORawPair<>(cacheEntry.getPageIndex(), -1));
 
-                    OPrefixBTreeBucket.SBTreeEntry<V> entry = bucket.getEntry(0);
-                    final long childIndex = entry.leftChild;
+                    final long childIndex = bucket.getLeft(0);
 
                     releasePageFromRead(atomicOperation, cacheEntry);
 
@@ -1839,8 +1823,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
                       pathItem = new ORawPair<>(pathIndex, cItemIndex + 1);
                       currentPath.add(pathItem);
 
-                      OPrefixBTreeBucket.SBTreeEntry<V> entry = parentBucket.getEntry(cItemIndex);
-                      cacheEntry = loadPageForRead(atomicOperation, fileId, entry.rightChild, false);
+                      cacheEntry = loadPageForRead(atomicOperation, fileId, parentBucket.getRight(cItemIndex), false);
                       bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
 
                       break;
@@ -1874,9 +1857,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
                     break;
                   } else {
                     currentPath.add(new ORawPair<>(cacheEntry.getPageIndex(), -1));
-                    OPrefixBTreeBucket.SBTreeEntry<V> entry = bucket.getEntry(0);
-
-                    final long childIndex = entry.leftChild;
+                    final long childIndex = bucket.getLeft(0);
 
                     releasePageFromRead(atomicOperation, cacheEntry);
 
@@ -2039,9 +2020,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
                       pathItem = new ORawPair<>(pathIndex, -(cItemIndex + 1));
                       currentPath.add(pathItem);
 
-                      OPrefixBTreeBucket.SBTreeEntry<V> entry = parentBucket.getEntry(cItemIndex);
-
-                      cacheEntry = loadPageForRead(atomicOperation, fileId, entry.leftChild, false);
+                      cacheEntry = loadPageForRead(atomicOperation, fileId, parentBucket.getLeft(cItemIndex), false);
                       bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
                       break;
                     }
@@ -2073,8 +2052,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
                     itemIndex = bucket.size() - 1;
                     break;
                   } else {
-                    OPrefixBTreeBucket.SBTreeEntry<V> entry = bucket.getEntry(0);
-                    final long childIndex = entry.rightChild;
+                    final long childIndex = bucket.getRight(0);
 
                     releasePageFromRead(atomicOperation, cacheEntry);
 
