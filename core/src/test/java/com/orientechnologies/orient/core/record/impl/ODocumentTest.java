@@ -2547,4 +2547,61 @@ public class ODocumentTest {
     }
   }
   
+  @Test
+  public void testRidbagsUpdateDeltaAddInEmbeddedDocument() {
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try {
+      odb = new OrientDB("memory:", OrientDBConfig.defaultConfig());
+      odb.createIfNotExists(dbName, ODatabaseType.MEMORY);
+      db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);
+
+      OClass claz = db.createClassIfNotExist("TestClass");
+      
+      String fieldName = "testField";
+      
+      ODocument first = new ODocument(claz);
+      first = db.save(first);
+      ODocument second = new ODocument(claz);
+      second = db.save(second);
+      
+      ORidBag ridBag = new ORidBag();
+      ridBag.add(first);
+      ridBag.add(second);
+      ODocument doc = new ODocument(claz);
+      doc.field(fieldName, ridBag, OType.LINKBAG);
+      doc = db.save(doc);
+      ODocument container = new ODocument(claz);
+      container.field(fieldName, doc, OType.EMBEDDED);
+      container = db.save(container);
+      
+      ODocument originalDoc = new ODocument(claz);
+      ORidBag ridBagCopy = new ORidBag();
+      ridBagCopy.add(first);
+      ridBagCopy.add(second);
+      originalDoc.field(fieldName, ridBagCopy, OType.LINKBAG);
+      ODocument containerCopy = new ODocument(claz);
+      containerCopy.field(fieldName, originalDoc, OType.EMBEDDED);
+      
+      ODocument third = new ODocument(claz);
+      third = db.save(third);      
+      ridBag.add(third);      
+      
+      ODocumentDelta dc = container.getDeltaFromOriginal();
+      dc = dc.field("u").getValue();
+      containerCopy.mergeUpdateDelta(dc);
+      ODocument tmp = containerCopy.field(fieldName);
+      ORidBag mergedRidbag = tmp.field(fieldName);
+      assertEquals(ridBag, mergedRidbag);
+    }
+    finally {
+      if (db != null)
+        db.close();
+      if (odb != null) {
+        odb.drop(dbName);
+        odb.close();
+      }
+    }
+  }
+  
 }

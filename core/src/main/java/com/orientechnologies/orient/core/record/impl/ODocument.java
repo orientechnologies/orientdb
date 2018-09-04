@@ -3572,7 +3572,8 @@ public class ODocument extends ORecordAbstract
   
   private UpdateTypeValueType getUpdateForRidbagWithoutPreviousValue(ORidBag currentValue, ODocumentEntry parent){
     UpdateTypeValueType retVal = null;
-    if (currentValue != null &&        
+    if (currentValue != null &&
+        currentValue.isEmbedded() &&
         ODocumentHelper.isChangedRidbag(currentValue, parent)) {
       retVal = new UpdateTypeValueType();
       retVal.setUpdateType(UpdateDeltaValueType.RIDBAG_UPDATE);
