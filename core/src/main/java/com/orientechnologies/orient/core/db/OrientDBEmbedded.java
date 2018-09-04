@@ -69,7 +69,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private volatile boolean                                open     = true;
   private volatile OEmbeddedDatabaseInstanceFactory       factory  = new ODefaultEmbeddedDatabaseInstanceFactory();
 
-  private final long maxWALSegmentSize;
+  protected final long maxWALSegmentSize;
 
   public OrientDBEmbedded(String directoryPath, OrientDBConfig configurations, Orient orient) {
     super();
