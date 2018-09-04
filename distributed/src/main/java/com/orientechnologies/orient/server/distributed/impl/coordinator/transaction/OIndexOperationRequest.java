@@ -25,26 +25,21 @@ public class OIndexOperationRequest {
 
   public void serialize(DataOutput output) throws IOException {
     output.writeUTF(indexName);
-    if (cleanIndexValues) {
-      output.writeBoolean(true);
-    } else {
-      output.writeBoolean(false);
-      output.writeInt(indexKeyChanges.size());
-      for (OIndexKeyChange change : indexKeyChanges) {
-        change.serialize(output);
-      }
+    output.writeBoolean(true);
+    output.writeBoolean(false);
+    output.writeInt(indexKeyChanges.size());
+    for (OIndexKeyChange change : indexKeyChanges) {
+      change.serialize(output);
     }
   }
 
   public void deserialize(DataInput input) throws IOException {
     indexName = input.readUTF();
     cleanIndexValues = input.readBoolean();
-    if (!cleanIndexValues) {
-      int size = input.readInt();
-      while (size-- > 0) {
-        OIndexKeyChange change = new OIndexKeyChange();
-        change.deserialize(input);
-      }
+    int size = input.readInt();
+    while (size-- > 0) {
+      OIndexKeyChange change = new OIndexKeyChange();
+      change.deserialize(input);
     }
   }
 }

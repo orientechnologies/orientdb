@@ -5,12 +5,8 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
 import java.io.DataInput;
@@ -62,10 +58,10 @@ public class OTransactionSubmit implements OSubmitRequest {
     Set<OPair<String, String>> keys = new TreeSet<>();
     for (OIndexOperationRequest change : indexes) {
       for (OIndexKeyChange keyChange : change.getIndexKeyChanges()) {
-        if (keyChange.getValue() == null) {
+        if (keyChange.getKey() == null) {
           keys.add(new OPair<>(change.getIndexName(), "null"));
         } else {
-          keys.add(new OPair<>(change.getIndexName(), keyChange.getValue().toString()));
+          keys.add(new OPair<>(change.getIndexName(), keyChange.getKey().toString()));
         }
       }
 
