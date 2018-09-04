@@ -48,6 +48,7 @@ import static org.junit.Assert.fail;
 public class IsolatedNodeRejoinScenarioIT extends AbstractScenarioTest {
 
   @Test
+  @Ignore
   public void test() throws Exception {
 
     maxRetries = 10;

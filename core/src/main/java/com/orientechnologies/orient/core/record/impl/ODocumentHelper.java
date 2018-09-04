@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
@@ -77,14 +78,19 @@ public class ODocumentHelper {
   public static interface RIDMapper {
     ORID map(ORID rid);
   }
-  
-  public static Set<String> getReservedAttributes(){
+
+  public static Set<String> getReservedAttributes() {
     Set<String> retSet = new HashSet<>();
-    retSet.add(ATTRIBUTE_THIS); retSet.add(ATTRIBUTE_RID);
-    retSet.add(ATTRIBUTE_RID_ID); retSet.add(ATTRIBUTE_RID_POS);
-    retSet.add(ATTRIBUTE_VERSION); retSet.add(ATTRIBUTE_CLASS);
-    retSet.add(ATTRIBUTE_TYPE); retSet.add(ATTRIBUTE_SIZE);
-    retSet.add(ATTRIBUTE_FIELDS); retSet.add(ATTRIBUTE_RAW);
+    retSet.add(ATTRIBUTE_THIS);
+    retSet.add(ATTRIBUTE_RID);
+    retSet.add(ATTRIBUTE_RID_ID);
+    retSet.add(ATTRIBUTE_RID_POS);
+    retSet.add(ATTRIBUTE_VERSION);
+    retSet.add(ATTRIBUTE_CLASS);
+    retSet.add(ATTRIBUTE_TYPE);
+    retSet.add(ATTRIBUTE_SIZE);
+    retSet.add(ATTRIBUTE_FIELDS);
+    retSet.add(ATTRIBUTE_RAW);
     return retSet;
   }
 
@@ -116,6 +122,14 @@ public class ODocumentHelper {
         return (RET) iValue;
       } else if (iValue instanceof String) {
         return (RET) new ORecordId((String) iValue);
+      } else if (OMultiValue.isMultiValue(iValue) && OMultiValue.getSize(iValue) == 1) {
+        Object val = OMultiValue.getFirstValue(iValue);
+        if (val instanceof OResult) {
+          val = ((OResult) val).getIdentity().orElse(null);
+        }
+        if (val instanceof OIdentifiable) {
+          return (RET) val;
+        }
       }
     } else if (Set.class.isAssignableFrom(iFieldType)) {
       if (!(iValue instanceof Set)) {
@@ -898,8 +912,8 @@ public class ODocumentHelper {
 
     if (fieldValue != null) {
       if (fieldValue instanceof ODocument && ((ODocument) fieldValue).isEmbedded()) {
-          // EMBEDDED DOCUMENT
-          return ((ODocument) fieldValue).copy();
+        // EMBEDDED DOCUMENT
+        return ((ODocument) fieldValue).copy();
       } else if (fieldValue instanceof ORidBag) {
         ORidBag newBag = ((ORidBag) fieldValue).copy();
         newBag.setOwner(null);

@@ -69,6 +69,7 @@ public class OVertexDocument extends ODocument implements OVertex {
   public Iterable<OEdge> getEdges(ODirection direction, String... labels) {
     final OMultiCollectionIterator<OEdge> iterable = new OMultiCollectionIterator<OEdge>().setEmbedded(true);
 
+    labels = resolveAliases(labels);
     Set<String> fieldNames = null;
     if (labels != null && labels.length > 0) {
       // EDGE LABELS: CREATE FIELD NAME TABLE (FASTER THAN EXTRACT FIELD NAMES FROM THE DOCUMENT)
@@ -113,6 +114,27 @@ public class OVertexDocument extends ODocument implements OVertex {
     }
 
     return iterable;
+  }
+
+  private String[] resolveAliases(String[] labels) {
+    if (labels == null) {
+      return null;
+    }
+    ODatabaseDocumentInternal db = getDatabaseIfDefined();
+    if (db == null) {
+      return labels;
+    }
+    OSchema schema = getDatabaseIfDefined().getMetadata().getSchema();
+    String[] result = new String[labels.length];
+    for (int i = 0; i < labels.length; i++) {
+      OClass clazz = schema.getClass(labels[i]);
+      if (clazz != null) {
+        result[i] = clazz.getName();
+      } else {
+        result[i] = labels[i];
+      }
+    }
+    return result;
   }
 
   @Override
@@ -323,6 +345,7 @@ public class OVertexDocument extends ODocument implements OVertex {
       allClassNames.add(className);
       OClass clazz = schema.getClass(className);
       if (clazz != null) {
+        allClassNames.add(clazz.getName()); // needed for aliases
         Collection<OClass> subClasses = clazz.getAllSubclasses();
         for (OClass subClass : subClasses) {
           allClassNames.add(subClass.getName());

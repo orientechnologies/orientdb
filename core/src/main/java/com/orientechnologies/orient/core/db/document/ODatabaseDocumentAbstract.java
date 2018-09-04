@@ -2406,7 +2406,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
-  public String incrementalBackup(final String path) {
+  public String incrementalBackup(final String path) throws UnsupportedOperationException{
     checkOpenness();
     checkIfActive();
 
