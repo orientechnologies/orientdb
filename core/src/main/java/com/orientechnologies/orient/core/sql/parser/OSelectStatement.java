@@ -284,7 +284,14 @@ public class OSelectStatement extends OStatement {
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(this);
-    OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
+    OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, true);
+    result.setStatement(this.originalStatement);
+    return result;
+  }
+
+  public OInternalExecutionPlan createExecutionPlanNoCache(OCommandContext ctx, boolean enableProfiling) {
+    OSelectExecutionPlanner planner = new OSelectExecutionPlanner(this);
+    OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, false);
     result.setStatement(this.originalStatement);
     return result;
   }
