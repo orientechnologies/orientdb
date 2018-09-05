@@ -427,7 +427,7 @@ public class PrefixBTreeTestIT {
 
       int counter = 0;
       while (iterator.hasNext()) {
-        if (counter == 3752437) {
+        if (keyInclusive && !ascSortOrder && counter == 3752437) {
           System.out.println();
         }
 
