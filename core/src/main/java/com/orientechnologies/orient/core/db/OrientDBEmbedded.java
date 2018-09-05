@@ -42,7 +42,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -136,8 +135,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
     final FileStore fileStore = Files.getFileStore(Paths.get(walPath));
     final long freeSpace = fileStore.getUsableSpace();
-
-    final Iterator<Path> pathFiles = Files.walk(Paths.get(walPath)).iterator();
 
     final long filesSize = Files.walk(Paths.get(walPath)).mapToLong(p -> p.toFile().isFile() ? p.toFile().length() : 0).sum();
     long maxSegSize;
@@ -341,13 +338,12 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   public void restore(String name, String user, String password, ODatabaseType type, String path, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
+    OAbstractPaginatedStorage storage;
     synchronized (this) {
       if (!exists(name, null, null)) {
         try {
-          OAbstractPaginatedStorage storage;
           storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>(), maxWALSegmentSize);
           embedded = internalCreate(config, storage);
-          storage.restoreFromIncrementalBackup(path);
           storages.put(name, storage);
         } catch (Exception e) {
           throw OException.wrapException(new ODatabaseException("Cannot restore database '" + name + "'"), e);
@@ -355,15 +351,19 @@ public class OrientDBEmbedded implements OrientDBInternal {
       } else
         throw new ODatabaseException("Cannot create new storage '" + name + "' because it already exists");
     }
+    storage.restoreFromIncrementalBackup(path);
     embedded.callOnCreateListeners();
   }
 
-  public synchronized void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
+  public void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
       OCommandOutputListener iListener) {
     try {
-      OAbstractPaginatedStorage storage = getOrInitStorage(name);
+      OAbstractPaginatedStorage storage;
+      synchronized (this) {
+        storage = getOrInitStorage(name);
+        storages.put(name, storage);
+      }
       storage.restore(in, options, callable, iListener);
-      storages.put(name, storage);
     } catch (Exception e) {
       throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
     }
