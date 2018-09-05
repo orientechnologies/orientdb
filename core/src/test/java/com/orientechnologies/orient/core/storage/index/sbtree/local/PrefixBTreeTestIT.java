@@ -437,6 +437,7 @@ public class PrefixBTreeTestIT {
 
         Assert.assertEquals(indexEntry.getKey(), entry.getKey());
         Assert.assertEquals(indexEntry.getValue(), entry.getValue());
+        counter++;
       }
 
       Assert.assertFalse(iterator.hasNext());
