@@ -34,11 +34,11 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DIST
 public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   public static final int FACTORYID = 44;
 
-  private ODistributedRequestId transactionId;
-  private boolean               success;
-  private int[]                 involvedClusters;
-  private          boolean hasResponse = false;
-  private volatile int     retryCount  = 0;
+  private          ODistributedRequestId transactionId;
+  private          boolean               success;
+  private          int[]                 involvedClusters;
+  private          boolean               hasResponse = false;
+  private volatile int                   retryCount  = 0;
 
   public OTransactionPhase2Task(ODistributedRequestId transactionId, boolean success, int[] involvedClusters,
       OLogSequenceNumber lsn) {

@@ -63,9 +63,9 @@ import java.util.*;
  * </ul>
  * <br>
  * The representation is automatically converted to tree-based implementation when top threshold is reached. And backward to
- * embedded one when size is decreased to bottom threshold. <br>
- * The thresholds could be configured by {@link OGlobalConfiguration#RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD} and
- * {@link OGlobalConfiguration#RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD}. <br>
+ * embedded one when size is decreased to bottom threshold. <br> The thresholds could be configured by {@link
+ * OGlobalConfiguration#RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD} and {@link OGlobalConfiguration#RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD}.
+ * <br>
  * <br>
  * This collection is used to efficiently manage relationships in graph model.<br>
  * <br>
@@ -159,18 +159,19 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   public void remove(OIdentifiable identifiable) {
     delegate.remove(identifiable);
   }
-   
+
   /**
    * for internal use only
+   *
    * @param index
    * @param newValue
-   * @return 
+   *
+   * @return
    */
-  public boolean changeValue(int index, OIdentifiable newValue){
-    if (isEmbedded()){
-      return ((OEmbeddedRidBag)delegate).swap(index, newValue);
-    }
-    else{
+  public boolean changeValue(int index, OIdentifiable newValue) {
+    if (isEmbedded()) {
+      return ((OEmbeddedRidBag) delegate).swap(index, newValue);
+    } else {
       throw new UnsupportedOperationException("Operation not supported for SB Tree ridbags");
     }
   }
@@ -260,7 +261,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     delegate.serialize(stream, offset, oldUuid);
     return pointer;
   }
-  
+
   public void checkAndConvert() {
     ODatabaseInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
     if (database != null && !database.getStorage().isRemote()) {
@@ -505,35 +506,35 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
     //not needed do nothing
   }
-  
+
   @Override
-  public boolean equals(Object other){
-    if (!(other instanceof ORidBag)){
+  public boolean equals(Object other) {
+    if (!(other instanceof ORidBag)) {
       return false;
     }
-    
-    ORidBag otherRidbag = (ORidBag)other;
-    if (!delegate.getClass().equals(otherRidbag.delegate.getClass())){
+
+    ORidBag otherRidbag = (ORidBag) other;
+    if (!delegate.getClass().equals(otherRidbag.delegate.getClass())) {
       return false;
     }
-    
+
     Iterator<OIdentifiable> firstIter = delegate.rawIterator();
     Iterator<OIdentifiable> secondIter = otherRidbag.delegate.rawIterator();
-    while (firstIter.hasNext()){
-      if (!secondIter.hasNext()){
+    while (firstIter.hasNext()) {
+      if (!secondIter.hasNext()) {
         return false;
       }
-      
+
       OIdentifiable firstElement = firstIter.next();
       OIdentifiable secondElement = secondIter.next();
-      if (!Objects.equals(firstElement, secondElement)){
+      if (!Objects.equals(firstElement, secondElement)) {
         return false;
       }
     }
-    if (secondIter.hasNext()){
+    if (secondIter.hasNext()) {
       return false;
     }
-    
+
     return true;
   }
 }

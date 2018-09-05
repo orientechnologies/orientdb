@@ -182,8 +182,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final List<OCluster>        clusters   = new ArrayList<>();
 
   private volatile ThreadLocal<OStorageTransaction> transaction;
-  private final AtomicBoolean checkpointInProgress = new AtomicBoolean();
-  private final AtomicBoolean walVacuumInProgress  = new AtomicBoolean();
+  private final    AtomicBoolean                    checkpointInProgress = new AtomicBoolean();
+  private final    AtomicBoolean                    walVacuumInProgress  = new AtomicBoolean();
 
   /**
    * Error which happened inside of storage or during data processing related to this storage.
@@ -206,16 +206,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private volatile ORecordConflictStrategy recordConflictStrategy = Orient.instance().getRecordConflictStrategy()
       .getDefaultImplementation();
 
-  private volatile int defaultClusterId = -1;
+  private volatile   int                      defaultClusterId                           = -1;
   @SuppressWarnings("WeakerAccess")
   protected volatile OAtomicOperationsManager atomicOperationsManager;
-  private volatile boolean                  wereNonTxOperationsPerformedInPreviousOpen = false;
-  private volatile OLowDiskSpaceInformation lowDiskSpace                               = null;
-  private volatile boolean                  pessimisticLock                            = false;
+  private volatile   boolean                  wereNonTxOperationsPerformedInPreviousOpen = false;
+  private volatile   OLowDiskSpaceInformation lowDiskSpace                               = null;
+  private volatile   boolean                  pessimisticLock                            = false;
   /**
    * Set of pages which were detected as broken and need to be repaired.
    */
-  private final    Set<OPair<String, Long>> brokenPages                                = Collections
+  private final      Set<OPair<String, Long>> brokenPages                                = Collections
       .newSetFromMap(new ConcurrentHashMap<>());
 
   private volatile Throwable dataFlushException = null;
@@ -978,13 +978,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * This method finds all the records which were updated starting from (but not including) current LSN and write result in provided
    * output stream. In output stream will be included all thw records which were updated/deleted/created since passed in LSN till
-   * the current moment.
-   * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
-   * Data format: <ol> <li>Amount of records (single entry) - 8 bytes</li> <li>Record's cluster id - 4 bytes</li> <li>Record's
-   * cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only if record is
-   * not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary presentation of
-   * record, only if record is not deleted - 4 bytes</li> <li>Binary presentation of the record, only if record is not deleted -
-   * length of content is provided in above entity</li> </ol>
+   * the current moment. Deleted records are written in output stream first, then created/updated records. All records are sorted by
+   * record id. Data format: <ol> <li>Amount of records (single entry) - 8 bytes</li> <li>Record's cluster id - 4 bytes</li>
+   * <li>Record's cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only if
+   * record is not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary
+   * presentation of record, only if record is not deleted - 4 bytes</li> <li>Binary presentation of the record, only if record is
+   * not deleted - length of content is provided in above entity</li> </ol>
    *
    * @param lsn    LSN from which we should find changed records
    * @param stream Stream which will contain found records
@@ -2292,7 +2291,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize, clustersToIndex,
             engineProperties, metadata, encryption);
 
-        if(writeAheadLog != null) {
+        if (writeAheadLog != null) {
           writeAheadLog.flush();
         }
 
@@ -4598,7 +4597,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         cluster.open();
       }
 
-      if(writeAheadLog != null) {
+      if (writeAheadLog != null) {
         writeAheadLog.flush();
       }
 
@@ -4990,7 +4989,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public String incrementalBackup(String backupDirectory) throws UnsupportedOperationException{
+  public String incrementalBackup(String backupDirectory) throws UnsupportedOperationException {
     throw new UnsupportedOperationException("Incremental backup is supported only in enterprise version");
   }
 

@@ -2274,7 +2274,7 @@ public class ODocumentTest {
       }
     }
   }
-  
+
   @Test
   public void testRidbagsUpdateDeltaAddWithCopy() {
     ODatabaseSession db = null;
@@ -2288,24 +2288,24 @@ public class ODocumentTest {
 
       ODocument doc = new ODocument(claz);
       String fieldName = "testField";
-      
+
       ODocument first = new ODocument(claz);
       first = db.save(first);
       ODocument second = new ODocument(claz);
       second = db.save(second);
-      
+
       ORidBag ridBag = new ORidBag();
       ridBag.add(first);
       ridBag.add(second);
       doc.field(fieldName, ridBag, OType.LINKBAG);
       doc = db.save(doc);
-      
+
       ODocument originalDoc = new ODocument(claz);
       ORidBag ridBagCopy = new ORidBag();
       ridBagCopy.add(first);
       ridBagCopy.add(second);
       originalDoc.field(fieldName, ridBagCopy, OType.LINKBAG);
-      
+
       ODocument third = new ODocument(claz);
       third = db.save(third);
       ridBag = new ORidBag();
@@ -2313,14 +2313,13 @@ public class ODocumentTest {
       ridBag.add(second);
       ridBag.add(third);
       doc.field(fieldName, ridBag, OType.LINKBAG);
-      
+
       ODocumentDelta dc = doc.getDeltaFromOriginal();
       dc = dc.field("u").getValue();
       originalDoc.mergeUpdateDelta(dc);
       ORidBag mergedRidbag = originalDoc.field(fieldName);
       assertEquals(ridBag, mergedRidbag);
-    }
-    finally {
+    } finally {
       if (db != null)
         db.close();
       if (odb != null) {
@@ -2329,7 +2328,7 @@ public class ODocumentTest {
       }
     }
   }
-  
+
   @Test
   public void testRidbagsUpdateDeltaRemoveWithCopy() {
     ODatabaseSession db = null;
@@ -2343,40 +2342,39 @@ public class ODocumentTest {
 
       ODocument doc = new ODocument(claz);
       String fieldName = "testField";
-      
+
       ODocument first = new ODocument(claz);
       first = db.save(first);
       ODocument second = new ODocument(claz);
       second = db.save(second);
       ODocument third = new ODocument(claz);
-      third = db.save(third);            
-      
+      third = db.save(third);
+
       ORidBag ridBag = new ORidBag();
       ridBag.add(first);
       ridBag.add(second);
       ridBag.add(third);
       doc.field(fieldName, ridBag, OType.LINKBAG);
       doc = db.save(doc);
-      
+
       ODocument originalDoc = new ODocument(claz);
       ORidBag ridBagCopy = new ORidBag();
       ridBagCopy.add(first);
       ridBagCopy.add(second);
       ridBagCopy.add(third);
       originalDoc.field(fieldName, ridBagCopy, OType.LINKBAG);
-            
+
       ridBag = new ORidBag();
       ridBag.add(first);
       ridBag.add(second);
       doc.field(fieldName, ridBag, OType.LINKBAG);
-      
+
       ODocumentDelta dc = doc.getDeltaFromOriginal();
       dc = dc.field("u").getValue();
       originalDoc.mergeUpdateDelta(dc);
       ORidBag mergedRidbag = originalDoc.field(fieldName);
       assertEquals(ridBag, mergedRidbag);
-    }
-    finally {
+    } finally {
       if (db != null)
         db.close();
       if (odb != null) {
@@ -2385,7 +2383,7 @@ public class ODocumentTest {
       }
     }
   }
-  
+
   @Test
   public void testRidbagsUpdateDeltaAdd() {
     ODatabaseSession db = null;
@@ -2399,35 +2397,34 @@ public class ODocumentTest {
 
       ODocument doc = new ODocument(claz);
       String fieldName = "testField";
-      
+
       ODocument first = new ODocument(claz);
       first = db.save(first);
       ODocument second = new ODocument(claz);
       second = db.save(second);
-      
+
       ORidBag ridBag = new ORidBag();
       ridBag.add(first);
       ridBag.add(second);
       doc.field(fieldName, ridBag, OType.LINKBAG);
       doc = db.save(doc);
-      
+
       ODocument originalDoc = new ODocument(claz);
       ORidBag ridBagCopy = new ORidBag();
       ridBagCopy.add(first);
       ridBagCopy.add(second);
       originalDoc.field(fieldName, ridBagCopy, OType.LINKBAG);
-      
+
       ODocument third = new ODocument(claz);
-      third = db.save(third);      
-      ridBag.add(third);      
-      
+      third = db.save(third);
+      ridBag.add(third);
+
       ODocumentDelta dc = doc.getDeltaFromOriginal();
       dc = dc.field("u").getValue();
       originalDoc.mergeUpdateDelta(dc);
       ORidBag mergedRidbag = originalDoc.field(fieldName);
       assertEquals(ridBag, mergedRidbag);
-    }
-    finally {
+    } finally {
       if (db != null)
         db.close();
       if (odb != null) {
@@ -2436,7 +2433,7 @@ public class ODocumentTest {
       }
     }
   }
-  
+
   @Test
   public void testRidbagsUpdateDeltaRemove() {
     ODatabaseSession db = null;
@@ -2450,38 +2447,37 @@ public class ODocumentTest {
 
       ODocument doc = new ODocument(claz);
       String fieldName = "testField";
-      
+
       ODocument first = new ODocument(claz);
       first = db.save(first);
       ODocument second = new ODocument(claz);
       second = db.save(second);
       ODocument third = new ODocument(claz);
       third = db.save(third);
-      
+
       ORidBag ridBag = new ORidBag();
       ridBag.add(first);
       ridBag.add(second);
       ridBag.add(third);
       doc.field(fieldName, ridBag, OType.LINKBAG);
       doc = db.save(doc);
-      
+
       ODocument originalDoc = new ODocument(claz);
       ORidBag ridBagCopy = new ORidBag();
       ridBagCopy.add(first);
       ridBagCopy.add(second);
       ridBagCopy.add(third);
-      originalDoc.field(fieldName, ridBagCopy, OType.LINKBAG);                        
-      
+      originalDoc.field(fieldName, ridBagCopy, OType.LINKBAG);
+
       ridBag.remove(third);
       ORidBag mergedRidbag = originalDoc.field(fieldName);
-      
+
       ODocumentDelta dc = doc.getDeltaFromOriginal();
       dc = dc.field("u").getValue();
       originalDoc.mergeUpdateDelta(dc);
       mergedRidbag = originalDoc.field(fieldName);
       assertEquals(ridBag, mergedRidbag);
-    }
-    finally {
+    } finally {
       if (db != null)
         db.close();
       if (odb != null) {
@@ -2490,7 +2486,7 @@ public class ODocumentTest {
       }
     }
   }
-  
+
   @Test
   public void testRidbagsUpdateDeltaChangeWithCopy() {
     ODatabaseSession db = null;
@@ -2504,40 +2500,39 @@ public class ODocumentTest {
 
       ODocument doc = new ODocument(claz);
       String fieldName = "testField";
-      
+
       ODocument first = new ODocument(claz);
       first = db.save(first);
       ODocument second = new ODocument(claz);
       second = db.save(second);
       ODocument third = new ODocument(claz);
-      third = db.save(third);            
-      
+      third = db.save(third);
+
       ORidBag ridBag = new ORidBag();
       ridBag.add(first);
       ridBag.add(second);
       ridBag.add(third);
       doc.field(fieldName, ridBag, OType.LINKBAG);
       doc = db.save(doc);
-      
+
       ODocument originalDoc = new ODocument(claz);
       ORidBag ridBagCopy = new ORidBag();
       ridBagCopy.add(first);
       ridBagCopy.add(second);
       ridBagCopy.add(third);
       originalDoc.field(fieldName, ridBagCopy, OType.LINKBAG);
-            
+
       ridBag = new ORidBag();
       ridBag.add(first);
       ridBag.add(third);
       doc.field(fieldName, ridBag, OType.LINKBAG);
-      
+
       ODocumentDelta dc = doc.getDeltaFromOriginal();
       dc = dc.field("u").getValue();
       originalDoc.mergeUpdateDelta(dc);
       ORidBag mergedRidbag = originalDoc.field(fieldName);
       assertEquals(ridBag, mergedRidbag);
-    }
-    finally {
+    } finally {
       if (db != null)
         db.close();
       if (odb != null) {
@@ -2546,7 +2541,7 @@ public class ODocumentTest {
       }
     }
   }
-  
+
   @Test
   public void testRidbagsUpdateDeltaAddInEmbeddedDocument() {
     ODatabaseSession db = null;
@@ -2557,14 +2552,14 @@ public class ODocumentTest {
       db = odb.open(dbName, defaultDbAdminCredentials, defaultDbAdminCredentials);
 
       OClass claz = db.createClassIfNotExist("TestClass");
-      
+
       String fieldName = "testField";
-      
+
       ODocument first = new ODocument(claz);
       first = db.save(first);
       ODocument second = new ODocument(claz);
       second = db.save(second);
-      
+
       ORidBag ridBag = new ORidBag();
       ridBag.add(first);
       ridBag.add(second);
@@ -2574,7 +2569,7 @@ public class ODocumentTest {
       ODocument container = new ODocument(claz);
       container.field(fieldName, doc, OType.EMBEDDED);
       container = db.save(container);
-      
+
       ODocument originalDoc = new ODocument(claz);
       ORidBag ridBagCopy = new ORidBag();
       ridBagCopy.add(first);
@@ -2582,19 +2577,18 @@ public class ODocumentTest {
       originalDoc.field(fieldName, ridBagCopy, OType.LINKBAG);
       ODocument containerCopy = new ODocument(claz);
       containerCopy.field(fieldName, originalDoc, OType.EMBEDDED);
-      
+
       ODocument third = new ODocument(claz);
-      third = db.save(third);      
-      ridBag.add(third);      
-      
+      third = db.save(third);
+      ridBag.add(third);
+
       ODocumentDelta dc = container.getDeltaFromOriginal();
       dc = dc.field("u").getValue();
       containerCopy.mergeUpdateDelta(dc);
       ODocument tmp = containerCopy.field(fieldName);
       ORidBag mergedRidbag = tmp.field(fieldName);
       assertEquals(ridBag, mergedRidbag);
-    }
-    finally {
+    } finally {
       if (db != null)
         db.close();
       if (odb != null) {
@@ -2603,5 +2597,5 @@ public class ODocumentTest {
       }
     }
   }
-  
+
 }

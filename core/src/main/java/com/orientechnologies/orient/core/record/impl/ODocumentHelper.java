@@ -77,14 +77,19 @@ public class ODocumentHelper {
   public static interface RIDMapper {
     ORID map(ORID rid);
   }
-  
-  public static Set<String> getReservedAttributes(){
+
+  public static Set<String> getReservedAttributes() {
     Set<String> retSet = new HashSet<>();
-    retSet.add(ATTRIBUTE_THIS); retSet.add(ATTRIBUTE_RID);
-    retSet.add(ATTRIBUTE_RID_ID); retSet.add(ATTRIBUTE_RID_POS);
-    retSet.add(ATTRIBUTE_VERSION); retSet.add(ATTRIBUTE_CLASS);
-    retSet.add(ATTRIBUTE_TYPE); retSet.add(ATTRIBUTE_SIZE);
-    retSet.add(ATTRIBUTE_FIELDS); retSet.add(ATTRIBUTE_RAW);
+    retSet.add(ATTRIBUTE_THIS);
+    retSet.add(ATTRIBUTE_RID);
+    retSet.add(ATTRIBUTE_RID_ID);
+    retSet.add(ATTRIBUTE_RID_POS);
+    retSet.add(ATTRIBUTE_VERSION);
+    retSet.add(ATTRIBUTE_CLASS);
+    retSet.add(ATTRIBUTE_TYPE);
+    retSet.add(ATTRIBUTE_SIZE);
+    retSet.add(ATTRIBUTE_FIELDS);
+    retSet.add(ATTRIBUTE_RAW);
     return retSet;
   }
 
@@ -1658,12 +1663,12 @@ public class ODocumentHelper {
 
     return false;
   }
-  
-  public static boolean isChangedRidbag(ORidBag ridbag, ODocumentEntry entry) {    
+
+  public static boolean isChangedRidbag(ORidBag ridbag, ODocumentEntry entry) {
 
     if (entry.timeLine != null) {
       List<OMultiValueChangeEvent<Object, Object>> timeline = entry.timeLine.getMultiValueChangeEvents();
-      if (timeline != null){
+      if (timeline != null) {
         return !timeline.isEmpty();
       }
     }

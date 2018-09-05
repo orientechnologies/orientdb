@@ -43,10 +43,10 @@ import java.util.Map;
 public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public static final int FACTORYID = 43;
 
-  private volatile boolean                       hasResponse;
-  private          OLogSequenceNumber            lastLSN;
-  private          List<ORecordOperation>        ops;
-  private          List<ORecordOperationRequest> operations;
+  private volatile    boolean                                         hasResponse;
+  private             OLogSequenceNumber                              lastLSN;
+  private             List<ORecordOperation>                          ops;
+  private             List<ORecordOperationRequest>                   operations;
   private             OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType         = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   private transient   int                                             retryCount         = 0;
   public static final boolean                                         useDeltasForUpdate = false;

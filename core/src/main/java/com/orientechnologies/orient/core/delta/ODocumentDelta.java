@@ -40,7 +40,7 @@ import java.util.*;
  */
 public class ODocumentDelta implements OIdentifiable {
 
-  protected Map<String, ValueType> fields = new HashMap<>();
+  protected     Map<String, ValueType>    fields = new HashMap<>();
   private final ODocumentDeltaSerializerI serializer;
 
   public ODocumentDelta() {

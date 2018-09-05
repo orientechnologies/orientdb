@@ -43,9 +43,9 @@ public class ODocumentEntry {
   public OProperty                                       property;
   public OSimpleMultiValueChangeListener<Object, Object> changeListener;
   public OMultiValueChangeTimeLine<Object, Object>       timeLine;
-  public boolean changed = false;
-  public boolean exist   = true;
-  public boolean created = false;
+  public boolean                                         changed = false;
+  public boolean                                         exist   = true;
+  public boolean                                         created = false;
 
   public ODocumentEntry() {
 

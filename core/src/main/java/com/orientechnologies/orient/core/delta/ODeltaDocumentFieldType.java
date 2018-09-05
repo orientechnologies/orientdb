@@ -28,7 +28,7 @@ public enum ODeltaDocumentFieldType implements OTypeInterface {
 
   DELTA_RECORD(Byte.MAX_VALUE);
 
-  private final int id;
+  private final        int                                   id;
   private static final Map<Integer, ODeltaDocumentFieldType> mappedIds = new HashMap<>();
 
   static {

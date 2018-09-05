@@ -22,10 +22,10 @@ import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPha
 import java.util.*;
 
 public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
-  private final Map<ORID, ORecord> createdRecords = new HashMap<>();
-  private final Map<ORID, ORecord> updatedRecords = new HashMap<>();
-  private final Set<ORID>          deletedRecord  = new HashSet<>();
-  private List<ORecordOperation> changes;
+  private final Map<ORID, ORecord>     createdRecords = new HashMap<>();
+  private final Map<ORID, ORecord>     updatedRecords = new HashMap<>();
+  private final Set<ORID>              deletedRecord  = new HashSet<>();
+  private       List<ORecordOperation> changes;
 
   public OTransactionOptimisticDistributed(ODatabaseDocumentInternal database, List<ORecordOperation> changes) {
     super(database);

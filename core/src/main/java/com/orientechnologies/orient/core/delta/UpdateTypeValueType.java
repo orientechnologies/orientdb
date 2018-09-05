@@ -19,20 +19,19 @@ import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
 import com.orientechnologies.orient.core.record.impl.UpdateDeltaValueType;
 
 /**
- *
  * @author marko
  */
 public class UpdateTypeValueType {
-  
+
   private Object               value;
   private UpdateDeltaValueType updateType;
   private OTypeInterface       valueType;
-  
-  public UpdateTypeValueType(){
-    
+
+  public UpdateTypeValueType() {
+
   }
-  
-  public UpdateTypeValueType(UpdateDeltaValueType updateType, Object value, OTypeInterface valueType){
+
+  public UpdateTypeValueType(UpdateDeltaValueType updateType, Object value, OTypeInterface valueType) {
     this.value = value;
     this.updateType = updateType;
     this.valueType = valueType;
@@ -50,8 +49,6 @@ public class UpdateTypeValueType {
     this.valueType = valueType;
   }
 
-  
-  
   public Object getValue() {
     return value;
   }
@@ -63,5 +60,5 @@ public class UpdateTypeValueType {
   public OTypeInterface getValueType() {
     return valueType;
   }
-  
+
 }

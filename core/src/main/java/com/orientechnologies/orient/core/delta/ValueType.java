@@ -18,27 +18,26 @@ package com.orientechnologies.orient.core.delta;
 import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
 
 /**
- *
  * @author mdjurovi
  */
-public class ValueType{
-  private Object value;
+public class ValueType {
+  private Object         value;
   private OTypeInterface type;
 
-  private ValueType(){
+  private ValueType() {
 
   }
 
-  public ValueType(Object value, OTypeInterface type){
+  public ValueType(Object value, OTypeInterface type) {
     this.value = value;
     this.type = type;
   }
 
-  public <T> T getValue(){
-    return (T)value;
+  public <T> T getValue() {
+    return (T) value;
   }
-  
-  public OTypeInterface getType(){
+
+  public OTypeInterface getType() {
     return type;
   }
 }
