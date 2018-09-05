@@ -227,6 +227,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         }
       } else
         throw new ODatabaseException("Cannot create new database '" + name + "' because it already exists");
+      ODatabaseRecordThreadLocal.instance().remove();
     }
     embedded.callOnCreateListeners();
   }

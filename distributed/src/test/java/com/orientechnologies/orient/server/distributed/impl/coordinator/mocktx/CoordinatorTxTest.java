@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -32,6 +33,14 @@ public class CoordinatorTxTest {
     this.three = OrientDBInternal.distributed("target/three/", OrientDBConfig.defaultConfig()).newOrientDB();
     this.three.create("none",ODatabaseType.MEMORY);
   }
+
+  @After
+  public void after() {
+    one.close();
+    two.close();
+    three.close();
+  }
+
 
   @Test
   public void testTxCoordinator() throws InterruptedException {
