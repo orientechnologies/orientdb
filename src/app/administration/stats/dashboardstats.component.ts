@@ -18,7 +18,8 @@ declare const angular: any;
   templateUrl: "./dashboardstats.component.html",
   styles: [""]
 })
-class DashboardStatsComponent implements OnInit {
+class DashboardStatsComponent implements OnInit,OnDestroy {
+  
   private servers = [];
   private clusterStats = {};
   private serversClass = "";
@@ -30,6 +31,11 @@ class DashboardStatsComponent implements OnInit {
       this.fetchMetrics();
     }, 5000);
     this.fetchMetrics();
+  }
+
+  ngOnDestroy(): void {
+
+    clearInterval(this.handle);
   }
   fetchMetrics() {
     this.metrics.getMetrics().then(data => {

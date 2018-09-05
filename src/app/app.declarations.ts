@@ -17,7 +17,8 @@ import {
   ServerStatsText,
   ChartComponent,
   ServerMetricsComponent,
-  ServerCrudComponent
+  ServerCrudComponent,
+  ServerManagementComponent
 } from "./administration";
 
 import { DualListComponent, GraphComponent, AddEdgeModal } from "./util";
@@ -43,5 +44,6 @@ export const APP_DECLARATIONS = [
   GaugeComponent,
   ChartComponent,
   ServerStatsGauges,
-  ServerStatsText
+  ServerStatsText,
+  ServerManagementComponent
 ];

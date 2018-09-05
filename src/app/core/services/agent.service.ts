@@ -36,6 +36,8 @@ class AgentService {
       resolve(this.agent);
     });
   }
+
+  
 }
 
 angular

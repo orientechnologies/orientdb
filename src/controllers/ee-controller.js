@@ -1339,70 +1339,72 @@ ee.controller("EEDashboardController", [
   function($scope, $rootScope, $routeParams, Database, PermissionService) {
     $scope.menus = [];
     $rootScope.$on("servermgmt:open", function() {
-      $scope.menus = PermissionService.getSideMenu();
+      
 
-      // if (data.permissions.indexOf("server.studio.dashboard") != -1) {
-      //   $scope.menus.push({
-      //     name: "stats",
-      //     title: "Dashboard",
-      //     template: "stats",
-      //     icon: "fa-dashboard"
-      //   });
-      // }
-      // $scope.menus = [
-      //   {
-      //     name: "general",
-      //     title: "Servers Management",
-      //     template: "general",
-      //     icon: "fa-desktop"
-      //   },
-      //   {
-      //     name: "cluster",
-      //     title: "Cluster Management",
-      //     template: "distributed",
-      //     icon: "fa-sitemap"
-      //   },
-      //   {
-      //     name: "backup",
-      //     title: "Backup Management",
-      //     template: "backup",
-      //     icon: "fa-clock-o"
-      //   },
-      //   {
-      //     name: "profiler",
-      //     title: "Query Profiler",
-      //     template: "profiler",
-      //     icon: "fa-rocket"
-      //   },
-      //   {
-      //     name: "security",
-      //     title: "Security",
-      //     template: "security",
-      //     icon: "fa-lock"
-      //   },
-      //   // {
-      //   //   name: "alerts",
-      //   //   title: "Alerts Management",
-      //   //   template: "events",
-      //   //   icon: "fa-bell"
-      //   // },
-      //   {
-      //     name: "importers",
-      //     title: "Importer",
-      //     template: "importersManager",
-      //     icon: "fa-plug"
-      //   }
-      //   // {
-      //   //   name: "cloud",
-      //   //   title: "Cloud Management",
-      //   //   template: "cloud",
-      //   //   icon: "fa-cloud",
-      //   //   wiki: "OrientDB-Cloud.html"
-      //   // }
-      // ];
-      $scope.show = "ee-view-show";
-    });
+        $scope.menus = PermissionService.getSideMenu();
 
+        // if (data.permissions.indexOf("server.studio.dashboard") != -1) {
+        //   $scope.menus.push({
+        //     name: "stats",
+        //     title: "Dashboard",
+        //     template: "stats",
+        //     icon: "fa-dashboard"
+        //   });
+        // }
+        // $scope.menus = [
+        //   {
+        //     name: "general",
+        //     title: "Servers Management",
+        //     template: "general",
+        //     icon: "fa-desktop"
+        //   },
+        //   {
+        //     name: "cluster",
+        //     title: "Cluster Management",
+        //     template: "distributed",
+        //     icon: "fa-sitemap"
+        //   },
+        //   {
+        //     name: "backup",
+        //     title: "Backup Management",
+        //     template: "backup",
+        //     icon: "fa-clock-o"
+        //   },
+        //   {
+        //     name: "profiler",
+        //     title: "Query Profiler",
+        //     template: "profiler",
+        //     icon: "fa-rocket"
+        //   },
+        //   {
+        //     name: "security",
+        //     title: "Security",
+        //     template: "security",
+        //     icon: "fa-lock"
+        //   },
+        //   // {
+        //   //   name: "alerts",
+        //   //   title: "Alerts Management",
+        //   //   template: "events",
+        //   //   icon: "fa-bell"
+        //   // },
+        //   {
+        //     name: "importers",
+        //     title: "Importer",
+        //     template: "importersManager",
+        //     icon: "fa-plug"
+        //   }
+        //   // {
+        //   //   name: "cloud",
+        //   //   title: "Cloud Management",
+        //   //   template: "cloud",
+        //   //   icon: "fa-cloud",
+        //   //   wiki: "OrientDB-Cloud.html"
+        //   // }
+        // ];
+        $scope.show = "ee-view-show";
+      });
+    
     $rootScope.$on("servermgmt:close", function() {
       $scope.show = "";
       $scope.menus = [];

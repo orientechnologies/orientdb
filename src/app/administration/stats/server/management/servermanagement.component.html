@@ -1,0 +1,61 @@
+<div class="container-fluid">
+  <div class="row studio-well">
+    <div class="col-md-2">
+      <label>Server </label>
+      <select class="form-control" id="serverOnline" required>
+        <option *ngFor="let server of servers" [value]="selectedServer">{{server}}</option>
+      </select>
+    </div>
+
+    <div class="col-md-10">
+      <div class="col-md-4">
+        <div class="row">
+          <i class="icon-angle-right"></i> Status: <b>{{server.status}}</b>
+        </div>
+        <div class="row">
+          <i class="icon-angle-right"></i> Version :
+          <b>{{server.version}}</b>
+        </div>
+        <div class="row">
+          <i class="icon-angle-right"></i> Address: <b>{{server.addresses}}</b>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="row">
+          <i class="icon-angle-right"></i> Java vendor: <b>{{server.javaVendor}} </b>
+        </div>
+        <div class="row">
+          <i class="icon-angle-right"></i> Java version: <b>{{server.javaVersion}}</b>
+        </div>
+        <div class="row">
+          <i class="icon-angle-right"></i> Num.CPU: <b>{{server.cpus}}</b>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="row">
+          <i class="icon-angle-right"></i> Os name: <b>{{server.osName}} </b>
+        </div>
+        <div class="row">
+          <i class="icon-angle-right"></i> Os version: <b>{{server.osVersion}}</b>
+        </div>
+        <div class="row">
+          <i class="icon-angle-right"></i> Os arch: <b>{{server.osArch}} </b>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row row-space">
+    <!-- <tabset>
+      <tab title="Overview" template-url="views/server/general/overview.html"></tab>
+      <tab title="Monitoring" template-url="views/server/general/monitoring.html"></tab>
+      <tab title="Metrics" template-url="views/server/general/metrics.html"></tab>
+      <tab title="Databases" template-url="views/server/general/db.html"></tab>
+      <tab title="Warnings" template-url="views/server/general/warnings.html"></tab>
+      <tab title="Logs" template-url="views/server/general/log.html"></tab>
+      <tab title="Plugins" template-url="views/server/general/plugins.html"></tab>
+      <tab title="Global Cfg" template-url="views/server/general/config.html"></tab>
+      <tab title="Server Cfg" template-url="views/server/general/configuration.html"></tab>
+    </tabset> -->
+  </div>
+</div>

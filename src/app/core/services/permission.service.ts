@@ -47,7 +47,7 @@ class PermissionService {
   public getCurrentComponent(tab) {
     if (tab) {
       return this.getSideMenu().filter(m => {
-        m.name === tab;
+        return m.name === tab;
       })[0];
     } else {
       return this.getSideMenu()[0];
