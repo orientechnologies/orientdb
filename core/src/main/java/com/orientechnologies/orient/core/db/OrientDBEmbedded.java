@@ -42,7 +42,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -136,8 +135,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
     final FileStore fileStore = Files.getFileStore(Paths.get(walPath));
     final long freeSpace = fileStore.getUsableSpace();
-
-    final Iterator<Path> pathFiles = Files.walk(Paths.get(walPath)).iterator();
 
     final long filesSize = Files.walk(Paths.get(walPath)).mapToLong(p -> p.toFile().isFile() ? p.toFile().length() : 0).sum();
     long maxSegSize;
