@@ -26,16 +26,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Abstract Index implementation that allows only one value for a key.
@@ -44,8 +38,8 @@ import java.util.Set;
  */
 public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   public OIndexOneValue(String name, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, ODocument metadata, final int binaryFormatVersion) {
-    super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage, binaryFormatVersion);
+      String valueContainerAlgorithm, ODocument metadata) {
+    super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage);
   }
 
   public OIdentifiable get(Object iKey) {

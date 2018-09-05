@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedIndexRIDContainerSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
@@ -51,8 +50,8 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable>> {
   public OIndexMultiValues(String name, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, final ODocument metadata, final int binaryFormatVersion) {
-    super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage, binaryFormatVersion);
+      String valueContainerAlgorithm, final ODocument metadata) {
+    super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage);
   }
 
   public Set<OIdentifiable> get(Object key) {
@@ -131,11 +130,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         Set<OIdentifiable> toUpdate = (Set<OIdentifiable>) oldValue;
         if (toUpdate == null) {
           if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-            if (binaryFormatVersion >= 13) {
-              toUpdate = new OMixedIndexRIDContainer(getName(), bonsayFileId);
-            } else {
-              toUpdate = new OIndexRIDContainer(getName(), durable, bonsayFileId);
-            }
+            toUpdate = new OMixedIndexRIDContainer(getName(), bonsayFileId);
           } else {
             throw new IllegalStateException("MVRBTree is not supported any more");
           }
@@ -229,11 +224,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   protected OBinarySerializer determineValueSerializer() {
-    if (binaryFormatVersion >= 13) {
-      return storage.getComponentsFactory().binarySerializerFactory.getObjectSerializer(OMixedIndexRIDContainerSerializer.ID);
-    }
-
-    return storage.getComponentsFactory().binarySerializerFactory.getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
+    return storage.getComponentsFactory().binarySerializerFactory.getObjectSerializer(OMixedIndexRIDContainerSerializer.ID);
   }
 
   @Override

@@ -22,8 +22,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 
-import java.nio.ByteBuffer;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 14.05.13
@@ -60,19 +58,6 @@ public abstract class OAbstractCheckPointStartRecord extends OAbstractWALRecord 
     offset += OLongSerializer.LONG_SIZE;
 
     return offset;
-  }
-
-  @Override
-  public void toStream(ByteBuffer buffer) {
-    if (previousCheckpoint == null) {
-      buffer.put((byte) 0);
-      return;
-    }
-
-    buffer.put((byte) 1);
-
-    buffer.putLong(previousCheckpoint.getSegment());
-    buffer.putLong(previousCheckpoint.getPosition());
   }
 
   @Override

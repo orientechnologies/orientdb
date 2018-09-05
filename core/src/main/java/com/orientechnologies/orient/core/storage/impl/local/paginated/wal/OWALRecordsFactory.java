@@ -20,144 +20,96 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OEmptyWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import net.jpountz.lz4.LZ4Compressor;
-import net.jpountz.lz4.LZ4Factory;
-import net.jpountz.lz4.LZ4FastDecompressor;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.ATOMIC_UNIT_END_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.ATOMIC_UNIT_START_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.CHECKPOINT_END_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.EMPTY_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_CREATED_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_DELETED_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FILE_TRUNCATED_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FULL_CHECKPOINT_START_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FUZZY_CHECKPOINT_END_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.FUZZY_CHECKPOINT_START_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.NON_TX_OPERATION_PERFORMED_WAL_RECORD;
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WALRecordTypes.UPDATE_PAGE_RECORD;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 25.04.13
  */
-public final class OWALRecordsFactory {
+public class OWALRecordsFactory {
   private final Map<Byte, Class> idToTypeMap = new HashMap<>();
+  private final Map<Class, Byte> typeToIdMap = new HashMap<>();
 
-  public static final OWALRecordsFactory INSTANCE = new OWALRecordsFactory();
+  public static final OWALRecordsFactory INSTANCE    = new OWALRecordsFactory();
 
-  private static final LZ4Factory factory                    = LZ4Factory.fastestInstance();
-  private static final int        MIN_COMPRESSED_RECORD_SIZE = 2 * 1024;
+  public byte[] toStream(OWALRecord walRecord) {
+    int contentSize = walRecord.serializedSize() + 1;
+    byte[] content = new byte[contentSize];
 
-  public static OPair<ByteBuffer, Long> toStream(final OWriteableWALRecord walRecord) {
-    final int contentSize = walRecord.serializedSize() + 1;
+    if (walRecord instanceof OUpdatePageRecord)
+      content[0] = 0;
+    else if (walRecord instanceof OFuzzyCheckpointStartRecord)
+      content[0] = 1;
+    else if (walRecord instanceof OFuzzyCheckpointEndRecord)
+      content[0] = 2;
+    else if (walRecord instanceof OFullCheckpointStartRecord)
+      content[0] = 4;
+    else if (walRecord instanceof OCheckpointEndRecord)
+      content[0] = 5;
+    else if (walRecord instanceof OAtomicUnitStartRecord)
+      content[0] = 8;
+    else if (walRecord instanceof OAtomicUnitEndRecord)
+      content[0] = 9;
+    else if (walRecord instanceof OFileCreatedWALRecord)
+      content[0] = 10;
+    else if (walRecord instanceof ONonTxOperationPerformedWALRecord)
+      content[0] = 11;
+    else if (walRecord instanceof OFileDeletedWALRecord)
+      content[0] = 12;
+    else if (walRecord instanceof OFileTruncatedWALRecord)
+      content[0] = 13;
+    else if (typeToIdMap.containsKey(walRecord.getClass())) {
+      content[0] = typeToIdMap.get(walRecord.getClass());
+    } else
+      throw new IllegalArgumentException(walRecord.getClass().getName() + " class cannot be serialized.");
 
-    final long pointer;
-    final ByteBuffer content;
+    walRecord.toStream(content, 1);
 
-    pointer = Native.malloc(contentSize);
-    content = new Pointer(pointer).getByteBuffer(0, contentSize);
-
-    final byte recordId = walRecord.getId();
-    content.put(recordId);
-    walRecord.toStream(content);
-
-    if (MIN_COMPRESSED_RECORD_SIZE <= 0 || contentSize < MIN_COMPRESSED_RECORD_SIZE) {
-      return new OPair<>(content, pointer);
-    }
-
-    final LZ4Compressor compressor = factory.fastCompressor();
-    final int maxCompressedLength = compressor.maxCompressedLength(contentSize - 1);
-
-    final long compressedPointer = Native.malloc(maxCompressedLength + 5);
-    final ByteBuffer compressedContent = new Pointer(compressedPointer).
-        getByteBuffer(0, maxCompressedLength + 5).order(ByteOrder.nativeOrder());
-
-    content.position(1);
-    compressedContent.position(5);
-    final int compressedLength = compressor.compress(content, 1, contentSize - 1, compressedContent, 5, maxCompressedLength);
-
-    if (compressedLength + 5 < contentSize) {
-      if (pointer > 0) {
-        Native.free(pointer);
-      }
-
-      compressedContent.limit(compressedLength + 5);
-      compressedContent.put(0, (byte) (-(recordId + 1)));
-      compressedContent.putInt(1, contentSize);
-
-      return new OPair<>(compressedContent, compressedPointer);
-    } else {
-      Native.free(compressedPointer);
-      return new OPair<>(content, pointer);
-    }
+    return content;
   }
 
-  public OWriteableWALRecord fromStream(byte[] content) {
-    if (content[0] < 0) {
-      final int originalLen = OIntegerSerializer.INSTANCE.deserializeNative(content, 1);
-      final byte[] restored = new byte[originalLen];
-
-      final LZ4FastDecompressor decompressor = factory.fastDecompressor();
-      decompressor.decompress(content, 5, restored, 1, restored.length - 1);
-      restored[0] = (byte) (-content[0] - 1);
-      content = restored;
-    }
-
-    final OWriteableWALRecord walRecord;
+  public OWALRecord fromStream(byte[] content) {
+    OWALRecord walRecord;
     switch (content[0]) {
-    case UPDATE_PAGE_RECORD:
+    case 0:
       walRecord = new OUpdatePageRecord();
       break;
-    case FUZZY_CHECKPOINT_START_RECORD:
+    case 1:
       walRecord = new OFuzzyCheckpointStartRecord();
       break;
-    case FUZZY_CHECKPOINT_END_RECORD:
+    case 2:
       walRecord = new OFuzzyCheckpointEndRecord();
       break;
-    case FULL_CHECKPOINT_START_RECORD:
+    case 4:
       walRecord = new OFullCheckpointStartRecord();
       break;
-    case CHECKPOINT_END_RECORD:
+    case 5:
       walRecord = new OCheckpointEndRecord();
       break;
-    case ATOMIC_UNIT_START_RECORD:
+    case 8:
       walRecord = new OAtomicUnitStartRecord();
       break;
-    case ATOMIC_UNIT_END_RECORD:
+    case 9:
       walRecord = new OAtomicUnitEndRecord();
       break;
-    case FILE_CREATED_WAL_RECORD:
+    case 10:
       walRecord = new OFileCreatedWALRecord();
       break;
-    case NON_TX_OPERATION_PERFORMED_WAL_RECORD:
+    case 11:
       walRecord = new ONonTxOperationPerformedWALRecord();
       break;
-    case FILE_DELETED_WAL_RECORD:
+    case 12:
       walRecord = new OFileDeletedWALRecord();
       break;
-    case FILE_TRUNCATED_WAL_RECORD:
+    case 13:
       walRecord = new OFileTruncatedWALRecord();
-      break;
-    case EMPTY_WAL_RECORD:
-      walRecord = new OEmptyWALRecord();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))
         try {
-          walRecord = (OWriteableWALRecord) idToTypeMap.get(content[0]).newInstance();
-        } catch (final InstantiationException | IllegalAccessException e) {
+          walRecord = (OWALRecord) idToTypeMap.get(content[0]).newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
           throw new IllegalStateException("Cannot deserialize passed in record", e);
         }
       else
@@ -169,7 +121,8 @@ public final class OWALRecordsFactory {
     return walRecord;
   }
 
-  public void registerNewRecord(final byte id, final Class<? extends OWriteableWALRecord> type) {
+  public void registerNewRecord(byte id, Class<? extends OWALRecord> type) {
+    typeToIdMap.put(type, id);
     idToTypeMap.put(id, type);
   }
 }

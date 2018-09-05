@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OLoadCacheStateException;
+import com.orientechnologies.orient.core.exception.OReadCacheException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -37,7 +38,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -59,6 +60,7 @@ import java.util.TimerTask;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -237,12 +239,12 @@ public class O2QCache implements OReadCache {
 
   @Override
   public OCacheEntry loadForWrite(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
-      boolean verifyChecksums, OLogSequenceNumber startLSN) throws IOException {
+      boolean verifyChecksums) throws IOException {
     final OCacheEntry cacheEntry = doLoad(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, verifyChecksums);
 
     if (cacheEntry != null) {
       cacheEntry.acquireExclusiveLock();
-      writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
+      writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer());
     }
 
     return cacheEntry;
@@ -252,6 +254,8 @@ public class O2QCache implements OReadCache {
   public void releaseFromWrite(OCacheEntry cacheEntry, OWriteCache writeCache) {
     final OCachePointer cachePointer = cacheEntry.getCachePointer();
     assert cachePointer != null;
+
+    CountDownLatch latch = null;
 
     Lock fileLock;
     Lock pageLock;
@@ -266,7 +270,21 @@ public class O2QCache implements OReadCache {
           assert cacheEntry.getUsagesCount() >= 0;
 
           if (cacheEntry.getUsagesCount() == 0 && cacheEntry.isDirty()) {
-            writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
+            final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = writeCache
+                .getPerformanceStatisticManager().getSessionPerformanceStatistic();
+
+            if (sessionStoragePerformanceStatistic != null) {
+              sessionStoragePerformanceStatistic.startPageWriteInCacheTimer();
+            }
+
+            try {
+              latch = writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
+            } finally {
+              if (sessionStoragePerformanceStatistic != null) {
+                sessionStoragePerformanceStatistic.stopPageWriteInCacheTimer();
+              }
+            }
+
             cacheEntry.clearDirty();
           }
         } finally {
@@ -293,6 +311,17 @@ public class O2QCache implements OReadCache {
     //it is treated as flushed during fuzzy checkpoint and portion of write ahead log which contains not flushed changes is removed.
     //This can lead to the data loss after restore and corruption of data structures
     cachePointer.releaseExclusiveLock();
+
+    if (latch != null) {
+      try {
+        latch.await();
+      } catch (InterruptedException e) {
+        Thread.interrupted();
+        throw OException.wrapException(new OInterruptedException("File flush was interrupted"), e);
+      } catch (Exception e) {
+        throw OException.wrapException(new OReadCacheException("File flush was abnormally terminated"), e);
+      }
+    }
   }
 
   @Override
@@ -339,7 +368,7 @@ public class O2QCache implements OReadCache {
   }
 
   @Override
-  public void pinPage(final OCacheEntry cacheEntry, OWriteCache writeCache) {
+  public void pinPage(final OCacheEntry cacheEntry) {
     Lock fileLock;
     Lock pageLock;
 
@@ -385,7 +414,7 @@ public class O2QCache implements OReadCache {
       newMemoryData = new MemoryData(memoryData.maxSize, memoryData.pinnedPages + 1);
     }
 
-    removeColdestPagesIfNeeded(writeCache);
+    removeColdestPagesIfNeeded();
   }
 
   /**
@@ -415,8 +444,8 @@ public class O2QCache implements OReadCache {
       newMemoryData = new MemoryData(newMemorySize, memoryData.pinnedPages);
     } while (!memoryDataContainer.compareAndSet(memoryData, newMemoryData));
 
-//    if (newMemorySize < memoryData.maxSize)
-//      removeColdestPagesIfNeeded();
+    if (newMemorySize < memoryData.maxSize)
+      removeColdestPagesIfNeeded();
 
     OLogManager.instance()
         .info(this, "Disk cache size was changed from " + memoryData.maxSize + " pages to " + newMemorySize + " pages");
@@ -424,34 +453,48 @@ public class O2QCache implements OReadCache {
 
   private OCacheEntry doLoad(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
       boolean verifyChecksums) throws IOException {
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = writeCache.getPerformanceStatisticManager()
+        .getSessionPerformanceStatistic();
+
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
+    }
+
     final OModifiableBoolean cacheHit = new OModifiableBoolean(false);
-    fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
-
-    final UpdateCacheResult cacheResult = doLoad(fileId, pageIndex, checkPinnedPages, false, writeCache, pageCount, verifyChecksums,
-        cacheHit);
-    if (cacheResult == null)
-      return null;
-
     try {
-      if (cacheResult.removeColdPages)
-        removeColdestPagesIfNeeded(writeCache);
-    } catch (RuntimeException e) {
-      assert !cacheResult.cacheEntry.isDirty();
+      fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
 
-      releaseFromWrite(cacheResult.cacheEntry, writeCache);
-      throw e;
+      final UpdateCacheResult cacheResult = doLoad(fileId, pageIndex, checkPinnedPages, false, writeCache, pageCount,
+          sessionStoragePerformanceStatistic, verifyChecksums, cacheHit);
+      if (cacheResult == null)
+        return null;
+
+      try {
+        if (cacheResult.removeColdPages)
+          removeColdestPagesIfNeeded();
+      } catch (RuntimeException e) {
+        assert !cacheResult.cacheEntry.isDirty();
+
+        releaseFromWrite(cacheResult.cacheEntry, writeCache);
+        throw e;
+      }
+
+      cacheRequests.increment();
+
+      if (cacheHit.getValue()) {
+        cacheHits.increment();
+      }
+      return cacheResult.cacheEntry;
+    } finally {
+      if (sessionStoragePerformanceStatistic != null) {
+        sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
+      }
     }
-
-    cacheRequests.increment();
-
-    if (cacheHit.getValue()) {
-      cacheHits.increment();
-    }
-    return cacheResult.cacheEntry;
   }
 
   private UpdateCacheResult doLoad(long fileId, long pageIndex, boolean checkPinnedPages, boolean addNewPages,
-      OWriteCache writeCache, final int pageCount, boolean verifyChecksums, final OModifiableBoolean cacheHit) throws IOException {
+      OWriteCache writeCache, final int pageCount, final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic,
+      boolean verifyChecksums, final OModifiableBoolean cacheHit) throws IOException {
 
     if (pageCount < 1)
       throw new IllegalArgumentException(
@@ -512,58 +555,73 @@ public class O2QCache implements OReadCache {
       cacheLock.releaseReadLock();
     }
 
+    if (sessionStoragePerformanceStatistic != null)
+      sessionStoragePerformanceStatistic.incrementPageAccessOnCacheLevel(cacheHit.getValue());
+
     return new UpdateCacheResult(removeColdPages, cacheEntry);
   }
 
   @Override
-  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums, OLogSequenceNumber startLSN)
-      throws IOException {
-    fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
+  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums) throws IOException {
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = writeCache.getPerformanceStatisticManager()
+        .getSessionPerformanceStatistic();
 
-    UpdateCacheResult cacheResult;
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
+    }
 
-    final OModifiableBoolean cacheHit = new OModifiableBoolean(false);
-    Lock fileLock;
-    cacheLock.acquireReadLock();
     try {
-      fileLock = fileLockManager.acquireExclusiveLock(fileId);
+      fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
+
+      UpdateCacheResult cacheResult;
+
+      final OModifiableBoolean cacheHit = new OModifiableBoolean(false);
+      Lock fileLock;
+      cacheLock.acquireReadLock();
       try {
-        final long filledUpTo = writeCache.getFilledUpTo(fileId);
-        assert filledUpTo >= 0;
-        cacheResult = doLoad(fileId, filledUpTo, false, true, writeCache, 1, verifyChecksums, cacheHit);
+        fileLock = fileLockManager.acquireExclusiveLock(fileId);
+        try {
+          final long filledUpTo = writeCache.getFilledUpTo(fileId);
+          assert filledUpTo >= 0;
+          cacheResult = doLoad(fileId, filledUpTo, false, true, writeCache, 1, sessionStoragePerformanceStatistic, verifyChecksums,
+              cacheHit);
+        } finally {
+          fileLock.unlock();
+        }
       } finally {
-        fileLock.unlock();
+        cacheLock.releaseReadLock();
       }
+
+      assert cacheResult != null;
+
+      try {
+        if (cacheResult.removeColdPages)
+          removeColdestPagesIfNeeded();
+      } catch (RuntimeException e) {
+        assert !cacheResult.cacheEntry.isDirty();
+
+        doRelease(cacheResult.cacheEntry);
+        throw e;
+      }
+
+      final OCacheEntry cacheEntry = cacheResult.cacheEntry;
+
+      if (cacheEntry != null) {
+        cacheEntry.acquireExclusiveLock();
+        writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer());
+      }
+
+      assert cacheHit.getValue();
+
+      cacheRequests.increment();
+      cacheHits.increment();
+
+      return cacheResult.cacheEntry;
     } finally {
-      cacheLock.releaseReadLock();
-    }
-
-    assert cacheResult != null;
-
-    try {
-      if (cacheResult.removeColdPages) {
-        removeColdestPagesIfNeeded(writeCache);
+      if (sessionStoragePerformanceStatistic != null) {
+        sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
       }
-    } catch (RuntimeException e) {
-      assert !cacheResult.cacheEntry.isDirty();
-
-      doRelease(cacheResult.cacheEntry);
-      throw e;
     }
-
-    final OCacheEntry cacheEntry = cacheResult.cacheEntry;
-
-    if (cacheEntry != null) {
-      cacheEntry.acquireExclusiveLock();
-      writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
-    }
-
-    assert cacheHit.getValue();
-
-    cacheRequests.increment();
-    cacheHits.increment();
-
-    return cacheResult.cacheEntry;
   }
 
   @Override
@@ -1280,68 +1338,32 @@ public class O2QCache implements OReadCache {
     return removeColdPages;
   }
 
-  private void removeColdestPagesIfNeeded(OWriteCache writeCache) {
+  private void removeColdestPagesIfNeeded() {
+    if (!coldPagesRemovalInProgress.compareAndSet(false, true))
+      return;
+
     final MemoryData memoryData = this.memoryDataContainer.get();
-    if (am.size() + a1in.size() > memoryData.get2QCacheSize()) {
-      try {
-        writeCache.checkCacheOverflow();
-      } catch (InterruptedException e) {
-        throw OException.wrapException(new OInterruptedException("Check of write cache overflow was interrupted"), e);
-      }
-    }
+    final boolean exclusiveCacheLock = (am.size() + a1in.size() - memoryData.get2QCacheSize()) > MAX_CACHE_OVERFLOW;
 
-    cacheLock.acquireWriteLock();
+    if (exclusiveCacheLock)
+      cacheLock.acquireWriteLock();
+    else
+      cacheLock.acquireReadLock();
+
     try {
-      while (am.size() + a1in.size() > memoryData.get2QCacheSize()) {
-        if (a1in.size() > memoryData.K_IN) {
-          final OCacheEntry removedFromAInEntry = a1in.removeLRU();
-          if (removedFromAInEntry == null) {
-            throw new OAllCacheEntriesAreUsedException("All records in aIn queue in 2q cache are used!");
-          } else {
-            assert removedFromAInEntry.getUsagesCount() == 0;
 
-            final OCachePointer cachePointer = removedFromAInEntry.getCachePointer();
-            //cache pointer can be null if we load initial state of cache from disk
-            //see #restoreQueueWithPageLoad for details
-            if (cachePointer != null) {
-              cachePointer.decrementReadersReferrer();
-              removedFromAInEntry.clearCachePointer();
-            }
-            a1out.putToMRU(removedFromAInEntry);
-          }
+      if (exclusiveCacheLock)
+        removeColdPagesWithCacheLock();
+      else
+        removeColdPagesWithoutCacheLock();
 
-          while (a1out.size() > memoryData.K_OUT) {
-            final OCacheEntry removedEntry = a1out.removeLRU();
-
-            assert removedEntry.getUsagesCount() == 0;
-            assert removedEntry.getCachePointer() == null;
-
-            final Set<Long> pageEntries = filePages.get(removedEntry.getFileId());
-            pageEntries.remove(removedEntry.getPageIndex());
-          }
-        } else {
-          final OCacheEntry removedEntry = am.removeLRU();
-
-          if (removedEntry == null) {
-            throw new OAllCacheEntriesAreUsedException("All records in aIn queue in 2q cache are used!");
-          } else {
-            assert removedEntry.getUsagesCount() == 0;
-
-            final OCachePointer cachePointer = removedEntry.getCachePointer();
-            //cache pointer can be null if we load initial state of cache from disk
-            //see #restoreQueueWithPageLoad for details
-            if (cachePointer != null) {
-              cachePointer.decrementReadersReferrer();
-              removedEntry.clearCachePointer();
-            }
-
-            final Set<Long> pageEntries = filePages.get(removedEntry.getFileId());
-            pageEntries.remove(removedEntry.getPageIndex());
-          }
-        }
-      }
     } finally {
-      cacheLock.releaseWriteLock();
+      if (exclusiveCacheLock)
+        cacheLock.releaseWriteLock();
+      else
+        cacheLock.releaseReadLock();
+
+      coldPagesRemovalInProgress.set(false);
     }
   }
 

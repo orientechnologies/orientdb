@@ -18,20 +18,7 @@ package com.orientechnologies.orient.core.storage.impl.local.statistic;
 
 import com.orientechnologies.common.log.OLogManager;
 
-import javax.management.Attribute;
-import javax.management.AttributeList;
-import javax.management.AttributeNotFoundException;
-import javax.management.DynamicMBean;
-import javax.management.InvalidAttributeValueException;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanConstructorInfo;
-import javax.management.MBeanException;
-import javax.management.MBeanInfo;
-import javax.management.MBeanNotificationInfo;
-import javax.management.MBeanOperationInfo;
-import javax.management.MBeanParameterInfo;
-import javax.management.ReflectionException;
-import javax.management.RuntimeOperationsException;
+import javax.management.*;
 import javax.management.modelmbean.ModelMBeanAttributeInfo;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -289,6 +276,18 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
     case WRITE_CACHE_OVERFLOW_COUNT:
       if (componentName == null)
         return manager.getWriteCacheOverflowCount();
+      else
+        throwComponentsAreNotSupported(WAL_CACHE_OVERFLOW_COUNT);
+      break;
+    case WAL_SIZE:
+      if (componentName == null)
+        return manager.getWALSize();
+      else
+        throwComponentsAreNotSupported(WAL_SIZE);
+      break;
+    case WAL_CACHE_OVERFLOW_COUNT:
+      if (componentName == null)
+        return manager.getWALCacheOverflowCount();
       else
         throwComponentsAreNotSupported(WAL_CACHE_OVERFLOW_COUNT);
       break;

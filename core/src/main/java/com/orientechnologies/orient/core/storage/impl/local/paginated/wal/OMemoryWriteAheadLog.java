@@ -23,11 +23,9 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.orient.core.storage.impl.local.OCheckpointRequestListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -36,13 +34,13 @@ import java.util.Map;
  */
 public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   @Override
-  public OLogSequenceNumber begin() {
+  public OLogSequenceNumber begin() throws IOException {
     throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
   @Override
   public OLogSequenceNumber end() {
-    return new OLogSequenceNumber(-1, -1);
+    throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
   @Override
@@ -61,10 +59,13 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber log(OWriteableWALRecord record) throws IOException {
+  public OLogSequenceNumber log(OWALRecord record) throws IOException {
     return new OLogSequenceNumber(Long.MAX_VALUE, Long.MAX_VALUE);
   }
 
+  @Override
+  public void truncate() throws IOException {
+  }
 
   @Override
   public void close() throws IOException {
@@ -79,12 +80,17 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public List<OWriteableWALRecord> read(OLogSequenceNumber lsn, int limit) throws IOException {
+  public void delete(boolean flush) throws IOException {
     throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
   @Override
-  public List<OWriteableWALRecord> next(OLogSequenceNumber lsn, int limit) throws IOException {
+  public OWALRecord read(OLogSequenceNumber lsn) throws IOException {
+    throw new UnsupportedOperationException("Operation not supported for in memory storage.");
+  }
+
+  @Override
+  public OLogSequenceNumber next(OLogSequenceNumber lsn) throws IOException {
     throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
@@ -144,13 +150,12 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber begin(long segmentId) {
+  public OLogSequenceNumber begin(long segmentId) throws IOException {
     throw new UnsupportedOperationException("Operation not supported for in memory storage.");
   }
 
   @Override
-  public boolean cutAllSegmentsSmallerThan(long segmentId) {
-    return false;
+  public void cutAllSegmentsSmallerThan(long segmentId) throws IOException {
   }
 
   @Override

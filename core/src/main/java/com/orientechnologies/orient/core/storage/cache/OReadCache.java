@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.storage.cache;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
 import java.io.IOException;
 
 /**
@@ -67,7 +65,7 @@ public interface OReadCache {
   long addFile(String fileName, long fileId, OWriteCache writeCache) throws IOException;
 
   OCacheEntry loadForWrite(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
-      boolean verifyChecksums, OLogSequenceNumber startLSN) throws IOException;
+      boolean verifyChecksums) throws IOException;
 
   OCacheEntry loadForRead(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
       boolean verifyChecksums) throws IOException;
@@ -76,10 +74,9 @@ public interface OReadCache {
 
   void releaseFromWrite(OCacheEntry cacheEntry, OWriteCache writeCache);
 
-  void pinPage(OCacheEntry cacheEntry, OWriteCache writeCache);
+  void pinPage(OCacheEntry cacheEntry);
 
-  OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums, OLogSequenceNumber startLSN)
-      throws IOException;
+  OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums) throws IOException;
 
   long getUsedMemory();
 

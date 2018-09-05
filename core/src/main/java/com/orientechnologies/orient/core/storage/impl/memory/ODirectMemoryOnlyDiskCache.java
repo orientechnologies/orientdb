@@ -25,13 +25,7 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
-import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
@@ -48,6 +42,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -75,6 +70,11 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     this.pageSize = pageSize;
     this.id = id;
     this.performanceStatisticManager = performanceStatisticManager;
+  }
+
+  @Override
+  public OPerformanceStatisticManager getPerformanceStatisticManager() {
+    return performanceStatisticManager;
   }
 
   /**
@@ -155,10 +155,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void checkCacheOverflow() throws InterruptedException {
-  }
-
-  @Override
   public long addFile(String fileName, long fileId, OWriteCache writeCache) {
     int intId = extractFileId(fileId);
 
@@ -182,7 +178,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public OCacheEntry loadForWrite(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
-      boolean verifyChecksums, OLogSequenceNumber startLSN) throws IOException {
+      boolean verifyChecksums) throws IOException {
 
     final OCacheEntry cacheEntry = doLoad(fileId, pageIndex);
 
@@ -238,11 +234,11 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void pinPage(OCacheEntry cacheEntry, OWriteCache writeCache) {
+  public void pinPage(OCacheEntry cacheEntry) {
   }
 
   @Override
-  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums, OLogSequenceNumber startLSN) {
+  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums) {
     final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
         .getSessionPerformanceStatistic();
 
@@ -513,7 +509,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
           }
 
           final OByteBufferPool bufferPool = OByteBufferPool.instance();
-          final ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+          final ByteBuffer buffer = bufferPool.acquireDirect(true);
 
           final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, id, index);
           cachePointer.incrementReferrer();
@@ -641,7 +637,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void store(long fileId, long pageIndex, OCachePointer dataPointer) {
+  public CountDownLatch store(long fileId, long pageIndex, OCachePointer dataPointer) {
     throw new UnsupportedOperationException();
   }
 
@@ -654,12 +650,12 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public Long getMinimalNotFlushedSegment() {
+  public OLogSequenceNumber getMinimalNotFlushedLSN() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void updateDirtyPagesTable(OCachePointer pointer, OLogSequenceNumber startLSN) {
+  public void updateDirtyPagesTable(OCachePointer pointer) {
   }
 
   @Override
@@ -719,6 +715,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
     return firstIntId == secondIntId;
   }
+
 
   @Override
   public String restoreFileById(long fileId) throws IOException {

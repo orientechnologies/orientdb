@@ -11,4 +11,18 @@ public abstract class OOperationUnitBodyRecord extends OOperationUnitRecord {
   protected OOperationUnitBodyRecord(OOperationUnitId operationUnitId) {
     super(operationUnitId);
   }
+
+  @Override
+  public int toStream(byte[] content, int offset) {
+    offset = super.toStream(content, offset);
+
+    return offset;
+  }
+
+  @Override
+  public int fromStream(byte[] content, int offset) {
+    offset = super.fromStream(content, offset);
+
+    return offset;
+  }
 }

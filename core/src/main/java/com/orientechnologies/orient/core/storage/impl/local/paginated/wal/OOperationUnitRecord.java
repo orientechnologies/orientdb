@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import java.nio.ByteBuffer;
-
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 30.05.13
@@ -38,11 +36,6 @@ public abstract class OOperationUnitRecord extends OAbstractWALRecord {
   @Override
   public int toStream(final byte[] content, final int offset) {
     return operationUnitId.toStream(content, offset);
-  }
-
-  @Override
-  public void toStream(ByteBuffer buffer) {
-    operationUnitId.toStream(buffer);
   }
 
   @Override

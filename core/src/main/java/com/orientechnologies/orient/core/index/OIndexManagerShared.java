@@ -42,16 +42,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.nio.channels.UnsupportedAddressTypeException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -63,9 +54,9 @@ import java.util.Set;
 public class OIndexManagerShared extends OIndexManagerAbstract {
   private static final long serialVersionUID = 1L;
 
-  protected volatile transient Thread   recreateIndexesThread = null;
-  private volatile             boolean  rebuildCompleted      = false;
-  private                      OStorage storage;
+  protected volatile transient Thread  recreateIndexesThread = null;
+  private volatile             boolean rebuildCompleted      = false;
+  private OStorage storage;
 
   public OIndexManagerShared(OStorage storage) {
     super();
@@ -118,19 +109,12 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     }
 
     ODatabaseDocumentInternal database = getDatabase();
+    OStorage storage = database.getStorage();
 
     final Locale locale = getServerLocale();
     type = type.toUpperCase(locale);
-
     if (algorithm == null) {
-      final OType[] types = indexDefinition.getTypes();
-
-      if ((type.equals(OClass.INDEX_TYPE.NOTUNIQUE.name()) || type.equals(OClass.INDEX_TYPE.UNIQUE.name())) && types.length == 1
-          && types[0] == OType.STRING) {
-        algorithm = ODefaultIndexFactory.PREFIX_BTREE_ALGORITHM;
-      } else {
-        algorithm = OIndexes.chooseDefaultIndexAlgorithm(type);
-      }
+      algorithm = OIndexes.chooseDefaultIndexAlgorithm(type);
     }
 
     final String valueContainerAlgorithm = chooseContainerAlgorithm(type);

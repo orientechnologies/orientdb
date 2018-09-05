@@ -22,6 +22,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexEngine;
@@ -107,9 +108,8 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
       metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
 
     if (OClass.INDEX_TYPE.SPATIAL.toString().equals(indexType)) {
-      final int binaryFormatVersion = pagStorage.getConfiguration().getBinaryFormatVersion();
-      return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM, version, pagStorage, valueContainerAlgorithm, metadata,
-          binaryFormatVersion);
+
+      return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM, version, pagStorage, valueContainerAlgorithm, metadata);
     }
     throw new OConfigurationException("Unsupported type : " + algorithm);
   }
