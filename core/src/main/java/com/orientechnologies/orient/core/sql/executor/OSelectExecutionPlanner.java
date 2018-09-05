@@ -108,9 +108,9 @@ public class OSelectExecutionPlanner {
 
   }
 
-  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling, boolean useCache) {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
-    if (!enableProfiling && statement.executinPlanCanBeCached()) {
+    if (useCache && !enableProfiling && statement.executinPlanCanBeCached()) {
       OExecutionPlan plan = OExecutionPlanCache.get(statement.getOriginalStatement(), ctx, db);
       if (plan != null) {
         return (OInternalExecutionPlan) plan;
@@ -154,7 +154,7 @@ public class OSelectExecutionPlanner {
 
     handleProjectionsBlock(result, info, ctx, enableProfiling);
 
-    if (!enableProfiling && statement.executinPlanCanBeCached() && result.canBeCached()
+    if (useCache && !enableProfiling && statement.executinPlanCanBeCached() && result.canBeCached()
         && OExecutionPlanCache.getLastInvalidation(db) < planningStart) {
       OExecutionPlanCache.put(statement.getOriginalStatement(), result, (ODatabaseDocumentInternal) ctx.getDatabase());
     }

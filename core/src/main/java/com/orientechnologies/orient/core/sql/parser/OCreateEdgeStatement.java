@@ -70,7 +70,14 @@ public class OCreateEdgeStatement extends OStatement {
 
   public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OCreateEdgeExecutionPlanner planner = new OCreateEdgeExecutionPlanner(this);
-    OInsertExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
+    OInsertExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, true);
+    result.setStatement(this.originalStatement);
+    return result;
+  }
+
+  public OInsertExecutionPlan createExecutionPlanNoCache(OCommandContext ctx, boolean enableProfiling) {
+    OCreateEdgeExecutionPlanner planner = new OCreateEdgeExecutionPlanner(this);
+    OInsertExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, false);
     result.setStatement(this.originalStatement);
     return result;
   }
