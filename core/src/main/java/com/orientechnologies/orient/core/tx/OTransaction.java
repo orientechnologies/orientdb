@@ -141,16 +141,15 @@ public interface OTransaction extends OBasicTransaction {
 
   boolean isLockedRecord(OIdentifiable iRecord);
 
+  @Deprecated
   OStorage.LOCKING_STRATEGY lockingStrategy(OIdentifiable iRecord);
 
+  @Deprecated
   OTransaction lockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY iLockingStrategy);
 
+  @Deprecated
   OTransaction unlockRecord(OIdentifiable iRecord);
 
-  HashMap<ORID, OStorage.LOCKING_STRATEGY> getLockedRecords();
-
   int getEntryCount();
-
-  boolean hasRecordCreation();
 
 }

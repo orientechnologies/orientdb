@@ -29,11 +29,14 @@ import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
  */
 public class OrientDBConfig {
 
-  private OrientDBConfig          parent;
-  private OContextConfiguration   configurations;
-  private Map<ATTRIBUTES, Object> attributes;
-  private Set<ODatabaseListener>  listeners;
-  private ClassLoader             classLoader;
+  public static final String                  LOCK_TYPE_MODIFICATION = "modification";
+  public static final String                  LOCK_TYPE_READWRITE    = "readwrite";
+
+  private             OrientDBConfig          parent;
+  private             OContextConfiguration   configurations;
+  private             Map<ATTRIBUTES, Object> attributes;
+  private             Set<ODatabaseListener>  listeners;
+  private             ClassLoader             classLoader;
 
   protected OrientDBConfig() {
     configurations = new OContextConfiguration();

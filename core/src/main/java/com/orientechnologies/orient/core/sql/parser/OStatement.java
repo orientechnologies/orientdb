@@ -9,7 +9,10 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.executor.*;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
 import java.util.Map;
@@ -92,6 +95,10 @@ public class OStatement extends SimpleNode {
    */
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean profile) {
     throw new UnsupportedOperationException();
+  }
+
+  public OInternalExecutionPlan createExecutionPlanNoCache(OCommandContext ctx, boolean profile) {
+    return createExecutionPlan(ctx, profile);
   }
 
   public OStatement copy() {

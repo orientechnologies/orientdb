@@ -51,8 +51,11 @@ import java.util.*;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OTransactionNoTx extends OTransactionAbstract {
-  public OTransactionNoTx(final ODatabaseDocumentInternal iDatabase) {
+  public OTransactionNoTx(final ODatabaseDocumentInternal iDatabase, Map<ORID, LockedRecordMetadata> noTxLocks) {
     super(iDatabase);
+    if (noTxLocks != null) {
+      setLocks(noTxLocks);
+    }
   }
 
   public void begin() {
@@ -64,11 +67,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
   @Override
   public int getEntryCount() {
     return 0;
-  }
-
-  @Override
-  public boolean hasRecordCreation() {
-    return false;
   }
 
   @Override

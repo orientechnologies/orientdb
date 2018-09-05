@@ -41,9 +41,9 @@ public class OCreateEdgeExecutionPlanner {
 
   }
 
-  public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
+  public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling, boolean useCache) {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
-    if (!enableProfiling && statement.executinPlanCanBeCached()) {
+    if (useCache && !enableProfiling && statement.executinPlanCanBeCached()) {
       OExecutionPlan plan = OExecutionPlanCache.get(statement.getOriginalStatement(), ctx, db);
       if (plan != null) {
         return (OInsertExecutionPlan) plan;
@@ -96,7 +96,7 @@ public class OCreateEdgeExecutionPlanner {
     handleSave(result, targetClusterName, ctx, enableProfiling);
     //TODO implement batch, wait and retry
 
-    if (!enableProfiling && statement.executinPlanCanBeCached() && result.canBeCached()
+    if (useCache && !enableProfiling && statement.executinPlanCanBeCached() && result.canBeCached()
         && OExecutionPlanCache.getLastInvalidation(db) < planningStart) {
       OExecutionPlanCache.put(statement.getOriginalStatement(), result, (ODatabaseDocumentInternal) ctx.getDatabase());
     }

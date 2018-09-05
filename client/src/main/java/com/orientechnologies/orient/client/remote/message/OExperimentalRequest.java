@@ -17,8 +17,10 @@ import java.io.IOException;
  */
 public class OExperimentalRequest implements OBinaryRequest<OExperimentalResponse> {
 
-  private byte                                      messageID;
-  private OBinaryRequest<? extends OBinaryResponse> request;
+  public static final byte                                      REQUEST_RECORD_LOCK   = 48;
+  public static final byte                                      REQUEST_RECORD_UNLOCK = 49;
+  private             byte                                      messageID;
+  private             OBinaryRequest<? extends OBinaryResponse> request;
 
   public OExperimentalRequest() {
 
@@ -44,6 +46,10 @@ public class OExperimentalRequest implements OBinaryRequest<OExperimentalRespons
 
   private OBinaryRequest<? extends OBinaryResponse> createBinaryRequest(byte message) {
     switch (message) {
+    case REQUEST_RECORD_LOCK:
+      return new OLockRecordRequest();
+    case REQUEST_RECORD_UNLOCK:
+      return new OUnlockRecordRequest();
     //NONE FOR NOW
     }
 
@@ -75,6 +81,6 @@ public class OExperimentalRequest implements OBinaryRequest<OExperimentalRespons
 
   @Override
   public String getDescription() {
-    return "Experimental message:" + request == null ? "Not Defined" : request.getDescription();
+    return "Experimental message:" + (request == null ? "Not Defined" : request.getDescription());
   }
 }

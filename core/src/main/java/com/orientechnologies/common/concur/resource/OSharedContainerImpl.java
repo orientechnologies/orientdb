@@ -32,7 +32,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * the resource is locked until is removed.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 @SuppressWarnings("unchecked")
 public class OSharedContainerImpl implements OSharedContainer {
@@ -65,11 +64,11 @@ public class OSharedContainerImpl implements OSharedContainer {
           } catch (Exception e) {
             throw OException.wrapException(new ODatabaseException("Error on creation of shared resource"), e);
           }
-          
+
           if (value instanceof OSharedResource)
             ((OSharedResource) value).acquireExclusiveLock();
-
-          sharedResources.put(iName, value);
+          if (value != null)
+            sharedResources.put(iName, value);
         }
       }
     }

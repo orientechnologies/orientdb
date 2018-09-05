@@ -284,7 +284,14 @@ public class OSelectStatement extends OStatement {
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(this);
-    OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling);
+    OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, true);
+    result.setStatement(this.originalStatement);
+    return result;
+  }
+
+  public OInternalExecutionPlan createExecutionPlanNoCache(OCommandContext ctx, boolean enableProfiling) {
+    OSelectExecutionPlanner planner = new OSelectExecutionPlanner(this);
+    OInternalExecutionPlan result = planner.createExecutionPlan(ctx, enableProfiling, false);
     result.setStatement(this.originalStatement);
     return result;
   }
@@ -381,6 +388,9 @@ public class OSelectStatement extends OStatement {
     //no FROM, if a subquery refers to parent it does not make sense, so that reference will be just ignored
 
     if (projection != null && projection.refersToParent()) {
+      return true;
+    }
+    if(target!=null && target.refersToParent()){
       return true;
     }
     if (whereClause != null && whereClause.refersToParent()) {
