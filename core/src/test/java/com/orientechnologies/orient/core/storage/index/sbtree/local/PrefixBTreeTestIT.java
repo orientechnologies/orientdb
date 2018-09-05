@@ -1,10 +1,8 @@
 package com.orientechnologies.orient.core.storage.index.sbtree.local;
 
-import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -39,17 +37,17 @@ public class PrefixBTreeTestIT {
     buildDirectory = System.getProperty("buildDirectory", ".") + File.separator + PrefixBTreeTestIT.class.getSimpleName();
 
     dbName = "localPrefixBTreeTest";
-    final File dbDirectory = new File(buildDirectory, dbName);
-    OFileUtils.deleteRecursively(dbDirectory);
+//    final File dbDirectory = new File(buildDirectory, dbName);
+//    OFileUtils.deleteRecursively(dbDirectory);
 
     orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
-    orientDB.create(dbName, ODatabaseType.PLOCAL);
+//    orientDB.create(dbName, ODatabaseType.PLOCAL);
 
     databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
     prefixTree = new OPrefixBTree<>("prefixBTree", ".pbt", ".npt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
-    prefixTree.create(OUTF8Serializer.INSTANCE, OLinkSerializer.INSTANCE, false, null);
+    prefixTree.load("prefixBTree", OUTF8Serializer.INSTANCE, OLinkSerializer.INSTANCE, false, null);
   }
 
   @After
@@ -330,12 +328,12 @@ public class PrefixBTreeTestIT {
       int val = random.nextInt(Integer.MAX_VALUE);
       String key = Integer.toString(val);
 
-      prefixTree.put(key, new ORecordId(val % 32000, val));
+      // prefixTree.put(key, new ORecordId(val % 32000, val));
       keyValues.put(key, new ORecordId(val % 32000, val));
     }
 
-    assertIterateMajorEntries(keyValues, random, true, true);
-    assertIterateMajorEntries(keyValues, random, false, true);
+    //assertIterateMajorEntries(keyValues, random, true, true);
+    //assertIterateMajorEntries(keyValues, random, false, true);
 
     assertIterateMajorEntries(keyValues, random, true, false);
     assertIterateMajorEntries(keyValues, random, false, false);
@@ -429,6 +427,10 @@ public class PrefixBTreeTestIT {
 
       int counter = 0;
       while (iterator.hasNext()) {
+        if (counter == 3752437) {
+          System.out.println();
+        }
+
         final Map.Entry<String, OIdentifiable> indexEntry = cursor.next(-1);
         final Map.Entry<String, ORID> entry = iterator.next();
 
