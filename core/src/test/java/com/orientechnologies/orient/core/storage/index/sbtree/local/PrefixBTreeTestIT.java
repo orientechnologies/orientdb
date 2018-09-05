@@ -317,7 +317,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testIterateEntriesMajor() {
-    final int keysCount = 500_000;
+    final int keysCount = 100_000_000;
 
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     final long seed = 817196323495312L;//System.nanoTime();
