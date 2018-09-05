@@ -394,6 +394,9 @@ public class OSelectStatement extends OStatement {
     if (projection != null && projection.refersToParent()) {
       return true;
     }
+    if(target!=null && target.refersToParent()){
+      return true;
+    }
     if (whereClause != null && whereClause.refersToParent()) {
       return true;
     }
