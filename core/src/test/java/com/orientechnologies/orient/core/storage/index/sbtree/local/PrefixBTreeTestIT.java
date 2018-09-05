@@ -320,7 +320,7 @@ public class PrefixBTreeTestIT {
     final int keysCount = 500_000;
 
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
-    final long seed = System.nanoTime();
+    final long seed = 817196323495312L;//System.nanoTime();
 
     System.out.println("testIterateEntriesMajor: " + seed);
     Random random = new Random(seed);
@@ -426,9 +426,14 @@ public class PrefixBTreeTestIT {
       else
         iterator = keyValues.descendingMap().subMap(keyValues.lastKey(), true, fromKey, keyInclusive).entrySet().iterator();
 
+      int counter = 0;
       while (iterator.hasNext()) {
         final Map.Entry<String, OIdentifiable> indexEntry = cursor.next(-1);
         final Map.Entry<String, ORID> entry = iterator.next();
+
+        if (indexEntry == null) {
+          System.out.println(counter);
+        }
 
         Assert.assertEquals(indexEntry.getKey(), entry.getKey());
         Assert.assertEquals(indexEntry.getValue(), entry.getValue());
