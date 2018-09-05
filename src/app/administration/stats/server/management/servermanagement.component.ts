@@ -28,6 +28,8 @@ class ServerManagementComponent implements OnInit, OnChanges {
   servers: string[];
   server: any = {};
   selectedServer: string;
+  tab = "overview";
+    currentStats: any;
 
   constructor(private metrics: MetricService) {}
 
@@ -47,11 +49,11 @@ class ServerManagementComponent implements OnInit, OnChanges {
   }
   fetchMetrics() {
     this.metrics.getMetrics().then(data => {
-      console.log(data);
       this.servers = Object.keys(data.clusterStats);
       this.selectedServer = this.servers[0];
       this.clusterStats = data.clusterStats;
       let gauges = data.clusterStats[this.selectedServer].gauges;
+      this.currentStats = data.clusterStats[this.selectedServer];
       this.server = {
         status: "ONLINE",
         javaVersion: gauges["server.info.javaVersion"].value,

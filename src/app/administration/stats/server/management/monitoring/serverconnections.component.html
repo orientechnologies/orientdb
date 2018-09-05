@@ -1,0 +1,151 @@
+<div class="col-md-12">
+
+    <div class="row">
+        <div class="col-md-12">
+            Below all the active connections. Keep in mind that HTTP connections are stateless, so no database is retained and usually
+            after a short timeout (seconds) they are killed. Binary connections, instead, remain in life until the connection
+            client closes it. Binary connections are used by the
+            <a target="_blank" href="http://www.orientdb.com/docs/{{version}}/Console-Commands.html">Orient Console
+            </a>
+            tool and by any Orient Java applications that uses the native
+            <a target="_blank" href="http://www.orientdb.com/docs/{{version}}/Java-API.html">Java API</a>
+        </div>
+    </div>
+    <br/>
+
+
+    <div class="row">
+        <div class="col-md-6">
+            <form class="form-search">
+                <div class="input-group">
+                    <input type="text" class="input-xxlarge form-control search-query" [(ngModel)]="searchText" placeholder="Search connections"
+                        focus="true">
+                    <span class="input-group-btn">
+                        <button type="submit" class="btn btn-default" ng-click="">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+    <br/>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered table-condensed ng-table-responsive ">
+                    <thead>
+                        <tr>
+
+                            <th>Session ID</th>
+                            <th>Client</th>
+                            <th>Address</th>
+                            <th>Database</th>
+                            <th>User</th>
+                            <th>Total Requests</th>
+                            <th>Command Info</th>
+                            <th>Command Detail</th>
+                            <th>Last Command On</th>
+                            <th>Last Command Info</th>
+                            <th>Last Command Detail</th>
+                            <th>Last Execution Time</th>
+                            <th>Total Working Time</th>
+                            <th>Connected Since</th>
+                            <th>Protocol</th>
+                            <th>Client ID</th>
+                            <th>Driver</th>
+                            <th>Commands</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr *ngFor="let conn of connections">
+                            <td>{{conn.sessionId}}</td>
+                            <td>{{ conn.connectionId }}</td>
+                            <td>{{ conn.remoteAddress }}</td>
+                            <td>{{ conn.db }}</td>
+                            <td>{{ conn.user }}</td>
+                            <td>{{ conn.totalRequests }}</td>
+                            <td>{{ conn.commandInfo }}</td>
+                            <td>{{ conn.commandDetail }}</td>
+                            <td>{{ conn.lastCommandOn }}</td>
+                            <td>{{ conn.lastCommandInfo }}</td>
+                            <td>{{ conn.lastCommandDetail }}</td>
+                            <td>{{ conn.lastExecutionTime }}</td>
+                            <td>{{ conn.totalWorkingTime }}</td>
+                            <td>{{ conn.connectedOn }}</td>
+                            <td>{{ conn.protocol }}</td>
+                            <td>{{ conn.clientId }}</td>
+                            <td>{{ conn.driver }}</td>
+                            <td>
+                                <a href="javascript:void(0)">
+                                    <i class="fa fa-ban"></i>Interrupt
+                                </a>
+                                <a href="javascript:void(0)">
+                                    <i class="fa fa-trash-o"></i>Kill
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <!-- <table st-table="connections" class="table table-striped table-bordered table-condensed ng-table-responsive ">
+
+                    <thead>
+                        <tr>
+                            <th>Session ID</th>
+                            <th>Client</th>
+                            <th>Address</th>
+                            <th>Database</th>
+                            <th>User</th>
+                            <th>Total Requests</th>
+                            <th>Command Info</th>
+                            <th>Command Detail</th>
+                            <th>Last Command On</th>
+                            <th>Last Command Info</th>
+                            <th>Last Command Detail</th>
+                            <th>Last Execution Time</th>
+                            <th>Total Working Time</th>
+                            <th>Connected Since</th>
+                            <th>Protocol</th>
+                            <th>Client ID</th>
+                            <th>Driver</th>
+                            <th>Commands</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="conn in  connections  | filter:query">
+                            <td>{{conn.sessionId}}</td>
+                            <td>{{ conn.connectionId }}</td>
+                            <td>{{ conn.remoteAddress }}</td>
+                            <td>{{ conn.db }}</td>
+                            <td>{{ conn.user }}</td>
+                            <td>{{ conn.totalRequests }}</td>
+                            <td>{{ conn.commandInfo }}</td>
+                            <td>{{ conn.commandDetail }}</td>
+                            <td>{{ conn.lastCommandOn }}</td>
+                            <td>{{ conn.lastCommandInfo }}</td>
+                            <td>{{ conn.lastCommandDetail }}</td>
+                            <td>{{ conn.lastExecutionTime }}</td>
+                            <td>{{ conn.totalWorkingTime }}</td>
+                            <td>{{ conn.connectedOn }}</td>
+                            <td>{{ conn.protocol }}</td>
+                            <td>{{ conn.clientId }}</td>
+                            <td>{{ conn.driver }}</td>
+                            <td>
+                                <a ng-click="interruptConnection(conn)" href="javascript:void(0)">
+                                    <i class="fa fa-ban"></i>Interrupt
+                                </a>
+                                <a ng-click="killConnection(conn)" href="javascript:void(0)">
+                                    <i class="fa fa-trash-o"></i>Kill
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table> -->
+
+            </div>
+        </div>
+    </div>
+
+</div>

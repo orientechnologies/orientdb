@@ -30,6 +30,26 @@ class MetricService {
       headers: headers
     };
   }
+
+  getConnections(agent, name) {
+    let url = API + (agent ? `/node/info?${name}` : "server");
+    return this.http
+      .get(url, this.getOptions())
+      .toPromise()
+      .then(data => {
+        return data.json();
+      });
+  }
+
+  threadDumps(name) {
+    let url = API + `/node/threadDump?${name}`;
+    return this.http
+      .get(url, this.getOptions())
+      .toPromise()
+      .then(data => {
+        return data.json();
+      });
+  }
 }
 
 angular

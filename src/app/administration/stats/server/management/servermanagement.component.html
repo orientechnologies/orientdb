@@ -46,6 +46,20 @@
   </div>
 
   <div class="row row-space">
+    <div>
+      <ul class="nav nav-tabs">
+        <li [ngClass]="{'active' : tab === 'overview'}" (click)="tab = 'overview'"><a href="javascript:void(0)"><span>Overview</span></a></li>
+        <li [ngClass]="{'active' : tab === 'monitoring'}" (click)="tab = 'monitoring'"><a href="javascript:void(0)"><span>Monitoring</span></a></li>
+        <li [ngClass]="{'active' : tab === 'globalCfg'}" (click)="tab = 'globalCfg'"><a href="javascript:void(0)"><span>Global
+              CFG
+            </span></a></li>
+      </ul>
+      <div class="tab-content row">
+        <server-management-overview *ngIf="tab === 'overview'" [name]="selectedServer" [stats]="currentStats"></server-management-overview>
+        <server-management-monitoring *ngIf="tab === 'monitoring'" [name]="selectedServer"></server-management-monitoring>
+      </div>
+    </div>
+
     <!-- <tabset>
       <tab title="Overview" template-url="views/server/general/overview.html"></tab>
       <tab title="Monitoring" template-url="views/server/general/monitoring.html"></tab>
