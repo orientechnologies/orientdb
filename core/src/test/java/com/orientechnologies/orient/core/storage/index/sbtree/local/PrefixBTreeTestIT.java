@@ -332,8 +332,8 @@ public class PrefixBTreeTestIT {
       keyValues.put(key, new ORecordId(val % 32000, val));
     }
 
-    //assertIterateMajorEntries(keyValues, random, true, true);
-    //assertIterateMajorEntries(keyValues, random, false, true);
+    assertIterateMajorEntries(keyValues, random, true, true);
+    assertIterateMajorEntries(keyValues, random, false, true);
 
     assertIterateMajorEntries(keyValues, random, true, false);
     assertIterateMajorEntries(keyValues, random, false, false);
