@@ -469,31 +469,31 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
   public static void updateSchema(OStorageRemote storage, ODocument schema) {
 //    storage.get
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> {
-      throw new IllegalStateException("No shared context set on remote storage!");
-    });
-    ((OSchemaRemote) shared.getSchema()).update(schema);
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> null);
+    if (shared != null) {
+      ((OSchemaRemote) shared.getSchema()).update(schema);
+    }
   }
 
   public static void updateIndexManager(OStorageRemote storage, ODocument indexManager) {
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> {
-      throw new IllegalStateException("No shared context set on remote storage!");
-    });
-    ((OIndexManagerRemote) shared.getIndexManager()).update(indexManager);
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> null);
+    if (shared != null) {
+      ((OIndexManagerRemote) shared.getIndexManager()).update(indexManager);
+    }
   }
 
   public static void updateFunction(OStorageRemote storage) {
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> {
-      throw new IllegalStateException("No shared context set on remote storage!");
-    });
-    (shared.getFunctionLibrary()).update();
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> null);
+    if (shared != null) {
+      (shared.getFunctionLibrary()).update();
+    }
   }
 
   public static void updateSequences(OStorageRemote storage) {
-    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> {
-      throw new IllegalStateException("No shared context set on remote storage!");
-    });
-    (shared.getSequenceLibrary()).update();
+    OSharedContext shared = storage.getResource(OSharedContext.class.getName(), () -> null);
+    if (shared != null) {
+      (shared.getSequenceLibrary()).update();
+    }
   }
 
   @Override
@@ -752,7 +752,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       getMetadata().clearThreadLocalSchemaSnapshot();
     }
   }
-
 
   public String getClusterName(final ORecord record) {
     // DON'T ASSIGN CLUSTER WITH REMOTE: SERVER KNOWS THE RIGHT CLUSTER BASED ON LOCALITY
