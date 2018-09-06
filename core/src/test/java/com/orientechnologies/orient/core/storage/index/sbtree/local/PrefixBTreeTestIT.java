@@ -435,6 +435,7 @@ public class PrefixBTreeTestIT {
         final Map.Entry<String, ORID> entry = iterator.next();
 
         if (indexEntry == null) {
+          prefixTree.get(entry.getKey());
           System.out.println(counter);
         }
 
