@@ -25,6 +25,11 @@ class ServerThreadDumpComponent implements OnInit, OnChanges {
   private threadDump = "";
   dumpDate: Date;
 
+  private editorOptions = {
+    lineWrapping: true,
+    lineNumbers: true,
+    readOnly: true
+  };
   constructor(
     private metrics: MetricService,
     private agentService: AgentService

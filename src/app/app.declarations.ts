@@ -25,7 +25,12 @@ import {
   ServerThreadDumpComponent
 } from "./administration";
 
-import { DualListComponent, GraphComponent, AddEdgeModal } from "./util";
+import {
+  DualListComponent,
+  GraphComponent,
+  AddEdgeModal,
+  CodemirrorComponent
+} from "./util";
 
 export const APP_DECLARATIONS = [
   ImportExportComponent,
@@ -53,5 +58,6 @@ export const APP_DECLARATIONS = [
   ServerManagementOverviewComponent,
   ServerManagementMonitoringComponent,
   ServerConnectionsComponent,
-  ServerThreadDumpComponent
+  ServerThreadDumpComponent,
+  CodemirrorComponent
 ];

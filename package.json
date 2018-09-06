@@ -12,6 +12,7 @@
     "@angular/upgrade": "^4.4.6",
     "@angularclass/hmr": "^1.2.2",
     "@angularclass/hmr-loader": "^3.0.4",
+    "@types/codemirror": "0.0.60",
     "@types/filesize": "^3.6.0",
     "angular": "1.5.9",
     "angular-animate": "1.5.9",
