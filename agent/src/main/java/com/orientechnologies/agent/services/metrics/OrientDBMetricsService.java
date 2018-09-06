@@ -62,6 +62,9 @@ public class OrientDBMetricsService implements OEnterpriseService {
                     configFile);
             content = "{ \"enabled\" : false}";
           }
+          if (content == null) {
+            content = "{ \"enabled\" : false}";
+          }
           ODocument document = new ODocument(PROFILER_SCHEMA).fromJSON(content);
           return (OElement) db.save(document);
         });
@@ -79,7 +82,7 @@ public class OrientDBMetricsService implements OEnterpriseService {
 
     configAndStart();
 
-    server.registerStatelessCommand(new OrientDBMetricsCommand(server,registry, this));
+    server.registerStatelessCommand(new OrientDBMetricsCommand(server, registry, this));
 
   }
 
@@ -214,7 +217,7 @@ public class OrientDBMetricsService implements OEnterpriseService {
 
   }
 
-  public  String toJson() {
+  public String toJson() {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     try {
       this.registry.toJSON(buffer);
