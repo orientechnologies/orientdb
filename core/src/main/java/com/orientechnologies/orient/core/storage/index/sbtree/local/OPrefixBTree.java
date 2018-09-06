@@ -2052,8 +2052,9 @@ public class OPrefixBTree<V> extends ODurableComponent {
                     itemIndex = bucket.size() - 1;
                     break;
                   } else {
-                    currentPath.add(new ORawPair<>(cacheEntry.getPageIndex(), 1));
-                    final long childIndex = bucket.getRight(0);
+                    final int lastIndex = bucket.size() - 1;
+                    currentPath.add(new ORawPair<>(cacheEntry.getPageIndex(), lastIndex + 1));
+                    final long childIndex = bucket.getRight(lastIndex);
 
                     releasePageFromRead(atomicOperation, cacheEntry);
 
