@@ -279,7 +279,7 @@ public enum OGlobalConfiguration {
       Integer.class, 64),
 
   DISK_CACHE_PRINT_CACHE_STATISTICS("storage.diskCache.printCacheStatistics",
-      "Print information about write cache performance metrics", Boolean.class, true),
+      "Print information about write cache performance metrics", Boolean.class, false),
 
   DISK_CACHE_STATISTICS_INTERVAL("storage.diskCache.cacheStatisticsInterval",
       "Period in sec. after which information about write cache performance metrics will be printed", Integer.class, 10),
