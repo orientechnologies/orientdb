@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 import java.io.IOException;
@@ -83,5 +84,12 @@ public class ORemoteServerController {
 
   public int getProtocolVersion() {
     return protocolVersion;
+  }
+
+  public void sendBinaryRequest(OBinaryRequest request) {
+    int idx = requestChannelIndex++;
+    if (idx < 0)
+      idx = 0;
+    requestChannels[idx % responseChannels.length].sendBinaryRequest(request);
   }
 }

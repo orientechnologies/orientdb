@@ -34,6 +34,8 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
+import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -46,13 +48,15 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.impl.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.network.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
@@ -64,6 +68,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.*;
+
+import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.*;
 
 /**
  * Hazelcast implementation for clustering.
@@ -1786,4 +1792,33 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     OLogManager.instance().info(this, "Distributed Lock Manager server is '%s'", lockManagerServer);
   }
 
+  @Override
+  public void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
+      throws IOException {
+    OBinaryRequest<OBinaryResponse> request = newDistributedRequest(requestType);
+    try {
+      request.read(channel, 0, null);
+    } catch (IOException e) {
+      //impossible to read request ... probably need to notify this back.
+      throw e;
+    }
+    ODistributedExecutable executable = (ODistributedExecutable) request;
+    //TODO: this should be bound to a member and from the request we should identify the sending member
+    OCoordinatedExecutorMessageHandler executor = new OCoordinatedExecutorMessageHandler(null, null, null, null);
+    executable.executeDistributed(executor);
+  }
+
+  private OBinaryRequest<OBinaryResponse> newDistributedRequest(int requestType) {
+    switch (requestType) {
+    case DISTRIBUTED_SUBMIT_REQUEST:
+      return new ONetworkSubmitRequest();
+    case DISTRIBUTED_SUBMIT_RESPONSE:
+      return new ONetworkSubmitResponse();
+    case DISTRIBUTED_OPERATION_REQUEST:
+      return new OOperationRequest();
+    case DISTRIBUTED_OPERATION_RESPONSE:
+      return new OOperationResponse();
+    }
+    return null;
+  }
 }
