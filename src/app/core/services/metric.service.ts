@@ -31,7 +31,7 @@ class MetricService {
     };
   }
 
-  getConnections(agent, name) {
+  getInfo(agent, name) {
     let url = API + (agent ? `/node/info?${name}` : "server");
     return this.http
       .get(url, this.getOptions())

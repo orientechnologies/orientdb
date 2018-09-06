@@ -1,0 +1,88 @@
+<div class="col-md-12">
+    <h4>Properties</h4>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered table-condensed">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Value</th>
+            </thead>
+            <tbody>
+                <tr *ngFor="let props of properties">
+                    <td>{{ props.name }}</td>
+                    <td>{{ props.value }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+
+    <div class="row">
+        <div class="col-md-6">
+            <h4>Global Configuration</h4>
+        </div>
+        <div class="col-md-6">
+            <div class="btn-toolbar pull-right">
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-default" (click)="saveGlobalProperties()">
+                        <i class="fa fa-save"></i> Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-md-6">
+            <form class="form-search">
+                <div class="input-group">
+                    <input type="text" class="input-xxlarge form-control search-query" name="searchText" [(ngModel)]="searchText" placeholder="Search global property"
+                        focus="true">
+                    <span class="input-group-btn">
+                        <button type="submit" class="btn btn-default" ng-click="">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+    <br/>
+
+    <div class="row row-space">
+        <div class="col-md-12">
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered table-condensed">
+                    <thead>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Default Value</th>
+                        <th>Value</th>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let props of globalProperties | filter : searchText : fields">
+                            <td>{{ props.key }}</td>
+                            <td>{{ props.description }}</td>
+                            <td>
+                                <span>{{props.defaultValue}}</span>
+                                <!-- <input type="checkbox" disabled ng-show="isBoolean(props.defaultValue)" ng-model="props.defaultValue"> -->
+                                <!-- <span ng-hide="isBoolean(props.defaultValue)"> {{ props.defaultValue }}</span> -->
+                            </td>
+                            <td *ngIf="!props.canChange">
+                                <span>{{props.value}}</span>
+                                <!-- <input type="checkbox" disabled ng-show="isBoolean(props.value)" ng-model="props.value"> -->
+                                <!-- <span ng-hide="isBoolean(props.value)"> {{ props.value }}</span> -->
+                            </td>
+                            <td *ngIf="props.canChange">
+                                <!-- <input class="{ 'form-control' : {{ getType(props.value) != 'checkbox' }} }" type=" {{ getType(props.value)}}" ng-change="changeGlobal(props)"
+                                    ng-model="props.value"> -->
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

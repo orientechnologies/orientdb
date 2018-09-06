@@ -57,6 +57,7 @@
       <div class="tab-content row">
         <server-management-overview *ngIf="tab === 'overview'" [name]="selectedServer" [stats]="currentStats"></server-management-overview>
         <server-management-monitoring *ngIf="tab === 'monitoring'" [name]="selectedServer"></server-management-monitoring>
+        <global-configuration *ngIf="tab === 'globalCfg'" [name]="selectedServer"></global-configuration>
       </div>
     </div>
 

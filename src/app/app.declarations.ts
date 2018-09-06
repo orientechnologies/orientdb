@@ -22,7 +22,8 @@ import {
   ServerManagementOverviewComponent,
   ServerManagementMonitoringComponent,
   ServerConnectionsComponent,
-  ServerThreadDumpComponent
+  ServerThreadDumpComponent,
+  GlobalCFGComponent
 } from "./administration";
 
 import {
@@ -59,5 +60,6 @@ export const APP_DECLARATIONS = [
   ServerManagementMonitoringComponent,
   ServerConnectionsComponent,
   ServerThreadDumpComponent,
-  CodemirrorComponent
+  CodemirrorComponent,
+  GlobalCFGComponent
 ];

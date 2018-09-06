@@ -43,11 +43,9 @@ class ServerConnectionsComponent implements OnInit, OnChanges {
   }
 
   fetchConnections() {
-    this.metrics
-      .getConnections(this.agentService.active, this.name)
-      .then(data => {
-        this.connections = data.connections;
-      });
+    this.metrics.getInfo(this.agentService.active, this.name).then(data => {
+      this.connections = data.connections;
+    });
   }
   ngOnDestroy(): void {
     clearInterval(this.handle);
