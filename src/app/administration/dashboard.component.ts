@@ -14,13 +14,18 @@ import {
 } from "@angular/core";
 import { downgradeComponent } from "@angular/upgrade/static";
 import { PermissionService, WikiService } from "../core/services";
-import { DashboardStatsComponent, ServerManagementComponent } from "./stats";
+import {
+  DashboardStatsComponent,
+  ServerManagementComponent,
+  ClusterManagementComponent
+} from "./stats";
 
 declare const angular: any;
 
 const subComponents = {
   stats: DashboardStatsComponent,
-  general: ServerManagementComponent
+  general: ServerManagementComponent,
+  cluster: ClusterManagementComponent
 };
 
 @Component({
@@ -45,7 +50,6 @@ class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-
     let cmp = this.permission.getCurrentComponent(this.tab);
     if (cmp && subComponents[cmp.name]) {
       this.title = cmp.title;

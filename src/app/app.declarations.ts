@@ -23,14 +23,18 @@ import {
   ServerManagementMonitoringComponent,
   ServerConnectionsComponent,
   ServerThreadDumpComponent,
-  GlobalCFGComponent
+  GlobalCFGComponent,
+  ClusterManagementComponent,
+  ClusterOverviewComponent,
+  ClusterStatsComponent
 } from "./administration";
 
 import {
   DualListComponent,
   GraphComponent,
   AddEdgeModal,
-  CodemirrorComponent
+  CodemirrorComponent,
+  NoAgentComponent
 } from "./util";
 
 export const APP_DECLARATIONS = [
@@ -61,5 +65,9 @@ export const APP_DECLARATIONS = [
   ServerConnectionsComponent,
   ServerThreadDumpComponent,
   CodemirrorComponent,
-  GlobalCFGComponent
+  GlobalCFGComponent,
+  ClusterManagementComponent,
+  NoAgentComponent,
+  ClusterOverviewComponent,
+  ClusterStatsComponent
 ];
