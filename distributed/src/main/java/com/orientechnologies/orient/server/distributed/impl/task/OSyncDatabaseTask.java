@@ -140,6 +140,8 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
                   try {
                     OWriteAheadLog wal = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getWALInstance();
                     OLogSequenceNumber lsn = wal.end();
+                    if (lsn == null)
+                      throw new UnsupportedOperationException();
                     wal.addCutTillLimit(lsn);
 
                     resultedBackupFile.delete();
