@@ -332,8 +332,8 @@ public class PrefixBTreeTestIT {
       keyValues.put(key, new ORecordId(val % 32000, val));
     }
 
-    //assertIterateMajorEntries(keyValues, random, true, true);
-    //assertIterateMajorEntries(keyValues, random, false, true);
+    assertIterateMajorEntries(keyValues, random, true, true);
+    assertIterateMajorEntries(keyValues, random, false, true);
 
     assertIterateMajorEntries(keyValues, random, true, false);
     assertIterateMajorEntries(keyValues, random, false, false);
@@ -409,7 +409,7 @@ public class PrefixBTreeTestIT {
     }
 
     for (int i = 0; i < 100; i++) {
-      final int fromKeyIndex = 93804684;//random.nextInt(keys.length);
+      final int fromKeyIndex = random.nextInt(keys.length);
       String fromKey = keys[fromKeyIndex];
 
       if (random.nextBoolean()) {
@@ -425,23 +425,12 @@ public class PrefixBTreeTestIT {
       else
         iterator = keyValues.descendingMap().subMap(keyValues.lastKey(), true, fromKey, keyInclusive).entrySet().iterator();
 
-      int counter = 0;
       while (iterator.hasNext()) {
-        if (keyInclusive && !ascSortOrder && counter == 3752437) {
-          System.out.println();
-        }
-
         final Map.Entry<String, OIdentifiable> indexEntry = cursor.next(-1);
         final Map.Entry<String, ORID> entry = iterator.next();
 
-        if (indexEntry == null) {
-          prefixTree.get(entry.getKey());
-          System.out.println(counter);
-        }
-
         Assert.assertEquals(indexEntry.getKey(), entry.getKey());
         Assert.assertEquals(indexEntry.getValue(), entry.getValue());
-        counter++;
       }
 
       Assert.assertFalse(iterator.hasNext());
