@@ -24,6 +24,10 @@ class ServerConnectionsComponent implements OnInit, OnChanges {
   private connections = [];
   handle: any;
 
+  private fields = ["db", "commandInfo", "protocol"];
+
+  private searchText;
+
   constructor(
     private metrics: MetricService,
     private agentService: AgentService

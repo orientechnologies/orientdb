@@ -1,9 +1,3 @@
-import {
-  ToSizeString,
-} from "./core/pipes";
+import { ToSizeString, FilterPipe } from "./core/pipes";
 
-
-
-export const APP_PIPES = [
-  ToSizeString
-];
+export const APP_PIPES = [ToSizeString, FilterPipe];
