@@ -26,7 +26,9 @@ import {
   GlobalCFGComponent,
   ClusterManagementComponent,
   ClusterOverviewComponent,
-  ClusterStatsComponent
+  ClusterStatsComponent,
+  BackupComponent,
+  SingleBackupComponent
 } from "./administration";
 
 import {
@@ -34,7 +36,8 @@ import {
   GraphComponent,
   AddEdgeModal,
   CodemirrorComponent,
-  NoAgentComponent
+  NoAgentComponent,
+  CronComponent
 } from "./util";
 
 export const APP_DECLARATIONS = [
@@ -69,5 +72,8 @@ export const APP_DECLARATIONS = [
   ClusterManagementComponent,
   NoAgentComponent,
   ClusterOverviewComponent,
-  ClusterStatsComponent
+  ClusterStatsComponent,
+  BackupComponent,
+  SingleBackupComponent,
+  CronComponent
 ];

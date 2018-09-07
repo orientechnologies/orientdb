@@ -41,6 +41,15 @@ class MetricService {
       });
   }
 
+  listDatabases() {
+    let url = API + "listDatabases";
+    return this.http
+      .get(url, this.getOptions())
+      .toPromise()
+      .then(data => {
+        return data.json();
+      });
+  }
   threadDumps(name) {
     let url = API + `/node/threadDump?${name}`;
     return this.http

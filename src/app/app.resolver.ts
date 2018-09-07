@@ -11,19 +11,17 @@ import {
   Neo4jImporterService,
   PermissionService,
   WikiService,
-  MetricService
+  MetricService,
+  BackupService
 } from "./core/services";
 import {
   FormatArrayPipe,
   FormatErrorPipe,
   ObjectKeysPipe,
+  KeysPipe
 } from "./core/pipes";
 
-const APP_PIPES = [
-  FormatArrayPipe,
-  FormatErrorPipe,
-  ObjectKeysPipe,
-];
+const APP_PIPES = [FormatArrayPipe, FormatErrorPipe, ObjectKeysPipe];
 
 const APP_SERVICES = [
   DBService,
@@ -39,7 +37,8 @@ const APP_SERVICES = [
   GraphService,
   PermissionService,
   WikiService,
-  MetricService
+  MetricService,
+  BackupService
 ];
 
 export const APP_RESOLVER_PROVIDERS = [...APP_SERVICES, ...APP_PIPES];

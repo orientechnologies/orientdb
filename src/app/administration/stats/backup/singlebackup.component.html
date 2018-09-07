@@ -1,0 +1,99 @@
+<div class="row">
+    <div class="col-md-12" ng-controller="SingleBackupController">
+        <div>
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">Settings</div>
+                        <div class="panel-body">
+                            <form class="form-horizontal">
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">Database</label>
+                                    <div class="col-sm-9">
+                                        <p class="form-control-static">{{backup.dbName}}</p>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">Backup ID</label>
+                                    <div class="col-sm-9">
+                                        <p class="form-control-static">{{backup.uuid}}</p>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">Enabled</label>
+                                    <div class="col-sm-9">
+                                        <input type="checkbox" name="enabled" [(ngModel)]="backup.enabled">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">Directory</label>
+                                    <div class="col-sm-9">
+                                        <input type="text" class="form-control" name="directory" placeholder="Directory"
+                                            [(ngModel)]="backup.directory">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">Retention days</label>
+                                    <div class="col-sm-9">
+                                        <input type="number" class="form-control" name="retentionDays" placeholder=""
+                                            [(ngModel)]="backup.retentionDays">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label">Mode</label>
+                                    <div class="col-sm-9">
+                                        <select class="form-control" name="mode" [(ngModel)]="mode">
+                                            <option *ngFor="let mode of modes | keys" [value]="mode">{{modes[mode]}}</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" *ngIf="mode == '3' || mode == '2'">
+                                    <label class="col-sm-3 control-label">Full Backup</label>
+                                    <div class="col-sm-9">
+                                        <cron [cron]="backup.modes['FULL_BACKUP'].when"></cron>
+                                    </div>
+                                </div>
+                                <div class="form-group" *ngIf="mode == '3' || mode == '1'">
+                                    <label class="col-sm-3 control-label">Incremental Backup</label>
+                                    <div class="col-sm-9">
+                                        <cron [cron]="backup.modes['INCREMENTAL_BACKUP'].when"></cron>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-sm-offset-3 col-sm-9">
+                                        <button type="submit" class="btn btn-default btn-sm" ng-click="save()">Save</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7">
+
+                    <div *ngIf="backup.uuid">
+                        <ul class="list-inline text-center">
+                            <li (click)="onEventClick(t)" *ngFor="let t of eventsType" class="pointer">
+                                <i class="fa" [ngClass]="getClazz(t)">
+                                </i>
+                                {{t.name}}
+                            </li>
+                        </ul>
+                    </div>
+                    <div id="calendar"></div>
+
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div id="timeline"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
