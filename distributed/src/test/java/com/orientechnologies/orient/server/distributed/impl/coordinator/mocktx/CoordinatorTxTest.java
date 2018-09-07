@@ -27,11 +27,11 @@ public class CoordinatorTxTest {
   @Before
   public void before() {
     this.one = OrientDBInternal.distributed("target/one/", OrientDBConfig.defaultConfig()).newOrientDB();
-    this.one.create("none",ODatabaseType.MEMORY);
+    this.one.create("none", ODatabaseType.MEMORY);
     this.two = OrientDBInternal.distributed("target/two/", OrientDBConfig.defaultConfig()).newOrientDB();
-    this.two.create("none",ODatabaseType.MEMORY);
+    this.two.create("none", ODatabaseType.MEMORY);
     this.three = OrientDBInternal.distributed("target/three/", OrientDBConfig.defaultConfig()).newOrientDB();
-    this.three.create("none",ODatabaseType.MEMORY);
+    this.three.create("none", ODatabaseType.MEMORY);
   }
 
   @After
@@ -108,6 +108,11 @@ public class CoordinatorTxTest {
     public void sendResponse(OLogId id, ONodeResponse nodeResponse) {
       //This in real case should do a network call on the side of the executor node and this call should be in the coordinator node.
       coordinator.receive(member, id, nodeResponse);
+    }
+
+    @Override
+    public void submit(OSubmitRequest request) {
+
     }
 
     @Override

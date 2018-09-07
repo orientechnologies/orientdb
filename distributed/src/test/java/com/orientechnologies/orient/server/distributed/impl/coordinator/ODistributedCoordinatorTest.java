@@ -109,6 +109,15 @@ public class ODistributedCoordinatorTest {
                     ONodeResponse response) {
                   if (context.getResponses().size() == 1) {
                     member.reply(new OSubmitResponse() {
+                      @Override
+                      public void serialize(DataOutput output) throws IOException {
+
+                      }
+
+                      @Override
+                      public void deserialize(DataInput input) throws IOException {
+
+                      }
                     });
                   }
                   return context.getResponses().size() == context.getInvolvedMembers().size();
@@ -218,6 +227,11 @@ public class ODistributedCoordinatorTest {
     @Override
     public void sendResponse(OLogId id, ONodeResponse nodeResponse) {
       assertTrue(false);
+    }
+
+    @Override
+    public void submit(OSubmitRequest request) {
+
     }
 
     @Override

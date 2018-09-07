@@ -146,6 +146,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     return requestType == OChannelBinaryProtocol.DISTRIBUTED_REQUEST || requestType == OChannelBinaryProtocol.DISTRIBUTED_RESPONSE;
   }
 
+  private boolean isCoordinated(int requestType) {
+    return requestType == OChannelBinaryProtocol.DISTRIBUTED_SUBMIT_REQUEST
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_SUBMIT_RESPONSE
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_OPERATION_REQUEST
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_OPERATION_RESPONSE;
+  }
+
   @Override
   protected void execute() throws Exception {
     requestType = -1;
@@ -170,7 +177,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             && requestType != OChannelBinaryProtocol.REQUEST_OK_PUSH) {
           clientTxId = channel.readInt();
           channel.clearInput();
-          sendError(null,clientTxId,new OOfflineNodeException("Node Shutting down"));
+          sendError(null, clientTxId, new OOfflineNodeException("Node Shutting down"));
         }
         return;
       }
@@ -187,7 +194,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       clientTxId = channel.readInt();
       // GET THE CONNECTION IF EXIST
       OClientConnection connection = server.getClientConnectionManager().getConnection(clientTxId, this);
-      if (isDistributed(requestType)) {
+      if (isCoordinated(requestType)) {
+        coordinatedRequest(connection, requestType, clientTxId);
+      } else if (isDistributed(requestType)) {
         distributedRequest(connection, requestType, clientTxId);
       } else
         sessionRequest(connection, requestType, clientTxId);
@@ -196,6 +205,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       sendShutdown();
       throw e;
     }
+  }
+
+  private void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId) throws IOException {
+    final ODistributedServerManager manager = server.getDistributedManager();
+    byte[] tokenBytes = channel.readBytes();
+    connection = onBeforeOperationalRequest(connection, tokenBytes);
+    manager.coordinatedRequest(connection, requestType, clientTxId, channel);
   }
 
   private void handleHandshake() throws IOException {

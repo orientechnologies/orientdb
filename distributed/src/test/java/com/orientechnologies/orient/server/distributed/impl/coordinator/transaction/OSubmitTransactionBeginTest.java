@@ -58,6 +58,11 @@ public class OSubmitTransactionBeginTest {
     }
 
     @Override
+    public void submit(OSubmitRequest request) {
+
+    }
+
+    @Override
     public void reply(OSubmitResponse response) {
 
     }
