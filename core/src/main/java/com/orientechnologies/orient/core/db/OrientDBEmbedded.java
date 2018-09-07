@@ -213,9 +213,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
         }
       } else
         throw new ODatabaseException("Cannot create new database '" + name + "' because it already exists");
-      ODatabaseRecordThreadLocal.instance().remove();
     }
     embedded.callOnCreateListeners();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   public void restore(String name, String user, String password, ODatabaseType type, String path, OrientDBConfig config) {
@@ -235,6 +235,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
     storage.restoreFromIncrementalBackup(path);
     embedded.callOnCreateListeners();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   public void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
@@ -416,8 +417,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
       }
       storages.put(name, storage);
     }
-    if (embedded != null)
+    if (embedded != null) {
       embedded.callOnCreateListeners();
+      ODatabaseRecordThreadLocal.instance().remove();
+    }
   }
 
   public synchronized void removeShutdownHook() {
