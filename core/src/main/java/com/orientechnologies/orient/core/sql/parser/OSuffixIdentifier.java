@@ -15,11 +15,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OSuffixIdentifier extends SimpleNode {
 
@@ -81,8 +77,11 @@ public class OSuffixIdentifier extends SimpleNode {
       }
       return null;
     }
-    if (recordAttribute != null) {
-      return ((OElement) iCurrentRecord.getRecord()).getProperty(recordAttribute.name);
+    if (recordAttribute != null && iCurrentRecord != null) {
+      OElement rec = iCurrentRecord.getRecord();
+      if (rec != null) {
+        return rec.getProperty(recordAttribute.name);
+      }
     }
     return null;
   }
