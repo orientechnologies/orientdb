@@ -32,6 +32,11 @@ public class SecondPhaseResponseHandler implements OResponseHandler {
         public void deserialize(DataInput input) throws IOException {
 
         }
+
+        @Override
+        public int getResponseType() {
+          return 0;
+        }
       });
     }
     return context1.getResponses().size() == context1.getInvolvedMembers().size();

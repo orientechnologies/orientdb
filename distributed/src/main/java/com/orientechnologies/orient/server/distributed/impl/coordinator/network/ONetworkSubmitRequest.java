@@ -7,6 +7,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitRequest;
 
 import java.io.DataInputStream;
@@ -16,25 +17,38 @@ import java.io.IOException;
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_SUBMIT_REQUEST;
 
 public class ONetworkSubmitRequest implements OBinaryRequest, ODistributedExecutable {
-  private OSubmitRequest request;
+  private String                     senderNode;
+  private String                     database;
+  private OSubmitRequest             request;
+  private OCoordinateMessagesFactory factory;
 
-  public ONetworkSubmitRequest(OSubmitRequest request) {
+  public ONetworkSubmitRequest(String senderNode, String database, OSubmitRequest request) {
+    this.database = database;
     this.request = request;
+    this.senderNode = senderNode;
   }
 
-  public ONetworkSubmitRequest() {
-
+  public ONetworkSubmitRequest(OCoordinateMessagesFactory coordinateMessagesFactory) {
+    factory = coordinateMessagesFactory;
   }
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
-    request.serialize(new DataOutputStream(network.getDataOutput()));
+    DataOutputStream output = new DataOutputStream(network.getDataOutput());
+    output.writeUTF(senderNode);
+    output.writeUTF(database);
+    output.writeInt(request.getRequestType());
+    request.serialize(output);
   }
 
   @Override
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
-    request = null;// TODO: create instance from a ID.
-    request.deserialize(new DataInputStream(channel.getDataInput()));
+    DataInputStream input = new DataInputStream(channel.getDataInput());
+    senderNode = input.readUTF();
+    database = input.readUTF();
+    int requestType = input.readInt();
+    request = factory.createSubmitRequest(requestType);
+    request.deserialize(input);
   }
 
   @Override
@@ -69,5 +83,13 @@ public class ONetworkSubmitRequest implements OBinaryRequest, ODistributedExecut
 
   public OSubmitRequest getRequest() {
     return request;
+  }
+
+  public String getDatabase() {
+    return database;
+  }
+
+  public String getSenderNode() {
+    return senderNode;
   }
 }

@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_FIRST_PHASE_REQUEST;
+
 public class OTransactionFirstPhaseOperation implements ONodeRequest {
 
   private OSessionOperationId           operationId;
@@ -35,6 +37,10 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
     this.operationId = operationId;
     this.operations = operations;
     this.indexes = indexes;
+  }
+
+  public OTransactionFirstPhaseOperation() {
+
   }
 
   @Override
@@ -129,5 +135,10 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
       indexes.add(change);
     }
 
+  }
+
+  @Override
+  public int getRequestType() {
+    return TRANSACTION_FIRST_PHASE_REQUEST;
   }
 }

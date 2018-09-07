@@ -2,38 +2,35 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.network
 
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.network.ONetworkSubmitRequest;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.network.ONetworkSubmitResponse;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.network.OOperationRequest;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.network.OOperationResponse;
 
 public class ODistributedChannelBinaryProtocol implements ODistributedChannel {
 
+  private String                  nodeName;
   private ORemoteServerController controller;
 
-  public ODistributedChannelBinaryProtocol(ORemoteServerController controller) {
-    this.controller = controller;
+  public ODistributedChannelBinaryProtocol(String nodeName, ORemoteServerController remoteServer) {
+    this.nodeName = nodeName;
+    this.controller = remoteServer;
   }
 
   @Override
-  public void sendRequest(OLogId id, ONodeRequest nodeRequest) {
-    controller.sendBinaryRequest(new OOperationRequest(id, nodeRequest));
+  public void sendRequest(String database, OLogId id, ONodeRequest nodeRequest) {
+    controller.sendBinaryRequest(new OOperationRequest(nodeName, database, id, nodeRequest));
   }
 
   @Override
-  public void sendResponse(OLogId id, ONodeResponse nodeResponse) {
-    controller.sendBinaryRequest(new OOperationResponse(id, nodeResponse));
-
+  public void sendResponse(String database, OLogId id, ONodeResponse nodeResponse) {
+    controller.sendBinaryRequest(new OOperationResponse(nodeName, database, id, nodeResponse));
   }
 
   @Override
-  public void submit(OSubmitRequest request) {
-    controller.sendBinaryRequest(new ONetworkSubmitRequest(request));
+  public void submit(String database, OSubmitRequest request) {
+    controller.sendBinaryRequest(new ONetworkSubmitRequest(nodeName, database, request));
   }
 
   @Override
-  public void reply(OSubmitResponse response) {
-    controller.sendBinaryRequest(new ONetworkSubmitResponse(response));
+  public void reply(String database, OSubmitResponse response) {
+    controller.sendBinaryRequest(new ONetworkSubmitResponse(nodeName, database, response));
   }
 
 }

@@ -7,6 +7,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeRequest;
 
@@ -17,31 +18,41 @@ import java.io.IOException;
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_OPERATION_REQUEST;
 
 public class OOperationRequest implements OBinaryRequest, ODistributedExecutable {
-  private OLogId       id;
-  private ONodeRequest request;
+  private String                     sourceNode;
+  private String                     database;
+  private OLogId                     id;
+  private ONodeRequest               request;
+  private OCoordinateMessagesFactory factory;
 
-  public OOperationRequest(OLogId id, ONodeRequest request) {
+  public OOperationRequest(String sourceNode, String database, OLogId id, ONodeRequest request) {
+    this.sourceNode = sourceNode;
+    this.database = database;
     this.id = id;
     this.request = request;
   }
 
-  public OOperationRequest() {
-
+  public OOperationRequest(OCoordinateMessagesFactory coordinateMessagesFactory) {
+    this.factory = coordinateMessagesFactory;
   }
 
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     DataOutputStream output = new DataOutputStream(network.getDataOutput());
+    output.writeUTF(sourceNode);
+    output.writeUTF(database);
     OLogId.serialize(id, output);
-    //TODO: write request kind/id.
+    output.writeInt(request.getRequestType());
     request.serialize(output);
   }
 
   @Override
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     DataInputStream input = new DataInputStream(channel.getDataInput());
+    sourceNode = input.readUTF();
+    database = input.readUTF();
     id = OLogId.deserialize(input);
-    request = null;// TODO: read the type id and create the instance.
+    int requestType = input.readInt();
+    request = factory.createOperationRequest(requestType);
     request.deserialize(input);
   }
 
@@ -72,7 +83,7 @@ public class OOperationRequest implements OBinaryRequest, ODistributedExecutable
 
   @Override
   public void executeDistributed(OCoordinatedExecutor executor) {
-      executor.executeOperationRequest(this);
+    executor.executeOperationRequest(this);
   }
 
   public OLogId getId() {
@@ -81,5 +92,13 @@ public class OOperationRequest implements OBinaryRequest, ODistributedExecutable
 
   public ONodeRequest getRequest() {
     return request;
+  }
+
+  public String getDatabase() {
+    return database;
+  }
+
+  public String getSourceNode() {
+    return sourceNode;
   }
 }

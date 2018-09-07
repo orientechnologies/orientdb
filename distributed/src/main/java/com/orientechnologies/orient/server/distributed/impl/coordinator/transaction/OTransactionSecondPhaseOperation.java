@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
+import static com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SECOND_PHASE_REQUEST;
+
 public class OTransactionSecondPhaseOperation implements ONodeRequest {
   private OSessionOperationId operationId;
   private boolean             success;
@@ -18,6 +20,10 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
   public OTransactionSecondPhaseOperation(OSessionOperationId operationId, boolean success) {
     this.operationId = operationId;
     this.success = success;
+  }
+
+  public OTransactionSecondPhaseOperation() {
+
   }
 
   @Override
@@ -53,5 +59,10 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
     operationId = new OSessionOperationId();
     operationId.deserialize(input);
     success = input.readBoolean();
+  }
+
+  @Override
+  public int getRequestType() {
+    return TRANSACTION_SECOND_PHASE_REQUEST;
   }
 }
