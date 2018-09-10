@@ -24,7 +24,7 @@ export class CronComponent implements OnInit, OnChanges {
   private cron;
 
   @Output()
-  private changed: EventEmitter<any>;
+  private changed: EventEmitter<any> = new EventEmitter();
 
   ngOnChanges(changes: SimpleChanges) {
     if (this.cronElement) {

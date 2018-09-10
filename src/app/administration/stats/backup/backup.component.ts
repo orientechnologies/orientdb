@@ -38,6 +38,8 @@ class BackupComponent implements OnInit, OnDestroy {
   onChange() {
     this.backup = this.backups[this.db] || {
       dbName: this.db,
+      enabled : true,
+      retentionDays : -1,
       modes: { FULL_BACKUP: { when: "0 0/10 * * * ?" } }
     };
   }

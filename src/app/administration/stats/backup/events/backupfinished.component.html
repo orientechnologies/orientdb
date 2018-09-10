@@ -1,0 +1,159 @@
+<div>
+    <modal #backupModal>
+        <modal-header [show-close]="true">
+            <h4 class="modal-title">Backup Finished Event</h4>
+        </modal-header>
+        <modal-body>
+
+            <div class="row">
+                <div class="col-md-12 ">
+                    <ul class="list-unstyled">
+                        <li>
+                            <i class="fa fa-angle-right">
+                            </i>
+                            <b>Info:</b> {{event.title}} at {{ event._source.timestamp | date : 'medium' }}
+                        </li>
+                        <li>
+                            <i class="fa fa-angle-right">
+                            </i>
+                            <b>Path:</b> {{ event._source.path }}
+                        </li>
+                        <li>
+                            <i class="fa fa-angle-right">
+                            </i>
+                            <b>Filename:</b> {{ event._source.fileName }}
+                        </li>
+                        <li>
+                            <i class="fa fa-angle-right">
+                            </i>
+                            <b>File size:</b> {{ event._source.fileSize | toSizeString }}
+                        </li>
+                        <li>
+                            <i class="fa fa-angle-right">
+                            </i>
+                            <b>Execution time:</b> {{ event._source.elapsedTime }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </modal-body>
+        <modal-footer [show-default-buttons]="false">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary" (click)="restoreDatabase()">Restore database</button>
+            <button class="btn btn-danger" (click)="removeBackup()">Remove Backup</button>
+        </modal-footer>
+    </modal>
+
+    <modal #restoreBackupModal ngIf="restoring">
+        <modal-header [show-close]="true">
+            <h4 class="modal-title">Restore Backup to <b>{{restored.target}}</b></h4>
+        </modal-header>
+        <modal-body>
+            <div class="row">
+                <div class="col-md-12">
+                    <form id="signin" name="newDB" class="form-horizontal" novalidate="">
+                        <fieldset>
+                            <div class="form-group">
+                                <label class="control-label col-md-2">Database name</label>
+                                <div class="col-md-10">
+                                    <input type="text" class="form-control" name="target" required [(ngModel)]="restored.target"
+                                        placeholder="Database name" focus="true" />
+                                </div>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row">
+
+                <div class="col-md-12">
+
+                    <div class="studio-well">
+                        <p>
+                            The selected backup is part of an incremental backup.
+                            Below are the files (<b>{{unitLogs.length}}</b>) involved . The restore will use all the
+                            files stored
+                            in <b>{{restored.log.path}}</b> to
+                            restore the database.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <br />
+            <div class="row">
+
+                <div class="col-md-12">
+                    <table class="table table-striped  table-fixed-header table-backup">
+                        <thead>
+                            <tr>
+                                <th>Mode</th>
+                                <th>When</th>
+                                <th>File Name</th>
+                                <th>File Size</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="u in unitLogs">
+                                <td>{{ u.mode }}</td>
+                                <td>{{ u.timestamp | date : 'medium'}}</td>
+                                <td>{{ u.fileName }}</td>
+                                <td>{{ u.fileSize | toSizeString }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </modal-body>
+        <modal-footer [show-default-buttons]="false">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary" (click)="restoreDatabase()">Restore database</button>
+            <button class="btn btn-danger" (click)="removeBackup()">Remove Backup</button>
+        </modal-footer>
+    </modal>
+
+    <modal #removeBackupModal>
+        <modal-header [show-close]="true">
+            <h4 class="modal-title">Restore Backup to <b>{{restored.target}}</b></h4>
+        </modal-header>
+        <modal-body>
+
+            <div class="row">
+                <div class="col-md-12 ">
+                    <ul class="list-unstyled">
+                        <li>
+                            <i class="fa fa-angle-right">
+                            </i>
+                            <b>Info:</b> {{event.title}} at {{ event._source.timestamp | date : 'medium' }}
+                        </li>
+                        <li>
+                            <i class="fa fa-angle-right">
+                            </i>
+                            <b>Path:</b> {{ event._source.path }}
+                        </li>
+                        <li>
+                            <i class="fa fa-angle-right">
+                            </i>
+                            <b>Filename:</b> {{ event._source.fileName }}
+                        </li>
+                        <li>
+                            <i class="fa fa-angle-right">
+                            </i>
+                            <b>File size:</b> {{ event._source.fileSize | toSizeString }}
+                        </li>
+                        <li>
+                            <i class="fa fa-angle-right">
+                            </i>
+                            <b>Execution time:</b> {{ event._source.elapsedTime }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </modal-body>
+        <modal-footer [show-default-buttons]="false">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary" (click)="restoreDatabase()">Restore database</button>
+            <button class="btn btn-danger" (click)="removeBackup()">Remove Backup</button>
+        </modal-footer>
+    </modal>
+</div>

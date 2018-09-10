@@ -28,7 +28,9 @@ import {
   ClusterOverviewComponent,
   ClusterStatsComponent,
   BackupComponent,
-  SingleBackupComponent
+  SingleBackupComponent,
+  BackupCalendarComponent,
+  BackupFinishedEvent
 } from "./administration";
 
 import {
@@ -75,5 +77,7 @@ export const APP_DECLARATIONS = [
   ClusterStatsComponent,
   BackupComponent,
   SingleBackupComponent,
-  CronComponent
+  CronComponent,
+  BackupCalendarComponent,
+  BackupFinishedEvent
 ];
