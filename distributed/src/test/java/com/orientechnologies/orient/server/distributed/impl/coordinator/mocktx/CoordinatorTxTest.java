@@ -55,17 +55,17 @@ public class CoordinatorTxTest {
         null, null);
 
     MemberChannel cOne = new MemberChannel(eOne, coordinator);
-    ODistributedMember mOne = new ODistributedMember("one", cOne);
+    ODistributedMember mOne = new ODistributedMember("one", null, cOne);
     cOne.member = mOne;
     coordinator.join(mOne);
 
     MemberChannel cTwo = new MemberChannel(eOne, coordinator);
-    ODistributedMember mTwo = new ODistributedMember("two", cTwo);
+    ODistributedMember mTwo = new ODistributedMember("two", null, cTwo);
     cTwo.member = mTwo;
     coordinator.join(mTwo);
 
     MemberChannel cThree = new MemberChannel(eOne, coordinator);
-    ODistributedMember mThree = new ODistributedMember("three", cThree);
+    ODistributedMember mThree = new ODistributedMember("three", null, cThree);
     cThree.member = mThree;
     coordinator.join(mThree);
     OSubmitTx submit = new OSubmitTx();
@@ -99,24 +99,24 @@ public class CoordinatorTxTest {
     }
 
     @Override
-    public void sendRequest(OLogId id, ONodeRequest nodeRequest) {
+    public void sendRequest(String database, OLogId id, ONodeRequest nodeRequest) {
       // Here in real case should be a network call and this method should be call on the other node
       executor.receive(member, id, nodeRequest);
     }
 
     @Override
-    public void sendResponse(OLogId id, ONodeResponse nodeResponse) {
+    public void sendResponse(String database, OLogId id, ONodeResponse nodeResponse) {
       //This in real case should do a network call on the side of the executor node and this call should be in the coordinator node.
       coordinator.receive(member, id, nodeResponse);
     }
 
     @Override
-    public void submit(OSubmitRequest request) {
+    public void submit(String database, OSubmitRequest request) {
 
     }
 
     @Override
-    public void reply(OSubmitResponse response) {
+    public void reply(String database, OSubmitResponse response) {
       latch.countDown();
       callCount.decrementAndGet();
     }

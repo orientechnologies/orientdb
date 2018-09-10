@@ -30,9 +30,9 @@ public class FirstPhaseResponseHandlerTest {
   @Test
   public void testFirstPhaseQuorumSuccess() {
     OSessionOperationId operationId = new OSessionOperationId();
-    ODistributedMember member1 = new ODistributedMember("one", null);
-    ODistributedMember member2 = new ODistributedMember("two", null);
-    ODistributedMember member3 = new ODistributedMember("three", null);
+    ODistributedMember member1 = new ODistributedMember("one", null, null);
+    ODistributedMember member2 = new ODistributedMember("two", null, null);
+    ODistributedMember member3 = new ODistributedMember("three", null, null);
     List<ODistributedMember> members = new ArrayList<>();
     members.add(member1);
     members.add(member2);
@@ -54,9 +54,9 @@ public class FirstPhaseResponseHandlerTest {
   @Test
   public void testFirstPhaseQuorumCME() {
     OSessionOperationId operationId = new OSessionOperationId();
-    ODistributedMember member1 = new ODistributedMember("one", null);
-    ODistributedMember member2 = new ODistributedMember("two", null);
-    ODistributedMember member3 = new ODistributedMember("three", null);
+    ODistributedMember member1 = new ODistributedMember("one", null, null);
+    ODistributedMember member2 = new ODistributedMember("two", null, null);
+    ODistributedMember member3 = new ODistributedMember("three", null, null);
     List<ODistributedMember> members = new ArrayList<>();
     members.add(member1);
     members.add(member2);
@@ -81,9 +81,9 @@ public class FirstPhaseResponseHandlerTest {
   @Test
   public void testFirstPhaseQuorumUnique() {
     OSessionOperationId operationId = new OSessionOperationId();
-    ODistributedMember member1 = new ODistributedMember("one", null);
-    ODistributedMember member2 = new ODistributedMember("two", null);
-    ODistributedMember member3 = new ODistributedMember("three", null);
+    ODistributedMember member1 = new ODistributedMember("one", null, null);
+    ODistributedMember member2 = new ODistributedMember("two", null, null);
+    ODistributedMember member3 = new ODistributedMember("three", null, null);
     List<ODistributedMember> members = new ArrayList<>();
     members.add(member1);
     members.add(member2);

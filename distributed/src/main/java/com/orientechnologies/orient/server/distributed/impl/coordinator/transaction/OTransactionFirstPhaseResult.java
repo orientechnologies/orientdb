@@ -10,7 +10,13 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import static com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_FIRST_PHASE_RESPONSE;
+
 public class OTransactionFirstPhaseResult implements ONodeResponse {
+
+  public OTransactionFirstPhaseResult() {
+
+  }
 
   public enum Type {
     SUCCESS, CONCURRENT_MODIFICATION_EXCEPTION, UNIQUE_KEY_VIOLATION, EXCEPTION
@@ -76,5 +82,10 @@ public class OTransactionFirstPhaseResult implements ONodeResponse {
     if (type != Type.SUCCESS) {
       resultMetadata.deserialize(input);
     }
+  }
+
+  @Override
+  public int getResponseType() {
+    return TRANSACTION_FIRST_PHASE_RESPONSE;
   }
 }

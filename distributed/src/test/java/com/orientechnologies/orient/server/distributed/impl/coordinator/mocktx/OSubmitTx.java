@@ -26,4 +26,9 @@ public class OSubmitTx implements OSubmitRequest {
 
   }
 
+  @Override
+  public int getRequestType() {
+    return 0;
+  }
+
 }

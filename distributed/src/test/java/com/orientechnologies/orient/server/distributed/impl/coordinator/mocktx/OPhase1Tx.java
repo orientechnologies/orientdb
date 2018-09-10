@@ -23,4 +23,9 @@ public class OPhase1Tx implements ONodeRequest {
   public void deserialize(DataInput input) throws IOException {
 
   }
+
+  @Override
+  public int getRequestType() {
+    return 0;
+  }
 }

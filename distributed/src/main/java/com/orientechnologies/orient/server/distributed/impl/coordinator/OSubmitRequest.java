@@ -10,4 +10,6 @@ public interface OSubmitRequest {
   void serialize(DataOutput output) throws IOException;
 
   void deserialize(DataInput input) throws IOException;
+
+  int getRequestType();
 }

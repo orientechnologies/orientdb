@@ -14,6 +14,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
 
+import static com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SUBMIT_REQUEST;
+
 public class OTransactionSubmit implements OSubmitRequest {
   private OSessionOperationId           operationId;
   private List<ORecordOperationRequest> operations;
@@ -24,6 +26,10 @@ public class OTransactionSubmit implements OSubmitRequest {
     this.operationId = operationId;
     this.operations = genOps(ops);
     this.indexes = indexes;
+  }
+
+  public OTransactionSubmit() {
+
   }
 
   public static List<ORecordOperationRequest> genOps(Collection<ORecordOperation> ops) {
@@ -127,5 +133,10 @@ public class OTransactionSubmit implements OSubmitRequest {
     for (OIndexOperationRequest change : indexes) {
       change.serialize(output);
     }
+  }
+
+  @Override
+  public int getRequestType() {
+    return TRANSACTION_SUBMIT_REQUEST;
   }
 }

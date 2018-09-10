@@ -16,4 +16,9 @@ public class OPhase1TxOk implements ONodeResponse {
   public void deserialize(DataInput input) throws IOException {
 
   }
+
+  @Override
+  public int getResponseType() {
+    return 0;
+  }
 }
