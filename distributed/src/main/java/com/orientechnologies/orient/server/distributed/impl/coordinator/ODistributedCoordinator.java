@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
+
 import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.*;
@@ -23,14 +25,14 @@ public class ODistributedCoordinator implements AutoCloseable {
     this.allocator = allocator;
   }
 
-  public void submit(ODistributedMember member, OSubmitRequest request) {
+  public void submit(ODistributedMember member, OSessionOperationId operationId, OSubmitRequest request) {
     requestExecutor.execute(() -> {
-      request.begin(member, this);
+      request.begin(member, operationId, this);
     });
   }
 
-  public void reply(ODistributedMember member, OSubmitResponse response) {
-    member.reply(response);
+  public void reply(ODistributedMember member, OSessionOperationId operationId, OSubmitResponse response) {
+    member.reply(operationId, response);
   }
 
   public void receive(ODistributedMember member, OLogId relativeRequest, ONodeResponse response) {

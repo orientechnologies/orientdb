@@ -17,13 +17,10 @@ import java.util.*;
 import static com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SUBMIT_REQUEST;
 
 public class OTransactionSubmit implements OSubmitRequest {
-  private OSessionOperationId           operationId;
   private List<ORecordOperationRequest> operations;
   private List<OIndexOperationRequest>  indexes;
 
-  public OTransactionSubmit(OSessionOperationId operationId, Collection<ORecordOperation> ops,
-      List<OIndexOperationRequest> indexes) {
-    this.operationId = operationId;
+  public OTransactionSubmit(Collection<ORecordOperation> ops, List<OIndexOperationRequest> indexes) {
     this.operations = genOps(ops);
     this.indexes = indexes;
   }
@@ -57,7 +54,7 @@ public class OTransactionSubmit implements OSubmitRequest {
   }
 
   @Override
-  public void begin(ODistributedMember member, ODistributedCoordinator coordinator) {
+  public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
     ODistributedLockManager lockManager = coordinator.getLockManager();
 
     //using OPair because there could be different types of values here, so falling back to lexicographic sorting
@@ -78,12 +75,12 @@ public class OTransactionSubmit implements OSubmitRequest {
 
     //Sort and lock transaction entry in distributed environment
     Set<ORID> rids = new TreeSet<>();
-    Map<ORID, ORID> newIds = new HashMap<>();
     for (ORecordOperationRequest entry : operations) {
       if (ORecordOperation.CREATED == entry.getType()) {
         int clusterId = entry.getId().getClusterId();
         long pos = coordinator.getAllocator().allocate(clusterId);
-        newIds.put(entry.getId(), new ORecordId(clusterId, pos));
+        ORecordId value = new ORecordId(clusterId, pos);
+        entry.setId(value);
       } else {
         rids.add(entry.getId());
       }
@@ -95,14 +92,12 @@ public class OTransactionSubmit implements OSubmitRequest {
     }
     OTransactionFirstPhaseResponseHandler responseHandler = new OTransactionFirstPhaseResponseHandler(operationId, this, member,
         guards);
-    OTransactionFirstPhaseOperation request = new OTransactionFirstPhaseOperation(this.operationId, this.operations, indexes);
+    OTransactionFirstPhaseOperation request = new OTransactionFirstPhaseOperation(operationId, this.operations, indexes);
     coordinator.sendOperation(this, request, responseHandler);
   }
 
   @Override
   public void deserialize(DataInput input) throws IOException {
-    operationId = new OSessionOperationId();
-    operationId.deserialize(input);
 
     int size = input.readInt();
     operations = new ArrayList<>(size);
@@ -124,7 +119,6 @@ public class OTransactionSubmit implements OSubmitRequest {
 
   @Override
   public void serialize(DataOutput output) throws IOException {
-    operationId.serialize(output);
     output.writeInt(operations.size());
     for (ORecordOperationRequest operation : operations) {
       operation.serialize(output);

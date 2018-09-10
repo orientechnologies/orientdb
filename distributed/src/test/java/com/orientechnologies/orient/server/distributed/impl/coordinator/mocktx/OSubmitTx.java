@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.mocktx;
 
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -12,7 +13,7 @@ public class OSubmitTx implements OSubmitRequest {
   public boolean secondPhase;
 
   @Override
-  public void begin(ODistributedMember member, ODistributedCoordinator coordinator) {
+  public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
     coordinator.sendOperation(this, new OPhase1Tx(), new FirstPhaseHandler(this, member));
   }
 

@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.network
 
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 
 public class ODistributedChannelBinaryProtocol implements ODistributedChannel {
 
@@ -24,13 +25,13 @@ public class ODistributedChannelBinaryProtocol implements ODistributedChannel {
   }
 
   @Override
-  public void submit(String database, OSubmitRequest request) {
-    controller.sendBinaryRequest(new ONetworkSubmitRequest(nodeName, database, request));
+  public void submit(String database, OSessionOperationId operationId, OSubmitRequest request) {
+    controller.sendBinaryRequest(new ONetworkSubmitRequest(nodeName, database, operationId, request));
   }
 
   @Override
-  public void reply(String database, OSubmitResponse response) {
-    controller.sendBinaryRequest(new ONetworkSubmitResponse(nodeName, database, response));
+  public void reply(String database, OSessionOperationId operationId, OSubmitResponse response) {
+    controller.sendBinaryRequest(new ONetworkSubmitResponse(nodeName, database, operationId, response));
   }
 
 }

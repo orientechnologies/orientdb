@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -99,6 +100,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final ODistributedExecutor       executor;
   private       ODistributedCoordinator    coordinator;
   private final OSubmitContext             submitContext;
+  private final OrientDB                   context;
 
   public OSimpleLockManager<ORID> getRecordLockManager() {
     return recordLockManager;
@@ -142,6 +144,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       indexKeyLockManager = null;
       executor = null;
       submitContext = null;
+      context = null;
       return;
     }
 
@@ -196,7 +199,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     long timeout = manager.getServerInstance().getContextConfiguration().getValueAsLong(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
     recordLockManager = new OSimpleLockManagerImpl<>(timeout);
     indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
-    executor = new ODistributedExecutor(Executors.newSingleThreadExecutor(), null, server.getContext(), databaseName);
+    context = server.getContext();
+    executor = new ODistributedExecutor(Executors.newSingleThreadExecutor(), null, context, databaseName);
     submitContext = new OSubmitContextImpl();
   }
 
@@ -1399,7 +1403,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public synchronized void makeMaster() {
     if (coordinator == null) {
       coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), null, new ODistributedLockManagerImpl(0),
-          null);
+          new OClusterPositionAllocatorDatabase(context, databaseName));
     }
   }
 

@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,7 +70,7 @@ public class CoordinatorTxTest {
     cThree.member = mThree;
     coordinator.join(mThree);
     OSubmitTx submit = new OSubmitTx();
-    coordinator.submit(mOne, submit);
+    coordinator.submit(mOne, new OSessionOperationId(), submit);
 
     assertTrue(cOne.latch.await(10, TimeUnit.SECONDS));
     assertTrue(submit.firstPhase);
@@ -111,12 +112,12 @@ public class CoordinatorTxTest {
     }
 
     @Override
-    public void submit(String database, OSubmitRequest request) {
+    public void submit(String database, OSessionOperationId operationId, OSubmitRequest request) {
 
     }
 
     @Override
-    public void reply(String database, OSubmitResponse response) {
+    public void reply(String database, OSessionOperationId operationId, OSubmitResponse response) {
       latch.countDown();
       callCount.decrementAndGet();
     }

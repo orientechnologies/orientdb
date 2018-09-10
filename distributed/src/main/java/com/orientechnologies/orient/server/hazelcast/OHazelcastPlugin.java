@@ -1207,6 +1207,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       for (String s : list) {
         ODistributedDatabaseImpl ser = getMessageService().getDatabase(s);
         ser.removeMaster();
+        ODistributedMember coor = ser.getContext().getCoordinator();
+        if(lockManager.equals(coor.getName())) {
+          try {
+            ODistributedMember m = new ODistributedMember(lockManager, s,
+                new ODistributedChannelBinaryProtocol(nodeName, getRemoteServer(lockManager)));
+            ser.getContext().setCoordinator(m);
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
       }
     }
 

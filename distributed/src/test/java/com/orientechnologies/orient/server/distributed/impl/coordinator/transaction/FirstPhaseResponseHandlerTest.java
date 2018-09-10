@@ -48,7 +48,7 @@ public class FirstPhaseResponseHandlerTest {
     Mockito.verify(coordinator, times(1))
         .sendOperation(any(OSubmitRequest.class), eq(new OTransactionSecondPhaseOperation(operationId, true)),
             any(OTransactionSecondPhaseResponseHandler.class));
-    Mockito.verify(coordinator, times(0)).reply(same(member1), any(OTransactionResponse.class));
+    Mockito.verify(coordinator, times(0)).reply(same(member1), any(OSessionOperationId.class), any(OTransactionResponse.class));
   }
 
   @Test
@@ -75,7 +75,7 @@ public class FirstPhaseResponseHandlerTest {
         .sendOperation(any(OSubmitRequest.class), eq(new OTransactionSecondPhaseOperation(operationId, false)),
             any(OTransactionSecondPhaseResponseHandler.class));
 
-    Mockito.verify(coordinator, times(1)).reply(same(member1), any(OTransactionResponse.class));
+    Mockito.verify(coordinator, times(1)).reply(same(member1), any(OSessionOperationId.class), any(OTransactionResponse.class));
   }
 
   @Test
@@ -102,7 +102,7 @@ public class FirstPhaseResponseHandlerTest {
         .sendOperation(any(OSubmitRequest.class), eq(new OTransactionSecondPhaseOperation(operationId, false)),
             any(OTransactionSecondPhaseResponseHandler.class));
 
-    Mockito.verify(coordinator, times(1)).reply(same(member1), any(OTransactionResponse.class));
+    Mockito.verify(coordinator, times(1)).reply(same(member1), any(OSessionOperationId.class), any(OTransactionResponse.class));
 
   }
 

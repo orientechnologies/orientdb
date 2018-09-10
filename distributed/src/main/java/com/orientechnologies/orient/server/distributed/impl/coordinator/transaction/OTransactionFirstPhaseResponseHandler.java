@@ -86,7 +86,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
 
   private void sendSecondPhaseError(ODistributedCoordinator coordinator) {
     OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(true, request, requester,
-        null);
+        null, operationId);
     coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, false), responseHandler);
     if (guards != null) {
       for (OLockGuard guard : guards) {
@@ -94,7 +94,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
       }
     }
     if (!replySent) {
-      coordinator.reply(requester, new OTransactionResponse());
+      coordinator.reply(requester, operationId, new OTransactionResponse());
       replySent = true;
     }
     secondPhaseSent = true;
@@ -102,7 +102,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
 
   private void sendSecondPhaseSuccess(ODistributedCoordinator coordinator) {
     OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(false, request, requester,
-        guards);
+        guards, operationId);
     coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, true), responseHandler);
     secondPhaseSent = true;
   }
