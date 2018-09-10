@@ -23,10 +23,12 @@ public class OExceptionResult implements OTransactionResult {
   @Override
   public void serialize(DataOutput output) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    new ObjectOutputStream(out).writeObject(exception);
+    ObjectOutputStream objectOutputStream = new ObjectOutputStream(out);
+    objectOutputStream.writeObject(exception);
+    objectOutputStream.flush();
     byte[] bytes = out.toByteArray();
     output.writeInt(bytes.length);
-    out.write(bytes);
+    output.write(bytes);
   }
 
   @Override

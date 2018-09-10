@@ -9,8 +9,8 @@ import java.io.IOException;
 
 public class OIndexKeyOperation {
   // Key Change Operation
-  private final static int PUT    = 1;
-  private final static int REMOVE = 2;
+  public final static byte PUT    = 1;
+  public final static byte REMOVE = 2;
 
   private byte type;
   private ORID value;
@@ -32,5 +32,13 @@ public class OIndexKeyOperation {
   public void deserialize(DataInput input) throws IOException {
     type = input.readByte();
     value = ORecordId.deserialize(input);
+  }
+
+  public byte getType() {
+    return type;
+  }
+
+  public ORID getValue() {
+    return value;
   }
 }

@@ -20,6 +20,7 @@ public class OIndexKeyChange {
   private List<OIndexKeyOperation> operations;
 
   public OIndexKeyChange(Object key, List<OIndexKeyOperation> operations) {
+    this.key = key;
     this.operations = operations;
   }
 
@@ -49,6 +50,7 @@ public class OIndexKeyChange {
       }
     } else {
       output.writeBoolean(false);
+      //TODO: Handle null key
       OType valType = OType.getTypeByValue(key);
       output.writeByte(valType.getId());
       byte[] bytes = ORecordSerializerNetwork.INSTANCE.serializeValue(key, valType);
@@ -65,6 +67,7 @@ public class OIndexKeyChange {
     while (operations-- > 0) {
       OIndexKeyOperation operation = new OIndexKeyOperation();
       operation.deserialize(input);
+      this.operations.add(operation);
     }
   }
 
@@ -84,5 +87,9 @@ public class OIndexKeyChange {
       input.readFully(bytes);
       return ORecordSerializerNetwork.INSTANCE.deserializeValue(bytes, keyType);
     }
+  }
+
+  public List<OIndexKeyOperation> getOperations() {
+    return operations;
   }
 }

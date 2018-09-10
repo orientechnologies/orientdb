@@ -32,4 +32,8 @@ public class OTransactionSecondPhaseResponse implements ONodeResponse {
   public int getResponseType() {
     return TRANSACTION_SECOND_PHASE_RESPONSE;
   }
+
+  public boolean isSuccess() {
+    return success;
+  }
 }

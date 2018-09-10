@@ -17,6 +17,20 @@ public class ORecordOperationRequest {
   private int     version;
   private boolean contentChanged;
 
+  public ORecordOperationRequest() {
+  }
+
+  public ORecordOperationRequest(byte type, byte recordType, ORID id, ORID oldId, byte[] record, int version,
+      boolean contentChanged) {
+    this.type = type;
+    this.recordType = recordType;
+    this.id = id;
+    this.oldId = oldId;
+    this.record = record;
+    this.version = version;
+    this.contentChanged = contentChanged;
+  }
+
   public ORID getId() {
     return id;
   }

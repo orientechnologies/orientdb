@@ -65,4 +65,12 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
   public int getRequestType() {
     return TRANSACTION_SECOND_PHASE_REQUEST;
   }
+
+  public OSessionOperationId getOperationId() {
+    return operationId;
+  }
+
+  public boolean isSuccess() {
+    return success;
+  }
 }

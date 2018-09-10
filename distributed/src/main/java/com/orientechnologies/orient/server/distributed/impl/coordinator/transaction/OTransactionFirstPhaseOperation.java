@@ -141,4 +141,12 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
   public int getRequestType() {
     return TRANSACTION_FIRST_PHASE_REQUEST;
   }
+
+  public List<OIndexOperationRequest> getIndexes() {
+    return indexes;
+  }
+
+  public List<ORecordOperationRequest> getOperations() {
+    return operations;
+  }
 }
