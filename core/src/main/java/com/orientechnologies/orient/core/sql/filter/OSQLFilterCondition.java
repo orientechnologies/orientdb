@@ -369,7 +369,8 @@ public class OSQLFilterCondition {
       }
     }
 
-    if (binaryEvaluation && iValue instanceof OSQLFilterItemField) {
+    if (binaryEvaluation && iValue instanceof OSQLFilterItemField && iCurrentRecord != null && !((ODocument) iCurrentRecord)
+        .isDirty() && !iCurrentRecord.getIdentity().isTemporary()) {
       final OBinaryField bField = ((OSQLFilterItemField) iValue).getBinaryField(iCurrentRecord);
       if (bField != null)
         return bField;
