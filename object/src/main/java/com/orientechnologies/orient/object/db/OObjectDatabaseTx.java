@@ -21,6 +21,7 @@ package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
@@ -74,6 +75,7 @@ import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -86,13 +88,13 @@ import java.util.function.Function;
 @SuppressWarnings("unchecked")
 public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumentInternal, Object> implements ODatabaseObject {
 
-  public static final String TYPE = "object";
-  protected ODictionary<Object> dictionary;
-  protected OEntityManager      entityManager;
-  protected boolean             saveOnlyDirty;
-  protected boolean             lazyLoading;
-  protected boolean             automaticSchemaGeneration;
-  protected OMetadataObject     metadata;
+  public static final String              TYPE = "object";
+  protected           ODictionary<Object> dictionary;
+  protected           OEntityManager      entityManager;
+  protected           boolean             saveOnlyDirty;
+  protected           boolean             lazyLoading;
+  protected           boolean             automaticSchemaGeneration;
+  protected           OMetadataObject     metadata;
 
   public OObjectDatabaseTx(final String iURL) {
     super(new ODatabaseDocumentTx(iURL));
@@ -326,8 +328,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   }
 
   /**
-   * Method that detaches all fields contained in the document to the given object. It returns by default a proxied instance. To get
-   * a detached non proxied instance @see {@link OObjectEntitySerializer.detach(T, ODatabaseObject)}
+   * Method that detaches all fields contained in the document to the given object. It returns by default a proxied instance.
    *
    * @param iPojo :- the object to detach
    *
@@ -366,21 +367,8 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
     return detachAll(iPojo, returnNonProxiedInstance, new HashMap<Object, Object>(), new HashMap<Object, Object>());
   }
 
-  public <RET> RET load(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
-    return (RET) load(iPojo, iFetchPlan, iIgnoreCache, false, OStorage.LOCKING_STRATEGY.DEFAULT);
-  }
-
   @Override
-  @Deprecated
-  public <RET> RET load(Object iPojo, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
-      OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    return load(iPojo, iFetchPlan, iIgnoreCache, !iIgnoreCache, loadTombstone, iLockingStrategy);
-  }
-
-  @Override
-  @Deprecated
-  public <RET> RET load(Object iPojo, String iFetchPlan, boolean iIgnoreCache, final boolean iUpdateCache, boolean loadTombstone,
-      OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public <RET> RET load(Object iPojo, String iFetchPlan, boolean iIgnoreCache) {
     checkOpenness();
     if (iPojo == null)
       return null;
@@ -390,12 +378,47 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
     try {
       record.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
-      record = underlying.load(record, iFetchPlan, iIgnoreCache, iUpdateCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
+      record = underlying.load(record, iFetchPlan, iIgnoreCache);
 
       return (RET) stream2pojo(record, iPojo, iFetchPlan);
     } finally {
       record.setInternalStatus(ORecordElement.STATUS.LOADED);
     }
+  }
+
+  @Override
+  public <RET> RET lock(ORID recordId) throws OLockException {
+    checkOpenness();
+    if (recordId == null)
+      return null;
+
+    // GET THE ASSOCIATED DOCUMENT
+    final ODocument record = (ODocument) underlying.lock(recordId);
+    if (record == null)
+      return null;
+
+    return (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(record.getClassName(), entityManager, record, null);
+
+  }
+
+  @Override
+  public <RET> RET lock(ORID recordId, long timeout, TimeUnit timeoutUnit) throws OLockException {
+    checkOpenness();
+    if (recordId == null)
+      return null;
+
+    // GET THE ASSOCIATED DOCUMENT
+    final ODocument record = (ODocument) underlying.lock(recordId, timeout, timeoutUnit);
+    if (record == null)
+      return null;
+
+    return (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(record.getClassName(), entityManager, record, null);
+  }
+
+  @Override
+  public void unlock(ORID recordId) throws OLockException {
+    checkOpenness();
+    underlying.unlock(recordId);
   }
 
   public <RET> RET load(final ORID recordId) {
@@ -406,28 +429,14 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
     return (RET) load(iRecordId, iFetchPlan, false);
   }
 
-  public <RET> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
-    return (RET) load(iRecordId, iFetchPlan, iIgnoreCache, !iIgnoreCache, false, OStorage.LOCKING_STRATEGY.DEFAULT);
-  }
-
   @Override
-  @Deprecated
-  public <RET> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
-      OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    return load(iRecordId, iFetchPlan, iIgnoreCache, !iIgnoreCache, loadTombstone, iLockingStrategy);
-  }
-
-  @Override
-  @Deprecated
-  public <RET> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, final boolean iUpdateCache, boolean loadTombstone,
-      OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public <RET> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache) {
     checkOpenness();
     if (iRecordId == null)
       return null;
 
     // GET THE ASSOCIATED DOCUMENT
-    final ODocument record = (ODocument) underlying
-        .load(iRecordId, iFetchPlan, iIgnoreCache, iUpdateCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
+    final ODocument record = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache);
     if (record == null)
       return null;
 

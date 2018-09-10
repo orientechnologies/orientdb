@@ -229,17 +229,17 @@ public class OrientDBEmbedded implements OrientDBInternal {
         throw new ODatabaseException("Cannot create new database '" + name + "' because it already exists");
     }
     embedded.callOnCreateListeners();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
   public void restore(String name, String user, String password, ODatabaseType type, String path, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
+    OAbstractPaginatedStorage storage;
     synchronized (this) {
       if (!exists(name, null, null)) {
         try {
-          OAbstractPaginatedStorage storage;
           storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
           embedded = internalCreate(config, storage);
-          storage.restoreFromIncrementalBackup(path);
           storages.put(name, storage);
         } catch (Exception e) {
           throw OException.wrapException(new ODatabaseException("Cannot restore database '" + name + "'"), e);
@@ -247,15 +247,20 @@ public class OrientDBEmbedded implements OrientDBInternal {
       } else
         throw new ODatabaseException("Cannot create new storage '" + name + "' because it already exists");
     }
+    storage.restoreFromIncrementalBackup(path);
     embedded.callOnCreateListeners();
+    ODatabaseRecordThreadLocal.instance().remove();
   }
 
-  public synchronized void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
+  public void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
       OCommandOutputListener iListener) {
     try {
-      OAbstractPaginatedStorage storage = getOrInitStorage(name);
+      OAbstractPaginatedStorage storage;
+      synchronized (this) {
+        storage = getOrInitStorage(name);
+        storages.put(name, storage);
+      }
       storage.restore(in, options, callable, iListener);
-      storages.put(name, storage);
     } catch (Exception e) {
       throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
     }
@@ -456,8 +461,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
       }
       storages.put(name, storage);
     }
-    if (embedded != null)
+    if (embedded != null) {
       embedded.callOnCreateListeners();
+      ODatabaseRecordThreadLocal.instance().remove();
+    }
   }
 
   public synchronized void removeShutdownHook() {

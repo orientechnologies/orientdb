@@ -34,6 +34,8 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
+import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -46,13 +48,18 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.impl.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedCoordinator;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.network.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
@@ -64,6 +71,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.*;
+
+import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.*;
 
 /**
  * Hazelcast implementation for clustering.
@@ -87,10 +96,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected volatile HazelcastInstance hazelcastInstance;
 
   // THIS MAP IS BACKED BY HAZELCAST EVENTS. IN THIS WAY WE AVOID TO USE HZ MAP DIRECTLY
-  protected OHazelcastDistributedMap       configurationMap;
-  private   OSignalHandler.OSignalListener signalListener;
+  protected OHazelcastDistributedMap           configurationMap;
+  private   OSignalHandler.OSignalListener     signalListener;
+  private   OCoordinatedExecutorMessageHandler requestHandler;
+  private   OCoordinateMessagesFactory         coordinateMessagesFactory;
 
   public OHazelcastPlugin() {
+    requestHandler = new OCoordinatedExecutorMessageHandler(this);
+    //This now si simple but should be replaced by a factory depending to the protocol version
+    coordinateMessagesFactory = new OCoordinateMessagesFactory();
   }
 
   // Must be set before startup() is called.
@@ -232,9 +246,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         }
       }
 
-      assignLockManagerFromCluster();
-
       messageService = new ODistributedMessageServiceImpl(this);
+
+      assignLockManagerFromCluster();
 
       initSystemDatabase();
 
@@ -979,7 +993,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         reloadRegisteredNodes((String) iEvent.getValue());
 
       } else if (key.startsWith(CONFIG_LOCKMANAGER)) {
-        getLockManagerRequester().setServer((String) iEvent.getValue());
+        String lockManager = (String) iEvent.getValue();
+        getLockManagerRequester().setServer(lockManager);
+        checkAndMakeCoordinator(lockManager);
       }
 
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
@@ -1105,7 +1121,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (state == LifecycleEvent.LifecycleState.MERGING)
       setNodeStatus(NODE_STATUS.MERGING);
     else if (state == LifecycleEvent.LifecycleState.MERGED) {
-      getLockManagerRequester().setServer((String) configurationMap.getHazelcastMap().get(CONFIG_LOCKMANAGER));
+      String lockManager = (String) configurationMap.getHazelcastMap().get(CONFIG_LOCKMANAGER);
+      getLockManagerRequester().setServer(lockManager);
+      checkAndMakeCoordinator(lockManager);
 
       ODistributedServerLog
           .info(this, nodeName, null, DIRECTION.NONE, "Server merged the existent cluster, lockManager=%s, merging databases...",
@@ -1175,6 +1193,23 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       t.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       t.start();
     }
+  }
+
+  private void checkAndMakeCoordinator(String lockManager) {
+    if (nodeName.equals(lockManager)) {
+      Set<String> list = getMessageService().getDatabases();
+      for (String s : list) {
+        ODistributedDatabaseImpl ser = getMessageService().getDatabase(s);
+        ser.makeMaster();
+      }
+    } else {
+      Set<String> list = getMessageService().getDatabases();
+      for (String s : list) {
+        ODistributedDatabaseImpl ser = getMessageService().getDatabase(s);
+        ser.removeMaster();
+      }
+    }
+
   }
 
   @Override
@@ -1599,6 +1634,20 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
               "Cannot re-balance the cluster for database '%s' because the Lock Manager is not available (err=%s)", databaseName,
               e.getMessage());
         }
+
+        ODistributedDatabaseImpl database = messageService.getDatabase(databaseName);
+        ODistributedCoordinator coordinator = database.getCoordinator();
+        if (coordinator != null) {
+          ODistributedMember cm = coordinator.getMember(nodeLeftName);
+          if (cm != null) {
+            coordinator.leave(cm);
+          }
+        }
+        ODistributedMember em = database.getExecutor().getMember(nodeLeftName);
+        if (em != null) {
+          database.getExecutor().leave(em);
+        }
+
       }
 
       if (nodeLeftName.equalsIgnoreCase(nodeName))
@@ -1662,6 +1711,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
           try {
             getLockManagerRequester().setServer(newServer);
+            checkAndMakeCoordinator(newServer);
 
             configurationMap.put(CONFIG_LOCKMANAGER, getLockManagerRequester().getServer());
 
@@ -1740,10 +1790,24 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         l.onNodeJoined(joinedNodeName);
 
       // FORCE THE ALIGNMENT FOR ALL THE ONLINE DATABASES AFTER THE JOIN ONLY IF AUTO-DEPLOY IS SET
-      for (String db : messageService.getDatabases())
-        if (getDatabaseConfiguration(db).isAutoDeploy() && getDatabaseStatus(joinedNodeName, db) == DB_STATUS.ONLINE)
+      for (String db : messageService.getDatabases()) {
+        if (getDatabaseConfiguration(db).isAutoDeploy() && getDatabaseStatus(joinedNodeName, db) == DB_STATUS.ONLINE) {
           setDatabaseStatus(joinedNodeName, db, DB_STATUS.NOT_AVAILABLE);
+          try {
+            ODistributedMember m = new ODistributedMember(joinedNodeName, db,
+                new ODistributedChannelBinaryProtocol(nodeName, getRemoteServer(joinedNodeName)));
 
+            ODistributedDatabaseImpl database = messageService.getDatabase(db);
+            ODistributedCoordinator coordinator = database.getCoordinator();
+            if (coordinator != null) {
+              coordinator.join(m);
+            }
+            database.getExecutor().join(m);
+          } catch (IOException e) {
+            //TODO:
+          }
+        }
+      }
       dumpServersStatus();
     }
   }
@@ -1766,6 +1830,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           // LAST LOCK MANAGER WAS CURRENT NODE? TRY TO FORCE A NEW ELECTION
           OLogManager.instance().info(this, "Found lockManager as current node, even if it was offline. Forcing a new election...");
           getLockManagerRequester().setServer(lockManagerServer);
+          checkAndMakeCoordinator(lockManagerServer);
           lockManagerServer = electNewLockManager();
           break;
         }
@@ -1782,8 +1847,36 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
 
     getLockManagerRequester().setServer(lockManagerServer);
+    checkAndMakeCoordinator(lockManagerServer);
 
     OLogManager.instance().info(this, "Distributed Lock Manager server is '%s'", lockManagerServer);
   }
 
+  @Override
+  public void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
+      throws IOException {
+    OBinaryRequest<OBinaryResponse> request = newDistributedRequest(requestType);
+    try {
+      request.read(channel, 0, null);
+    } catch (IOException e) {
+      //impossible to read request ... probably need to notify this back.
+      throw e;
+    }
+    ODistributedExecutable executable = (ODistributedExecutable) request;
+    executable.executeDistributed(requestHandler);
+  }
+
+  private OBinaryRequest<OBinaryResponse> newDistributedRequest(int requestType) {
+    switch (requestType) {
+    case DISTRIBUTED_SUBMIT_REQUEST:
+      return new ONetworkSubmitRequest(coordinateMessagesFactory);
+    case DISTRIBUTED_SUBMIT_RESPONSE:
+      return new ONetworkSubmitResponse(coordinateMessagesFactory);
+    case DISTRIBUTED_OPERATION_REQUEST:
+      return new OOperationRequest(coordinateMessagesFactory);
+    case DISTRIBUTED_OPERATION_RESPONSE:
+      return new OOperationResponse(coordinateMessagesFactory);
+    }
+    return null;
+  }
 }

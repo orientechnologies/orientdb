@@ -23,30 +23,25 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class OTransactionAbstract implements OTransaction {
-  protected final ODatabaseDocumentInternal           database;
-  protected       TXSTATUS                            status         = TXSTATUS.INVALID;
-  protected       ISOLATION_LEVEL                     isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
-  protected       HashMap<ORID, LockedRecordMetadata> locks          = new HashMap<ORID, LockedRecordMetadata>();
+  protected final ODatabaseDocumentInternal       database;
+  protected       TXSTATUS                        status         = TXSTATUS.INVALID;
+  protected       ISOLATION_LEVEL                 isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
+  protected       Map<ORID, LockedRecordMetadata> locks          = new HashMap<ORID, LockedRecordMetadata>();
 
-  private static final class LockedRecordMetadata {
+  public static final class LockedRecordMetadata {
     private final OStorage.LOCKING_STRATEGY strategy;
     private       int                       locksCount;
 
@@ -112,13 +107,9 @@ public abstract class OTransactionAbstract implements OTransaction {
         final LockedRecordMetadata lockedRecordMetadata = lock.getValue();
 
         if (lockedRecordMetadata.strategy.equals(OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)) {
-          for (int i = 0; i < lockedRecordMetadata.locksCount; i++) {
-            ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).releaseWriteLock(lock.getKey());
-          }
+          ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).releaseWriteLock(lock.getKey());
         } else if (lockedRecordMetadata.strategy.equals(OStorage.LOCKING_STRATEGY.SHARED_LOCK)) {
-          for (int i = 0; i < lockedRecordMetadata.locksCount; i++) {
-            ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).releaseReadLock(lock.getKey());
-          }
+          ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).releaseReadLock(lock.getKey());
         }
       } catch (Exception e) {
         OLogManager.instance().debug(this, "Error on releasing lock against record " + lock.getKey(), e);
@@ -129,37 +120,7 @@ public abstract class OTransactionAbstract implements OTransaction {
 
   @Override
   public OTransaction lockRecord(final OIdentifiable iRecord, final OStorage.LOCKING_STRATEGY lockingStrategy) {
-    final OStorage stg = database.getStorage();
-    if (!(stg.getUnderlying() instanceof OAbstractPaginatedStorage))
-      throw new OLockException("Cannot lock record across remote connections");
-
-    final ORID rid = new ORecordId(iRecord.getIdentity());
-
-    LockedRecordMetadata lockedRecordMetadata = locks.get(rid);
-    boolean addItem = false;
-
-    if (lockedRecordMetadata == null) {
-      lockedRecordMetadata = new LockedRecordMetadata(lockingStrategy);
-      addItem = true;
-    } else if (lockedRecordMetadata.strategy != lockingStrategy) {
-      assert lockedRecordMetadata.locksCount == 0;
-      lockedRecordMetadata = new LockedRecordMetadata(lockingStrategy);
-      addItem = true;
-    }
-
-    if (lockingStrategy == OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)
-      ((OAbstractPaginatedStorage) stg.getUnderlying()).acquireWriteLock(rid);
-    else if (lockingStrategy == OStorage.LOCKING_STRATEGY.SHARED_LOCK)
-      ((OAbstractPaginatedStorage) stg.getUnderlying()).acquireReadLock(rid);
-    else
-      throw new IllegalStateException("Unsupported locking strategy " + lockingStrategy);
-
-    lockedRecordMetadata.locksCount++;
-
-    if (addItem) {
-      locks.put(rid, lockedRecordMetadata);
-    }
-
+    database.internalLockRecord(iRecord, lockingStrategy);
     return this;
   }
 
@@ -187,43 +148,53 @@ public abstract class OTransactionAbstract implements OTransaction {
 
   @Override
   public OTransaction unlockRecord(final OIdentifiable iRecord) {
-    final OStorage stg = database.getStorage();
-    if (!(stg.getUnderlying() instanceof OAbstractPaginatedStorage))
-      throw new OLockException("Cannot lock record across remote connections");
-
-    final ORID rid = iRecord.getIdentity();
-
-    final LockedRecordMetadata lockedRecordMetadata = locks.get(rid);
-
-    if (lockedRecordMetadata == null || lockedRecordMetadata.locksCount == 0)
-      throw new OLockException("Cannot unlock a never acquired lock");
-    else if (lockedRecordMetadata.strategy == OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK)
-      ((OAbstractPaginatedStorage) stg.getUnderlying()).releaseWriteLock(rid);
-    else if (lockedRecordMetadata.strategy == OStorage.LOCKING_STRATEGY.SHARED_LOCK)
-      ((OAbstractPaginatedStorage) stg.getUnderlying()).releaseReadLock(rid);
-    else
-      throw new IllegalStateException("Unsupported locking strategy " + lockedRecordMetadata.strategy);
-
-    lockedRecordMetadata.locksCount--;
-
-    if (lockedRecordMetadata.locksCount == 0)
-      locks.remove(rid);
-
+    database.internalUnlockRecord(iRecord);
     return this;
-  }
-
-  @Override
-  public HashMap<ORID, OStorage.LOCKING_STRATEGY> getLockedRecords() {
-    final HashMap<ORID, OStorage.LOCKING_STRATEGY> lockedRecords = new HashMap<ORID, OStorage.LOCKING_STRATEGY>();
-
-    for (Map.Entry<ORID, LockedRecordMetadata> entry : locks.entrySet()) {
-      if (entry.getValue().locksCount > 0)
-        lockedRecords.put(entry.getKey(), entry.getValue().strategy);
-    }
-
-    return lockedRecords;
   }
 
   public abstract void internalRollback();
 
+  public void trackLockedRecord(ORID rid, OStorage.LOCKING_STRATEGY lockingStrategy) {
+    OTransactionAbstract.LockedRecordMetadata lockedRecordMetadata = locks.get(rid);
+    boolean addItem = false;
+
+    if (lockedRecordMetadata == null) {
+      lockedRecordMetadata = new OTransactionAbstract.LockedRecordMetadata(lockingStrategy);
+      addItem = true;
+    } else if (lockedRecordMetadata.strategy != lockingStrategy) {
+      assert lockedRecordMetadata.locksCount == 0;
+      lockedRecordMetadata = new OTransactionAbstract.LockedRecordMetadata(lockingStrategy);
+      addItem = true;
+    }
+    lockedRecordMetadata.locksCount++;
+    if (addItem) {
+      locks.put(rid, lockedRecordMetadata);
+    }
+  }
+
+  public OStorage.LOCKING_STRATEGY trackUnlockRecord(ORID rid) {
+    final LockedRecordMetadata lockedRecordMetadata = locks.get(rid);
+    if (lockedRecordMetadata != null && lockedRecordMetadata.locksCount > 0) {
+      lockedRecordMetadata.locksCount--;
+      if (lockedRecordMetadata.locksCount == 0) {
+        locks.remove(rid);
+        return lockedRecordMetadata.strategy;
+      }
+    } else {
+      throw new OLockException("Cannot unlock a never acquired lock");
+    }
+    return null;
+  }
+
+  public Map<ORID, LockedRecordMetadata> getInternalLocks() {
+    return locks;
+  }
+
+  protected void setLocks(Map<ORID, LockedRecordMetadata> locks) {
+    this.locks = locks;
+  }
+
+  public Set<ORID> getLockedRecords() {
+    return locks.keySet();
+  }
 }

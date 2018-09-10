@@ -21,10 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.concur.lock.OComparableLockManager;
-import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
-import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
+import com.orientechnologies.common.concur.lock.*;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.io.OIOException;
@@ -48,6 +45,7 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -95,6 +93,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollection
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.*;
@@ -171,7 +170,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     fuzzyCheckpointExecutor.setMaximumPoolSize(1);
   }
 
-  private final OComparableLockManager<ORID> lockManager;
+  private final OSimpleRWLockManager<ORID> lockManager;
 
   /**
    * Lock is used to atomically update record versions.
@@ -211,7 +210,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected volatile OAtomicOperationsManager atomicOperationsManager;
   private volatile   boolean                  wereNonTxOperationsPerformedInPreviousOpen = false;
   private volatile   OLowDiskSpaceInformation lowDiskSpace                               = null;
-  private volatile   boolean                  pessimisticLock                            = false;
+  private volatile   boolean                  modificationLock                           = false;
+  private volatile   boolean                  readLock                                   = false;
   /**
    * Set of pages which were detected as broken and need to be repaired.
    */
@@ -244,7 +244,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     super(name, filePath, mode);
 
     this.id = id;
-    lockManager = new ORIDOLockManager();
+    lockManager = new ONotThreadRWLockManager<>();
     recordVersionManager = new OPartitionedLockManager<>();
 
     registerProfilerHooks();
@@ -279,7 +279,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (!exists())
           throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
-        pessimisticLock = contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
+        initLockingStrategy(contextConfiguration);
 
         transaction = new ThreadLocal<>();
         ((OStorageConfigurationImpl) configuration).load(contextConfiguration);
@@ -354,6 +354,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     OLogManager.instance()
         .infoNoDb(this, "Storage '%s' is opened under OrientDB distribution : %s", getURL(), OConstants.getVersion());
+  }
+
+  private void initLockingStrategy(OContextConfiguration contextConfiguration) {
+    String lockKind = contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
+    if (OrientDBConfig.LOCK_TYPE_MODIFICATION.equals(lockKind)) {
+      modificationLock = true;
+    } else if (OrientDBConfig.LOCK_TYPE_READWRITE.equals(lockKind)) {
+      modificationLock = true;
+      readLock = true;
+    }
   }
 
   /**
@@ -474,7 +484,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (exists())
           throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it already exists");
 
-        pessimisticLock = contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
+        initLockingStrategy(contextConfiguration);
 
         ((OStorageConfigurationImpl) configuration).initConfiguration(contextConfiguration);
         componentsFactory = new OCurrentStorageComponentsFactory(getConfiguration());
@@ -980,8 +990,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * output stream. In output stream will be included all thw records which were updated/deleted/created since passed in LSN till
    * the current moment. Deleted records are written in output stream first, then created/updated records. All records are sorted by
    * record id. Data format: <ol> <li>Amount of records (single entry) - 8 bytes</li> <li>Record's cluster id - 4 bytes</li>
-   * <li>Record's cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only if
-   * record is not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary
+   * <li>Record's cluster position - 8 bytes</li> <li>Delete flag, 1 if record is deleted - 1 byte</li> <li>Record version , only
+   * if record is not deleted - 4 bytes</li> <li>Record type, only if record is not deleted - 1 byte</li> <li>Length of binary
    * presentation of record, only if record is not deleted - 4 bytes</li> <li>Binary presentation of the record, only if record is
    * not deleted - length of content is provided in above entity</li> </ol>
    *
@@ -1974,12 +1984,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final List<ORecordOperation> result = new ArrayList<>();
       stateLock.acquireReadLock();
       try {
-        if (pessimisticLock) {
+        if (modificationLock) {
           List<ORID> recordLocks = new ArrayList<>();
           for (ORecordOperation recordOperation : recordOperations) {
             if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
               recordLocks.add(recordOperation.getRID());
             }
+          }
+          Set<ORID> locked = transaction.getLockedRecords();
+          if (locked != null) {
+            recordLocks.removeAll(locked);
           }
           Collections.sort(recordLocks);
           for (ORID rid : recordLocks) {
@@ -2087,11 +2101,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
       } finally {
         try {
-          if (pessimisticLock) {
+          if (modificationLock) {
+            List<ORID> recordLocks = new ArrayList<>();
             for (ORecordOperation recordOperation : recordOperations) {
               if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
-                releaseWriteLock(recordOperation.getRID());
+                recordLocks.add(recordOperation.getRID());
               }
+            }
+
+            Set<ORID> locked = transaction.getLockedRecords();
+            if (locked != null) {
+              recordLocks.removeAll(locked);
+            }
+
+            for (ORID rid : recordLocks) {
+              releaseWriteLock(rid);
             }
           }
         } finally {
@@ -3851,9 +3875,33 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public void acquireWriteLock(final ORID rid) {
+  public void acquireWriteLock(final ORID rid, long timeout) {
+    if (!modificationLock) {
+      throw new ODatabaseException(
+          "Record write locks are off by configuration, set the configuration \"storage.pessimisticLock\" to \""
+              + OrientDBConfig.LOCK_TYPE_READWRITE + "\" for enable them");
+    }
+
     try {
-      lockManager.acquireLock(rid, OComparableLockManager.LOCK.EXCLUSIVE, RECORD_LOCK_TIMEOUT);
+      lockManager.acquireWriteLock(rid, timeout);
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  public void acquireWriteLock(final ORID rid) {
+    if (!modificationLock) {
+      throw new ODatabaseException(
+          "Record write locks are off by configuration, set the configuration \"storage.pessimisticLock\" to \""
+              + OrientDBConfig.LOCK_TYPE_MODIFICATION + "\" for enable them");
+    }
+
+    try {
+      lockManager.acquireWriteLock(rid, 0);
     } catch (RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (Error ee) {
@@ -3865,7 +3913,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public void releaseWriteLock(final ORID rid) {
     try {
-      lockManager.releaseLock(this, rid, OComparableLockManager.LOCK.EXCLUSIVE);
+      lockManager.releaseWriteLock(rid);
     } catch (RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (Error ee) {
@@ -3876,8 +3924,32 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void acquireReadLock(final ORID rid) {
+    if (!readLock) {
+      throw new ODatabaseException(
+          "Record read locks are off by configuration, set the configuration \"storage.pessimisticLock\" to \""
+              + OrientDBConfig.LOCK_TYPE_READWRITE + "\" for enable them");
+    }
+
     try {
-      lockManager.acquireLock(rid, OComparableLockManager.LOCK.SHARED, RECORD_LOCK_TIMEOUT);
+      lockManager.acquireReadLock(rid, 0);
+    } catch (RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Error ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  public void acquireReadLock(final ORID rid, long timeout) {
+    if (!readLock) {
+      throw new ODatabaseException(
+          "Record read locks are off by configuration, set the configuration \"storage.pessimisticLock\" to \""
+              + OrientDBConfig.LOCK_TYPE_READWRITE + "\" for enable them");
+    }
+
+    try {
+      lockManager.acquireReadLock(rid, timeout);
     } catch (RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (Error ee) {
@@ -3889,7 +3961,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public void releaseReadLock(final ORID rid) {
     try {
-      lockManager.releaseLock(this, rid, OComparableLockManager.LOCK.SHARED);
+      lockManager.releaseReadLock(rid);
     } catch (RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (Error ee) {
@@ -4089,8 +4161,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     stateLock.acquireReadLock();
     try {
-      if (pessimisticLock) {
-        acquireReadLock(rid);
+      if (readLock) {
+        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+        if (db == null || !((OTransactionAbstract) db.getTransaction()).getLockedRecords().contains(rid)) {
+          acquireReadLock(rid);
+        }
       }
 
       ORawBuffer buff;
@@ -4100,8 +4175,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       return buff;
     } finally {
       try {
-        if (pessimisticLock) {
-          releaseReadLock(rid);
+        if (readLock) {
+          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+          if (db == null || !((OTransactionAbstract) db.getTransaction()).getLockedRecords().contains(rid)) {
+            releaseReadLock(rid);
+          }
         }
       } finally {
         stateLock.releaseReadLock();
@@ -4124,15 +4202,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     stateLock.acquireReadLock();
     try {
-      if (pessimisticLock) {
-        acquireReadLock(rid);
+      if (readLock) {
+        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+        if (db == null || !((OTransactionAbstract) db.getTransaction()).getLockedRecords().contains(rid)) {
+          acquireReadLock(rid);
+        }
       }
       checkOpenness();
       return doReadRecord(clusterSegment, rid, prefetchRecords);
     } finally {
       try {
-        if (pessimisticLock) {
-          releaseReadLock(rid);
+        if (readLock) {
+          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+          if (db == null || !((OTransactionAbstract) db.getTransaction()).getLockedRecords().contains(rid)) {
+            releaseReadLock(rid);
+          }
         }
       } finally {
         stateLock.releaseReadLock();

@@ -2,6 +2,10 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.mocktx;
 
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 public class SecondPhaseResponseHandler implements OResponseHandler {
   private final OSubmitTx          submitTx;
   private final ODistributedMember member;
@@ -19,6 +23,20 @@ public class SecondPhaseResponseHandler implements OResponseHandler {
       done = true;
       submitTx.secondPhase = true;
       this.member.reply(new OSubmitResponse() {
+        @Override
+        public void serialize(DataOutput output) throws IOException {
+
+        }
+
+        @Override
+        public void deserialize(DataInput input) throws IOException {
+
+        }
+
+        @Override
+        public int getResponseType() {
+          return 0;
+        }
       });
     }
     return context1.getResponses().size() == context1.getInvolvedMembers().size();

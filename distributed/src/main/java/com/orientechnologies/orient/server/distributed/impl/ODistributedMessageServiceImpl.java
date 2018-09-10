@@ -42,15 +42,15 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ODistributedMessageServiceImpl implements ODistributedMessageService {
 
-  private final OHazelcastPlugin                                     manager;
-  private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
-  private final TimerTask                                            asynchMessageManager;
-  final ConcurrentHashMap<String, ODistributedDatabaseImpl> databases = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
-  private Thread responseThread;
-  private          long[]                      responseTimeMetrics = new long[10];
-  private volatile boolean                     running             = true;
-  private final    Map<String, OProfilerEntry> latencies           = new HashMap<String, OProfilerEntry>();
-  private final    Map<String, AtomicLong>     messagesStats       = new HashMap<String, AtomicLong>();
+  private final    OHazelcastPlugin                                     manager;
+  private final    ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
+  private final    TimerTask                                            asynchMessageManager;
+  final            ConcurrentHashMap<String, ODistributedDatabaseImpl>  databases           = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
+  private          Thread                                               responseThread;
+  private          long[]                                               responseTimeMetrics = new long[10];
+  private volatile boolean                                              running             = true;
+  private final    Map<String, OProfilerEntry>                          latencies           = new HashMap<String, OProfilerEntry>();
+  private final    Map<String, AtomicLong>                              messagesStats       = new HashMap<String, AtomicLong>();
 
   public ODistributedMessageServiceImpl(final OHazelcastPlugin manager) {
     this.manager = manager;
@@ -146,7 +146,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     if (ddb != null)
       return ddb;
 
-    return new ODistributedDatabaseImpl(manager, this, iDatabaseName, cfg);
+    return new ODistributedDatabaseImpl(manager, this, iDatabaseName, cfg, manager.getServerInstance());
   }
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {

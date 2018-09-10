@@ -2,9 +2,9 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.transac
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.ConcurrentModification;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results.OConcurrentModificationResult;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.Type;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.UniqueKeyViolation;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results.OUniqueKeyViolationResult;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -30,9 +30,9 @@ public class FirstPhaseResponseHandlerTest {
   @Test
   public void testFirstPhaseQuorumSuccess() {
     OSessionOperationId operationId = new OSessionOperationId();
-    ODistributedMember member1 = new ODistributedMember("one", null);
-    ODistributedMember member2 = new ODistributedMember("two", null);
-    ODistributedMember member3 = new ODistributedMember("three", null);
+    ODistributedMember member1 = new ODistributedMember("one", null, null);
+    ODistributedMember member2 = new ODistributedMember("two", null, null);
+    ODistributedMember member3 = new ODistributedMember("three", null, null);
     List<ODistributedMember> members = new ArrayList<>();
     members.add(member1);
     members.add(member2);
@@ -54,9 +54,9 @@ public class FirstPhaseResponseHandlerTest {
   @Test
   public void testFirstPhaseQuorumCME() {
     OSessionOperationId operationId = new OSessionOperationId();
-    ODistributedMember member1 = new ODistributedMember("one", null);
-    ODistributedMember member2 = new ODistributedMember("two", null);
-    ODistributedMember member3 = new ODistributedMember("three", null);
+    ODistributedMember member1 = new ODistributedMember("one", null, null);
+    ODistributedMember member2 = new ODistributedMember("two", null, null);
+    ODistributedMember member3 = new ODistributedMember("three", null, null);
     List<ODistributedMember> members = new ArrayList<>();
     members.add(member1);
     members.add(member2);
@@ -66,10 +66,10 @@ public class FirstPhaseResponseHandlerTest {
     ORequestContext context = new ORequestContext(null, null, null, members, handler, id);
 
     handler.receive(coordinator, context, member1, new OTransactionFirstPhaseResult(Type.CONCURRENT_MODIFICATION_EXCEPTION,
-        new ConcurrentModification(new ORecordId(10, 10), 0, 1)));
+        new OConcurrentModificationResult(new ORecordId(10, 10), 0, 1)));
     handler.receive(coordinator, context, member2, new OTransactionFirstPhaseResult(Type.SUCCESS, null));
     handler.receive(coordinator, context, member3, new OTransactionFirstPhaseResult(Type.CONCURRENT_MODIFICATION_EXCEPTION,
-        new ConcurrentModification(new ORecordId(10, 10), 0, 1)));
+        new OConcurrentModificationResult(new ORecordId(10, 10), 0, 1)));
 
     Mockito.verify(coordinator, times(1))
         .sendOperation(any(OSubmitRequest.class), eq(new OTransactionSecondPhaseOperation(operationId, false)),
@@ -81,9 +81,9 @@ public class FirstPhaseResponseHandlerTest {
   @Test
   public void testFirstPhaseQuorumUnique() {
     OSessionOperationId operationId = new OSessionOperationId();
-    ODistributedMember member1 = new ODistributedMember("one", null);
-    ODistributedMember member2 = new ODistributedMember("two", null);
-    ODistributedMember member3 = new ODistributedMember("three", null);
+    ODistributedMember member1 = new ODistributedMember("one", null, null);
+    ODistributedMember member2 = new ODistributedMember("two", null, null);
+    ODistributedMember member3 = new ODistributedMember("three", null, null);
     List<ODistributedMember> members = new ArrayList<>();
     members.add(member1);
     members.add(member2);
@@ -93,10 +93,10 @@ public class FirstPhaseResponseHandlerTest {
     ORequestContext context = new ORequestContext(null, null, null, members, handler, id);
 
     handler.receive(coordinator, context, member1, new OTransactionFirstPhaseResult(Type.UNIQUE_KEY_VIOLATION,
-        new UniqueKeyViolation("Key", new ORecordId(10, 10), new ORecordId(10, 11), "Class.property")));
+        new OUniqueKeyViolationResult("Key", new ORecordId(10, 10), new ORecordId(10, 11), "Class.property")));
     handler.receive(coordinator, context, member2, new OTransactionFirstPhaseResult(Type.SUCCESS, null));
     handler.receive(coordinator, context, member3, new OTransactionFirstPhaseResult(Type.UNIQUE_KEY_VIOLATION,
-        new UniqueKeyViolation("Key", new ORecordId(10, 10), new ORecordId(10, 11), "Class.property")));
+        new OUniqueKeyViolationResult("Key", new ORecordId(10, 10), new ORecordId(10, 11), "Class.property")));
 
     Mockito.verify(coordinator, times(1))
         .sendOperation(any(OSubmitRequest.class), eq(new OTransactionSecondPhaseOperation(operationId, false)),

@@ -138,4 +138,8 @@ public interface OBinaryRequestExecutor {
   OBinaryResponse executeSubscribeSequences(OSubscribeSequencesRequest request);
 
   OBinaryResponse executeExperimental(OExperimentalRequest request);
+
+  OBinaryResponse executeLockRecord(OLockRecordRequest request);
+
+  OBinaryResponse executeUnlockRecord(OUnlockRecordRequest request);
 }

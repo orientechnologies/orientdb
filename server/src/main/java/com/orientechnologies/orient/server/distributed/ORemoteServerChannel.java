@@ -101,6 +101,17 @@ public class ORemoteServerChannel {
     return protocolVersion;
   }
 
+  public void sendBinaryRequest(OBinaryRequest request) {
+    executor.execute(() -> {
+      networkOperation(request.getCommand(), () -> {
+        request.write(channel, null);
+        channel.flush();
+        return null;
+      }, "Cannot send distributed request " + request.getClass(), MAX_RETRY, true);
+    });
+
+  }
+
   public interface OStorageRemoteOperation<T> {
     T execute() throws IOException;
   }

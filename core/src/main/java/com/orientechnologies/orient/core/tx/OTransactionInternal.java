@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.storage.OBasicTransaction;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Expose the api for extract the internal details needed by the storage for perform the transaction commit
@@ -84,5 +85,7 @@ public interface OTransactionInternal extends OBasicTransaction {
    * @return the change or null if there is no change for the specified rid
    */
   ORecordOperation getRecordEntry(ORID currentRid);
+
+  Set<ORID> getLockedRecords();
 
 }

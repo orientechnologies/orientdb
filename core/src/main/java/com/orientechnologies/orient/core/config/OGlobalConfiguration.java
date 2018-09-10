@@ -26,6 +26,7 @@ import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -226,7 +227,8 @@ public enum OGlobalConfiguration {
       + "on the given TCP/IP port. Used for internal testing purposes only. Never touch it if you don't know what you doing.",
       Integer.class, null),
 
-  STORAGE_PESSIMISTIC_LOCKING("storage.pessimisticLock", "Enable/Disable pessimistic locking feature", Boolean.class, false),
+  STORAGE_PESSIMISTIC_LOCKING("storage.pessimisticLock",
+      "Set the approach of the pessimistic locking, valid options: none, modification, readwrite", String.class, "none"),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 

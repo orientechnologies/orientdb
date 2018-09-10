@@ -53,7 +53,13 @@ public class LetQueryStep extends AbstractExecutionStep {
         OBasicCommandContext subCtx = new OBasicCommandContext();
         subCtx.setDatabase(ctx.getDatabase());
         subCtx.setParentWithoutOverridingChild(ctx);
-        OInternalExecutionPlan subExecutionPlan = query.createExecutionPlan(subCtx, profilingEnabled);
+        OInternalExecutionPlan subExecutionPlan;
+        if (query.toString().contains("?")) {
+          //with positional parameters, you cannot know if a parameter has the same ordinal as the one cached
+          subExecutionPlan = query.createExecutionPlanNoCache(subCtx, profilingEnabled);
+        } else {
+          subExecutionPlan = query.createExecutionPlan(subCtx, profilingEnabled);
+        }
         result.setMetadata(varName.getStringValue(), toList(new OLocalResultSet(subExecutionPlan)));
       }
 

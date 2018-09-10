@@ -21,7 +21,6 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
 
   boolean executed = false;
 
-
   public GlobalLetQueryStep(OIdentifier varName, OStatement query, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.varName = varName;
@@ -29,10 +28,16 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
     OBasicCommandContext subCtx = new OBasicCommandContext();
     subCtx.setDatabase(ctx.getDatabase());
     subCtx.setParent(ctx);
-    subExecutionPlan = query.createExecutionPlan(subCtx, profilingEnabled);
+    if (query.toString().contains("?")) {
+      //with positional parameters, you cannot know if a parameter has the same ordinal as the one cached
+      subExecutionPlan = query.createExecutionPlanNoCache(subCtx, profilingEnabled);
+    } else {
+      subExecutionPlan = query.createExecutionPlan(subCtx, profilingEnabled);
+    }
   }
 
-  @Override public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+  @Override
+  public OResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     calculate(ctx);
     return new OInternalResultSet();
@@ -46,8 +51,6 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
     executed = true;
   }
 
-
-
   private List<OResult> toList(OLocalResultSet oLocalResultSet) {
     List<OResult> result = new ArrayList<>();
     while (oLocalResultSet.hasNext()) {
@@ -57,10 +60,11 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
     return result;
   }
 
-  @Override public String prettyPrint(int depth, int indent) {
+  @Override
+  public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    return spaces + "+ LET (once)\n" +
-        spaces + "  " + varName + " = \n" + box(spaces+"    ", this.subExecutionPlan.prettyPrint(0, indent));
+    return spaces + "+ LET (once)\n" + spaces + "  " + varName + " = \n" + box(spaces + "    ",
+        this.subExecutionPlan.prettyPrint(0, indent));
   }
 
   @Override
@@ -73,7 +77,7 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
     StringBuilder result = new StringBuilder();
     result.append(spaces);
     result.append("+-------------------------\n");
-    for(String row:rows){
+    for (String row : rows) {
       result.append(spaces);
       result.append("| ");
       result.append(row);

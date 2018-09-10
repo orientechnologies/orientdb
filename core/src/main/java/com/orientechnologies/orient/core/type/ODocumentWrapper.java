@@ -75,11 +75,6 @@ public class ODocumentWrapper implements Serializable {
     return (RET) this;
   }
 
-  public <RET extends ODocumentWrapper> RET load(final String iFetchPlan, final boolean iIgnoreCache, final boolean loadTombstone) {
-    document = document.load(iFetchPlan, iIgnoreCache, loadTombstone);
-    return (RET) this;
-  }
-
   public <RET extends ODocumentWrapper> RET reload() {
     document.reload();
     return (RET) this;

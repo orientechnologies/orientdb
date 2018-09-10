@@ -4,8 +4,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.mocktx.CoordinatorTxTest;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.mocktx.OSubmitTx;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -23,15 +21,15 @@ public class OSubmitTransactionBeginTest {
         new ODistributedLockManagerImpl(0), new OMockAllocator());
 
     MockChannel cOne = new MockChannel();
-    ODistributedMember mOne = new ODistributedMember("one", cOne);
+    ODistributedMember mOne = new ODistributedMember("one", null, cOne);
     coordinator.join(mOne);
 
     MockChannel cTwo = new MockChannel();
-    ODistributedMember mTwo = new ODistributedMember("two", cTwo);
+    ODistributedMember mTwo = new ODistributedMember("two", null, cTwo);
     coordinator.join(mTwo);
 
     MockChannel cThree = new MockChannel();
-    ODistributedMember mThree = new ODistributedMember("three", cThree);
+    ODistributedMember mThree = new ODistributedMember("three", null, cThree);
     coordinator.join(mThree);
 
     ArrayList<ORecordOperation> recordOps = new ArrayList<>();
@@ -48,17 +46,22 @@ public class OSubmitTransactionBeginTest {
     private CountDownLatch sentRequest = new CountDownLatch(1);
 
     @Override
-    public void sendRequest(OLogId id, ONodeRequest nodeRequest) {
+    public void sendRequest(String database, OLogId id, ONodeRequest nodeRequest) {
       sentRequest.countDown();
     }
 
     @Override
-    public void sendResponse(OLogId id, ONodeResponse nodeResponse) {
+    public void sendResponse(String database, OLogId id, ONodeResponse nodeResponse) {
 
     }
 
     @Override
-    public void reply(OSubmitResponse response) {
+    public void submit(String database, OSubmitRequest request) {
+
+    }
+
+    @Override
+    public void reply(String database, OSubmitResponse response) {
 
     }
   }

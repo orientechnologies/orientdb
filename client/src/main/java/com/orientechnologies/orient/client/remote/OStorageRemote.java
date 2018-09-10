@@ -44,11 +44,13 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal
 import com.orientechnologies.orient.core.db.document.OLiveQueryMonitorRemote;
 import com.orientechnologies.orient.core.db.document.OTransactionOptimisticClient;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OTokenException;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
@@ -80,6 +82,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -2152,6 +2155,20 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
         }
       }
     }
+  }
+
+  public OLockRecordResponse lockRecord(OIdentifiable iRecord, LOCKING_STRATEGY lockingStrategy, long timeout) {
+    OExperimentalRequest request = new OExperimentalRequest(
+        new OLockRecordRequest(iRecord.getIdentity(), lockingStrategy, timeout));
+    OExperimentalResponse response = networkOperation(request, "Error locking record");
+    OLockRecordResponse realResponse = (OLockRecordResponse) response.getResponse();
+    return realResponse;
+  }
+
+  public void unlockRecord(OIdentifiable iRecord) {
+    OExperimentalRequest request = new OExperimentalRequest(new OUnlockRecordRequest(iRecord.getIdentity()));
+    OExperimentalResponse response = networkOperation(request, "Error locking record");
+    OUnlockRecordResponse realResponse = (OUnlockRecordResponse) response.getResponse();
   }
 
   @Override

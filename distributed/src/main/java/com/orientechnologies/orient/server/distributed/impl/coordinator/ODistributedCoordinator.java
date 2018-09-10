@@ -90,4 +90,12 @@ public class ODistributedCoordinator implements AutoCloseable {
   public OClusterPositionAllocator getAllocator() {
     return allocator;
   }
+
+  public ODistributedMember getMember(String senderNode) {
+    return members.get(senderNode);
+  }
+
+  public void leave(ODistributedMember member) {
+    members.remove(member.getName());
+  }
 }

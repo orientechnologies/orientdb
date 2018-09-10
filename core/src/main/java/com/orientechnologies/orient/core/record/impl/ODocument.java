@@ -947,21 +947,6 @@ public class ODocument extends ORecordAbstract
     return (ODocument) result;
   }
 
-  @Deprecated
-  public ODocument load(final String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
-    Object result;
-    try {
-      result = getDatabase().load(this, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
-    } catch (Exception e) {
-      throw OException.wrapException(new ORecordNotFoundException(getIdentity()), e);
-    }
-
-    if (result == null)
-      throw new ORecordNotFoundException(getIdentity());
-
-    return (ODocument) result;
-  }
-
   @Override
   public ODocument reload(final String fetchPlan, final boolean ignoreCache) {
     super.reload(fetchPlan, ignoreCache);
