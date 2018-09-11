@@ -128,9 +128,9 @@ public class OHttpGraphResponse extends OHttpResponse {
       json.beginCollection("edges");
       Set<ORID> edgeRids = new HashSet<ORID>();
       for (OVertex vertex : vertices) {
-        for (OEdge e : vertex.getEdges(ODirection.BOTH)) {
+        for (OEdge e : vertex.getEdges(ODirection.OUT)) {
           OEdge edge = (OEdge) e;
-          if (edgeRids.contains(e.getIdentity())) {
+          if (edgeRids.contains(e.getIdentity()) && e.getIdentity() != null /* only for non-lighweight */) {
             continue;
           }
           if (!vertices.contains(edge.getVertex(ODirection.OUT)) || !vertices.contains(edge.getVertex(ODirection.IN)))
