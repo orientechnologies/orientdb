@@ -143,6 +143,9 @@ public enum OGlobalConfiguration {
   DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percentage of disk cache, which is used as write cache", Integer.class,
       5),
 
+  DISK_WRITE_CACHE_SHUTDOWN_TIMEOUT("storage.diskCache.writeCacheShutdownTimeout",
+      "Timeout of shutdown of write cache for single task in min.", Integer.class, 30),
+
   DISK_WRITE_CACHE_PAGE_TTL("storage.diskCache.writeCachePageTTL",
       "Max time until a page will be flushed from write cache (in seconds)", Long.class, 24 * 60 * 60),
 
@@ -248,6 +251,9 @@ public enum OGlobalConfiguration {
   WAL_CACHE_SIZE("storage.wal.cacheSize",
       "Maximum size of WAL cache (in amount of WAL pages, each page is 4k) If set to 0, caching will be disabled", Integer.class,
       65536),
+
+  WAL_BUFFER_SIZE("storage.wal.bufferSize",
+      "Size of the direct memory WAL buffer which is used inside of " + "the background write thread (in MB)", Integer.class, 128),
 
   WAL_SEGMENTS_INTERVAL("storage.wal.segmentsInterval",
       "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 30),
