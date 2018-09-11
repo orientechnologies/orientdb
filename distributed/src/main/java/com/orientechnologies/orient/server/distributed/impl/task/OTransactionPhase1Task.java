@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializer;
 import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializerI;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -173,17 +174,16 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         ORecordInternal.setRecordSerializer(record, database.getSerializer());
       }
       break;
-      case ORecordOperation.UPDATED: {
-        OIdentifiable updateRecord = null;
-        if (useDeltasForUpdate) {
+      case ORecordOperation.UPDATED: {        
+        if (useDeltasForUpdate) {          
           ODocumentDeltaSerializerI serializer = ODocumentDeltaSerializer.getActiveSerializer();
-          updateRecord = serializer.fromStream(new BytesContainer(req.getRecord()));
+          ODocumentDelta updateRecord = serializer.fromStream(new BytesContainer(req.getRecord()));
+          ORecordOperation op = new ORecordOperation(updateRecord, type);
+          ops.add(op);
         } else {
-          updateRecord = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
-          record = (ORecord) updateRecord;
+          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);          
         }
-        ORecordOperation op = new ORecordOperation(updateRecord, type);
-        ops.add(op);
+        
       }
       break;
       case ORecordOperation.DELETED:
