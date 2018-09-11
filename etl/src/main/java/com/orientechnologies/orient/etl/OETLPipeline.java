@@ -117,7 +117,7 @@ public class OETLPipeline {
         throw e;
 
       } catch (Exception e) {
-        OETLContextWrapper.getInstance().getMessageHandler().error(this, "Error in Pipeline execution:", e);
+        OETLContextWrapper.getInstance().getMessageHandler().error(this, "Error in Pipeline execution: %s", e);
 
         processor.getStats().incrementErrors();
 

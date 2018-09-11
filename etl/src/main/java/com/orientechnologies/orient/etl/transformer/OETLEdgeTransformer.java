@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -44,17 +45,17 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{joinValue:{optional:true,description:'value to use for join'}},"
-        + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
-        + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
-        + "{direction:{optional:true,description:'Direction between \'in\' and \'out\'. Default is \'out\''}},"
-        + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
-        + "{targetVertexFields:{optional:true,description:'Map of fields to set in target vertex. Use ${$input.<field>} to get input field values'}},"
-        + "{edgeFields:{optional:true,description:'Map of fields to set in edge. Use ${$input.<field>} to get input field values'}},"
-        + "{skipDuplicates:{optional:true,description:'Duplicated edges (with a composite index built on both out and in properties) are skipped', default:false}},"
-        + "{unresolvedLinkAction:{optional:true,description:'action when the target vertex is not found',values:"
-        + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument','OVertex'],output:'OVertex'}");
+    return new ODocument().fromJSON(
+        "{parameters:[" + getCommonConfigurationParameters() + "," + "{joinValue:{optional:true,description:'value to use for join'}},"
+            + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
+            + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
+            + "{direction:{optional:true,description:'Direction between \'in\' and \'out\'. Default is \'out\''}},"
+            + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
+            + "{targetVertexFields:{optional:true,description:'Map of fields to set in target vertex. Use ${$input.<field>} to get input field values'}},"
+            + "{edgeFields:{optional:true,description:'Map of fields to set in edge. Use ${$input.<field>} to get input field values'}},"
+            + "{skipDuplicates:{optional:true,description:'Duplicated edges (with a composite index built on both out and in properties) are skipped', default:false}},"
+            + "{unresolvedLinkAction:{optional:true,description:'action when the target vertex is not found',values:" + stringArray2Json(ACTION.values())
+            + "}}]," + "input:['ODocument','OVertex'],output:'OVertex'}");
   }
 
   @Override
@@ -136,8 +137,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
     return input;
   }
 
-  private List<OEdge> createEdge(ODatabaseDocument db, final OVertex vertex, final Object joinCurrentValue, Object result,
-      final Object input) {
+  private List<OEdge> createEdge(ODatabaseDocument db, final OVertex vertex, final Object joinCurrentValue, Object result, final Object input) {
     log(Level.FINE, "joinCurrentValue=%s, lookupResult=%s", joinCurrentValue, result);
 
     if (result == null) {
@@ -201,6 +201,12 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
         final OVertex targetVertex = new OVertexDelegate(db.getRecord(oid));
 
         final String currentClass = (String) resolve(edgeClass);
+
+        OClass clz = db.getMetadata().getSchema().getClass(currentClass);
+        if (clz == null) {
+          OLogManager.instance().info(this, "Creating edge class '%s'", currentClass);
+          db.getMetadata().getSchema().createClass(currentClass, db.getMetadata().getSchema().getClass("E"));
+        }
 
         try {
           // CREATE THE EDGE
