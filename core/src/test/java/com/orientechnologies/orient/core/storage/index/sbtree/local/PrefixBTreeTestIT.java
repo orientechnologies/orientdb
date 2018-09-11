@@ -60,7 +60,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testKeyPut() {
-    final int keysCount = 100_000_000;
+    final int keysCount = 500_000;
 
     String lastKey = null;
 
@@ -98,7 +98,7 @@ public class PrefixBTreeTestIT {
   public void testKeyPutRandomUniform() {
     final NavigableSet<String> keys = new TreeSet<>();
     final Random random = new Random();
-    final int keysCount = 100_000_000;
+    final int keysCount = 500_000;
 
     while (keys.size() < keysCount) {
       int val = random.nextInt(Integer.MAX_VALUE);
@@ -127,7 +127,7 @@ public class PrefixBTreeTestIT {
     System.out.println("testKeyPutRandomGaussian seed : " + seed);
 
     Random random = new Random(seed);
-    final int keysCount = 1_000_000;
+    final int keysCount = 500_000;
 
     while (keys.size() < keysCount) {
       int val = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
@@ -152,7 +152,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testKeyDeleteRandomUniform() {
-    final int keysCount = 100_000_000;
+    final int keysCount = 500_000;
 
     NavigableSet<String> keys = new TreeSet<>();
     for (int i = 0; i < keysCount; i++) {
@@ -186,7 +186,7 @@ public class PrefixBTreeTestIT {
   @Test
   public void testKeyDeleteRandomGaussian() {
     NavigableSet<String> keys = new TreeSet<>();
-    final int keysCount = 1_000_000;
+    final int keysCount = 500_000;
 
     long seed = System.currentTimeMillis();
 
@@ -231,7 +231,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testKeyDelete() {
-    final int keysCount = 100_000_000;
+    final int keysCount = 500_000;
 
     for (int i = 0; i < keysCount; i++) {
       prefixTree.put(Integer.toString(i), new ORecordId(i % 32000, i));
@@ -254,7 +254,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testKeyAddDelete() {
-    final int keysCount = 100_000_000;
+    final int keysCount = 500_000;
 
     for (int i = 0; i < keysCount; i++) {
       prefixTree.put(Integer.toString(i), new ORecordId(i % 32000, i));
@@ -288,7 +288,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testKeyCursor() {
-    final int keysCount = 100_000_000;
+    final int keysCount = 500_000;
 
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     final long seed = System.nanoTime();
@@ -345,7 +345,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testIterateEntriesMinor() {
-    final int keysCount = 100_000_000;
+    final int keysCount = 500_000;
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
 
     final long seed = System.nanoTime();
@@ -373,7 +373,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testIterateEntriesBetween() {
-    final int keysCount = 100_000_000;
+    final int keysCount = 500_000;
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 
