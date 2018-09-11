@@ -40,7 +40,7 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
   @Override
   public void executeSubmitResponse(ONetworkSubmitResponse response) {
     ODistributedDatabase db = distributed.getMessageService().getDatabase(response.getDatabase());
-    OSubmitContext context = ((ODistributedDatabaseImpl) db).getContext();
+    OSubmitContext context = ((ODistributedDatabaseImpl) db).getSubmitContext();
     context.receive(response.getOperationId(), response.getResponse());
   }
 

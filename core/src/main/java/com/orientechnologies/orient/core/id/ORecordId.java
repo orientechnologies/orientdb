@@ -356,13 +356,21 @@ public class ORecordId implements ORID {
   }
 
   public static void serialize(ORID id, DataOutput output) throws IOException {
-    output.writeInt(id.getClusterId());
-    output.writeLong(id.getClusterPosition());
+    if (id == null) {
+      output.writeInt(-2);
+      output.writeLong(-2);
+    } else {
+      output.writeInt(id.getClusterId());
+      output.writeLong(id.getClusterPosition());
+    }
   }
 
   public static ORecordId deserialize(DataInput input) throws IOException {
     int cluster = input.readInt();
     long pos = input.readLong();
+    if (cluster == -2 && pos == -2) {
+      return null;
+    }
     return new ORecordId(cluster, pos);
   }
 }

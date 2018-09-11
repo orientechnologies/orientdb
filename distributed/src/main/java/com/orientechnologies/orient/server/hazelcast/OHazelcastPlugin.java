@@ -59,6 +59,7 @@ import com.orientechnologies.orient.server.distributed.impl.*;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedCoordinator;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OLoopBackDistributeMember;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.network.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
@@ -793,7 +794,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                   .error(this, nodeName, null, DIRECTION.NONE, "Error on saving distributed LSN for database '%s' (err=%s).",
                       databaseName, e.getMessage());
             }
-
+            assignCoordinator(getLockManagerServer(), ddb);
             ddb.setOnline();
 
             return null;
@@ -1196,30 +1197,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   private void checkAndMakeCoordinator(String lockManager) {
-    if (nodeName.equals(lockManager)) {
-      Set<String> list = getMessageService().getDatabases();
-      for (String s : list) {
-        ODistributedDatabaseImpl ser = getMessageService().getDatabase(s);
-        ser.makeMaster();
-      }
-    } else {
-      Set<String> list = getMessageService().getDatabases();
-      for (String s : list) {
-        ODistributedDatabaseImpl ser = getMessageService().getDatabase(s);
-        ser.removeMaster();
-        ODistributedMember coor = ser.getContext().getCoordinator();
-        if(lockManager.equals(coor.getName())) {
-          try {
-            ODistributedMember m = new ODistributedMember(lockManager, s,
-                new ODistributedChannelBinaryProtocol(nodeName, getRemoteServer(lockManager)));
-            ser.getContext().setCoordinator(m);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        }
-      }
-    }
 
+    Set<String> list = getMessageService().getDatabases();
+    for (String s : list) {
+      ODistributedDatabaseImpl ser = getMessageService().getDatabase(s);
+      assignCoordinator(lockManager, ser);
+    }
   }
 
   @Override

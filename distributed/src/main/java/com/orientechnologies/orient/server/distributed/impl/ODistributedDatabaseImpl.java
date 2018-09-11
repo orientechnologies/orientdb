@@ -200,7 +200,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     recordLockManager = new OSimpleLockManagerImpl<>(timeout);
     indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
     context = server.getContext();
-    executor = new ODistributedExecutor(Executors.newSingleThreadExecutor(), null, context, databaseName);
+    executor = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new OIncrementOperationalLog(), context, databaseName);
     submitContext = new OSubmitContextImpl();
   }
 
@@ -1402,8 +1402,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public synchronized void makeMaster() {
     if (coordinator == null) {
-      coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), null, new ODistributedLockManagerImpl(0),
-          new OClusterPositionAllocatorDatabase(context, databaseName));
+      coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), new OIncrementOperationalLog(),
+          new ODistributedLockManagerImpl(0), new OClusterPositionAllocatorDatabase(context, databaseName));
+      OLoopBackDistributeMember loopBack = new OLoopBackDistributeMember(localNodeName, databaseName, submitContext, coordinator,
+          executor);
+      coordinator.join(loopBack);
+      submitContext.setCoordinator(loopBack);
     }
   }
 
@@ -1422,7 +1426,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return coordinator;
   }
 
-  public OSubmitContext getContext() {
+  public OSubmitContext getSubmitContext() {
     return submitContext;
   }
 }

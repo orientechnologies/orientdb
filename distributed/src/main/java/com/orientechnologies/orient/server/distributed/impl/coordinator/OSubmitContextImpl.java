@@ -5,6 +5,7 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.transact
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 public class OSubmitContextImpl implements OSubmitContext {
 
@@ -12,10 +13,11 @@ public class OSubmitContextImpl implements OSubmitContext {
   private ODistributedMember                                           coordinator;
 
   @Override
-  public synchronized void send(OSessionOperationId operationId, OSubmitRequest request) {
+  public synchronized Future<OSubmitResponse> send(OSessionOperationId operationId, OSubmitRequest request) {
     CompletableFuture<OSubmitResponse> value = new CompletableFuture<>();
     operations.put(operationId, value);
     coordinator.submit(operationId, request);
+    return value;
   }
 
   @Override

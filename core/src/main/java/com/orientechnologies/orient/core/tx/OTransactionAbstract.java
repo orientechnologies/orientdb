@@ -36,10 +36,10 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class OTransactionAbstract implements OTransaction {
-  protected final ODatabaseDocumentInternal       database;
-  protected       TXSTATUS                        status         = TXSTATUS.INVALID;
-  protected       ISOLATION_LEVEL                 isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
-  protected       Map<ORID, LockedRecordMetadata> locks          = new HashMap<ORID, LockedRecordMetadata>();
+  protected ODatabaseDocumentInternal       database;
+  protected TXSTATUS                        status         = TXSTATUS.INVALID;
+  protected ISOLATION_LEVEL                 isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
+  protected Map<ORID, LockedRecordMetadata> locks          = new HashMap<ORID, LockedRecordMetadata>();
 
   public static final class LockedRecordMetadata {
     private final OStorage.LOCKING_STRATEGY strategy;
@@ -196,5 +196,9 @@ public abstract class OTransactionAbstract implements OTransaction {
 
   public Set<ORID> getLockedRecords() {
     return locks.keySet();
+  }
+
+  public void setDatabase(ODatabaseDocumentInternal database) {
+    this.database = database;
   }
 }

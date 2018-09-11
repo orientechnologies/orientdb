@@ -2,9 +2,11 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 
+import java.util.concurrent.Future;
+
 public interface OSubmitContext {
 
-  void send(OSessionOperationId requestId, OSubmitRequest response);
+  Future<OSubmitResponse> send(OSessionOperationId requestId, OSubmitRequest response);
 
   void receive(OSessionOperationId requestId, OSubmitResponse response);
 
