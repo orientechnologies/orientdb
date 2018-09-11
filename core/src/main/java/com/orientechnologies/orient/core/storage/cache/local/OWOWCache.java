@@ -78,16 +78,19 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
@@ -161,6 +164,24 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private static final int PAGE_OFFSET_TO_CHECKSUM_FROM = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
 
   private static final int CHUNK_SIZE = 32 * 1024 * 1024;
+
+  /**
+   * Executor which runs in single thread all tasks are related to flush of write cache data.
+   */
+  private static final OScheduledThreadPoolExecutorWithLogging commitExecutor;
+
+  /**
+   * Executor which is used to call event listeners in  background thread
+   */
+  private static final ExecutorService cacheEventsPublisher;
+
+  static {
+    cacheEventsPublisher = new OThreadPoolExecutorWithLogging(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
+        new CacheEventsPublisherFactory());
+
+    commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FlushThreadFactory());
+    commitExecutor.setMaximumPoolSize(1);
+  }
 
   /**
    * Limit of free space on disk after which database will be switched to "read only" mode
@@ -299,16 +320,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private final OReadersWriterSpinLock filesLock = new OReadersWriterSpinLock();
 
   /**
-   * Executor which runs in single thread all tasks are related to flush of write cache data.
-   */
-  private final OScheduledThreadPoolExecutorWithLogging commitExecutor;
-
-  /**
-   * Executor which is used to call event listeners in  background thread
-   */
-  private final ExecutorService cacheEventsPublisher;
-
-  /**
    * Mapping between case sensitive file names are used in write cache and file's internal id. Name of file in write cache is case
    * sensitive and can be different from file name which is used to store file in file system.
    */
@@ -417,18 +428,28 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private final boolean memoryLocking;
 
+  private final    long      pageFlushInterval;
+  private volatile boolean   stopFlush = false;
+  private volatile Future<?> flushFuture;
+
+  private final ConcurrentHashMap<ExclusiveFlushTask, CountDownLatch> triggeredTasks = new ConcurrentHashMap<>();
+
+  private final int shutdownTimeout;
+
   /**
    * Listeners which are called when exception in background data flush thread is happened.
    */
   private final List<WeakReference<OBackgroundExceptionListener>> backgroundExceptionListeners = new CopyOnWriteArrayList<>();
 
   public OWOWCache(final int pageSize, final OByteBufferPool bufferPool, final OWriteAheadLog writeAheadLog,
-      final long pageFlushInterval, final long exclusiveWriteCacheMaxSize, final long maxCacheSize, Path storagePath,
-      String storageName, OBinarySerializer<String> stringSerializer, final OClosableLinkedContainer<Long, OFileClassic> files,
-      final int id, final OChecksumMode checksumMode, boolean allowDirectIO, boolean callFsync, double exclusiveWriteCacheBoundary,
-      boolean printCacheStatistics, int statisticsPrintInterval, boolean flushTillSegmentLogging, boolean fileFlushLogging,
-      boolean fileRemovalLogging, boolean memoryLocking) {
+      final long pageFlushInterval, final int shutdownTimeout, final long exclusiveWriteCacheMaxSize, final long maxCacheSize,
+      Path storagePath, String storageName, OBinarySerializer<String> stringSerializer,
+      final OClosableLinkedContainer<Long, OFileClassic> files, final int id, final OChecksumMode checksumMode, boolean callFsync,
+      double exclusiveWriteCacheBoundary, boolean printCacheStatistics, int statisticsPrintInterval,
+      boolean flushTillSegmentLogging, boolean fileFlushLogging, boolean fileRemovalLogging, boolean memoryLocking) {
 
+    this.shutdownTimeout = shutdownTimeout;
+    this.pageFlushInterval = pageFlushInterval;
     this.callFsync = callFsync;
     this.exclusiveWriteCacheBoundary = exclusiveWriteCacheBoundary;
     this.printCacheStatistics = printCacheStatistics;
@@ -463,15 +484,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       this.stringSerializer = stringSerializer;
       this.storageName = storageName;
 
-      commitExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FlushThreadFactory(storageName));
-      commitExecutor.setMaximumPoolSize(1);
-
-      cacheEventsPublisher = new OThreadPoolExecutorWithLogging(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
-          new SynchronousQueue<>(), new CacheEventsPublisherFactory(storageName));
-
       this.pagesFlushInterval = pageFlushInterval;
       if (pageFlushInterval > 0) {
-        commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
+        flushFuture = commitExecutor.schedule(new PeriodicFlushTask(), pageFlushInterval, TimeUnit.MILLISECONDS);
       }
 
     } finally {
@@ -989,14 +1004,19 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   @Override
   public void checkCacheOverflow() throws InterruptedException {
     while (exclusiveWriteCacheSize.get() > exclusiveWriteCacheMaxSize) {
-      final CountDownLatch latch = new CountDownLatch(1);
-      commitExecutor.submit(new ExclusiveFlushTask(latch));
+      final CountDownLatch cacheBoundaryLatch = new CountDownLatch(1);
+      final CountDownLatch completionLatch = new CountDownLatch(1);
+      final ExclusiveFlushTask exclusiveFlushTask = new ExclusiveFlushTask(cacheBoundaryLatch, completionLatch);
+
+      triggeredTasks.put(exclusiveFlushTask, completionLatch);
+      commitExecutor.submit(exclusiveFlushTask);
 
       long startTs = 0;
       if (printCacheStatistics) {
         startTs = System.nanoTime();
       }
-      latch.await();
+
+      cacheBoundaryLatch.await();
       if (printCacheStatistics) {
         long endTs = System.nanoTime();
 
@@ -1389,23 +1409,39 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
   }
 
+  private void stopFlush() {
+    stopFlush = true;
+
+    for (CountDownLatch completionLatch : triggeredTasks.values()) {
+      try {
+        if (!completionLatch.await(shutdownTimeout, TimeUnit.MINUTES)) {
+          throw new OWriteCacheException("Can not shutdown data flush for storage " + storageName);
+        }
+      } catch (InterruptedException e) {
+        throw OException
+            .wrapException(new OWriteCacheException("Flush of the data for storage " + storageName + " has been interrupted"), e);
+      }
+    }
+
+    if (flushFuture != null) {
+      try {
+        flushFuture.get(shutdownTimeout, TimeUnit.MINUTES);
+      } catch (InterruptedException | CancellationException e) {
+        //ignore
+      } catch (ExecutionException e) {
+        throw OException.wrapException(new OWriteCacheException("Error in execution of data flush for storage " + storageName), e);
+      } catch (TimeoutException e) {
+        throw OException.wrapException(new OWriteCacheException("Can not shutdown data flush for storage " + storageName), e);
+      }
+    }
+
+  }
+
   @Override
   public long[] close() throws IOException {
     flush();
 
-    if (!commitExecutor.isShutdown()) {
-      commitExecutor.shutdown();
-      try {
-        if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
-          throw new OWriteCacheException("Background data flush task cannot be stopped.");
-      } catch (final InterruptedException e) {
-        OLogManager.instance().error(this, "Data flush thread was interrupted", e);
-
-        //noinspection ResultOfMethodCallIgnored
-        Thread.interrupted();
-        throw OException.wrapException(new OWriteCacheException("Data flush thread was interrupted"), e);
-      }
-    }
+    stopFlush();
 
     filesLock.acquireWriteLock();
     try {
@@ -1639,19 +1675,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       filesLock.releaseWriteLock();
     }
 
-    if (!commitExecutor.isShutdown()) {
-      commitExecutor.shutdown();
-      try {
-        if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
-          throw new OWriteCacheException("Background data flush task cannot be stopped.");
-      } catch (final InterruptedException e) {
-        OLogManager.instance().error(this, "Data flush thread was interrupted", e);
-
-        //noinspection ResultOfMethodCallIgnored
-        Thread.interrupted();
-        throw OException.wrapException(new OInterruptedException("Data flush thread was interrupted"), e);
-      }
-    }
+    stopFlush();
 
     final long[] fIds = new long[result.size()];
     int n = 0;
@@ -2088,16 +2112,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   private void removeCachedPages(final int fileId) {
-    //cache already closed or deleted
-    if (commitExecutor.isShutdown())
-      return;
-
     final Future<Void> future = commitExecutor.submit(new RemoveFilePagesTask(fileId));
     try {
       future.get();
     } catch (final InterruptedException e) {
-      //noinspection ResultOfMethodCallIgnored
-      Thread.interrupted();
       throw OException.wrapException(new OInterruptedException("File data removal was interrupted"), e);
     } catch (final Exception e) {
       throw OException.wrapException(new OWriteCacheException("File data removal was abnormally terminated"), e);
@@ -2558,14 +2576,20 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   private final class ExclusiveFlushTask implements Runnable {
-    private final CountDownLatch latch;
+    private final CountDownLatch cacheBoundaryLatch;
+    private final CountDownLatch completionLatch;
 
-    private ExclusiveFlushTask(CountDownLatch latch) {
-      this.latch = latch;
+    private ExclusiveFlushTask(CountDownLatch cacheBoundaryLatch, CountDownLatch completionLatch) {
+      this.cacheBoundaryLatch = cacheBoundaryLatch;
+      this.completionLatch = completionLatch;
     }
 
     @Override
     public void run() {
+      if (stopFlush) {
+        return;
+      }
+
       try {
         if (flushError != null) {
           OLogManager.instance()
@@ -2581,12 +2605,12 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         assert ewcSize >= 0;
 
-        if (latch != null && ewcSize <= exclusiveWriteCacheMaxSize) {
-          latch.countDown();
+        if (cacheBoundaryLatch != null && ewcSize <= exclusiveWriteCacheMaxSize) {
+          cacheBoundaryLatch.countDown();
         }
 
         if (ewcSize > exclusiveWriteCacheMaxSize) {
-          flushExclusiveWriteCache(latch, chunkSize);
+          flushExclusiveWriteCache(cacheBoundaryLatch, chunkSize);
         }
 
       } catch (final Error | Exception t) {
@@ -2594,8 +2618,12 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         OWOWCache.this.fireBackgroundDataFlushExceptionEvent(t);
         flushError = t;
       } finally {
-        if (latch != null) {
-          latch.countDown();
+        if (cacheBoundaryLatch != null) {
+          cacheBoundaryLatch.countDown();
+        }
+
+        if (completionLatch != null) {
+          completionLatch.countDown();
         }
       }
 
@@ -2603,132 +2631,143 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   private final class PeriodicFlushTask implements Runnable {
+
     @Override
     public void run() {
-      if (printCacheStatistics) {
-        printReport();
-      }
-
-      if (flushError != null) {
-        OLogManager.instance()
-            .errorNoDb(this, "Can not flush data because of issue during data write, %s", null, flushError.getMessage());
+      if (stopFlush) {
         return;
       }
 
       try {
-        if (writeCachePages.isEmpty()) {
+        if (printCacheStatistics) {
+          printReport();
+        }
+
+        if (flushError != null) {
+          OLogManager.instance()
+              .errorNoDb(this, "Can not flush data because of issue during data write, %s", null, flushError.getMessage());
           return;
         }
 
-        final long startTs = System.nanoTime();
-        long ewcSize = exclusiveWriteCacheSize.get();
+        try {
+          if (writeCachePages.isEmpty()) {
+            return;
+          }
 
-        int exclusivePages = 0;
-        if (ewcSize >= 0.8 * exclusiveWriteCacheMaxSize) {
-          exclusivePages = flushExclusiveWriteCache(null, ewcSize);
-        }
+          final long startTs = System.nanoTime();
+          long ewcSize = exclusiveWriteCacheSize.get();
 
-        final long lsnFlushInterval;
-        if (lastTsLSNFlush == -1) {
-          lastTsLSNFlush = startTs;
-          lsnFlushInterval = 0;
-        } else {
-          lsnFlushInterval = startTs - lastTsLSNFlush;
-        }
+          int exclusivePages = 0;
+          if (ewcSize >= 0.8 * exclusiveWriteCacheMaxSize) {
+            exclusivePages = flushExclusiveWriteCache(null, ewcSize);
+          }
 
-        int lsnPages = 0;
-        if (writeAheadLog != null) {
-          convertSharedDirtyPagesToLocal();
-
-          final long startSegment = writeAheadLog.begin().getSegment();
-          final long endSegment = writeAheadLog.end().getSegment();
-          final int segmentCount = localDirtyPagesBySegment.size();
-
-          if (lsnFlushInterval >= lsnFlushIntervalBoundary || segmentCount > lastSegmentCount) {
+          final long lsnFlushInterval;
+          if (lastTsLSNFlush == -1) {
             lastTsLSNFlush = startTs;
+            lsnFlushInterval = 0;
+          } else {
+            lsnFlushInterval = startTs - lastTsLSNFlush;
+          }
 
-            Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
+          int lsnPages = 0;
+          if (writeAheadLog != null) {
+            convertSharedDirtyPagesToLocal();
 
-            if (lsnEntry != null && segmentCount > 0 && lsnEntry.getKey() < endSegment) {
-              final long lsnTs = System.nanoTime();
+            final long startSegment = writeAheadLog.begin().getSegment();
+            final long endSegment = writeAheadLog.end().getSegment();
+            final int segmentCount = localDirtyPagesBySegment.size();
 
-              lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 8 * chunkSize);
+            if (lsnFlushInterval >= lsnFlushIntervalBoundary || segmentCount > lastSegmentCount) {
+              lastTsLSNFlush = startTs;
 
-              lsnFlushIntervalSum += lsnFlushInterval;
-              lsnFlushIntervalCount++;
+              Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
 
-              if (lsnPages > 0) {
-                final long endTs = System.nanoTime();
+              if (lsnEntry != null && segmentCount > 0 && lsnEntry.getKey() < endSegment) {
+                final long lsnTs = System.nanoTime();
 
-                final int segments = localDirtyPagesBySegment.size();
-                final long flushInterval = endTs - lsnTs;
+                lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 8 * chunkSize);
 
-                if (lsnPagesFlushIntervalCount == 10) {
+                lsnFlushIntervalSum += lsnFlushInterval;
+                lsnFlushIntervalCount++;
+
+                if (lsnPages > 0) {
+                  final long endTs = System.nanoTime();
+
+                  final int segments = localDirtyPagesBySegment.size();
+                  final long flushInterval = endTs - lsnTs;
+
+                  if (lsnPagesFlushIntervalCount == 10) {
+                    final long avgFlushInterval = lsnPagesFlushIntervalSum / lsnPagesFlushIntervalCount;
+
+                    lsnPagesFlushIntervalSum = avgFlushInterval;
+                    lsnPagesFlushIntervalCount = 1;
+                  }
+
+                  lsnPagesFlushIntervalSum += flushInterval;
+                  lsnPagesFlushIntervalCount++;
+
                   final long avgFlushInterval = lsnPagesFlushIntervalSum / lsnPagesFlushIntervalCount;
 
-                  lsnPagesFlushIntervalSum = avgFlushInterval;
-                  lsnPagesFlushIntervalCount = 1;
-                }
-
-                lsnPagesFlushIntervalSum += flushInterval;
-                lsnPagesFlushIntervalCount++;
-
-                final long avgFlushInterval = lsnPagesFlushIntervalSum / lsnPagesFlushIntervalCount;
-
-                if (segments <= 2) {
-                  lsnFlushIntervalBoundary = 8 * avgFlushInterval;
-                } else if (segments <= 3) {
-                  lsnFlushIntervalBoundary = 4 * avgFlushInterval;
-                } else if (segments <= 4) {
-                  lsnFlushIntervalBoundary = 2 * avgFlushInterval;
-                } else if (segments <= 5) {
-                  lsnFlushIntervalBoundary = avgFlushInterval;
-                } else if (segments <= 6) {
-                  lsnFlushIntervalBoundary = avgFlushInterval / 2;
-                } else if (segments <= 7) {
-                  lsnFlushIntervalBoundary = avgFlushInterval / 4;
-                } else if (segments <= 8) {
-                  lsnFlushIntervalBoundary = avgFlushInterval / 8;
-                } else {
-                  lsnFlushIntervalBoundary = 0;
+                  if (segments <= 2) {
+                    lsnFlushIntervalBoundary = 8 * avgFlushInterval;
+                  } else if (segments <= 3) {
+                    lsnFlushIntervalBoundary = 4 * avgFlushInterval;
+                  } else if (segments <= 4) {
+                    lsnFlushIntervalBoundary = 2 * avgFlushInterval;
+                  } else if (segments <= 5) {
+                    lsnFlushIntervalBoundary = avgFlushInterval;
+                  } else if (segments <= 6) {
+                    lsnFlushIntervalBoundary = avgFlushInterval / 2;
+                  } else if (segments <= 7) {
+                    lsnFlushIntervalBoundary = avgFlushInterval / 4;
+                  } else if (segments <= 8) {
+                    lsnFlushIntervalBoundary = avgFlushInterval / 8;
+                  } else {
+                    lsnFlushIntervalBoundary = 0;
+                  }
                 }
               }
             }
+
+            lastSegmentCount = segmentCount;
           }
 
-          lastSegmentCount = segmentCount;
-        }
+          if (lsnPages + exclusivePages == 0) {
+            final long backgroundExclusiveInterval;
 
-        if (lsnPages + exclusivePages == 0) {
-          final long backgroundExclusiveInterval;
-
-          if (lastFlushTs == -1) {
-            backgroundExclusiveInterval = 0;
-          } else {
-            backgroundExclusiveInterval = startTs - lastFlushTs;
-          }
-
-          ewcSize = exclusiveWriteCacheSize.get();
-
-          if (ewcSize >= chunkSize && backgroundExclusiveInterval >= backroundExclusiveFlushBoundary) {
-            final long backgroundTs = System.nanoTime();
-
-            final int backgroundPages = flushExclusiveWriteCache(null, (long) (0.1 * exclusiveWriteCacheMaxSize));
-
-            if (backgroundPages > 0) {
-              final long endTs = System.nanoTime();
-              backroundExclusiveFlushBoundary = 9 * (endTs - backgroundTs);
+            if (lastFlushTs == -1) {
+              backgroundExclusiveInterval = 0;
+            } else {
+              backgroundExclusiveInterval = startTs - lastFlushTs;
             }
 
+            ewcSize = exclusiveWriteCacheSize.get();
+
+            if (ewcSize >= chunkSize && backgroundExclusiveInterval >= backroundExclusiveFlushBoundary) {
+              final long backgroundTs = System.nanoTime();
+
+              final int backgroundPages = flushExclusiveWriteCache(null, (long) (0.1 * exclusiveWriteCacheMaxSize));
+
+              if (backgroundPages > 0) {
+                final long endTs = System.nanoTime();
+                backroundExclusiveFlushBoundary = 9 * (endTs - backgroundTs);
+              }
+
+              lastFlushTs = startTs;
+            }
+          } else {
             lastFlushTs = startTs;
           }
-        } else {
-          lastFlushTs = startTs;
+        } catch (final Error | Exception t) {
+          OLogManager.instance().error(this, "Exception during data flush", t);
+          OWOWCache.this.fireBackgroundDataFlushExceptionEvent(t);
+          flushError = t;
         }
-      } catch (final Error | Exception t) {
-        OLogManager.instance().error(this, "Exception during data flush", t);
-        OWOWCache.this.fireBackgroundDataFlushExceptionEvent(t);
-        flushError = t;
+      } finally {
+        if (pageFlushInterval > 0 && !stopFlush) {
+          flushFuture = commitExecutor.schedule(this, pageFlushInterval, TimeUnit.MILLISECONDS);
+        }
       }
     }
   }
@@ -3298,28 +3337,23 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   private static class FlushThreadFactory implements ThreadFactory {
-    private final String storageName;
 
-    private FlushThreadFactory(final String storageName) {
-      this.storageName = storageName;
+    private FlushThreadFactory() {
     }
 
     @Override
     public Thread newThread(final Runnable r) {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
-      thread.setPriority(Thread.MAX_PRIORITY);
-      thread.setName("OrientDB Write Cache Flush Task (" + storageName + ")");
+      thread.setName("OrientDB Write Cache Flush Task");
       thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       return thread;
     }
   }
 
   private static class CacheEventsPublisherFactory implements ThreadFactory {
-    private final String storageName;
 
-    private CacheEventsPublisherFactory(final String storageName) {
-      this.storageName = storageName;
+    private CacheEventsPublisherFactory() {
     }
 
     @Override
@@ -3327,7 +3361,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
 
       thread.setDaemon(true);
-      thread.setName("OrientDB Write Cache Event Publisher (" + storageName + ")");
+      thread.setName("OrientDB Write Cache Event Publisher");
       thread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
 
       return thread;
