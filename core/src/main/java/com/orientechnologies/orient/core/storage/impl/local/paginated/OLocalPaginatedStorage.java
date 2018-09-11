@@ -407,7 +407,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * 1024 * 1024L,
         10, true, getConfiguration().getLocaleInstance(), OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024,
-        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT), true,
+        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
+        getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.WAL_ALLOW_DIRECT_IO),
         getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
         getConfiguration().getContextConfiguration()
             .getValueAsBoolean(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),
@@ -575,7 +576,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
               * 1_000_000_000L, walMaxSegSize, 10, true, getConfiguration().getLocaleInstance(),
           OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
           OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024 * 1024,
-          getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT), true,
+          getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
+          getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.WAL_ALLOW_DIRECT_IO),
           getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
           getConfiguration().getContextConfiguration()
               .getValueAsBoolean(OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),

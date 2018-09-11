@@ -25,6 +25,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
@@ -128,7 +129,14 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
       if ((type.equals(OClass.INDEX_TYPE.NOTUNIQUE.name()) || type.equals(OClass.INDEX_TYPE.UNIQUE.name())) && types.length == 1
           && types[0] == OType.STRING) {
-        algorithm = ODefaultIndexFactory.PREFIX_BTREE_ALGORITHM;
+
+        OStorage storage = getStorage();
+        OStorageConfiguration configuration = storage.getConfiguration();
+        if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.INDEX_USE_PREFIX_B_TREE)) {
+          algorithm = ODefaultIndexFactory.PREFIX_BTREE_ALGORITHM;
+        } else {
+          algorithm = OIndexes.chooseDefaultIndexAlgorithm(type);
+        }
       } else {
         algorithm = OIndexes.chooseDefaultIndexAlgorithm(type);
       }

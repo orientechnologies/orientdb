@@ -268,6 +268,9 @@ public enum OGlobalConfiguration {
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk (in megabytes)", Integer.class, -1),
 
+  WAL_ALLOW_DIRECT_IO("storage.wal.allowDirectIO",
+      "Allows usage of direct IO API on Linux OS to avoid keeping of WAL data in " + "OS buffer", Boolean.class, true),
+
   WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
 
   WAL_SHUTDOWN_TIMEOUT("storage.wal.shutdownTimeout", "Maximum wait interval between events, when the background flush thread"
@@ -418,6 +421,9 @@ public enum OGlobalConfiguration {
 
   INDEX_DURABLE_IN_NON_TX_MODE("index.durableInNonTxMode",
       "Indicates whether index implementation for plocal storage will be durable in non-Tx mode (true by default)", Boolean.class,
+      true),
+
+  INDEX_USE_PREFIX_B_TREE("index.usePrefixBTRee", "Indicates that prefix B-Tree should be used for String indexes", Boolean.class,
       true),
 
   /**
