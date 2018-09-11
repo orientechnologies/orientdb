@@ -19,7 +19,7 @@ import {
   NotificationService
 } from "../../../core/services";
 import { ModalComponent } from "ng2-bs3-modal";
-import { BackupFinishedEvent } from "./events";
+import { BackupFinishedEvent, GenericBackupEvent } from "./events";
 
 declare const angular: any;
 
@@ -143,9 +143,10 @@ class SingleBackupComponent implements OnInit, OnDestroy, OnChanges {
 
   selectEvent(event) {
     let cmp = subComponents[event._source.op];
-    if (cmp) {
-      this.createComponent(cmp, event, this.backup);
+    if (!cmp) {
+      cmp = GenericBackupEvent;
     }
+    this.createComponent(cmp, event, this.backup);
   }
   saveBackup() {
     this.backupService

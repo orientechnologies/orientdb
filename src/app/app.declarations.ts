@@ -30,7 +30,8 @@ import {
   BackupComponent,
   SingleBackupComponent,
   BackupCalendarComponent,
-  BackupFinishedEvent
+  BackupFinishedEvent,
+  GenericBackupEvent
 } from "./administration";
 
 import {
@@ -79,5 +80,6 @@ export const APP_DECLARATIONS = [
   SingleBackupComponent,
   CronComponent,
   BackupCalendarComponent,
-  BackupFinishedEvent
+  BackupFinishedEvent,
+  GenericBackupEvent
 ];

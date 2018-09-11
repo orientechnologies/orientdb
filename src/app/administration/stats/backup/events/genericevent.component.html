@@ -1,0 +1,25 @@
+<div>
+    <modal #eventModal>
+        <modal-header [show-close]="true">
+            <h4 class="modal-title">{{event._source | eventToString}} Event</h4>
+        </modal-header>
+        <modal-body>
+
+            <div class="row">
+                <div class="col-md-12 ">
+                    <ul class="list-unstyled">
+                        <li>
+                            <i class="fa fa-angle-right">
+                            </i>
+                            <b>Info:</b> {{event.title}} at {{ event._source.timestamp | date : 'medium' }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </modal-body>
+        <modal-footer [show-default-buttons]="false">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </modal-footer>
+    </modal>
+
+</div>
