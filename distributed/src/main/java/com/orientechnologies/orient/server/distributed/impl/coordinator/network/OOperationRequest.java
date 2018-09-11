@@ -18,14 +18,14 @@ import java.io.IOException;
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_OPERATION_REQUEST;
 
 public class OOperationRequest implements OBinaryRequest, ODistributedExecutable {
-  private String                     sourceNode;
+  private String                     senderNode;
   private String                     database;
   private OLogId                     id;
   private ONodeRequest               request;
   private OCoordinateMessagesFactory factory;
 
-  public OOperationRequest(String sourceNode, String database, OLogId id, ONodeRequest request) {
-    this.sourceNode = sourceNode;
+  public OOperationRequest(String senderNode, String database, OLogId id, ONodeRequest request) {
+    this.senderNode = senderNode;
     this.database = database;
     this.id = id;
     this.request = request;
@@ -38,7 +38,7 @@ public class OOperationRequest implements OBinaryRequest, ODistributedExecutable
   @Override
   public void write(OChannelDataOutput network, OStorageRemoteSession session) throws IOException {
     DataOutputStream output = new DataOutputStream(network.getDataOutput());
-    output.writeUTF(sourceNode);
+    output.writeUTF(senderNode);
     output.writeUTF(database);
     OLogId.serialize(id, output);
     output.writeInt(request.getRequestType());
@@ -48,7 +48,7 @@ public class OOperationRequest implements OBinaryRequest, ODistributedExecutable
   @Override
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer) throws IOException {
     DataInputStream input = new DataInputStream(channel.getDataInput());
-    sourceNode = input.readUTF();
+    senderNode = input.readUTF();
     database = input.readUTF();
     id = OLogId.deserialize(input);
     int requestType = input.readInt();
@@ -98,7 +98,7 @@ public class OOperationRequest implements OBinaryRequest, ODistributedExecutable
     return database;
   }
 
-  public String getSourceNode() {
-    return sourceNode;
+  public String getSenderNode() {
+    return senderNode;
   }
 }

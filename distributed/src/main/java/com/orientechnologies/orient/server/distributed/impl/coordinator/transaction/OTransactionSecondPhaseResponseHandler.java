@@ -12,6 +12,7 @@ public class OTransactionSecondPhaseResponseHandler implements OResponseHandler 
   private       int                 responseCount = 0;
   private final List<OLockGuard>    guards;
   private       OSessionOperationId operationId;
+  private       boolean             replySent     = false;
 
   public OTransactionSecondPhaseResponseHandler(boolean success, OTransactionSubmit request, ODistributedMember requester,
       List<OLockGuard> guards, OSessionOperationId operationId) {
@@ -33,7 +34,10 @@ public class OTransactionSecondPhaseResponseHandler implements OResponseHandler 
             guard.release();
           }
         }
-        coordinator.reply(requester, operationId, new OTransactionResponse());
+        if (!replySent) {
+          coordinator.reply(requester, operationId, new OTransactionResponse());
+          replySent = true;
+        }
       }
     }
     return responseCount == context.getInvolvedMembers().size();

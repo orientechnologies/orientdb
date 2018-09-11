@@ -80,8 +80,13 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
         }
       }
     }
-
-    return responseCount == context.getInvolvedMembers().size();
+    if (responseCount == context.getInvolvedMembers().size()) {
+      if (!secondPhaseSent) {
+        sendSecondPhaseError(coordinator);
+      }
+      return true;
+    }
+    return false;
   }
 
   private void sendSecondPhaseError(ODistributedCoordinator coordinator) {

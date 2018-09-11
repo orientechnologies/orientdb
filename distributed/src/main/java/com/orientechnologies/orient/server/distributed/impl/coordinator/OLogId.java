@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
 import java.io.*;
+import java.util.Objects;
 
 public class OLogId {
   private long id;
@@ -15,5 +16,21 @@ public class OLogId {
 
   public static OLogId deserialize(DataInput input) throws IOException {
     return new OLogId(input.readLong());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    OLogId oLogId = (OLogId) o;
+    return id == oLogId.id;
+  }
+
+  @Override
+  public int hashCode() {
+
+    return Objects.hash(id);
   }
 }

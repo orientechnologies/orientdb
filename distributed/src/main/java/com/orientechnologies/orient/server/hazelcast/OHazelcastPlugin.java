@@ -103,7 +103,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   private   OCoordinateMessagesFactory         coordinateMessagesFactory;
 
   public OHazelcastPlugin() {
-    requestHandler = new OCoordinatedExecutorMessageHandler(this);
     //This now si simple but should be replaced by a factory depending to the protocol version
     coordinateMessagesFactory = new OCoordinateMessagesFactory();
   }
@@ -121,7 +120,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
     super.config(iServer, iParams);
-
+    requestHandler = new OCoordinatedExecutorMessageHandler((OrientDBDistributed) iServer.getDatabases());
     if (nodeName == null)
       assignNodeName();
 
@@ -238,6 +237,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             activeNodes.put(memberName, m);
             activeNodesNamesByUuid.put(m.getUuid(), memberName);
             activeNodesUuidByName.put(memberName, m.getUuid());
+
+            OrientDBDistributed distributed = (OrientDBDistributed) serverInstance.getDatabases();
+
+            distributed.nodeJoin(memberName, new ODistributedChannelBinaryProtocol(getLocalNodeName(), getRemoteServer(memberName)));
             break;
           }
 
@@ -794,7 +797,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
                   .error(this, nodeName, null, DIRECTION.NONE, "Error on saving distributed LSN for database '%s' (err=%s).",
                       databaseName, e.getMessage());
             }
-            assignCoordinator(getLockManagerServer(), ddb);
             ddb.setOnline();
 
             return null;
@@ -956,13 +958,21 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         final ODocument cfg = (ODocument) iEvent.getValue();
 
-        if (!activeNodes.containsKey((String) cfg.field("name")))
+        String name = (String) cfg.field("name");
+        if (!activeNodes.containsKey(name))
           updateLastClusterChange();
 
-        activeNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
+        activeNodes.put(name, (Member) iEvent.getMember());
         if (iEvent.getMember().getUuid() != null) {
-          activeNodesNamesByUuid.put(iEvent.getMember().getUuid(), (String) cfg.field("name"));
-          activeNodesUuidByName.put((String) cfg.field("name"), iEvent.getMember().getUuid());
+          activeNodesNamesByUuid.put(iEvent.getMember().getUuid(), name);
+          activeNodesUuidByName.put(name, iEvent.getMember().getUuid());
+        }
+        OrientDBDistributed distributed = (OrientDBDistributed) serverInstance.getDatabases();
+
+        try {
+          distributed.nodeJoin(name, new ODistributedChannelBinaryProtocol(getLocalNodeName(), getRemoteServer(name)));
+        } catch (IOException e) {
+          e.printStackTrace();
         }
 
         dumpServersStatus();
@@ -1197,12 +1207,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   private void checkAndMakeCoordinator(String lockManager) {
-
-    Set<String> list = getMessageService().getDatabases();
-    for (String s : list) {
-      ODistributedDatabaseImpl ser = getMessageService().getDatabase(s);
-      assignCoordinator(lockManager, ser);
-    }
+    OrientDBDistributed distributed = (OrientDBDistributed) serverInstance.getDatabases();
+    distributed.setCoordinator(lockManager, nodeName.equals(lockManager));
   }
 
   @Override
@@ -1617,6 +1623,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             "Removed node id=%s name=%s has not being recognized. Remove the node manually (registeredNodes=%s)", member,
             nodeLeftName, registeredNodes);
       }
+      OrientDBDistributed distributed = (OrientDBDistributed) serverInstance.getDatabases();
+      distributed.nodeLeave(nodeLeftName);
 
       for (String databaseName : getManagedDatabases()) {
         try {
@@ -1626,19 +1634,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
               "Cannot re-balance the cluster for database '%s' because the Lock Manager is not available (err=%s)", databaseName,
               e.getMessage());
-        }
-
-        ODistributedDatabaseImpl database = messageService.getDatabase(databaseName);
-        ODistributedCoordinator coordinator = database.getCoordinator();
-        if (coordinator != null) {
-          ODistributedMember cm = coordinator.getMember(nodeLeftName);
-          if (cm != null) {
-            coordinator.leave(cm);
-          }
-        }
-        ODistributedMember em = database.getExecutor().getMember(nodeLeftName);
-        if (em != null) {
-          database.getExecutor().leave(em);
         }
 
       }
@@ -1767,13 +1762,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       activeNodesNamesByUuid.put(member.getUuid(), joinedNodeName);
       activeNodesUuidByName.put(joinedNodeName, member.getUuid());
-
+      ORemoteServerController network = null;
       try {
-        getRemoteServer(joinedNodeName);
+        network = getRemoteServer(joinedNodeName);
       } catch (IOException e) {
         ODistributedServerLog
             .error(this, nodeName, joinedNodeName, DIRECTION.OUT, "Error on connecting to node %s", joinedNodeName);
       }
+      OrientDBDistributed distributed = (OrientDBDistributed) serverInstance.getDatabases();
+
+      distributed.nodeJoin(joinedNodeName, new ODistributedChannelBinaryProtocol(getLocalNodeName(), network));
 
       ODistributedServerLog.info(this, nodeName, getNodeName(member), DIRECTION.IN,
           "Added node configuration id=%s name=%s, now %d nodes are configured", member, getNodeName(member), activeNodes.size());
@@ -1786,19 +1784,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       for (String db : messageService.getDatabases()) {
         if (getDatabaseConfiguration(db).isAutoDeploy() && getDatabaseStatus(joinedNodeName, db) == DB_STATUS.ONLINE) {
           setDatabaseStatus(joinedNodeName, db, DB_STATUS.NOT_AVAILABLE);
-          try {
-            ODistributedMember m = new ODistributedMember(joinedNodeName, db,
-                new ODistributedChannelBinaryProtocol(nodeName, getRemoteServer(joinedNodeName)));
-
-            ODistributedDatabaseImpl database = messageService.getDatabase(db);
-            ODistributedCoordinator coordinator = database.getCoordinator();
-            if (coordinator != null) {
-              coordinator.join(m);
-            }
-            database.getExecutor().join(m);
-          } catch (IOException e) {
-            //TODO:
-          }
         }
       }
       dumpServersStatus();
@@ -1848,6 +1833,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
       throws IOException {
+    try {
+      waitUntilNodeOnline();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
     OBinaryRequest<OBinaryResponse> request = newDistributedRequest(requestType);
     try {
       request.read(channel, 0, null);

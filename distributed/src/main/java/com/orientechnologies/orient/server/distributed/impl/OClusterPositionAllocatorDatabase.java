@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OClusterPositionAllocator;
 
@@ -16,19 +17,18 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OClusterPositionAllocatorDatabase implements OClusterPositionAllocator {
-  private OrientDB context;
-  private String   database;
+  private OrientDBInternal context;
+  private String           database;
 
   private volatile AtomicLong[] allocators;
 
-  public OClusterPositionAllocatorDatabase(OrientDB context, String databaseName) {
+  public OClusterPositionAllocatorDatabase(OrientDBInternal context, String databaseName) {
     this.context = context;
     this.database = databaseName;
     registerListener();
   }
 
   private void registerListener() {
-    OrientDBInternal internal = OrientDBInternal.extract(context);
     Orient.instance().addDbLifecycleListener(new ODatabaseLifecycleListener() {
       @Override
       public void onCreate(ODatabaseInternal iDatabase) {
@@ -99,7 +99,11 @@ public class OClusterPositionAllocatorDatabase implements OClusterPositionAlloca
     allocators = new AtomicLong[clusterInstances.size()];
     for (OCluster cluster : clusterInstances) {
       try {
-        allocators[cluster.getId()] = new AtomicLong(cluster.getLastPosition());
+        long next = cluster.getLastPosition();
+        if (next == 0 && cluster.getPhysicalPosition(new OPhysicalPosition(next)) != null) {
+          next += 1;
+        }
+        allocators[cluster.getId()] = new AtomicLong(next);
       } catch (IOException e) {
         OLogManager.instance().error(this, "error resolving last position", e);
       }

@@ -97,10 +97,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final String                     localNodeName;
   private final OSimpleLockManager<ORID>   recordLockManager;
   private final OSimpleLockManager<Object> indexKeyLockManager;
-  private final ODistributedExecutor       executor;
-  private       ODistributedCoordinator    coordinator;
-  private final OSubmitContext             submitContext;
-  private final OrientDB                   context;
 
   public OSimpleLockManager<ORID> getRecordLockManager() {
     return recordLockManager;
@@ -142,9 +138,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (iDatabaseName.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
       recordLockManager = null;
       indexKeyLockManager = null;
-      executor = null;
-      submitContext = null;
-      context = null;
       return;
     }
 
@@ -199,9 +192,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     long timeout = manager.getServerInstance().getContextConfiguration().getValueAsLong(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
     recordLockManager = new OSimpleLockManagerImpl<>(timeout);
     indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
-    context = server.getContext();
-    executor = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new OIncrementOperationalLog(), context, databaseName);
-    submitContext = new OSubmitContextImpl();
   }
 
   public OLogSequenceNumber getLastLSN(final String server) {
@@ -1400,33 +1390,4 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return buffer.toString();
   }
 
-  public synchronized void makeMaster() {
-    if (coordinator == null) {
-      coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), new OIncrementOperationalLog(),
-          new ODistributedLockManagerImpl(0), new OClusterPositionAllocatorDatabase(context, databaseName));
-      OLoopBackDistributeMember loopBack = new OLoopBackDistributeMember(localNodeName, databaseName, submitContext, coordinator,
-          executor);
-      coordinator.join(loopBack);
-      submitContext.setCoordinator(loopBack);
-    }
-  }
-
-  public synchronized void removeMaster() {
-    if (coordinator != null) {
-      coordinator.close();
-    }
-    coordinator = null;
-  }
-
-  public ODistributedExecutor getExecutor() {
-    return executor;
-  }
-
-  public synchronized ODistributedCoordinator getCoordinator() {
-    return coordinator;
-  }
-
-  public OSubmitContext getSubmitContext() {
-    return submitContext;
-  }
 }

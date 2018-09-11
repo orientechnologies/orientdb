@@ -57,7 +57,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPo
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
@@ -328,26 +327,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       distribDatabase = messageService.registerDatabase(dbName, cfg);
       distribDatabase.checkNodeInConfiguration(cfg, getLocalNodeName());
       distribDatabase.resume();
-      assignCoordinator(getLockManagerServer(), distribDatabase);
       distribDatabase.setOnline();
-    }
-  }
-
-  protected void assignCoordinator(String coordinator, ODistributedDatabaseImpl sharedDb) {
-    if (nodeName.equals(coordinator)) {
-      sharedDb.makeMaster();
-    } else {
-      sharedDb.removeMaster();
-      ODistributedMember coor = sharedDb.getSubmitContext().getCoordinator();
-      if (coor == null || coordinator.equals(coor.getName())) {
-        try {
-          ODistributedMember m = new ODistributedMember(coordinator, sharedDb.getDatabaseName(),
-              new ODistributedChannelBinaryProtocol(nodeName, getRemoteServer(coordinator)));
-          sharedDb.getSubmitContext().setCoordinator(m);
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
     }
   }
 
