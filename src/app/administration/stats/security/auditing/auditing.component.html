@@ -1,0 +1,13 @@
+<div class="col-md-12">
+
+    <ul class="nav nav-tabs">
+        <li [ngClass]="{'active' : tab === 'auditingLog'}" (click)="tab = 'auditingLog'"><a href="javascript:void(0)"><span>Auditing
+                    Log</span></a></li>
+        <li [ngClass]="{'active' : tab === 'auditingCfg'}" (click)="tab = 'auditingCfg'"><a href="javascript:void(0)"><span>Auditing
+                    Cfg</span></a></li>
+    </ul>
+    <div class="tab-content row">
+        <auditing-log-management *ngIf="tab ==='auditingLog'"></auditing-log-management>
+    </div>
+
+</div>

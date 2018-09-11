@@ -20,6 +20,8 @@ import {
   ClusterManagementComponent,
   BackupComponent
 } from "./stats";
+import { ImportManagerComponent } from "./importmanager";
+import { SecurityManagerComponent } from "./stats/security";
 
 declare const angular: any;
 
@@ -27,7 +29,9 @@ const subComponents = {
   stats: DashboardStatsComponent,
   general: ServerManagementComponent,
   cluster: ClusterManagementComponent,
-  backup: BackupComponent
+  backup: BackupComponent,
+  importers: ImportManagerComponent,
+  security: SecurityManagerComponent
 };
 
 @Component({

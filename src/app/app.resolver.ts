@@ -12,7 +12,8 @@ import {
   PermissionService,
   WikiService,
   MetricService,
-  BackupService
+  BackupService,
+  SecurityService
 } from "./core/services";
 import {
   FormatArrayPipe,
@@ -38,7 +39,8 @@ const APP_SERVICES = [
   PermissionService,
   WikiService,
   MetricService,
-  BackupService
+  BackupService,
+  SecurityService
 ];
 
 export const APP_RESOLVER_PROVIDERS = [...APP_SERVICES, ...APP_PIPES];

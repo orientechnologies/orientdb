@@ -25,7 +25,10 @@ class ClusterStatsComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     this.stats = changes.stats.currentValue;
-    this.servers = Object.keys(this.stats.clusterStats);
+
+    if (this.stats) {
+      this.servers = Object.keys(this.stats.clusterStats);
+    }
   }
 
   ngOnInit(): void {}

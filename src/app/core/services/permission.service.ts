@@ -76,7 +76,7 @@ class PermissionService {
         title: "Dashboard",
         template: "stats",
         icon: "fa-dashboard",
-        wiki : "Studio-Dashboard.html",
+        wiki: "Studio-Dashboard.html"
       });
     }
     if (this.data.permissions.indexOf("server.studio.serverManagement") != -1) {
@@ -124,7 +124,7 @@ class PermissionService {
     ) {
       menus.push({
         name: "security",
-        title: "Security",
+        title: "Security Management",
         template: "security",
         icon: "fa-lock",
         wiki: "Security-Config.html"
