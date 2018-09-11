@@ -503,8 +503,8 @@ public class OEdgeDelegate implements OEdge {
     if (element != null) {
       return element.toJSON();
     } else {
-      return "{'out':'" + vOut.getIdentity() + "', 'in':'" + vIn.getIdentity() + "', '@class':'" + OStringSerializerHelper
-          .encode(lightweightEdgeType.getName()) + "'}";
+      return "{\"out\":\"" + vOut.getIdentity() + "\", \"in\":\"" + vIn.getIdentity() + "\", \"@class\":\"" + OStringSerializerHelper
+          .encode(lightweightEdgeType.getName()) + "\"}";
     }
   }
 
@@ -513,8 +513,8 @@ public class OEdgeDelegate implements OEdge {
     if (element != null) {
       return element.toJSON(iFormat);
     } else {
-      return "{'out':'" + vOut.getIdentity() + "', 'in':'" + vIn.getIdentity() + "', '@class':'" + OStringSerializerHelper
-          .encode(lightweightEdgeType.getName()) + "'}";
+      return "{\"out\":\"" + vOut.getIdentity() + "\", \"in\":\"" + vIn.getIdentity() + "\", \"@class\":\"" + OStringSerializerHelper
+          .encode(lightweightEdgeType.getName()) + "\"}";
     }
   }
 
