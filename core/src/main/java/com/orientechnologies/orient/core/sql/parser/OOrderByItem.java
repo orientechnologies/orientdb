@@ -93,11 +93,9 @@ public class OOrderByItem {
       } else {
         result = -1;
       }
-    }
-    if (bVal == null) {
+    } else if (bVal == null) {
       result = 1;
-    }
-    if (aVal instanceof Comparable && bVal instanceof Comparable) {
+    } else if (aVal instanceof Comparable && bVal instanceof Comparable) {
       try {
         result = ((Comparable) aVal).compareTo(bVal);
       } catch (Exception e) {
@@ -139,6 +137,10 @@ public class OOrderByItem {
 
   public OModifier getModifier() {
     return modifier;
+  }
+
+  public void setModifier(OModifier modifier) {
+    this.modifier = modifier;
   }
 
   public OResult serialize() {

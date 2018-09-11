@@ -764,6 +764,7 @@ public class OSelectExecutionPlanner {
           OIdentifier newAlias = new OIdentifier("_$$$ORDER_BY_ALIAS$$$_" + (nextAliasCount++));
           newProj.setAlias(newAlias);
           item.setAlias(newAlias.getStringValue());
+          item.setModifier(null);
           result.add(newProj);
         }
       }
