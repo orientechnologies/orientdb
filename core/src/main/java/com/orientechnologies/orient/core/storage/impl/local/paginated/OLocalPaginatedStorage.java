@@ -21,9 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
-import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -73,7 +71,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
@@ -96,6 +93,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   private static final int ONE_KB = 1024;
 
+  private static final OThreadPoolExecutorWithLogging segmentAdderExecutor;
+
+  static {
+    segmentAdderExecutor = new OThreadPoolExecutorWithLogging(0, 1, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
+        new SegmentAppenderFactory());
+
+  }
+
   private final int DELETE_MAX_RETRIES;
   private final int DELETE_WAIT_TIME;
 
@@ -109,8 +114,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   private final long walMaxSegSize;
 
-  private volatile OThreadPoolExecutorWithLogging segmentAdderExecutor;
-  private final    AtomicReference<Future<Void>>  segmentAppender = new AtomicReference<>();
+  private final AtomicReference<Future<Void>> segmentAppender = new AtomicReference<>();
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id, OReadCache readCache,
       OClosableLinkedContainer<Long, OFileClassic> files, final long walMaxSegSize) throws IOException {
@@ -402,6 +406,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   protected OWriteAheadLog createWalFromIBUFiles(File directory) throws IOException {
     final OCASDiskWriteAheadLog restoreWAL = new OCASDiskWriteAheadLog(name, storagePath, directory.toPath(),
         getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
+        getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE),
         getConfiguration().getContextConfiguration().getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL) * 60
             * 1_000_000_000L,
         getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * 1024 * 1024L,
@@ -440,7 +445,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   protected Map<String, Object> preCloseSteps() {
     final Map<String, Object> params = super.preCloseSteps();
-    params.put("segmentAdderExecutor", segmentAdderExecutor);
 
     if (fuzzyCheckpointTask != null) {
       fuzzyCheckpointTask.cancel(false);
@@ -452,21 +456,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   protected void postCloseStepsAfterLock(Map<String, Object> params) {
     super.postCloseStepsAfterLock(params);
-
-    final ThreadPoolExecutor executor = (ThreadPoolExecutor) params.get("segmentAdderExecutor");
-    if (executor != null) {
-      int waitTimeout = getConfiguration().getContextConfiguration()
-          .getValueAsInteger(OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT);
-      executor.shutdown();
-      try {
-        if (!executor.awaitTermination(waitTimeout, TimeUnit.SECONDS)) {
-          throw new OStorageException("Can not able to terminate segment addeder executor");
-        }
-      } catch (InterruptedException e) {
-        throw OException
-            .wrapException(new OInterruptedException("Thread was interrupted during termination of segment adder thread"), e);
-      }
-    }
   }
 
   @Override
@@ -484,8 +473,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       }
       dirtyFlag.close();
     }
-
-    segmentAdderExecutor = null;
   }
 
   @Override
@@ -572,6 +559,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
       final OCASDiskWriteAheadLog diskWriteAheadLog = new OCASDiskWriteAheadLog(name, storagePath, walPath,
           getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
+          getConfiguration().getContextConfiguration().getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE),
           getConfiguration().getContextConfiguration().getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL) * 60
               * 1_000_000_000L, walMaxSegSize, 10, true, getConfiguration().getLocaleInstance(),
           OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
@@ -587,9 +575,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       diskWriteAheadLog.addLowDiskSpaceListener(this);
       writeAheadLog = diskWriteAheadLog;
       writeAheadLog.addFullCheckpointListener(this);
-
-      segmentAdderExecutor = new OThreadPoolExecutorWithLogging(0, 1, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
-          new SegmentAppenderFactory(name));
 
       diskWriteAheadLog.addSegmentOverflowListener((segment) -> {
         if (status != STATUS.OPEN) {
@@ -629,9 +614,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     final OBinarySerializerFactory binarySerializerFactory = getComponentsFactory().binarySerializerFactory;
     final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(), writeAheadLog,
-        OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, diskCacheSize,
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL),
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT), writeCacheSize, diskCacheSize,
         getStoragePath(), getName(), binarySerializerFactory.getObjectSerializer(OType.STRING), files, getId(),
-        contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class), true,
+        contextConfiguration.getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class),
         contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC), exclusiveWriteCacheBoundary,
         printCacheStatistics, statisticsPrintInterval, flushTillSegmentLogging, fileFlushLogging, fileRemovalLogging,
         OGlobalConfiguration.MEMORY_LOCK.getValueAsBoolean());
@@ -701,15 +687,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   private final static class SegmentAppenderFactory implements ThreadFactory {
-    private final String storageName;
-
-    SegmentAppenderFactory(String storageName) {
-      this.storageName = storageName;
+    SegmentAppenderFactory() {
     }
 
     @Override
     public Thread newThread(Runnable r) {
-      return new Thread(OAbstractPaginatedStorage.storageThreadGroup, r, "Segment adder for " + storageName);
+      return new Thread(OAbstractPaginatedStorage.storageThreadGroup, r, "Segment adder thread");
     }
   }
 }
