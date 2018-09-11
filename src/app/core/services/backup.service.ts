@@ -21,19 +21,40 @@ class BackupService {
       });
   }
 
+  restore(uuid, toRestore) {
+    let url = API + "backupManager/" + uuid + "/restore";
+    return this.http
+      .post(url, toRestore, this.getOptions())
+      .toPromise()
+      .then(data => {
+        return data.json();
+      });
+  }
+
+  remove(uuid, toRemove) {
+    let url = `${API}backupManager/${uuid}/remove?unitId=${
+      toRemove.unitId
+    }&txId=${toRemove.log.txId}`;
+    return this.http
+      .delete(url, this.getOptions())
+      .toPromise()
+      .then(data => {
+        return data.json();
+      });
+  }
   save(backup) {
     let url = API + "backupManager";
 
     if (backup.uuid) {
       return this.http
-        .put(url, backup, this.getOptions())
+        .put(url + "/" + backup.uuid, backup, this.getOptions())
         .toPromise()
         .then(data => {
           return data.json();
         });
     } else {
       return this.http
-        .post(url + "/" + backup.uuid, backup, this.getOptions())
+        .post(url, backup, this.getOptions())
         .toPromise()
         .then(data => {
           return;

@@ -36,9 +36,6 @@ class SingleBackupComponent implements OnInit, OnDestroy, OnChanges {
   @Input()
   private backup: any;
 
-  // @ViewChild("backupModal")
-  // renameModal: ModalComponent;
-
   @ViewChild("backupModal", { read: ViewContainerRef })
   dashboardContainer: ViewContainerRef;
 
@@ -105,9 +102,18 @@ class SingleBackupComponent implements OnInit, OnDestroy, OnChanges {
       );
       this.bind(componentRef.instance, "event", event);
       this.bind(componentRef.instance, "backup", this.backup);
+
+      this.subscribeOnChange(componentRef.instance);
     }
   }
 
+  subscribeOnChange(component) {
+    if (component.onChange) {
+      component.onChange.subscribe(() => {
+        this.fetchBackups(this.backup.uuid, this.range);
+      });
+    }
+  }
   bind(component, name, event) {
     component[name] = event;
   }
@@ -193,7 +199,7 @@ class SingleBackupComponent implements OnInit, OnDestroy, OnChanges {
     } else {
       this.selectedEvents.splice(idx, 1);
     }
-    // $scope.refreshEvents();
+    this.currentUnitLogs = formatLogs(this.logs, this.selectedEvents);
   }
   getClazz(t) {
     return (

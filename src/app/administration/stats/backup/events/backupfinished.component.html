@@ -44,7 +44,7 @@
         </modal-footer>
     </modal>
 
-    <modal #restoreBackupModal ngIf="restoring">
+    <modal #restoreBackupModal>
         <modal-header [show-close]="true">
             <h4 class="modal-title">Restore Backup to <b>{{restored.target}}</b></h4>
         </modal-header>
@@ -94,7 +94,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr ng-repeat="u in unitLogs">
+                            <tr *ngFor="let u of unitLogs">
                                 <td>{{ u.mode }}</td>
                                 <td>{{ u.timestamp | date : 'medium'}}</td>
                                 <td>{{ u.fileName }}</td>
@@ -107,53 +107,56 @@
         </modal-body>
         <modal-footer [show-default-buttons]="false">
             <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-            <button class="btn btn-primary" (click)="restoreDatabase()">Restore database</button>
-            <button class="btn btn-danger" (click)="removeBackup()">Remove Backup</button>
+            <button class="btn btn-primary" [disabled]="restored.target==null || restored.target == ''" (click)="onRestore()">Restore
+            </button>
         </modal-footer>
     </modal>
 
     <modal #removeBackupModal>
         <modal-header [show-close]="true">
-            <h4 class="modal-title">Restore Backup to <b>{{restored.target}}</b></h4>
+            <h4 class="modal-title">Remove Backup Unit <b>{{restored.unitId}}</b></h4>
         </modal-header>
         <modal-body>
 
             <div class="row">
-                <div class="col-md-12 ">
-                    <ul class="list-unstyled">
-                        <li>
-                            <i class="fa fa-angle-right">
-                            </i>
-                            <b>Info:</b> {{event.title}} at {{ event._source.timestamp | date : 'medium' }}
-                        </li>
-                        <li>
-                            <i class="fa fa-angle-right">
-                            </i>
-                            <b>Path:</b> {{ event._source.path }}
-                        </li>
-                        <li>
-                            <i class="fa fa-angle-right">
-                            </i>
-                            <b>Filename:</b> {{ event._source.fileName }}
-                        </li>
-                        <li>
-                            <i class="fa fa-angle-right">
-                            </i>
-                            <b>File size:</b> {{ event._source.fileSize | toSizeString }}
-                        </li>
-                        <li>
-                            <i class="fa fa-angle-right">
-                            </i>
-                            <b>Execution time:</b> {{ event._source.elapsedTime }}
-                        </li>
-                    </ul>
+                <div class="col-md-12">
+                    <div class="studio-well">
+                        <p>
+                            The selected backup event (<b>{{restored.log.mode}}</b>) is part of a backup.
+                            Below are the files (<b>{{unitLogs.length}}</b>) involved. All the backups done after
+                            the selected (<b> {{ restored.log.fileName }} </b>) backup will be deleted (Marked in red).
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <br />
+            <div class="row">
+
+                <div class="col-md-12">
+                    <table class="table table-striped  table-fixed-header table-backup">
+                        <thead>
+                            <tr>
+                                <th>Mode</th>
+                                <th>When</th>
+                                <th>File Name</th>
+                                <th>File Size</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let u of unitLogs" [ngClass]="{ 'danger' : u.timestamp >= restored.log.timestamp}">
+                                <td>{{ u.mode }}</td>
+                                <td>{{ u.timestamp | date : 'medium'}}</td>
+                                <td>{{ u.fileName }}</td>
+                                <td>{{ u.fileSize | toSizeString }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </modal-body>
         <modal-footer [show-default-buttons]="false">
             <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-            <button class="btn btn-primary" (click)="restoreDatabase()">Restore database</button>
-            <button class="btn btn-danger" (click)="removeBackup()">Remove Backup</button>
+            <button class="btn btn-danger" (click)="onRemove()">Remove</button>
         </modal-footer>
     </modal>
 </div>
