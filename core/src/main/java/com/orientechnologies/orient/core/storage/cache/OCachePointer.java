@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.nio.ByteBuffer;
@@ -206,15 +205,6 @@ public class OCachePointer {
     version++;
   }
 
-  public boolean tryAcquireExclusiveLock() {
-    boolean result = readWriteLock.writeLock().tryLock();
-
-    if (result) {
-      version++;
-    }
-
-    return result;
-  }
 
   public long getVersion() {
     return version;
@@ -235,31 +225,6 @@ public class OCachePointer {
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   public boolean tryAcquireSharedLock() {
     return readWriteLock.readLock().tryLock();
-  }
-
-  @Override
-  protected void finalize() throws Throwable {
-    super.finalize();
-
-    boolean needInfo = false;
-
-    if (getReaders(readersWritersReferrer.get()) != 0) {
-      needInfo = true;
-      OLogManager.instance().error(this, "OCachePointer.finalize: readers != 0", null);
-    }
-    if (getWriters(readersWritersReferrer.get()) != 0) {
-      needInfo = true;
-      OLogManager.instance().error(this, "OCachePointer.finalize: writers != 0", null);
-    }
-
-    if (needInfo && buffer != null)
-      bufferPool.logTrackedBufferInfo("finalizing", buffer);
-
-    if (referrersCount.get() > 0 && buffer != null) {
-      if (!needInfo) // not logged yet
-        bufferPool.logTrackedBufferInfo("finalizing", buffer);
-      bufferPool.release(buffer);
-    }
   }
 
   @Override
