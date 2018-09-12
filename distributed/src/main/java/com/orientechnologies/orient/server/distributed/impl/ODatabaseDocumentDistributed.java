@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
@@ -53,14 +52,13 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitContext;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitResponse;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionResponse;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionSubmit;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OTransactionContext;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OToLeaderTransactionTask;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OToLeaderTransactionTaskResponse;
 import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -498,35 +496,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       //Exclusive for handling schema manipulation, remove after refactor for distributed schema
       super.internalCommit(iTx);
     } else {
-      //Disabled forward of transaction to make sure that tests run correctly, will be re-enabled when the rest of refactor is done
-      if (true) {
-        realCommit(iTx);
-      } else {
-        OToLeaderTransactionTask message = new OToLeaderTransactionTask(iTx.getRecordOperations());
-        ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
-        // SYNCHRONOUS CALL: REPLICATE IT
-        final Set<String> servers = new HashSet<String>();
-        servers.add(dManager.getLockManagerServer());
-        ODistributedResponse response = dManager.sendRequest(getName(), null, servers, message, dManager.getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-        for (OToLeaderTransactionTaskResponse.OCreatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
-            .getPayload()).getCreated()) {
-          iTx.updateIdentityAfterCommit(entry.getCurrentRid(), entry.getCreatedRid());
-          ORecordInternal.setVersion(iTx.getRecordEntry(entry.getCurrentRid()).getRecord(), entry.getVersion());
-        }
-        for (OToLeaderTransactionTaskResponse.OUpdatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
-            .getPayload()).getUpdated()) {
-          ORecordInternal.setVersion(iTx.getRecordEntry(entry.getRid()).getRecord(), entry.getVersion());
-        }
-        for (OToLeaderTransactionTaskResponse.ODeletedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
-            .getPayload()).getDeleted()) {
-          this.getLocalCache().deleteRecord(entry.getRid());
-        }
-        for (OToLeaderTransactionTaskResponse.OUpdatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
-            .getPayload()).getUpdated()) {
-          ORecordInternal.setVersion(iTx.getRecordEntry(entry.getRid()).getRecord(), entry.getVersion());
-        }
-      }
+      realCommit(iTx);
     }
   }
 
