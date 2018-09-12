@@ -7,6 +7,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
 import java.io.DataInput;
@@ -51,6 +53,39 @@ public class OTransactionSubmit implements OSubmitRequest {
       operations.add(request);
     }
     return operations;
+  }
+
+  public static List<OIndexOperationRequest> genIndexes(Map<String, OTransactionIndexChanges> indexOperations) {
+    List<OIndexOperationRequest> idx = new ArrayList<>();
+    for (Map.Entry<String, OTransactionIndexChanges> index : indexOperations.entrySet()) {
+      OTransactionIndexChanges changes = index.getValue();
+      List<OIndexKeyChange> keys = new ArrayList<>();
+      for (Map.Entry<Object, OTransactionIndexChangesPerKey> entry : changes.changesPerKey.entrySet()) {
+        List<OIndexKeyOperation> oper = new ArrayList<>();
+        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry operat : entry.getValue().entries) {
+          if (operat.operation == OTransactionIndexChanges.OPERATION.PUT) {
+            oper.add(new OIndexKeyOperation(OIndexKeyOperation.PUT, operat.value.getIdentity()));
+          } else {
+            oper.add(new OIndexKeyOperation(OIndexKeyOperation.REMOVE, operat.value.getIdentity()));
+          }
+        }
+        keys.add(new OIndexKeyChange(entry.getKey(), oper));
+      }
+      if (index.getValue().nullKeyChanges != null) {
+        List<OIndexKeyOperation> oper = new ArrayList<>();
+        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry operat : index.getValue().nullKeyChanges.entries) {
+          if (operat.operation == OTransactionIndexChanges.OPERATION.PUT) {
+            oper.add(new OIndexKeyOperation(OIndexKeyOperation.PUT, operat.value.getIdentity()));
+          } else {
+            oper.add(new OIndexKeyOperation(OIndexKeyOperation.REMOVE, operat.value.getIdentity()));
+          }
+        }
+        keys.add(new OIndexKeyChange(null, oper));
+
+      }
+      idx.add(new OIndexOperationRequest(index.getKey(), changes.cleared, keys));
+    }
+    return idx;
   }
 
   @Override

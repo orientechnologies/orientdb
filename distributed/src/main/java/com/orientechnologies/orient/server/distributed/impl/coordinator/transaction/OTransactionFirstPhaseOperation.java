@@ -46,11 +46,9 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
   @Override
   public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
       ODatabaseDocumentInternal session) {
-    List<ORecordOperation> operations = convert(session, this.operations);
-    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(session, operations);
     ONodeResponse response;
     try {
-      ((ODatabaseDocumentDistributed) session).txFirstPhase(operationId, tx);
+      ((ODatabaseDocumentDistributed) session).txFirstPhase(operationId, operations, indexes);
       response = new OTransactionFirstPhaseResult(Type.SUCCESS, null);
 
     } catch (OConcurrentModificationException ex) {
@@ -68,7 +66,7 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
     return response;
   }
 
-  private List<ORecordOperation> convert(ODatabaseDocumentInternal database, List<ORecordOperationRequest> operations) {
+  public static List<ORecordOperation> convert(ODatabaseDocumentInternal database, List<ORecordOperationRequest> operations) {
     List<ORecordOperation> ops = new ArrayList<>();
     for (ORecordOperationRequest req : operations) {
       byte type = req.getType();

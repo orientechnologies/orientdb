@@ -50,12 +50,16 @@ public class OIndexKeyChange {
       }
     } else {
       output.writeBoolean(false);
-      //TODO: Handle null key
-      OType valType = OType.getTypeByValue(key);
-      output.writeByte(valType.getId());
-      byte[] bytes = ORecordSerializerNetwork.INSTANCE.serializeValue(key, valType);
-      output.writeInt(bytes.length);
-      output.write(bytes);
+      if (key == null) {
+        output.writeBoolean(true);
+      } else {
+        output.writeBoolean(false);
+        OType valType = OType.getTypeByValue(key);
+        output.writeByte(valType.getId());
+        byte[] bytes = ORecordSerializerNetwork.INSTANCE.serializeValue(key, valType);
+        output.writeInt(bytes.length);
+        output.write(bytes);
+      }
     }
 
   }
@@ -81,6 +85,9 @@ public class OIndexKeyChange {
       }
       return new OCompositeKey(keys);
     } else {
+      boolean isNull = input.readBoolean();
+      if (isNull)
+        return null;
       OType keyType = OType.getById(input.readByte());
       int keySize = input.readInt();
       byte bytes[] = new byte[keySize];

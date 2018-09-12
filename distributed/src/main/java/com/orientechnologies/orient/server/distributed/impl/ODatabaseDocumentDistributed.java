@@ -9,6 +9,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.db.*;
@@ -51,9 +52,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitContext;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitResponse;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionResponse;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionSubmit;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.*;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OTransactionContext;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
@@ -571,9 +570,15 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void txFirstPhase(OSessionOperationId requestId, OTransactionInternal tx) {
+  }
+
+  public void txFirstPhase(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
+      List<OIndexOperationRequest> indexes) {
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>());
     OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
-    sharedContext.getDistributedContext().registerTransaction(requestId, tx);
-    ((OTransactionOptimistic) tx).begin();
+    sharedContext.getDistributedContext().registerTransaction(operationId, tx);
+    List<ORecordOperation> opes = OTransactionFirstPhaseOperation.convert(this, operations);
+    tx.begin(opes, indexes);
     firstPhaseDataChecks(false, tx);
   }
 
