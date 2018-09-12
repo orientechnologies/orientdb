@@ -804,8 +804,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       dropStorageFiles();
     }
 
-    serverInstance.getDatabases().forceDatabaseClose(getName());
-
   }
 
   @Override

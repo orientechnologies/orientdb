@@ -240,7 +240,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
             OrientDBDistributed distributed = (OrientDBDistributed) serverInstance.getDatabases();
 
-            distributed.nodeJoin(memberName, new ODistributedChannelBinaryProtocol(getLocalNodeName(), getRemoteServer(memberName)));
+            distributed
+                .nodeJoin(memberName, new ODistributedChannelBinaryProtocol(getLocalNodeName(), getRemoteServer(memberName)));
             break;
           }
 

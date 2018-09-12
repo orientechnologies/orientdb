@@ -623,7 +623,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           .setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
     } finally {
-      sharedContext.getDistributedContext().close(operationId);
+      sharedContext.getDistributedContext().closeTransaction(operationId);
     }
 
   }

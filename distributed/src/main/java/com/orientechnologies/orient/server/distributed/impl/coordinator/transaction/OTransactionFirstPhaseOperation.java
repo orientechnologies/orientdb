@@ -97,7 +97,6 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
       ORecordOperation op = new ORecordOperation(record, type);
       ops.add(op);
     }
-    operations.clear();
     return ops;
   }
 

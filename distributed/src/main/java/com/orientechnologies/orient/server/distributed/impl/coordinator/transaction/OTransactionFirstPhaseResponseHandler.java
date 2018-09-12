@@ -71,25 +71,27 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
       for (Map.Entry<ORID, List<ODistributedMember>> entry : cme.entrySet()) {
         if (entry.getValue().size() >= quorum) {
           sendSecondPhaseError(coordinator);
+          break;
         }
       }
 
       for (Map.Entry<String, List<ODistributedMember>> entry : unique.entrySet()) {
         if (entry.getValue().size() >= quorum) {
           sendSecondPhaseError(coordinator);
+          break;
         }
       }
-    }
-    if (responseCount == context.getInvolvedMembers().size()) {
-      if (!secondPhaseSent) {
+
+      if (responseCount == context.getInvolvedMembers().size()) {
         sendSecondPhaseError(coordinator);
       }
-      return true;
     }
-    return false;
+    return responseCount == context.getInvolvedMembers().size();
   }
 
   private void sendSecondPhaseError(ODistributedCoordinator coordinator) {
+    if (secondPhaseSent)
+      return;
     OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(false, request, requester,
         null, operationId);
     coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, false), responseHandler);
@@ -99,13 +101,15 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
       }
     }
     if (!replySent) {
-      coordinator.reply(requester, operationId, new OTransactionResponse());
+      coordinator.reply(requester, operationId, new OTransactionResponse(false));
       replySent = true;
     }
     secondPhaseSent = true;
   }
 
   private void sendSecondPhaseSuccess(ODistributedCoordinator coordinator) {
+    if (secondPhaseSent)
+      return;
     OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(true, request, requester,
         guards, operationId);
     coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, true), responseHandler);

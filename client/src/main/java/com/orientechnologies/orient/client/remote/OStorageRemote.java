@@ -2141,7 +2141,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
 
   @Override
   public void onPushDisconnect(OChannelBinary network, Exception e) {
-    this.connectionManager.remove((OChannelBinaryAsynchClient) network);
+    if (this.connectionManager.getPool(((OChannelBinaryAsynchClient) network).getServerURL()) != null) {
+      this.connectionManager.remove((OChannelBinaryAsynchClient) network);
+    }
     if (e instanceof InterruptedException) {
       for (OLiveQueryClientListener liveListener : liveQueryListener.values()) {
         liveListener.onEnd();

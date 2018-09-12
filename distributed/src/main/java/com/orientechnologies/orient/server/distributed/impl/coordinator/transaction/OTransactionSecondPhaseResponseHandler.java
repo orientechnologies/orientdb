@@ -35,7 +35,7 @@ public class OTransactionSecondPhaseResponseHandler implements OResponseHandler 
           }
         }
         if (!replySent) {
-          coordinator.reply(requester, operationId, new OTransactionResponse());
+          coordinator.reply(requester, operationId, new OTransactionResponse(true));
           replySent = true;
         }
       }

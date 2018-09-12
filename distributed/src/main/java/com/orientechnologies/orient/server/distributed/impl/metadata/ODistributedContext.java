@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
+import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBDistributed;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -41,7 +42,7 @@ public class ODistributedContext {
     return transactions.get(operationId);
   }
 
-  public void close(OSessionOperationId operationId) {
+  public void closeTransaction(OSessionOperationId operationId) {
     transactions.remove(operationId);
   }
 
@@ -57,10 +58,10 @@ public class ODistributedContext {
     return coordinator;
   }
 
-  public synchronized void makeCoordinator(String nodeName) {
+  public synchronized void makeCoordinator(String nodeName, OSharedContext context) {
     if (coordinator == null) {
       coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), new OIncrementOperationalLog(),
-          new ODistributedLockManagerImpl(0), new OClusterPositionAllocatorDatabase(context, databaseName));
+          new ODistributedLockManagerImpl(0), new OClusterPositionAllocatorDatabase(context));
       OLoopBackDistributeMember loopBack = new OLoopBackDistributeMember(nodeName, databaseName, submitContext, coordinator,
           executor);
       coordinator.join(loopBack);
@@ -77,5 +78,11 @@ public class ODistributedContext {
     }
     submitContext.setCoordinator(lockManager);
     executor.join(lockManager);
+  }
+
+  public synchronized void close() {
+    if (coordinator != null)
+      coordinator.close();
+    executor.close();
   }
 }

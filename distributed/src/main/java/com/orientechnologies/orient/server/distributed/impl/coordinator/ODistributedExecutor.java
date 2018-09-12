@@ -44,7 +44,6 @@ public class ODistributedExecutor implements AutoCloseable {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    orientDB.close();
   }
 
   public void join(ODistributedMember member) {

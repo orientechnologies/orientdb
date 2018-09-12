@@ -1,12 +1,10 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -14,76 +12,50 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.OCluster
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OClusterPositionAllocatorDatabase implements OClusterPositionAllocator {
-  private OrientDBInternal context;
-  private String           database;
 
-  private volatile AtomicLong[] allocators;
+  private volatile Map<String, Integer> names = new HashMap<>();
+  private volatile AtomicLong[]         allocators;
 
-  public OClusterPositionAllocatorDatabase(OrientDBInternal context, String databaseName) {
-    this.context = context;
-    this.database = databaseName;
-    registerListener();
+  public OClusterPositionAllocatorDatabase(OSharedContext context) {
+    registerListener(context);
   }
 
-  private void registerListener() {
-    Orient.instance().addDbLifecycleListener(new ODatabaseLifecycleListener() {
+  private void registerListener(OSharedContext context1) {
+
+    context1.registerListener(new OMetadataUpdateListener() {
       @Override
-      public void onCreate(ODatabaseInternal iDatabase) {
+      public void onSchemaUpdate(String database, OSchemaShared schema) {
 
       }
 
       @Override
-      public void onOpen(ODatabaseInternal iDatabase) {
-        OStorage storage = iDatabase.getStorage().getUnderlying();
-        iDatabase.getSharedContext().registerListener(new OMetadataUpdateListener() {
-          @Override
-          public void onSchemaUpdate(String database, OSchemaShared schema) {
-
-          }
-
-          @Override
-          public void onIndexManagerUpdate(String database, OIndexManager indexManager) {
-
-          }
-
-          @Override
-          public void onFunctionLibraryUpdate(String database) {
-
-          }
-
-          @Override
-          public void onSequenceLibraryUpdate(String database) {
-
-          }
-
-          @Override
-          public void onStorageConfigurationUpdate(String database, OStorageConfiguration update) {
-            //this may not be perfect now because allocation may have happened in parallel to schema operation now that the schema operations don't go through the coordinator.
-            initAllocators(storage);
-          }
-        });
-
-        initAllocators(storage);
-      }
-
-      @Override
-      public void onClose(ODatabaseInternal iDatabase) {
+      public void onIndexManagerUpdate(String database, OIndexManager indexManager) {
 
       }
 
       @Override
-      public void onDrop(ODatabaseInternal iDatabase) {
+      public void onFunctionLibraryUpdate(String database) {
 
       }
 
       @Override
-      public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
+      public void onSequenceLibraryUpdate(String database) {
 
+      }
+
+      @Override
+      public void onStorageConfigurationUpdate(String database, OStorageConfiguration update) {
+        //this may not be perfect now because allocation may have happened in parallel to schema operation now that the schema operations don't go through the coordinator.
+        initAllocators(context1.getStorage());
       }
     });
+
+    initAllocators(context1.getStorage());
   }
 
   @Override
@@ -94,19 +66,26 @@ public class OClusterPositionAllocatorDatabase implements OClusterPositionAlloca
 
   private synchronized void initAllocators(OStorage storage) {
     //Syncrhonized will be replaced when the schema operations will go through the coordinator
-
     Collection<? extends OCluster> clusterInstances = storage.getClusterInstances();
-    allocators = new AtomicLong[clusterInstances.size()];
+    AtomicLong[] newAllocators = new AtomicLong[clusterInstances.size()];
+    Map<String, Integer> newNames = new HashMap<>();
+
     for (OCluster cluster : clusterInstances) {
       try {
-        long next = cluster.getLastPosition();
-        if (next == 0 && cluster.getPhysicalPosition(new OPhysicalPosition(next)) != null) {
-          next += 1;
+        Integer exits = names.get(cluster.getName());
+        if (exits != null) {
+          newAllocators[cluster.getId()] = allocators[exits];
+        } else {
+          long next = cluster.getLastPosition() + 1;
+          newAllocators[cluster.getId()] = new AtomicLong(next);
         }
-        allocators[cluster.getId()] = new AtomicLong(next);
+        newNames.put(cluster.getName(), cluster.getId());
       } catch (IOException e) {
         OLogManager.instance().error(this, "error resolving last position", e);
       }
     }
+    allocators = newAllocators;
+    names = newNames;
+
   }
 }

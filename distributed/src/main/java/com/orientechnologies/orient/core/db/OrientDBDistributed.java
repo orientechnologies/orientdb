@@ -157,7 +157,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       if (shared instanceof OSharedContextDistributed) {
         ODistributedContext distributed = ((OSharedContextDistributed) shared).getDistributedContext();
         if (coordinator && distributed.getCoordinator() == null) {
-          distributed.makeCoordinator(plugin.getLocalNodeName());
+          distributed.makeCoordinator(plugin.getLocalNodeName(), shared);
           for (Map.Entry<String, ODistributedChannel> node : members.entrySet()) {
             ODistributedMember member = new ODistributedMember(node.getKey(), database, node.getValue());
             distributed.getCoordinator().join(member);
@@ -176,7 +176,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public synchronized void nodeJoin(String nodeName, ODistributedChannel channel) {
     members.put(nodeName, channel);
     for (OSharedContext context : sharedContexts.values()) {
-      if (context.getStorage().getName().equals(OSystemDatabase.SYSTEM_DB_NAME))
+      if (isContextToIgnore(context))
         continue;
       ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
       ODistributedMember member = new ODistributedMember(nodeName, context.getStorage().getName(), channel);
@@ -184,7 +184,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       if (coordinator) {
         ODistributedCoordinator c = distributed.getCoordinator();
         if (c == null) {
-          distributed.makeCoordinator(plugin.getLocalNodeName());
+          distributed.makeCoordinator(plugin.getLocalNodeName(), context);
           c = distributed.getCoordinator();
         }
         c.join(member);
@@ -194,16 +194,32 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public synchronized void nodeLeave(String nodeName) {
     members.remove(nodeName);
+    for (OSharedContext context : sharedContexts.values()) {
+      if (isContextToIgnore(context))
+        continue;
+      ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
+      distributed.getExecutor().leave(distributed.getExecutor().getMember(nodeName));
+      if (coordinator) {
+        ODistributedCoordinator c = distributed.getCoordinator();
+        if (c == null) {
+          c.leave(c.getMember(nodeName));
+        }
+      }
+    }
+  }
+
+  private boolean isContextToIgnore(OSharedContext context) {
+    return context.getStorage().getName().equals(OSystemDatabase.SYSTEM_DB_NAME) || context.getStorage().isClosed();
   }
 
   public synchronized void setCoordinator(String lockManager, boolean isSelf) {
     if (isSelf) {
       if (!coordinator) {
         for (OSharedContext context : sharedContexts.values()) {
-          if (context.getStorage().getName().equals(OSystemDatabase.SYSTEM_DB_NAME))
+          if (isContextToIgnore(context))
             continue;
           ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
-          distributed.makeCoordinator(lockManager);
+          distributed.makeCoordinator(lockManager, context);
           for (Map.Entry<String, ODistributedChannel> node : members.entrySet()) {
             ODistributedMember member = new ODistributedMember(node.getKey(), context.getStorage().getName(), node.getValue());
             distributed.getCoordinator().join(member);
@@ -213,7 +229,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       }
     } else {
       for (OSharedContext context : sharedContexts.values()) {
-        if (context.getStorage().getName().equals(OSystemDatabase.SYSTEM_DB_NAME))
+        if (isContextToIgnore(context))
           continue;
         ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
         ODistributedMember member = new ODistributedMember(lockManager, context.getStorage().getName(), members.get(lockManager));

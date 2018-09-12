@@ -94,6 +94,7 @@ public class OSharedContextDistributed extends OSharedContext {
     executionPlanCache.invalidate();
     liveQueryOps.close();
     liveQueryOpsV2.close();
+    distributedContext.close();
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
