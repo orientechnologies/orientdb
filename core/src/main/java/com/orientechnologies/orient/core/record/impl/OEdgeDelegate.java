@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -170,7 +171,8 @@ public class OEdgeDelegate implements OEdge {
     OVertex to = getTo();
     OVertexDelegate.detachOutgointEdge(from, this);
     OVertexDelegate.detachIncomingEdge(to, this);
-    this.element = db.newEdge(from, to, lightweightEdgeType).getRecord();
+    this.element = ((ODatabaseDocumentInternal) db)
+        .newRegularEdge(lightweightEdgeType == null ? "E" : lightweightEdgeType.getName(), from, to).getRecord();
     this.lightweightEdgeType = null;
     this.vOut = null;
     this.vIn = null;
@@ -503,8 +505,8 @@ public class OEdgeDelegate implements OEdge {
     if (element != null) {
       return element.toJSON();
     } else {
-      return "{\"out\":\"" + vOut.getIdentity() + "\", \"in\":\"" + vIn.getIdentity() + "\", \"@class\":\"" + OStringSerializerHelper
-          .encode(lightweightEdgeType.getName()) + "\"}";
+      return "{\"out\":\"" + vOut.getIdentity() + "\", \"in\":\"" + vIn.getIdentity() + "\", \"@class\":\""
+          + OStringSerializerHelper.encode(lightweightEdgeType.getName()) + "\"}";
     }
   }
 
@@ -513,8 +515,8 @@ public class OEdgeDelegate implements OEdge {
     if (element != null) {
       return element.toJSON(iFormat);
     } else {
-      return "{\"out\":\"" + vOut.getIdentity() + "\", \"in\":\"" + vIn.getIdentity() + "\", \"@class\":\"" + OStringSerializerHelper
-          .encode(lightweightEdgeType.getName()) + "\"}";
+      return "{\"out\":\"" + vOut.getIdentity() + "\", \"in\":\"" + vIn.getIdentity() + "\", \"@class\":\""
+          + OStringSerializerHelper.encode(lightweightEdgeType.getName()) + "\"}";
     }
   }
 

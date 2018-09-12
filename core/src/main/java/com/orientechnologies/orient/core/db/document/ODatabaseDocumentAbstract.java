@@ -84,26 +84,26 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
-  protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
-  protected       ORecordSerializer                           serializer;
-  protected       String                                      url;
-  protected       STATUS                                      status;
-  protected       OIntent                                     currentIntent;
-  protected       ODatabaseInternal<?>                        databaseOwner;
-  protected       OMetadataDefault                            metadata;
-  protected       OImmutableUser                              user;
+  protected final Map<String, Object> properties = new HashMap<String, Object>();
+  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
+  protected ORecordSerializer    serializer;
+  protected String               url;
+  protected STATUS               status;
+  protected OIntent              currentIntent;
+  protected ODatabaseInternal<?> databaseOwner;
+  protected OMetadataDefault     metadata;
+  protected OImmutableUser       user;
   protected final byte                                        recordType    = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
-  protected       OLocalRecordCache                           localCache;
-  protected       OCurrentStorageComponentsFactory            componentsFactory;
-  protected       boolean                                     initialized   = false;
-  protected       OTransaction                                currentTx;
+  protected OLocalRecordCache                localCache;
+  protected OCurrentStorageComponentsFactory componentsFactory;
+  protected boolean initialized = false;
+  protected OTransaction currentTx;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected       OSharedContext  sharedContext;
+  protected OSharedContext sharedContext;
 
   private boolean prefetchRecords;
 
@@ -268,7 +268,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     final int clusterId = getClusterIdByName(iClusterName);
 
-    return new ORecordIteratorCluster<REC>(this, clusterId, startClusterPosition, endClusterPosition, OStorage.LOCKING_STRATEGY.DEFAULT);
+    return new ORecordIteratorCluster<REC>(this, clusterId, startClusterPosition, endClusterPosition,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @Override
@@ -1696,8 +1697,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (cl == null || !cl.isEdgeType()) {
       throw new IllegalArgumentException("" + type + " is not an edge class");
     }
-    ODocument doc = new OEdgeDocument(cl);
-    return addEdgeInternal(from, to, type);
+    return addEdgeInternal(from, to, type, false);
   }
 
   @Override
@@ -1708,7 +1708,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return newEdge(from, to, type.getName());
   }
 
-  private OEdge addEdgeInternal(final OVertex currentVertex, final OVertex inVertex, String iClassName, final Object... fields) {
+  private OEdge addEdgeInternal(final OVertex currentVertex, final OVertex inVertex, String iClassName, boolean forceRegular,
+      final Object... fields) {
     if (currentVertex == null)
       throw new IllegalArgumentException("To vertex is null");
     if (inVertex == null)
@@ -1770,7 +1771,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
         // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
 
-        if (isUseLightweightEdges() && (fields == null || fields.length == 0)) {
+        if (isUseLightweightEdges() && (fields == null || fields.length == 0) && !forceRegular) {
           edge = newLightweightEdge(iClassName, from, to);
           OVertexDelegate.createLink(from.getRecord(), to.getRecord(), outFieldName);
           OVertexDelegate.createLink(to.getRecord(), from.getRecord(), inFieldName);
@@ -1903,8 +1904,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       boolean loadTombstones) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-    return new ORecordIteratorCluster<ODocument>(this, getClusterIdByName(iClusterName), startClusterPosition,
-        endClusterPosition, OStorage.LOCKING_STRATEGY.DEFAULT);
+    return new ORecordIteratorCluster<ODocument>(this, getClusterIdByName(iClusterName), startClusterPosition, endClusterPosition,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   /**
@@ -2406,7 +2407,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
-  public String incrementalBackup(final String path) throws UnsupportedOperationException{
+  public String incrementalBackup(final String path) throws UnsupportedOperationException {
     checkOpenness();
     checkIfActive();
 
@@ -2701,6 +2702,14 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     OEdgeDelegate result = new OEdgeDelegate(from, to, clazz, iClassName);
 
     return result;
+  }
+
+  public OEdge newRegularEdge(String iClassName, OVertex from, OVertex to) {
+    OClass cl = getClass(iClassName);
+    if (cl == null || !cl.isEdgeType()) {
+      throw new IllegalArgumentException("" + iClassName + " is not an edge class");
+    }
+    return addEdgeInternal(from, to, iClassName, true);
   }
 
   public synchronized void queryStarted(String id, OResultSet rs) {
