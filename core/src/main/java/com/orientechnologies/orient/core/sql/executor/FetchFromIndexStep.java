@@ -11,10 +11,7 @@ import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.parser.*;
 
@@ -335,14 +332,23 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     List<OCollection> secondValueCombinations = cartesianProduct(fromKey);
     List<OCollection> thirdValueCombinations = cartesianProduct(toKey);
 
+    OIndexDefinition indexDef = index.getDefinition();
+
     for (int i = 0; i < secondValueCombinations.size(); i++) {
 
       Object secondValue = secondValueCombinations.get(i).execute((OResult) null, ctx);
+      if (secondValue instanceof List && ((List) secondValue).size() == 1 && indexDef.getFields().size() == 1
+          && !(indexDef instanceof OIndexDefinitionMultiValue)) {
+        secondValue = ((List) secondValue).get(0);
+      }
       secondValue = unboxOResult(secondValue);
       Object thirdValue = thirdValueCombinations.get(i).execute((OResult) null, ctx);
+      if (thirdValue instanceof List && ((List) thirdValue).size() == 1 && indexDef.getFields().size() == 1
+          && !(indexDef instanceof OIndexDefinitionMultiValue)) {
+        thirdValue = ((List) thirdValue).get(0);
+      }
       thirdValue = unboxOResult(thirdValue);
 
-      OIndexDefinition indexDef = index.getDefinition();
       try {
         secondValue = convertToIndexDefinitionTypes(secondValue, indexDef.getTypes());
         thirdValue = convertToIndexDefinitionTypes(thirdValue, indexDef.getTypes());
