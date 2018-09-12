@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, Input } from "@angular/core";
+import { MetricService } from "../../../../core/services";
 
 declare const angular: any;
 
@@ -11,10 +12,15 @@ class AuditingComponent implements OnInit, OnDestroy {
   @Input()
   private security: any;
 
-  private tab = "auditingLog";
-  constructor() {}
+  @Input()
+  private databases: string[];
 
-  ngOnInit(): void {}
+  private tab = "auditingLog";
+  constructor(private metrics: MetricService) {}
+
+  ngOnInit(): void {
+    
+  }
 
   ngOnDestroy(): void {}
 }

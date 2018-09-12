@@ -1,0 +1,294 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="btn-toolbar pull-right">
+                <div class="btn-group">
+                    <button href="javascript:void(0)" class="btn btn-primary btn-sm" (click)="saveAuditing()"><i class="fa fa-save"></i>
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <b>Global Settings
+                        <a href="{{ auditingWiki }}" class="btn btn-trasparent btn-help" data-placement="right" target="_blank"
+                            data-title="Help" data-trigger="hover" data-animation="am-flip-x" bs-tooltip>
+                            <i class="fa fa-question-circle fa-lg"></i>
+                        </a>
+                    </b>
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Enabled</label>
+                            <div class="col-sm-9">
+                                <input type="checkbox" name="enabled" [(ngModel)]="globalAuditing.enabled">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Node Join</label>
+                            <div class="col-sm-1">
+                                <input type="checkbox" name="nodeJoin" [(ngModel)]="globalAuditing.distributed.onNodeJoinedEnabled" />
+                            </div>
+                            <div class="col-sm-8">
+                                <textarea class="form-control" name="nodeJoinMessage" placeholder="Message" [disabled]="!globalAuditing.distributed.onNodeJoinedEnabled"
+                                    [(ngModel)]="globalAuditing.distributed.onNodeJoinedMessage"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Node Left</label>
+                            <div class="col-sm-1">
+                                <input type="checkbox" name="nodeLeft" [(ngModel)]="globalAuditing.distributed.onNodeLeftEnabled" />
+                            </div>
+                            <div class="col-sm-8">
+                                <textarea class="form-control" name="nodeLeftMessage" placeholder="Message" [disabled]="!globalAuditing.distributed.onNodeLeftEnabled"
+                                    [(ngModel)]="globalAuditing.distributed.onNodeLeftMessage"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <form class="form-inline ">
+                <div class="form-group">
+                    <label>Database </label>
+                    <select id="databasesOnline" name="database" (change)="onDatabaseChange()" [(ngModel)]="database" class="form-control"
+                        data-placeholder="Pick a Server">
+                        <option *ngFor="let db of databases" [value]="db">{{db}}</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default" *ngIf="globalAuditing.enabled && config">
+                <div class="panel-heading">
+                    <b>Schema Auditing</b>
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Create Class</label>
+                            <div class="col-sm-1">
+                                <input type="checkbox" name="onCreateClassEnabled" [(ngModel)]="config.schema.onCreateClassEnabled" />
+                            </div>
+                            <div class="col-sm-8">
+                                <textarea class="form-control" placeholder="Message" [disabled]="!config.schema.onCreateClassEnabled"
+                                    name="onCreateClassMessage" [(ngModel)]="config.schema.onCreateClassMessage"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">Drop Class</label>
+                            <div class="col-sm-1">
+                                <input type="checkbox" name="onDropClassEnabled" [(ngModel)]="config.schema.onDropClassEnabled" />
+                            </div>
+                            <div class="col-sm-8">
+                                <textarea class="form-control" placeholder="Message" [disabled]="!config.schema.onDropClassEnabled"
+                                    name="onDropClassMessage" [(ngModel)]="config.schema.onDropClassMessage"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default" *ngIf="globalAuditing.enabled && config">
+                <div class="panel-heading">
+                    <b>Command Auditing</b>
+                    <div class="panel-actions">
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-success" (click)="addCommand()"><i class="fa fa-plus-circle"></i>
+                                Add
+                                Command
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Regex
+                                </th>
+
+                                <th>
+                                    Message
+                                </th>
+
+                                <th>
+
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let c of config.commands">
+                                <td>
+                                    <input class="form-control" [(ngModel)]="c.regex">
+                                </td>
+                                <td>
+                                    <textarea class="form-control" placeholder="Message" [(ngModel)]="c.message"></textarea>
+
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button (click)="deleteCommand(c)" class="btn btn-xs btn-danger"><i class="fa fa-remove"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default" *ngIf="globalAuditing.enabled && config">
+                <div class="panel-heading">
+                    <b>Class Auditing</b>
+                    <div class="panel-actions">
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-success" (click)="addClass()"><i class="fa fa-plus-circle"></i>
+                                Add Class
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Class
+                                </th>
+
+                                <th>
+                                    Create
+                                </th>
+
+                                <th>
+                                    Read
+                                </th>
+
+                                <th>
+                                    Update
+                                </th>
+
+                                <th>
+                                    Delete
+                                </th>
+                                <th>
+                                    Polymorphic
+                                </th>
+                                <th>
+
+                                </th>
+                            </tr>
+                        </thead>
+                        <tr *ngFor="let k of config.classes | keys">
+                            <td>{{k}}</td>
+                            <td>
+                                <form class="form-inline">
+                                    <div class="form-group">
+                                        <input type="checkbox" name="onCreateEnabled" [(ngModel)]="config.classes[k].onCreateEnabled">
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <textarea class="form-control" placeholder="Message" [disabled]="!config.classes[k].onCreateEnabled"
+                                            name="onCreateMessage" [(ngModel)]="config.classes[k].onCreateMessage"></textarea>
+                                    </div>
+                                </form>
+                            </td>
+                            <td>
+                                <form class="form-inline">
+                                    <div class="form-group">
+                                        <input type="checkbox" name="onReadEnabled" [(ngModel)]="config.classes[k].onReadEnabled">
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <textarea class="form-control" placeholder="Message" [disabled]="!config.classes[k].onReadEnabled"
+                                            name="onReadMessage" [(ngModel)]="config.classes[k].onReadMessage"></textarea>
+                                    </div>
+                                </form>
+                            </td>
+                            <td>
+                                <form class="form-inline">
+                                    <div class="form-group">
+                                        <input type="checkbox" name="onUpdateEnabled" [(ngModel)]="config.classes[k].onUpdateEnabled">
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <textarea class="form-control" placeholder="Message" [disabled]="!config.classes[k].onUpdateEnabled"
+                                            name="onUpdateMessage" [(ngModel)]="config.classes[k].onUpdateMessage"></textarea>
+
+                                        <input type="checkbox" name="onUpdateChanges" [disabled]="!config.classes[k].onUpdateEnabled"
+                                            [(ngModel)]="config.classes[k].onUpdateChanges">
+                                        <label> Track Changes</label>
+                                    </div>
+                                </form>
+                            </td>
+                            <td>
+                                <form class="form-inline">
+                                    <div class="form-group">
+                                        <input type="checkbox" name="onDeleteEnabled" ng-model="config.classes[k].onDeleteEnabled">
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <textarea class="form-control" placeholder="Message" [disabled]="!config.classes[k].onDeleteEnabled"
+                                            name="onDeleteMessage" [(ngModel)]="config.classes[k].onDeleteMessage"></textarea>
+                                    </div>
+                                </form>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="polymorphic" [(ngModel)]="config.classes[k].polymorphic">
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button (click)="deleteClass(k)" class="btn btn-xs btn-danger"><i class="fa fa-remove"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <modal #addClassModal>
+        <modal-header [show-close]="true">
+            <h4 class="modal-title">Add Class</h4>
+        </modal-header>
+        <modal-body>
+            <div class="row">
+                <div class="span12">
+                    <div class="form-group">
+                        <label class="control-label col-md-3" for="inputIn"> Audited Class</label>
+                        <div class="col-md-9">
+                            <select id="inputIn" class="form-control" name="clazz" [(ngModel)]="selectedClass" required="">
+                                <option *ngFor="let cls of classes" [value]="cls.name">{{cls.name}}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </modal-body>
+        <modal-footer [show-default-buttons]="false">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary" (click)="confirmClass(selectedClass)">Add</button>
+        </modal-footer>
+    </modal>
+</div>

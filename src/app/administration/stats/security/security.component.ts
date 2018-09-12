@@ -8,7 +8,7 @@ import {
   OnInit,
   ViewContainerRef
 } from "@angular/core";
-import { AgentService } from "../../../core/services";
+import { AgentService, MetricService } from "../../../core/services";
 import { SecurityService } from "../../../core/services/security.service";
 
 declare const angular: any;
@@ -22,17 +22,23 @@ class SecurityManagerComponent implements OnInit, OnDestroy {
   ee: boolean;
   security: any;
   tab = "auditing";
+  private databases: string[];
   constructor(
     private agent: AgentService,
-    private securityService: SecurityService
+    private securityService: SecurityService,
+    private metrics: MetricService
   ) {}
 
   ngOnInit(): void {
     this.ee = this.agent.active;
 
     if (this.ee) {
-      this.securityService.getConfig().then(config => {
-        this.security = config;
+      Promise.all([
+        this.metrics.listDatabases(),
+        this.securityService.getConfig()
+      ]).then(response => {
+        this.databases = response[0].databases;
+        this.security = response[1];
       });
     }
   }

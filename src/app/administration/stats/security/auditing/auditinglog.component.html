@@ -37,7 +37,8 @@
                                 <div class="col-md-3">
                                     <label>Database </label>
                                     <select id="databasesOnline" name="db" [(ngModel)]="query.db" class="form-control"
-                                        ng-options="db for db in databases" data-placeholder="Pick a Database">
+                                        data-placeholder="Pick a Database">
+                                        <option *ngFor="let db of databases" [value]="db"> {{db}}</option>
                                     </select>
                                 </div>
 
@@ -96,7 +97,7 @@
                                             </button>
                                         </div>
                                         <div class="btn-group">
-                                            <button class="btn btn-sm btn-default" type="submit"><i class="fa fa-search">
+                                            <button class="btn btn-sm btn-default" (click)="searchLogs()"><i class="fa fa-search">
                                                 </i>
                                                 Search
                                             </button>

@@ -13,7 +13,8 @@ import {
   WikiService,
   MetricService,
   BackupService,
-  SecurityService
+  SecurityService,
+  AuditingService
 } from "./core/services";
 import {
   FormatArrayPipe,
@@ -40,7 +41,8 @@ const APP_SERVICES = [
   WikiService,
   MetricService,
   BackupService,
-  SecurityService
+  SecurityService,
+  AuditingService
 ];
 
 export const APP_RESOLVER_PROVIDERS = [...APP_SERVICES, ...APP_PIPES];

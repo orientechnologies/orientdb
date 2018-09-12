@@ -27,9 +27,13 @@
                 <div class="col-md-12">
                     <ul class="nav nav-tabs">
                         <li [ngClass]="{'active' : tab === 'auditing'}" (click)="tab = 'auditing'"><a href="javascript:void(0)"><span>Auditing</span></a></li>
+                        <li [ngClass]="{'active' : tab === 'auth'}" (click)="tab = 'auth'"><a href="javascript:void(0)"><span>Authentication</span></a></li>
+                        <li [ngClass]="{'active' : tab === 'ldap'}" (click)="tab = 'ldap'"><a href="javascript:void(0)"><span>LDAP
+                                    Importer</span></a></li>
+                        <li [ngClass]="{'active' : tab === 'misc'}" (click)="tab = 'misc'"><a href="javascript:void(0)"><span>Misc</span></a></li>
                     </ul>
                     <div class="tab-content row">
-                        <auditing-management [security]="security" *ngIf="tab === 'auditing'"></auditing-management>
+                        <auditing-management [security]="security" [databases]="databases" *ngIf="tab === 'auditing'"></auditing-management>
                     </div>
                 </div>
             </div>

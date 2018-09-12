@@ -9,11 +9,11 @@ import { Headers } from "@angular/http";
 import { API } from "../../../constants";
 
 @Injectable()
-class SecurityService {
+class AuditingService {
   constructor(private http: Http) {}
 
-  getConfig() {
-    let url = API + "security/config";
+  getConfig(database) {
+    let url = `${API}auditing/${database}/config`;
     return this.http
       .get(url, this.getOptions())
       .toPromise()
@@ -22,16 +22,25 @@ class SecurityService {
       });
   }
 
-
-  reload(config) {
-    let url = API + 'security/reload';
+  saveConfig(db, config) {
+    let url = API + "auditing/" + db + "/config";
     return this.http
-      .post(url,config, this.getOptions())
+      .post(url, config, this.getOptions())
       .toPromise()
       .then(data => {
         return data.json();
       });
   }
+  query(params) {
+    let url = API + "auditing/logs/query";
+    return this.http
+      .post(url, params, this.getOptions())
+      .toPromise()
+      .then(data => {
+        return data.json();
+      });
+  }
+
   getOptions() {
     let headers = new Headers({
       Authorization: localStorage.getItem("SimpleAuth"),
@@ -43,4 +52,4 @@ class SecurityService {
   }
 }
 
-export { SecurityService };
+export { AuditingService };

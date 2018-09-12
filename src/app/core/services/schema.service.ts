@@ -265,6 +265,7 @@ class SchemaService {
     return color;
   }
 
+  
 
   hash(cls) {
     return hashCode(cls);
