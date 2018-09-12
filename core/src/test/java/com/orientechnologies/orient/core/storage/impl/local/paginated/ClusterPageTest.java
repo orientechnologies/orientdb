@@ -32,7 +32,7 @@ public class ClusterPageTest {
   @Test
   public void testAddOneRecord() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -40,7 +40,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -85,7 +85,7 @@ public class ClusterPageTest {
   @Test
   public void testAddThreeRecords() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -93,7 +93,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -158,7 +158,7 @@ public class ClusterPageTest {
   @Test
   public void testAddFullPage() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -166,7 +166,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -225,7 +225,7 @@ public class ClusterPageTest {
   @Test
   public void testDeleteAddLowerVersion() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -233,7 +233,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -282,7 +282,7 @@ public class ClusterPageTest {
   @Test
   public void testDeleteAddBiggerVersion() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -290,7 +290,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -342,7 +342,7 @@ public class ClusterPageTest {
   @Test
   public void testDeleteAddEqualVersion() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool,0, 0);
     cachePointer.incrementReferrer();
@@ -350,7 +350,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -396,7 +396,7 @@ public class ClusterPageTest {
   @Test
   public void testDeleteAddEqualVersionKeepTombstoneVersion() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -404,7 +404,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -449,7 +449,7 @@ public class ClusterPageTest {
   @Test
   public void testDeleteTwoOutOfFour() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -457,7 +457,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -539,7 +539,7 @@ public class ClusterPageTest {
   @Test
   public void testAddFullPageDeleteAndAddAgain() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -547,7 +547,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -633,7 +633,7 @@ public class ClusterPageTest {
   @Test
   public void testAddBigRecordDeleteAndAddSmallRecords() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -641,7 +641,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -720,7 +720,7 @@ public class ClusterPageTest {
   @Test
   public void testFindFirstRecord() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -728,7 +728,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -810,7 +810,7 @@ public class ClusterPageTest {
   @Test
   public void testFindLastRecord() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool,0, 0);
     cachePointer.incrementReferrer();
@@ -818,7 +818,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool,  0, 0);
     directCachePointer.incrementReferrer();
 
@@ -897,7 +897,7 @@ public class ClusterPageTest {
   @Test
   public void testSetGetNextPage() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -905,7 +905,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -936,7 +936,7 @@ public class ClusterPageTest {
   @Test
   public void testSetGetPrevPage() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -944,7 +944,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -975,7 +975,7 @@ public class ClusterPageTest {
   @Test
   public void testReplaceOneRecordWithBiggerSize() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -983,7 +983,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -1035,7 +1035,7 @@ public class ClusterPageTest {
   @Test
   public void testReplaceOneRecordWithEqualSize() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -1043,7 +1043,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -1094,7 +1094,7 @@ public class ClusterPageTest {
   @Test
   public void testReplaceOneRecordWithSmallerSize() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -1102,7 +1102,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -1154,7 +1154,7 @@ public class ClusterPageTest {
   @Test
   public void testReplaceOneRecordNoVersionUpdate() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -1162,7 +1162,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -1213,7 +1213,7 @@ public class ClusterPageTest {
   @Test
   public void testReplaceOneRecordLowerVersion() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
-    ByteBuffer buffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
@@ -1221,7 +1221,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
-    ByteBuffer directBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer directBuffer = bufferPool.acquireDirect(true);
     OCachePointer directCachePointer = new OCachePointer(directBuffer, bufferPool, 0, 0);
     directCachePointer.incrementReferrer();
 
@@ -1268,7 +1268,7 @@ public class ClusterPageTest {
   }
 
   private void assertChangesTracking(OClusterPage localPage, ByteBuffer buffer, OByteBufferPool bufferPool) throws IOException {
-    ByteBuffer restoredBuffer = bufferPool.acquireDirect(true, false);
+    ByteBuffer restoredBuffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(restoredBuffer, bufferPool,  0, 0);
     cachePointer.incrementReferrer();

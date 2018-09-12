@@ -28,7 +28,6 @@ import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -55,7 +54,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListene
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.sun.jna.Platform;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -371,8 +369,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    */
   private Throwable flushError;
 
-  private final long pagesFlushInterval;
-
   private final long maxCacheSize;
 
   private long flushedPagesSum  = 0;
@@ -426,9 +422,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   private final int chunkSize;
 
-  private final boolean memoryLocking;
-
-  private final    long      pageFlushInterval;
+  private final    long      pagesFlushInterval;
   private volatile boolean   stopFlush = false;
   private volatile Future<?> flushFuture;
 
@@ -442,14 +436,14 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   private final List<WeakReference<OBackgroundExceptionListener>> backgroundExceptionListeners = new CopyOnWriteArrayList<>();
 
   public OWOWCache(final int pageSize, final OByteBufferPool bufferPool, final OWriteAheadLog writeAheadLog,
-      final long pageFlushInterval, final int shutdownTimeout, final long exclusiveWriteCacheMaxSize, final long maxCacheSize,
+      final long pagesFlushInterval, final int shutdownTimeout, final long exclusiveWriteCacheMaxSize, final long maxCacheSize,
       Path storagePath, String storageName, OBinarySerializer<String> stringSerializer,
       final OClosableLinkedContainer<Long, OFileClassic> files, final int id, final OChecksumMode checksumMode, boolean callFsync,
       double exclusiveWriteCacheBoundary, boolean printCacheStatistics, int statisticsPrintInterval,
-      boolean flushTillSegmentLogging, boolean fileFlushLogging, boolean fileRemovalLogging, boolean memoryLocking) {
+      boolean flushTillSegmentLogging, boolean fileFlushLogging, boolean fileRemovalLogging) {
 
     this.shutdownTimeout = shutdownTimeout;
-    this.pageFlushInterval = pageFlushInterval;
+    this.pagesFlushInterval = pagesFlushInterval;
     this.callFsync = callFsync;
     this.exclusiveWriteCacheBoundary = exclusiveWriteCacheBoundary;
     this.printCacheStatistics = printCacheStatistics;
@@ -457,8 +451,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     this.flushTillSegmentLogging = flushTillSegmentLogging;
     this.fileFlushLogging = fileFlushLogging;
     this.fileRemovalLogging = fileRemovalLogging;
-
-    this.memoryLocking = memoryLocking && Platform.isLinux() && ONative.instance().isUnlimitedMemoryLocking();
 
     filesLock.acquireWriteLock();
     try {
@@ -484,9 +476,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       this.stringSerializer = stringSerializer;
       this.storageName = storageName;
 
-      this.pagesFlushInterval = pageFlushInterval;
-      if (pageFlushInterval > 0) {
-        flushFuture = commitExecutor.schedule(new PeriodicFlushTask(), pageFlushInterval, TimeUnit.MILLISECONDS);
+      if (pagesFlushInterval > 0) {
+        flushFuture = commitExecutor.schedule(new PeriodicFlushTask(), pagesFlushInterval, TimeUnit.MILLISECONDS);
       }
 
     } finally {
@@ -1187,7 +1178,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
               startAllocationIndex = fileSize / pageSize;
 
               for (long index = startAllocationIndex; index <= stopAllocationIndex; index++) {
-                final ByteBuffer buffer = bufferPool.acquireDirect(true, memoryLocking);
+                final ByteBuffer buffer = bufferPool.acquireDirect(true);
                 buffer.putLong(MAGIC_NUMBER_OFFSET, MAGIC_NUMBER_WITHOUT_CHECKSUM);
 
                 final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, fileId, index);
@@ -1586,7 +1577,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         final byte[] data = new byte[pageSize];
 
-        ByteBuffer byteBuffer = bufferPool.acquireDirect(true, memoryLocking);
+        ByteBuffer byteBuffer = bufferPool.acquireDirect(true);
         try {
           fileClassic.read(pos, byteBuffer, true);
           byteBuffer.rewind();
@@ -2146,7 +2137,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           try {
             if (pageCount == 1) {
-              final ByteBuffer buffer = bufferPool.acquireDirect(false, memoryLocking);
+              final ByteBuffer buffer = bufferPool.acquireDirect(false);
               assert buffer.position() == 0;
               fileClassic.read(firstPageStartPosition, buffer, false);
 
@@ -2166,7 +2157,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
             final ByteBuffer[] buffers = new ByteBuffer[realPageCount];
             for (int i = 0; i < buffers.length; i++) {
-              buffers[i] = bufferPool.acquireDirect(false, memoryLocking);
+              buffers[i] = bufferPool.acquireDirect(false);
               assert buffers[i].position() == 0;
             }
 
@@ -2765,8 +2756,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           flushError = t;
         }
       } finally {
-        if (pageFlushInterval > 0 && !stopFlush) {
-          flushFuture = commitExecutor.schedule(this, pageFlushInterval, TimeUnit.MILLISECONDS);
+        if (pagesFlushInterval > 0 && !stopFlush) {
+          flushFuture = commitExecutor.schedule(this, pagesFlushInterval, TimeUnit.MILLISECONDS);
         }
       }
     }
@@ -2914,7 +2905,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           final long version;
           final OLogSequenceNumber fullLogLSN;
 
-          final ByteBuffer copy = bufferPool.acquireDirect(false, memoryLocking);
+          final ByteBuffer copy = bufferPool.acquireDirect(false);
           try {
             version = pointer.getVersion();
             final ByteBuffer buffer = pointer.getBufferDuplicate();
@@ -3138,7 +3129,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         } else {
           if (pointer.tryAcquireSharedLock()) {
             final OLogSequenceNumber fullLSN;
-            final ByteBuffer copy = bufferPool.acquireDirect(false, memoryLocking);
+            final ByteBuffer copy = bufferPool.acquireDirect(false);
             try {
               version = pointer.getVersion();
               final ByteBuffer buffer = pointer.getBufferDuplicate();
@@ -3253,7 +3244,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
             try {
               final ByteBuffer buffer = pagePointer.getBufferDuplicate();
-              final ByteBuffer copy = bufferPool.acquireDirect(false, memoryLocking);
+              final ByteBuffer copy = bufferPool.acquireDirect(false);
 
               try {
                 buffer.position(0);
