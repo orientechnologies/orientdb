@@ -4,6 +4,7 @@ import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
+import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
@@ -107,5 +108,9 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
 
   public void setStorage(OStorage storage) {
     this.storage = storage;
+  }
+
+  public ViewManager getViewManager() {
+    throw new UnsupportedOperationException();
   }
 }

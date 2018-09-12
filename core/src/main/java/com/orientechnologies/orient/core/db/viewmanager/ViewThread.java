@@ -35,7 +35,9 @@ public class ViewThread extends Thread {
       } catch (Exception e) {
         e.printStackTrace();
       } finally {
-        db.close();
+        if (db != null) {
+          db.close();
+        }
       }
       try {
         Thread.sleep(5_000);
@@ -47,6 +49,7 @@ public class ViewThread extends Thread {
   private void updateViews(ODatabaseDocument db) {
     try {
       viewManager.cleanUnusedViewClusters(db);
+      viewManager.cleanUnusedViewIndexes(db);
       OView view = viewManager.getNextViewToUpdate(db);
       while (view != null) {
         if (interrupted) {

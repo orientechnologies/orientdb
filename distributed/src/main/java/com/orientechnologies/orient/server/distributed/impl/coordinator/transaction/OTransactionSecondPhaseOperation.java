@@ -5,18 +5,25 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+
+import static com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SECOND_PHASE_REQUEST;
 
 public class OTransactionSecondPhaseOperation implements ONodeRequest {
   private OSessionOperationId operationId;
   private boolean             success;
-  private List<ORecordId>     allocatedIds;
 
-  public OTransactionSecondPhaseOperation(OSessionOperationId operationId, boolean success, List<ORecordId> allocatedIds) {
+  public OTransactionSecondPhaseOperation(OSessionOperationId operationId, boolean success) {
     this.operationId = operationId;
     this.success = success;
-    this.allocatedIds = allocatedIds;
+  }
+
+  public OTransactionSecondPhaseOperation() {
+
   }
 
   @Override
@@ -26,10 +33,6 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
     return new OTransactionSecondPhaseResponse(true);
   }
 
-  public List<ORecordId> getAllocatedIds() {
-    return allocatedIds;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o)
@@ -37,12 +40,37 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
     if (o == null || getClass() != o.getClass())
       return false;
     OTransactionSecondPhaseOperation that = (OTransactionSecondPhaseOperation) o;
-    return success == that.success && Objects.equals(allocatedIds, that.allocatedIds);
+    return success == that.success;
   }
 
   @Override
   public int hashCode() {
+    return Objects.hash(success);
+  }
 
-    return Objects.hash(success, allocatedIds);
+  @Override
+  public void serialize(DataOutput output) throws IOException {
+    operationId.serialize(output);
+    output.writeBoolean(success);
+  }
+
+  @Override
+  public void deserialize(DataInput input) throws IOException {
+    operationId = new OSessionOperationId();
+    operationId.deserialize(input);
+    success = input.readBoolean();
+  }
+
+  @Override
+  public int getRequestType() {
+    return TRANSACTION_SECOND_PHASE_REQUEST;
+  }
+
+  public OSessionOperationId getOperationId() {
+    return operationId;
+  }
+
+  public boolean isSuccess() {
+    return success;
   }
 }

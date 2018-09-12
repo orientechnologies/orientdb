@@ -192,7 +192,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractSyncDatabaseTask {
     final ODistributedMomentum momentum = dDatabase.getSyncConfiguration().getMomentum().copy();
     momentum.setLSN(iManager.getLocalNodeName(), endLSN.get());
 
-    final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, momentum, false);
+    final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, momentum, false, true);
 
     ODistributedServerLog
         .info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "- transferring chunk #%d offset=%d size=%s...", 1,

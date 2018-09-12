@@ -299,7 +299,7 @@ public class OClusterHealthChecker extends TimerTask {
         // SKIP SYSTEM DATABASE FROM HEALTH CHECK
         continue;
 
-      final Set<String> servers = manager.getAvailableNodeNames(dbName);
+      final List<String> servers = manager.getOnlineNodes(dbName);
       servers.remove(manager.getLocalNodeName());
 
       if (servers.isEmpty())

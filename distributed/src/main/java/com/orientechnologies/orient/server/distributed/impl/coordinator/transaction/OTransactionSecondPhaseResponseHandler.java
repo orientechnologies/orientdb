@@ -6,18 +6,21 @@ import java.util.List;
 
 public class OTransactionSecondPhaseResponseHandler implements OResponseHandler {
 
-  private       OTransactionSubmit request;
-  private       ODistributedMember requester;
-  private final boolean            success;
-  private       int                responseCount = 0;
-  private final List<OLockGuard>   guards;
+  private       OTransactionSubmit  request;
+  private       ODistributedMember  requester;
+  private final boolean             success;
+  private       int                 responseCount = 0;
+  private final List<OLockGuard>    guards;
+  private       OSessionOperationId operationId;
+  private       boolean             replySent     = false;
 
   public OTransactionSecondPhaseResponseHandler(boolean success, OTransactionSubmit request, ODistributedMember requester,
-      List<OLockGuard> guards) {
+      List<OLockGuard> guards, OSessionOperationId operationId) {
     this.success = success;
     this.request = request;
     this.requester = requester;
     this.guards = guards;
+    this.operationId = operationId;
   }
 
   @Override
@@ -31,7 +34,10 @@ public class OTransactionSecondPhaseResponseHandler implements OResponseHandler 
             guard.release();
           }
         }
-        coordinator.reply(requester, new OTransactionResponse());
+        if (!replySent) {
+          coordinator.reply(requester, operationId, new OTransactionResponse());
+          replySent = true;
+        }
       }
     }
     return responseCount == context.getInvolvedMembers().size();

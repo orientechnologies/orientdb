@@ -109,4 +109,33 @@ public class OCreateViewStatementExecutionTest {
     Assert.assertEquals("pp", view.getOriginRidField());
   }
 
+  @Test
+  public void testIndexes() throws InterruptedException {
+    String className = "testIndexesClass";
+    String viewName = "testIndexes";
+    db.createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("name", "name" + i);
+      elem.setProperty("surname", "surname" + i);
+      elem.save();
+    }
+
+    String statement = "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    statement += "indexes: [{type:'NOTUNIQUE', properties:{name:'STRING', surname:'STRING'}}]";
+    statement += "}";
+
+    db.command(statement);
+
+    Thread.sleep(1000);
+
+    OResultSet result = db.query("SELECT FROM " + viewName + " WHERE name = 'name4'");
+    result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep);
+    Assert.assertTrue(result.hasNext());
+    result.next();
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
 }

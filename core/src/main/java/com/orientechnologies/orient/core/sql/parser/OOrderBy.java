@@ -57,7 +57,7 @@ public class OOrderBy extends SimpleNode {
     for (OOrderByItem item : items) {
       int result = item.compare(a, b, ctx);
       if (result != 0) {
-        return result;
+        return result > 0 ? 1 : -1;
       }
     }
     return 0;
@@ -69,7 +69,8 @@ public class OOrderBy extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -83,22 +84,23 @@ public class OOrderBy extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return items != null ? items.hashCode() : 0;
   }
 
   public void extractSubQueries(SubQueryCollector collector) {
-    if(items!=null){
-      for(OOrderByItem item:items){
+    if (items != null) {
+      for (OOrderByItem item : items) {
         item.extractSubQueries(collector);
       }
     }
   }
 
   public boolean refersToParent() {
-    if(items!=null){
-      for(OOrderByItem item:items){
-        if(item.refersToParent()){
+    if (items != null) {
+      for (OOrderByItem item : items) {
+        if (item.refersToParent()) {
           return true;
         }
       }

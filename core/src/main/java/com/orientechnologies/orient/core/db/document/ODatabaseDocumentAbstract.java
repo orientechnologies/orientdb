@@ -85,26 +85,26 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected final Map<String, Object> properties = new HashMap<String, Object>();
-  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
-  protected ORecordSerializer    serializer;
-  protected String               url;
-  protected STATUS               status;
-  protected OIntent              currentIntent;
-  protected ODatabaseInternal<?> databaseOwner;
-  protected OMetadataDefault     metadata;
-  protected OImmutableUser       user;
+  protected final Map<String, Object>                         properties    = new HashMap<String, Object>();
+  protected       Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable>                          inHook        = new HashSet<OIdentifiable>();
+  protected       ORecordSerializer                           serializer;
+  protected       String                                      url;
+  protected       STATUS                                      status;
+  protected       OIntent                                     currentIntent;
+  protected       ODatabaseInternal<?>                        databaseOwner;
+  protected       OMetadataDefault                            metadata;
+  protected       OImmutableUser                              user;
   protected final byte                                        recordType    = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
-  protected OLocalRecordCache                localCache;
-  protected OCurrentStorageComponentsFactory componentsFactory;
-  protected boolean initialized = false;
-  protected OTransaction currentTx;
+  protected       OLocalRecordCache                           localCache;
+  protected       OCurrentStorageComponentsFactory            componentsFactory;
+  protected       boolean                                     initialized   = false;
+  protected       OTransaction                                currentTx;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected OSharedContext sharedContext;
+  protected       OSharedContext  sharedContext;
 
   private boolean prefetchRecords;
 
@@ -1080,26 +1080,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   @SuppressWarnings("unchecked")
   @Override
-  @Deprecated
-  public <RET extends ORecord> RET load(ORecord iRecord, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
-      OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    checkIfActive();
-    return (RET) currentTx
-        .loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, !iIgnoreCache, loadTombstone, iLockingStrategy);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  @Deprecated
-  public <RET extends ORecord> RET load(final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache,
-      final boolean iUpdateCache, final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    checkIfActive();
-    return (RET) currentTx
-        .loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, iUpdateCache, loadTombstone, iLockingStrategy);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
   public <RET extends ORecord> RET load(final ORecord iRecord) {
     checkIfActive();
     return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, null, false);
@@ -1123,24 +1103,6 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       boolean ignoreCache) throws ORecordNotFoundException {
     checkIfActive();
     return (RET) currentTx.loadRecordIfVersionIsNotLatest(rid, recordVersion, fetchPlan, ignoreCache);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  @Deprecated
-  public <RET extends ORecord> RET load(final ORID iRecordId, String iFetchPlan, final boolean iIgnoreCache,
-      final boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    checkIfActive();
-    return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  @Deprecated
-  public <RET extends ORecord> RET load(final ORID iRecordId, String iFetchPlan, final boolean iIgnoreCache,
-      final boolean iUpdateCache, final boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    checkIfActive();
-    return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, iIgnoreCache, iUpdateCache, loadTombstone, iLockingStrategy);
   }
 
   @SuppressWarnings("unchecked")
@@ -1222,6 +1184,13 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     if (currentTx.isActive() && iTx.equals(currentTx)) {
       currentTx.begin();
+      return;
+    }
+
+    Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLockedRecords = null;
+
+    if (!currentTx.isActive() && iTx instanceof OTransactionOptimistic) {
+      noTxLockedRecords = ((OTransactionAbstract) currentTx).getInternalLocks();
     }
 
     currentTx.rollback(true, 0);
@@ -1238,6 +1207,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       }
 
     currentTx = iTx;
+    if (iTx instanceof OTransactionOptimistic) {
+      ((OTransactionOptimistic) iTx).setNoTxLocks(noTxLockedRecords);
+    }
     currentTx.begin();
   }
 
@@ -1264,126 +1236,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    *
    * @Internal
    */
-  public <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final int recordVersion,
+  public abstract <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final int recordVersion,
       final String fetchPlan, final boolean ignoreCache, final boolean iUpdateCache, final boolean loadTombstones,
-      final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader) {
-    checkOpenness();
-    checkIfActive();
-
-    getMetadata().makeThreadLocalSchemaSnapshot();
-    ORecordSerializationContext.pushContext();
-    try {
-      checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(rid.getClusterId()));
-
-      // either regular or micro tx must be active or both inactive
-      assert !(getTransaction().isActive() && (microTransaction != null && microTransaction.isActive()));
-
-      // SEARCH IN LOCAL TX
-      ORecord record = getTransaction().getRecord(rid);
-      if (record == OBasicTransaction.DELETED_RECORD)
-        // DELETED IN TX
-        return null;
-
-      if (record == null) {
-        if (microTransaction != null && microTransaction.isActive()) {
-          record = microTransaction.getRecord(rid);
-          if (record == OBasicTransaction.DELETED_RECORD)
-            return null;
-        }
-      }
-
-      if (record == null && !ignoreCache)
-        // SEARCH INTO THE CACHE
-        record = getLocalCache().findRecord(rid);
-
-      if (record != null) {
-        if (iRecord != null) {
-          iRecord.fromStream(record.toStream());
-          ORecordInternal.setVersion(iRecord, record.getVersion());
-          record = iRecord;
-        }
-
-        OFetchHelper.checkFetchPlanValid(fetchPlan);
-        if (beforeReadOperations(record))
-          return null;
-
-        if (record.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-          record.reload();
-
-        if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
-          OLogManager.instance()
-              .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
-          record.lock(false);
-
-        } else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
-          OLogManager.instance()
-              .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
-          record.lock(true);
-        }
-
-        afterReadOperations(record);
-        if (record instanceof ODocument)
-          ODocumentInternal.checkClass((ODocument) record, this);
-        return (RET) record;
-      }
-
-      final ORawBuffer recordBuffer;
-      if (!rid.isValid())
-        recordBuffer = null;
-      else {
-        OFetchHelper.checkFetchPlanValid(fetchPlan);
-
-        int version;
-        if (iRecord != null)
-          version = iRecord.getVersion();
-        else
-          version = recordVersion;
-
-        recordBuffer = recordReader.readRecord(getStorage(), rid, fetchPlan, ignoreCache, version);
-      }
-
-      if (recordBuffer == null)
-        return null;
-
-      if (iRecord == null || ORecordInternal.getRecordType(iRecord) != recordBuffer.recordType)
-        // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
-        iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType, rid.getClusterId(), this);
-
-      ORecordInternal.setRecordSerializer(iRecord, getSerializer());
-      ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false, this);
-
-      if (iRecord instanceof ODocument)
-        ODocumentInternal.checkClass((ODocument) iRecord, this);
-
-      if (ORecordVersionHelper.isTombstone(iRecord.getVersion()))
-        return (RET) iRecord;
-
-      if (beforeReadOperations(iRecord))
-        return null;
-
-      iRecord.fromStream(recordBuffer.buffer);
-
-      afterReadOperations(iRecord);
-      if (iUpdateCache)
-        getLocalCache().updateRecord(iRecord);
-
-      return (RET) iRecord;
-    } catch (OOfflineClusterException t) {
-      throw t;
-    } catch (ORecordNotFoundException t) {
-      throw t;
-    } catch (Exception t) {
-      if (rid.isTemporary())
-        throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RID: " + rid), t);
-      else
-        throw OException.wrapException(new ODatabaseException(
-            "Error on retrieving record " + rid + " (cluster: " + getStorage().getPhysicalClusterNameById(rid.getClusterId())
-                + ")"), t);
-    } finally {
-      ORecordSerializationContext.pullContext();
-      getMetadata().clearThreadLocalSchemaSnapshot();
-    }
-  }
+      final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader);
 
   public int assignAndCheckCluster(ORecord record, String iClusterName) {
     ORecordId rid = (ORecordId) record.getIdentity();
@@ -1505,7 +1360,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
     switch (iType) {
     case NOTX:
-      setDefaultTransactionMode();
+      setDefaultTransactionMode(null);
       break;
 
     case OPTIMISTIC:
@@ -1520,9 +1375,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return this;
   }
 
-  public void setDefaultTransactionMode() {
+  public void setDefaultTransactionMode(Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLocks) {
     if (!(currentTx instanceof OTransactionNoTx))
-      currentTx = new OTransactionNoTx(this);
+      currentTx = new OTransactionNoTx(this, noTxLocks);
   }
 
   /**
@@ -2399,7 +2254,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
-  public String incrementalBackup(final String path) {
+  public String incrementalBackup(final String path) throws UnsupportedOperationException{
     checkOpenness();
     checkIfActive();
 
@@ -2529,7 +2384,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   protected void init() {
-    currentTx = new OTransactionNoTx(this);
+    currentTx = new OTransactionNoTx(this, null);
   }
 
   private OFreezableStorageComponent getFreezableStorage() {
@@ -2751,6 +2606,16 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   public OView getViewFromCluster(int cluster) {
     return getMetadata().getImmutableSchemaSnapshot().getViewByClusterId(cluster);
+  }
+
+  protected void pessimisticLockChecks(ORID recordId) {
+    ORecord record = getTransaction().getRecord(recordId);
+    if (record != null && record.isDirty()) {
+      throw new ODatabaseException("Impossible to lock a record modified in transaction");
+    }
+    if (!recordId.isPersistent()) {
+      throw new ODatabaseException("Impossible to lock an not persistent record");
+    }
   }
 
 }

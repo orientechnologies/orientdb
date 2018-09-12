@@ -58,7 +58,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
   private static final AtomicInteger transactionSerial = new AtomicInteger(0);
 
-  private final ODatabaseDocumentInternal database;
+  private ODatabaseDocumentInternal database;
   private final OAbstractPaginatedStorage storage;
 
   private final int id;
@@ -87,6 +87,8 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   private boolean active       = false;
   private int     level        = 0;
   private int     recordSerial = -2;
+
+  private Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLocks;
 
   /**
    * Instantiates a new micro-transaction.
@@ -731,5 +733,21 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   @Override
   public ORecordOperation getRecordEntry(ORID currentRid) {
     return recordOperations.get(currentRid);
+  }
+
+  public void setNoTxLocks(Map<ORID, OTransactionAbstract.LockedRecordMetadata> noTxLocks) {
+    this.noTxLocks = noTxLocks;
+  }
+
+  public Set<ORID> getLockedRecords() {
+    if (noTxLocks != null) {
+      return noTxLocks.keySet();
+    }
+    return null;
+  }
+
+  @Override
+  public void setDatabase(ODatabaseDocumentInternal database) {
+    this.database = database;
   }
 }

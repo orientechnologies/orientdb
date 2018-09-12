@@ -238,9 +238,10 @@ public class OSchemaEmbedded extends OSchemaShared {
       if (indexes instanceof Collection) {
         for (Object index : (Collection) indexes) {
           if (index instanceof Map) {
-            OViewConfig.OViewIndexConfig idxConfig = cfg.addIndex();
-            for (Map.Entry<String, String> entry : ((Map<String, String>) index).entrySet()) {
-              OType val = OType.valueOf(entry.getValue());
+            OViewConfig.OViewIndexConfig idxConfig = cfg
+                .addIndex((String) ((Map) index).get("type"), (String) ((Map) index).get("engine"));
+            for (Map.Entry<String, String> entry : ((Map<String, String>) ((Map) index).get("properties")).entrySet()) {
+              OType val = OType.valueOf(entry.getValue().toUpperCase(Locale.ENGLISH));
               if (val == null) {
                 throw new IllegalArgumentException("Invalid value for index key type: " + entry.getValue());
               }

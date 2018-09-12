@@ -54,9 +54,9 @@ public class OSelectExecutionPlanner {
 
   }
 
-  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling) {
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx, boolean enableProfiling, boolean useCache) {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
-    if (!enableProfiling && statement.executinPlanCanBeCached()) {
+    if (useCache && !enableProfiling && statement.executinPlanCanBeCached()) {
       OExecutionPlan plan = OExecutionPlanCache.get(statement.getOriginalStatement(), ctx, db);
       if (plan != null) {
         return (OInternalExecutionPlan) plan;
@@ -100,7 +100,7 @@ public class OSelectExecutionPlanner {
 
     handleProjectionsBlock(result, info, ctx, enableProfiling);
 
-    if (!enableProfiling && statement.executinPlanCanBeCached() && result.canBeCached()
+    if (useCache && !enableProfiling && statement.executinPlanCanBeCached() && result.canBeCached()
         && OExecutionPlanCache.getLastInvalidation(db) < planningStart) {
       OExecutionPlanCache.put(statement.getOriginalStatement(), result, (ODatabaseDocumentInternal) ctx.getDatabase());
     }
@@ -540,7 +540,7 @@ public class OSelectExecutionPlanner {
   private boolean isMinimalQuery(QueryPlanningInfo info) {
     if (info.projectionAfterOrderBy != null || info.globalLetClause != null || info.perRecordLetClause != null
         || info.whereClause != null || info.flattenedWhereClause != null || info.groupBy != null || info.orderBy != null
-        || info.unwind != null || info.skip != null || info.limit != null) {
+        || info.unwind != null || info.skip != null) {
       return false;
     }
     return true;
@@ -631,7 +631,11 @@ public class OSelectExecutionPlanner {
       return;
     }
     if (info.whereClause != null && info.target != null && info.target.getItem().getIdentifier() != null) {
-      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(info.target.getItem().getIdentifier().getStringValue());
+      String className = info.target.getItem().getIdentifier().getStringValue();
+      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(className);
+      if(clazz==null){
+        clazz = ctx.getDatabase().getMetadata().getSchema().getView(className);
+      }
       if (clazz != null) {
         info.whereClause.getBaseExpression().rewriteIndexChainsAsSubqueries(ctx, clazz);
       }
@@ -760,6 +764,7 @@ public class OSelectExecutionPlanner {
           OIdentifier newAlias = new OIdentifier("_$$$ORDER_BY_ALIAS$$$_" + (nextAliasCount++));
           newProj.setAlias(newAlias);
           item.setAlias(newAlias.getStringValue());
+          item.setModifier(null);
           result.add(newProj);
         }
       }

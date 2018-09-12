@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -50,11 +51,13 @@ import com.orientechnologies.orient.core.util.OBackupable;
 
 import java.io.Closeable;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
- * Limits: <ul> <li>Maximum records per cluster/class = <b>9.223.372.036 Billions</b>: 2^63 = 9.223.372.036.854.775.808 records</li>
+ * Limits: <ul> <li>Maximum records per cluster/class = <b>9.223.372.036 Billions</b>: 2^63 = 9.223.372.036.854.775.808
+ * records</li>
  * <li>Maximum records per database = <b>302.231.454.903.657 Billions</b>: 2^15 clusters x 2^63 records = (2^78) 32.768 *
  * 9,223.372.036.854.775.808 = 302.231,454.903.657.293.676.544 records</li> <li>Maximum storage per database =
  * <b>19.807.040.628.566.084 Terabytes</b>: 2^31 data-segments x 2^63 bytes = (2^94) 2.147.483.648 x 9,223.372.036.854.775.808
@@ -581,34 +584,40 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   <RET extends T> RET load(T iObject, String iFetchPlan);
 
   /**
-   * Loads a record using a fetch plan.
+   * Pessimistic lock a record.
+   * <p>
+   * In case of lock inside the transaction the lock will be release by the commit operation, In case of lock outside a transaction
+   * unlock need to be call manually.
    *
-   * @param iObject          Record to load
-   * @param iFetchPlan       Fetch plan used
-   * @param iLockingStrategy
+   * @param recordId the id of the record that need to be locked
    *
-   * @return The record received
+   * @return the record updated to the last state after the lock.
    *
-   * @deprecated Usage of this method may lead to deadlocks.
+   * @throws OLockException In case of deadlock detected
    */
-  @Deprecated
-  <RET extends T> RET load(T iObject, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
-      OStorage.LOCKING_STRATEGY iLockingStrategy);
+  <RET extends T> RET lock(ORID recordId) throws OLockException;
 
   /**
-   * Loads a record using a fetch plan.
+   * Pessimistic lock a record.
    *
-   * @param iObject          Record to load
-   * @param iFetchPlan       Fetch plan used
-   * @param iLockingStrategy
+   * @param recordId    the id of the record that need to be locked
+   * @param timeout     for the record locking
+   * @param timeoutUnit relative for the timeout
    *
-   * @return The record received
+   * @return the record updated to the last state after the lock.
    *
-   * @deprecated Usage of this method may lead to deadlocks.
+   * @throws OLockException In case of deadlock detected
    */
-  @Deprecated
-  <RET extends T> RET load(T iObject, String iFetchPlan, boolean iIgnoreCache, boolean iUpdateCache, boolean loadTombstone,
-      OStorage.LOCKING_STRATEGY iLockingStrategy);
+  <RET extends T> RET lock(ORID recordId, long timeout, TimeUnit timeoutUnit) throws OLockException;
+
+  /**
+   * Pessimistic unlock
+   *
+   * @param recordId the id of the record to unlock
+   *
+   * @throws OLockException if the record  is not locked.
+   */
+  void unlock(ORID recordId) throws OLockException;
 
   /**
    * Loads a record using a fetch plan.
@@ -674,20 +683,6 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @return The loaded entity
    */
   <RET extends T> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache);
-
-  @Deprecated
-  /**
-   * @deprecated Usage of this method may lead to deadlocks.
-   */
-  <RET extends T> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
-      OStorage.LOCKING_STRATEGY iLockingStrategy);
-
-  @Deprecated
-  /**
-   * @deprecated Usage of this method may lead to deadlocks.
-   */
-  <RET extends T> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean iUpdateCache, boolean loadTombstone,
-      OStorage.LOCKING_STRATEGY iLockingStrategy);
 
   /**
    * Saves an entity in synchronous mode. If the entity is not dirty, then the operation will be ignored. For custom entity
@@ -1051,7 +1046,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @since 2.2
    */
-  String incrementalBackup(String path);
+  String incrementalBackup(String path) throws UnsupportedOperationException;
 
   /**
    * Subscribe a query as a live query for future create/update event with the referred conditions

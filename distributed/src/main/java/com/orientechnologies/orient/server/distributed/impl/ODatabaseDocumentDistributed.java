@@ -50,7 +50,10 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitContext;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitResponse;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionSubmit;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OTransactionContext;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
@@ -67,6 +70,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
@@ -606,8 +611,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
     OTransactionContext context = sharedContext.getDistributedContext().getTransaction(operationId);
     try {
-      OTransactionInternal tx = context.getTransaction();
       if (success) {
+        OTransactionInternal tx = context.getTransaction();
+        tx.setDatabase(this);
         ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
       } else {
         //FOR NOW ROLLBACK DO NOTHING ON THE STORAGE ONLY THE CLOSE IS NEEDED

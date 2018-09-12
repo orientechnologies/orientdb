@@ -1,23 +1,37 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedChannel;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedCoordinator;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
+import com.orientechnologies.orient.server.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Created by tglman on 08/08/17.
  */
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
 
-  private          OServer          server;
-  private volatile OHazelcastPlugin plugin;
+  private          OServer                          server;
+  private volatile OHazelcastPlugin                 plugin;
+  private final    Map<String, ODistributedChannel> members     = new HashMap<>();
+  private volatile boolean                          coordinator = false;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -63,5 +77,157 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public void setPlugin(OHazelcastPlugin plugin) {
     this.plugin = plugin;
+  }
+
+  public void fullSync(String dbName, String backupPath, OrientDBConfig config) {
+    final ODatabaseDocumentEmbedded embedded;
+    OAbstractPaginatedStorage storage;
+    synchronized (this) {
+
+      try {
+        storage = storages.get(dbName);
+
+        if (storage != null) {
+          storage.delete();
+          storages.remove(dbName);
+        }
+        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(dbName), new HashMap<>());
+        embedded = internalCreate(config, storage);
+        storages.put(dbName, storage);
+      } catch (Exception e) {
+        throw OException.wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
+      }
+    }
+    storage.restoreFromIncrementalBackup(backupPath);
+    checkCoordinator(dbName);
+  }
+
+  @Override
+  public void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
+      OCommandOutputListener iListener) {
+    super.restore(name, in, options, callable, iListener);
+    checkCoordinator(name);
+  }
+
+  @Override
+  public void restore(String name, String user, String password, ODatabaseType type, String path, OrientDBConfig config) {
+    super.restore(name, user, password, type, path, config);
+    checkCoordinator(name);
+  }
+
+  @Override
+  public void create(String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
+    super.create(name, user, password, type, config);
+    checkCoordinator(name);
+  }
+
+  @Override
+  public ODatabaseDocumentEmbedded openNoAuthenticate(String name, String user) {
+    ODatabaseDocumentEmbedded session = super.openNoAuthenticate(name, user);
+    checkCoordinator(name);
+    return session;
+  }
+
+  @Override
+  public ODatabaseDocumentEmbedded openNoAuthorization(String name) {
+    ODatabaseDocumentEmbedded session = super.openNoAuthorization(name);
+    checkCoordinator(name);
+    return session;
+
+  }
+
+  @Override
+  public ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
+    ODatabaseDocumentInternal session = super.open(name, user, password, config);
+    checkCoordinator(name);
+    return session;
+  }
+
+  @Override
+  public ODatabaseDocumentInternal poolOpen(String name, String user, String password, ODatabasePoolInternal pool) {
+    ODatabaseDocumentInternal session = super.poolOpen(name, user, password, pool);
+    checkCoordinator(name);
+    return session;
+
+  }
+
+  private synchronized void checkCoordinator(String database) {
+    if (!database.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
+      OSharedContext shared = sharedContexts.get(database);
+      if (shared instanceof OSharedContextDistributed) {
+        ODistributedContext distributed = ((OSharedContextDistributed) shared).getDistributedContext();
+        if (coordinator && distributed.getCoordinator() == null) {
+          distributed.makeCoordinator(plugin.getLocalNodeName());
+          for (Map.Entry<String, ODistributedChannel> node : members.entrySet()) {
+            ODistributedMember member = new ODistributedMember(node.getKey(), database, node.getValue());
+            distributed.getCoordinator().join(member);
+          }
+        }
+
+        for (Map.Entry<String, ODistributedChannel> node : members.entrySet()) {
+          ODistributedMember member = new ODistributedMember(node.getKey(), database, node.getValue());
+          distributed.getExecutor().join(member);
+        }
+      }
+    }
+
+  }
+
+  public synchronized void nodeJoin(String nodeName, ODistributedChannel channel) {
+    members.put(nodeName, channel);
+    for (OSharedContext context : sharedContexts.values()) {
+      if (context.getStorage().getName().equals(OSystemDatabase.SYSTEM_DB_NAME))
+        continue;
+      ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
+      ODistributedMember member = new ODistributedMember(nodeName, context.getStorage().getName(), channel);
+      distributed.getExecutor().join(member);
+      if (coordinator) {
+        ODistributedCoordinator c = distributed.getCoordinator();
+        if (c == null) {
+          distributed.makeCoordinator(plugin.getLocalNodeName());
+          c = distributed.getCoordinator();
+        }
+        c.join(member);
+      }
+    }
+  }
+
+  public synchronized void nodeLeave(String nodeName) {
+    members.remove(nodeName);
+  }
+
+  public synchronized void setCoordinator(String lockManager, boolean isSelf) {
+    if (isSelf) {
+      if (!coordinator) {
+        for (OSharedContext context : sharedContexts.values()) {
+          if (context.getStorage().getName().equals(OSystemDatabase.SYSTEM_DB_NAME))
+            continue;
+          ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
+          distributed.makeCoordinator(lockManager);
+          for (Map.Entry<String, ODistributedChannel> node : members.entrySet()) {
+            ODistributedMember member = new ODistributedMember(node.getKey(), context.getStorage().getName(), node.getValue());
+            distributed.getCoordinator().join(member);
+          }
+        }
+        coordinator = true;
+      }
+    } else {
+      for (OSharedContext context : sharedContexts.values()) {
+        if (context.getStorage().getName().equals(OSystemDatabase.SYSTEM_DB_NAME))
+          continue;
+        ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
+        ODistributedMember member = new ODistributedMember(lockManager, context.getStorage().getName(), members.get(lockManager));
+        distributed.setExternalCoordinator(member);
+      }
+      coordinator = false;
+    }
+  }
+
+  public synchronized ODistributedContext getDistributedContext(String database) {
+    OSharedContext shared = sharedContexts.get(database);
+    if (shared != null) {
+      return ((OSharedContextDistributed) shared).getDistributedContext();
+    }
+    return null;
   }
 }

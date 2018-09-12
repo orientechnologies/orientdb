@@ -1,16 +1,11 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.ConcurrentModification;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.Success;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.UniqueKeyViolation;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results.OConcurrentModificationResult;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results.OUniqueKeyViolationResult;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
 
@@ -18,7 +13,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
   private final OTransactionSubmit                    request;
   private final ODistributedMember                    requester;
   private       int                                   responseCount   = 0;
-  private final Map<ODistributedMember, Success>      success         = new HashMap<>();
+  private final Set<ODistributedMember>               success         = new HashSet<>();
   private final Map<ORID, List<ODistributedMember>>   cme             = new HashMap<>();
   private final Map<String, List<ODistributedMember>> unique          = new HashMap<>();
   private final List<ODistributedMember>              exceptions      = new ArrayList<>();
@@ -41,10 +36,10 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
     OTransactionFirstPhaseResult result = (OTransactionFirstPhaseResult) response;
     switch (result.getType()) {
     case SUCCESS:
-      success.put(member, (Success) result.getResultMetadata());
+      success.add(member);
       break;
     case CONCURRENT_MODIFICATION_EXCEPTION: {
-      ConcurrentModification concurrentModification = (ConcurrentModification) result.getResultMetadata();
+      OConcurrentModificationResult concurrentModification = (OConcurrentModificationResult) result.getResultMetadata();
       List<ODistributedMember> members = cme.get(concurrentModification.getRecordId());
       if (members == null) {
         members = new ArrayList<>();
@@ -54,7 +49,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
     }
     break;
     case UNIQUE_KEY_VIOLATION: {
-      UniqueKeyViolation uniqueKeyViolation = (UniqueKeyViolation) result.getResultMetadata();
+      OUniqueKeyViolationResult uniqueKeyViolation = (OUniqueKeyViolationResult) result.getResultMetadata();
       List<ODistributedMember> members = unique.get(uniqueKeyViolation.getKeyStringified());
       if (members == null) {
         members = new ArrayList<>();
@@ -70,8 +65,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
     int quorum = context.getQuorum();
     if (responseCount >= quorum && !secondPhaseSent) {
       if (success.size() >= quorum) {
-        Success ids = success.values().iterator().next();
-        sendSecondPhaseSuccess(coordinator, ids.getAllocatedIds());
+        sendSecondPhaseSuccess(coordinator);
       }
 
       for (Map.Entry<ORID, List<ODistributedMember>> entry : cme.entrySet()) {
@@ -86,27 +80,35 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
         }
       }
     }
-
-    return responseCount == context.getInvolvedMembers().size();
+    if (responseCount == context.getInvolvedMembers().size()) {
+      if (!secondPhaseSent) {
+        sendSecondPhaseError(coordinator);
+      }
+      return true;
+    }
+    return false;
   }
 
   private void sendSecondPhaseError(ODistributedCoordinator coordinator) {
-    OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(true, request, requester,
-        null);
-    coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, false, new ArrayList<>()), responseHandler);
+    OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(false, request, requester,
+        null, operationId);
+    coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, false), responseHandler);
     if (guards != null) {
       for (OLockGuard guard : guards) {
         guard.release();
       }
     }
-    coordinator.reply(requester, new OTransactionResponse());
+    if (!replySent) {
+      coordinator.reply(requester, operationId, new OTransactionResponse());
+      replySent = true;
+    }
     secondPhaseSent = true;
   }
 
-  private void sendSecondPhaseSuccess(ODistributedCoordinator coordinator, List<ORecordId> allocatedIds) {
-    OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(false, request, requester,
-        guards);
-    coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, true, allocatedIds), responseHandler);
+  private void sendSecondPhaseSuccess(ODistributedCoordinator coordinator) {
+    OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(true, request, requester,
+        guards, operationId);
+    coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, true), responseHandler);
     secondPhaseSent = true;
   }
 

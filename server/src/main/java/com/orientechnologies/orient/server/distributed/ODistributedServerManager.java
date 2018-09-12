@@ -24,6 +24,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
@@ -295,4 +297,8 @@ public interface ODistributedServerManager {
    * @return
    */
   boolean isWriteQuorumPresent(String databaseName);
+
+  void notifyClients(String databaseName);
+
+  void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel) throws IOException;
 }

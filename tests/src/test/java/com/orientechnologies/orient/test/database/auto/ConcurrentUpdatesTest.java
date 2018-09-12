@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
+import org.junit.Ignore;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -217,7 +218,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     database.close();
   }
 
-  @Test
+  @Test(enabled = false)
   public void concurrentPessimisticSQLUpdates() throws Exception {
     sqlUpdate(true);
   }

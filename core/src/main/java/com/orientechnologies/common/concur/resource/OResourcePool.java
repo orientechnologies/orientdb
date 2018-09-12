@@ -33,6 +33,7 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
 
 /**
  * Generic non reentrant implementation about pool of resources. It pre-allocates a semaphore of maxResources. Resources are lazily
@@ -62,11 +63,11 @@ public class OResourcePool<K, V> {
     unmodifiableresources = Collections.unmodifiableCollection(resources);
   }
 
-  public V getResource(K key, final long maxWaitMillis, Object... additionalArgs) throws OLockException {
+  public V getResource(K key, final long maxWaitMillis, Object... additionalArgs) throws OAcquireTimeoutException {
     // First, get permission to take or create a resource
     try {
       if (!sem.tryAcquire(maxWaitMillis, TimeUnit.MILLISECONDS))
-        throw new OLockException("No more resources available in pool (max=" + maxResources + "). Requested resource: " + key);
+        throw new OAcquireTimeoutException("No more resources available in pool (max=" + maxResources + "). Requested resource: " + key);
 
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();

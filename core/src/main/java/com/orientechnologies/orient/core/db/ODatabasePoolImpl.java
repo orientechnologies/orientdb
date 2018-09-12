@@ -22,6 +22,10 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_ACQUIRE_TIMEOUT;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_MAX;
 
 /**
  * Created by tglman on 07/07/16.
@@ -32,7 +36,7 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
   private final OrientDBConfig                                 config;
 
   public ODatabasePoolImpl(OrientDBInternal factory, String database, String user, String password, OrientDBConfig config) {
-    int max = config.getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX);
+    int max = config.getConfigurations().getValueAsInteger(DB_POOL_MAX);
     // TODO use configured max
     pool = new OResourcePool(max, new OResourcePoolListener<Void, ODatabaseDocumentInternal>() {
       @Override
@@ -42,7 +46,7 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
 
       @Override
       public boolean reuseResource(Void iKey, Object[] iAdditionalArgs, ODatabaseDocumentInternal iValue) {
-        if(iValue.getStorage().isClosed()){
+        if (iValue.getStorage().isClosed()) {
           return false;
         }
         iValue.reuse();
@@ -54,9 +58,8 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
   }
 
   @Override
-  public synchronized ODatabaseSession acquire() {
-    // TODO:use configured timeout no property exist yet
-    return pool.getResource(null, 1000);
+  public synchronized ODatabaseSession acquire() throws OAcquireTimeoutException {
+    return pool.getResource(null, config.getConfigurations().getValueAsLong(DB_POOL_ACQUIRE_TIMEOUT));
   }
 
   @Override

@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -114,7 +115,7 @@ public class OEdgeDelegate implements OEdge {
     if (element != null) {
       return element.getPropertyNames();
     }
-    return null;
+    return Collections.EMPTY_SET;
   }
 
   public OEdge delete() {
@@ -502,8 +503,8 @@ public class OEdgeDelegate implements OEdge {
     if (element != null) {
       return element.toJSON();
     } else {
-      return "{'out':'" + vOut.getIdentity() + "', 'in':'" + vIn.getIdentity() + "', '@class':'" + OStringSerializerHelper
-          .encode(lightweightEdgeType.getName()) + "'}";
+      return "{\"out\":\"" + vOut.getIdentity() + "\", \"in\":\"" + vIn.getIdentity() + "\", \"@class\":\"" + OStringSerializerHelper
+          .encode(lightweightEdgeType.getName()) + "\"}";
     }
   }
 
@@ -512,8 +513,8 @@ public class OEdgeDelegate implements OEdge {
     if (element != null) {
       return element.toJSON(iFormat);
     } else {
-      return "{'out':'" + vOut.getIdentity() + "', 'in':'" + vIn.getIdentity() + "', '@class':'" + OStringSerializerHelper
-          .encode(lightweightEdgeType.getName()) + "'}";
+      return "{\"out\":\"" + vOut.getIdentity() + "\", \"in\":\"" + vIn.getIdentity() + "\", \"@class\":\"" + OStringSerializerHelper
+          .encode(lightweightEdgeType.getName()) + "\"}";
     }
   }
 

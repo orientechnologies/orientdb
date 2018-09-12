@@ -7,17 +7,23 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
+import com.orientechnologies.orient.core.metadata.sequence.SequenceOrderType;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class OAlterSequenceStatement extends ODDLStatement {
   OIdentifier name;
   OExpression start;
   OExpression increment;
   OExpression cache;
+  Boolean     positive;
+  Boolean     cyclic;
+  OExpression limitValue; 
+  boolean turnLimitOff = false;
 
   public OAlterSequenceStatement(int id) {
     super(id);
@@ -42,6 +48,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
     }
 
     OSequence.CreateParams params = new OSequence.CreateParams();
+    params.resetNull();
 
     if (start != null) {
       Object val = start.execute((OIdentifiable) null, ctx);
@@ -64,6 +71,22 @@ public class OAlterSequenceStatement extends ODDLStatement {
       }
       params.cacheSize = ((Number) val).intValue();
     }
+    if (positive != null) {
+      params.orderType = positive == true ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.ORDER_NEGATIVE;
+    }
+    if (cyclic != null) {
+      params.recyclable = cyclic;
+    }
+    if (limitValue != null) {
+      Object val = limitValue.execute((OIdentifiable) null, ctx);
+      if (!(val instanceof Number)) {
+        throw new OCommandExecutionException("invalid cache value for a sequence: " + val);
+      }
+      params.limitValue = ((Number) val).longValue();
+    }    
+    if (turnLimitOff) {
+      params.turnLimitOff = true;
+    }
 
     sequence.updateParams(params);
     sequence.save(database);
@@ -72,9 +95,27 @@ public class OAlterSequenceStatement extends ODDLStatement {
     OResultInternal item = new OResultInternal();
     item.setProperty("operation", "alter sequence");
     item.setProperty("sequenceName", sequenceName);
-    item.setProperty("start", params.start);
-    item.setProperty("increment", params.increment);
-    item.setProperty("cacheSize", params.cacheSize);
+    if (params.start != null) {
+      item.setProperty("start", params.start);
+    }
+    if (params.increment != null) {
+      item.setProperty("increment", params.increment);
+    }
+    if (params.cacheSize != null) {
+      item.setProperty("cacheSize", params.cacheSize);
+    }
+    if (params.limitValue != null) {
+      item.setProperty("limitValue", params.limitValue);
+    }
+    if (params.orderType != null) {
+      item.setProperty("orderType", params.orderType.toString());
+    }
+    if (params.recyclable != null) {
+      item.setProperty("recycable", params.recyclable);
+    }
+    if (params.turnLimitOff != null && params.turnLimitOff) {
+      item.setProperty("turnLimitOff", params.turnLimitOff);
+    }
     result.add(item);
     return result;
   }
@@ -96,6 +137,21 @@ public class OAlterSequenceStatement extends ODDLStatement {
       builder.append(" CACHE ");
       cache.toString(params, builder);
     }
+    if (positive != null) {
+      String appendString;
+      appendString = positive == true ? " ASC" : " DESC";
+      builder.append(appendString);
+    }
+    if (cyclic != null) {
+      builder.append(" CYCLE ").append(cyclic.toString().toUpperCase());
+    }
+    if (limitValue != null) {
+      builder.append(" LIMIT ");
+      limitValue.toString(params, builder);
+    }    
+    if (turnLimitOff) {
+      builder.append(" NOLIMIT");
+    }
   }
 
   @Override
@@ -105,6 +161,9 @@ public class OAlterSequenceStatement extends ODDLStatement {
     result.start = start == null ? null : start.copy();
     result.increment = increment == null ? null : increment.copy();
     result.cache = cache == null ? null : cache.copy();
+    result.positive = positive;
+    result.cyclic = cyclic;
+    result.limitValue = limitValue == null ? null : limitValue.copy();    
     return result;
   }
 
@@ -125,6 +184,18 @@ public class OAlterSequenceStatement extends ODDLStatement {
       return false;
     if (cache != null ? !cache.equals(that.cache) : that.cache != null)
       return false;
+    if (!Objects.equals(positive, that.positive)) {
+      return false;
+    }
+    if (!Objects.equals(cyclic, that.cyclic)) {
+      return false;
+    }
+    if (!Objects.equals(limitValue, that.limitValue)) {
+      return false;
+    }    
+    if (turnLimitOff != that.turnLimitOff){
+      return false;
+    }
 
     return true;
   }
@@ -135,6 +206,10 @@ public class OAlterSequenceStatement extends ODDLStatement {
     result = 31 * result + (start != null ? start.hashCode() : 0);
     result = 31 * result + (increment != null ? increment.hashCode() : 0);
     result = 31 * result + (cache != null ? cache.hashCode() : 0);
+    result = 31 * result + (positive != null ? positive.hashCode() : 0);
+    result = 31 * result + (cyclic != null ? cyclic.hashCode() : 0);
+    result = 31 * result + (limitValue != null ? limitValue.hashCode() : 0);    
+    result = 31 * result + Boolean.hashCode(turnLimitOff);
     return result;
   }
 }

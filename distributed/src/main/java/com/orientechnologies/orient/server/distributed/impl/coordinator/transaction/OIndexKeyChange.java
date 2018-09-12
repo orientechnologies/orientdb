@@ -1,33 +1,95 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OIndexKeyChange {
-  // Key Change Operation
-  private final static int PUT       = 1;
-  private final static int REMOVE    = 2;
+
   // Key Type
   private final static int SIMPLE    = 1;
   private final static int COMPOSITE = 2;
 
-  private int    operation;
-  private int    keyType;
-  private Object value;
+  private Object                   key;
+  private List<OIndexKeyOperation> operations;
 
-  public OIndexKeyChange(int operation, Object value) {
-    this.operation = operation;
-    if (value instanceof OCompositeKey) {
-      keyType = COMPOSITE;
-    } else {
-      keyType = SIMPLE;
+  public OIndexKeyChange(Object key, List<OIndexKeyOperation> operations) {
+    this.key = key;
+    this.operations = operations;
+  }
+
+  public OIndexKeyChange() {
+
+  }
+
+  public Object getKey() {
+    return key;
+  }
+
+  public void serialize(DataOutput output) throws IOException {
+    serializeKey(key, output);
+    output.writeInt(operations.size());
+    for (OIndexKeyOperation operation : operations) {
+      operation.serialize(output);
     }
   }
 
-  public int getOperation() {
-    return operation;
+  private void serializeKey(Object key, DataOutput output) throws IOException {
+    if (key instanceof OCompositeKey) {
+      output.writeBoolean(true);
+      List<Object> keys = ((OCompositeKey) key).getKeys();
+      output.writeInt(keys.size());
+      for (Object o : keys) {
+        serializeKey(o, output);
+      }
+    } else {
+      output.writeBoolean(false);
+      //TODO: Handle null key
+      OType valType = OType.getTypeByValue(key);
+      output.writeByte(valType.getId());
+      byte[] bytes = ORecordSerializerNetwork.INSTANCE.serializeValue(key, valType);
+      output.writeInt(bytes.length);
+      output.write(bytes);
+    }
+
   }
 
-  public Object getValue() {
-    return value;
+  public void deserialize(DataInput input) throws IOException {
+    key = deserializeKey(input);
+    int operations = input.readInt();
+    this.operations = new ArrayList<>(operations);
+    while (operations-- > 0) {
+      OIndexKeyOperation operation = new OIndexKeyOperation();
+      operation.deserialize(input);
+      this.operations.add(operation);
+    }
+  }
+
+  private Object deserializeKey(DataInput input) throws IOException {
+    boolean composite = input.readBoolean();
+    if (composite) {
+      int size = input.readInt();
+      List<Object> keys = new ArrayList<>(size);
+      while (size-- > 0) {
+        keys.add(deserializeKey(input));
+      }
+      return new OCompositeKey(keys);
+    } else {
+      OType keyType = OType.getById(input.readByte());
+      int keySize = input.readInt();
+      byte bytes[] = new byte[keySize];
+      input.readFully(bytes);
+      return ORecordSerializerNetwork.INSTANCE.deserializeValue(bytes, keyType);
+    }
+  }
+
+  public List<OIndexKeyOperation> getOperations() {
+    return operations;
   }
 }

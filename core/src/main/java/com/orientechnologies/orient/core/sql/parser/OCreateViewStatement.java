@@ -2,17 +2,18 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class OCreateViewStatement extends ODDLStatement {
 
@@ -57,7 +58,104 @@ public class OCreateViewStatement extends ODDLStatement {
   }
 
   public void checkMetadataSyntax() throws OCommandSQLParsingException {
-    //TODO
+    Set<String> validAttributes = new HashSet<>();
+    validAttributes.add("updatable");
+    validAttributes.add("updateIntervalSeconds");
+    validAttributes.add("updateStrategy");
+    validAttributes.add("watchClasses");
+    validAttributes.add("originRidField");
+    validAttributes.add("nodes");
+    validAttributes.add("indexes");
+    if (metadata == null) {
+      return;
+    }
+    Map<String, Object> metadataMap = metadata.toMap(new OResultInternal(), new OBasicCommandContext());
+    for (Map.Entry<String, Object> s : metadataMap.entrySet()) {
+
+      String key = s.getKey();
+      Object value = s.getValue();
+      switch (key) {
+      case "updatable":
+        if (!(value instanceof Boolean)) {
+          throw new OCommandSQLParsingException(
+              "Invalid value for view metadata: updatable should be true or false, it is " + value);
+        }
+        if (Boolean.TRUE.equals(value)) {
+          if (!metadataMap.containsKey("originRidField"))
+            throw new OCommandSQLParsingException("Updatable view needs a originRidField defined");
+        }
+        break;
+      case "updateIntervalSeconds":
+        if (!(value instanceof Number)) {
+          throw new OCommandSQLParsingException(
+              "Invalid value for view metadata: updateIntervalSeconds should be a number, it is " + value);
+        }
+        break;
+      case "updateStrategy":
+        if (!(OViewConfig.UPDATE_STRATEGY_BATCH.equals(value) || OViewConfig.UPDATE_STRATEGY_LIVE.equals(value))) {
+          throw new OCommandSQLParsingException(
+              "Invalid value for view metadata: updateStrategy should be " + OViewConfig.UPDATE_STRATEGY_LIVE + " or "
+                  + OViewConfig.UPDATE_STRATEGY_BATCH + ", it is " + value);
+        }
+        break;
+      case "watchClasses":
+        if (!(value instanceof Collection)) {
+          throw new OCommandSQLParsingException(
+              "Invalid value for view metadata: watchClasses should be a list of class names as strings, it is " + value);
+        }
+        if (((Collection) value).stream().anyMatch(x -> !(x instanceof String))) {
+          throw new OCommandSQLParsingException(
+              "Invalid value for view metadata: watchClasses should be a list of class names as strings, one value is null");
+        }
+        break;
+      case "originRidField":
+        if (!(value instanceof String)) {
+          throw new OCommandSQLParsingException(
+              "Invalid value for view metadata: updateStrategy should be a string, it is " + value);
+        }
+        break;
+      case "nodes":
+        if (!(value instanceof Collection)) {
+          throw new OCommandSQLParsingException(
+              "Invalid value for view metadata: nodes should be a list of class names as strings, it is " + value);
+        }
+        if (((Collection) value).stream().anyMatch(x -> !(x instanceof String))) {
+          throw new OCommandSQLParsingException(
+              "Invalid value for view metadata: nodes should be a list of class names as strings, one value is null");
+        }
+        break;
+      case "indexes":
+        if (!(value instanceof Collection)) {
+          throw new OCommandSQLParsingException(
+              "Invalid value for view metadata: indexes should be a list of class names as strings, it is " + value);
+        }
+        for (Object o : (Collection) value) {
+          if (!(o instanceof Map)) {
+            throw new OCommandSQLParsingException(
+                "Invalid value for view metadata: index configuration should be as follows: {type:'<index_type>', engine:'<engine_name>', properties:{propName1:'<type>', propNameN:'<type'>}}. Engine is optional");
+          }
+          Map<String, Object> valueMap = (Map<String, Object>) o;
+          for (String idxKey : valueMap.keySet()) {
+            switch (idxKey) {
+            case "type":
+            case "engine":
+            case "properties":
+              break;
+
+            default:
+              throw new OCommandSQLParsingException(
+                  "Invalid key for view index metadata: " + idxKey + ". Valid keys are 'type', 'engine', 'properties'");
+            }
+          }
+        }
+        break;
+
+      default:
+        throw new OCommandSQLParsingException("Invalid metadata for view: " + key);
+      }
+
+    }
+
   }
 
   @Override

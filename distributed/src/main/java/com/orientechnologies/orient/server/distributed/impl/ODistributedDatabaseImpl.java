@@ -32,15 +32,18 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.server.distributed.impl.task.ODistributedLockTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OWaitForTask;
@@ -53,10 +56,7 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -94,9 +94,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private          AtomicBoolean                         parsing               = new AtomicBoolean(true);
   private final    AtomicReference<ODistributedMomentum> filterByMomentum      = new AtomicReference<ODistributedMomentum>();
 
-  private String                     localNodeName;
-  private OSimpleLockManager<ORID>   recordLockManager;
-  private OSimpleLockManager<Object> indexKeyLockManager;
+  private final String                     localNodeName;
+  private final OSimpleLockManager<ORID>   recordLockManager;
+  private final OSimpleLockManager<Object> indexKeyLockManager;
 
   public OSimpleLockManager<ORID> getRecordLockManager() {
     return recordLockManager;
@@ -120,7 +120,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public ODistributedDatabaseImpl(final OHazelcastPlugin manager, final ODistributedMessageServiceImpl msgService,
-      final String iDatabaseName, final ODistributedConfiguration cfg) {
+      final String iDatabaseName, final ODistributedConfiguration cfg, OServer server) {
     this.manager = manager;
     this.msgService = msgService;
     this.databaseName = iDatabaseName;
@@ -135,8 +135,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     startAcceptingRequests();
 
-    if (iDatabaseName.equals(OSystemDatabase.SYSTEM_DB_NAME))
+    if (iDatabaseName.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
+      recordLockManager = null;
+      indexKeyLockManager = null;
       return;
+    }
 
     startTxTimeoutTimerTask();
 
@@ -200,7 +203,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public void waitForOnline() {
     try {
-      if(!databaseName.equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME))
+      if (!databaseName.equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME))
         waitForOnline.await();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -1386,4 +1389,5 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     return buffer.toString();
   }
+
 }

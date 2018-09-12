@@ -4,20 +4,23 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class ODistributedExecutor implements AutoCloseable {
 
-  private       OOperationLog    operationLog;
-  private       ExecutorService  executor;
-  private       OrientDBInternal orientDB;
-  private final String           database;
+  private       OOperationLog                   operationLog;
+  private       ExecutorService                 executor;
+  private       OrientDBInternal                orientDB;
+  private final String                          database;
+  private final Map<String, ODistributedMember> members = new ConcurrentHashMap<>();
 
-  public ODistributedExecutor(ExecutorService executor, OOperationLog operationLog, OrientDB orientDB, String database) {
+  public ODistributedExecutor(ExecutorService executor, OOperationLog operationLog, OrientDBInternal orientDB, String database) {
     this.operationLog = operationLog;
     this.executor = executor;
-    this.orientDB = OrientDBInternal.extract(orientDB);
+    this.orientDB = orientDB;
     this.database = database;
   }
 
@@ -42,5 +45,17 @@ public class ODistributedExecutor implements AutoCloseable {
       Thread.currentThread().interrupt();
     }
     orientDB.close();
+  }
+
+  public void join(ODistributedMember member) {
+    members.put(member.getName(), member);
+  }
+
+  public ODistributedMember getMember(String senderNode) {
+    return members.get(senderNode);
+  }
+
+  public void leave(ODistributedMember member) {
+    members.remove(member.getName());
   }
 }

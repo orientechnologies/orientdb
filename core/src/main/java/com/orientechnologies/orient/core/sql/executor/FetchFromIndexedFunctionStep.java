@@ -66,6 +66,7 @@ public class FetchFromIndexedFunctionStep extends AbstractExecutionStep {
           }
           OResultInternal result = new OResultInternal();
           result.setElement(fullResult.next());
+          ctx.setVariable("$current", result);
           localCount++;
           return result;
         } finally {

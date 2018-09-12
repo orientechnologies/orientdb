@@ -59,7 +59,6 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_RECORD_CREATE    = 31;
   public static final byte REQUEST_RECORD_UPDATE    = 32;
   public static final byte REQUEST_RECORD_DELETE    = 33;
-  public static final byte REQUEST_RECORD_COPY      = 34;                 // NOT USED ANYMORE
   public static final byte REQUEST_BATCH_OPERATIONS = 35;                // since 3.0
   public static final byte REQUEST_POSITIONS_HIGHER = 36;                 // since 1.3.0
   public static final byte REQUEST_POSITIONS_LOWER  = 37;                 // since 1.3.0
@@ -103,6 +102,10 @@ public class OChannelBinaryProtocol {
   public static final byte SUBSCRIBE_PUSH   = 100;
   public static final byte UNSUBSCRIBE_PUSH = 101;
   public static final byte EXPERIMENTAL     = 102;
+  public static final byte DISTRIBUTED_SUBMIT_REQUEST     = 103;
+  public static final byte DISTRIBUTED_SUBMIT_RESPONSE    = 104;
+  public static final byte DISTRIBUTED_OPERATION_REQUEST  = 105;
+  public static final byte DISTRIBUTED_OPERATION_RESPONSE = 106;
 
   // REMOTE SB-TREE COLLECTIONS
   public static final byte REQUEST_CREATE_SBTREE_BONSAI            = 110;

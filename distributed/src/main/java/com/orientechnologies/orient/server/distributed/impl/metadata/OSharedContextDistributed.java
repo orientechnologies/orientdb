@@ -49,7 +49,7 @@ public class OSharedContextDistributed extends OSharedContext {
 
     queryStats = new OQueryStats();
 
-    distributedContext = new ODistributedContext();
+    distributedContext = new ODistributedContext(storage, orientDB);
     this.viewManager = new ViewManagerDistributed(orientDB, storage.getName());
     this.viewManager.start();
 

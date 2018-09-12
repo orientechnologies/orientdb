@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
 import com.orientechnologies.orient.core.util.OURLConnection;
 import com.orientechnologies.orient.core.util.OURLHelper;
 
@@ -100,8 +101,8 @@ public class ODatabasePool implements AutoCloseable {
   }
 
   /**
-   * Open a new database pool from a environment and a database name, useful in case the application access to only a database or
-   * do not manipulate databases.
+   * Open a new database pool from a environment and a database name, useful in case the application access to only a database or do
+   * not manipulate databases.
    *
    * @param environment the url for an environemnt, like "embedded:/the/environment/path/" or "remote:localhost"
    * @param database    the database for the current url.
@@ -128,7 +129,14 @@ public class ODatabasePool implements AutoCloseable {
     internal = orientDb.openPool(database, user, password, configuration);
   }
 
-  public ODatabaseSession acquire() {
+  /**
+   * Acquire a session from the pool, if no session are available will wait until a session is available or a timeout is reached
+   *
+   * @return a session from the pool.
+   *
+   * @throws OAcquireTimeoutException in case the timeout for waiting for a session is reached.
+   */
+  public ODatabaseSession acquire() throws OAcquireTimeoutException {
     return internal.acquire();
   }
 

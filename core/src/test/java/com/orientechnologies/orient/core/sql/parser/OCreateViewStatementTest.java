@@ -10,7 +10,7 @@ public class OCreateViewStatementTest extends OParserTestAbstract {
     checkRightSyntax("create view Foo from (select from v where name ='foo')");
     checkRightSyntax("create view Foo from (MATCH {class:V} RETURN $elements)");
 
-    checkRightSyntax("CREATE VIEW Foo FROM (select from v where name ='foo') METADATA {updatable:true}");
+    checkRightSyntax("CREATE VIEW Foo FROM (select from v where name ='foo') METADATA {updatable:true, originRidField:'origin'}");
 
     checkWrongSyntax("create view Foo");
 
