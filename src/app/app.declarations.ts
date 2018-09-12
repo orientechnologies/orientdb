@@ -38,7 +38,8 @@ import {
   AuditingLogComponent,
   AuthenticationComponent,
   PasswordAuthenticatorComponent,
-  KerberosAuthenticatorComponent
+  KerberosAuthenticatorComponent,
+  SecurityMiscComponent
 } from "./administration";
 
 import {
@@ -95,5 +96,6 @@ export const APP_DECLARATIONS = [
   AuditingLogComponent,
   AuthenticationComponent,
   PasswordAuthenticatorComponent,
-  KerberosAuthenticatorComponent
+  KerberosAuthenticatorComponent,
+  SecurityMiscComponent
 ];
