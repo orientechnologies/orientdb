@@ -43,7 +43,7 @@ public class WOWCacheTestIT {
   private static final int systemOffset = 2 * (OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE);
   private static final int pageSize     = systemOffset + 8;
 
-  private static String                 fileName;
+  private static String fileName;
 
   private static       OCASDiskWriteAheadLog writeAheadLog;
   private static final OByteBufferPool       bufferPool = new OByteBufferPool(pageSize);
@@ -125,7 +125,7 @@ public class WOWCacheTestIT {
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, Integer.MAX_VALUE,
         Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
     wowCache = new OWOWCache(pageSize, bufferPool, writeAheadLog, 10, 10, 100, 10_000_000, storagePath, storageName,
-        OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, false, 0.9, true, 10, true, true, true, false);
+        OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndVerify, false, 0.9, true, 10, true, true, true);
 
     wowCache.loadRegisteredFiles();
   }

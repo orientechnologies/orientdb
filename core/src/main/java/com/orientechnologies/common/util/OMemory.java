@@ -22,12 +22,7 @@ package com.orientechnologies.common.util;
 import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
-import com.sun.jna.Platform;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
-import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -73,56 +68,6 @@ public class OMemory {
               + " bytes). That may cause out of memory errors, please tune the configuration up. Use the "
               + "-Xmx JVM option to lower the JVM maximum heap memory size or storage.diskCache.bufferSize OrientDB option to "
               + "lower memory requirements of the cache.");
-  }
-
-  public static void lockMemory() {
-    if (OGlobalConfiguration.MEMORY_LOCK.getValueAsBoolean()) {
-      if (Platform.isLinux()) {
-        if (!ONative.instance().isUnlimitedMemoryLocking()) {
-          OLogManager.instance().warnNoDb(OMemory.class,
-              "To allow preventing OrientDB buffers from swapping you should set unlimited soft limit for current user.");
-          OGlobalConfiguration.MEMORY_LOCK.setValue(false);
-          return;
-        }
-
-        final RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
-        final List<String> inputArgs = runtimeMXBean.getInputArguments();
-
-        String xms = null;
-        String xmx = null;
-
-        for (String inputArg : inputArgs) {
-          if (inputArg.matches("-Xms\\d+[gGmMkK]?")) {
-            xms = inputArg;
-          } else if (inputArg.matches("-Xmx\\d+[gGmMkK]?")) {
-            xmx = inputArg;
-          }
-        }
-
-        if (xmx == null || xms == null) {
-          OLogManager.instance().infoNoDb(OMemory.class,
-              "Can not prevent heap memory from swapping because initial or maximum values of heap memory usage are NOT set.");
-          return;
-        }
-
-        final long xmsBytes = extractMemoryLimitInBytes(xms);
-        final long xmxBytes = extractMemoryLimitInBytes(xmx);
-
-        if (xmsBytes == xmxBytes) {
-          ONative.instance().mlockall(ONative.MCL_CURRENT);
-          OLogManager.instance()
-              .infoNoDb(OMemory.class, "Memory currently allocated by process is locked and can not be swapped to the disk.");
-        } else {
-          OLogManager.instance().infoNoDb(OMemory.class,
-              "Initial and maximum values of heap memory usage are NOT equal, containers of "
-                  + "results of SQL executors will NOT use soft references by default");
-        }
-      } else {
-        OLogManager.instance().infoNoDb(OEngineLocalPaginated.class,
-            "Can not prevent OrientDB buffers from swapping, this feature is supported only for OS Linux");
-        OGlobalConfiguration.MEMORY_LOCK.setValue(false);
-      }
-    }
   }
 
   private static long extractMemoryLimitInBytes(String limit) {

@@ -55,7 +55,6 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
 
     OMemory.checkCacheMemoryConfiguration();
     OMemory.fixCommonConfigurationProblems();
-    OMemory.lockMemory();
   }
 
   private void configureDefaults() {
