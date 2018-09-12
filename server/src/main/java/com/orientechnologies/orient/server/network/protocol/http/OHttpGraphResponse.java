@@ -68,6 +68,9 @@ public class OHttpGraphResponse extends OHttpResponse {
       // DIVIDE VERTICES FROM EDGES
       final Set<OVertex> vertices = new HashSet<>();
 
+      Set<ORID> edgeRids = new HashSet<ORID>();
+      boolean lightweightFound = false;
+
       final Iterator<Object> iIterator = OMultiValue.getMultiValueIterator(iRecords);
       while (iIterator.hasNext()) {
         Object entry = iIterator.next();
@@ -95,6 +98,11 @@ public class OHttpGraphResponse extends OHttpResponse {
             OEdge edge = element.asEdge().get();
             vertices.add(edge.getTo());
             vertices.add(edge.getFrom());
+            if (edge.getIdentity() != null) {
+              edgeRids.add(edge.getIdentity());
+            } else {
+              lightweightFound = true;
+            }
           } else
             // IGNORE IT
             continue;
@@ -124,35 +132,34 @@ public class OHttpGraphResponse extends OHttpResponse {
       }
       json.endCollection();
 
+      if (lightweightFound) {
+        //clean up cached edges and re-calculate, there could be more
+        edgeRids.clear();
+      }
+
       // WRITE EDGES
       json.beginCollection("edges");
-      Set<ORID> edgeRids = new HashSet<ORID>();
-      for (OVertex vertex : vertices) {
-        for (OEdge e : vertex.getEdges(ODirection.OUT)) {
-          OEdge edge = (OEdge) e;
-          if (edgeRids.contains(e.getIdentity()) && e.getIdentity() != null /* only for non-lighweight */) {
-            continue;
+
+      if (edgeRids.isEmpty()) {
+        for (OVertex vertex : vertices) {
+          for (OEdge e : vertex.getEdges(ODirection.OUT)) {
+            OEdge edge = (OEdge) e;
+            if (edgeRids.contains(e.getIdentity()) && e.getIdentity() != null /* only for non-lighweight */) {
+              continue;
+            }
+            if (!vertices.contains(edge.getVertex(ODirection.OUT)) || !vertices.contains(edge.getVertex(ODirection.IN)))
+              // ONE OF THE 2 VERTICES ARE NOT PART OF THE RESULT SET: DISCARD IT
+              continue;
+
+            edgeRids.add(edge.getIdentity());
+
+            printEdge(json, edge);
           }
-          if (!vertices.contains(edge.getVertex(ODirection.OUT)) || !vertices.contains(edge.getVertex(ODirection.IN)))
-            // ONE OF THE 2 VERTICES ARE NOT PART OF THE RESULT SET: DISCARD IT
-            continue;
-
-          edgeRids.add(edge.getIdentity());
-
-          json.beginObject();
-          json.writeAttribute("@rid", edge.getIdentity());
-          json.writeAttribute("@class", edge.getSchemaType().map(x -> x.getName()).orElse(null));
-
-          json.writeAttribute("out", edge.getVertex(ODirection.OUT).getIdentity());
-          json.writeAttribute("in", edge.getVertex(ODirection.IN).getIdentity());
-
-          for (String field : edge.getPropertyNames()) {
-            final Object v = edge.getProperty(field);
-            if (v != null)
-              json.writeAttribute(field, v);
-          }
-
-          json.endObject();
+        }
+      } else {
+        for (ORID edgeRid : edgeRids) {
+          OEdge edge = edgeRid.getRecord();
+          printEdge(json, edge);
         }
       }
 
@@ -182,5 +189,24 @@ public class OHttpGraphResponse extends OHttpResponse {
     } finally {
       graph.close();
     }
+  }
+
+  private void printEdge(OJSONWriter json, OEdge edge) throws IOException {
+    json.beginObject();
+    json.writeAttribute("@rid", edge.getIdentity());
+    json.writeAttribute("@class", edge.getSchemaType().map(x -> x.getName()).orElse(null));
+
+    json.writeAttribute("out", edge.getVertex(ODirection.OUT).getIdentity());
+    json.writeAttribute("in", edge.getVertex(ODirection.IN).getIdentity());
+
+    for (String field : edge.getPropertyNames()) {
+      if (!(field.equals("out") || field.equals("in"))) {
+        final Object v = edge.getProperty(field);
+        if (v != null)
+          json.writeAttribute(field, v);
+      }
+    }
+
+    json.endObject();
   }
 }
