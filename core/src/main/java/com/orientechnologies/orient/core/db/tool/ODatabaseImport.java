@@ -1131,7 +1131,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   private ORID importRecord() throws Exception {
-    String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
+    String value = jsonReader.readString(OJSONReader.NEXT_IN_ARRAY).trim();
+
+    if (value.isEmpty()) {
+      return null;
+    }
 
     // JUMP EMPTY RECORDS
     while (!value.isEmpty() && value.charAt(0) != '{') {
@@ -1177,7 +1181,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       // CHECK IF THE CLUSTER IS INCLUDED
       if (includeClusters != null) {
         if (!includeClusters.contains(database.getClusterNameById(record.getIdentity().getClusterId()))) {
-          jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
           return null;
         }
       } else if (excludeClusters != null) {
@@ -1244,8 +1247,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         throw t;
       }
 
-    } finally {
-      jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
     }
 
     return record.getIdentity();
