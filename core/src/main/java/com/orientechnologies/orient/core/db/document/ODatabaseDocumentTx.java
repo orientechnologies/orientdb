@@ -1283,6 +1283,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return internal.newLightweightEdge(iClassName, from, to);
   }
 
+  public OEdge newRegularEdge(String iClassName, OVertex from, OVertex to) {
+    checkOpenness();
+    return internal.newRegularEdge(iClassName, from, to);
+  }
+
   @Override
   public long countClass(String iClassName) {
     checkOpenness();

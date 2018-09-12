@@ -78,11 +78,12 @@ public class OSuffixIdentifier extends SimpleNode {
       return null;
     }
     if (recordAttribute != null && iCurrentRecord != null) {
-      OElement rec = iCurrentRecord.getRecord();
+      OElement rec = iCurrentRecord instanceof OElement ? (OElement) iCurrentRecord : iCurrentRecord.getRecord();
       if (rec != null) {
-        return rec.getProperty(recordAttribute.name);
+        return recordAttribute.evaluate(rec, ctx);
       }
     }
+
     return null;
   }
 

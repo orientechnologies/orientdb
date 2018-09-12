@@ -160,6 +160,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   OEdge newLightweightEdge(String iClassName, OVertex from, OVertex to);
 
+  OEdge newRegularEdge(String iClassName, OVertex from, OVertex to);
+
   void setUseLightweightEdges(boolean b);
 
   /**
