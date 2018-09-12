@@ -66,6 +66,8 @@ class AuditingConfigComponent implements OnInit, OnDestroy {
           content: "Auditing configuration saved correctly.",
           autoHide: true
         });
+      }).catch((err)=>{
+
       });
   }
 

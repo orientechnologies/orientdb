@@ -34,6 +34,7 @@
                     </ul>
                     <div class="tab-content row">
                         <auditing-management [security]="security" [databases]="databases" *ngIf="tab === 'auditing'"></auditing-management>
+                        <authentication-management [security]="security" *ngIf="tab === 'auth'"></authentication-management>
                     </div>
                 </div>
             </div>

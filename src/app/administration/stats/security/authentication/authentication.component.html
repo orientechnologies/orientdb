@@ -1,0 +1,131 @@
+<div class="col-md-12">
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <b>Settings</b>
+
+                    <div class="panel-actions">
+                        <div class="btn-group">
+                            <button class="btn btn-primary btn-sm" (click)="saveAuthentication()">
+                                <i class="fa fa-save"></i>
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">
+                                Enabled
+                            </label>
+                            <div class="col-md-9">
+                                <input type="checkbox" name="enabledAuth" [(ngModel)]="security.authentication.enabled">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">
+                                Allow Default
+                                <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                                    data-container="body" data-content="{{ 'sec.authentication.allowDefault' | translate:links }}"
+                                    bs-popover>
+                                    <i class="fa fa-question-circle"></i>
+                                </a> -->
+                            </label>
+                            <div class="col-md-9">
+                                <input type="checkbox" name="allowDefault" [(ngModel)]="security.authentication.allowDefault">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-3 control-label">
+                                Authenticators
+                            </label>
+                            <div class="col-md-9">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <th>Name</th>
+                                        <th>Enabled</th>
+                                        <th>
+                                            <button class="btn btn-xs" (click)="addAuthenticator()"><i class="fa fa-plus-circle"></i>
+                                            </button>
+                                        </th>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-click="currentSelected = a.class" *ngFor="let a of security.authentication.authenticators; let idx = index"
+                                            [ngClass]="{ 'active' : (a.class == currentSelected)}">
+                                            <td>
+                                                {{a.name}}
+
+                                                <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus"
+                                                    data-placement="right" data-container="body" data-content="{{ 'sec.authenticator.' + a.name | translate:links }}"
+                                                    bs-popover>
+                                                    <i class="fa fa-question-circle"></i>
+                                                </a> -->
+                                            </td>
+                                            <td>
+                                                <input type="checkbox" name="{{idx}}aEnabled" [(ngModel)]="a.enabled"></td>
+                                            <td>
+
+                                                <button [disabled]="idx == security.authentication.authenticators.length-1"
+                                                    class="btn btn-xs btn-primary" (click)="moveDown(a,idx)"><i class="fa fa-arrow-down"></i></button>
+
+                                                <button [disabled]="idx == 0" class="btn btn-xs btn-primary" (click)="moveUp(a,idx)"><i
+                                                        class="fa fa-arrow-up"></i></button>
+
+                                                <button href="javascript:void(0)" class="btn btn-xs btn-danger" (click)="removeAuth(idx)"><i
+                                                        class="fa fa-remove"></i></button>
+                                                <button *ngIf="hasTemplate(a.name)" class="btn btn-xs" (click)="selectAuthenticator(idx)"><i
+                                                        class="fa fa-gear"></i></button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="panel panel-default" [hidden]="!currentAuthenticator">
+                <div class="panel-heading" *ngIf="currentAuthenticator">
+                    <b>{{currentAuthenticator.name }}</b>
+                </div>
+                <div class="panel-body">
+
+                    <div #authenticator>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <modal #authenticatorModal>
+            <modal-header [show-close]="true">
+                <h4 class="modal-title">Add Authenticator</h4>
+            </modal-header>
+            <modal-body>
+                <div class="row">
+                    <div class="span12">
+                        <div class="form-group">
+                            <label class="control-label col-md-3" for="inputIn"> Authenticator</label>
+                            <div class="col-md-9">
+                                <select id="inputIn" class="form-control" name="authenticator" [(ngModel)]="selectedAuthenticator"
+                                    required="">
+                                    <option *ngFor="let a of auths;" [ngValue]="a">{{a.name}}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </modal-body>
+            <modal-footer [show-default-buttons]="false">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" (click)="confirmAuthenticator(selectedAuthenticator)">Add</button>
+            </modal-footer>
+        </modal>
+    </div>
+</div>

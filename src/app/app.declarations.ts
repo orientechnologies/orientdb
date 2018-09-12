@@ -31,7 +31,14 @@ import {
   SingleBackupComponent,
   BackupCalendarComponent,
   BackupFinishedEvent,
-  GenericBackupEvent
+  GenericBackupEvent,
+  SecurityManagerComponent,
+  AuditingComponent,
+  AuditingConfigComponent,
+  AuditingLogComponent,
+  AuthenticationComponent,
+  PasswordAuthenticatorComponent,
+  KerberosAuthenticatorComponent
 } from "./administration";
 
 import {
@@ -42,7 +49,6 @@ import {
   NoAgentComponent,
   CronComponent
 } from "./util";
-import { SecurityManagerComponent, AuditingComponent, AuditingConfigComponent, AuditingLogComponent } from "./administration/stats/security";
 
 export const APP_DECLARATIONS = [
   ImportExportComponent,
@@ -86,5 +92,8 @@ export const APP_DECLARATIONS = [
   SecurityManagerComponent,
   AuditingComponent,
   AuditingConfigComponent,
-  AuditingLogComponent
+  AuditingLogComponent,
+  AuthenticationComponent,
+  PasswordAuthenticatorComponent,
+  KerberosAuthenticatorComponent
 ];
