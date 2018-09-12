@@ -1,0 +1,329 @@
+<div class="col-md-12">
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <b>Settings</b>
+          <div class="panel-actions">
+            <div class="btn-group">
+              <button class="btn btn-sm btn-primary" (click)="saveLdap()">
+                <i class="fa fa-save"></i> Save
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <form class="form-horizontal">
+            <div class="form-group">
+              <label class="col-md-3 control-label">
+                Enabled
+              </label>
+              <div class="col-md-9">
+                <input type="checkbox" name="enabled" [(ngModel)]="ldap.enabled">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-3 control-label">
+                Debug
+              </label>
+              <div class="col-md-9">
+                <input type="checkbox" name="debug" [(ngModel)]="ldap.debug">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-3 control-label">
+                Period (seconds)
+                <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right" data-container="body"
+                  data-content="{{ 'sec.ldap.period' | translate:links }}" bs-popover>
+                  <i class="fa fa-question-circle"></i>
+                </a> -->
+              </label>
+              <div class="col-md-9">
+                <input type="number" name="period" class="form-control" [(ngModel)]="ldap.period">
+              </div>
+            </div>
+
+            <!--SERVICE-->
+            <div class="form-group">
+              <label class="col-md-3 control-label">
+                Databases
+              </label>
+              <div class="col-md-9">
+                <table class="table table-hover">
+                  <thead>
+                    <th>
+                      Name
+                      <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                        data-container="body" data-content="{{ 'sec.ldap.database.name' | translate:links }}"
+                        bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                      </a> -->
+                    </th>
+                    <th>Ignore Local
+                      <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                        data-container="body" data-content="{{ 'sec.ldap.database.ignoreLocal' | translate:links }}"
+                        bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                      </a> -->
+                    </th>
+                    <th>
+                      <button class="btn btn-xs" (click)="addDatabase()"><i class="fa fa-plus-circle"></i>
+                      </button>
+                    </th>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let a of ldap.databases; let idx = index">
+                      <td>{{a.database}}</td>
+                      <td>
+                        <input type="checkbox" name="{{idx}}ignoreLocal" [(ngModel)]="a.ignoreLocal">
+                      <td>
+
+                        <button href="javascript:void(0)" class="btn btn-xs btn-danger" (click)="removeDatabase($index)">
+                          <i class="fa fa-remove"></i></button>
+                        <button class="btn btn-xs" (click)="setSelected(a)"><i class="fa fa-gear"></i></button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="panel panel-default" *ngIf="currentSelected">
+
+            <div class="panel-heading">
+              <b>Database</b>
+            </div>
+            <div class="panel-body">
+              <form class="form-horizontal">
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    Name
+                    <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                      data-container="body" data-content="{{ 'sec.ldap.database.name' | translate:links }}" bs-popover>
+                      <i class="fa fa-question-circle"></i>
+                    </a> -->
+                  </label>
+                  <div class="col-md-9">
+                    <select class="form-control" name="database" [(ngModel)]="currentSelected.database">
+                      <option *ngFor="let db of databases" [ngValue]="db">{{db}}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    Ignore Local
+                    <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                      data-container="body" data-content="{{ 'sec.ldap.database.ignoreLocal' | translate:links }}"
+                      bs-popover>
+                      <i class="fa fa-question-circle"></i>
+                    </a> -->
+                  </label>
+                  <div class="col-md-9">
+                    <input type="checkbox" name="ignoreLocal" [(ngModel)]="currentSelected.ignoreLocal">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    Domains
+                  </label>
+                  <div class="col-md-9">
+
+                    <table class="table table-hover">
+                      <thead>
+                        <th>Domain
+
+                          <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                            data-container="body" data-content="{{ 'sec.ldap.database.domain.domain' | translate:links }}"
+                            bs-popover>
+                            <i class="fa fa-question-circle"></i>
+                          </a> -->
+                        </th>
+                        <th>Authenticator
+                          <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                            data-container="body" data-content="{{ 'sec.ldap.database.domain.authenticator' | translate:links }}"
+                            bs-popover>
+                            <i class="fa fa-question-circle"></i>
+                          </a> -->
+                        </th>
+                        <th>
+                          <button class="btn btn-xs" (click)="addDomain()"><i class="fa fa-plus-circle"></i>
+                          </button>
+                        </th>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let domain of currentSelected.domains; let idx = index">
+                          <td>{{domain.domain}}</td>
+                          <td>
+                            {{domain.authenticator}}
+                          </td>
+                          <td>
+
+                            <button href="javascript:void(0)" class="btn btn-xs btn-danger" (click)="removeDomain(idx)">
+                              <i class="fa fa-remove"></i></button>
+                            <button class="btn btn-xs" (click)="setCurrentDomain(domain)"><i class="fa fa-gear"></i></button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-12">
+          <div class="panel panel-default" *ngIf="currentDomain">
+            <div class="panel-heading">
+              <b>Domain</b>
+            </div>
+            <div class="panel-body">
+              <form class="form-horizontal">
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    Domain
+                    <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                      data-container="body" data-content="{{ 'sec.ldap.database.domain.domain' | translate:links }}"
+                      bs-popover>
+                      <i class="fa fa-question-circle"></i>
+                    </a> -->
+                  </label>
+                  <div class="col-md-9">
+                    <input type="text" class="form-control" name="domain" [(ngModel)]="currentDomain.domain">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    Authenticator
+                    <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                      data-container="body" data-content="{{ 'sec.ldap.database.domain.authenticator' | translate:links }}"
+                      bs-popover>
+                      <i class="fa fa-question-circle"></i>
+                    </a> -->
+                  </label>
+                  <div class="col-md-9">
+                    <select class="form-control" name="authenticator" [(ngModel)]="currentDomain.authenticator">
+                      <option *ngFor="let a of authenticators" [ngValue]="a.name">{{a.name}}</option>
+                    </select>
+
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    Servers
+                  </label>
+                  <div class="col-md-9">
+                    <table class="table table-hover">
+                      <thead>
+                        <th>Url
+                          <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                            data-container="body" data-content="{{ 'sec.ldap.database.domain.server.url' | translate:links }}"
+                            bs-popover>
+                            <i class="fa fa-question-circle"></i>
+                          </a> -->
+                        </th>
+                        <th>isAlias
+                          <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                            data-container="body" data-content="{{ 'sec.ldap.database.domain.server.isAlias' | translate:links }}"
+                            bs-popover>
+                            <i class="fa fa-question-circle"></i>
+                          </a> -->
+                        </th>
+                        <th>
+                          <button class="btn btn-xs" (click)="addServer()"><i class="fa fa-plus-circle"></i>
+                          </button>
+                        </th>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let server of currentDomain.servers; let idx = index">
+                          <td>
+                            <input type="text" class="form-control" name="{{idx}}url" [(ngModel)]="server.url" />
+                          <td>
+                            <input type="checkbox" name="{{idx}}alias" [(ngModel)]="server.isAlias" />
+                          </td>
+                          <td>
+
+                            <button href="javascript:void(0)" class="btn btn-xs btn-danger" (click)="removeServer(idx)">
+                              <i class="fa fa-remove"></i></button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    Users
+                  </label>
+                  <div class="col-md-9">
+                    <table class="table table-hover">
+                      <thead>
+                        <th>BaseDN
+                          <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                            data-container="body" data-content="{{ 'sec.ldap.database.domain.user.baseDN' | translate:links }}"
+                            bs-popover>
+                            <i class="fa fa-question-circle"></i>
+                          </a> -->
+                        </th>
+                        <th>Filter
+                          <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                            data-container="body" data-content="{{ 'sec.ldap.database.domain.user.filter' | translate:links }}"
+                            bs-popover>
+                            <i class="fa fa-question-circle"></i>
+                          </a> -->
+                        </th>
+                        <th>Roles (comma separated)
+                          <!-- <a href="javascript:void(0)" tabindex="1" data-trigger="focus" data-placement="right"
+                            data-container="body" data-content="{{ 'sec.ldap.database.domain.user.roles' | translate:links }}"
+                            bs-popover>
+                            <i class="fa fa-question-circle"></i>
+                          </a> -->
+                        </th>
+                        <th>
+                          <button class="btn btn-xs" (click)="addUser()"><i class="fa fa-plus-circle"></i>
+                          </button>
+                        </th>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let user of currentDomain.users; let idx = index">
+                          <td>
+                            <input type="text" class="form-control" name="{{idx}}baseDN" [(ngModel)]="user.baseDN" />
+                          <td>
+                            <input type="text" class="form-control" name="{{idx}}filter" [(ngModel)]="user.filter" />
+                          </td>
+                          <td>
+
+                            <input type="
+                              text" class="form-control" name="{{idx}}roles"
+                              [(ngModel)]="user.roles" />
+
+                          </td>
+
+                          <td>
+                            <button href="javascript:void(0)" class="btn btn-xs btn-danger" (click)="removeUser(idx)">
+                              <i class="fa fa-remove"></i></button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

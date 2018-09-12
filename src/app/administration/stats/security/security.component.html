@@ -35,6 +35,7 @@
                     <div class="tab-content row">
                         <auditing-management [security]="security" [databases]="databases" *ngIf="tab === 'auditing'"></auditing-management>
                         <authentication-management [security]="security" *ngIf="tab === 'auth'"></authentication-management>
+                        <ldap-importer-management [security]="security" *ngIf="tab === 'ldap'"></ldap-importer-management>
                         <security-misc-management [security]="security" *ngIf="tab === 'misc'"></security-misc-management>
                     </div>
                 </div>

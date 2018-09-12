@@ -39,7 +39,8 @@ import {
   AuthenticationComponent,
   PasswordAuthenticatorComponent,
   KerberosAuthenticatorComponent,
-  SecurityMiscComponent
+  SecurityMiscComponent,
+  LdapImporterComponent
 } from "./administration";
 
 import {
@@ -97,5 +98,6 @@ export const APP_DECLARATIONS = [
   AuthenticationComponent,
   PasswordAuthenticatorComponent,
   KerberosAuthenticatorComponent,
-  SecurityMiscComponent
+  SecurityMiscComponent,
+  LdapImporterComponent
 ];
