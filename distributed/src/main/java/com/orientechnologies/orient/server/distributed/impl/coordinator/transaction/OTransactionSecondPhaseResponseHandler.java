@@ -28,6 +28,7 @@ public class OTransactionSecondPhaseResponseHandler implements OResponseHandler 
       ONodeResponse response) {
     responseCount++;
     if (responseCount >= context.getQuorum()) {
+      OTransactionSecondPhaseResponse values = (OTransactionSecondPhaseResponse) response;
       if (success) {
         if (guards != null) {
           for (OLockGuard guard : guards) {
@@ -35,7 +36,8 @@ public class OTransactionSecondPhaseResponseHandler implements OResponseHandler 
           }
         }
         if (!replySent) {
-          coordinator.reply(requester, operationId, new OTransactionResponse(true));
+          coordinator.reply(requester, operationId,
+              new OTransactionResponse(true, values.getCreatedRecords(), values.getUpdatedRecords(), values.getDeletedRecords()));
           replySent = true;
         }
       }

@@ -101,7 +101,8 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
       }
     }
     if (!replySent) {
-      coordinator.reply(requester, operationId, new OTransactionResponse(false));
+      coordinator
+          .reply(requester, operationId, new OTransactionResponse(false, new ArrayList<>(), new ArrayList<>(), new ArrayList<>()));
       replySent = true;
     }
     secondPhaseSent = true;

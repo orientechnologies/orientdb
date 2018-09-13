@@ -30,7 +30,7 @@ public class OClusterPositionAllocatorDatabase implements OClusterPositionAlloca
     context1.registerListener(new OMetadataUpdateListener() {
       @Override
       public void onSchemaUpdate(String database, OSchemaShared schema) {
-
+        initAllocators(context1.getStorage());
       }
 
       @Override

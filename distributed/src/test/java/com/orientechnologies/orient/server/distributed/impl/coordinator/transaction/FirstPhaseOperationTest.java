@@ -124,11 +124,11 @@ public class FirstPhaseOperationTest {
       OElement ele = session.newElement("simple");
       ele.setProperty("indexed", "val");
       session.save(ele);
-      Collection<ORecordOperation> txOps = ((OTransactionOptimistic) session.getTransaction()).getRecordOperations();
+      OTransactionOptimistic tx = (OTransactionOptimistic) session.getTransaction();
+      Collection<ORecordOperation> txOps = tx.getRecordOperations();
       networkOps = OTransactionSubmit.genOps(txOps);
-      Map<String, OTransactionIndexChanges> indexOperations = ((OTransactionOptimistic) session.getTransaction())
-          .getIndexOperations();
-      indexes = OTransactionSubmit.genIndexes(indexOperations);
+      Map<String, OTransactionIndexChanges> indexOperations = tx.getIndexOperations();
+      indexes = OTransactionSubmit.genIndexes(indexOperations, tx);
     }
 
     OTransactionFirstPhaseOperation ops = new OTransactionFirstPhaseOperation(new OSessionOperationId(), networkOps, indexes);

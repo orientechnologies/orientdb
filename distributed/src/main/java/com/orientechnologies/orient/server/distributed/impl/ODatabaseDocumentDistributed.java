@@ -9,6 +9,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.client.remote.message.OCommit37Response;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
@@ -577,12 +578,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>());
     OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
     sharedContext.getDistributedContext().registerTransaction(operationId, tx);
-    List<ORecordOperation> opes = OTransactionFirstPhaseOperation.convert(this, operations);
-    tx.begin(opes, indexes);
+    tx.begin(operations, indexes);
     firstPhaseDataChecks(false, tx);
   }
 
-  public void txSecondPhase(OSessionOperationId operationId, boolean success) {
+  public OTransactionOptimisticDistributed txSecondPhase(OSessionOperationId operationId, boolean success) {
     OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
     OTransactionContext context = sharedContext.getDistributedContext().getTransaction(operationId);
     try {
@@ -590,6 +590,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         OTransactionInternal tx = context.getTransaction();
         tx.setDatabase(this);
         ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
+        return (OTransactionOptimisticDistributed) tx;
       } else {
         //FOR NOW ROLLBACK DO NOTHING ON THE STORAGE ONLY THE CLOSE IS NEEDED
       }
@@ -600,7 +601,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } finally {
       sharedContext.getDistributedContext().closeTransaction(operationId);
     }
-
+    return null;
   }
 
   public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local, int retryCount) {

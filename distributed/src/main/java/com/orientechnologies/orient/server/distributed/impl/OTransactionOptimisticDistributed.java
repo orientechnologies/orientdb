@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -13,9 +14,11 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OIndexKeyChange;
@@ -35,12 +38,48 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
     this.changes = changes;
   }
 
-  public void begin(List<ORecordOperation> ops, List<OIndexOperationRequest> indexes) {
+  public void begin(List<ORecordOperationRequest> operations, List<OIndexOperationRequest> indexes) {
     super.begin();
+
+    List<ORecordOperation> ops = new ArrayList<>();
+    for (ORecordOperationRequest req : operations) {
+      byte type = req.getType();
+      if (type == ORecordOperation.LOADED) {
+        continue;
+      }
+
+      ORecord record = null;
+      switch (type) {
+      case ORecordOperation.CREATED: {
+        addUpdatedRid(req.getOldId(), req.getId());
+        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+        ORecordInternal.setRecordSerializer(record, database.getSerializer());
+        createdRecords.put(req.getOldId(), record);
+      }
+      break;
+      case ORecordOperation.UPDATED: {
+        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+        ORecordInternal.setRecordSerializer(record, database.getSerializer());
+      }
+      break;
+      case ORecordOperation.DELETED:
+        record = database.getRecord(req.getId());
+        if (record == null) {
+          record = Orient.instance().getRecordFactoryManager()
+              .newInstance(req.getRecordType(), req.getId().getClusterId(), database);
+        }
+        break;
+      }
+      ORecordInternal.setIdentity(record, (ORecordId) req.getId());
+      ORecordInternal.setVersion(record, req.getVersion());
+      ORecordOperation op = new ORecordOperation(record, type);
+      ops.add(op);
+    }
     for (ORecordOperation change : ops) {
       allEntries.put(change.getRID(), change);
       resolveTracking(change, false);
     }
+
     for (OIndexOperationRequest indexChange : indexes) {
       OIndex<?> index = database.getMetadata().getIndexManager().getIndex(indexChange.getIndexName());
       if (indexChange.isCleanIndexValues()) {
@@ -72,7 +111,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
 
   }
 
-  private void resolveTracking(ORecordOperation change, boolean indexes) {
+  private void resolveTracking(ORecordOperation change, boolean onlyExecutorCase) {
     if (change.getRecord() instanceof ODocument) {
       ODocument rec = (ODocument) change.getRecord();
       List<OClassIndexManager.IndexChange> changes = new ArrayList<>();
@@ -84,7 +123,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
           OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, database);
           OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
           if (clazz != null) {
-            if (indexes) {
+            if (onlyExecutorCase) {
               OClassIndexManager.processIndexOnCreate(database, rec, changes);
             }
             if (clazz.isFunction()) {
@@ -99,7 +138,9 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
             }
           }
         }
-        createdRecords.put(change.getRID().copy(), change.getRecord());
+        if (onlyExecutorCase) {
+          createdRecords.put(change.getRID().copy(), change.getRecord());
+        }
         break;
       case ORecordOperation.UPDATED:
         if (change.getRecord() instanceof ODocument) {
@@ -113,7 +154,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
           OLiveQueryHookV2.addOp(doc, ORecordOperation.UPDATED, database);
           OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
           if (clazz != null) {
-            if (indexes) {
+            if (onlyExecutorCase) {
               OClassIndexManager.processIndexOnUpdate(database, doc, changes);
             }
             if (clazz.isFunction()) {
@@ -132,7 +173,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
           ODocument doc = (ODocument) change.getRecord();
           OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
           if (clazz != null) {
-            if (indexes) {
+            if (onlyExecutorCase) {
               OClassIndexManager.processIndexOnDelete(database, rec, changes);
             }
             if (clazz.isFunction()) {
@@ -157,7 +198,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
       default:
         break;
       }
-      if (indexes) {
+      if (onlyExecutorCase) {
         for (OClassIndexManager.IndexChange indexChange : changes) {
           addIndexEntry(indexChange.index, indexChange.index.getName(), indexChange.operation, indexChange.key, indexChange.value);
         }

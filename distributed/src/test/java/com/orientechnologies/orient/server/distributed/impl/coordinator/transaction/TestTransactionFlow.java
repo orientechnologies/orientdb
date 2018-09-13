@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.impl.OIncrementOperationalLog;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -48,6 +49,11 @@ public class TestTransactionFlow {
     }
   }
 
+  @After
+  public void after() {
+    server0.shutdown();
+  }
+
   @Test
   public void testFlowWithIndexes() {
     Collection<ORecordOperation> txOps;
@@ -66,7 +72,7 @@ public class TestTransactionFlow {
       OTransactionOptimistic tx = (OTransactionOptimistic) session.getTransaction();
       txOps = tx.getRecordOperations();
       Map<String, OTransactionIndexChanges> indexOperations = tx.getIndexOperations();
-      indexes = OTransactionSubmit.genIndexes(indexOperations);
+      indexes = OTransactionSubmit.genIndexes(indexOperations, tx);
       submit = new OTransactionSubmit(txOps, indexes);
     }
 

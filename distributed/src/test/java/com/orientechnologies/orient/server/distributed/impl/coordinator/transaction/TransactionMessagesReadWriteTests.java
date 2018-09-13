@@ -87,7 +87,8 @@ public class TransactionMessagesReadWriteTests {
 
   @Test
   public void testSecondPhaseResult() {
-    OTransactionSecondPhaseResponse operation = new OTransactionSecondPhaseResponse(true);
+    OTransactionSecondPhaseResponse operation = new OTransactionSecondPhaseResponse(true, new ArrayList<>(), new ArrayList<>(),
+        new ArrayList<>());
     OTransactionSecondPhaseResponse readOperation = new OTransactionSecondPhaseResponse();
     writeRead(operation, readOperation);
 

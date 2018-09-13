@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
 import java.io.DataInput;
@@ -55,7 +56,8 @@ public class OTransactionSubmit implements OSubmitRequest {
     return operations;
   }
 
-  public static List<OIndexOperationRequest> genIndexes(Map<String, OTransactionIndexChanges> indexOperations) {
+  public static List<OIndexOperationRequest> genIndexes(Map<String, OTransactionIndexChanges> indexOperations,
+      OTransactionInternal tx) {
     List<OIndexOperationRequest> idx = new ArrayList<>();
     for (Map.Entry<String, OTransactionIndexChanges> index : indexOperations.entrySet()) {
       OTransactionIndexChanges changes = index.getValue();
@@ -63,10 +65,14 @@ public class OTransactionSubmit implements OSubmitRequest {
       for (Map.Entry<Object, OTransactionIndexChangesPerKey> entry : changes.changesPerKey.entrySet()) {
         List<OIndexKeyOperation> oper = new ArrayList<>();
         for (OTransactionIndexChangesPerKey.OTransactionIndexEntry operat : entry.getValue().entries) {
+          ORID identity = operat.value.getIdentity();
+          if (!identity.isPersistent()) {
+            identity = tx.getRecordEntry(identity).getRID();
+          }
           if (operat.operation == OTransactionIndexChanges.OPERATION.PUT) {
-            oper.add(new OIndexKeyOperation(OIndexKeyOperation.PUT, operat.value.getIdentity()));
+            oper.add(new OIndexKeyOperation(OIndexKeyOperation.PUT, identity));
           } else {
-            oper.add(new OIndexKeyOperation(OIndexKeyOperation.REMOVE, operat.value.getIdentity()));
+            oper.add(new OIndexKeyOperation(OIndexKeyOperation.REMOVE, identity));
           }
         }
         keys.add(new OIndexKeyChange(entry.getKey(), oper));
@@ -74,10 +80,14 @@ public class OTransactionSubmit implements OSubmitRequest {
       if (index.getValue().nullKeyChanges != null) {
         List<OIndexKeyOperation> oper = new ArrayList<>();
         for (OTransactionIndexChangesPerKey.OTransactionIndexEntry operat : index.getValue().nullKeyChanges.entries) {
+          ORID identity = operat.value.getIdentity();
+          if (!identity.isPersistent()) {
+            identity = tx.getRecordEntry(identity).getRID();
+          }
           if (operat.operation == OTransactionIndexChanges.OPERATION.PUT) {
-            oper.add(new OIndexKeyOperation(OIndexKeyOperation.PUT, operat.value.getIdentity()));
+            oper.add(new OIndexKeyOperation(OIndexKeyOperation.PUT, identity));
           } else {
-            oper.add(new OIndexKeyOperation(OIndexKeyOperation.REMOVE, operat.value.getIdentity()));
+            oper.add(new OIndexKeyOperation(OIndexKeyOperation.REMOVE, identity));
           }
         }
         keys.add(new OIndexKeyChange(null, oper));
