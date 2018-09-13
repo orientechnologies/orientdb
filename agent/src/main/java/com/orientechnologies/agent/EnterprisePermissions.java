@@ -10,7 +10,8 @@ public enum EnterprisePermissions {
       "server.log"), SERVER_PROFILER("server.profiler"), SERVER_SECURITY("server.security"), SERVER_PLUGINS(
       "server.plugins"), STUDIO_DASHBOARD("server.studio.dashboard"), STUDIO_SERVER_MANAGEMENT(
       "server.studio.serverManagement"), STUDIO_CLUSTER_MANAGEMENT("server.studio.clusterManagement"), STUDIO_BACKUP_MANAGEMENT(
-      "server.studio.backupManagement"), STUDIO_PROFILER_MANAGEMENT("server.studio.profilerManagement"), STUDIO_SECURITY_MANAGEMENT(
+      "server.studio.backupManagement"),STUDIO_BACKUP_MANAGEMENT_EDIT(
+      "server.studio.backupManagement.edit"), STUDIO_PROFILER_MANAGEMENT("server.studio.profilerManagement"), STUDIO_SECURITY_MANAGEMENT(
       "server.studio.securityManagement"), STUDIO_IMPORTER_MANAGEMENT("server.studio.importerManagement"), STUDIO_SETTINGS("server.studio.settings");
 
   private String permission;
