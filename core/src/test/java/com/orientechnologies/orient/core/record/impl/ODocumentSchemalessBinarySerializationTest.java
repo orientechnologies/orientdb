@@ -16,16 +16,16 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import org.assertj.core.api.Assertions;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.math.BigDecimal;
 import java.util.*;
 
 import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class ODocumentSchemalessBinarySerializationTest {  
@@ -951,6 +951,31 @@ public class ODocumentSchemalessBinarySerializationTest {
       assertEquals(document.<Object>field("oldAge"), extr.field("oldAge"));        
     }    
   }
+
+  @Test
+  public void testListOfMapsWithNull(){
+    ODatabaseRecordThreadLocal.instance().remove();
+    ODocument document = new ODocument();
+
+
+    List lista = new ArrayList<>();
+    Map mappa = new LinkedHashMap<>();
+    mappa.put("prop1", "val1");
+    mappa.put("prop2", null);
+    lista.add(mappa);
+
+    mappa = new HashMap();
+    mappa.put("prop", "val");
+    lista.add(mappa);
+    document.setProperty("list", lista);
+
+
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+    assertEquals(extr.fields(), document.fields());
+    assertEquals(extr.<Object>field("list"), document.field("list"));
+  }
+
 
   public static class Custom implements OSerializableStream {
     byte[] bytes = new byte[10];
