@@ -122,4 +122,9 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
   public String getSyntax() {
     return "HA STATUS [-servers] [-db] [-latency] [-messages] [-all] [-output=text]";
   }
+
+  @Override
+  public boolean isIdempotent() {
+    return true;
+  }
 }
