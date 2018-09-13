@@ -169,7 +169,11 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
       if (v instanceof OMetricSet) {
         m.putAll(getMetricsLists(((OMetricSet) v).getMetrics(), ((OMetricSet) v).prefix()));
       } else {
-        m.put(prefix + "." + k, v.getDescription());
+        if (prefix != null && !prefix.isEmpty()) {
+          m.put(prefix + "." + k, v.getDescription());
+        } else {
+          m.put(k, v.getDescription());
+        }
       }
     });
     return m;

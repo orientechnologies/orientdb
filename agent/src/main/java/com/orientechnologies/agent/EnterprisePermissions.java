@@ -11,7 +11,7 @@ public enum EnterprisePermissions {
       "server.plugins"), STUDIO_DASHBOARD("server.studio.dashboard"), STUDIO_SERVER_MANAGEMENT(
       "server.studio.serverManagement"), STUDIO_CLUSTER_MANAGEMENT("server.studio.clusterManagement"), STUDIO_BACKUP_MANAGEMENT(
       "server.studio.backupManagement"), STUDIO_PROFILER_MANAGEMENT("server.studio.profilerManagement"), STUDIO_SECURITY_MANAGEMENT(
-      "server.studio.securityManagement"), STUDIO_IMPORTER_MANAGEMENT("server.studio.importerManagement");
+      "server.studio.securityManagement"), STUDIO_IMPORTER_MANAGEMENT("server.studio.importerManagement"), STUDIO_SETTINGS("server.studio.settings");
 
   private String permission;
 

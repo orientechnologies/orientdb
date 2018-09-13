@@ -80,13 +80,13 @@ public class OrientDBServerResourcesMetrics implements OrientDBMetric {
       @Override
       public Map<String, OMetric> getMetrics() {
         Map<String, OMetric> metrics = new HashMap<>();
-        metrics
-            .put("totalSpace", registry.newGauge("totalSpace", "Total used disk space", OrientDBServerResourcesMetrics.this::getDiskTotal));
-        metrics
-            .put("freeSpace", registry.newGauge("freeSpace", "Total free disk space", OrientDBServerResourcesMetrics.this::getDiskFree));
+        metrics.put("totalSpace",
+            registry.newGauge("totalSpace", "Total used disk space", OrientDBServerResourcesMetrics.this::getDiskTotal));
+        metrics.put("freeSpace",
+            registry.newGauge("freeSpace", "Total free disk space", OrientDBServerResourcesMetrics.this::getDiskFree));
 
-        metrics
-            .put("usableSpace", registry.newGauge("usableSpace", "Total usable disk space", OrientDBServerResourcesMetrics.this::getDiskUsable));
+        metrics.put("usableSpace",
+            registry.newGauge("usableSpace", "Total usable disk space", OrientDBServerResourcesMetrics.this::getDiskUsable));
 
         return metrics;
       }
@@ -128,6 +128,7 @@ public class OrientDBServerResourcesMetrics implements OrientDBMetric {
     return this.roots.stream().map((f) -> f.getFreeSpace()).reduce(0l, (a, b) -> a + b);
 
   }
+
   protected long getDiskUsable() {
     return this.roots.stream().map((f) -> f.getUsableSpace()).reduce(0l, (a, b) -> a + b);
 
@@ -152,6 +153,7 @@ public class OrientDBServerResourcesMetrics implements OrientDBMetric {
     this.registry.remove(OGlobalMetrics.SERVER_RUNTIME_THREADS.name);
     this.registry.remove(OGlobalMetrics.SERVER_RUNTIME_CPU.name);
     this.registry.remove(OGlobalMetrics.SERVER_RUNTIME_DISK_CACHE.name);
+    this.registry.remove(OGlobalMetrics.SERVER_DISK_SPACE.name);
   }
 
   public double cpuUsage() {
