@@ -16,7 +16,8 @@ import {
 import {
   AgentService,
   BackupService,
-  NotificationService
+  NotificationService,
+  PermissionService
 } from "../../../core/services";
 import { ModalComponent } from "ng2-bs3-modal";
 import { BackupFinishedEvent, GenericBackupEvent } from "./events";
@@ -35,6 +36,8 @@ class SingleBackupComponent implements OnInit, OnDestroy, OnChanges {
   private ee = true;
   @Input()
   private backup: any;
+
+  private canEdit = false;
 
   @ViewChild("backupModal", { read: ViewContainerRef })
   dashboardContainer: ViewContainerRef;
@@ -88,7 +91,8 @@ class SingleBackupComponent implements OnInit, OnDestroy, OnChanges {
     private backupService: BackupService,
     private notification: NotificationService,
     private resolver: ComponentFactoryResolver,
-    private injector: Injector
+    private injector: Injector,
+    private permissionService: PermissionService
   ) {}
 
   createComponent(component, event, backup) {
@@ -119,6 +123,7 @@ class SingleBackupComponent implements OnInit, OnDestroy, OnChanges {
   }
   ngOnInit(): void {
     this.ee = this.agent.active;
+    this.canEdit = this.permissionService.isAllow("server.backup.edit");
   }
 
   ngOnChanges(changes: SimpleChanges) {

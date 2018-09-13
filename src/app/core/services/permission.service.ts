@@ -99,7 +99,7 @@ class PermissionService {
         wiki: "Studio-Cluster-Management.html"
       });
     }
-    if (this.data.permissions.indexOf("server.studio.backupManagement") != -1) {
+    if (this.data.permissions.indexOf("server.backup") != -1) {
       menus.push({
         name: "backup",
         title: "Backup Management",
@@ -148,6 +148,10 @@ class PermissionService {
       });
     }
     return menus;
+  }
+
+  isAllow(permission) {
+    return this.data.permissions.indexOf(permission) != -1;
   }
 }
 

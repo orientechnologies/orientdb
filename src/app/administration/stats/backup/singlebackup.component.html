@@ -1,5 +1,5 @@
 <div class="row">
-    <div class="col-md-12" ng-controller="SingleBackupController">
+    <div class="col-md-12">
         <div>
             <div class="row">
                 <div class="col-md-5">
@@ -22,27 +22,27 @@
                                 <div class="form-group">
                                     <label class="col-sm-3 control-label">Enabled</label>
                                     <div class="col-sm-9">
-                                        <input type="checkbox" name="enabled" [(ngModel)]="backup.enabled">
+                                        <input type="checkbox" [disabled]="!canEdit" name="enabled" [(ngModel)]="backup.enabled">
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="col-sm-3 control-label">Directory</label>
                                     <div class="col-sm-9">
-                                        <input type="text" class="form-control" name="directory" placeholder="Directory"
-                                            [(ngModel)]="backup.directory">
+                                        <input type="text" class="form-control" [disabled]="!canEdit" name="directory"
+                                            placeholder="Directory" [(ngModel)]="backup.directory">
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="col-sm-3 control-label">Retention days</label>
                                     <div class="col-sm-9">
-                                        <input type="number" class="form-control" name="retentionDays" placeholder=""
-                                            [(ngModel)]="backup.retentionDays">
+                                        <input type="number" class="form-control" [disabled]="!canEdit" name="retentionDays"
+                                            placeholder="" [(ngModel)]="backup.retentionDays">
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="col-sm-3 control-label">Mode</label>
                                     <div class="col-sm-9">
-                                        <select class="form-control" name="mode" (change)="changeMode(mode)"
+                                        <select class="form-control" [disabled]="!canEdit" name="mode" (change)="changeMode(mode)"
                                             [(ngModel)]="mode">
                                             <option *ngFor="let mode of modes | keys" [value]="mode">{{modes[mode]}}</option>
                                         </select>
@@ -65,7 +65,8 @@
                                 </div>
                                 <div class="form-group">
                                     <div class="col-sm-offset-3 col-sm-9">
-                                        <button type="submit" class="btn btn-default btn-sm" (click)="saveBackup()">Save</button>
+                                        <button type="submit" [disabled]="!canEdit" class="btn btn-default btn-sm"
+                                            (click)="saveBackup()">Save</button>
                                     </div>
                                 </div>
                             </form>
@@ -104,18 +105,7 @@
                 <div #backupModal>
 
                 </div>
-                <!-- <modal #backupModal>
-                    <modal-header [show-close]="true">
-                        <h4 class="modal-title">Warning!</h4>
-                    </modal-header>
-                    <modal-body>
-                        You are dropping <b>{{edgeName}}</b> class. Are you sure?
-                    </modal-body>
-                    <modal-footer [show-default-buttons]="false">
-                        <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissOrCloseDropClassModal('dismiss')">Cancel</button>
-                        <button type="button" class="btn btn-primary" (click)="dismissOrCloseDropClassModal('close')">Ok</button>
-                    </modal-footer>
-                </modal> -->
+
             </div>
         </div>
     </div>
