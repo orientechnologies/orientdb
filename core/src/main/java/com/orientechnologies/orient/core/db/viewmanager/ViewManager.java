@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.core.db.viewmanager;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.index.*;
@@ -25,6 +24,8 @@ public class ViewManager {
   private final String           dbName;
 
   ViewThread thread;
+
+  ODatabaseDocumentInternal liveDb;
 
   /**
    * To retain clusters that are being used in queries until the queries are closed.
@@ -57,7 +58,60 @@ public class ViewManager {
   }
 
   protected void init() {
+    orientDB.executeNoAuthorization(dbName, (db) -> {
+      // do this to make sure that the storage is already initialized and so is the shared context.
+      // you just don't need the db passed as a param here
+      registerLiveUpdates();
+      return null;
+    });
 
+  }
+
+  private synchronized void registerLiveUpdates() {
+    if (liveDb == null) {
+      liveDb = orientDB.openNoAuthorization(dbName);
+    }
+    boolean liveViewsExist = false;
+    Collection<OView> views = liveDb.getMetadata().getSchema().getViews();
+    for (OView view : views) {
+      liveViewsExist = registerLiveUpdateFor(view.getName()) || liveViewsExist;
+    }
+    if (!liveViewsExist) {
+      liveDb.close();
+      liveDb = null;
+    }
+
+  }
+
+  public synchronized boolean registerLiveUpdateFor(String viewName) {
+    ODatabaseDocumentInternal oldDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    boolean newDb = false;
+    if (liveDb == null) {
+      newDb = true;
+      liveDb = orientDB.openNoAuthorization(dbName);
+    }
+    OView view = liveDb.getMetadata().getSchema().getView(viewName);
+    try {
+      boolean registered = false;
+      if (view.getUpdateStrategy() != null && view.getUpdateStrategy().equalsIgnoreCase(OViewConfig.UPDATE_STRATEGY_LIVE)) {
+        liveDb.activateOnCurrentThread();
+        liveDb.live(view.getQuery(), new ViewUpdateListener(view.getName()));
+        if (oldDb != null) {
+
+        }
+        registered = true;
+      }
+
+      if (newDb && !registered) {
+        liveDb.close();
+        liveDb = null;
+      }
+      return registered;
+    } finally {
+      if (oldDb != null) {
+        oldDb.activateOnCurrentThread();
+      }
+    }
   }
 
   public void start() {
@@ -68,6 +122,15 @@ public class ViewManager {
   public void close() {
     try {
       thread.finish();
+      if (liveDb != null) {
+        ODatabaseDocumentInternal oldDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
+        liveDb.activateOnCurrentThread();
+        liveDb.close();
+        liveDb = null;
+        if (oldDb != null) {
+          oldDb.activateOnCurrentThread();
+        }
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -116,6 +179,9 @@ public class ViewManager {
       if (!buildOnThisNode(db, name)) {
         continue;
       }
+      if (isLiveUpdate(db, name)) {
+        continue;
+      }
       if (!isUpdateExpiredFor(name, db)) {
         continue;
       }
@@ -130,6 +196,11 @@ public class ViewManager {
 
     lastUpdatedView = null;
     return null;
+  }
+
+  private boolean isLiveUpdate(ODatabase db, String viewName) {
+    OView view = db.getMetadata().getSchema().getView(viewName);
+    return OViewConfig.UPDATE_STRATEGY_LIVE.equalsIgnoreCase(view.getUpdateStrategy());
   }
 
   protected boolean buildOnThisNode(ODatabase db, String name) {
@@ -203,14 +274,7 @@ public class ViewManager {
         OResultSet rs = db.query(query);
         while (rs.hasNext()) {
           OResult item = rs.next();
-          OElement newRow = copyElement(item, db);
-          if (originRidField != null) {
-            newRow.setProperty(originRidField, item.getIdentity().orElse(item.getProperty("@rid")));
-            newRow.setProperty("@view", viewName);
-          }
-          db.save(newRow, clusterName);
-
-          indexes.forEach(idx -> idx.put(indexedKeyFor(idx, newRow), newRow));
+          addItemToView(item, db, originRidField, viewName, clusterName, indexes);
         }
 
         return null;
@@ -249,6 +313,18 @@ public class ViewManager {
     cleanUnusedViewIndexes(db);
     cleanUnusedViewClusters(db);
 
+  }
+
+  private void addItemToView(OResult item, ODatabaseDocument db, String originRidField, String viewName, String clusterName,
+      List<OIndex> indexes) {
+    OElement newRow = copyElement(item, db);
+    if (originRidField != null) {
+      newRow.setProperty(originRidField, item.getIdentity().orElse(item.getProperty("@rid")));
+      newRow.setProperty("@view", viewName);
+    }
+    db.save(newRow, clusterName);
+
+    indexes.forEach(idx -> idx.put(indexedKeyFor(idx, newRow), newRow));
   }
 
   private Object indexedKeyFor(OIndex idx, OElement newRow) {
@@ -315,7 +391,7 @@ public class ViewManager {
   private OElement copyElement(OResult item, ODatabaseDocument db) {
     OElement newRow = db.newElement();
     for (String prop : item.getPropertyNames()) {
-      if (!prop.equalsIgnoreCase("@rid")) {
+      if (!prop.equalsIgnoreCase("@rid") && !prop.equalsIgnoreCase("@class")) {
         newRow.setProperty(prop, item.getProperty(prop));
       }
     }
@@ -393,5 +469,43 @@ public class ViewManager {
       viewIndexVisitors.put(indexName, item);
     }
     item.incrementAndGet();
+  }
+
+  private class ViewUpdateListener implements OLiveQueryResultListener {
+    private final String viewName;
+
+    public ViewUpdateListener(String name) {
+      this.viewName = name;
+    }
+
+    @Override
+    public void onCreate(ODatabaseDocument db, OResult data) {
+      OView view = db.getMetadata().getSchema().getView(viewName);
+      if (view != null) {
+        int cluster = view.getClusterIds()[0];
+        addItemToView(data, db, view.getOriginRidField(), view.getName(), db.getClusterNameById(cluster),
+            new ArrayList<>(view.getIndexes()));
+      }
+    }
+
+    @Override
+    public void onUpdate(ODatabaseDocument database, OResult before, OResult after) {
+      //TODO
+    }
+
+    @Override
+    public void onDelete(ODatabaseDocument database, OResult data) {
+      //TODO
+    }
+
+    @Override
+    public void onError(ODatabaseDocument database, OException exception) {
+
+    }
+
+    @Override
+    public void onEnd(ODatabaseDocument database) {
+
+    }
   }
 }

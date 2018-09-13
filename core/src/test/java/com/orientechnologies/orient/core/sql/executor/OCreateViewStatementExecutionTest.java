@@ -138,4 +138,37 @@ public class OCreateViewStatementExecutionTest {
     result.close();
   }
 
+  @Test
+  public void testLiveUpdate() throws InterruptedException {
+    String className = "testLiveUpdateClass";
+    String viewName = "testLiveUpdate";
+    db.createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("name", "name" + i);
+      elem.setProperty("surname", "surname" + i);
+      elem.save();
+    }
+
+    String statement = "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    statement += "updateStrategy:\"live\"";
+    statement += "}";
+
+    db.command(statement);
+
+    Thread.sleep(1000);
+
+    OResultSet result = db.query("SELECT FROM " + viewName);
+    Assert.assertEquals(10, result.stream().count());
+    result.close();
+
+    db.command("insert into " + className + " set name = 'name10', surname = 'surname10'");
+
+    Thread.sleep(1000);
+    result = db.query("SELECT FROM " + viewName);
+    Assert.assertEquals(11, result.stream().count());
+    result.close();
+  }
+
 }
