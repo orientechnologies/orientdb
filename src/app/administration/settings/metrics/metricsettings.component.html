@@ -1,0 +1,103 @@
+<div class="col-md-12">
+  <div class="row">
+    <div class="col-md-6" *ngIf="config">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <b> Metrics Configuration </b>
+          <div class="panel-actions">
+            <div class="btn-group">
+              <button class="btn btn-primary btn-sm" (click)="saveMetrics()">
+                <i class="fa fa-save"></i>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <form class="form-horizontal">
+
+            <div class="form-group">
+              <label class="col-md-4 control-label">
+                Enabled
+
+              </label>
+              <div class="col-md-8">
+                <input type="checkbox" name="enabled" [(ngModel)]="config.enabled">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-4 control-label">
+                Server Metrics
+
+              </label>
+              <div class="col-md-8">
+                <input type="checkbox" name="serverEnabled" [(ngModel)]="config.server.enabled">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">
+                Database Metrics
+              </label>
+              <div class="col-md-8">
+                <input type="checkbox" name="databaseEnabled" [(ngModel)]="config.database.enabled">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">
+                Cluster Metrics
+              </label>
+              <div class="col-md-8">
+                <input type="checkbox" name="clusterEnabled" [(ngModel)]="config.cluster.enabled">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">
+                Reporters
+              </label>
+              <div class="col-md-8">
+                <table class="table table-hover">
+                  <thead>
+                    <th>Name</th>
+                    <th>Enabled</th>
+                    <th></th>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let r of config.reporters | keys; let idx = index" [ngClass]="{ 'active' : (r == currentSelected)}">
+                      <td>
+                        {{'metrics.reporter.' + r | translate}}
+                      </td>
+                      <td>
+                        <input type="checkbox" name="{{idx}}aEnabled" [(ngModel)]="config.reporters[r].enabled"></td>
+                      <td>
+                        <button class="btn btn-xs" *ngIf="hasConfig(r)" (click)="selectReporter(r)"><i class="fa fa-gear"></i></button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6" [hidden]="!config ||  !currentSelectedName || !hasConfig(currentSelectedName)">
+      <div class="panel panel-default">
+        <div class="
+        panel-heading">
+          <b> {{'metrics.reporter.' + currentSelectedName | translate}} Configuration </b>
+        </div>
+        <div class="panel-body">
+          <div #reporterContainer>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <metrics-list *ngIf="metrics" [metrics]="metrics"></metrics-list>
+    </div>
+  </div>
+</div>

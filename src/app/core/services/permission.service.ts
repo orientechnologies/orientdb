@@ -140,6 +140,13 @@ class PermissionService {
         icon: "fa-plug"
       });
     }
+    if (this.data.permissions.indexOf("server.studio.settings") != -1) {
+      menus.push({
+        name: "settings",
+        title: "Settings",
+        icon: "fa-cog"
+      });
+    }
     return menus;
   }
 }

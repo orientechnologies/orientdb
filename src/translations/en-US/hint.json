@@ -1,12 +1,10 @@
 {
   "login.newDb": "Create a new database",
   "login.importDb": "Import a public database",
-  "login.importers":
-    "Find out how easy it is to start using OrientDB with your datasets, migrating them through specific plugins.",
+  "login.importers": "Find out how easy it is to start using OrientDB with your datasets, migrating them through specific plugins.",
   "login.deleteDb": "Drop the selected database",
   "login.connectDb": "Connect to the selected database",
-  "login.help":
-    "To login, enter the credentials for any database user. By default, <b>reader/reader</b> can read records from the database, <b>writer/writer</b> can read, create, update and delete records. <b>admin/admin</b> has full administrative rights. To learn more about security, read the docs <a href='{{link}}' target='_blank'>here</a>",
+  "login.help": "To login, enter the credentials for any database user. By default, <b>reader/reader</b> can read records from the database, <b>writer/writer</b> can read, create, update and delete records. <b>admin/admin</b> has full administrative rights. To learn more about security, read the docs <a href='{{link}}' target='_blank'>here</a>",
   "browse.help": "Query help",
   "browse.clearHistory": "Clear history",
   "browse.searchHistory": "Search in history",
@@ -14,131 +12,70 @@
   "browse.config": "Query help",
   "browse.addBookmark": "Add bookmark",
   "browse.showBookmark": "Toggle bookmarks",
-  "schema.clusterSelection":
-    "<ul class='clusterSelection'><li><strong>default</strong>, always uses the Class's <code>defaultClusterId</code> property. This was the default before version 1.7</li><li><strong>round-robin</strong>, puts the Class's configured clusters in a ring and returns a different cluster every time restarting at the first when the ring is completed</li><li><strong>balanced</strong>, checks the records in all the clusters and returns the smaller cluster. This allows the cluster to have all the underlying clusters balanced on size.</li> <li><strong>local</strong> When the database is run in distributed mode, it selects the master cluster on the current node. This helps to avoid conflicts and reduce network latency with remote calls between nodes.</></ul> For more details, visit the <a href='{{linkClusterSelection}}' target='_blank'>docs</a>",
-  "schema.clusters":
-    "A cluster is a place where a group of records are stored. Perhaps the best equivalent in the relational world would be a Table. Starting from v2.2, OrientDB automatically creates multiple clusters per each class (the number of clusters created is equals to the number of CPU's cores available on the server) to improve using of parallelism. All the records of a class are stored in the same cluster which has the same name as the class. For more details, visit the <a href='{{linkClusters}}' target='_blank'>docs</a>",
-  "class.clusters":
-    "By default, OrientDB will create multiple clusters per each class (the number of clusters created is equals to the number of CPU's cores available on the server). All the records of a class are stored in the same cluster which has the same name as the class. For more details, visit the <a href='{{linkClusters}}' target='_blank'>docs</a>",
-  "schema.class":
-    "A Class is a concept taken from the Object Oriented paradigm. In OrientDB defines a type of record. It's the closest concept to a Relational DBMS Table. Class can be schema-less, schema-full or mixed. For more details about classes visit the <a href='{{linkClasses}}' target='_blank'>docs</a>",
-  "schema.superClass":
-    "OrientDB supports multiple inheritance between classes. For more details about inheritance, visit the <a href='{{linkInheritance}}' target='_blank'>docs</a>",
-  "structure.conflictStrategy":
-    "Used to handle conflicts when OrientDB's Multi Version Concurrency Control (MVCC) finds an update or delete operation executed against an old record. For more details about conflict strategy, visit the <a href='{{linkConflictStrategy}}' target='_blank'>docs</a>",
-  "configuration.conflictStrategy":
-    "Used to handle conflicts when OrientDB's Multi Version Concurrency Control (MVCC) finds an update or delete operation executed against an old record. For more details about conflict strategy, visit the <a href='{{conflictStrategy}}' target='_blank'>docs</a>",
-  "configuration.clusterSelection":
-    "Sets the default strategy used when selecting the cluster where new records are created. This setting is read on class creation. After creation, each class has it's own modifiable strategy. For more details about cluster selection, visit the <a href='{{clusterSelection}}' target='_blank'>docs</a>",
-  "configuration.minimumClusters":
-    "Sets the minimum number of clusters to create automatically when a new class is created. The default is 1, but for multi CPU/core configurations having multiple clusters/files, putting the core number here improves read/write performance",
-  "configuration.useLightweightEdges":
-    "Starting from OrientDB v1.4.x, edges are managed as lightweight edges by default: they don't have their own identities stored as a record, but are physically stored as links inside vertices. OrientDB automatically uses Lightweight edges only when edges have no properties, otherwise regular edges are used. For more details about lightweight edges, visit the <a href='{{useLightweightEdges}}' target='_blank'>docs</a>",
-  "class.property":
-    "Properties are the class fields. For more details about properties and supported types, visit the <a href='{{properties}}' target='_blank'>docs</a>",
-  "class.indexes":
-    "Indexes are used to speed up searches. For more details about indexes and supported types, visit the <a href='{{indexes}}' target='_blank'>docs</a>",
-  "security.permissions":
-    "Resources are strings bound to OrientDB concepts. Note: resources are case sensitive. For more details about resource permissions, visit the <a href='{{resources}}' target='_blank'>docs</a>",
-  "security.roles":
-    "A role specifies the assigned permissions (ie. whether or not the user is allowed to execute an operation against a resource). These permissions depend on the working mode (i.e 'allow all, except' or 'deny all, except') and the rules. Rules work differently, but are based on the working mode. For more details about roles, visit the <a href='{{roles}}' target='_blank'>docs</a>",
-  "security.users":
-    "A user interacts with the database. To access a database, you need to specify the username and password for the user. Each user has it's own credentials and permissions. For more details about users, visit the <a href='{{users}}' target='_blank'>docs</a>",
-  "index.type":
-    "Supported type are : <br> <ul class='indexType'><li><strong>UNIQUE</strong></li><li><strong>NOTUNIQUE</strong></li><li><strong>FULLTEXT</strong></li><li><strong>DICTIONARY</strong></li><li><strong>UNIQUE_HASH_INDEX</strong></li><li><strong>NOTUNIQUE_HASH_INDEX</strong></li><li><strong>NOTUNIQUE_HASH_INDEX</strong></li><li><strong>DICTIONARY_HASH_INDEX</strong></li></ul> For more details about index types, visit the <a href='{{type}}' target='_blank'>docs</a>",
-  "index.engine":
-    "Supported engines are : <br> <ul class='indexType'><li><strong>SBTREE</strong></li><li><strong>HASHINDEX</strong></li><li><strong>LUCENE</strong></li></ul> For more details about supported engines, visit the <a href='{{engine}}' target='_blank'>docs</a>",
-  "agent.notFound":
-    "This feature is available in OrientDB Enterprise Edition. To susbscribe to OrientDB Enterprise Edition click <a href='{{ee}}' target='_blank'>here</a>.",
-  "agent.notConnected":
-    "The current instance is not connected to the OrientDB Cloud. To start monitoring OrientDB instances with the Cloud Console create an account <a href='{{eecloud}}' target='_blank'>here</a>.",
-  "agent.Connected":
-    "Connected to the OrientDB Cloud. To start monitoring this instance with the Cloud Console click <a href='{{eeCloudProject}}' target='_blank'>here</a>.",
-  "agent.moved":
-    "The following features have been moved to the Cloud Dashboard:",
-  "agent.moved1":
-    "To susbscribe to OrientDB Enterprise Edition click <a href='https://orientdb.com/orientdb-enterprise' target='_blank'>here</a>.",
+  "schema.clusterSelection": "<ul class='clusterSelection'><li><strong>default</strong>, always uses the Class's <code>defaultClusterId</code> property. This was the default before version 1.7</li><li><strong>round-robin</strong>, puts the Class's configured clusters in a ring and returns a different cluster every time restarting at the first when the ring is completed</li><li><strong>balanced</strong>, checks the records in all the clusters and returns the smaller cluster. This allows the cluster to have all the underlying clusters balanced on size.</li> <li><strong>local</strong> When the database is run in distributed mode, it selects the master cluster on the current node. This helps to avoid conflicts and reduce network latency with remote calls between nodes.</></ul> For more details, visit the <a href='{{linkClusterSelection}}' target='_blank'>docs</a>",
+  "schema.clusters": "A cluster is a place where a group of records are stored. Perhaps the best equivalent in the relational world would be a Table. Starting from v2.2, OrientDB automatically creates multiple clusters per each class (the number of clusters created is equals to the number of CPU's cores available on the server) to improve using of parallelism. All the records of a class are stored in the same cluster which has the same name as the class. For more details, visit the <a href='{{linkClusters}}' target='_blank'>docs</a>",
+  "class.clusters": "By default, OrientDB will create multiple clusters per each class (the number of clusters created is equals to the number of CPU's cores available on the server). All the records of a class are stored in the same cluster which has the same name as the class. For more details, visit the <a href='{{linkClusters}}' target='_blank'>docs</a>",
+  "schema.class": "A Class is a concept taken from the Object Oriented paradigm. In OrientDB defines a type of record. It's the closest concept to a Relational DBMS Table. Class can be schema-less, schema-full or mixed. For more details about classes visit the <a href='{{linkClasses}}' target='_blank'>docs</a>",
+  "schema.superClass": "OrientDB supports multiple inheritance between classes. For more details about inheritance, visit the <a href='{{linkInheritance}}' target='_blank'>docs</a>",
+  "structure.conflictStrategy": "Used to handle conflicts when OrientDB's Multi Version Concurrency Control (MVCC) finds an update or delete operation executed against an old record. For more details about conflict strategy, visit the <a href='{{linkConflictStrategy}}' target='_blank'>docs</a>",
+  "configuration.conflictStrategy": "Used to handle conflicts when OrientDB's Multi Version Concurrency Control (MVCC) finds an update or delete operation executed against an old record. For more details about conflict strategy, visit the <a href='{{conflictStrategy}}' target='_blank'>docs</a>",
+  "configuration.clusterSelection": "Sets the default strategy used when selecting the cluster where new records are created. This setting is read on class creation. After creation, each class has it's own modifiable strategy. For more details about cluster selection, visit the <a href='{{clusterSelection}}' target='_blank'>docs</a>",
+  "configuration.minimumClusters": "Sets the minimum number of clusters to create automatically when a new class is created. The default is 1, but for multi CPU/core configurations having multiple clusters/files, putting the core number here improves read/write performance",
+  "configuration.useLightweightEdges": "Starting from OrientDB v1.4.x, edges are managed as lightweight edges by default: they don't have their own identities stored as a record, but are physically stored as links inside vertices. OrientDB automatically uses Lightweight edges only when edges have no properties, otherwise regular edges are used. For more details about lightweight edges, visit the <a href='{{useLightweightEdges}}' target='_blank'>docs</a>",
+  "class.property": "Properties are the class fields. For more details about properties and supported types, visit the <a href='{{properties}}' target='_blank'>docs</a>",
+  "class.indexes": "Indexes are used to speed up searches. For more details about indexes and supported types, visit the <a href='{{indexes}}' target='_blank'>docs</a>",
+  "security.permissions": "Resources are strings bound to OrientDB concepts. Note: resources are case sensitive. For more details about resource permissions, visit the <a href='{{resources}}' target='_blank'>docs</a>",
+  "security.roles": "A role specifies the assigned permissions (ie. whether or not the user is allowed to execute an operation against a resource). These permissions depend on the working mode (i.e 'allow all, except' or 'deny all, except') and the rules. Rules work differently, but are based on the working mode. For more details about roles, visit the <a href='{{roles}}' target='_blank'>docs</a>",
+  "security.users": "A user interacts with the database. To access a database, you need to specify the username and password for the user. Each user has it's own credentials and permissions. For more details about users, visit the <a href='{{users}}' target='_blank'>docs</a>",
+  "index.type": "Supported type are : <br> <ul class='indexType'><li><strong>UNIQUE</strong></li><li><strong>NOTUNIQUE</strong></li><li><strong>FULLTEXT</strong></li><li><strong>DICTIONARY</strong></li><li><strong>UNIQUE_HASH_INDEX</strong></li><li><strong>NOTUNIQUE_HASH_INDEX</strong></li><li><strong>NOTUNIQUE_HASH_INDEX</strong></li><li><strong>DICTIONARY_HASH_INDEX</strong></li></ul> For more details about index types, visit the <a href='{{type}}' target='_blank'>docs</a>",
+  "index.engine": "Supported engines are : <br> <ul class='indexType'><li><strong>SBTREE</strong></li><li><strong>HASHINDEX</strong></li><li><strong>LUCENE</strong></li></ul> For more details about supported engines, visit the <a href='{{engine}}' target='_blank'>docs</a>",
+  "agent.notFound": "This feature is available in OrientDB Enterprise Edition. To susbscribe to OrientDB Enterprise Edition click <a href='{{ee}}' target='_blank'>here</a>.",
+  "agent.notConnected": "The current instance is not connected to the OrientDB Cloud. To start monitoring OrientDB instances with the Cloud Console create an account <a href='{{eecloud}}' target='_blank'>here</a>.",
+  "agent.Connected": "Connected to the OrientDB Cloud. To start monitoring this instance with the Cloud Console click <a href='{{eeCloudProject}}' target='_blank'>here</a>.",
+  "agent.moved": "The following features have been moved to the Cloud Dashboard:",
+  "agent.moved1": "To susbscribe to OrientDB Enterprise Edition click <a href='https://orientdb.com/orientdb-enterprise' target='_blank'>here</a>.",
   "agent.pluginsNotFound": "No plugins installed.",
-  "sec.authentication.allowDefault":
-    "When checked, indicates if a database's default authentication should be allowed in addition to the external authenticators",
+  "sec.authentication.allowDefault": "When checked, indicates if a database's default authentication should be allowed in addition to the external authenticators",
   "sec.kerberos.configFile": "Specifies the location of the krb5.conf file",
-  "sec.kerberos.service.ktname":
-    "Specifies the location of the keytab file used for decrypting OrientDB client service tickets",
-  "sec.kerberos.service.principal":
-    "Specifies the realm user associated with the OrientDB SPN used to decrypt client service tickets",
-  "sec.kerberos.spnego.ktname":
-    "Specifies the location of the keytab file used for decrypting OrientDB SPNEGO service tickets",
-  "sec.kerberos.spnego.principal":
-    "Specifies the realm user associated with the OrientDB SPN used to decrypt SPNEGO service tickets",
-  "sec.kerberos.client.ccname":
-    "If useTicketCache is checked, specifies the location of the local credential cache file",
-  "sec.kerberos.client.ktname":
-    "If useTicketCache is unchecked, specifies the location of the server's client keytab file",
-  "sec.kerberos.client.useTicketCache":
-    "If checked, indicates that the client credential cache should be used, otherwise the client keytab file",
-  "sec.kerberos.client.principal":
-    "Specifies the name of the principal used with the client credentials when accessing the LDAP service",
-  "sec.kerberos.client.renewalPeriod":
-    "Specifies how often the LDAP client service ticket is renewed (in minutes)",
-  "sec.authenticator.Password":
-    "When enabled, provides the same service as the OrientDB server config users section but allows users to be stored in the security.json file",
-  "sec.authenticator.ServerConfig":
-    "When enabled, allows authentication of the users in the OrientDB server config file",
-  "sec.authenticator.SystemAuthenticator":
-    "When enabled, allows authentication of system users in the OrientDB System database",
-  "sec.authenticator.Kerberos":
-    "When enabled, the Kerberos authenticator provides support for Kerberos/SPNEGO authentication",
+  "sec.kerberos.service.ktname": "Specifies the location of the keytab file used for decrypting OrientDB client service tickets",
+  "sec.kerberos.service.principal": "Specifies the realm user associated with the OrientDB SPN used to decrypt client service tickets",
+  "sec.kerberos.spnego.ktname": "Specifies the location of the keytab file used for decrypting OrientDB SPNEGO service tickets",
+  "sec.kerberos.spnego.principal": "Specifies the realm user associated with the OrientDB SPN used to decrypt SPNEGO service tickets",
+  "sec.kerberos.client.ccname": "If useTicketCache is checked, specifies the location of the local credential cache file",
+  "sec.kerberos.client.ktname": "If useTicketCache is unchecked, specifies the location of the server's client keytab file",
+  "sec.kerberos.client.useTicketCache": "If checked, indicates that the client credential cache should be used, otherwise the client keytab file",
+  "sec.kerberos.client.principal": "Specifies the name of the principal used with the client credentials when accessing the LDAP service",
+  "sec.kerberos.client.renewalPeriod": "Specifies how often the LDAP client service ticket is renewed (in minutes)",
+  "sec.authenticator.Password": "When enabled, provides the same service as the OrientDB server config users section but allows users to be stored in the security.json file",
+  "sec.authenticator.ServerConfig": "When enabled, allows authentication of the users in the OrientDB server config file",
+  "sec.authenticator.SystemAuthenticator": "When enabled, allows authentication of system users in the OrientDB System database",
+  "sec.authenticator.Kerberos": "When enabled, the Kerberos authenticator provides support for Kerberos/SPNEGO authentication",
   "sec.ldap.period": "Specifies how often the LDAP importer runs (in seconds)",
-  "sec.ldap.database.name":
-    "Specifies the name of the database where the LDAP users will be imported",
-  "sec.ldap.database.ignoreLocal":
-    "When checked, existing database users are preserved during LDAP import",
-  "sec.ldap.database.domain.domain":
-    "Specifies a user-defined name for importing from an LDAP domain",
-  "sec.ldap.database.domain.authenticator":
-    "Specifies which authenticator should be used when authenticating with the LDAP server",
-  "sec.ldap.database.domain.server.url":
-    "Specifies the LDAP server's URL (ldaps is supported)",
-  "sec.ldap.database.domain.server.isAlias":
-    "When checked, the hostname specified in the URL is treated as an alias and the real address is queried followed by a reverse DNS lookup",
-  "sec.ldap.database.domain.user.baseDN":
-    "Specifies the distinguished name of the starting point for the LDAP import",
-  "sec.ldap.database.domain.user.filter":
-    "Specifies the LDAP filter to use for importing users",
-  "sec.ldap.database.domain.user.roles":
-    "Specifies the corresponding OrientDB database roles that will be assigned to each user that is imported from the current LDAP group",
-  "sec.server.createDefaultUsers":
-    "When checked and a new database is created, the default databases users will be created",
-  "sec.passwordValidator.enabled":
-    "When checked and a password is changed, the password will be validated using the specified regular expressions",
-  "sec.passwordValidator.ignoreUUID":
-    "When checked and a password is detected as a valid UUID, password validation is ignored",
-  "sec.passwordValidator.minimumLength":
-    "Defines the minimum number of characters required in the password",
-  "sec.passwordValidator.numberRegEx":
-    "Defines the regular expression for the minimum count of required numbers and what symbols are considered numbers",
-  "sec.passwordValidator.uppercaseRegEx":
-    "Defines the regular expression for the minimum count of required uppercase characters and what symbols are considered uppercase characters",
-  "sec.passwordValidator.specialRegEx":
-    "Defines the regular expression for the minimum count of special characters and what symbols are considered special characters",
-  "cluster.distribution":
-    "It's the map of the partitions (clusters), who is the owner and who has a copy. <a href='{{ownership}}' target='_blank'>Documentation</a>",
-  "cluster.role":
-    "Is the role of the server in the cluster. <b> master </b> can read and write, <b>replica</b> can only do reads. <a href='{{role}}' target='_blank'>Documentation</a>",
-  "cluster.readYourWrites":
-    "Enable it if you want the replication always waits for the local node for further reads",
-  "cluster.autoDeploy":
-    "Whether to deploy the database to any joining node that does not have it.",
-  "cluster.readQuorum":
-    "On <b>read</b> operation (record read, query and traverse) this is the number of responses to be coherent before sending the response to the client. Set to 1 if you don't want this check at read time",
-  "cluster.writeQuorum":
-    "On <b>write</b> operation (any write on database) this is the number of responses to be coherent before sending the response to the client. Set to 1 if you don't want this check at write time. Suggested value is <b>majority</b>, the default, that means N/2+1 where N is the number of available nodes. In this way the quorum is reached only if the majority of nodes are coherent. <b>all</b> means all the available nodes. Starting from v2.2, N represent the MASTER only servers",
-  "events.when":
-    "<b>Be notified when:</b>  <br/> <ul class='indexType'><li>A node status change <br> Ex. (ONLINE, OFFLINE)</li><li>A metric condition is satisfied. <br/> Ex. (CPU avg > 80%)</li></ul>",
-  "events.with":
-    "<b>Be notified by:</b>  <br/> <ul class='indexType'><li>Email</li><li>HTTP Request</li></ul>",
-  "events.markersStatus":
-    "<h5>You can use the following markers:</h5><ul class='indexType'><li><b>${server}:</b> Name of the server</li><li><b>${status}:</b> Status of the server</li><li><b>${date}:</b> Date of the event</li></ul>",
-  "events.markersMetric":
-    "<h5>You can use the following markers:</h5><ul class='indexType'><li><b>${server}: </b> Name of the server</li><li><b>${name}:</b> Name of the metric</li><li><b>${from}:</b> Recording from date</li><li><b>${to}:</b> Recording to date</li></ul><h6>Chronos and Statistics</h6><ul class='indexType'><li><b>${entries}:</b> Number of times recorded</li><li><b>${average}:</b> Average value recorded</li><li><b>${max}:</b> Max value recorded</li><li><b>${min}:</b> Min value recorded</li><li><b>${last}:</b> Last value recorded</li><li><b>${total}:</b> Total value recorded</li></ul><h6>Counters</h6><ul  class='indexType'><li><b>${value}:</b> Current value </li></ul>"
+  "sec.ldap.database.name": "Specifies the name of the database where the LDAP users will be imported",
+  "sec.ldap.database.ignoreLocal": "When checked, existing database users are preserved during LDAP import",
+  "sec.ldap.database.domain.domain": "Specifies a user-defined name for importing from an LDAP domain",
+  "sec.ldap.database.domain.authenticator": "Specifies which authenticator should be used when authenticating with the LDAP server",
+  "sec.ldap.database.domain.server.url": "Specifies the LDAP server's URL (ldaps is supported)",
+  "sec.ldap.database.domain.server.isAlias": "When checked, the hostname specified in the URL is treated as an alias and the real address is queried followed by a reverse DNS lookup",
+  "sec.ldap.database.domain.user.baseDN": "Specifies the distinguished name of the starting point for the LDAP import",
+  "sec.ldap.database.domain.user.filter": "Specifies the LDAP filter to use for importing users",
+  "sec.ldap.database.domain.user.roles": "Specifies the corresponding OrientDB database roles that will be assigned to each user that is imported from the current LDAP group",
+  "sec.server.createDefaultUsers": "When checked and a new database is created, the default databases users will be created",
+  "sec.passwordValidator.enabled": "When checked and a password is changed, the password will be validated using the specified regular expressions",
+  "sec.passwordValidator.ignoreUUID": "When checked and a password is detected as a valid UUID, password validation is ignored",
+  "sec.passwordValidator.minimumLength": "Defines the minimum number of characters required in the password",
+  "sec.passwordValidator.numberRegEx": "Defines the regular expression for the minimum count of required numbers and what symbols are considered numbers",
+  "sec.passwordValidator.uppercaseRegEx": "Defines the regular expression for the minimum count of required uppercase characters and what symbols are considered uppercase characters",
+  "sec.passwordValidator.specialRegEx": "Defines the regular expression for the minimum count of special characters and what symbols are considered special characters",
+  "cluster.distribution": "It's the map of the partitions (clusters), who is the owner and who has a copy. <a href='{{ownership}}' target='_blank'>Documentation</a>",
+  "cluster.role": "Is the role of the server in the cluster. <b> master </b> can read and write, <b>replica</b> can only do reads. <a href='{{role}}' target='_blank'>Documentation</a>",
+  "cluster.readYourWrites": "Enable it if you want the replication always waits for the local node for further reads",
+  "cluster.autoDeploy": "Whether to deploy the database to any joining node that does not have it.",
+  "cluster.readQuorum": "On <b>read</b> operation (record read, query and traverse) this is the number of responses to be coherent before sending the response to the client. Set to 1 if you don't want this check at read time",
+  "cluster.writeQuorum": "On <b>write</b> operation (any write on database) this is the number of responses to be coherent before sending the response to the client. Set to 1 if you don't want this check at write time. Suggested value is <b>majority</b>, the default, that means N/2+1 where N is the number of available nodes. In this way the quorum is reached only if the majority of nodes are coherent. <b>all</b> means all the available nodes. Starting from v2.2, N represent the MASTER only servers",
+  "events.when": "<b>Be notified when:</b>  <br/> <ul class='indexType'><li>A node status change <br> Ex. (ONLINE, OFFLINE)</li><li>A metric condition is satisfied. <br/> Ex. (CPU avg > 80%)</li></ul>",
+  "events.with": "<b>Be notified by:</b>  <br/> <ul class='indexType'><li>Email</li><li>HTTP Request</li></ul>",
+  "events.markersStatus": "<h5>You can use the following markers:</h5><ul class='indexType'><li><b>${server}:</b> Name of the server</li><li><b>${status}:</b> Status of the server</li><li><b>${date}:</b> Date of the event</li></ul>",
+  "events.markersMetric": "<h5>You can use the following markers:</h5><ul class='indexType'><li><b>${server}: </b> Name of the server</li><li><b>${name}:</b> Name of the metric</li><li><b>${from}:</b> Recording from date</li><li><b>${to}:</b> Recording to date</li></ul><h6>Chronos and Statistics</h6><ul class='indexType'><li><b>${entries}:</b> Number of times recorded</li><li><b>${average}:</b> Average value recorded</li><li><b>${max}:</b> Max value recorded</li><li><b>${min}:</b> Min value recorded</li><li><b>${last}:</b> Last value recorded</li><li><b>${total}:</b> Total value recorded</li></ul><h6>Counters</h6><ul  class='indexType'><li><b>${value}:</b> Current value </li></ul>"
+  
 }

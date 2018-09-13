@@ -53,7 +53,7 @@
                                         </th>
                                     </thead>
                                     <tbody>
-                                        <tr ng-click="currentSelected = a.class" *ngFor="let a of security.authentication.authenticators; let idx = index"
+                                        <tr (click)="currentSelected = a.class" *ngFor="let a of security.authentication.authenticators; let idx = index"
                                             [ngClass]="{ 'active' : (a.class == currentSelected)}">
                                             <td>
                                                 {{a.name}}

@@ -67,7 +67,7 @@ class AuditingConfigComponent implements OnInit, OnDestroy {
           autoHide: true
         });
       }).catch((err)=>{
-
+        this.noti.push({ content: err.data, error: true, autoHide: true });
       });
   }
 

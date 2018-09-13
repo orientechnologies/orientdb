@@ -40,7 +40,13 @@ import {
   PasswordAuthenticatorComponent,
   KerberosAuthenticatorComponent,
   SecurityMiscComponent,
-  LdapImporterComponent
+  LdapImporterComponent,
+  StudioSettingsComponent,
+  MetricsSettingsComponent,
+  JMXReporterComponent,
+  CSVReporterComponent,
+  ConsoleReporterComponent,
+  MetricsListComponent
 } from "./administration";
 
 import {
@@ -99,5 +105,11 @@ export const APP_DECLARATIONS = [
   PasswordAuthenticatorComponent,
   KerberosAuthenticatorComponent,
   SecurityMiscComponent,
-  LdapImporterComponent
+  LdapImporterComponent,
+  StudioSettingsComponent,
+  MetricsSettingsComponent,
+  JMXReporterComponent,
+  CSVReporterComponent,
+  ConsoleReporterComponent,
+  MetricsListComponent
 ];

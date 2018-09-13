@@ -22,6 +22,7 @@ import {
 } from "./stats";
 import { ImportManagerComponent } from "./importmanager";
 import { SecurityManagerComponent } from "./stats/security";
+import { StudioSettingsComponent } from "./settings";
 
 declare const angular: any;
 
@@ -31,7 +32,8 @@ const subComponents = {
   cluster: ClusterManagementComponent,
   backup: BackupComponent,
   importers: ImportManagerComponent,
-  security: SecurityManagerComponent
+  security: SecurityManagerComponent,
+  settings: StudioSettingsComponent
 };
 
 @Component({
@@ -76,6 +78,8 @@ class DashboardComponent implements OnInit {
       );
     }
   }
+
+
 }
 
 angular

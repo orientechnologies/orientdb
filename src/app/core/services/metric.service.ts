@@ -21,6 +21,34 @@ class MetricService {
       });
   }
 
+  list() {
+    let url = API + "metrics/list";
+    return this.http
+      .get(url, this.getOptions())
+      .toPromise()
+      .then(data => {
+        return data.json();
+      });
+  }
+  getConfig() {
+    let url = API + "metrics/config";
+    return this.http
+      .get(url, this.getOptions())
+      .toPromise()
+      .then(data => {
+        return data.json();
+      });
+  }
+  saveConfig(config) {
+    let url = API + "metrics/config";
+    return this.http
+      .post(url, config, this.getOptions())
+      .toPromise()
+      .then(data => {
+        return data.json();
+      });
+  }
+
   getOptions() {
     let headers = new Headers({
       Authorization: localStorage.getItem("SimpleAuth"),

@@ -47,7 +47,7 @@ export class SecurityMiscComponent implements OnInit {
         });
       })
       .catch(err => {
-        this.noti.push({ content: err.data, error: true, autoHide: true });
+        this.noti.push({ content: err.json(), error: true, autoHide: true });
       });
   }
   savePasswordValidator() {
