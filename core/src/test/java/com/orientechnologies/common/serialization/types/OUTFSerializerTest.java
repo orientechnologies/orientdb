@@ -16,7 +16,9 @@ public class OUTFSerializerTest {
 
   @Before
   public void beforeClass() {
-    OBJECT = "asd d astasf sdfrete 5678b sdf";
+    OBJECT = "asd d astasf sdfrete 5678b sdf adfas ase sdf aas  t sdf ts d s e34523 sdf gsd 63 sdfs ыа ы кы афц"
+        + "3м  ыпаыву  s sf s sdf asd asfsd w assf tet ы ц к к йцкуаыфв ыфафаф фаываыфав а фв аs  asf s sdfsa dscas "
+        + " s as asdf sfsr43r344 1tasdf asa  asdfa fgwe treqr3 qadfasf аывфыфцк у фыва ые унпваыва  вайк ыавыфвауц";
     stringSerializer = new OUTF8Serializer();
   }
 
