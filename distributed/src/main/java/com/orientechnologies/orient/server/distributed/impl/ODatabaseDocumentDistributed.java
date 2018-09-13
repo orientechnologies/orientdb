@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
@@ -45,10 +46,7 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.tx.*;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitContext;
@@ -502,7 +500,58 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       //Exclusive for handling schema manipulation, remove after refactor for distributed schema
       super.internalCommit(iTx);
     } else {
-      realCommit(iTx);
+      //realCommit(iTx);
+
+      ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
+      try {
+        dManager.waitUntilNodeOnline();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      ODistributedDatabaseImpl sharedDistributeDb = (ODistributedDatabaseImpl) dManager.getMessageService().getDatabase(getName());
+      OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
+      sharedDistributeDb.waitForOnline();
+      OSessionOperationId id = new OSessionOperationId();
+      id.init();
+      Future<OSubmitResponse> future = submitContext.send(id,
+          new OTransactionSubmit(iTx.getRecordOperations(), OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx)));
+      try {
+        OTransactionResponse response = (OTransactionResponse) future.get();
+        if (!response.isSuccess()) {
+          throw new ODatabaseException("failed");
+        }
+        for (OCreatedRecordResponse created : response.getCreatedRecords()) {
+          iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
+          ORecordOperation rop = iTx.getRecordEntry(created.getCurrentRid());
+          if (rop != null) {
+            if (created.getVersion() > rop.getRecord().getVersion() + 1)
+              // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+              rop.getRecord().unload();
+            ORecordInternal.setVersion(rop.getRecord(), created.getVersion());
+          }
+        }
+        for (OUpdatedRecordResponse updated : response.getUpdatedRecords()) {
+          ORecordOperation rop = iTx.getRecordEntry(updated.getRid());
+          if (rop != null) {
+            if (updated.getVersion() > rop.getRecord().getVersion() + 1)
+              // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+              rop.getRecord().unload();
+            ORecordInternal.setVersion(rop.getRecord(), updated.getVersion());
+          }
+        }
+        // SET ALL THE RECORDS AS UNDIRTY
+        for (ORecordOperation txEntry : iTx.getRecordOperations())
+          ORecordInternal.unsetDirty(txEntry.getRecord());
+
+        // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT.
+        OTransactionAbstract.updateCacheFromEntries(iTx.getDatabase(), iTx.getRecordOperations(), true);
+
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      } catch (ExecutionException e) {
+        e.printStackTrace();
+      }
+
     }
   }
 
