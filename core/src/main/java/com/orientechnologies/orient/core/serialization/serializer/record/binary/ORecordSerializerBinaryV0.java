@@ -1034,7 +1034,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       } else {
         //signal for null value
-        writeEmptyString(bytes);
+        OIntegerSerializer.INSTANCE.serializeLiteral(0, bytes.bytes, pos[i]);
       }
     }
     return fullPos;
