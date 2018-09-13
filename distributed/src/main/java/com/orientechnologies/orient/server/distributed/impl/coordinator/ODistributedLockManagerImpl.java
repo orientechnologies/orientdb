@@ -29,7 +29,7 @@ public class ODistributedLockManagerImpl implements ODistributedLockManager {
   public OLockGuard lockIndexKey(String index, Object key) {
     //TODO: Find a better way to do this.
     String indexKey = index + key;
-    keyLocks.unlock(indexKey);
+    keyLocks.lock(indexKey);
     return new OLockGuard() {
       @Override
       public void release() {

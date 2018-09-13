@@ -146,4 +146,8 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
   public List<ORecordOperationRequest> getOperations() {
     return operations;
   }
+
+  public OSessionOperationId getOperationId() {
+    return operationId;
+  }
 }

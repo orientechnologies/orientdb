@@ -115,6 +115,7 @@ public class OTransactionSubmit implements OSubmitRequest {
         int clusterId = entry.getId().getClusterId();
         long pos = coordinator.getAllocator().allocate(clusterId);
         ORecordId value = new ORecordId(clusterId, pos);
+        entry.setOldId(entry.getId());
         entry.setId(value);
       } else {
         rids.add(entry.getId());

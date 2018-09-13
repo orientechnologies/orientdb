@@ -48,12 +48,14 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
       }
       for (OIndexKeyChange key : indexChange.getIndexKeyChanges()) {
         for (OIndexKeyOperation operation : key.getOperations()) {
+          ORID value = operation.getValue();
+          if (!value.isPersistent()) {
+            value = getRecordEntry(value).getRID();
+          }
           if (operation.getType() == OIndexKeyOperation.PUT) {
-            addIndexEntry(index, indexChange.getIndexName(), OTransactionIndexChanges.OPERATION.PUT, key.getKey(),
-                operation.getValue());
+            addIndexEntry(index, indexChange.getIndexName(), OTransactionIndexChanges.OPERATION.PUT, key.getKey(), value);
           } else {
-            addIndexEntry(index, indexChange.getIndexName(), OTransactionIndexChanges.OPERATION.REMOVE, key.getKey(),
-                operation.getValue());
+            addIndexEntry(index, indexChange.getIndexName(), OTransactionIndexChanges.OPERATION.REMOVE, key.getKey(), value);
           }
         }
       }
@@ -181,4 +183,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
     return deletedRecord;
   }
 
+  public void addUpdatedRid(ORID oldId, ORID id) {
+    updatedRids.put(oldId, id);
+  }
 }
