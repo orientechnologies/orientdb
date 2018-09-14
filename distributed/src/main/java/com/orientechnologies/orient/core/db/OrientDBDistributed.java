@@ -32,6 +32,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private volatile OHazelcastPlugin                 plugin;
   private final    Map<String, ODistributedChannel> members     = new HashMap<>();
   private volatile boolean                          coordinator = false;
+  private volatile String                           coordinatorName;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -99,6 +100,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       }
     }
     storage.restoreFromIncrementalBackup(backupPath);
+    //THIS MAKE SURE THAT THE SHARED CONTEXT IS INITED.
+    ODatabaseDocumentEmbedded instance = openNoAuthorization(dbName);
+    instance.close();
     checkCoordinator(dbName);
   }
 
@@ -106,12 +110,18 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public void restore(String name, InputStream in, Map<String, Object> options, Callable<Object> callable,
       OCommandOutputListener iListener) {
     super.restore(name, in, options, callable, iListener);
+    //THIS MAKE SURE THAT THE SHARED CONTEXT IS INITED.
+    ODatabaseDocumentEmbedded instance = openNoAuthorization(name);
+    instance.close();
     checkCoordinator(name);
   }
 
   @Override
   public void restore(String name, String user, String password, ODatabaseType type, String path, OrientDBConfig config) {
     super.restore(name, user, password, type, path, config);
+    //THIS MAKE SURE THAT THE SHARED CONTEXT IS INITED.
+    ODatabaseDocumentEmbedded instance = openNoAuthorization(name);
+    instance.close();
     checkCoordinator(name);
   }
 
@@ -156,11 +166,16 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       OSharedContext shared = sharedContexts.get(database);
       if (shared instanceof OSharedContextDistributed) {
         ODistributedContext distributed = ((OSharedContextDistributed) shared).getDistributedContext();
-        if (coordinator && distributed.getCoordinator() == null) {
-          distributed.makeCoordinator(plugin.getLocalNodeName(), shared);
-          for (Map.Entry<String, ODistributedChannel> node : members.entrySet()) {
-            ODistributedMember member = new ODistributedMember(node.getKey(), database, node.getValue());
-            distributed.getCoordinator().join(member);
+        if (distributed.getCoordinator() == null) {
+          if (coordinator) {
+            distributed.makeCoordinator(plugin.getLocalNodeName(), shared);
+            for (Map.Entry<String, ODistributedChannel> node : members.entrySet()) {
+              ODistributedMember member = new ODistributedMember(node.getKey(), database, node.getValue());
+              distributed.getCoordinator().join(member);
+            }
+          } else {
+            ODistributedMember member = new ODistributedMember(coordinatorName, database, members.get(coordinatorName));
+            distributed.setExternalCoordinator(member);
           }
         }
 
@@ -213,6 +228,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public synchronized void setCoordinator(String lockManager, boolean isSelf) {
+    this.coordinatorName = lockManager;
     if (isSelf) {
       if (!coordinator) {
         for (OSharedContext context : sharedContexts.values()) {

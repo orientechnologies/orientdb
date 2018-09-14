@@ -9,11 +9,18 @@ import java.util.concurrent.Future;
 
 public class OSubmitContextImpl implements OSubmitContext {
 
-  private Map<OSessionOperationId, CompletableFuture<OSubmitResponse>> operations = new HashMap<>();
-  private ODistributedMember                                           coordinator;
+  private          Map<OSessionOperationId, CompletableFuture<OSubmitResponse>> operations = new HashMap<>();
+  private volatile ODistributedMember                                           coordinator;
 
   @Override
   public synchronized Future<OSubmitResponse> send(OSessionOperationId operationId, OSubmitRequest request) {
+    while (coordinator == null) {
+      try {
+        this.wait();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    }
     CompletableFuture<OSubmitResponse> value = new CompletableFuture<>();
     operations.put(operationId, value);
     coordinator.submit(operationId, request);
@@ -32,7 +39,8 @@ public class OSubmitContextImpl implements OSubmitContext {
   }
 
   @Override
-  public void setCoordinator(ODistributedMember m) {
-    this.coordinator = m;
+  public synchronized void setCoordinator(ODistributedMember coordinator) {
+    this.coordinator = coordinator;
+    notifyAll();
   }
 }
