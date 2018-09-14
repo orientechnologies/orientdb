@@ -49,7 +49,6 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
 
   private int treeSizeOffset;
 
-  private int freeValuesListOffset;
   private int positionsArrayOffset;
 
   private final boolean isLeaf;
@@ -96,7 +95,6 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
     setByteValue(isLeafOffset, (byte) (isLeaf ? 1 : 0));
 
     setLongValue(treeSizeOffset, 0);
-    setLongValue(freeValuesListOffset, -1);
   }
 
   private void calculateOffsets(int bucketPrefixSize) {
@@ -104,8 +102,7 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
     sizeOffset = freePointerOffset + OIntegerSerializer.INT_SIZE;
     isLeafOffset = sizeOffset + OIntegerSerializer.INT_SIZE;
     treeSizeOffset = isLeafOffset + OByteSerializer.BYTE_SIZE;
-    freeValuesListOffset = treeSizeOffset + OLongSerializer.LONG_SIZE;
-    positionsArrayOffset = freeValuesListOffset + OLongSerializer.LONG_SIZE;
+    positionsArrayOffset = treeSizeOffset + OLongSerializer.LONG_SIZE;
   }
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
@@ -147,24 +144,26 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
     return size() == 0;
   }
 
-  long getValuesFreeListFirstIndex() {
-    return getLongValue(freeValuesListOffset);
-  }
-
-  void setValuesFreeListFirstIndex(long pageIndex) {
-    setLongValue(freeValuesListOffset, pageIndex);
-  }
-
   public String getBucketPrefix() {
     return bucketPrefix;
   }
 
   public int find(String key) {
-    int low = 0;
-    int high = size() - 1;
+    final int size = size();
 
-    if (key.length() < bucketPrefix.length() || !key.substring(0, bucketPrefix.length()).equals(bucketPrefix)) {
-      return -(low + 1);
+    int low = 0;
+    int high = size - 1;
+
+    if (key.length() < bucketPrefix.length()) {
+      return -1;
+    }
+
+    if (!key.startsWith(bucketPrefix)) {
+      if (key.compareTo(bucketPrefix) > 0) {
+        return -(size + 1);
+      }
+
+      return -1;
     }
 
     key = key.substring(bucketPrefix.length());
@@ -181,6 +180,7 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
       else
         return mid; // key found
     }
+
     return -(low + 1); // key not found.
   }
 
@@ -410,7 +410,6 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
     setByteValue(isLeafOffset, (byte) (isLeaf ? 1 : 0));
 
     setLongValue(treeSizeOffset, 0);
-    setLongValue(freeValuesListOffset, -1);
 
     this.bucketPrefix = bucketPrefix;
 
@@ -428,7 +427,6 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
     }
 
     final long treeSize = getLongValue(treeSizeOffset);
-    final long freeValuesList = getLongValue(freeValuesListOffset);
 
     final int bucketPrefixSize;
 
@@ -454,7 +452,6 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
     setByteValue(isLeafOffset, (byte) (isLeaf ? 1 : 0));
 
     setLongValue(treeSizeOffset, treeSize);
-    setLongValue(freeValuesListOffset, freeValuesList);
 
     int index = 0;
     for (SBTreeEntry<V> entry : treeEntries) {

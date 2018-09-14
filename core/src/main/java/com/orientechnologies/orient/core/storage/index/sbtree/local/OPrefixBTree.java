@@ -1256,7 +1256,6 @@ public class OPrefixBTree<V> extends ODurableComponent {
   private BucketUpdateSearchResult splitRootBucket(List<Long> path, int keyIndex, String keyToInsert, OCacheEntry bucketEntry,
       OPrefixBTreeBucket<V> bucketToSplit, boolean splitLeaf, int indexToSplit, String separationKey, List<byte[]> rightEntries,
       OAtomicOperation atomicOperation) throws IOException {
-    final long freeListPage = bucketToSplit.getValuesFreeListFirstIndex();
     final long treeSize = bucketToSplit.getTreeSize();
 
     final List<byte[]> leftEntries = new ArrayList<>(indexToSplit);
@@ -1286,7 +1285,6 @@ public class OPrefixBTree<V> extends ODurableComponent {
     bucketToSplit = new OPrefixBTreeBucket<>(bucketEntry, false, keySerializer, valueSerializer, encryption, "");
 
     bucketToSplit.setTreeSize(treeSize);
-    bucketToSplit.setValuesFreeListFirstIndex(freeListPage);
 
     bucketToSplit.addEntry(0,
         new OPrefixBTreeBucket.SBTreeEntry<>((int) leftBucketEntry.getPageIndex(), (int) rightBucketEntry.getPageIndex(),
@@ -1324,8 +1322,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
     while (true) {
       if (path.size() > MAX_PATH_LENGTH) {
         throw new OPrefixBTreeException(
-            "We reached max level of depth of SBTree but still found nothing, seems like tree is in corrupted state. You should rebuild index related to given query.",
-            this);
+            "We reached max level of depth of SBTree but still found nothing, seems like tree is in corrupted state."
+                + " You should rebuild index related to given query. Key = " + key, this);
       }
 
       path.add(pageIndex);
@@ -1720,9 +1718,9 @@ public class OPrefixBTree<V> extends ODurableComponent {
     private       boolean fromKeyInclusive;
     private final boolean toKeyInclusive;
 
-    private List<Map.Entry<String, V>>     dataCache         = new ArrayList<>();
+    private final List<Map.Entry<String, V>>     dataCache         = new ArrayList<>();
     @SuppressWarnings("unchecked")
-    private Iterator<Map.Entry<String, V>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
+    private       Iterator<Map.Entry<String, V>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
 
     private OSBTreeCursorForward(String fromKey, String toKey, boolean fromKeyInclusive, boolean toKeyInclusive) {
       this.fromKey = fromKey;
