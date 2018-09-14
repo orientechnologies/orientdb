@@ -67,6 +67,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1248,7 +1249,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   @Override
   public void flush(final long fileId) {
-    final Future<Void> future = commitExecutor.submit(new FileFlushTask(extractFileId(fileId)));
+    final Future<Void> future = commitExecutor.submit(new FileFlushTask(Collections.singleton(extractFileId(fileId))));
     try {
       future.get();
     } catch (final InterruptedException e) {
@@ -1262,11 +1263,16 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   @Override
   public void flush() {
-    for (final int intId : nameIdMap.values()) {
-      if (intId < 0)
-        continue;
 
-      flush(intId);
+    final Future<Void> future = commitExecutor.submit(new FileFlushTask(nameIdMap.values()));
+    try {
+      future.get();
+    } catch (final InterruptedException e) {
+      //noinspection ResultOfMethodCallIgnored
+      Thread.interrupted();
+      throw OException.wrapException(new OInterruptedException("File flush was interrupted"), e);
+    } catch (final Exception e) {
+      throw OException.wrapException(new OWriteCacheException("File flush was abnormally terminated"), e);
     }
   }
 
@@ -3215,10 +3221,10 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   private final class FileFlushTask implements Callable<Void> {
-    private final int fileId;
+    private final Set<Integer> fileIdSet;
 
-    private FileFlushTask(final int fileId) {
-      this.fileId = fileId;
+    private FileFlushTask(final Collection<Integer> fileIds) {
+      this.fileIdSet = new HashSet<>(fileIds);
     }
 
     @Override
@@ -3235,7 +3241,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       while (entryIterator.hasNext()) {
         final Map.Entry<PageKey, OCachePointer> entry = entryIterator.next();
         final PageKey pageKey = entry.getKey();
-        if (pageKey.fileId == fileId) {
+        if (fileIdSet.contains(pageKey.fileId)) {
           final OCachePointer pagePointer = entry.getValue();
           final Lock groupLock = lockManager.acquireExclusiveLock(pageKey);
           try {
@@ -3274,12 +3280,16 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
 
       if (callFsync) {
-        final long finalId = composeFileId(id, fileId);
-        final OClosableEntry<Long, OFileClassic> entry = files.acquire(finalId);
-        try {
-          entry.get().synch();
-        } finally {
-          files.release(entry);
+        for (int iFileId : fileIdSet) {
+          final long finalId = composeFileId(id, iFileId);
+          final OClosableEntry<Long, OFileClassic> entry = files.acquire(finalId);
+          if (entry != null) {
+            try {
+              entry.get().synch();
+            } finally {
+              files.release(entry);
+            }
+          }
         }
       }
 
