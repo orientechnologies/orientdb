@@ -326,8 +326,9 @@ public class OPrefixBTree<V> extends ODurableComponent {
               releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
 
               keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false);
-              keyBucket = new OPrefixBTreeBucket<>(keyBucketCacheEntry, keySerializer, valueSerializer, encryption);
             }
+
+            keyBucket = new OPrefixBTreeBucket<>(keyBucketCacheEntry, keySerializer, valueSerializer, encryption);
           }
 
           releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
@@ -1180,8 +1181,9 @@ public class OPrefixBTree<V> extends ODurableComponent {
             releasePageFromWrite(atomicOperation, parentCacheEntry);
 
             parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false);
-            parentBucket = new OPrefixBTreeBucket<>(parentCacheEntry, keySerializer, valueSerializer, encryption);
           }
+
+          parentBucket = new OPrefixBTreeBucket<>(parentCacheEntry, keySerializer, valueSerializer, encryption);
         }
 
         final ArrayList<Long> resultPath = new ArrayList<>(path.subList(0, path.size() - 1));
