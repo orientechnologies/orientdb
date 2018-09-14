@@ -114,8 +114,9 @@ public class OTransactionSubmit implements OSubmitRequest {
       }
 
     }
+    List<OLockGuard> guards = new ArrayList<>();
     for (OPair<String, String> key : keys) {
-      lockManager.lockIndexKey(key.getKey(), key.getValue());
+      guards.add(lockManager.lockIndexKey(key.getKey(), key.getValue()));
     }
 
     //Sort and lock transaction entry in distributed environment
@@ -132,7 +133,6 @@ public class OTransactionSubmit implements OSubmitRequest {
       }
     }
 
-    List<OLockGuard> guards = new ArrayList<>();
     for (ORID rid : rids) {
       guards.add(lockManager.lockRecord(rid));
     }

@@ -34,6 +34,7 @@ public class OTransactionSecondPhaseResponseHandler implements OResponseHandler 
           for (OLockGuard guard : guards) {
             guard.release();
           }
+          guards.clear();
         }
         if (!replySent) {
           coordinator.reply(requester, operationId,
