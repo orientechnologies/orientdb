@@ -186,6 +186,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           importIndexes();
         else if (tag.equals("manualIndexes"))
           importManualIndexes();
+        else if (tag.equals("brokenRids")){
+          processBrokenRids();
+          continue;
+        }
         else
           throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");
       }
@@ -229,6 +233,38 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
 
     return this;
+  }
+  
+  private void processBrokenRids() throws IOException, ParseException{
+    Set<ORID> brokenRids = new HashSet<ORID>();
+    processBrokenRids(brokenRids);
+    jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+  }
+  
+  //just read collection so import process can continue
+  private void processBrokenRids(Set<ORID> brokenRids) throws IOException, ParseException{
+    if (exporterVersion >= 12){
+      listener.onMessage("Reading of set of RIDs of records which were detected as broken during database export\n");
+      
+      jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+
+      while (true) {
+        jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+
+        final ORecordId recordId = new ORecordId(jsonReader.getValue());
+        brokenRids.add(recordId);
+
+        if (jsonReader.lastChar() == ']')
+          break;
+      }
+    }
+    if (migrateLinks) {
+      if (exporterVersion >= 12)
+        listener.onMessage(
+            brokenRids.size() + " were detected as broken during database export, links on those records will be removed from"
+                + " result database");
+      migrateLinksInImportedDocuments(brokenRids);
+    }
   }
 
   public void rebuildIndexes() {
@@ -1066,29 +1102,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
 
     final Set<ORID> brokenRids = new HashSet<ORID>();
-
-    if (exporterVersion >= 12) {
-      listener.onMessage("Reading of set of RIDs of records which were detected as broken during database export\n");
-
-      jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
-
-      while (true) {
-        jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-
-        final ORecordId recordId = new ORecordId(jsonReader.getValue());
-        brokenRids.add(recordId);
-
-        if (jsonReader.lastChar() == ']')
-          break;
-      }
-    }
-    if (migrateLinks) {
-      if (exporterVersion >= 12)
-        listener.onMessage(
-            brokenRids.size() + " were detected as broken during database export, links on those records will be removed from"
-                + " result database");
-      migrateLinksInImportedDocuments(brokenRids);
-    }
+    processBrokenRids(brokenRids);
 
     listener.onMessage(String.format("\n\nDone. Imported %,d records in %,.2f secs\n", totalRecords,
         ((float) (System.currentTimeMillis() - begin)) / 1000));
