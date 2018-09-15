@@ -59,6 +59,50 @@ public class PrefixBTreeTestIT {
   }
 
   @Test
+  public void testRandom() {
+    final int keysCount = 100_000_000;
+    TreeMap<Integer, String> keys = new TreeMap<>();
+
+    for (int i = 0; i < 100; i++) {
+      long seed = System.nanoTime();
+      System.out.println("Insertion " + i + " is started, seed : " + seed);
+      Random random = new Random(seed);
+
+      System.out.println("Generation of keys is started");
+
+      for (int k = 0; k < keysCount; k++) {
+        keys.put(k, String.valueOf(k));
+      }
+
+      System.out.println("Generation of keys is completed");
+
+      for (int n = 0; n < keysCount; n++) {
+        Map.Entry<Integer, String> entry = keys.ceilingEntry(random.nextInt(keysCount));
+        if (entry == null) {
+          entry = keys.firstEntry();
+        }
+
+        prefixTree.put(entry.getValue(), new ORecordId(entry.getKey() % 32_000, entry.getKey()));
+        keys.remove(entry.getKey());
+      }
+
+      System.out.println("Insertion " + i + " is completed");
+      System.out.println("Check " + i + " is started");
+
+      for (int k = 0; k < keysCount; k++) {
+        Assert.assertEquals(prefixTree.get(String.valueOf(k)), new ORecordId(k % 32_000, k));
+      }
+
+      System.out.println("Check " + i + " is completed");
+      prefixTree.delete();
+
+      prefixTree = new OPrefixBTree<>("prefixBTree", ".pbt", ".npt",
+          (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
+      prefixTree.create(OUTF8Serializer.INSTANCE, OLinkSerializer.INSTANCE, false, null);
+    }
+  }
+
+  @Test
   public void testKeyPut() {
     final int keysCount = 500_000;
 
