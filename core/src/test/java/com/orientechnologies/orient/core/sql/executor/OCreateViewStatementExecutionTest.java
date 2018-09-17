@@ -139,6 +139,45 @@ public class OCreateViewStatementExecutionTest {
   }
 
   @Test
+  public void testLiveUpdate() throws InterruptedException {
+    String className = "testLiveUpdateClass";
+    String viewName = "testLiveUpdate";
+    db.createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("name", "name" + i);
+      elem.setProperty("surname", "surname" + i);
+      elem.save();
+    }
+
+    String statement = "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    statement += "updateStrategy:\"live\",";
+    statement += "originRidField:\"origin\"";
+    statement += "}";
+
+    db.command(statement);
+
+    Thread.sleep(1000);
+    
+    db.command("UPDATE " + className + " SET surname = 'changed' WHERE name = 'name3'");
+
+    Thread.sleep(1000);
+
+    OResultSet result = db.query("SELECT FROM " + viewName);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      if (item.getProperty("name").equals("name3")) {
+        Assert.assertEquals("changed", item.getProperty("surname"));
+      } else {
+        Assert.assertEquals("sur" + item.getProperty("name"), item.getProperty("surname"));
+      }
+    }
+    result.close();
+  }
+
+  @Test
   public void testLiveUpdateInsert() throws InterruptedException {
     String className = "testLiveUpdateInsertClass";
     String viewName = "testLiveUpdateInsert";
