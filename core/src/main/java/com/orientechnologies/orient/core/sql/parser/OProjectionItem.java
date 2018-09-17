@@ -162,7 +162,7 @@ public class OProjectionItem extends SimpleNode {
     if (all) {
       result = new OIdentifier("*");
     } else {
-      result = new OIdentifier(expression.toString());
+      result = expression.getDefaultAlias();
     }
     return result;
   }
