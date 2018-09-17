@@ -74,7 +74,7 @@ public class OEdgeDelegate implements OEdge {
     if (doc == null)
       return null;
 
-    Object result = doc.getProperty(DIRECITON_OUT);
+    Object result = doc.getProperty(DIRECTION_OUT);
     if (!(result instanceof OElement)) {
       return null;
     }
@@ -95,7 +95,7 @@ public class OEdgeDelegate implements OEdge {
     if (doc == null)
       return null;
 
-    Object result = doc.getProperty(DIRECITON_IN);
+    Object result = doc.getProperty(DIRECTION_IN);
     if (!(result instanceof OElement)) {
       return null;
     }

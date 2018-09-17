@@ -17,7 +17,7 @@ public class OEdgeDocument extends ODocument implements OEdge {
 
   @Override
   public OVertex getFrom() {
-    Object result = getProperty(DIRECITON_OUT);
+    Object result = getProperty(DIRECTION_OUT);
     if (!(result instanceof OElement)) {
       return null;
     }
@@ -30,7 +30,7 @@ public class OEdgeDocument extends ODocument implements OEdge {
 
   @Override
   public OVertex getTo() {
-    Object result = getProperty(DIRECITON_IN);
+    Object result = getProperty(DIRECTION_IN);
     if (!(result instanceof OElement)) {
       return null;
     }
