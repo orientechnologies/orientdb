@@ -139,9 +139,9 @@ public class OCreateViewStatementExecutionTest {
   }
 
   @Test
-  public void testLiveUpdate() throws InterruptedException {
-    String className = "testLiveUpdateClass";
-    String viewName = "testLiveUpdate";
+  public void testLiveUpdateInsert() throws InterruptedException {
+    String className = "testLiveUpdateInsertClass";
+    String viewName = "testLiveUpdateInsert";
     db.createClass(className);
 
     for (int i = 0; i < 10; i++) {
@@ -168,6 +168,44 @@ public class OCreateViewStatementExecutionTest {
     Thread.sleep(1000);
     result = db.query("SELECT FROM " + viewName);
     Assert.assertEquals(11, result.stream().count());
+    result.close();
+  }
+
+  @Test
+  public void testLiveUpdateDelete() throws InterruptedException {
+    String className = "testLiveUpdateDeleteClass";
+    String viewName = "testLiveUpdateDelete";
+    db.createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("name", "name" + i);
+      elem.setProperty("surname", "surname" + i);
+      elem.save();
+    }
+
+    String statement = "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    statement += "updateStrategy:\"live\",";
+    statement += "originRidField:\"origin\"";
+    statement += "}";
+
+    db.command(statement);
+
+    Thread.sleep(1000);
+
+    OResultSet result = db.query("SELECT FROM " + viewName);
+    Assert.assertEquals(10, result.stream().count());
+    result.close();
+
+    db.command("DELETE FROM " + className + " WHERE name = 'name3'");
+
+    Thread.sleep(1000);
+    result = db.query("SELECT FROM " + viewName);
+    for (int i = 0; i < 9; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotEquals("name3", item.getProperty("name"));
+    }
     result.close();
   }
 

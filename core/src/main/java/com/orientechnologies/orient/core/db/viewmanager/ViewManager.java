@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.db.viewmanager;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -489,18 +490,26 @@ public class ViewManager {
     }
 
     @Override
-    public void onUpdate(ODatabaseDocument database, OResult before, OResult after) {
+    public void onUpdate(ODatabaseDocument db, OResult before, OResult after) {
       //TODO
     }
 
     @Override
-    public void onDelete(ODatabaseDocument database, OResult data) {
-      //TODO
+    public void onDelete(ODatabaseDocument db, OResult data) {
+      OView view = db.getMetadata().getSchema().getView(viewName);
+      if (view != null && view.getOriginRidField() != null) {
+        try (OResultSet rs = db
+            .query("SELECT FROM " + viewName + " WHERE " + view.getOriginRidField() + " = ?", (Object) data.getProperty("@rid"))) {
+          while (rs.hasNext()) {
+            rs.next().getElement().ifPresent(x -> x.delete());
+          }
+        }
+      }
     }
 
     @Override
     public void onError(ODatabaseDocument database, OException exception) {
-
+      OLogManager.instance().error(ViewManager.this, "Error updating view " + viewName, exception);
     }
 
     @Override
