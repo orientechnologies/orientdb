@@ -16,7 +16,7 @@
  *   For more information: http://www.orientdb.com
  */
 
-package com.orientechnologies.agent.backup.log;
+package com.orientechnologies.agent.services.backup.log;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;

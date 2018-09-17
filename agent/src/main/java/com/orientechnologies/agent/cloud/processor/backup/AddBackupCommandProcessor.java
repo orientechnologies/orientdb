@@ -7,6 +7,7 @@ import com.orientechnologies.agent.cloud.processor.tasks.backup.AddBackupTaskRes
 import com.orientechnologies.agent.operation.NodeResponse;
 import com.orientechnologies.agent.operation.OperationResponseFromNode;
 import com.orientechnologies.agent.operation.ResponseOk;
+import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
@@ -31,7 +32,8 @@ public class AddBackupCommandProcessor extends AbstractBackupCommandProcessor {
     ODocument addedBackup;
 
     if (!agent.isDistributed()) {
-      addedBackup = agent.getBackupManager().addBackup(toODocument(info));
+      OBackupService backupService = agent.getServiceByClass(OBackupService.class).get();
+      addedBackup = backupService.addBackup(toODocument(info));
     } else {
 
       OperationResponseFromNode response = agent.getNodesManager().send(info.getServer(), new AddBackupTask(toODocument(info)));

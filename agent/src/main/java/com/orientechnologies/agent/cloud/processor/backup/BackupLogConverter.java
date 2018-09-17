@@ -1,7 +1,7 @@
 package com.orientechnologies.agent.cloud.processor.backup;
 
-import com.orientechnologies.agent.backup.log.OBackupLog;
-import com.orientechnologies.agent.backup.log.OBackupLogType;
+import com.orientechnologies.agent.services.backup.log.OBackupLog;
+import com.orientechnologies.agent.services.backup.log.OBackupLogType;
 import com.orientechnologies.orientdb.cloud.protocol.backup.log.*;
 import org.apache.commons.beanutils.BeanUtils;
 

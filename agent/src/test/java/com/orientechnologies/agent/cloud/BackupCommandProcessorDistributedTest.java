@@ -1,9 +1,10 @@
 package com.orientechnologies.agent.cloud;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
-import com.orientechnologies.agent.backup.OBackupTask;
-import com.orientechnologies.agent.backup.log.OBackupLog;
-import com.orientechnologies.agent.backup.log.OBackupLogType;
+import com.orientechnologies.agent.services.backup.OBackupService;
+import com.orientechnologies.agent.services.backup.OBackupTask;
+import com.orientechnologies.agent.services.backup.log.OBackupLog;
+import com.orientechnologies.agent.services.backup.log.OBackupLogType;
 import com.orientechnologies.agent.cloud.processor.backup.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.AbstractEnterpriseServerClusterTest;
@@ -32,8 +33,6 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
   private final String NEW_DB_NAME = "newDB";
   private final String BACKUP_PATH =
       System.getProperty("buildDirectory", "target") + File.separator + "databases" + File.separator + DB_NAME;
-
-
 
   @Test
   public void testBackupCommandProcessorEmptyBackups() throws Exception {
@@ -185,7 +184,8 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
     backup.field("enabled", true);
     backup.field("retentionDays", 30);
 
-    return agent.getBackupManager().addBackup(backup);
+    OBackupService backupService = agent.getServiceByClass(OBackupService.class).get();
+    return backupService.addBackup(backup);
   }
 
   private BackupList getBackupList(String nodeName) {
@@ -343,9 +343,9 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
       String uuid = cfg.field("uuid");
 
-      final OBackupTask task = getAgent(firstServer.getNodeName()).getBackupManager().getTask(uuid);
+      final OBackupTask task = getBackupService(firstServer.getNodeName()).getTask(uuid);
 
-      final OBackupTask task1 = getAgent(secondServer.getNodeName()).getBackupManager().getTask(uuid);
+      final OBackupTask task1 = getBackupService(secondServer.getNodeName()).getTask(uuid);
 
       assertThat(task1).isNull();
 
@@ -397,9 +397,9 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
       String uuid = cfg.field("uuid");
 
-      final OBackupTask task = getAgent(firstServer.getNodeName()).getBackupManager().getTask(uuid);
+      final OBackupTask task = getBackupService(firstServer.getNodeName()).getTask(uuid);
 
-      final OBackupTask task1 = getAgent(secondServer.getNodeName()).getBackupManager().getTask(uuid);
+      final OBackupTask task1 = getBackupService(secondServer.getNodeName()).getTask(uuid);
 
       assertThat(task1).isNull();
 
@@ -439,7 +439,7 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
   @Test
   public void testRemoveBackupLogsCommandProcessor() throws Exception {
 
-      execute(2, () -> {
+    execute(2, () -> {
 
       ServerRun firstServer = this.serverInstance.get(0);
       ServerRun secondServer = this.serverInstance.get(1);
@@ -455,9 +455,9 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
       String uuid = cfg.field("uuid");
 
-      final OBackupTask task = getAgent(firstServer.getNodeName()).getBackupManager().getTask(uuid);
+      final OBackupTask task = getBackupService(firstServer.getNodeName()).getTask(uuid);
 
-      final OBackupTask task1 = getAgent(secondServer.getNodeName()).getBackupManager().getTask(uuid);
+      final OBackupTask task1 = getBackupService(secondServer.getNodeName()).getTask(uuid);
 
       assertThat(task1).isNull();
 
@@ -512,9 +512,9 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
       String uuid = cfg.field("uuid");
 
-      final OBackupTask task = getAgent(firstServer.getNodeName()).getBackupManager().getTask(uuid);
+      final OBackupTask task = getBackupService(firstServer.getNodeName()).getTask(uuid);
 
-      final OBackupTask task1 = getAgent(secondServer.getNodeName()).getBackupManager().getTask(uuid);
+      final OBackupTask task1 = getBackupService(secondServer.getNodeName()).getTask(uuid);
 
       assertThat(task1).isNull();
 

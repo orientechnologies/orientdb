@@ -1,6 +1,7 @@
 package com.orientechnologies.agent.cloud.processor.tasks.backup;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -19,7 +20,8 @@ public class ListBackupTask implements NodeOperation {
   @Override
   public NodeOperationResponse execute(OServer iServer, ODistributedServerManager iManager) {
     OEnterpriseAgent agent = iServer.getPluginByClass(OEnterpriseAgent.class);
-    ODocument config = agent.getBackupManager().getConfiguration();
+    OBackupService backupService = agent.getServiceByClass(OBackupService.class).get();
+    ODocument config = backupService.getConfiguration();
     return new ListBackupTaskResponse(config);
   }
 

@@ -6,6 +6,7 @@ import com.orientechnologies.agent.cloud.processor.tasks.backup.RestoreBackupTas
 import com.orientechnologies.agent.operation.NodeResponse;
 import com.orientechnologies.agent.operation.OperationResponseFromNode;
 import com.orientechnologies.agent.operation.ResponseOk;
+import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
@@ -39,10 +40,12 @@ public class RestoreBackupCommandProcessor extends AbstractBackupCommandProcesso
   }
 
   public static void restoreBackup(OEnterpriseAgent agent, BackupLogRequest request) {
+
+    OBackupService backupService = agent.getServiceByClass(OBackupService.class).get();;
     ODocument body = new ODocument().fromMap(request.getParams()).field("unitId", request.getUnitId())
         .field("backupId", request.getBackupId());
 
-    agent.getBackupManager().restoreBackup(request.getBackupId(), body);
+    backupService.restoreBackup(request.getBackupId(), body);
   }
 
 }

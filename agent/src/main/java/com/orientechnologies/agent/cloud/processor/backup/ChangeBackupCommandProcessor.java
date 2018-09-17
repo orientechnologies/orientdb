@@ -7,6 +7,7 @@ import com.orientechnologies.agent.cloud.processor.tasks.backup.ChangeBackupTask
 import com.orientechnologies.agent.operation.NodeResponse;
 import com.orientechnologies.agent.operation.OperationResponseFromNode;
 import com.orientechnologies.agent.operation.ResponseOk;
+import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
@@ -45,7 +46,8 @@ public class ChangeBackupCommandProcessor extends AbstractBackupCommandProcessor
   public static BackupInfo changeBackupInfo(OEnterpriseAgent agent, String uuid, BackupInfo info) {
 
     ODocument config = toODocument(info);
-    agent.getBackupManager().changeBackup(uuid, config);
+    OBackupService backupService = agent.getServiceByClass(OBackupService.class).get();
+    backupService.changeBackup(uuid, config);
     return fromODocument(config);
   }
 

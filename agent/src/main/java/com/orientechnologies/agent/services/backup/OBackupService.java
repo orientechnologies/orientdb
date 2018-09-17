@@ -16,17 +16,17 @@
  *   For more information: http://www.orientdb.com
  */
 
-package com.orientechnologies.agent.backup;
+package com.orientechnologies.agent.services.backup;
 
-import com.orientechnologies.agent.backup.log.OBackupDBLogger;
-import com.orientechnologies.agent.backup.log.OBackupDiskLogger;
-import com.orientechnologies.agent.backup.log.OBackupLog;
-import com.orientechnologies.agent.backup.log.OBackupLogger;
-import com.orientechnologies.agent.backup.strategy.OBackupStrategy;
+import com.orientechnologies.agent.http.command.OServerCommandBackupManager;
+import com.orientechnologies.agent.services.OEnterpriseService;
+import com.orientechnologies.agent.services.backup.log.OBackupDBLogger;
+import com.orientechnologies.agent.services.backup.log.OBackupLog;
+import com.orientechnologies.agent.services.backup.log.OBackupLogger;
+import com.orientechnologies.agent.services.backup.strategy.OBackupStrategy;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerLifecycleListener;
 
 import java.io.IOException;
 import java.util.*;
@@ -35,16 +35,12 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by Enrico Risa on 22/03/16.
  */
-public class OBackupManager implements OServerLifecycleListener {
+public class OBackupService implements OEnterpriseService {
 
-  private final OServer server;
-  OBackupConfig config;
-  OBackupLogger logger;
+  private   OEnterpriseServer        server;
+  private   OBackupConfig            config;
+  private   OBackupLogger            logger;
   protected Map<String, OBackupTask> tasks = new ConcurrentHashMap<String, OBackupTask>();
-
-  public OBackupManager(final OServer server) {
-    this(server, new OBackupConfig().load());
-  }
 
   private void initTasks() {
     Collection<ODocument> backups = config.backups();
@@ -58,19 +54,13 @@ public class OBackupManager implements OServerLifecycleListener {
     if (server.getSystemDatabase().exists()) {
       logger = new OBackupDBLogger(server);
     } else {
-      logger = new OBackupDiskLogger(server);
+
+      throw new UnsupportedOperationException("Cannot use Enterprise incremental backup without a system database");
     }
   }
 
-  public OBackupManager(final OServer server, final OBackupConfig config) {
-    this.config = config;
-    this.server = server;
-    server.registerLifecycleListener(this);
-  }
+  public OBackupService() {
 
-  public void shutdown() {
-    server.unregisterLifecycleListener(this);
-    tasks.values().stream().forEach((t) -> t.stop());
   }
 
   public ODocument getConfiguration() {
@@ -163,30 +153,28 @@ public class OBackupManager implements OServerLifecycleListener {
     return history;
   }
 
-  @Override
-  public void onBeforeActivate() {
-
-  }
-
-  @Override
-  public void onAfterActivate() {
-    initLogger();
-    initTasks();
-  }
-
-  @Override
-  public void onBeforeDeactivate() {
-
-  }
-
-  @Override
-  public void onAfterDeactivate() {
-
-  }
-
   public void deleteBackup(String uuid, Long unitId, Long timestamp) {
     OBackupTask oBackupTask = tasks.get(uuid);
 
     oBackupTask.deleteBackup(unitId, timestamp);
+  }
+
+  @Override
+  public void init(OEnterpriseServer server) {
+    this.server = server;
+  }
+
+  @Override
+  public void start() {
+    this.config = new OBackupConfig().load();
+    initLogger();
+    initTasks();
+    server.registerStatelessCommand(new OServerCommandBackupManager(this));
+  }
+
+  @Override
+  public void stop() {
+    tasks.values().stream().forEach((t) -> t.stop());
+    server.unregisterStatelessCommand(OServerCommandBackupManager.class);
   }
 }

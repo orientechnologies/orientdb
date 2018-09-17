@@ -19,7 +19,7 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
-import com.orientechnologies.agent.backup.OBackupManager;
+import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -32,11 +32,11 @@ import java.io.IOException;
  */
 public class OServerCommandBackupManager extends OServerCommandDistributedScope {
 
-  OBackupManager backupManager;
+  OBackupService backupManager;
   private static final String[] NAMES = { "GET|backupManager", "GET|backupManager/*", "POST|backupManager", "POST|backupManager/*",
       "PUT|backupManager/*", "DELETE|backupManager/*" };
 
-  public OServerCommandBackupManager(OBackupManager manager) {
+  public OServerCommandBackupManager(OBackupService manager) {
     super(EnterprisePermissions.SERVER_BACKUP.toString());
     backupManager = manager;
   }

@@ -5,6 +5,7 @@ import com.orientechnologies.agent.cloud.processor.tasks.backup.ListBackupTask;
 import com.orientechnologies.agent.cloud.processor.tasks.backup.ListBackupTaskResponse;
 import com.orientechnologies.agent.operation.OperationResponseFromNode;
 import com.orientechnologies.agent.operation.ResponseOk;
+import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
@@ -56,7 +57,10 @@ public class ListBackupCommandProcessor extends AbstractBackupCommandProcessor {
 
     } else {
       String server = "orientdb";
-      ODocument config = agent.getBackupManager().getConfiguration();
+
+      OBackupService backupService = agent.getServiceByClass(OBackupService.class).get();
+
+      ODocument config = backupService.getConfiguration();
 
       List<BackupInfo> backupInfos = config.<List<ODocument>>field("backups").stream().map(c -> {
         BackupInfo backupInfo = fromODocument(c);

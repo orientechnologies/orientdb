@@ -1,4 +1,4 @@
-package com.orientechnologies.agent.backup.log;
+package com.orientechnologies.agent.services.backup.log;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 

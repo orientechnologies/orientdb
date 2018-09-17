@@ -6,6 +6,7 @@ import com.orientechnologies.agent.cloud.processor.tasks.backup.ListBackupLogsTa
 import com.orientechnologies.agent.operation.NodeResponse;
 import com.orientechnologies.agent.operation.OperationResponseFromNode;
 import com.orientechnologies.agent.operation.ResponseOk;
+import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
 import com.orientechnologies.orientdb.cloud.protocol.backup.BackupLogRequest;
@@ -50,14 +51,15 @@ public class ListBackupLogsCommandProcessor extends AbstractBackupCommandProcess
   public static BackupLogsList getBackupLogsList(OEnterpriseAgent agent, BackupLogRequest request) {
     BackupLogsList backupLogsList = new BackupLogsList();
 
+    OBackupService backupService = agent.getServiceByClass(OBackupService.class).get();
     int page = request.getPage() != null ? request.getPage().intValue() : 1;
     int pageSide = request.getPageSize() != null ? request.getPageSize().intValue() : -1;
 
     if (request.getUnitId() == null) {
-      agent.getBackupManager().findLogs(request.getBackupId(), page, pageSide, request.getParams()).stream()
-          .map(BackupLogConverter::convert).forEach(l -> backupLogsList.addLog(l));
+      backupService.findLogs(request.getBackupId(), page, pageSide, request.getParams()).stream().map(BackupLogConverter::convert)
+          .forEach(l -> backupLogsList.addLog(l));
     } else {
-      agent.getBackupManager().findLogs(request.getBackupId(), request.getUnitId(), page, pageSide, request.getParams()).stream()
+      backupService.findLogs(request.getBackupId(), request.getUnitId(), page, pageSide, request.getParams()).stream()
           .map(BackupLogConverter::convert).forEach(l -> backupLogsList.addLog(l));
     }
 

@@ -16,9 +16,9 @@
  *   For more information: http://www.orientdb.com
  */
 
-package com.orientechnologies.agent.backup;
+package com.orientechnologies.agent.services.backup;
 
-import com.orientechnologies.agent.backup.log.OBackupLog;
+import com.orientechnologies.agent.services.backup.log.OBackupLog;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**

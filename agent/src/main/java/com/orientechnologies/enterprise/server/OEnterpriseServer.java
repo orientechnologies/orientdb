@@ -53,4 +53,8 @@ public interface OEnterpriseServer {
 
 
   NodesManager getNodesManager() ;
+
+  boolean existsDatabase(String databaseName);
+
+  void restore(String databaseName, String path);
 }

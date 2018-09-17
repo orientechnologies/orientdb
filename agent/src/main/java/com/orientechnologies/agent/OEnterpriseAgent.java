@@ -17,7 +17,7 @@
  */
 package com.orientechnologies.agent;
 
-import com.orientechnologies.agent.backup.OBackupManager;
+import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.agent.functions.OAgentFunctionFactory;
 import com.orientechnologies.agent.ha.OEnterpriseDistributedStrategy;
 import com.orientechnologies.agent.http.command.*;
@@ -90,7 +90,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     TOKEN = t;
   }
 
-  private   OBackupManager      backupManager;
   protected OEnterpriseProfiler profiler;
 
   private OEnterpriseCloudManager cloudManager;
@@ -105,7 +104,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     enabled = false;
     server = oServer;
 
-    enterpriseServer = new OEnterpriseServerImpl(server,this);
+    enterpriseServer = new OEnterpriseServerImpl(server, this);
     for (OServerParameterConfiguration p : iParams) {
       if (p.name.equals("license"))
         license = p.value;
@@ -123,6 +122,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     this.services.add(new StudioService());
     this.services.add(new OrientDBMetricsService());
     this.services.add(new OAgentFunctionFactory());
+    this.services.add(new OBackupService());
     this.services.forEach((s) -> s.init(this.enterpriseServer));
 
   }
@@ -142,7 +142,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
         server.registerLifecycleListener(this);
         enabled = true;
         installProfiler();
-        installBackupManager();
 
         installPlugins();
 
@@ -203,7 +202,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       cloudManager.shutdown();
 
       unregisterSecurityComponents();
-      uninstallBackupManager();
       uninstallCommands();
       uninstallProfiler();
 
@@ -214,10 +212,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       Orient.instance().removeDbLifecycleListener(this);
 
     }
-  }
-
-  public OBackupManager getBackupManager() {
-    return backupManager;
   }
 
   public NodesManager getNodesManager() {
@@ -297,7 +291,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     listener.registerStatelessCommand(new OServerCommandAuditing(server));
     listener.registerStatelessCommand(new OServerCommandGetSecurityConfig(server.getSecurity()));
     listener.registerStatelessCommand(new OServerCommandPostSecurityReload(server.getSecurity()));
-    listener.registerStatelessCommand(new OServerCommandBackupManager(backupManager));
+
   }
 
   private void uninstallCommands() {
@@ -416,17 +410,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       return false;
     }
     return true;
-  }
-
-  private void installBackupManager() {
-    backupManager = new OBackupManager(server);
-  }
-
-  private void uninstallBackupManager() {
-    if (backupManager != null) {
-      backupManager.shutdown();
-      backupManager = null;
-    }
   }
 
   private void installPlugins() {

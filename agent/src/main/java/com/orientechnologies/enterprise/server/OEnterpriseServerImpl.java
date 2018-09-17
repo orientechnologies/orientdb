@@ -115,6 +115,15 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
     return agent.getNodesManager();
   }
 
+  @Override
+  public boolean existsDatabase(String databaseName) {
+    return server.existsDatabase(databaseName);
+  }
+
+  @Override
+  public void restore(String databaseName, String path) {
+    server.restore(databaseName,path);
+  }
 
   @Override
   public void onClientDisconnection(OClientConnection oClientConnection) {

@@ -16,11 +16,11 @@
  *   For more information: http://www.orientdb.com
  */
 
-package com.orientechnologies.agent.backup;
+package com.orientechnologies.agent.services.backup;
 
-import com.orientechnologies.agent.backup.log.OBackupLog;
-import com.orientechnologies.agent.backup.log.OBackupLogType;
-import com.orientechnologies.agent.backup.strategy.OBackupStrategy;
+import com.orientechnologies.agent.services.backup.log.OBackupLog;
+import com.orientechnologies.agent.services.backup.log.OBackupLogType;
+import com.orientechnologies.agent.services.backup.strategy.OBackupStrategy;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;

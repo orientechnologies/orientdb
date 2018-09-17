@@ -19,6 +19,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spi.properties.GroupProperty;
 import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
@@ -436,10 +437,11 @@ public abstract class AbstractEnterpriseServerClusterTest {
   }
 
   protected void deleteBackupConfig(OEnterpriseAgent agent) {
-    ODocument configuration = agent.getBackupManager().getConfiguration();
+    OBackupService backupService = agent.getServiceByClass(OBackupService.class).get();
+    ODocument configuration = backupService.getConfiguration();
 
     configuration.<List<ODocument>>field("backups").stream().map(cfg -> cfg.<String>field("uuid")).collect(Collectors.toList())
-        .forEach((b) -> agent.getBackupManager().removeAndStopBackup(b));
+        .forEach((b) -> backupService.removeAndStopBackup(b));
   }
 
   protected String getDatabaseURL(ServerRun server) {
@@ -451,6 +453,15 @@ public abstract class AbstractEnterpriseServerClusterTest {
     return this.serverInstance.stream().filter(serverRun -> serverRun.getNodeName().equals(server)).findFirst()
         .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot find server with name %s", server)))
         .getServerInstance().getPluginByClass(OEnterpriseAgent.class);
+
+  }
+
+  protected OBackupService getBackupService(String server) {
+
+    return this.serverInstance.stream().filter(serverRun -> serverRun.getNodeName().equals(server)).findFirst()
+        .map(s -> s.getServerInstance().getPluginByClass(OEnterpriseAgent.class))
+        .map(a -> a.getServiceByClass(OBackupService.class).get())
+        .orElseThrow(() -> new IllegalArgumentException(String.format("Cannot find server with name %s", server)));
 
   }
 }

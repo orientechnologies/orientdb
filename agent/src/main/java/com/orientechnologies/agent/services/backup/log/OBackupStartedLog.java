@@ -16,19 +16,19 @@
  *   For more information: http://www.orientdb.com
  */
 
-package com.orientechnologies.agent.backup.log;
+package com.orientechnologies.agent.services.backup.log;
 
 /**
  * Created by Enrico Risa on 25/03/16.
  */
-public class ORestoreStartedLog extends OBackupLog {
+public class OBackupStartedLog extends OBackupLog {
 
-  public ORestoreStartedLog(long unitId, long opsId, String uuid, String dbName, String mode) {
+  public OBackupStartedLog(long unitId, long opsId, String uuid, String dbName, String mode) {
     super(unitId, opsId, uuid, dbName, mode);
   }
 
   @Override
   public OBackupLogType getType() {
-    return OBackupLogType.RESTORE_STARTED;
+    return OBackupLogType.BACKUP_STARTED;
   }
 }

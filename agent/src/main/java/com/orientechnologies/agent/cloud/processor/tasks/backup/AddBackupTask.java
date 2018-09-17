@@ -2,6 +2,7 @@ package com.orientechnologies.agent.cloud.processor.tasks.backup;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.cloud.processor.tasks.AbstractDocumentTask;
+import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -23,7 +24,8 @@ public class AddBackupTask extends AbstractDocumentTask {
   public NodeOperationResponse execute(OServer iServer, ODistributedServerManager iManager) {
 
     OEnterpriseAgent agent = iServer.getPluginByClass(OEnterpriseAgent.class);
-    ODocument backup = agent.getBackupManager().addBackup(payload);
+    OBackupService backupService = agent.getServiceByClass(OBackupService.class).get();
+    ODocument backup = backupService.addBackup(payload);
     backup.field("server", iManager.getLocalNodeName());
     return new AddBackupTaskResponse(backup);
   }

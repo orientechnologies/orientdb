@@ -16,10 +16,11 @@
  *   For more information: http://www.orientdb.com
  */
 
-package com.orientechnologies.agent.backup.log;
+package com.orientechnologies.agent.services.backup.log;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -31,7 +32,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 
 import java.io.File;
@@ -44,12 +44,12 @@ import java.util.stream.Collectors;
  */
 public class OBackupDBLogger implements OBackupLogger {
 
-  private final OServer server;
+  private final OEnterpriseServer server;
   OBackupLogFactory factory;
 
   public static final String CLASS_NAME = "OBackupLog";
 
-  public OBackupDBLogger(OServer server) {
+  public OBackupDBLogger(OEnterpriseServer server) {
 
     this.server = server;
     initLogger();
@@ -445,7 +445,7 @@ public class OBackupDBLogger implements OBackupLogger {
   }
 
   @Override
-  public OServer getServer() {
+  public OEnterpriseServer getServer() {
     return server;
   }
 

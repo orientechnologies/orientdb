@@ -16,19 +16,19 @@
  *   For more information: http://www.orientdb.com
  */
 
-package com.orientechnologies.agent.backup.strategy;
+package com.orientechnologies.agent.services.backup.strategy;
 
-import com.orientechnologies.agent.backup.OBackupConfig;
-import com.orientechnologies.agent.backup.OBackupListener;
-import com.orientechnologies.agent.backup.OBackupTask;
-import com.orientechnologies.agent.backup.log.*;
+import com.orientechnologies.agent.services.backup.OBackupConfig;
+import com.orientechnologies.agent.services.backup.OBackupListener;
+import com.orientechnologies.agent.services.backup.OBackupTask;
+import com.orientechnologies.agent.services.backup.log.*;
 import com.orientechnologies.backup.uploader.OLocalBackupUploader;
 import com.orientechnologies.backup.uploader.OUploadMetadata;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
 
 import java.io.File;
@@ -178,7 +178,7 @@ public abstract class OBackupStrategy {
     }
   }
 
-  private void startRestoreBackup(OServer server, OBackupFinishedLog finished, String databaseName, OBackupListener listener) {
+  private void startRestoreBackup(OEnterpriseServer server, OBackupFinishedLog finished, String databaseName, OBackupListener listener) {
     ORestoreStartedLog restoreStartedLog = null;
     try {
 
@@ -216,7 +216,7 @@ public abstract class OBackupStrategy {
     }
   }
 
-  private void doRestore(OServer server, OBackupFinishedLog finished, String path, String databaseName, OBackupListener listener,
+  private void doRestore(OEnterpriseServer server, OBackupFinishedLog finished, String path, String databaseName, OBackupListener listener,
       ORestoreStartedLog restoreStartedLog, Consumer<ORestoreFinishedLog> consumer) {
     server.restore(databaseName, path);
     ORestoreFinishedLog finishedLog = new ORestoreFinishedLog(restoreStartedLog.getUnitId(), restoreStartedLog.getTxId(), getUUID(),
@@ -272,7 +272,7 @@ public abstract class OBackupStrategy {
 
     String dbName = cfg.field(OBackupConfig.DBNAME);
 
-    OServer server = logger.getServer();
+    OEnterpriseServer server = logger.getServer();
 
     String url = server.getAvailableStorageNames().get(dbName);
 

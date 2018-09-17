@@ -16,11 +16,11 @@
  *   For more information: http://www.orientdb.com
  */
 
-package com.orientechnologies.agent.backup.strategy;
+package com.orientechnologies.agent.services.backup.strategy;
 
-import com.orientechnologies.agent.backup.OBackupConfig;
-import com.orientechnologies.agent.backup.OBackupListener;
-import com.orientechnologies.agent.backup.log.*;
+import com.orientechnologies.agent.services.backup.OBackupConfig;
+import com.orientechnologies.agent.services.backup.OBackupListener;
+import com.orientechnologies.agent.services.backup.log.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OCronExpression;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
@@ -33,47 +33,43 @@ import java.util.Date;
 /**
  * Created by Enrico Risa on 25/03/16.
  */
-public class OBackupStrategyMixBackup extends OBackupStrategy {
+public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
 
-  protected boolean isIncremental = false;
-
-  public OBackupStrategyMixBackup(ODocument cfg, OBackupLogger logger) {
+  public OBackupStrategyIncrementalBackup(ODocument cfg, OBackupLogger logger) {
     super(cfg, logger);
   }
 
   @Override
   public OAutomaticBackup.MODE getMode() {
-    return isIncremental ? OAutomaticBackup.MODE.INCREMENTAL_BACKUP : OAutomaticBackup.MODE.FULL_BACKUP;
+    return OAutomaticBackup.MODE.INCREMENTAL_BACKUP;
   }
 
   protected String calculatePath() {
-    if (!isIncremental) {
-      return defaultPath();
-    }
+
     OBackupFinishedLog last = null;
     try {
       last = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
     } catch (Exception e) {
       e.printStackTrace();
     }
-    return last != null ? last.getPath() : defaultPath();
 
-  }
-
-  protected String defaultPath() {
+    if (last != null && !Boolean.TRUE.equals(last.getPrevChange())) {
+      return last.getPath();
+    }
 
     long begin = System.currentTimeMillis();
     try {
-      OBackupLog last = logger.findLast(OBackupLogType.BACKUP_SCHEDULED, getUUID());
+      OBackupLog lastScheduled = logger.findLast(OBackupLogType.BACKUP_SCHEDULED, getUUID());
       if (last != null) {
-        begin = last.getUnitId();
+        begin = lastScheduled.getUnitId();
       }
     } catch (IOException e) {
       e.printStackTrace();
     }
     String basePath = cfg.field(OBackupConfig.DIRECTORY);
     String dbName = cfg.field(OBackupConfig.DBNAME);
-    return basePath + File.separator + dbName + "-" + begin;
+    return basePath + File.separator + dbName + "-incremental-" + begin;
+
   }
 
   @Override
@@ -82,31 +78,20 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
     OBackupScheduledLog last = lastUnfiredSchedule();
 
     if (last == null) {
-      ODocument full = (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.FULL_BACKUP);
-      String whenFull = full.field(OBackupConfig.WHEN);
-      ODocument incremental = (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.INCREMENTAL_BACKUP);
-      String whenIncremental = incremental.field(OBackupConfig.WHEN);
+      ODocument full = (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.INCREMENTAL_BACKUP);
+      String when = full.field(OBackupConfig.WHEN);
       try {
-        OCronExpression eFull = new OCronExpression(whenFull);
-        OCronExpression eIncremental = new OCronExpression(whenIncremental);
-        Date now = new Date();
-
-        Date nextFull = eFull.getNextValidTimeAfter(now);
-        Date nextIncremental = eIncremental.getNextValidTimeAfter(now);
-        OBackupFinishedLog lastCompleted = null;
+        OCronExpression expression = new OCronExpression(when);
+        Date nextExecution = expression.getNextValidTimeAfter(new Date());
         Long unitId = logger.nextOpId();
         try {
-          lastCompleted = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
-          if (lastCompleted != null && nextIncremental.before(nextFull) && !Boolean.TRUE.equals(lastCompleted.getPrevChange())) {
+          OBackupFinishedLog lastCompleted = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
+          if (lastCompleted != null && !Boolean.TRUE.equals(lastCompleted.getPrevChange())) {
             unitId = lastCompleted.getUnitId();
-            isIncremental = true;
-          } else {
-            isIncremental = false;
           }
-        } catch (IOException e) {
+        } catch (Exception e) {
           e.printStackTrace();
         }
-        Date nextExecution = nextIncremental.before(nextFull) ? nextIncremental : nextFull;
         OBackupScheduledLog log = new OBackupScheduledLog(unitId, logger.nextOpId(), getUUID(), getDbName(), getMode().toString());
         log.nextExecution = nextExecution.getTime();
         getLogger().log(log);
@@ -115,11 +100,11 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
       } catch (ParseException e) {
         e.printStackTrace();
       }
-      return null;
+
     } else {
-      isIncremental = OAutomaticBackup.MODE.INCREMENTAL_BACKUP.toString().equalsIgnoreCase(last.getMode());
       return new Date(last.nextExecution);
     }
-  }
 
+    return null;
+  }
 }

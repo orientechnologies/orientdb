@@ -19,7 +19,9 @@
 package com.orientechnologies.agent.backup;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
-import com.orientechnologies.agent.backup.log.OBackupLogType;
+import com.orientechnologies.agent.services.backup.OBackupService;
+import com.orientechnologies.agent.services.backup.OBackupTask;
+import com.orientechnologies.agent.services.backup.log.OBackupLogType;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -47,14 +49,14 @@ import static org.junit.Assert.*;
  * Created by Enrico Risa on 22/03/16.
  */
 
-public class OBackupManagerTest {
+public class OBackupServiceTest {
 
   private OServer server;
 
-  private final String DB_NAME     = "backupDBTest";
-  private final String BACKUP_PATH =
+  private final String         DB_NAME     = "backupDBTest";
+  private final String         BACKUP_PATH =
       System.getProperty("buildDirectory", "target") + File.separator + "databases" + File.separator + DB_NAME;
-  private OBackupManager manager;
+  private       OBackupService manager;
 
   @Before
   public void bootOrientDB() throws Exception {
@@ -77,7 +79,7 @@ public class OBackupManagerTest {
 
     OEnterpriseAgent agent = server.getPluginByClass(OEnterpriseAgent.class);
 
-    manager = agent.getBackupManager();
+    manager = agent.getServiceByClass(OBackupService.class).get();
   }
 
   @After

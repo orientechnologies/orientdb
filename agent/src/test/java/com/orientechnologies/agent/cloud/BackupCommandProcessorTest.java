@@ -1,9 +1,10 @@
 package com.orientechnologies.agent.cloud;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
-import com.orientechnologies.agent.backup.OBackupTask;
-import com.orientechnologies.agent.backup.log.OBackupLog;
-import com.orientechnologies.agent.backup.log.OBackupLogType;
+import com.orientechnologies.agent.services.backup.OBackupService;
+import com.orientechnologies.agent.services.backup.OBackupTask;
+import com.orientechnologies.agent.services.backup.log.OBackupLog;
+import com.orientechnologies.agent.services.backup.log.OBackupLogType;
 import com.orientechnologies.agent.cloud.processor.backup.*;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
@@ -38,11 +39,12 @@ public class BackupCommandProcessorTest {
 
   private OServer server;
 
-  private final String DB_NAME     = "backupDB";
-  private final String NEW_DB_NAME = "newDB";
-  private final String BACKUP_PATH =
+  private final String           DB_NAME     = "backupDB";
+  private final String           NEW_DB_NAME = "newDB";
+  private final String           BACKUP_PATH =
       System.getProperty("buildDirectory", "target") + File.separator + "databases" + File.separator + DB_NAME;
-  private OEnterpriseAgent agent;
+  private       OEnterpriseAgent agent;
+  private       OBackupService   backupService;
 
   @Before
   public void bootOrientDB() throws Exception {
@@ -59,7 +61,7 @@ public class BackupCommandProcessorTest {
 
     if (orientDB.exists(NEW_DB_NAME))
       orientDB.drop(NEW_DB_NAME);
-    
+
     orientDB.create(DB_NAME, ODatabaseType.PLOCAL);
 
     server.activate();
@@ -71,6 +73,8 @@ public class BackupCommandProcessorTest {
     });
 
     agent = server.getPluginByClass(OEnterpriseAgent.class);
+
+    backupService = agent.getServiceByClass(OBackupService.class).get();
 
     deleteBackupConfig();
 
@@ -99,10 +103,11 @@ public class BackupCommandProcessorTest {
   }
 
   private void deleteBackupConfig() {
-    ODocument configuration = agent.getBackupManager().getConfiguration();
+
+    ODocument configuration = backupService.getConfiguration();
 
     configuration.<List<ODocument>>field("backups").stream().map(cfg -> cfg.<String>field("uuid")).collect(Collectors.toList())
-        .forEach((b) -> agent.getBackupManager().removeAndStopBackup(b));
+        .forEach((b) -> backupService.removeAndStopBackup(b));
   }
 
   @Test
@@ -168,11 +173,12 @@ public class BackupCommandProcessorTest {
   private ODocument createBackupConfig() {
     return createBackupConfig(false);
   }
+
   private ODocument createBackupConfig(boolean mixed) {
     ODocument modes = new ODocument();
 
     ODocument mode = new ODocument();
-    if(mixed) {
+    if (mixed) {
       modes.field("FULL_BACKUP", mode);
       mode.field("when", "0/5 * * * * ?");
     }
@@ -188,7 +194,8 @@ public class BackupCommandProcessorTest {
     backup.field("enabled", true);
     backup.field("retentionDays", 30);
 
-    return agent.getBackupManager().addBackup(backup);
+    OBackupService backupService = agent.getServiceByClass(OBackupService.class).get();
+    return backupService.addBackup(backup);
   }
 
   @Test
@@ -279,7 +286,7 @@ public class BackupCommandProcessorTest {
 
     String uuid = cfg.field("uuid");
 
-    final OBackupTask task = agent.getBackupManager().getTask(uuid);
+    final OBackupTask task = backupService.getTask(uuid);
 
     final CountDownLatch latch = new CountDownLatch(3);
     task.registerListener((cfg1, log) -> {
@@ -319,7 +326,7 @@ public class BackupCommandProcessorTest {
 
     String uuid = cfg.field("uuid");
 
-    final OBackupTask task = agent.getBackupManager().getTask(uuid);
+    final OBackupTask task = backupService.getTask(uuid);
 
     AtomicReference<OBackupLog> lastLog = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(3);
@@ -362,7 +369,7 @@ public class BackupCommandProcessorTest {
 
     String uuid = cfg.field("uuid");
 
-    final OBackupTask task = agent.getBackupManager().getTask(uuid);
+    final OBackupTask task = backupService.getTask(uuid);
 
     AtomicReference<OBackupLog> lastLog = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(3);
@@ -404,7 +411,7 @@ public class BackupCommandProcessorTest {
 
     String uuid = cfg.field("uuid");
 
-    final OBackupTask task = agent.getBackupManager().getTask(uuid);
+    final OBackupTask task = backupService.getTask(uuid);
 
     AtomicReference<OBackupLog> lastLog = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(3);

@@ -16,9 +16,9 @@
  *   For more information: http://www.orientdb.com
  */
 
-package com.orientechnologies.agent.backup.log;
+package com.orientechnologies.agent.services.backup.log;
 
-import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.enterprise.server.OEnterpriseServer;
 
 import java.io.IOException;
 import java.util.List;
@@ -52,5 +52,5 @@ public interface OBackupLogger {
 
   void updateLog(OBackupLog log);
 
-  OServer getServer();
+  OEnterpriseServer getServer();
 }

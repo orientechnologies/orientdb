@@ -6,6 +6,7 @@ import com.orientechnologies.agent.cloud.processor.tasks.backup.RemoveBackupTask
 import com.orientechnologies.agent.operation.NodeResponse;
 import com.orientechnologies.agent.operation.OperationResponseFromNode;
 import com.orientechnologies.agent.operation.ResponseOk;
+import com.orientechnologies.agent.services.backup.OBackupService;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
 import com.orientechnologies.orientdb.cloud.protocol.backup.BackupLogRequest;
@@ -37,10 +38,12 @@ public class RemoveBackupCommandProcessor extends AbstractBackupCommandProcessor
   }
 
   public static void removeBackup(OEnterpriseAgent agent, BackupLogRequest request) {
+    OBackupService backupService = agent.getServiceByClass(OBackupService.class).get();
+
     if (request.getUnitId() != null && request.getTxId() != null) {
-      agent.getBackupManager().deleteBackup(request.getBackupId(), request.getUnitId(), request.getTxId());
+      backupService.deleteBackup(request.getBackupId(), request.getUnitId(), request.getTxId());
     } else {
-      agent.getBackupManager().removeAndStopBackup(request.getBackupId());
+      backupService.removeAndStopBackup(request.getBackupId());
     }
   }
 
