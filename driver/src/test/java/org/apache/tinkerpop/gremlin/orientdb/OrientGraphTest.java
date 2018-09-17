@@ -1,9 +1,9 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.junit.Assert;
@@ -143,7 +143,7 @@ public class OrientGraphTest {
         boolean success = false;
         try {
             factory.getTx();
-        } catch (OLockException e) {
+        } catch (OAcquireTimeoutException e) {
             success = true;
         }
         Assert.assertTrue(success);
