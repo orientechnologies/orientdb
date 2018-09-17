@@ -68,7 +68,14 @@ public class OAlterPropertyStatement extends ODDLStatement {
     } else {
       String setting = settingName.getStringValue();
       Object finalValue = settingValue.execute((OIdentifiable) null, ctx);
-
+      if (finalValue == null && (setting.equalsIgnoreCase("name") || setting.equalsIgnoreCase("shortname"))) {
+        finalValue = settingValue.toString();
+        String stringFinalValue = (String) finalValue;
+        if (stringFinalValue.startsWith("`") && stringFinalValue.endsWith("`") && stringFinalValue.length() > 2) {
+          stringFinalValue = stringFinalValue.substring(1, stringFinalValue.length() - 1);
+          finalValue = stringFinalValue;
+        }
+      }
       OProperty.ATTRIBUTES attribute;
       try {
         attribute = OProperty.ATTRIBUTES.valueOf(setting.toUpperCase(Locale.ENGLISH));
