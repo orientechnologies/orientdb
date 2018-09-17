@@ -47,6 +47,13 @@ public class OContainsConditionTest {
     Assert.assertTrue(op.execute(left, "foo"));
     Assert.assertTrue(op.execute(left, "bar"));
     Assert.assertFalse(op.execute(left, "fooz"));
+    
+    left.add(null);
+    Assert.assertTrue(op.execute(left, null));
 
+    List<String> right = new ArrayList<>();
+    right.add("foo");
+    right.add(null);
+    Assert.assertTrue(op.execute(left, right));
   }
 }
