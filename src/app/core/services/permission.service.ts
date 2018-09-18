@@ -120,7 +120,7 @@ class PermissionService {
       });
     }
     if (
-      this.data.permissions.indexOf("server.studio.securityManagement") != -1
+      this.data.permissions.indexOf("server.security") != -1
     ) {
       menus.push({
         name: "security",

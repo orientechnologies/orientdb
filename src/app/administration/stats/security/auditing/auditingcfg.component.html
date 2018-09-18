@@ -3,7 +3,8 @@
         <div class="col-md-12">
             <div class="btn-toolbar pull-right">
                 <div class="btn-group">
-                    <button href="javascript:void(0)" class="btn btn-primary btn-sm" (click)="saveAuditing()"><i class="fa fa-save"></i>
+                    <button href="javascript:void(0)" class="btn btn-primary btn-sm" [disabled]="!canEdit" (click)="saveAuditing()"><i
+                            class="fa fa-save"></i>
                         Save
                     </button>
                 </div>
@@ -27,28 +28,28 @@
                         <div class="form-group">
                             <label class="col-sm-3 control-label">Enabled</label>
                             <div class="col-sm-9">
-                                <input type="checkbox" name="enabled" [(ngModel)]="globalAuditing.enabled">
+                                <input type="checkbox" [disabled]="!canEdit" name="enabled" [(ngModel)]="globalAuditing.enabled">
                             </div>
                         </div>
                         <div class="form-group">
                             <label class="col-sm-3 control-label">Node Join</label>
                             <div class="col-sm-1">
-                                <input type="checkbox" name="nodeJoin" [(ngModel)]="globalAuditing.distributed.onNodeJoinedEnabled" />
+                                <input type="checkbox" [disabled]="!canEdit" name="nodeJoin" [(ngModel)]="globalAuditing.distributed.onNodeJoinedEnabled" />
                             </div>
                             <div class="col-sm-8">
-                                <textarea class="form-control" name="nodeJoinMessage" placeholder="Message" [disabled]="!globalAuditing.distributed.onNodeJoinedEnabled"
-                                    [(ngModel)]="globalAuditing.distributed.onNodeJoinedMessage"></textarea>
+                                <textarea class="form-control" [disabled]="!canEdit" name="nodeJoinMessage" placeholder="Message"
+                                    [disabled]="!globalAuditing.distributed.onNodeJoinedEnabled" [(ngModel)]="globalAuditing.distributed.onNodeJoinedMessage"></textarea>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label class="col-sm-3 control-label">Node Left</label>
                             <div class="col-sm-1">
-                                <input type="checkbox" name="nodeLeft" [(ngModel)]="globalAuditing.distributed.onNodeLeftEnabled" />
+                                <input type="checkbox" [disabled]="!canEdit" name="nodeLeft" [(ngModel)]="globalAuditing.distributed.onNodeLeftEnabled" />
                             </div>
                             <div class="col-sm-8">
-                                <textarea class="form-control" name="nodeLeftMessage" placeholder="Message" [disabled]="!globalAuditing.distributed.onNodeLeftEnabled"
-                                    [(ngModel)]="globalAuditing.distributed.onNodeLeftMessage"></textarea>
+                                <textarea class="form-control" [disabled]="!canEdit" name="nodeLeftMessage" placeholder="Message"
+                                    [disabled]="!globalAuditing.distributed.onNodeLeftEnabled" [(ngModel)]="globalAuditing.distributed.onNodeLeftMessage"></textarea>
                             </div>
                         </div>
                     </form>
@@ -65,8 +66,8 @@
             <form class="form-inline ">
                 <div class="form-group">
                     <label>Database </label>
-                    <select id="databasesOnline" name="database" (change)="onDatabaseChange()" [(ngModel)]="database" class="form-control"
-                        data-placeholder="Pick a Server">
+                    <select id="databasesOnline" name="database" (change)="onDatabaseChange()" [(ngModel)]="database"
+                        class="form-control" data-placeholder="Pick a Server">
                         <option *ngFor="let db of databases" [value]="db">{{db}}</option>
                     </select>
                 </div>
@@ -85,20 +86,20 @@
                         <div class="form-group">
                             <label class="col-sm-3 control-label">Create Class</label>
                             <div class="col-sm-1">
-                                <input type="checkbox" name="onCreateClassEnabled" [(ngModel)]="config.schema.onCreateClassEnabled" />
+                                <input type="checkbox" [disabled]="!canEdit" name="onCreateClassEnabled" [(ngModel)]="config.schema.onCreateClassEnabled" />
                             </div>
                             <div class="col-sm-8">
-                                <textarea class="form-control" placeholder="Message" [disabled]="!config.schema.onCreateClassEnabled"
+                                <textarea class="form-control" [disabled]="!canEdit" placeholder="Message" [disabled]="!config.schema.onCreateClassEnabled"
                                     name="onCreateClassMessage" [(ngModel)]="config.schema.onCreateClassMessage"></textarea>
                             </div>
                         </div>
                         <div class="form-group">
                             <label class="col-sm-3 control-label">Drop Class</label>
                             <div class="col-sm-1">
-                                <input type="checkbox" name="onDropClassEnabled" [(ngModel)]="config.schema.onDropClassEnabled" />
+                                <input type="checkbox" [disabled]="!canEdit" name="onDropClassEnabled" [(ngModel)]="config.schema.onDropClassEnabled" />
                             </div>
                             <div class="col-sm-8">
-                                <textarea class="form-control" placeholder="Message" [disabled]="!config.schema.onDropClassEnabled"
+                                <textarea class="form-control" [disabled]="!canEdit" placeholder="Message" [disabled]="!config.schema.onDropClassEnabled"
                                     name="onDropClassMessage" [(ngModel)]="config.schema.onDropClassMessage"></textarea>
                             </div>
                         </div>
@@ -112,7 +113,8 @@
                     <b>Command Auditing</b>
                     <div class="panel-actions">
                         <div class="btn-group">
-                            <button class="btn btn-sm btn-success" (click)="addCommand()"><i class="fa fa-plus-circle"></i>
+                            <button class="btn btn-sm btn-success" [disabled]="!canEdit" (click)="addCommand()"><i
+                                    class="fa fa-plus-circle"></i>
                                 Add
                                 Command
                             </button>
@@ -139,15 +141,17 @@
                         <tbody>
                             <tr *ngFor="let c of config.commands">
                                 <td>
-                                    <input class="form-control" [(ngModel)]="c.regex">
+                                    <input class="form-control" [disabled]="!canEdit" [(ngModel)]="c.regex">
                                 </td>
                                 <td>
-                                    <textarea class="form-control" placeholder="Message" [(ngModel)]="c.message"></textarea>
+                                    <textarea class="form-control" [disabled]="!canEdit" placeholder="Message"
+                                        [(ngModel)]="c.message"></textarea>
 
                                 </td>
                                 <td>
                                     <div class="btn-group">
-                                        <button (click)="deleteCommand(c)" class="btn btn-xs btn-danger"><i class="fa fa-remove"></i>
+                                        <button (click)="deleteCommand(c)" [disabled]="!canEdit" class="btn btn-xs btn-danger"><i
+                                                class="fa fa-remove"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -165,7 +169,7 @@
                     <b>Class Auditing</b>
                     <div class="panel-actions">
                         <div class="btn-group">
-                            <button class="btn btn-sm btn-success" (click)="addClass()"><i class="fa fa-plus-circle"></i>
+                            <button class="btn btn-sm btn-success" [disabled]="!canEdit" (click)="addClass()"><i class="fa fa-plus-circle"></i>
                                 Add Class
                             </button>
                         </div>
@@ -207,10 +211,10 @@
                             <td>
                                 <form class="form-inline">
                                     <div class="form-group">
-                                        <input type="checkbox" name="onCreateEnabled" [(ngModel)]="config.classes[k].onCreateEnabled">
+                                        <input type="checkbox" [disabled]="!canEdit" name="onCreateEnabled" [(ngModel)]="config.classes[k].onCreateEnabled">
                                     </div>
                                     <div class="form-group form-group-sm">
-                                        <textarea class="form-control" placeholder="Message" [disabled]="!config.classes[k].onCreateEnabled"
+                                        <textarea class="form-control" placeholder="Message" [disabled]="!canEdit || !config.classes[k].onCreateEnabled"
                                             name="onCreateMessage" [(ngModel)]="config.classes[k].onCreateMessage"></textarea>
                                     </div>
                                 </form>
@@ -218,10 +222,10 @@
                             <td>
                                 <form class="form-inline">
                                     <div class="form-group">
-                                        <input type="checkbox" name="onReadEnabled" [(ngModel)]="config.classes[k].onReadEnabled">
+                                        <input type="checkbox" [disabled]="!canEdit" name="onReadEnabled" [(ngModel)]="config.classes[k].onReadEnabled">
                                     </div>
                                     <div class="form-group form-group-sm">
-                                        <textarea class="form-control" placeholder="Message" [disabled]="!config.classes[k].onReadEnabled"
+                                        <textarea class="form-control" placeholder="Message" [disabled]=" !canEdit ||!config.classes[k].onReadEnabled"
                                             name="onReadMessage" [(ngModel)]="config.classes[k].onReadMessage"></textarea>
                                     </div>
                                 </form>
@@ -229,13 +233,13 @@
                             <td>
                                 <form class="form-inline">
                                     <div class="form-group">
-                                        <input type="checkbox" name="onUpdateEnabled" [(ngModel)]="config.classes[k].onUpdateEnabled">
+                                        <input type="checkbox" [disabled]="!canEdit" name="onUpdateEnabled" [(ngModel)]="config.classes[k].onUpdateEnabled">
                                     </div>
                                     <div class="form-group form-group-sm">
-                                        <textarea class="form-control" placeholder="Message" [disabled]="!config.classes[k].onUpdateEnabled"
+                                        <textarea class="form-control" placeholder="Message" [disabled]="!canEdit || !config.classes[k].onUpdateEnabled"
                                             name="onUpdateMessage" [(ngModel)]="config.classes[k].onUpdateMessage"></textarea>
 
-                                        <input type="checkbox" name="onUpdateChanges" [disabled]="!config.classes[k].onUpdateEnabled"
+                                        <input type="checkbox" name="onUpdateChanges" [disabled]="!canEdit || !config.classes[k].onUpdateEnabled"
                                             [(ngModel)]="config.classes[k].onUpdateChanges">
                                         <label> Track Changes</label>
                                     </div>
@@ -244,20 +248,21 @@
                             <td>
                                 <form class="form-inline">
                                     <div class="form-group">
-                                        <input type="checkbox" name="onDeleteEnabled" ng-model="config.classes[k].onDeleteEnabled">
+                                        <input type="checkbox" [disabled]="!canEdit" name="onDeleteEnabled" [(ngModel)]="config.classes[k].onDeleteEnabled">
                                     </div>
                                     <div class="form-group form-group-sm">
-                                        <textarea class="form-control" placeholder="Message" [disabled]="!config.classes[k].onDeleteEnabled"
+                                        <textarea class="form-control" placeholder="Message" [disabled]="!canEdit || !config.classes[k].onDeleteEnabled"
                                             name="onDeleteMessage" [(ngModel)]="config.classes[k].onDeleteMessage"></textarea>
                                     </div>
                                 </form>
                             </td>
                             <td>
-                                <input type="checkbox" name="polymorphic" [(ngModel)]="config.classes[k].polymorphic">
+                                <input type="checkbox" name="polymorphic" [disabled]="!canEdit" [(ngModel)]="config.classes[k].polymorphic">
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <button (click)="deleteClass(k)" class="btn btn-xs btn-danger"><i class="fa fa-remove"></i></button>
+                                    <button (click)="deleteClass(k)" [disabled]="!canEdit" class="btn btn-xs btn-danger"><i
+                                            class="fa fa-remove"></i></button>
                                 </div>
                             </td>
                         </tr>

@@ -106,6 +106,7 @@ class SingleBackupComponent implements OnInit, OnDestroy, OnChanges {
       );
       this.bind(componentRef.instance, "event", event);
       this.bind(componentRef.instance, "backup", this.backup);
+      this.bind(componentRef.instance, "canEdit", this.canEdit);
 
       this.subscribeOnChange(componentRef.instance);
     }

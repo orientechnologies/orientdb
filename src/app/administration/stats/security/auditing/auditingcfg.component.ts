@@ -30,6 +30,10 @@ class AuditingConfigComponent implements OnInit, OnDestroy {
   @Input()
   private databases: string[];
 
+
+  @Input()
+  private canEdit: boolean;
+
   private classes: any[] = [];
 
   constructor(

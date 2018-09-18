@@ -13,14 +13,15 @@ class AuditingComponent implements OnInit, OnDestroy {
   private security: any;
 
   @Input()
+  private canEdit: boolean;
+
+  @Input()
   private databases: string[];
 
   private tab = "auditingLog";
   constructor(private metrics: MetricService) {}
 
-  ngOnInit(): void {
-    
-  }
+  ngOnInit(): void {}
 
   ngOnDestroy(): void {}
 }

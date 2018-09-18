@@ -20,6 +20,10 @@ export class LdapImporterComponent implements OnInit {
   currentDomain: any;
   databases: any[];
 
+
+  @Input()
+  private canEdit: boolean;
+
   constructor(
     private securityService: SecurityService,
     private noti: NotificationService,

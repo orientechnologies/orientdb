@@ -8,7 +8,7 @@
     </ul>
     <div class="tab-content row">
         <auditing-log-management *ngIf="tab ==='auditingLog'" [databases]="databases"></auditing-log-management>
-        <auditing-cfg-management *ngIf="tab ==='auditingCfg'" [security]="security" [databases]="databases"></auditing-cfg-management>
+        <auditing-cfg-management [canEdit]="canEdit" *ngIf="tab ==='auditingCfg'" [security]="security" [databases]="databases"></auditing-cfg-management>
     </div>
 
 </div>

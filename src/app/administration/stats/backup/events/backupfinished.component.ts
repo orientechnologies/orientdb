@@ -28,8 +28,12 @@ class BackupFinishedEvent implements OnInit, OnDestroy, OnChanges {
   @Input()
   private backup;
 
+  @Input()
+  private canEdit : boolean;
+
   @Output()
   private onChange = new EventEmitter<any>();
+
 
   private restored: any = { log: {} };
 

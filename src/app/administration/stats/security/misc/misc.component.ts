@@ -16,6 +16,9 @@ export class SecurityMiscComponent implements OnInit {
   passwordValidator: any;
   serverSecurity: any;
 
+  @Input()
+  private canEdit: boolean;
+
   constructor(
     private securityService: SecurityService,
     private noti: NotificationService

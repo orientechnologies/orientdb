@@ -87,6 +87,10 @@ class AuthenticationComponent implements OnInit, OnDestroy {
   @Input()
   private security: any;
 
+
+  @Input()
+  private canEdit: boolean;
+
   @ViewChild("authenticatorModal")
   authenticatorModal: ModalComponent;
 

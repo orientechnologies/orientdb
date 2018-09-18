@@ -12,11 +12,11 @@
 
                                 <div class="form-group">
                                     <label>Enabled </label>
-                                    <input type="checkbox" name="enabled" [(ngModel)]="security.enabled">
+                                    <input type="checkbox" [disabled]="!canEdit" name="enabled" [(ngModel)]="security.enabled">
                                 </div>
                                 <div class="form-group">
                                     <label>Debug </label>
-                                    <input type="checkbox" name="debug" [(ngModel)]="security.debug">
+                                    <input type="checkbox" [disabled]="!canEdit" name="debug" [(ngModel)]="security.debug">
                                 </div>
                             </form>
                         </div>
@@ -33,10 +33,10 @@
                         <li [ngClass]="{'active' : tab === 'misc'}" (click)="tab = 'misc'"><a href="javascript:void(0)"><span>Misc</span></a></li>
                     </ul>
                     <div class="tab-content row">
-                        <auditing-management [security]="security" [databases]="databases" *ngIf="tab === 'auditing'"></auditing-management>
-                        <authentication-management [security]="security" *ngIf="tab === 'auth'"></authentication-management>
-                        <ldap-importer-management [security]="security" *ngIf="tab === 'ldap'"></ldap-importer-management>
-                        <security-misc-management [security]="security" *ngIf="tab === 'misc'"></security-misc-management>
+                        <auditing-management [security]="security" [canEdit]="canEdit" [databases]="databases" *ngIf="tab === 'auditing'"></auditing-management>
+                        <authentication-management [security]="security" [canEdit]="canEdit" *ngIf="tab === 'auth'"></authentication-management>
+                        <ldap-importer-management [security]="security" [canEdit]="canEdit" *ngIf="tab === 'ldap'"></ldap-importer-management>
+                        <security-misc-management [security]="security" [canEdit]="canEdit" *ngIf="tab === 'misc'"></security-misc-management>
                     </div>
                 </div>
             </div>

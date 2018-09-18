@@ -56,8 +56,8 @@
                             <div class="form-group">
                                 <label class="control-label col-md-2">Database name</label>
                                 <div class="col-md-10">
-                                    <input type="text" class="form-control" name="target" required [(ngModel)]="restored.target"
-                                        placeholder="Database name" focus="true" />
+                                    <input type="text" [disabled]="!canEdit" class="form-control" name="target"
+                                        required [(ngModel)]="restored.target" placeholder="Database name" focus="true" />
                                 </div>
                             </div>
                         </fieldset>
@@ -107,7 +107,8 @@
         </modal-body>
         <modal-footer [show-default-buttons]="false">
             <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-            <button class="btn btn-primary" [disabled]="restored.target==null || restored.target == ''" (click)="onRestore()">Restore
+            <button class="btn btn-primary" [disabled]="!canEdit || restored.target==null || restored.target == ''"
+                (click)="onRestore()">Restore
             </button>
         </modal-footer>
     </modal>
@@ -156,7 +157,7 @@
         </modal-body>
         <modal-footer [show-default-buttons]="false">
             <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-            <button class="btn btn-danger" w(click)="onRemove()">Remove</button>
+            <button class="btn btn-danger" [disabled]="!canEdit" (click)="onRemove()">Remove</button>
         </modal-footer>
     </modal>
 </div>

@@ -133,7 +133,6 @@ ServerModule.controller("MultipleServerController", [
     $scope.agentActive = AgentService.active;
 
     var singlePoll = function() {
-
       Profiler.realtime().then(function(data) {
         data.status = "ONLINE";
         data.name = "orientdb";
@@ -471,87 +470,7 @@ ServerModule.controller("ServerDashboardController", [
     Database,
     PermissionService
   ) {
-  //   $scope.version = Database.getVersion();
-
-  $scope.tab = $routeParams.tab;
-  //   $scope.dirtyProperties = [];
-
-  //   $scope.menus = PermissionService.getSideMenu();
-
-  //   if ($routeParams.tab) {
-  //     $scope.menus.forEach(function(e) {
-  //       if (e.name == $routeParams.tab) {
-  //         $scope.active = e.template;
-  //         $scope.current = e;
-  //       }
-  //     });
-  //   }
-
-  //   if (!$scope.active && $scope.menus && $scope.menus.length > 0) {
-      
-  //     $scope.active = $scope.menus[0].template;
-  //     $scope.current = $scope.menus[0];
-  //   }
-
-  //   $scope.getWiki = function(c) {
-  //     if (c) {
-  //       return Database.resolveWiki(c.wiki);
-  //     }
-  //     return null;
-  //   };
-
-  //   $scope.getTemplate = function(tab) {
-  //     if (tab) {
-  //       return "views/server/stats/" + tab + ".html";
-  //     }
-  //     return null;
-  //   };
-
-  //   $scope.changeGlobal = function(prop) {
-  //     if ($scope.dirtyProperties.indexOf(prop) == -1) {
-  //       $scope.dirtyProperties.push(prop);
-  //     }
-  //   };
-
-  //   $scope.getType = function(val) {
-  //     var type = typeof val;
-
-  //     var formType = "text";
-  //     switch (type) {
-  //       case "boolean":
-  //         formType = "checkbox";
-  //         break;
-  //       case "number":
-  //         formType = "number";
-  //         break;
-  //       default:
-  //     }
-
-  //     return formType;
-  //   };
-
-  //   $scope.isNumber = function(val) {};
-  //   $scope.isBoolean = function(val) {
-  //     return typeof val === "boolean";
-  //   };
-  //   $scope.isText = function(val) {};
-  //   $scope.saveGlobalProperties = function() {
-  //     var promises = [];
-  //     if ($scope.dirtyProperties.length > 0) {
-  //       $scope.dirtyProperties.forEach(function(p) {
-  //         promises.push(ServerApi.changeConfiguration(p.key, p.value));
-  //       });
-
-  //       $q.all(promises)
-  //         .then(function(data) {
-  //           $scope.dirtyProperties = [];
-  //           Notification.push({ content: data, autoHide: true });
-  //         })
-  //         .catch(function(data) {
-  //           Notification.push({ content: data, error: true, autoHide: true });
-  //         });
-  //     }
-  //   };
+    $scope.tab = $routeParams.tab;
   }
 ]);
 
