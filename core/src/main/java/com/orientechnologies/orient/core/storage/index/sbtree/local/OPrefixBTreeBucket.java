@@ -506,7 +506,7 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
   }
 
   public boolean addEntry(int index, SBTreeEntry<V> treeEntry, boolean updateNeighbors) {
-    assert treeEntry.key.contains(bucketPrefix);
+    assert treeEntry.key.startsWith(bucketPrefix);
     final String key = treeEntry.key.substring(bucketPrefix.length());
 
     final byte[] serializedKey = keySerializer.serializeNativeAsWhole(key, OType.STRING);
@@ -514,7 +514,7 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
     byte[] encryptedKey = null;
 
     if (encryption == null) {
-      keySize = keySerializer.getObjectSize(key, OType.STRING);
+      keySize = serializedKey.length;
     } else {
       encryptedKey = encryption.encrypt(serializedKey);
       keySize = encryptedKey.length + OIntegerSerializer.INT_SIZE;
@@ -565,8 +565,7 @@ public class OPrefixBTreeBucket<V> extends ODurablePage {
 
       freePointer += setByteValue(freePointer, treeEntry.value.isLink() ? (byte) 1 : (byte) 0);
 
-      byte[] serializedValue = new byte[valueSize];
-      valueSerializer.serializeNativeObject(treeEntry.value.getValue(), serializedValue, 0);
+      byte[] serializedValue = valueSerializer.serializeNativeAsWhole(treeEntry.value.getValue());
 
       setBinaryValue(freePointer, serializedValue);
     } else {
