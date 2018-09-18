@@ -8,7 +8,7 @@
 
                     <div class="panel-actions">
                         <div class="btn-group">
-                            <button class="btn btn-primary btn-sm" (click)="saveServerSecurity()">
+                            <button class="btn btn-primary btn-sm" [disabled]="!canEdit" (click)="saveServerSecurity()">
                                 <i class="fa fa-save"></i>
                                 Save
                             </button>
@@ -37,7 +37,7 @@
                                 </a> -->
                             </label>
                             <div class="col-md-8">
-                                <input type="checkbox" name="createDefaultUsers" [(ngModel)]="serverSecurity.createDefaultUsers">
+                                <input type="checkbox" [disabled]="!canEdit" name="createDefaultUsers" [(ngModel)]="serverSecurity.createDefaultUsers">
                             </div>
                         </div>
                     </form>
@@ -50,7 +50,7 @@
                     <b> Password Validator </b>
                     <div class="panel-actions">
                         <div class="btn-group">
-                            <button class="btn btn-primary btn-sm" (click)="savePasswordValidator()">
+                            <button class="btn btn-primary btn-sm" [disabled]="!canEdit" (click)="savePasswordValidator()">
                                 <i class="fa fa-save"></i>
                                 Save
                             </button>
@@ -70,7 +70,7 @@
                                 </a> -->
                             </label>
                             <div class="col-md-8">
-                                <input type="checkbox" name="enabled" [(ngModel)]="passwordValidator.enabled">
+                                <input type="checkbox" [disabled]="!canEdit" name="enabled" [(ngModel)]="passwordValidator.enabled">
                             </div>
                         </div>
 
@@ -84,7 +84,7 @@
                                 </a> -->
                             </label>
                             <div class="col-md-8">
-                                <input type="checkbox" name="ignoreUUID" [(ngModel)]="passwordValidator.ignoreUUID">
+                                <input type="checkbox" [disabled]="!canEdit" name="ignoreUUID" [(ngModel)]="passwordValidator.ignoreUUID">
                             </div>
                         </div>
                         <div class="form-group">
@@ -97,7 +97,8 @@
                                 </a> -->
                             </label>
                             <div class="col-md-8">
-                                <input type="number" name="minimumLength" class="form-control" [(ngModel)]="passwordValidator.minimumLength">
+                                <input type="number" [disabled]="!canEdit" name="minimumLength" class="form-control"
+                                    [(ngModel)]="passwordValidator.minimumLength">
                             </div>
                         </div>
                         <div class="form-group">
@@ -110,7 +111,8 @@
                                 </a> -->
                             </label>
                             <div class="col-md-8">
-                                <input type="text" name="numberRegEx" class="form-control" [(ngModel)]="passwordValidator.numberRegEx">
+                                <input type="text" [disabled]="!canEdit" name="numberRegEx" class="form-control"
+                                    [(ngModel)]="passwordValidator.numberRegEx">
                             </div>
                         </div>
                         <div class="form-group">
@@ -123,7 +125,8 @@
                                 </a> -->
                             </label>
                             <div class="col-md-8">
-                                <input type="text" name="uppercaseRegEx" class="form-control" [(ngModel)]="passwordValidator.uppercaseRegEx">
+                                <input type="text" [disabled]="!canEdit" name="uppercaseRegEx" class="form-control"
+                                    [(ngModel)]="passwordValidator.uppercaseRegEx">
                             </div>
                         </div>
                         <div class="form-group">
@@ -136,7 +139,8 @@
                                 </a> -->
                             </label>
                             <div class="col-md-8">
-                                <input type="text" name="specialRegEx" class="form-control" [(ngModel)]="passwordValidator.specialRegEx">
+                                <input type="text" [disabled]="!canEdit" name="specialRegEx" class="form-control"
+                                    [(ngModel)]="passwordValidator.specialRegEx">
                             </div>
                         </div>
                     </form>

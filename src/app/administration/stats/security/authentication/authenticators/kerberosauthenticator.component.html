@@ -5,7 +5,7 @@
         Enabled
       </label>
       <div class="col-md-8">
-        <input type="checkbox" name="enabled" [(ngModel)]="config.enabled">
+        <input type="checkbox" [disabled]="!canEdit" name="enabled" [(ngModel)]="config.enabled">
       </div>
     </div>
     <div class="form-group">
@@ -13,7 +13,7 @@
         Debug
       </label>
       <div class="col-md-8">
-        <input type="checkbox" name="debug" [(ngModel)]="config.debug">
+        <input type="checkbox [disabled]="!canEdit"" name="debug" [(ngModel)]="config.debug">
       </div>
     </div>
     <div class="form-group">
@@ -39,7 +39,7 @@
         </a> -->
       </label>
       <div class="col-md-8">
-        <input type="text" class="form-control" name="service_ktname" [(ngModel)]="config.service.ktname">
+        <input type="text" [disabled]="!canEdit" class="form-control" name="service_ktname" [(ngModel)]="config.service.ktname">
       </div>
     </div>
 
@@ -52,7 +52,7 @@
         </a> -->
       </label>
       <div class="col-md-8">
-        <input type="text" class="form-control" name="service_principal" [(ngModel)]="config.service.principal">
+        <input type="text" [disabled]="!canEdit" class="form-control" name="service_principal" [(ngModel)]="config.service.principal">
       </div>
     </div>
 
@@ -67,7 +67,7 @@
         </a> -->
       </label>
       <div class="col-md-8">
-        <input type="text" class="form-control" name="spnego_ktname" [(ngModel)]="config.spnego.ktname">
+        <input type="text" [disabled]="!canEdit" class="form-control" name="spnego_ktname" [(ngModel)]="config.spnego.ktname">
       </div>
     </div>
 
@@ -80,7 +80,7 @@
         </a> -->
       </label>
       <div class="col-md-8">
-        <input type="text" class="form-control" name="spnego_principal" [(ngModel)]="config.spnego.principal">
+        <input type="text" [disabled]="!canEdit" class="form-control" name="spnego_principal" [(ngModel)]="config.spnego.principal">
       </div>
     </div>
 
@@ -97,7 +97,7 @@
         </a> -->
       </label>
       <div class="col-md-8">
-        <input type="text" class="form-control" name="client_ccname" [(ngModel)]="config.client.ccname">
+        <input type="text" [disabled]="!canEdit" class="form-control" name="client_ccname" [(ngModel)]="config.client.ccname">
       </div>
     </div>
 
@@ -111,7 +111,7 @@
         </a> -->
       </label>
       <div class="col-md-8">
-        <input type="text" class="form-control" name="client_ktname" [(ngModel)]="config.client.ktname">
+        <input type="text" [disabled]="!canEdit" class="form-control" name="client_ktname" [(ngModel)]="config.client.ktname">
       </div>
     </div>
     <div class="form-group">
@@ -123,7 +123,7 @@
         </a> -->
       </label>
       <div class="col-md-8">
-        <input type="checkbox" name="client_useTicketCache" [(ngModel)]="config.client.useTicketCache">
+        <input type="checkbox" [disabled]="!canEdit" name="client_useTicketCache" [(ngModel)]="config.client.useTicketCache">
       </div>
     </div>
     <div class="form-group">
@@ -135,7 +135,7 @@
         </a> -->
       </label>
       <div class="col-md-8">
-        <input type="text" class="form-control" name="client_principal" [(ngModel)]="config.client.principal">
+        <input type="text" [disabled]="!canEdit" class="form-control" name="client_principal" [(ngModel)]="config.client.principal">
       </div>
     </div>
 
@@ -149,7 +149,7 @@
         </a> -->
       </label>
       <div class="col-md-8">
-        <input type="number" class="form-control" name="client_renewalPeriod" [(ngModel)]="config.client.renewalPeriod">
+        <input type="number" [disabled]="!canEdit" class="form-control" name="client_renewalPeriod" [(ngModel)]="config.client.renewalPeriod">
       </div>
     </div>
   </form>

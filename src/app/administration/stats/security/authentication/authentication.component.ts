@@ -129,6 +129,7 @@ class AuthenticationComponent implements OnInit, OnDestroy {
         this.injector
       );
       this.bind(componentRef.instance, "config", config);
+      this.bind(componentRef.instance, "canEdit", this.canEdit);
     }
   }
 

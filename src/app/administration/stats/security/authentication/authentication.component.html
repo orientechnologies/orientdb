@@ -8,7 +8,7 @@
 
                     <div class="panel-actions">
                         <div class="btn-group">
-                            <button class="btn btn-primary btn-sm" (click)="saveAuthentication()">
+                            <button class="btn btn-primary btn-sm"  [disabled]="!canEdit" (click)="saveAuthentication()">
                                 <i class="fa fa-save"></i>
                                 Save
                             </button>
@@ -22,7 +22,7 @@
                                 Enabled
                             </label>
                             <div class="col-md-9">
-                                <input type="checkbox" name="enabledAuth" [(ngModel)]="security.authentication.enabled">
+                                <input type="checkbox" [disabled]="!canEdit" name="enabledAuth" [(ngModel)]="security.authentication.enabled">
                             </div>
                         </div>
                         <div class="form-group">
@@ -35,7 +35,7 @@
                                 </a> -->
                             </label>
                             <div class="col-md-9">
-                                <input type="checkbox" name="allowDefault" [(ngModel)]="security.authentication.allowDefault">
+                                <input type="checkbox" [disabled]="!canEdit" name="allowDefault" [(ngModel)]="security.authentication.allowDefault">
                             </div>
                         </div>
                         <div class="form-group">
@@ -48,7 +48,7 @@
                                         <th>Name</th>
                                         <th>Enabled</th>
                                         <th>
-                                            <button class="btn btn-xs" (click)="addAuthenticator()"><i class="fa fa-plus-circle"></i>
+                                            <button class="btn btn-xs" [disabled]="!canEdit" (click)="addAuthenticator()"><i class="fa fa-plus-circle"></i>
                                             </button>
                                         </th>
                                     </thead>
@@ -65,7 +65,7 @@
                                                 </a> -->
                                             </td>
                                             <td>
-                                                <input type="checkbox" name="{{idx}}aEnabled" [(ngModel)]="a.enabled"></td>
+                                                <input type="checkbox" [disabled]="!canEdit" name="{{idx}}aEnabled" [(ngModel)]="a.enabled"></td>
                                             <td>
 
                                                 <button [disabled]="idx == security.authentication.authenticators.length-1"
@@ -74,9 +74,9 @@
                                                 <button [disabled]="idx == 0" class="btn btn-xs btn-primary" (click)="moveUp(a,idx)"><i
                                                         class="fa fa-arrow-up"></i></button>
 
-                                                <button href="javascript:void(0)" class="btn btn-xs btn-danger" (click)="removeAuth(idx)"><i
+                                                <button href="javascript:void(0)" class="btn btn-xs btn-danger" [disabled]="!canEdit" (click)="removeAuth(idx)"><i
                                                         class="fa fa-remove"></i></button>
-                                                <button *ngIf="hasTemplate(a.name)" class="btn btn-xs" (click)="selectAuthenticator(idx)"><i
+                                                <button *ngIf="hasTemplate(a.name)" class="btn btn-xs"  (click)="selectAuthenticator(idx)"><i
                                                         class="fa fa-gear"></i></button>
                                             </td>
                                         </tr>

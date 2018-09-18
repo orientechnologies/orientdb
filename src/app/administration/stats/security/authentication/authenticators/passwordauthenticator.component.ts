@@ -11,6 +11,9 @@ class PasswordAuthenticatorComponent implements OnInit, OnDestroy {
   @Input()
   private config: any;
 
+  @Input()
+  private canEdit: boolean;
+
   constructor() {}
 
   ngOnInit(): void {}

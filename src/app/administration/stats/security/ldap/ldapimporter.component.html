@@ -7,7 +7,7 @@
           <b>Settings</b>
           <div class="panel-actions">
             <div class="btn-group">
-              <button class="btn btn-sm btn-primary" (click)="saveLdap()">
+              <button class="btn btn-sm btn-primary" [disabled]="!canEdit" (click)="saveLdap()">
                 <i class="fa fa-save"></i> Save
               </button>
             </div>
@@ -20,7 +20,7 @@
                 Enabled
               </label>
               <div class="col-md-9">
-                <input type="checkbox" name="enabled" [(ngModel)]="ldap.enabled">
+                <input type="checkbox" [disabled]="!canEdit" name="enabled" [(ngModel)]="ldap.enabled">
               </div>
             </div>
             <div class="form-group">
@@ -28,7 +28,7 @@
                 Debug
               </label>
               <div class="col-md-9">
-                <input type="checkbox" name="debug" [(ngModel)]="ldap.debug">
+                <input type="checkbox" [disabled]="!canEdit" name="debug" [(ngModel)]="ldap.debug">
               </div>
             </div>
             <div class="form-group">
@@ -40,7 +40,7 @@
                 </a> -->
               </label>
               <div class="col-md-9">
-                <input type="number" name="period" class="form-control" [(ngModel)]="ldap.period">
+                <input type="number" [disabled]="!canEdit" name="period" class="form-control" [(ngModel)]="ldap.period">
               </div>
             </div>
 
@@ -68,7 +68,7 @@
                       </a> -->
                     </th>
                     <th>
-                      <button class="btn btn-xs" (click)="addDatabase()"><i class="fa fa-plus-circle"></i>
+                      <button class="btn btn-xs" [disabled]="!canEdit" (click)="addDatabase()"><i class="fa fa-plus-circle"></i>
                       </button>
                     </th>
                   </thead>
@@ -76,10 +76,10 @@
                     <tr *ngFor="let a of ldap.databases; let idx = index">
                       <td>{{a.database}}</td>
                       <td>
-                        <input type="checkbox" name="{{idx}}ignoreLocal" [(ngModel)]="a.ignoreLocal">
+                        <input type="checkbox" [disabled]="!canEdit" name="{{idx}}ignoreLocal" [(ngModel)]="a.ignoreLocal">
                       <td>
 
-                        <button href="javascript:void(0)" class="btn btn-xs btn-danger" (click)="removeDatabase($index)">
+                        <button href="javascript:void(0)" [disabled]="!canEdit" class="btn btn-xs btn-danger" (click)="removeDatabase($index)">
                           <i class="fa fa-remove"></i></button>
                         <button class="btn btn-xs" (click)="setSelected(a)"><i class="fa fa-gear"></i></button>
                       </td>
@@ -113,7 +113,7 @@
                     </a> -->
                   </label>
                   <div class="col-md-9">
-                    <select class="form-control" name="database" [(ngModel)]="currentSelected.database">
+                    <select class="form-control" [disabled]="!canEdit" name="database" [(ngModel)]="currentSelected.database">
                       <option *ngFor="let db of databases" [ngValue]="db">{{db}}</option>
                     </select>
                   </div>
@@ -129,7 +129,7 @@
                     </a> -->
                   </label>
                   <div class="col-md-9">
-                    <input type="checkbox" name="ignoreLocal" [(ngModel)]="currentSelected.ignoreLocal">
+                    <input type="checkbox" name="ignoreLocal" [disabled]="!canEdit" [(ngModel)]="currentSelected.ignoreLocal">
                   </div>
                 </div>
 
@@ -157,7 +157,7 @@
                           </a> -->
                         </th>
                         <th>
-                          <button class="btn btn-xs" (click)="addDomain()"><i class="fa fa-plus-circle"></i>
+                          <button class="btn btn-xs" [disabled]="!canEdit" (click)="addDomain()"><i class="fa fa-plus-circle"></i>
                           </button>
                         </th>
                       </thead>
@@ -169,7 +169,8 @@
                           </td>
                           <td>
 
-                            <button href="javascript:void(0)" class="btn btn-xs btn-danger" (click)="removeDomain(idx)">
+                            <button href="javascript:void(0)" [disabled]="!canEdit" class="btn btn-xs btn-danger"
+                              (click)="removeDomain(idx)">
                               <i class="fa fa-remove"></i></button>
                             <button class="btn btn-xs" (click)="setCurrentDomain(domain)"><i class="fa fa-gear"></i></button>
                           </td>
@@ -199,7 +200,7 @@
                     </a> -->
                   </label>
                   <div class="col-md-9">
-                    <input type="text" class="form-control" name="domain" [(ngModel)]="currentDomain.domain">
+                    <input type="text" class="form-control" [disabled]="!canEdit" name="domain" [(ngModel)]="currentDomain.domain">
                   </div>
                 </div>
 
@@ -213,7 +214,7 @@
                     </a> -->
                   </label>
                   <div class="col-md-9">
-                    <select class="form-control" name="authenticator" [(ngModel)]="currentDomain.authenticator">
+                    <select class="form-control" [disabled]="!canEdit" name="authenticator" [(ngModel)]="currentDomain.authenticator">
                       <option *ngFor="let a of authenticators" [ngValue]="a.name">{{a.name}}</option>
                     </select>
 
@@ -241,20 +242,21 @@
                           </a> -->
                         </th>
                         <th>
-                          <button class="btn btn-xs" (click)="addServer()"><i class="fa fa-plus-circle"></i>
+                          <button class="btn btn-xs" [disabled]="!canEdit" (click)="addServer()"><i class="fa fa-plus-circle"></i>
                           </button>
                         </th>
                       </thead>
                       <tbody>
                         <tr *ngFor="let server of currentDomain.servers; let idx = index">
                           <td>
-                            <input type="text" class="form-control" name="{{idx}}url" [(ngModel)]="server.url" />
+                            <input type="text" [disabled]="!canEdit" class="form-control" name="{{idx}}url" [(ngModel)]="server.url" />
                           <td>
-                            <input type="checkbox" name="{{idx}}alias" [(ngModel)]="server.isAlias" />
+                            <input type="checkbox" [disabled]="!canEdit" name="{{idx}}alias" [(ngModel)]="server.isAlias" />
                           </td>
                           <td>
 
-                            <button href="javascript:void(0)" class="btn btn-xs btn-danger" (click)="removeServer(idx)">
+                            <button href="javascript:void(0)" [disabled]="!canEdit" class="btn btn-xs btn-danger"
+                              (click)="removeServer(idx)">
                               <i class="fa fa-remove"></i></button>
                           </td>
                         </tr>
@@ -291,27 +293,28 @@
                           </a> -->
                         </th>
                         <th>
-                          <button class="btn btn-xs" (click)="addUser()"><i class="fa fa-plus-circle"></i>
+                          <button class="btn btn-xs" [disabled]="!canEdit" (click)="addUser()"><i class="fa fa-plus-circle"></i>
                           </button>
                         </th>
                       </thead>
                       <tbody>
                         <tr *ngFor="let user of currentDomain.users; let idx = index">
                           <td>
-                            <input type="text" class="form-control" name="{{idx}}baseDN" [(ngModel)]="user.baseDN" />
+                            <input type="text" [disabled]="!canEdit" class="form-control" name="{{idx}}baseDN"
+                              [(ngModel)]="user.baseDN" />
                           <td>
-                            <input type="text" class="form-control" name="{{idx}}filter" [(ngModel)]="user.filter" />
+                            <input type="text" [disabled]="!canEdit" class="form-control" name="{{idx}}filter"
+                              [(ngModel)]="user.filter" />
                           </td>
                           <td>
 
-                            <input type="
-                              text" class="form-control" name="{{idx}}roles"
+                            <input [disabled]="!canEdit" type="text" class="form-control" name="{{idx}}roles"
                               [(ngModel)]="user.roles" />
 
                           </td>
 
                           <td>
-                            <button href="javascript:void(0)" class="btn btn-xs btn-danger" (click)="removeUser(idx)">
+                            <button href="javascript:void(0)" [disabled]="!canEdit" class="btn btn-xs btn-danger" (click)="removeUser(idx)">
                               <i class="fa fa-remove"></i></button>
                           </td>
                         </tr>

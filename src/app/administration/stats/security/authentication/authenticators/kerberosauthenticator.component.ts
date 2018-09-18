@@ -10,6 +10,8 @@ declare const angular: any;
 class KerberosAuthenticatorComponent implements OnInit, OnDestroy {
   @Input()
   private config: any;
+  @Input()
+  private canEdit: boolean;
 
   constructor() {}
 
