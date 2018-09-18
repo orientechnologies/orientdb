@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.client.remote.message.tx;
 
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -92,9 +93,11 @@ public class ORecordOperationRequest {
     recordType = input.readByte();
     id = ORecordId.deserialize(input);
     oldId = ORecordId.deserialize(input);
-    int size = input.readInt();
-    record = new byte[size];
-    input.readFully(record);
+    if (type != ORecordOperation.DELETED) {
+      int size = input.readInt();
+      record = new byte[size];
+      input.readFully(record);
+    }
     version = input.readInt();
     contentChanged = input.readBoolean();
   }
@@ -104,8 +107,10 @@ public class ORecordOperationRequest {
     output.writeByte(recordType);
     ORecordId.serialize(id, output);
     ORecordId.serialize(oldId, output);
-    output.writeInt(record.length);
-    output.write(record);
+    if (type != ORecordOperation.DELETED) {
+      output.writeInt(record.length);
+      output.write(record);
+    }
     output.writeInt(version);
     output.writeBoolean(contentChanged);
   }
