@@ -31,6 +31,13 @@ public class OViewConfig {
       return props;
     }
 
+    public String getType() {
+      return type;
+    }
+
+    public String getEngine() {
+      return engine;
+    }
   }
 
   protected String  name;

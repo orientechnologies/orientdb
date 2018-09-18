@@ -147,17 +147,17 @@ public class CreateEdgesStep extends AbstractExecutionStep {
 
     Iterator toIter = (Iterator) toValues;
 
-    while (toIter != null && toIter.hasNext()) {
-      toList.add(toIter.next());
-    }
-
-    toIterator = toList.iterator();
     if (toIter instanceof OResultSet) {
       try {
         ((OResultSet) toIter).reset();
       } catch (Exception ignore) {
       }
     }
+    while (toIter != null && toIter.hasNext()) {
+      toList.add(toIter.next());
+    }
+
+    toIterator = toList.iterator();
 
     currentFrom = fromIter != null && fromIter.hasNext() ? asVertex(fromIter.next()) : null;
 

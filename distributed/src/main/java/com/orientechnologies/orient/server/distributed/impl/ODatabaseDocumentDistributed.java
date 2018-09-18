@@ -195,7 +195,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentDistributed database = new ODatabaseDocumentDistributed(getStorage(), hazelcastPlugin);
     database.init(getConfig(), getSharedContext());
-    database.internalOpen(getUser().getName(), null, false);
+    String user;
+    if (getUser() != null) {
+      user = getUser().getName();
+    } else {
+      user = null;
+    }
+    database.internalOpen(user, null, false);
     database.callOnOpenListeners();
     this.activateOnCurrentThread();
     return database;

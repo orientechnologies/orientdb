@@ -1326,8 +1326,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
     }
 
-    super.onDrop(iDatabase);
-
     if (configurationMap != null) {
       configurationMap.remove(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + nodeName + "." + dbName);
 
@@ -1339,6 +1337,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             "Dropped last copy of database '%s', removing it from the cluster", dbName);
       }
     }
+    super.onDrop(iDatabase);
   }
 
   public ODocument getNodeConfigurationByUuid(final String iNodeId, final boolean useCache) {

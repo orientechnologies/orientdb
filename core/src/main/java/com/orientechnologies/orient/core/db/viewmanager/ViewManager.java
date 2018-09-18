@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.db.viewmanager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
@@ -12,6 +13,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -347,9 +349,9 @@ public class ViewManager {
       for (OViewConfig.OViewIndexConfig cfg : view.getRequiredIndexesInfo()) {
         OIndexDefinition definition = createIndexDefinition(view.getName(), cfg.getProperties());
         String indexName = view.getName() + "_" + UUID.randomUUID().toString().replaceAll("-", "_");
-        String type = "NOTUNIQUE";//TODO allow other types!
-        OIndex<?> idx = idxMgr.createIndex(indexName, type, definition, new int[] { cluster }, null, null);
-
+        String type = cfg.getType();
+        String engine = cfg.getEngine();
+        OIndex<?> idx = idxMgr.createIndex(indexName, type, definition, new int[] { cluster }, null, null, engine);
         result.add(idx);
       }
       return result;
@@ -491,7 +493,38 @@ public class ViewManager {
 
     @Override
     public void onUpdate(ODatabaseDocument db, OResult before, OResult after) {
-      //TODO
+      OView view = db.getMetadata().getSchema().getView(viewName);
+      if (view != null && view.getOriginRidField() != null) {
+        try (OResultSet rs = db
+            .query("SELECT FROM " + viewName + " WHERE " + view.getOriginRidField() + " = ?", (Object) after.getProperty("@rid"))) {
+          while (rs.hasNext()) {
+            OResult row = rs.next();
+            row.getElement().ifPresent(elem -> updateViewRow(elem, after, view, (ODatabaseDocumentInternal) db));
+          }
+        }
+      }
+    }
+
+    private void updateViewRow(OElement viewRow, OResult origin, OView view, ODatabaseDocumentInternal db) {
+      OStatement stm = OStatementCache.get(view.getQuery(), db);
+      if (stm instanceof OSelectStatement) {
+        OProjection projection = ((OSelectStatement) stm).getProjection();
+        if (projection == null || (projection.getItems().size() == 0 && projection.getItems().get(0).isAll())) {
+          for (String s : origin.getPropertyNames()) {
+            if ("@rid".equalsIgnoreCase(s) || "@class".equalsIgnoreCase(s) || "@version".equalsIgnoreCase(s)) {
+              continue;
+            }
+            Object value = origin.getProperty(s);
+            viewRow.setProperty(s, value);
+          }
+        } else {
+          for (OProjectionItem oProjectionItem : projection.getItems()) {
+            Object value = oProjectionItem.execute(origin, new OBasicCommandContext());
+            viewRow.setProperty(oProjectionItem.getProjectionAliasAsString(), value);
+          }
+        }
+        viewRow.save();
+      }
     }
 
     @Override
