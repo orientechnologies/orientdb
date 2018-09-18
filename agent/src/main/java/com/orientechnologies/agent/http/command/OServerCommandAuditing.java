@@ -35,7 +35,7 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
   private              OEnterpriseServer server;
 
   public OServerCommandAuditing(OEnterpriseServer server) {
-    super(EnterprisePermissions.SERVER_AUDITING.toString());
+    super(EnterprisePermissions.SERVER_SECURITY.toString());
     this.server = server;
   }
 
@@ -176,10 +176,8 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
   private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws Exception {
     iRequest.databaseName = db;
 
-    ODatabaseDocument dbDoc = null;
 
     try {
-      dbDoc = getProfiledDatabaseInstance(iRequest);
 
       ODocument config = null;
       if (server.getSecurity().getAuditing() != null) {
@@ -190,8 +188,6 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
     } finally {
-      if (dbDoc != null)
-        dbDoc.close();
     }
   }
 
