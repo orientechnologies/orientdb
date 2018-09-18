@@ -27,6 +27,7 @@ import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.agent.profiler.OEnterpriseProfilerListener;
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsService;
+import com.orientechnologies.agent.services.security.OSecurityService;
 import com.orientechnologies.agent.services.studio.StudioService;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
@@ -123,6 +124,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     this.services.add(new OrientDBMetricsService());
     this.services.add(new OAgentFunctionFactory());
     this.services.add(new OBackupService());
+    this.services.add(new OSecurityService());
     this.services.forEach((s) -> s.init(this.enterpriseServer));
 
   }
@@ -144,8 +146,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
         installProfiler();
 
         installPlugins();
-
-        registerSecurityComponents();
 
         Thread installer = new Thread(() -> {
 
@@ -201,7 +201,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
 
       cloudManager.shutdown();
 
-      unregisterSecurityComponents();
       uninstallCommands();
       uninstallProfiler();
 
@@ -288,9 +287,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     listener.registerStatelessCommand(new OServerCommandPluginManager());
     listener.registerStatelessCommand(new OServerCommandGetNode());
     listener.registerStatelessCommand(new OServerCommandQueryCacheManager());
-    listener.registerStatelessCommand(new OServerCommandAuditing(server));
-    listener.registerStatelessCommand(new OServerCommandGetSecurityConfig(server.getSecurity()));
-    listener.registerStatelessCommand(new OServerCommandPostSecurityReload(server.getSecurity()));
+
 
   }
 
@@ -309,10 +306,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     listener.unregisterStatelessCommand(OServerCommandPluginManager.class);
     listener.unregisterStatelessCommand(OServerCommandGetNode.class);
     listener.unregisterStatelessCommand(OServerCommandQueryCacheManager.class);
-    listener.unregisterStatelessCommand(OServerCommandAuditing.class);
-    listener.unregisterStatelessCommand(OServerCommandBackupManager.class);
-    listener.unregisterStatelessCommand(OServerCommandGetSecurityConfig.class);
-    listener.unregisterStatelessCommand(OServerCommandPostSecurityReload.class);
+    
   }
 
   private void installRegistry() {
@@ -484,32 +478,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
           }
         }
       }
-    }
-  }
-
-  private void registerSecurityComponents() {
-    try {
-      if (server.getSecurity() != null) {
-        server.getSecurity()
-            .registerSecurityClass(com.orientechnologies.agent.security.authenticator.OSecuritySymmetricKeyAuth.class);
-        server.getSecurity()
-            .registerSecurityClass(com.orientechnologies.agent.security.authenticator.OSystemSymmetricKeyAuth.class);
-      }
-    } catch (Throwable th) {
-      OLogManager.instance().error(this, "registerSecurityComponents()", th);
-    }
-  }
-
-  private void unregisterSecurityComponents() {
-    try {
-      if (server.getSecurity() != null) {
-        server.getSecurity()
-            .unregisterSecurityClass(com.orientechnologies.agent.security.authenticator.OSecuritySymmetricKeyAuth.class);
-        server.getSecurity()
-            .unregisterSecurityClass(com.orientechnologies.agent.security.authenticator.OSystemSymmetricKeyAuth.class);
-      }
-    } catch (Throwable th) {
-      OLogManager.instance().error(this, "unregisterSecurityComponents()", th);
     }
   }
 

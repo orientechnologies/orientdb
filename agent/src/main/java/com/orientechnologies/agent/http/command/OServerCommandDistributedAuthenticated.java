@@ -45,6 +45,16 @@ public abstract class OServerCommandDistributedAuthenticated extends OServerComm
     }
   }
 
+  @Override
+  protected boolean authenticate(OHttpRequest iRequest, OHttpResponse iResponse, boolean iAskForAuthentication, String resource)
+      throws IOException {
+    if (isAgentAuthenticated(iRequest)) {
+      return true;
+    } else {
+      return super.authenticate(iRequest, iResponse, iAskForAuthentication, resource);
+    }
+  }
+
   protected boolean isLocalNode(OHttpRequest iRequest) {
 
     ODistributedServerManager distributedManager = server.getDistributedManager();

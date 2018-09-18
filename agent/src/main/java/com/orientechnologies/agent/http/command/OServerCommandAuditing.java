@@ -18,9 +18,9 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.EnterprisePermissions;
+import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -31,10 +31,10 @@ import java.util.Collection;
 import java.util.List;
 
 public class OServerCommandAuditing extends OServerCommandDistributedScope {
-  private static final String[] NAMES = { "GET|auditing/*", "POST|auditing/*" };
-  private              OServer  server;
+  private static final String[]          NAMES = { "GET|auditing/*", "POST|auditing/*" };
+  private              OEnterpriseServer server;
 
-  public OServerCommandAuditing(OServer server) {
+  public OServerCommandAuditing(OEnterpriseServer server) {
     super(EnterprisePermissions.SERVER_AUDITING.toString());
     this.server = server;
   }

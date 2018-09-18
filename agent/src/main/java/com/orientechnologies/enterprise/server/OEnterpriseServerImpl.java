@@ -22,6 +22,7 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
+import com.orientechnologies.orient.server.security.OServerSecurity;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -243,5 +244,10 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   @Override
   public void unregisterFunction(String function) {
     OSQLEngine.getInstance().unregisterFunction(function);
+  }
+
+  @Override
+  public OServerSecurity getSecurity() {
+    return server.getSecurity();
   }
 }
