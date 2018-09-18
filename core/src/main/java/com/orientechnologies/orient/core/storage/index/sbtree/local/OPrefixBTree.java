@@ -237,6 +237,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       throw OException.wrapException(new OPrefixBTreeException("Error during sbtree entrie put", this), e);
     }
 
+    assert atomicOperation != null;
     acquireExclusiveLock();
     try {
       checkNullSupport(key);
@@ -285,11 +286,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
             }
           }
 
-          final int valueSize = valueSerializer.getObjectSize(value);
-          final byte[] serializeValue = new byte[valueSize];
-          valueSerializer.serializeNativeObject(value, serializeValue, 0);
-
-          final boolean createLinkToTheValue = valueSize > MAX_EMBEDDED_VALUE_SIZE;
+          final byte[] serializeValue = valueSerializer.serializeNativeAsWhole(value);
+          final boolean createLinkToTheValue = serializeValue.length > MAX_EMBEDDED_VALUE_SIZE;
           assert !createLinkToTheValue;
 
           int insertionIndex;
