@@ -192,7 +192,19 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
           } else
             text.append(script);
 
-          OResultSet result = db.execute(language, text.toString());
+          Object params = operation.get("parameters");
+          if (params instanceof Collection) {
+            params = ((Collection) params).toArray();
+          }
+
+
+          OResultSet result;
+          if (params == null) {
+            result = db.execute(language, text.toString());
+          } else {
+            result = db.execute(language, text.toString(), (Object[]) params);
+          }
+
           lastResult = result.stream().map(x -> x.toElement()).collect(Collectors.toList());
           result.close();
         }
