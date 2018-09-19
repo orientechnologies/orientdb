@@ -18,23 +18,22 @@ package com.orientechnologies.lucene.engine;
 import org.apache.lucene.store.Directory;
 
 /**
- *
  * @author mdjurovi
  */
-public class LuceneDirectory {
+public class OLuceneDirectory {
   private final Directory dir;
-  private final String path;
-  
-  public LuceneDirectory(final Directory dir, final String path){
+  private final String    path;
+
+  public OLuceneDirectory(final Directory dir, final String path) {
     this.dir = dir;
     this.path = path;
   }
-  
-  public Directory getDirectory(){
+
+  public Directory getDirectory() {
     return dir;
   }
-  
-  public String getPath(){
+
+  public String getPath() {
     return path;
   }
 }

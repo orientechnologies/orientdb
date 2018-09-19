@@ -78,11 +78,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
+
 import java.io.File;
-import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.Path;
 
 public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptiveExternal implements OLuceneIndexEngine {
 
@@ -97,17 +96,17 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   protected ODocument                                     metadata;
   protected Version                                       version;
   Map<String, Boolean> collectionFields = new HashMap<>();
-  private          TimerTask     commitTask;
-  private          AtomicBoolean closed;
-  private          OStorage      storage;
-  private volatile long          reopenToken;
-  private          Analyzer      indexAnalyzer;
-  private          Analyzer      queryAnalyzer;
-  private volatile LuceneDirectory     directory;
-  private          IndexWriter   indexWriter;
-  private          long          flushIndexInterval;
-  private          long          closeAfterInterval;
-  private          long          firstFlushAfter;
+  private          TimerTask        commitTask;
+  private          AtomicBoolean    closed;
+  private          OStorage         storage;
+  private volatile long             reopenToken;
+  private          Analyzer         indexAnalyzer;
+  private          Analyzer         queryAnalyzer;
+  private volatile OLuceneDirectory directory;
+  private          IndexWriter      indexWriter;
+  private          long             flushIndexInterval;
+  private          long             closeAfterInterval;
+  private          long             firstFlushAfter;
 
   private Lock openCloseLock;
 
@@ -181,7 +180,8 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   private boolean shouldClose() {
-    return !(directory.getDirectory() instanceof RAMDirectory) && System.currentTimeMillis() - lastAccess.get() > closeAfterInterval;
+    return !(directory.getDirectory() instanceof RAMDirectory)
+        && System.currentTimeMillis() - lastAccess.get() > closeAfterInterval;
   }
 
   private void checkCollectionIndex(OIndexDefinition indexDefinition) {
@@ -338,7 +338,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
       final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) storage.getUnderlying();
       if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
-        OLocalPaginatedStorage localStorage = (OLocalPaginatedStorage)storageLocalAbstract;
+        OLocalPaginatedStorage localStorage = (OLocalPaginatedStorage) storageLocalAbstract;
         File storagePath = localStorage.getStoragePath().toFile();
         deleteIndexFolder(storagePath);
       }
@@ -354,20 +354,19 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
     }
     directory.getDirectory().close();
     String indexPath = directory.getPath();
-    if (indexPath != null){
+    if (indexPath != null) {
       File indexDir = new File(indexPath);
-      while (true){
-        if (Files.isSameFile(FileSystems.getDefault().getPath(baseStoragePath.getCanonicalPath()), 
-                FileSystems.getDefault().getPath(indexDir.getCanonicalPath()))){
+      while (true) {
+        if (Files.isSameFile(FileSystems.getDefault().getPath(baseStoragePath.getCanonicalPath()),
+            FileSystems.getDefault().getPath(indexDir.getCanonicalPath()))) {
           break;
         }
         //delete only if dir is empty, otherwise stop deleting process
         //last index will remove all upper dirs
-        if (indexDir.listFiles().length == 0){
+        if (indexDir.listFiles().length == 0) {
           OFileUtils.deleteRecursively(indexDir, true);
           indexDir = indexDir.getParentFile();
-        }
-        else{
+        } else {
           break;
         }
       }
@@ -511,7 +510,7 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
 
     final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) storage.getUnderlying();
     if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
-      OLocalPaginatedStorage localPaginatedStorage = (OLocalPaginatedStorage)storageLocalAbstract;
+      OLocalPaginatedStorage localPaginatedStorage = (OLocalPaginatedStorage) storageLocalAbstract;
       deleteIndexFolder(localPaginatedStorage.getStoragePath().toFile());
     }
   }
