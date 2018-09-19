@@ -148,10 +148,10 @@ public class OFileUtils {
       throw new IOException("Invalid file name '" + iFileName + "'");
   }
 
-  public static void deleteRecursively(final File rootFile){
+  public static void deleteRecursively(final File rootFile) {
     deleteRecursively(rootFile, false);
   }
-  
+
   public static void deleteRecursively(final File rootFile, boolean onlyDirs) {
     if (!rootFile.exists())
       return;
@@ -161,8 +161,8 @@ public class OFileUtils {
       Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-          if (!onlyDirs){
-            if (file != null && file.toFile() != null && file.toFile().exists()){
+          if (!onlyDirs) {
+            if (file != null && file.toFile() != null && file.toFile().exists()) {
               file.toFile().delete();
             }
           }
@@ -171,7 +171,7 @@ public class OFileUtils {
 
         @Override
         public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-          if (dir != null && dir.toFile() != null && dir.toFile().exists()){
+          if (dir != null && dir.toFile() != null && dir.toFile().exists()) {
             dir.toFile().delete();
           }
           return FileVisitResult.CONTINUE;
