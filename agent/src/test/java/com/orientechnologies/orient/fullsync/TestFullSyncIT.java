@@ -15,6 +15,7 @@ public class TestFullSyncIT {
     OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(false);
     OServer server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
     OServer server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
+    OServer server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");
     OrientDB remote = new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
     remote.create(TestFullSyncIT.class.getSimpleName(), ODatabaseType.PLOCAL);
     ODatabaseSession session = remote.open(TestFullSyncIT.class.getSimpleName(), "admin", "admin");
@@ -22,6 +23,9 @@ public class TestFullSyncIT {
     session.close();
     remote.drop(TestFullSyncIT.class.getSimpleName());
     remote.close();
+    server0.shutdown();
+    server1.shutdown();
+    server2.shutdown();
   }
 
 }
