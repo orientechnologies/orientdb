@@ -361,8 +361,15 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
                 FileSystems.getDefault().getPath(indexDir.getCanonicalPath()))){
           break;
         }
-        OFileUtils.deleteRecursively(indexDir, true);
-        indexDir = indexDir.getParentFile();
+        //delete only if dir is empty, otherwise stop deleting process
+        //last index will remove all upper dirs
+        if (indexDir.listFiles().length == 0){
+          OFileUtils.deleteRecursively(indexDir, true);
+          indexDir = indexDir.getParentFile();
+        }
+        else{
+          break;
+        }
       }
     }
   }
