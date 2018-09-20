@@ -9,10 +9,10 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.client.remote.message.OCommit37Response;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
@@ -500,62 +500,74 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       //Exclusive for handling schema manipulation, remove after refactor for distributed schema
       super.internalCommit(iTx);
     } else {
-      //realCommit(iTx);
-
-      ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
-      try {
-        dManager.waitUntilNodeOnline();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+      switch (OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger()) {
+      case 1:
+        distributedCommitV1(iTx);
+        break;
+      case 2:
+        distributedCommitV2(iTx);
+        break;
+      default:
+        throw new IllegalStateException(
+            "Invalid distributed replicaiton protocol version: " + OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION
+                .getValueAsInteger());
       }
-      ODistributedDatabaseImpl sharedDistributeDb = (ODistributedDatabaseImpl) dManager.getMessageService().getDatabase(getName());
-      OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
-      sharedDistributeDb.waitForOnline();
-      OSessionOperationId id = new OSessionOperationId();
-      id.init();
-      Future<OSubmitResponse> future = submitContext.send(id,
-          new OTransactionSubmit(iTx.getRecordOperations(), OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx)));
-      try {
-        OTransactionResponse response = (OTransactionResponse) future.get();
-        if (!response.isSuccess()) {
-          throw new ODatabaseException("failed");
-        }
-        for (OCreatedRecordResponse created : response.getCreatedRecords()) {
-          iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
-          ORecordOperation rop = iTx.getRecordEntry(created.getCurrentRid());
-          if (rop != null) {
-            if (created.getVersion() > rop.getRecord().getVersion() + 1)
-              // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
-              rop.getRecord().unload();
-            ORecordInternal.setVersion(rop.getRecord(), created.getVersion());
-          }
-        }
-        for (OUpdatedRecordResponse updated : response.getUpdatedRecords()) {
-          ORecordOperation rop = iTx.getRecordEntry(updated.getRid());
-          if (rop != null) {
-            if (updated.getVersion() > rop.getRecord().getVersion() + 1)
-              // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
-              rop.getRecord().unload();
-            ORecordInternal.setVersion(rop.getRecord(), updated.getVersion());
-          }
-        }
-        // SET ALL THE RECORDS AS UNDIRTY
-        for (ORecordOperation txEntry : iTx.getRecordOperations())
-          ORecordInternal.unsetDirty(txEntry.getRecord());
-
-        // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT.
-        OTransactionAbstract.updateCacheFromEntries(iTx.getDatabase(), iTx.getRecordOperations(), true);
-
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      } catch (ExecutionException e) {
-        e.printStackTrace();
-      }
-
     }
   }
 
-  public void realCommit(OTransactionInternal iTx) {
+  private void distributedCommitV2(OTransactionInternal iTx) {
+    ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
+    try {
+      dManager.waitUntilNodeOnline();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    ODistributedDatabaseImpl sharedDistributeDb = (ODistributedDatabaseImpl) dManager.getMessageService().getDatabase(getName());
+    OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
+    sharedDistributeDb.waitForOnline();
+    OSessionOperationId id = new OSessionOperationId();
+    id.init();
+    Future<OSubmitResponse> future = submitContext
+        .send(id, new OTransactionSubmit(iTx.getRecordOperations(), OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx)));
+    try {
+      OTransactionResponse response = (OTransactionResponse) future.get();
+      if (!response.isSuccess()) {
+        throw new ODatabaseException("failed");
+      }
+      for (OCreatedRecordResponse created : response.getCreatedRecords()) {
+        iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
+        ORecordOperation rop = iTx.getRecordEntry(created.getCurrentRid());
+        if (rop != null) {
+          if (created.getVersion() > rop.getRecord().getVersion() + 1)
+            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+            rop.getRecord().unload();
+          ORecordInternal.setVersion(rop.getRecord(), created.getVersion());
+        }
+      }
+      for (OUpdatedRecordResponse updated : response.getUpdatedRecords()) {
+        ORecordOperation rop = iTx.getRecordEntry(updated.getRid());
+        if (rop != null) {
+          if (updated.getVersion() > rop.getRecord().getVersion() + 1)
+            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+            rop.getRecord().unload();
+          ORecordInternal.setVersion(rop.getRecord(), updated.getVersion());
+        }
+      }
+      // SET ALL THE RECORDS AS UNDIRTY
+      for (ORecordOperation txEntry : iTx.getRecordOperations())
+        ORecordInternal.unsetDirty(txEntry.getRecord());
+
+      // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT.
+      OTransactionAbstract.updateCacheFromEntries(iTx.getDatabase(), iTx.getRecordOperations(), true);
+
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    } catch (ExecutionException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void distributedCommitV1(OTransactionInternal iTx) {
     //This is future may handle a retry
     try {
       for (ORecordOperation txEntry : iTx.getRecordOperations()) {

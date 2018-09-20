@@ -26,7 +26,6 @@ import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -842,6 +841,13 @@ public enum OGlobalConfiguration {
   DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY("distributed.publishNodeStatusEvery",
       "Time in ms to publish the node status on distributed map. Set to 0 to disable such refresh of node configuration",
       Long.class, 10000l, true),
+
+  /**
+   * @Since 2.2.0
+   */
+  DISTRIBUTED_REPLICATION_PROTOCOL_VERSION("distributed.replicationProtocol.version",
+      "1 for legacy replication model (v 3.0 and previous), 2 for coordinated replication (v 3.1 and next)", Integer.class, 1,
+      true),
 
   /**
    * @Since 2.2.0
