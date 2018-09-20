@@ -4,7 +4,8 @@ import {
   ViewChild,
   ViewContainerRef,
   ComponentFactoryResolver,
-  Injector
+  Injector,
+  Input
 } from "@angular/core";
 import { MetricService, NotificationService } from "../../../core/services";
 import {
@@ -27,6 +28,10 @@ export class MetricsSettingsComponent implements OnInit {
   config: any;
   currentSelected: any;
   currentSelectedName = "jmx";
+
+
+  @Input()
+  private canEdit : boolean
 
   @ViewChild("reporterContainer", { read: ViewContainerRef })
   reporterContainer: ViewContainerRef;
@@ -98,6 +103,7 @@ export class MetricsSettingsComponent implements OnInit {
         this.injector
       );
       this.bindProperty(componentRef.instance, "config", this.currentSelected);
+      this.bindProperty(componentRef.instance, "canEdit", this.canEdit);
     }
   }
 

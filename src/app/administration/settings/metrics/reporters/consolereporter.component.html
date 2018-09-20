@@ -4,7 +4,7 @@
             Interval
         </label>
         <div class="col-md-8">
-            <input type="number" class="form-control" name="domain" [(ngModel)]="config.interval">
+            <input type="number" [disabled]="!canEdit" class="form-control" name="domain" [(ngModel)]="config.interval">
         </div>
     </div>
 </form>

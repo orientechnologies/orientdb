@@ -2,11 +2,11 @@
 <div class="row" *ngIf="ee">
     <div class="col-md-12">
         <ul class="nav nav-tabs">
-            <li [ngClass]="{'active' : tab === 'metrics'}" (click)="tab = 'metrics'"><a href="javascript:void(0)"><span>Metrics</span></a></li>
+            <li *ngIf="canViewMetrics" [ngClass]="{'active' : tab === 'metrics'}" (click)="tab = 'metrics'"><a href="javascript:void(0)"><span>Metrics</span></a></li>
 
         </ul>
         <div class="tab-content row">
-            <metrics-settings *ngIf="tab === 'metrics'"></metrics-settings>
+            <metrics-settings [canEdit]="canEditMetrics" *ngIf="tab === 'metrics' && canViewMetrics"></metrics-settings>
         </div>
     </div>
 </div>

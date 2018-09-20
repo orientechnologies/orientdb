@@ -17,5 +17,9 @@ export class ConsoleReporterComponent {
   @Input()
   config: any;
 
+
+  @Input()
+  private canEdit : boolean
+
   constructor() {}
 }

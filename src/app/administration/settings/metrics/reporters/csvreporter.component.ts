@@ -17,5 +17,9 @@ export class CSVReporterComponent {
   @Input()
   config: any;
 
+
+  @Input()
+  private canEdit : boolean
+
   constructor() {}
 }

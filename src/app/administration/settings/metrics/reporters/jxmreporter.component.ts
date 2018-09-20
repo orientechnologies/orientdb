@@ -18,5 +18,9 @@ export class JMXReporterComponent {
   @Input()
   config: any;
 
+
+  @Input()
+  private canEdit : boolean
+
   constructor() {}
 }

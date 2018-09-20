@@ -70,7 +70,8 @@ class PermissionService {
     // }
 
     let menus = [];
-    if (this.data.permissions.indexOf("server.studio.dashboard") != -1) {
+
+    if (this.isAllow("server.metrics")) {
       menus.push({
         name: "stats",
         title: "Dashboard",
@@ -79,7 +80,7 @@ class PermissionService {
         wiki: "Studio-Dashboard.html"
       });
     }
-    if (this.data.permissions.indexOf("server.studio.serverManagement") != -1) {
+    if (this.isAllow("server.metrics")) {
       menus.push({
         name: "general",
         title: "Servers Management",
@@ -88,9 +89,7 @@ class PermissionService {
         wiki: "Studio-Server-Management.html"
       });
     }
-    if (
-      this.data.permissions.indexOf("server.studio.clusterManagement") != -1
-    ) {
+    if (this.isAllow("server.metrics") && this.isAllow("server.distributed")) {
       menus.push({
         name: "cluster",
         title: "Cluster Management",
@@ -99,7 +98,7 @@ class PermissionService {
         wiki: "Studio-Cluster-Management.html"
       });
     }
-    if (this.data.permissions.indexOf("server.backup") != -1) {
+    if (this.isAllow("server.backup")) {
       menus.push({
         name: "backup",
         title: "Backup Management",
@@ -108,9 +107,7 @@ class PermissionService {
         wiki: "Studio-Backup-Management.html"
       });
     }
-    if (
-      this.data.permissions.indexOf("server.studio.profilerManagement") != -1
-    ) {
+    if (this.isAllow("server.metrics")) {
       menus.push({
         name: "profiler",
         title: "Query Profiler",
@@ -119,9 +116,7 @@ class PermissionService {
         wiki: "Studio-Query-Profiler.html"
       });
     }
-    if (
-      this.data.permissions.indexOf("server.security") != -1
-    ) {
+    if (this.isAllow("server.security")) {
       menus.push({
         name: "security",
         title: "Security Management",
@@ -130,9 +125,7 @@ class PermissionService {
         wiki: "Security-Config.html"
       });
     }
-    if (
-      this.data.permissions.indexOf("server.studio.importerManagement") != -1
-    ) {
+    if (this.isAllow("server.importers")) {
       menus.push({
         name: "importers",
         title: "Importer",
@@ -140,13 +133,13 @@ class PermissionService {
         icon: "fa-plug"
       });
     }
-    if (this.data.permissions.indexOf("server.studio.settings") != -1) {
-      menus.push({
-        name: "settings",
-        title: "Settings",
-        icon: "fa-cog"
-      });
-    }
+
+    menus.push({
+      name: "settings",
+      title: "Settings",
+      icon: "fa-cog"
+    });
+
     return menus;
   }
 

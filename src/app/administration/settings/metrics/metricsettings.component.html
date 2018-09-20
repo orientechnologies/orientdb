@@ -6,7 +6,7 @@
           <b> Metrics Configuration </b>
           <div class="panel-actions">
             <div class="btn-group">
-              <button class="btn btn-primary btn-sm" (click)="saveMetrics()">
+              <button class="btn btn-primary btn-sm" [disabled]="!canEdit" (click)="saveMetrics()">
                 <i class="fa fa-save"></i>
                 Save
               </button>
@@ -22,7 +22,7 @@
 
               </label>
               <div class="col-md-8">
-                <input type="checkbox" name="enabled" [(ngModel)]="config.enabled">
+                <input type="checkbox" [disabled]="!canEdit" name="enabled" [(ngModel)]="config.enabled">
               </div>
             </div>
 
@@ -32,7 +32,7 @@
 
               </label>
               <div class="col-md-8">
-                <input type="checkbox" name="serverEnabled" [(ngModel)]="config.server.enabled">
+                <input type="checkbox" [disabled]="!canEdit" name="serverEnabled" [(ngModel)]="config.server.enabled">
               </div>
             </div>
             <div class="form-group">
@@ -40,7 +40,7 @@
                 Database Metrics
               </label>
               <div class="col-md-8">
-                <input type="checkbox" name="databaseEnabled" [(ngModel)]="config.database.enabled">
+                <input type="checkbox" [disabled]="!canEdit" name="databaseEnabled" [(ngModel)]="config.database.enabled">
               </div>
             </div>
             <div class="form-group">
@@ -48,7 +48,7 @@
                 Cluster Metrics
               </label>
               <div class="col-md-8">
-                <input type="checkbox" name="clusterEnabled" [(ngModel)]="config.cluster.enabled">
+                <input type="checkbox" [disabled]="!canEdit" name="clusterEnabled" [(ngModel)]="config.cluster.enabled">
               </div>
             </div>
             <div class="form-group">
@@ -68,7 +68,7 @@
                         {{'metrics.reporter.' + r | translate}}
                       </td>
                       <td>
-                        <input type="checkbox" name="{{idx}}aEnabled" [(ngModel)]="config.reporters[r].enabled"></td>
+                        <input type="checkbox" [disabled]="!canEdit" name="{{idx}}aEnabled" [(ngModel)]="config.reporters[r].enabled"></td>
                       <td>
                         <button class="btn btn-xs" *ngIf="hasConfig(r)" (click)="selectReporter(r)"><i class="fa fa-gear"></i></button>
                       </td>

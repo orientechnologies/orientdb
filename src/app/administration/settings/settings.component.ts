@@ -1,5 +1,5 @@
 import { Component, OnInit } from "@angular/core";
-import { AgentService } from "../../core/services";
+import { AgentService, PermissionService } from "../../core/services";
 
 @Component({
   selector: "studio-settings",
@@ -9,10 +9,17 @@ import { AgentService } from "../../core/services";
 export class StudioSettingsComponent implements OnInit {
   private tab = "metrics";
   ee: boolean;
+  canViewMetrics: boolean = false;
+  canEditMetrics: boolean = false;
 
-  constructor(private agent: AgentService) {}
+  constructor(
+    private agent: AgentService,
+    private permissions: PermissionService
+  ) {}
 
   ngOnInit(): void {
     this.ee = this.agent.active;
+    this.canViewMetrics = this.permissions.isAllow("server.metrics");
+    this.canEditMetrics = this.permissions.isAllow("server.metrics.edit");
   }
 }
