@@ -113,7 +113,7 @@ public class OProjectionItem extends SimpleNode {
     return convert(result);
   }
 
-  private Object convert(Object value) {
+  public Object convert(Object value) {
     if (value instanceof ORidBag) {
       List result = new ArrayList();
       ((ORidBag) value).forEach(x -> result.add(x));
