@@ -92,6 +92,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       final ODatabaseDocumentEmbedded embedded;
       OrientDBConfig config = solveConfig(null);
       synchronized (this) {
+        checkOpen();
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
         storage.open(config.getConfigurations());
@@ -116,6 +117,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       final ODatabaseDocumentEmbedded embedded;
       OrientDBConfig config = solveConfig(null);
       synchronized (this) {
+        checkOpen();
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
         storage.open(config.getConfigurations());
