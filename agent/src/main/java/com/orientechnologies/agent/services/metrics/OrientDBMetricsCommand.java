@@ -1,6 +1,7 @@
 package com.orientechnologies.agent.services.metrics;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orientechnologies.agent.EnterprisePermissions;
 import com.orientechnologies.agent.cloud.processor.tasks.EnterpriseStatsResponse;
 import com.orientechnologies.agent.cloud.processor.tasks.NewEnterpriseStatsTask;
 import com.orientechnologies.agent.operation.NodeResponse;
@@ -40,7 +41,7 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
   private ObjectMapper           mapper = new ObjectMapper();
 
   public OrientDBMetricsCommand(OEnterpriseServer enterpriseServer, OMetricsRegistry registry, OrientDBMetricsService settings) {
-    super("server.metrics");
+    super(EnterprisePermissions.SERVER_METRICS.toString());
     this.enterpriseServer = enterpriseServer;
     this.registry = registry;
     this.service = settings;
@@ -53,7 +54,12 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
     if (iRequest.httpMethod.equalsIgnoreCase("GET")) {
       doGet(iResponse, parts);
     } else if (iRequest.httpMethod.equalsIgnoreCase("POST")) {
-      doPost(iRequest, iResponse, parts);
+
+      if (super.authenticate(iRequest, iResponse, true, EnterprisePermissions.SERVER_METRICS_EDIT.toString())) {
+        doPost(iRequest, iResponse, parts);
+      } else {
+        throw new IllegalArgumentException("cannot execute post request ");
+      }
     }
 
     return false;
@@ -181,6 +187,7 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
   }
 
   private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String[] parts) throws IOException {
+
     OrientDBMetricsSettings settings = mapper.readValue(iRequest.content, OrientDBMetricsSettings.class);
     service.changeSettings(settings);
     iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, null, null);

@@ -74,10 +74,14 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
 
   @Override
   protected void doPut(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
-    final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: backupManager");
-    ODocument body = new ODocument().fromJSON(iRequest.content, "noMap");
-    backupManager.changeBackup(parts[1], body);
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, body.toJSON(""), null);
+    if (super.authenticate(iRequest, iResponse, true, EnterprisePermissions.SERVER_BACKUP_EDIT.toString())) {
+      final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: backupManager");
+      ODocument body = new ODocument().fromJSON(iRequest.content, "noMap");
+      backupManager.changeBackup(parts[1], body);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, body.toJSON(""), null);
+    } else {
+      throw new IllegalArgumentException("cannot execute post put ");
+    }
   }
 
   @Override

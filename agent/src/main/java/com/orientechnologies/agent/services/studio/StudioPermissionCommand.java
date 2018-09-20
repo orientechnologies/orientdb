@@ -25,7 +25,7 @@ public class StudioPermissionCommand extends OServerCommandAuthenticatedServerAb
   private OEnterpriseServer enterpriseServer;
 
   public StudioPermissionCommand(OEnterpriseServer server) {
-    super(EnterprisePermissions.STUDIO_PERMISSIONS.toString());
+    super(EnterprisePermissions.SERVER_PERMISSIONS.toString());
     enterpriseServer = server;
   }
 
