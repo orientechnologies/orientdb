@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SUBMIT_REQUEST;
-import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 
 public class OTransactionSubmit implements OSubmitRequest {
   private List<ORecordOperationRequest> operations;
@@ -45,11 +44,8 @@ public class OTransactionSubmit implements OSubmitRequest {
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
       switch (txEntry.type) {
       case ORecordOperation.CREATED:
-        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false));
-        request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
-        break;
       case ORecordOperation.UPDATED:
-        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), OTransactionPhase1Task.useDeltasForUpdate));
+        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false));
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
       case ORecordOperation.DELETED:
