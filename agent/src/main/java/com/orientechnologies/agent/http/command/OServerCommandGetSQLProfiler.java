@@ -87,7 +87,10 @@ public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope
       json.append(Orient.instance().getProfiler().toJSON("realtime", "db." + db + ".command"));
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, jsonBuffer.toString(), null);
       break;
+    default:
+      throw new UnsupportedOperationException();
     }
+
   }
 
   @Override
