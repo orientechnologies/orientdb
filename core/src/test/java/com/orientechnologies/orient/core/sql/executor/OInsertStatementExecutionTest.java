@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -340,6 +341,29 @@ public class OInsertStatementExecutionTest {
       OResult item = result.next();
       Assert.assertNotNull(item);
       Assert.assertEquals("name1", item.getProperty("name"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testNestedInsert() {
+    String className = "testNestedInsert";
+    db.getMetadata().getSchema().createClass(className);
+
+    OResultSet result = db
+        .command("insert into " + className + " set name = 'parent', children = (INSERT INTO " + className + " SET name = 'child')");
+
+    result.close();
+
+    result = db.query("SELECT FROM " + className);
+
+    for (int i = 0; i < 2; i++) {
+      OResult item = result.next();
+      if (item.getProperty("name").equals("parent")) {
+        Assert.assertTrue(item.getProperty("children") instanceof Collection);
+        Assert.assertEquals(1, ((Collection) item.getProperty("children")).size());
+      }
     }
     Assert.assertFalse(result.hasNext());
     result.close();
