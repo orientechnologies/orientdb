@@ -828,7 +828,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   <RET extends List<?>> RET query(final OQuery<?> iCommand, final Object... iArgs);
 
   /**
-   * Execute a command against the database. A command can be a SQL statement or a Procedure. If the OStorage used is remote
+   * Creates a command request to run a command against the database (you have to invoke .execute(parameters) to actually execute it).
+   * A command can be a SQL statement or a Procedure. If the OStorage used is remote
    * (OStorageRemote) then the command will be executed remotely and the result returned back to the calling client.
    *
    * @param iCommand Command request to execute.
