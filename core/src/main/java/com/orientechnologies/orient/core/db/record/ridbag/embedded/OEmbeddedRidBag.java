@@ -61,16 +61,16 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   private static enum Tombstone {
     TOMBSTONE
   }
-  
-  public Object[] getEntries(){
+
+  public Object[] getEntries() {
     return entries;
   }
 
   private final class EntriesIterator implements Iterator<OIdentifiable>, OResettable, OSizeable {
     private final boolean convertToRecord;
-    private int currentIndex = -1;
-    private int nextIndex    = -1;
-    private boolean currentRemoved;
+    private       int     currentIndex = -1;
+    private       int     nextIndex    = -1;
+    private       boolean currentRemoved;
 
     private EntriesIterator(boolean convertToRecord) {
       reset();
@@ -93,8 +93,8 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     @Override
     public OIdentifiable next() {
       currentRemoved = false;
- 
-     currentIndex = nextIndex;
+
+      currentIndex = nextIndex;
       if (currentIndex == -1)
         throw new NoSuchElementException();
 
@@ -146,6 +146,22 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       fireCollectionChangedEvent(
           new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null,
               nextValue));
+    }
+
+    protected void swapValueOnCurrent(OIdentifiable newValue) {
+      if (currentRemoved)
+        throw new IllegalStateException("Current element has already been removed");
+
+      if (currentIndex == -1)
+        throw new IllegalStateException("Next method was not called for given iterator");
+
+      final OIdentifiable oldValue = (OIdentifiable) entries[currentIndex];
+      entries[currentIndex] = newValue;
+
+      contentWasChanged = true;
+
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<>(OMultiValueChangeEvent.OChangeType.UPDATE, oldValue, oldValue, newValue));
     }
 
     @Override
@@ -266,6 +282,28 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
           new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null,
               identifiable));
     }
+  }
+
+  /**
+   * for internal use only
+   *
+   * @param index
+   * @param newValue
+   *
+   * @return
+   */
+  public boolean swap(int index, OIdentifiable newValue) {
+    EntriesIterator iter = (EntriesIterator) rawIterator();
+    int currIndex = 0;
+    while (iter.hasNext()) {
+      iter.next();
+      if (index == currIndex) {
+        iter.swapValueOnCurrent(newValue);
+        return true;
+      }
+      currIndex++;
+    }
+    return false;
   }
 
   @Override

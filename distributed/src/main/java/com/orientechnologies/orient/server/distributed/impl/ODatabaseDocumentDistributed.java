@@ -741,11 +741,19 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     commit2pc(transactionId);
   }
 
-  public boolean commit2pc(ODistributedRequestId transactionId) {
+  /**
+   * @param transactionId
+   *
+   * @return null returned means that commit failed
+   */
+  public Collection<ORecordOperation> commit2pc(ODistributedRequestId transactionId) {
     getStorageDistributed().resetLastValidBackup();
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
+
     ODistributedServerManager manager = getStorageDistributed().getDistributedManager();
     ONewDistributedTxContextImpl txContext = (ONewDistributedTxContextImpl) localDistributedDatabase.getTxContext(transactionId);
+    Collection<ORecordOperation> operations = txContext.getTransaction().getRecordOperations();
+
     if (txContext != null) {
       if (SUCCESS.equals(txContext.getStatus())) {
         try {
@@ -757,7 +765,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OLiveQueryHook.removePendingDatabaseOps(this);
           OLiveQueryHookV2.removePendingDatabaseOps(this);
         }
-        return true;
+        return operations;
       } else if (TIMEDOUT.equals(txContext.getStatus())) {
         for (int i = 0; i < 10; i++) {
           try {
@@ -796,7 +804,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         });
       }
     }
-    return false;
+    return null;
   }
 
   public boolean rollback2pc(ODistributedRequestId transactionId) {
