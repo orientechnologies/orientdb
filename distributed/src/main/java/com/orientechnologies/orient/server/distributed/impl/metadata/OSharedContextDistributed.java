@@ -49,7 +49,7 @@ public class OSharedContextDistributed extends OSharedContext {
 
     queryStats = new OQueryStats();
 
-    distributedContext = new ODistributedContext();
+    distributedContext = new ODistributedContext(storage, orientDB);
     this.viewManager = new ViewManagerDistributed(orientDB, storage.getName());
     this.viewManager.start();
 
@@ -94,6 +94,7 @@ public class OSharedContextDistributed extends OSharedContext {
     executionPlanCache.invalidate();
     liveQueryOps.close();
     liveQueryOpsV2.close();
+    distributedContext.close();
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {

@@ -4,6 +4,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
+import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
@@ -320,7 +321,30 @@ public class OSchemaEmbedded extends OSchemaShared {
       for (Iterator<ODatabaseListener> it = database.getListeners().iterator(); it.hasNext(); )
         it.next().onCreateView(database, result);
 
-      ((OSharedContextEmbedded) database.getSharedContext()).getViewManager().updateViewAsync(result.getName(), listener);
+      ViewManager viewMgr = ((OSharedContextEmbedded) database.getSharedContext()).getViewManager();
+      viewMgr.updateViewAsync(result.getName(), new ViewCreationListener() {
+        @Override
+        public void afterCreate(String viewName) {
+          try {
+            viewMgr.registerLiveUpdateFor(viewName);
+          } catch (Exception e) {
+            if (listener != null) {
+              listener.onError(viewName, e);
+            }
+            return;
+          }
+          if (listener != null) {
+            listener.afterCreate(viewName);
+          }
+        }
+
+        @Override
+        public void onError(String viewName, Exception exception) {
+          if (listener != null) {
+            listener.onError(viewName, exception);
+          }
+        }
+      });
 
     } catch (ClusterIdsAreEmptyException e) {
       throw OException.wrapException(new OSchemaException("Cannot create view '" + config.getName() + "'"), e);

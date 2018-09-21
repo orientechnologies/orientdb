@@ -17,10 +17,10 @@ public class ODistributedExecutor implements AutoCloseable {
   private final String                          database;
   private final Map<String, ODistributedMember> members = new ConcurrentHashMap<>();
 
-  public ODistributedExecutor(ExecutorService executor, OOperationLog operationLog, OrientDB orientDB, String database) {
+  public ODistributedExecutor(ExecutorService executor, OOperationLog operationLog, OrientDBInternal orientDB, String database) {
     this.operationLog = operationLog;
     this.executor = executor;
-    this.orientDB = OrientDBInternal.extract(orientDB);
+    this.orientDB = orientDB;
     this.database = database;
   }
 
@@ -44,7 +44,6 @@ public class ODistributedExecutor implements AutoCloseable {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    orientDB.close();
   }
 
   public void join(ODistributedMember member) {

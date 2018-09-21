@@ -95,7 +95,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   private ODistributedStorageEventListener    eventListener;
 
   private volatile ODistributedConfiguration distributedConfiguration;
-  private volatile File                      lastValidBackup = null;
+  private volatile OBackgroundBackup         lastValidBackup = null;
 
   public ODistributedStorage(final OServer iServer, final String dbName) {
     this.serverInstance = iServer;
@@ -804,8 +804,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       dropStorageFiles();
     }
 
-    serverInstance.getDatabases().forceDatabaseClose(getName());
-
   }
 
   @Override
@@ -1326,11 +1324,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           "Cannot execute write operation (" + operation + ") on node '" + localNodeName + "' because is non a master");
   }
 
-  public File getLastValidBackup() {
+  public OBackgroundBackup getLastValidBackup() {
     return lastValidBackup;
   }
 
-  public void setLastValidBackup(final File lastValidBackup) {
+  public void setLastValidBackup(final OBackgroundBackup lastValidBackup) {
     this.lastValidBackup = lastValidBackup;
   }
 

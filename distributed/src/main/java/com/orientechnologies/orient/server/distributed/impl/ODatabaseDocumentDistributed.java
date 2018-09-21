@@ -9,8 +9,10 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
@@ -44,20 +46,17 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.tx.*;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitContext;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitResponse;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.*;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OTransactionContext;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ORunQueryExecutionPlanTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncClusterTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OToLeaderTransactionTask;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OToLeaderTransactionTaskResponse;
 import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -67,6 +66,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
@@ -192,7 +193,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentDistributed database = new ODatabaseDocumentDistributed(getStorage(), hazelcastPlugin);
     database.init(getConfig(), getSharedContext());
-    database.internalOpen(getUser().getName(), null, false);
+    String user;
+    if (getUser() != null) {
+      user = getUser().getName();
+    } else {
+      user = null;
+    }
+    database.internalOpen(user, null, false);
     database.callOnOpenListeners();
     this.activateOnCurrentThread();
     return database;
@@ -493,39 +500,74 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       //Exclusive for handling schema manipulation, remove after refactor for distributed schema
       super.internalCommit(iTx);
     } else {
-      //Disabled forward of transaction to make sure that tests run correctly, will be re-enabled when the rest of refactor is done
-      if (true) {
-        realCommit(iTx);
-      } else {
-        OToLeaderTransactionTask message = new OToLeaderTransactionTask(iTx.getRecordOperations());
-        ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
-        // SYNCHRONOUS CALL: REPLICATE IT
-        final Set<String> servers = new HashSet<String>();
-        servers.add(dManager.getLockManagerServer());
-        ODistributedResponse response = dManager.sendRequest(getName(), null, servers, message, dManager.getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-        for (OToLeaderTransactionTaskResponse.OCreatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
-            .getPayload()).getCreated()) {
-          iTx.updateIdentityAfterCommit(entry.getCurrentRid(), entry.getCreatedRid());
-          ORecordInternal.setVersion(iTx.getRecordEntry(entry.getCurrentRid()).getRecord(), entry.getVersion());
-        }
-        for (OToLeaderTransactionTaskResponse.OUpdatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
-            .getPayload()).getUpdated()) {
-          ORecordInternal.setVersion(iTx.getRecordEntry(entry.getRid()).getRecord(), entry.getVersion());
-        }
-        for (OToLeaderTransactionTaskResponse.ODeletedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
-            .getPayload()).getDeleted()) {
-          this.getLocalCache().deleteRecord(entry.getRid());
-        }
-        for (OToLeaderTransactionTaskResponse.OUpdatedRecordResponse entry : ((OToLeaderTransactionTaskResponse) response
-            .getPayload()).getUpdated()) {
-          ORecordInternal.setVersion(iTx.getRecordEntry(entry.getRid()).getRecord(), entry.getVersion());
-        }
+      switch (OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger()) {
+      case 1:
+        distributedCommitV1(iTx);
+        break;
+      case 2:
+        distributedCommitV2(iTx);
+        break;
+      default:
+        throw new IllegalStateException(
+            "Invalid distributed replicaiton protocol version: " + OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION
+                .getValueAsInteger());
       }
     }
   }
 
-  public void realCommit(OTransactionInternal iTx) {
+  private void distributedCommitV2(OTransactionInternal iTx) {
+    ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
+    try {
+      dManager.waitUntilNodeOnline();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    ODistributedDatabaseImpl sharedDistributeDb = (ODistributedDatabaseImpl) dManager.getMessageService().getDatabase(getName());
+    OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
+    sharedDistributeDb.waitForOnline();
+    OSessionOperationId id = new OSessionOperationId();
+    id.init();
+    Future<OSubmitResponse> future = submitContext
+        .send(id, new OTransactionSubmit(iTx.getRecordOperations(), OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx)));
+    try {
+      OTransactionResponse response = (OTransactionResponse) future.get();
+      if (!response.isSuccess()) {
+        throw new ODatabaseException("failed");
+      }
+      for (OCreatedRecordResponse created : response.getCreatedRecords()) {
+        iTx.updateIdentityAfterCommit(created.getCurrentRid(), created.getCreatedRid());
+        ORecordOperation rop = iTx.getRecordEntry(created.getCurrentRid());
+        if (rop != null) {
+          if (created.getVersion() > rop.getRecord().getVersion() + 1)
+            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+            rop.getRecord().unload();
+          ORecordInternal.setVersion(rop.getRecord(), created.getVersion());
+        }
+      }
+      for (OUpdatedRecordResponse updated : response.getUpdatedRecords()) {
+        ORecordOperation rop = iTx.getRecordEntry(updated.getRid());
+        if (rop != null) {
+          if (updated.getVersion() > rop.getRecord().getVersion() + 1)
+            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+            rop.getRecord().unload();
+          ORecordInternal.setVersion(rop.getRecord(), updated.getVersion());
+        }
+      }
+      // SET ALL THE RECORDS AS UNDIRTY
+      for (ORecordOperation txEntry : iTx.getRecordOperations())
+        ORecordInternal.unsetDirty(txEntry.getRecord());
+
+      // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT.
+      OTransactionAbstract.updateCacheFromEntries(iTx.getDatabase(), iTx.getRecordOperations(), true);
+
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    } catch (ExecutionException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void distributedCommitV1(OTransactionInternal iTx) {
     //This is future may handle a retry
     try {
       for (ORecordOperation txEntry : iTx.getRecordOperations()) {
@@ -596,19 +638,26 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void txFirstPhase(OSessionOperationId requestId, OTransactionInternal tx) {
+  }
+
+  public void txFirstPhase(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
+      List<OIndexOperationRequest> indexes) {
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>());
     OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
-    sharedContext.getDistributedContext().registerTransaction(requestId, tx);
-    ((OTransactionOptimistic) tx).begin();
+    sharedContext.getDistributedContext().registerTransaction(operationId, tx);
+    tx.begin(operations, indexes);
     firstPhaseDataChecks(false, tx);
   }
 
-  public void txSecondPhase(OSessionOperationId operationId, boolean success) {
+  public OTransactionOptimisticDistributed txSecondPhase(OSessionOperationId operationId, boolean success) {
     OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
     OTransactionContext context = sharedContext.getDistributedContext().getTransaction(operationId);
     try {
-      OTransactionInternal tx = context.getTransaction();
       if (success) {
+        OTransactionInternal tx = context.getTransaction();
+        tx.setDatabase(this);
         ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
+        return (OTransactionOptimisticDistributed) tx;
       } else {
         //FOR NOW ROLLBACK DO NOTHING ON THE STORAGE ONLY THE CLOSE IS NEEDED
       }
@@ -617,9 +666,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           .setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
     } finally {
-      sharedContext.getDistributedContext().close(operationId);
+      sharedContext.getDistributedContext().closeTransaction(operationId);
     }
-
+    return null;
   }
 
   public boolean beginDistributedTx(ODistributedRequestId requestId, OTransactionInternal tx, boolean local, int retryCount) {

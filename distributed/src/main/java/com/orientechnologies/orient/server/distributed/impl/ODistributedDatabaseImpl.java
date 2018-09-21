@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -96,9 +97,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private final String                     localNodeName;
   private final OSimpleLockManager<ORID>   recordLockManager;
   private final OSimpleLockManager<Object> indexKeyLockManager;
-  private final ODistributedExecutor       executor;
-  private       ODistributedCoordinator    coordinator;
-  private final OSubmitContext             submitContext;
 
   public OSimpleLockManager<ORID> getRecordLockManager() {
     return recordLockManager;
@@ -140,8 +138,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (iDatabaseName.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
       recordLockManager = null;
       indexKeyLockManager = null;
-      executor = null;
-      submitContext = null;
       return;
     }
 
@@ -196,8 +192,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     long timeout = manager.getServerInstance().getContextConfiguration().getValueAsLong(DISTRIBUTED_ATOMIC_LOCK_TIMEOUT);
     recordLockManager = new OSimpleLockManagerImpl<>(timeout);
     indexKeyLockManager = new OSimpleLockManagerImpl<>(timeout);
-    executor = new ODistributedExecutor(Executors.newSingleThreadExecutor(), null, server.getContext(), databaseName);
-    submitContext = new OSubmitContextImpl();
   }
 
   public OLogSequenceNumber getLastLSN(final String server) {
@@ -1396,29 +1390,4 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return buffer.toString();
   }
 
-  public synchronized void makeMaster() {
-    if (coordinator == null) {
-      coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), null, new ODistributedLockManagerImpl(0),
-          null);
-    }
-  }
-
-  public synchronized void removeMaster() {
-    if (coordinator != null) {
-      coordinator.close();
-    }
-    coordinator = null;
-  }
-
-  public ODistributedExecutor getExecutor() {
-    return executor;
-  }
-
-  public synchronized ODistributedCoordinator getCoordinator() {
-    return coordinator;
-  }
-
-  public OSubmitContext getContext() {
-    return submitContext;
-  }
 }

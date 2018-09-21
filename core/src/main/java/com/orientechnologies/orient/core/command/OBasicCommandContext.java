@@ -408,12 +408,18 @@ public class OBasicCommandContext implements OCommandContext {
 
   @Override
   public boolean isScriptVariableDeclared(String varName) {
-    if (!varName.startsWith("$")) {
-      varName = "$" + varName;
+    if (varName == null || varName.length() == 0) {
+      return false;
     }
-    if (variables != null && variables.containsKey(varName.substring(1))) {
+    String dollarVar = varName;
+    if (!dollarVar.startsWith("$")) {
+      dollarVar = "$" + varName;
+    }
+    varName = dollarVar.substring(1);
+    if (variables != null && (variables.containsKey(varName) || variables.containsKey(dollarVar))) {
       return true;
     }
-    return declaredScriptVariables.contains(varName) || (parent != null && parent.isScriptVariableDeclared(varName));
+    return declaredScriptVariables.contains(varName) || declaredScriptVariables.contains(dollarVar) || (parent != null && parent
+        .isScriptVariableDeclared(varName));
   }
 }

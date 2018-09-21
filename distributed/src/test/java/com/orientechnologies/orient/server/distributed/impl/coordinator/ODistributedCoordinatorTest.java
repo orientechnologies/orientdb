@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 import org.junit.Test;
 
 import java.io.DataInput;
@@ -28,9 +29,9 @@ public class ODistributedCoordinatorTest {
     channel.member = one;
     coordinator.join(one);
 
-    coordinator.submit(one, new OSubmitRequest() {
+    coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
       @Override
-      public void begin(ODistributedMember member, ODistributedCoordinator coordinator) {
+      public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
@@ -83,9 +84,9 @@ public class ODistributedCoordinatorTest {
     channel.member = one;
     coordinator.join(one);
 
-    coordinator.submit(one, new OSubmitRequest() {
+    coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
       @Override
-      public void begin(ODistributedMember member, ODistributedCoordinator coordinator) {
+      public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
@@ -118,7 +119,7 @@ public class ODistributedCoordinatorTest {
                 public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
                     ONodeResponse response) {
                   if (context.getResponses().size() == 1) {
-                    member.reply(new OSubmitResponse() {
+                    member.reply(new OSessionOperationId(), new OSubmitResponse() {
                       @Override
                       public void serialize(DataOutput output) throws IOException {
 
@@ -188,9 +189,9 @@ public class ODistributedCoordinatorTest {
     channel.member = one;
     coordinator.join(one);
 
-    coordinator.submit(one, new OSubmitRequest() {
+    coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
       @Override
-      public void begin(ODistributedMember member, ODistributedCoordinator coordinator) {
+      public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
@@ -209,7 +210,7 @@ public class ODistributedCoordinatorTest {
 
       @Override
       public void serialize(DataOutput output) throws IOException {
-        
+
       }
 
       @Override
@@ -260,12 +261,12 @@ public class ODistributedCoordinatorTest {
     }
 
     @Override
-    public void submit(String database, OSubmitRequest request) {
+    public void submit(String database, OSessionOperationId operationId, OSubmitRequest request) {
 
     }
 
     @Override
-    public void reply(String database, OSubmitResponse response) {
+    public void reply(String database, OSessionOperationId operationId, OSubmitResponse response) {
       reply.countDown();
     }
   }

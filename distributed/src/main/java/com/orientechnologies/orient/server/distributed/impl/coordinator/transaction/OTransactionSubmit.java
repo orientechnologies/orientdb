@@ -7,6 +7,9 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
 import java.io.DataInput;
@@ -18,13 +21,10 @@ import static com.orientechnologies.orient.server.distributed.impl.coordinator.O
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 
 public class OTransactionSubmit implements OSubmitRequest {
-  private OSessionOperationId           operationId;
   private List<ORecordOperationRequest> operations;
   private List<OIndexOperationRequest>  indexes;
 
-  public OTransactionSubmit(OSessionOperationId operationId, Collection<ORecordOperation> ops,
-      List<OIndexOperationRequest> indexes) {
-    this.operationId = operationId;
+  public OTransactionSubmit(Collection<ORecordOperation> ops, List<OIndexOperationRequest> indexes) {
     this.operations = genOps(ops);
     this.indexes = indexes;
   }
@@ -60,8 +60,50 @@ public class OTransactionSubmit implements OSubmitRequest {
     return operations;
   }
 
+  public static List<OIndexOperationRequest> genIndexes(Map<String, OTransactionIndexChanges> indexOperations,
+      OTransactionInternal tx) {
+    List<OIndexOperationRequest> idx = new ArrayList<>();
+    for (Map.Entry<String, OTransactionIndexChanges> index : indexOperations.entrySet()) {
+      OTransactionIndexChanges changes = index.getValue();
+      List<OIndexKeyChange> keys = new ArrayList<>();
+      for (Map.Entry<Object, OTransactionIndexChangesPerKey> entry : changes.changesPerKey.entrySet()) {
+        List<OIndexKeyOperation> oper = new ArrayList<>();
+        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry operat : entry.getValue().entries) {
+          ORID identity = operat.value.getIdentity();
+          if (!identity.isPersistent()) {
+            identity = tx.getRecordEntry(identity).getRID();
+          }
+          if (operat.operation == OTransactionIndexChanges.OPERATION.PUT) {
+            oper.add(new OIndexKeyOperation(OIndexKeyOperation.PUT, identity));
+          } else {
+            oper.add(new OIndexKeyOperation(OIndexKeyOperation.REMOVE, identity));
+          }
+        }
+        keys.add(new OIndexKeyChange(entry.getKey(), oper));
+      }
+      if (index.getValue().nullKeyChanges != null) {
+        List<OIndexKeyOperation> oper = new ArrayList<>();
+        for (OTransactionIndexChangesPerKey.OTransactionIndexEntry operat : index.getValue().nullKeyChanges.entries) {
+          ORID identity = operat.value.getIdentity();
+          if (!identity.isPersistent()) {
+            identity = tx.getRecordEntry(identity).getRID();
+          }
+          if (operat.operation == OTransactionIndexChanges.OPERATION.PUT) {
+            oper.add(new OIndexKeyOperation(OIndexKeyOperation.PUT, identity));
+          } else {
+            oper.add(new OIndexKeyOperation(OIndexKeyOperation.REMOVE, identity));
+          }
+        }
+        keys.add(new OIndexKeyChange(null, oper));
+
+      }
+      idx.add(new OIndexOperationRequest(index.getKey(), changes.cleared, keys));
+    }
+    return idx;
+  }
+
   @Override
-  public void begin(ODistributedMember member, ODistributedCoordinator coordinator) {
+  public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
     ODistributedLockManager lockManager = coordinator.getLockManager();
 
     //using OPair because there could be different types of values here, so falling back to lexicographic sorting
@@ -76,37 +118,36 @@ public class OTransactionSubmit implements OSubmitRequest {
       }
 
     }
+    List<OLockGuard> guards = new ArrayList<>();
     for (OPair<String, String> key : keys) {
-      lockManager.lockIndexKey(key.getKey(), key.getValue());
+      guards.add(lockManager.lockIndexKey(key.getKey(), key.getValue()));
     }
 
     //Sort and lock transaction entry in distributed environment
     Set<ORID> rids = new TreeSet<>();
-    Map<ORID, ORID> newIds = new HashMap<>();
     for (ORecordOperationRequest entry : operations) {
       if (ORecordOperation.CREATED == entry.getType()) {
         int clusterId = entry.getId().getClusterId();
         long pos = coordinator.getAllocator().allocate(clusterId);
-        newIds.put(entry.getId(), new ORecordId(clusterId, pos));
+        ORecordId value = new ORecordId(clusterId, pos);
+        entry.setOldId(entry.getId());
+        entry.setId(value);
       } else {
         rids.add(entry.getId());
       }
     }
 
-    List<OLockGuard> guards = new ArrayList<>();
     for (ORID rid : rids) {
       guards.add(lockManager.lockRecord(rid));
     }
     OTransactionFirstPhaseResponseHandler responseHandler = new OTransactionFirstPhaseResponseHandler(operationId, this, member,
         guards);
-    OTransactionFirstPhaseOperation request = new OTransactionFirstPhaseOperation(this.operationId, this.operations, indexes);
+    OTransactionFirstPhaseOperation request = new OTransactionFirstPhaseOperation(operationId, this.operations, indexes);
     coordinator.sendOperation(this, request, responseHandler);
   }
 
   @Override
   public void deserialize(DataInput input) throws IOException {
-    operationId = new OSessionOperationId();
-    operationId.deserialize(input);
 
     int size = input.readInt();
     operations = new ArrayList<>(size);
@@ -128,7 +169,6 @@ public class OTransactionSubmit implements OSubmitRequest {
 
   @Override
   public void serialize(DataOutput output) throws IOException {
-    operationId.serialize(output);
     output.writeInt(operations.size());
     for (ORecordOperationRequest operation : operations) {
       operation.serialize(output);

@@ -71,22 +71,29 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
       for (Map.Entry<ORID, List<ODistributedMember>> entry : cme.entrySet()) {
         if (entry.getValue().size() >= quorum) {
           sendSecondPhaseError(coordinator);
+          break;
         }
       }
 
       for (Map.Entry<String, List<ODistributedMember>> entry : unique.entrySet()) {
         if (entry.getValue().size() >= quorum) {
           sendSecondPhaseError(coordinator);
+          break;
         }
       }
-    }
 
+      if (responseCount == context.getInvolvedMembers().size()) {
+        sendSecondPhaseError(coordinator);
+      }
+    }
     return responseCount == context.getInvolvedMembers().size();
   }
 
   private void sendSecondPhaseError(ODistributedCoordinator coordinator) {
-    OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(true, request, requester,
-        null);
+    if (secondPhaseSent)
+      return;
+    OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(false, request, requester,
+        null, operationId);
     coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, false), responseHandler);
     if (guards != null) {
       for (OLockGuard guard : guards) {
@@ -94,15 +101,18 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
       }
     }
     if (!replySent) {
-      coordinator.reply(requester, new OTransactionResponse());
+      coordinator
+          .reply(requester, operationId, new OTransactionResponse(false, new ArrayList<>(), new ArrayList<>(), new ArrayList<>()));
       replySent = true;
     }
     secondPhaseSent = true;
   }
 
   private void sendSecondPhaseSuccess(ODistributedCoordinator coordinator) {
-    OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(false, request, requester,
-        guards);
+    if (secondPhaseSent)
+      return;
+    OTransactionSecondPhaseResponseHandler responseHandler = new OTransactionSecondPhaseResponseHandler(true, request, requester,
+        guards, operationId);
     coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, true), responseHandler);
     secondPhaseSent = true;
   }

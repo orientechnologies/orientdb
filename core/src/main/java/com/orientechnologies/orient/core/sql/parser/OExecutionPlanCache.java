@@ -75,6 +75,9 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
     if (db == null) {
       throw new IllegalArgumentException("DB cannot be null");
     }
+    if (statement == null) {
+      return null;
+    }
 
     OExecutionPlanCache resource = db.getSharedContext().getExecutionPlanCache();
     OExecutionPlan result = resource.getInternal(statement, ctx, db);
@@ -85,12 +88,18 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
     if (db == null) {
       throw new IllegalArgumentException("DB cannot be null");
     }
+    if (statement == null) {
+      return;
+    }
 
     OExecutionPlanCache resource = db.getSharedContext().getExecutionPlanCache();
     resource.putInternal(statement, plan, db);
   }
 
   public void putInternal(String statement, OExecutionPlan plan, ODatabaseDocument db) {
+    if (statement == null) {
+      return;
+    }
     synchronized (map) {
       OInternalExecutionPlan internal = (OInternalExecutionPlan) plan;
       OBasicCommandContext ctx = new OBasicCommandContext();
@@ -110,6 +119,9 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
    */
   public OExecutionPlan getInternal(String statement, OCommandContext ctx, ODatabaseDocumentInternal db) {
     OInternalExecutionPlan result;
+    if (statement == null) {
+      return null;
+    }
     synchronized (map) {
       //LRU
       result = map.remove(statement);

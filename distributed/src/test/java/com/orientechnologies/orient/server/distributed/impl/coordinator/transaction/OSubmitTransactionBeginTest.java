@@ -36,7 +36,7 @@ public class OSubmitTransactionBeginTest {
     ORecordOperation op = new ORecordOperation(new ORecordId(10, 10), ORecordOperation.CREATED);
     op.setRecord(new ODocument("aaaa"));
     recordOps.add(op);
-    coordinator.submit(mOne, new OTransactionSubmit(new OSessionOperationId(), recordOps, new ArrayList<>()));
+    coordinator.submit(mOne, new OSessionOperationId(), new OTransactionSubmit(recordOps, new ArrayList<>()));
     assertTrue(cOne.sentRequest.await(1, TimeUnit.SECONDS));
     assertTrue(cTwo.sentRequest.await(1, TimeUnit.SECONDS));
     assertTrue(cThree.sentRequest.await(1, TimeUnit.SECONDS));
@@ -56,12 +56,12 @@ public class OSubmitTransactionBeginTest {
     }
 
     @Override
-    public void submit(String database, OSubmitRequest request) {
+    public void submit(String database, OSessionOperationId operationId, OSubmitRequest request) {
 
     }
 
     @Override
-    public void reply(String database, OSubmitResponse response) {
+    public void reply(String database, OSessionOperationId operationId, OSubmitResponse response) {
 
     }
   }

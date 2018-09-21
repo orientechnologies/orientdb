@@ -88,4 +88,6 @@ public interface OTransactionInternal extends OBasicTransaction {
 
   Set<ORID> getLockedRecords();
 
+  void setDatabase(ODatabaseDocumentInternal database);
+
 }

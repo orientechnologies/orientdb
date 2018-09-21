@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.client.remote.message.tx;
 
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -16,6 +17,20 @@ public class ORecordOperationRequest {
   private byte[]  record;
   private int     version;
   private boolean contentChanged;
+
+  public ORecordOperationRequest() {
+  }
+
+  public ORecordOperationRequest(byte type, byte recordType, ORID id, ORID oldId, byte[] record, int version,
+      boolean contentChanged) {
+    this.type = type;
+    this.recordType = recordType;
+    this.id = id;
+    this.oldId = oldId;
+    this.record = record;
+    this.version = version;
+    this.contentChanged = contentChanged;
+  }
 
   public ORID getId() {
     return id;
@@ -78,9 +93,11 @@ public class ORecordOperationRequest {
     recordType = input.readByte();
     id = ORecordId.deserialize(input);
     oldId = ORecordId.deserialize(input);
-    int size = input.readInt();
-    record = new byte[size];
-    input.readFully(record);
+    if (type != ORecordOperation.DELETED) {
+      int size = input.readInt();
+      record = new byte[size];
+      input.readFully(record);
+    }
     version = input.readInt();
     contentChanged = input.readBoolean();
   }
@@ -90,8 +107,10 @@ public class ORecordOperationRequest {
     output.writeByte(recordType);
     ORecordId.serialize(id, output);
     ORecordId.serialize(oldId, output);
-    output.writeInt(record.length);
-    output.write(record);
+    if (type != ORecordOperation.DELETED) {
+      output.writeInt(record.length);
+      output.write(record);
+    }
     output.writeInt(version);
     output.writeBoolean(contentChanged);
   }

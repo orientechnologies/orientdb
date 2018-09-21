@@ -30,6 +30,9 @@ public class OLetStatement extends OSimpleExecStatement {
       result = expression.execute((OResult) null, ctx);
     } else {
       Map<Object, Object> params = ctx.getInputParameters();
+      if (statement.originalStatement == null) {
+        statement.setOriginalStatement(statement.toString());
+      }
       result = statement.execute(ctx.getDatabase(), params, ctx);
     }
     if (result instanceof OResultSet) {

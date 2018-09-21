@@ -27,37 +27,39 @@ public class OLuceneDirectoryFactory {
 
   public static final String DIRECTORY_PATH = "directory_path";
 
-  public Directory createDirectory(ODatabaseDocumentInternal database, String indexName, ODocument metadata) {
+  public OLuceneDirectory createDirectory(ODatabaseDocumentInternal database, String indexName, ODocument metadata) {
 
     String luceneType = metadata.containsField(DIRECTORY_TYPE) ? metadata.<String>field(DIRECTORY_TYPE) : DIRECTORY_MMAP;
 
     if (database.getStorage().getType().equals("memory") || DIRECTORY_RAM.equals(luceneType)) {
-      return new RAMDirectory();
+      Directory dir = new RAMDirectory();
+      return new OLuceneDirectory(dir, null);
     }
 
     return createDirectory(database, indexName, metadata, luceneType);
   }
 
-  private Directory createDirectory(ODatabaseDocumentInternal database, String indexName, ODocument metadata, String luceneType) {
+  private OLuceneDirectory createDirectory(ODatabaseDocumentInternal database, String indexName, ODocument metadata,
+      String luceneType) {
     String luceneBasePath = metadata.containsField(DIRECTORY_PATH) ? metadata.<String>field(DIRECTORY_PATH) : OLUCENE_BASE_DIR;
 
     Path luceneIndexPath = Paths.get(database.getStorage().getConfiguration().getDirectory(), luceneBasePath, indexName);
     try {
 
+      Directory dir = null;
       if (DIRECTORY_NIO.equals(luceneType)) {
-        return new NIOFSDirectory(luceneIndexPath);
+        dir = new NIOFSDirectory(luceneIndexPath);
+      } else if (DIRECTORY_MMAP.equals(luceneType)) {
+        dir = new MMapDirectory(luceneIndexPath);
       }
 
-      if (DIRECTORY_MMAP.equals(luceneType)) {
-        return new MMapDirectory(luceneIndexPath);
-      }
-
+      return new OLuceneDirectory(dir, luceneIndexPath.toString());
     } catch (IOException e) {
       OLogManager.instance().error(this, "unable to create Lucene Directory with type " + luceneType, e);
     }
 
     OLogManager.instance().warn(this, "unable to create Lucene Directory, FALL BACK to ramDir");
-    return new RAMDirectory();
+    return new OLuceneDirectory(new RAMDirectory(), null);
   }
 
 }

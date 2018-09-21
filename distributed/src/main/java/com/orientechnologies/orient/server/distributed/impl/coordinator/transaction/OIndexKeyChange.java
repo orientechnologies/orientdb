@@ -20,6 +20,7 @@ public class OIndexKeyChange {
   private List<OIndexKeyOperation> operations;
 
   public OIndexKeyChange(Object key, List<OIndexKeyOperation> operations) {
+    this.key = key;
     this.operations = operations;
   }
 
@@ -49,11 +50,16 @@ public class OIndexKeyChange {
       }
     } else {
       output.writeBoolean(false);
-      OType valType = OType.getTypeByValue(key);
-      output.writeByte(valType.getId());
-      byte[] bytes = ORecordSerializerNetwork.INSTANCE.serializeValue(key, valType);
-      output.writeInt(bytes.length);
-      output.write(bytes);
+      if (key == null) {
+        output.writeBoolean(true);
+      } else {
+        output.writeBoolean(false);
+        OType valType = OType.getTypeByValue(key);
+        output.writeByte(valType.getId());
+        byte[] bytes = ORecordSerializerNetwork.INSTANCE.serializeValue(key, valType);
+        output.writeInt(bytes.length);
+        output.write(bytes);
+      }
     }
 
   }
@@ -65,6 +71,7 @@ public class OIndexKeyChange {
     while (operations-- > 0) {
       OIndexKeyOperation operation = new OIndexKeyOperation();
       operation.deserialize(input);
+      this.operations.add(operation);
     }
   }
 
@@ -78,11 +85,18 @@ public class OIndexKeyChange {
       }
       return new OCompositeKey(keys);
     } else {
+      boolean isNull = input.readBoolean();
+      if (isNull)
+        return null;
       OType keyType = OType.getById(input.readByte());
       int keySize = input.readInt();
       byte bytes[] = new byte[keySize];
       input.readFully(bytes);
       return ORecordSerializerNetwork.INSTANCE.deserializeValue(bytes, keyType);
     }
+  }
+
+  public List<OIndexKeyOperation> getOperations() {
+    return operations;
   }
 }

@@ -58,7 +58,7 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
 
   private static final AtomicInteger transactionSerial = new AtomicInteger(0);
 
-  private final ODatabaseDocumentInternal database;
+  private ODatabaseDocumentInternal database;
   private final OAbstractPaginatedStorage storage;
 
   private final int id;
@@ -744,5 +744,10 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
       return noTxLocks.keySet();
     }
     return null;
+  }
+
+  @Override
+  public void setDatabase(ODatabaseDocumentInternal database) {
+    this.database = database;
   }
 }

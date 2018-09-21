@@ -1,23 +1,35 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.delta.ODocumentDelta;
+import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializer;
+import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializerI;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OIndexKeyChange;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OIndexKeyOperation;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OIndexOperationRequest;
 
 import java.util.*;
 
@@ -32,21 +44,93 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
     this.changes = changes;
   }
 
+  public void begin(List<ORecordOperationRequest> operations, List<OIndexOperationRequest> indexes) {
+    super.begin();
+
+    List<ORecordOperation> ops = new ArrayList<>();
+    for (ORecordOperationRequest req : operations) {
+      byte type = req.getType();
+      if (type == ORecordOperation.LOADED) {
+        continue;
+      }
+
+      ORecord record = null;
+      switch (type) {
+      case ORecordOperation.CREATED: {
+        addUpdatedRid(req.getOldId(), req.getId());
+        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+        ORecordInternal.setRecordSerializer(record, database.getSerializer());
+        createdRecords.put(req.getOldId(), record);
+      }
+      break;
+      case ORecordOperation.UPDATED: {
+        if (OTransactionPhase1Task.useDeltasForUpdate) {
+          ODocumentDeltaSerializerI serializer = ODocumentDeltaSerializer.getActiveSerializer();
+          ODocumentDelta updateRecord = serializer.fromStream(new BytesContainer(req.getRecord()));
+          ORecordOperation op = new ORecordOperation(updateRecord, type);
+          ops.add(op);
+        }
+        else{
+          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+          ORecordInternal.setRecordSerializer(record, database.getSerializer());
+        }
+      }
+      break;
+      case ORecordOperation.DELETED:
+        record = database.getRecord(req.getId());
+        if (record == null) {
+          record = Orient.instance().getRecordFactoryManager()
+              .newInstance(req.getRecordType(), req.getId().getClusterId(), database);
+        }
+        break;
+      }
+      if (type == ORecordOperation.CREATED || type == ORecordOperation.DELETED ||
+          (type == ORecordOperation.UPDATED && !OTransactionPhase1Task.useDeltasForUpdate)){
+        ORecordInternal.setIdentity(record, (ORecordId) req.getId());
+        ORecordInternal.setVersion(record, req.getVersion());
+        ORecordOperation op = new ORecordOperation(record, type);
+        ops.add(op);
+      }
+    }
+    for (ORecordOperation change : ops) {
+      allEntries.put(change.getRID(), change);
+      resolveTracking(change, false);
+    }
+
+    for (OIndexOperationRequest indexChange : indexes) {
+      OIndex<?> index = database.getMetadata().getIndexManager().getIndex(indexChange.getIndexName());
+      if (indexChange.isCleanIndexValues()) {
+        addIndexEntry(index, indexChange.getIndexName(), OTransactionIndexChanges.OPERATION.CLEAR, null, null);
+      }
+      for (OIndexKeyChange key : indexChange.getIndexKeyChanges()) {
+        for (OIndexKeyOperation operation : key.getOperations()) {
+          ORID value = operation.getValue();
+          if (!value.isPersistent()) {
+            value = getRecordEntry(value).getRID();
+          }
+          if (operation.getType() == OIndexKeyOperation.PUT) {
+            addIndexEntry(index, indexChange.getIndexName(), OTransactionIndexChanges.OPERATION.PUT, key.getKey(), value);
+          } else {
+            addIndexEntry(index, indexChange.getIndexName(), OTransactionIndexChanges.OPERATION.REMOVE, key.getKey(), value);
+          }
+        }
+      }
+    }
+  }
+
   @Override
   public void begin() {
     super.begin();
     for (ORecordOperation change : changes) {
       allEntries.put(change.getRID(), change);
-      resolveTracking(change);
+      resolveTracking(change, true);
     }
 
   }
 
-  private void resolveTracking(ORecordOperation change) {
-    boolean detectedChange = false;
+  private void resolveTracking(ORecordOperation change, boolean onlyExecutorCase) {    
     List<OClassIndexManager.IndexChange> changes = new ArrayList<>();
-    if (change.getRecordContainer() instanceof ORecord && change.getRecord() instanceof ODocument) {
-      detectedChange = true;
+    if (change.getRecordContainer() instanceof ORecord && change.getRecord() instanceof ODocument) {      
       ODocument rec = (ODocument) change.getRecord();
       switch (change.getType()) {
       case ORecordOperation.CREATED:
@@ -56,7 +140,9 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
           OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, database);
           OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
           if (clazz != null) {
-            OClassIndexManager.processIndexOnCreate(database, rec, changes);
+            if (onlyExecutorCase) {
+              OClassIndexManager.processIndexOnCreate(database, rec, changes);
+            }
             if (clazz.isFunction()) {
               database.getSharedContext().getFunctionLibrary().createdFunction(doc);
               Orient.instance().getScriptManager().close(database.getName());
@@ -69,7 +155,9 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
             }
           }
         }
-        createdRecords.put(change.getRID().copy(), change.getRecord());
+        if (onlyExecutorCase) {
+          createdRecords.put(change.getRID().copy(), change.getRecord());
+        }
         break;
       case ORecordOperation.UPDATED:
         if (change.getRecord() instanceof ODocument) {
@@ -96,7 +184,9 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
           OLiveQueryHookV2.addOp(updateDoc, ORecordOperation.UPDATED, database);
           OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
           if (clazz != null) {
-            OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
+            if (onlyExecutorCase) {
+              OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
+            }
             if (clazz.isFunction()) {
               database.getSharedContext().getFunctionLibrary().updatedFunction(updateDoc);
               Orient.instance().getScriptManager().close(database.getName());
@@ -114,7 +204,9 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
           ODocument doc = (ODocument) change.getRecord();
           OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
           if (clazz != null) {
-            OClassIndexManager.processIndexOnDelete(database, rec, changes);
+            if (onlyExecutorCase) {
+              OClassIndexManager.processIndexOnDelete(database, rec, changes);
+            }
             if (clazz.isFunction()) {
               database.getSharedContext().getFunctionLibrary().droppedFunction(doc);
               Orient.instance().getScriptManager().close(database.getName());
@@ -137,8 +229,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
       default:
         break;
       }
-    } else if (change.getRecordContainer() instanceof ODocumentDelta) {
-      detectedChange = true;
+    } else if (change.getRecordContainer() instanceof ODocumentDelta) {      
       switch (change.getType()) {
       case ORecordOperation.UPDATED:
 
@@ -153,7 +244,9 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         OLiveQueryHookV2.addOp(updateDoc, ORecordOperation.UPDATED, database);
         OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
         if (clazz != null) {
-          OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
+          if (onlyExecutorCase) {
+            OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
+          }
           if (clazz.isFunction()) {
             database.getSharedContext().getFunctionLibrary().updatedFunction(updateDoc);
             Orient.instance().getScriptManager().close(database.getName());
@@ -166,10 +259,10 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         break;
       }
     }
-
-    if (detectedChange) {
+    
+    if (onlyExecutorCase) {
       for (OClassIndexManager.IndexChange indexChange : changes) {
-        addIndexEntry(indexChange.index, indexChange.index.getName(), indexChange.operation, indexChange.key, indexChange.value);
+        addIndexEntry(indexChange.index, indexChange.index.getName(), indexChange.operation, indexChange.key, indexChange.value);      
       }
     }
   }
@@ -189,5 +282,9 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
 
   public Set<ORID> getDeletedRecord() {
     return deletedRecord;
+  }
+
+  public void addUpdatedRid(ORID oldId, ORID id) {
+    updatedRids.put(oldId, id);
   }
 }

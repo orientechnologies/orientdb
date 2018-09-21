@@ -21,8 +21,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -141,6 +139,11 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
           if (command == null)
             throw new IllegalArgumentException("command parameter is null");
 
+          Object params = operation.get("parameters");
+          if (params instanceof Collection) {
+            params = ((Collection) params).toArray();
+          }
+
           String commandAsString = null;
           if (command != null)
             if (OMultiValue.isMultiValue(command)) {
@@ -153,9 +156,14 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
             } else
               commandAsString = command.toString();
 
-          final OCommandRequestText cmd = (OCommandRequestText) OCommandManager.instance().getRequester(language);
-          cmd.setText(commandAsString);
-          lastResult = db.command(cmd).execute();
+          OResultSet result;
+          if (params == null) {
+            result = db.execute(language, commandAsString);
+          } else {
+            result = db.execute(language, commandAsString, (Object[]) params);
+          }
+          lastResult = result.stream().map(x -> x.toElement()).collect(Collectors.toList());
+          result.close();
         } else if (type.equals("script")) {
           // COMMAND
           final String language = (String) operation.get("language");
@@ -184,7 +192,19 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
           } else
             text.append(script);
 
-          OResultSet result = db.execute(language, text.toString());
+          Object params = operation.get("parameters");
+          if (params instanceof Collection) {
+            params = ((Collection) params).toArray();
+          }
+
+
+          OResultSet result;
+          if (params == null) {
+            result = db.execute(language, text.toString());
+          } else {
+            result = db.execute(language, text.toString(), (Object[]) params);
+          }
+
           lastResult = result.stream().map(x -> x.toElement()).collect(Collectors.toList());
           result.close();
         }
