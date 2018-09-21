@@ -23,6 +23,7 @@ import {
 import { ImportManagerComponent } from "./importmanager";
 import { SecurityManagerComponent } from "./stats/security";
 import { StudioSettingsComponent } from "./settings";
+import { ProfilerComponent } from "./profiler";
 
 declare const angular: any;
 
@@ -33,7 +34,8 @@ const subComponents = {
   backup: BackupComponent,
   importers: ImportManagerComponent,
   security: SecurityManagerComponent,
-  settings: StudioSettingsComponent
+  settings: StudioSettingsComponent,
+  profiler: ProfilerComponent
 };
 
 @Component({
@@ -78,8 +80,6 @@ class DashboardComponent implements OnInit {
       );
     }
   }
-
-
 }
 
 angular

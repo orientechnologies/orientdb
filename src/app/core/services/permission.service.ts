@@ -107,10 +107,10 @@ class PermissionService {
         wiki: "Studio-Backup-Management.html"
       });
     }
-    if (this.isAllow("server.metrics")) {
+    if (this.isAllow("server.profiler")) {
       menus.push({
         name: "profiler",
-        title: "Query Profiler",
+        title: "Server Profiler",
         template: "profiler",
         icon: "fa-rocket",
         wiki: "Studio-Query-Profiler.html"

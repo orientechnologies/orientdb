@@ -1,0 +1,34 @@
+<div class="col-md-12">
+    <ul class="nav nav-tabs">
+        <li [ngClass]="{'active' : tab === 'running'}" (click)="tab = 'running'"><a href="javascript:void(0)"><span>Running</span></a></li>
+    </ul>
+
+
+
+    <div class="tab-content row">
+
+        <div class="col-md-12">
+            <form class="form-inline studio-well">
+                <div class="form-group">
+                    <label>Server </label>
+                    <select id="serverOnline" name="server" [(ngModel)]="params.server" class="form-control "
+                        data-placeholder="Pick a Server">
+                        <option *ngFor="let server of servers" [value]="server">{{server}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Database </label>
+                    <select id="databasesOnline" name="db" [(ngModel)]="params.db" class="form-control"
+                        data-placeholder="Pick a Server">
+                        <option *ngFor="let db of databases" [value]="db">{{db}}</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-12">
+            <br />
+        </div>
+
+        <running-query-profiler [params]="params" *ngIf="tab==='running'"></running-query-profiler>
+    </div>
+</div>

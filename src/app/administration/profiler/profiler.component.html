@@ -1,0 +1,12 @@
+<no-agent *ngIf="!ee"></no-agent>
+<div class="row" *ngIf="ee">
+    <div class="col-md-12">
+        <ul class="nav nav-tabs">
+            <li [ngClass]="{'active' : tab === 'query'}" (click)="tab = 'query'"><a href="javascript:void(0)"><span>Query</span></a></li>
+
+        </ul>
+        <div class="tab-content row">
+            <query-profiler *ngIf="tab === 'query'"></query-profiler>
+        </div>
+    </div>
+</div>

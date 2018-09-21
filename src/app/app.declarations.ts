@@ -46,7 +46,10 @@ import {
   JMXReporterComponent,
   CSVReporterComponent,
   ConsoleReporterComponent,
-  MetricsListComponent
+  MetricsListComponent,
+  ProfilerComponent,
+  QueryProfilerComponent,
+  RunningQueryProfilerComponent
 } from "./administration";
 
 import {
@@ -111,5 +114,8 @@ export const APP_DECLARATIONS = [
   JMXReporterComponent,
   CSVReporterComponent,
   ConsoleReporterComponent,
-  MetricsListComponent
+  MetricsListComponent,
+  ProfilerComponent,
+  QueryProfilerComponent,
+  RunningQueryProfilerComponent
 ];
