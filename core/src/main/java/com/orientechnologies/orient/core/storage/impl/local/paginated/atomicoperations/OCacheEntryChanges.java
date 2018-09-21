@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageChangesPortion;
 
@@ -14,8 +13,8 @@ public class OCacheEntryChanges implements OCacheEntry {
   OCacheEntry delegate;
   final OWALChanges changes = new OWALPageChangesPortion();
 
-  boolean            isNew   = false;
-  boolean            pinPage = false;
+  boolean isNew   = false;
+  boolean pinPage = false;
 
   public OCacheEntryChanges(OCacheEntry entry) {
     delegate = entry;
@@ -23,21 +22,6 @@ public class OCacheEntryChanges implements OCacheEntry {
 
   @SuppressWarnings("WeakerAccess")
   public OCacheEntryChanges() {
-  }
-
-  @Override
-  public void markDirty() {
-    delegate.markDirty();
-  }
-
-  @Override
-  public void clearDirty() {
-    delegate.clearDirty();
-  }
-
-  @Override
-  public boolean isDirty() {
-    return delegate.isDirty();
   }
 
   @Override
