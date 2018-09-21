@@ -1,5 +1,9 @@
+<div *ngIf="!ee" class="col-md-12">
+    <no-agent></no-agent>
+</div>
 <div class="col-md-12" *ngIf="stats && name">
-    <div class="row">
+
+    <div *ngIf="ee" class="row">
         <div class="col-md-6">
             <server-stats [name]="name" [stats]="stats">
             </server-stats>

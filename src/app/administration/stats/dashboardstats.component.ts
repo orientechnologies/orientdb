@@ -9,7 +9,11 @@ import {
   ViewContainerRef
 } from "@angular/core";
 import { downgradeComponent } from "@angular/upgrade/static";
-import { MetricService, NotificationService } from "../../core/services";
+import {
+  MetricService,
+  NotificationService,
+  AgentService
+} from "../../core/services";
 
 declare const angular: any;
 
@@ -23,21 +27,29 @@ class DashboardStatsComponent implements OnInit, OnDestroy {
   private clusterStats = {};
   private serversClass = "";
   private handle;
+  private ee = true;
   constructor(
     private metrics: MetricService,
     private noti: NotificationService,
-    private zone: NgZone
+    private zone: NgZone,
+    private agent: AgentService
   ) {}
 
   ngOnInit(): void {
-    this.handle = setInterval(() => {
+    this.ee = this.agent.active;
+
+    if (this.ee) {
+      this.handle = setInterval(() => {
+        this.fetchMetrics();
+      }, 5000);
       this.fetchMetrics();
-    }, 5000);
-    this.fetchMetrics();
+    }
   }
 
   ngOnDestroy(): void {
-    clearInterval(this.handle);
+    if (this.handle) {
+      clearInterval(this.handle);
+    }
   }
   fetchMetrics() {
     this.metrics

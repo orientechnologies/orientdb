@@ -23,6 +23,9 @@ class PermissionService {
       })
       .then(data => {
         this.data = data;
+      })
+      .catch(err => {
+        this.data.permissions = ["server.metrics"];
       });
   }
 

@@ -11,7 +11,7 @@ import {
   SimpleChanges
 } from "@angular/core";
 import { downgradeComponent } from "@angular/upgrade/static";
-import { MetricService } from "../../../../../core/services";
+import { MetricService, AgentService } from "../../../../../core/services";
 
 @Component({
   selector: "server-management-overview",
@@ -23,14 +23,18 @@ class ServerManagementOverviewComponent implements OnInit, OnChanges {
   private name;
   @Input()
   private stats;
+  private ee = true;
 
-  constructor() {}
+  
+  constructor(private agent: AgentService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     this.stats = changes.stats.currentValue;
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.ee = this.agent.active;
+  }
 
   ngOnDestroy(): void {}
 }

@@ -11,7 +11,7 @@ import {
   SimpleChanges
 } from "@angular/core";
 import { downgradeComponent } from "@angular/upgrade/static";
-import { MetricService } from "../../../../core/services";
+import { MetricService, AgentService } from "../../../../core/services";
 
 @Component({
   selector: "server-management",
@@ -29,23 +29,33 @@ class ServerManagementComponent implements OnInit, OnChanges {
   server: any = {};
   selectedServer: string;
   tab = "overview";
-    currentStats: any;
+  currentStats: any;
+  private ee = true;
 
-  constructor(private metrics: MetricService) {}
+  constructor(private metrics: MetricService, private agent: AgentService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     this.stats = changes.stats.currentValue;
   }
 
   ngOnInit(): void {
-    this.handle = setInterval(() => {
+    this.ee = this.agent.active;
+
+    if (this.ee) {
+      this.handle = setInterval(() => {
+        this.fetchMetrics();
+      }, 5000);
       this.fetchMetrics();
-    }, 5000);
-    this.fetchMetrics();
+    } else {
+      this.servers = ["orientdb"];
+      this.selectedServer = this.servers[0];
+    }
   }
 
   ngOnDestroy(): void {
-    clearInterval(this.handle);
+    if (this.handle) {
+      clearInterval(this.handle);
+    }
   }
   fetchMetrics() {
     this.metrics.getMetrics().then(data => {

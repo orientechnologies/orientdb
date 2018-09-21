@@ -1,4 +1,7 @@
-<div class="row">
+<div *ngIf="!ee" class="row">
+    <no-agent></no-agent>
+</div>
+<div *ngIf="ee" class="row">
     <div [ngClass]="serversClass" *ngFor="let server of servers">
         <server-metrics [name]="server" [stats]="clusterStats[server]">
         </server-metrics>

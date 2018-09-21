@@ -30,6 +30,7 @@ class ServerThreadDumpComponent implements OnInit, OnChanges {
     lineNumbers: true,
     readOnly: true
   };
+  ee: boolean;
   constructor(
     private metrics: MetricService,
     private agentService: AgentService
@@ -38,14 +39,17 @@ class ServerThreadDumpComponent implements OnInit, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {}
 
   ngOnInit(): void {
+    this.ee = this.agentService.active;
     this.fetchDump();
   }
 
   fetchDump() {
-    this.metrics.threadDumps(this.name).then(data => {
-      this.dumpDate = new Date();
-      this.threadDump = data.threadDump;
-    });
+    if (this.ee) {
+      this.metrics.threadDumps(this.name).then(data => {
+        this.dumpDate = new Date();
+        this.threadDump = data.threadDump;
+      });
+    }
   }
   ngOnDestroy(): void {}
 }
