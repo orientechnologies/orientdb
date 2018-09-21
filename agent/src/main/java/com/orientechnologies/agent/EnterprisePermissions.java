@@ -9,8 +9,7 @@ public enum EnterprisePermissions {
       "server.metrics.edit"), SERVER_BACKUP_EDIT("server.backup.edit"), SERVER_CONFIGURATION(
       "server.configuration"), SERVER_DISTRIBUTED("server.distributed"), SERVER_LOG("server.log"), SERVER_PROFILER(
       "server.profiler"), SERVER_SECURITY("server.security"), SERVER_SECURITY_EDIT("server.security.edit"), SERVER_PLUGINS(
-      "server.plugins"), STUDIO_DASHBOARD("server.studio.dashboard"), STUDIO_PROFILER_MANAGEMENT(
-      "server.studio.profilerManagement"), STUDIO_IMPORTER_MANAGEMENT("server.studio.importerManagement");
+      "server.plugins"), STUDIO_IMPORTER_MANAGEMENT("server.importers");
 
   private String permission;
 

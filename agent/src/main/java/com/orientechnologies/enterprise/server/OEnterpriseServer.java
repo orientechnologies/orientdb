@@ -4,16 +4,15 @@ import com.orientechnologies.agent.operation.NodesManager;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseConnectionListener;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseStorageListener;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.security.OServerSecurity;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 
 /**
  * Created by Enrico Risa on 16/07/2018.
@@ -59,4 +58,6 @@ public interface OEnterpriseServer {
   void restore(String databaseName, String path);
 
   OServerSecurity getSecurity();
+
+  List<OResult> listQueries(Optional<Function<OClientConnection, Boolean>> filter);
 }

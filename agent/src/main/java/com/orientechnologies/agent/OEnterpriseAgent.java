@@ -18,7 +18,7 @@
 package com.orientechnologies.agent;
 
 import com.orientechnologies.agent.services.backup.OBackupService;
-import com.orientechnologies.agent.functions.OAgentFunctionFactory;
+import com.orientechnologies.agent.functions.OAgentProfilerService;
 import com.orientechnologies.agent.ha.OEnterpriseDistributedStrategy;
 import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.operation.NodesManager;
@@ -122,7 +122,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   private void registerAndInitServices() {
     this.services.add(new StudioService());
     this.services.add(new OrientDBMetricsService());
-    this.services.add(new OAgentFunctionFactory());
+    this.services.add(new OAgentProfilerService());
     this.services.add(new OBackupService());
     this.services.add(new OSecurityService());
     this.services.forEach((s) -> s.init(this.enterpriseServer));
@@ -283,11 +283,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     listener.registerStatelessCommand(new OServerCommandConfiguration());
     listener.registerStatelessCommand(new OServerCommandPostBackupDatabase());
     listener.registerStatelessCommand(new OServerCommandGetDeployDb());
-    listener.registerStatelessCommand(new OServerCommandGetSQLProfiler());
+
     listener.registerStatelessCommand(new OServerCommandPluginManager());
     listener.registerStatelessCommand(new OServerCommandGetNode());
     listener.registerStatelessCommand(new OServerCommandQueryCacheManager());
-
 
   }
 
@@ -302,11 +301,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
     listener.unregisterStatelessCommand(OServerCommandPostBackupDatabase.class);
     listener.unregisterStatelessCommand(OServerCommandGetDeployDb.class);
-    listener.unregisterStatelessCommand(OServerCommandGetSQLProfiler.class);
     listener.unregisterStatelessCommand(OServerCommandPluginManager.class);
     listener.unregisterStatelessCommand(OServerCommandGetNode.class);
     listener.unregisterStatelessCommand(OServerCommandQueryCacheManager.class);
-    
+
   }
 
   private void installRegistry() {

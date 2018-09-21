@@ -10,7 +10,10 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.executor.*;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
+import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -24,11 +27,10 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.security.OServerSecurity;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by Enrico Risa on 16/07/2018.
@@ -36,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, ODatabaseLifecycleListener {
 
   private final OEnterpriseAgent agent;
-  private OServer server;
+  private       OServer          server;
 
   private List<OEnterpriseConnectionListener> listeners = new ArrayList<>();
 
@@ -123,7 +125,7 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
 
   @Override
   public void restore(String databaseName, String path) {
-    server.restore(databaseName,path);
+    server.restore(databaseName, path);
   }
 
   @Override
@@ -249,5 +251,43 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   @Override
   public OServerSecurity getSecurity() {
     return server.getSecurity();
+  }
+
+  @Override
+  public List<OResult> listQueries(Optional<Function<OClientConnection, Boolean>> filter) {
+    return getConnections().stream().filter((c) -> c.getDatabase() != null && filter.map(f -> f.apply(c)).orElse(true))
+        .flatMap((c) -> c.getDatabase().getActiveQueries().entrySet().stream().map((k) -> {
+          OResultInternal internal = new OResultInternal();
+          internal.setProperty("queryId", k.getKey());
+          OResultSet resultSet = k.getValue();
+          Optional<OExecutionPlan> plan = resultSet.getExecutionPlan();
+          String query = plan.map((p -> {
+            String q = "";
+            if (p instanceof OInternalExecutionPlan) {
+              String stm = ((OInternalExecutionPlan) p).getStatement();
+              if (stm != null) {
+                q = stm;
+              }
+            }
+            return q;
+          })).orElse("");
+
+          String user = "-";
+
+          if (c.getDatabase() != null && c.getDatabase().getUser() != null) {
+            user = c.getDatabase().getUser().getName();
+          }
+          internal.setProperty("user", user);
+          internal.setProperty("database", c.getDatabase().getName());
+          internal.setProperty("query", query);
+          if (resultSet instanceof OLocalResultSetLifecycleDecorator) {
+            OResultSet oResultSet = ((OLocalResultSetLifecycleDecorator) resultSet).getInternal();
+            if (oResultSet instanceof OLocalResultSet) {
+              internal.setProperty("startTime", ((OLocalResultSet) oResultSet).getStartTime());
+              internal.setProperty("elapsedTimeMillis", ((OLocalResultSet) oResultSet).getTotalExecutionTime());
+            }
+          }
+          return internal;
+        })).collect(Collectors.toList());
   }
 }
