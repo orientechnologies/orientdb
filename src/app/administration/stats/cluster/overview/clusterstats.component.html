@@ -63,16 +63,16 @@
                 <b>Status:</b> <span ng-class="getStatusLabel(server.status)">{{ status }}</span>
             </div>
             <div class="col-md-6">
-                <b> Operations:</b> {{operations}} /s
+                <span><b>Operations:</b> {{operations | async}} </span>
             </div>
         </div>
 
         <div class="row">
             <div class="col-md-6">
-                <span><b>Active Connections:</b> {{activeConnections}}</span>
+                <span><b>Active Sessions:</b> {{sessions}}</span>
             </div>
             <div class="col-md-6">
-                <span><b>Network Requests:</b> {{requests}} /s</span>
+                <span><b>Network Requests:</b> {{networkRequests | async}} </span>
             </div>
         </div>
         <div class="row">

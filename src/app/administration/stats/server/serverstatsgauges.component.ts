@@ -11,6 +11,7 @@ import {
   SimpleChanges
 } from "@angular/core";
 import { downgradeComponent } from "@angular/upgrade/static";
+import { MetricService } from "../../../core/services";
 
 @Component({
   selector: "server-stats-gauges",
@@ -30,7 +31,7 @@ class ServerStatsGauges implements OnInit, OnChanges {
   ramPercent: string;
   diskPercent: number;
 
-  constructor(private zone: NgZone) {}
+  constructor(private zone: NgZone, private metrics: MetricService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     this.stats = changes.stats.currentValue;
@@ -39,43 +40,26 @@ class ServerStatsGauges implements OnInit, OnChanges {
 
   changeStats() {
     // CPU
-    this.cpuPercent = (
-      100 * parseFloat(this.stats["gauges"]["server.runtime.cpu"].value)
-    ).toFixed(2);
 
-    // DISK CACHE
-    this.maxDiskCache = this.stats["gauges"][
-      "server.runtime.diskCache.total"
-    ].value;
+    let {
+      cpuPercent,
+      maxDiskCache,
+      totalDiskCache,
+      diskCachePercent,
+      maxMemory,
+      usedMemoy,
+      ramPercent,
+      diskPercent
+    } = this.metrics.calculateGauges(this.stats);
 
-    this.totalDiskCache = this.stats["gauges"][
-      "server.runtime.diskCache.used"
-    ].value;
-
-    this.diskCachePercent = Math.floor(
-      (this.totalDiskCache * 100) / this.maxDiskCache
-    );
-
-    // RAM
-
-    this.maxMemory = this.stats["gauges"][
-      "server.runtime.memory.heap.max"
-    ].value;
-
-    this.usedMemoy = this.stats["gauges"][
-      "server.runtime.memory.heap.used"
-    ].value;
-
-    this.ramPercent = (
-      100 * this.stats["gauges"]["server.runtime.memory.heap.usage"].value
-    ).toFixed(2);
-
-    // DISK
-
-    let totalDisk = this.stats["gauges"]["server.disk.space.totalSpace"].value;
-    let usableDisk = this.stats["gauges"]["server.disk.space.usableSpace"]
-      .value;
-    this.diskPercent = Math.floor(100 - (usableDisk * 100) / totalDisk);
+    this.cpuPercent = cpuPercent;
+    this.maxDiskCache = maxDiskCache;
+    this.totalDiskCache = totalDiskCache;
+    this.diskCachePercent = diskCachePercent;
+    this.maxMemory = maxMemory;
+    this.usedMemoy = usedMemoy;
+    this.ramPercent = ramPercent;
+    this.diskPercent = diskPercent;
   }
   ngOnInit(): void {
     this.changeStats();

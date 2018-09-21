@@ -49,7 +49,8 @@ import {
   MetricsListComponent,
   ProfilerComponent,
   QueryProfilerComponent,
-  RunningQueryProfilerComponent
+  RunningQueryProfilerComponent,
+  ClusterCrudComponent
 } from "./administration";
 
 import {
@@ -117,5 +118,6 @@ export const APP_DECLARATIONS = [
   MetricsListComponent,
   ProfilerComponent,
   QueryProfilerComponent,
-  RunningQueryProfilerComponent
+  RunningQueryProfilerComponent,
+  ClusterCrudComponent
 ];

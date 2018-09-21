@@ -87,6 +87,49 @@ class MetricService {
         return data.json();
       });
   }
+
+  calculateGauges(stats) {
+    // CPU
+
+    let cpuValue = parseFloat(stats["gauges"]["server.runtime.cpu"].value);
+    let cpuPercent = (100 * cpuValue).toFixed(2);
+
+    // DISK CACHE
+    let maxDiskCache = stats["gauges"]["server.runtime.diskCache.total"].value;
+
+    let totalDiskCache = stats["gauges"]["server.runtime.diskCache.used"].value;
+
+    let diskCachePercent = Math.floor((totalDiskCache * 100) / maxDiskCache);
+
+    // RAM
+
+    let maxMemory = stats["gauges"]["server.runtime.memory.heap.max"].value;
+
+    let usedMemoy = stats["gauges"]["server.runtime.memory.heap.used"].value;
+
+    let ramUsage = stats["gauges"]["server.runtime.memory.heap.usage"].value;
+    let ramPercent = (100 * ramUsage).toFixed(2);
+
+    // DISK
+
+    let totalDisk = stats["gauges"]["server.disk.space.totalSpace"].value;
+    let usableDisk = stats["gauges"]["server.disk.space.usableSpace"].value;
+    let diskPercent = Math.floor(100 - (usableDisk * 100) / totalDisk);
+
+    return {
+      cpuValue,
+      cpuPercent,
+      maxDiskCache,
+      totalDiskCache,
+      diskCachePercent,
+      maxMemory,
+      usedMemoy,
+      ramPercent,
+      totalDisk,
+      usableDisk,
+      diskPercent
+    };
+  }
 }
 
 angular
