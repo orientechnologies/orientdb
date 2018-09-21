@@ -3,15 +3,11 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.transac
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializer;
-import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializerI;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
@@ -29,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_FIRST_PHASE_REQUEST;
-import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 
 public class OTransactionFirstPhaseOperation implements ONodeRequest {
 
@@ -82,21 +77,9 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
       ORecord record = null;
       switch (type) {
       case ORecordOperation.CREATED:
+      case ORecordOperation.UPDATED: {
         record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
         ORecordInternal.setRecordSerializer(record, database.getSerializer());
-        break;
-      case ORecordOperation.UPDATED: {
-        OIdentifiable updateRecord;
-        if (OTransactionPhase1Task.useDeltasForUpdate) {
-          ODocumentDeltaSerializerI serializer = ODocumentDeltaSerializer.getActiveSerializer();
-          updateRecord = serializer.fromStream(new BytesContainer(req.getRecord()));
-          ORecordOperation op = new ORecordOperation(updateRecord, type);
-          ops.add(op);
-        }
-        else{
-          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
-          ORecordInternal.setRecordSerializer(record, database.getSerializer());
-        }
       }
       break;
       case ORecordOperation.DELETED:
@@ -107,13 +90,10 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
         }
         break;
       }
-      if (type == ORecordOperation.CREATED || type == ORecordOperation.DELETED ||
-          (type == ORecordOperation.UPDATED && !OTransactionPhase1Task.useDeltasForUpdate)){
-        ORecordInternal.setIdentity(record, (ORecordId) req.getId());
-        ORecordInternal.setVersion(record, req.getVersion());
-        ORecordOperation op = new ORecordOperation(record, type);
-        ops.add(op);
-      }
+      ORecordInternal.setIdentity(record, (ORecordId) req.getId());
+      ORecordInternal.setVersion(record, req.getVersion());
+      ORecordOperation op = new ORecordOperation(record, type);
+      ops.add(op);
     }
     return ops;
   }

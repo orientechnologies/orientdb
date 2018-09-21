@@ -3,11 +3,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.delta.ODocumentDelta;
-import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializer;
-import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializerI;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -22,11 +18,9 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OIndexKeyChange;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OIndexKeyOperation;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OIndexOperationRequest;
@@ -64,16 +58,8 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
       }
       break;
       case ORecordOperation.UPDATED: {
-        if (OTransactionPhase1Task.useDeltasForUpdate) {
-          ODocumentDeltaSerializerI serializer = ODocumentDeltaSerializer.getActiveSerializer();
-          ODocumentDelta updateRecord = serializer.fromStream(new BytesContainer(req.getRecord()));
-          ORecordOperation op = new ORecordOperation(updateRecord, type);
-          ops.add(op);
-        }
-        else{
-          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
-          ORecordInternal.setRecordSerializer(record, database.getSerializer());
-        }
+        record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+        ORecordInternal.setRecordSerializer(record, database.getSerializer());
       }
       break;
       case ORecordOperation.DELETED:
@@ -84,13 +70,10 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         }
         break;
       }
-      if (type == ORecordOperation.CREATED || type == ORecordOperation.DELETED ||
-          (type == ORecordOperation.UPDATED && !OTransactionPhase1Task.useDeltasForUpdate)){
-        ORecordInternal.setIdentity(record, (ORecordId) req.getId());
-        ORecordInternal.setVersion(record, req.getVersion());
-        ORecordOperation op = new ORecordOperation(record, type);
-        ops.add(op);
-      }
+      ORecordInternal.setIdentity(record, (ORecordId) req.getId());
+      ORecordInternal.setVersion(record, req.getVersion());
+      ORecordOperation op = new ORecordOperation(record, type);
+      ops.add(op);
     }
     for (ORecordOperation change : ops) {
       allEntries.put(change.getRID(), change);
@@ -128,10 +111,10 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
 
   }
 
-  private void resolveTracking(ORecordOperation change, boolean onlyExecutorCase) {    
-    List<OClassIndexManager.IndexChange> changes = new ArrayList<>();
-    if (change.getRecordContainer() instanceof ORecord && change.getRecord() instanceof ODocument) {      
+  private void resolveTracking(ORecordOperation change, boolean onlyExecutorCase) {
+    if (change.getRecord() instanceof ODocument) {
       ODocument rec = (ODocument) change.getRecord();
+      List<OClassIndexManager.IndexChange> changes = new ArrayList<>();
       switch (change.getType()) {
       case ORecordOperation.CREATED:
         if (change.getRecord() instanceof ODocument) {
@@ -161,39 +144,25 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         break;
       case ORecordOperation.UPDATED:
         if (change.getRecord() instanceof ODocument) {
-          ODocument original = null;
-          OIdentifiable updateRecord = null;
-          if (OTransactionPhase1Task.useDeltasForUpdate) {
-            updateRecord = change.getRecordContainer();
-          } else {
-            updateRecord = change.getRecord();
-          }
-
-          original = database.load(updateRecord.getIdentity());
+          ODocument doc = (ODocument) change.getRecord();
+          ODocument original = database.load(doc.getIdentity());
           if (original == null)
-            throw new ORecordNotFoundException(updateRecord.getIdentity());
-
-          if (OTransactionPhase1Task.useDeltasForUpdate) {
-            original = original.mergeDelta((ODocumentDelta) updateRecord);
-          } else {
-            original.merge((ODocument) updateRecord, false, false);
-          }
-
-          ODocument updateDoc = original;
-          OLiveQueryHook.addOp(updateDoc, ORecordOperation.UPDATED, database);
-          OLiveQueryHookV2.addOp(updateDoc, ORecordOperation.UPDATED, database);
-          OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
+            throw new ORecordNotFoundException(doc.getIdentity());
+          original.merge(doc, false, false);
+          doc = original;
+          OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, database);
+          OLiveQueryHookV2.addOp(doc, ORecordOperation.UPDATED, database);
+          OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
           if (clazz != null) {
             if (onlyExecutorCase) {
-              OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
+              OClassIndexManager.processIndexOnUpdate(database, doc, changes);
             }
             if (clazz.isFunction()) {
-              database.getSharedContext().getFunctionLibrary().updatedFunction(updateDoc);
+              database.getSharedContext().getFunctionLibrary().updatedFunction(doc);
               Orient.instance().getScriptManager().close(database.getName());
             }
             if (clazz.isSequence()) {
-              ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate()
-                  .onSequenceUpdated(database, updateDoc);
+              ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate().onSequenceUpdated(database, doc);
             }
           }
         }
@@ -229,41 +198,12 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
       default:
         break;
       }
-    } else if (change.getRecordContainer() instanceof ODocumentDelta) {      
-      switch (change.getType()) {
-      case ORecordOperation.UPDATED:
-
-        ODocumentDelta deltaRecord = (ODocumentDelta) change.getRecordContainer();
-        ODocument original = database.load(deltaRecord.getIdentity());
-        if (original == null)
-          throw new ORecordNotFoundException(deltaRecord.getIdentity());
-        original = original.mergeDelta(deltaRecord);
-
-        ODocument updateDoc = original;
-        OLiveQueryHook.addOp(updateDoc, ORecordOperation.UPDATED, database);
-        OLiveQueryHookV2.addOp(updateDoc, ORecordOperation.UPDATED, database);
-        OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
-        if (clazz != null) {
-          if (onlyExecutorCase) {
-            OClassIndexManager.processIndexOnUpdate(database, updateDoc, changes);
-          }
-          if (clazz.isFunction()) {
-            database.getSharedContext().getFunctionLibrary().updatedFunction(updateDoc);
-            Orient.instance().getScriptManager().close(database.getName());
-          }
-          if (clazz.isSequence()) {
-            ((OSequenceLibraryProxy) database.getMetadata().getSequenceLibrary()).getDelegate()
-                .onSequenceUpdated(database, updateDoc);
-          }
+      if (onlyExecutorCase) {
+        for (OClassIndexManager.IndexChange indexChange : changes) {
+          addIndexEntry(indexChange.index, indexChange.index.getName(), indexChange.operation, indexChange.key, indexChange.value);
         }
-        break;
       }
-    }
-    
-    if (onlyExecutorCase) {
-      for (OClassIndexManager.IndexChange indexChange : changes) {
-        addIndexEntry(indexChange.index, indexChange.index.getName(), indexChange.operation, indexChange.key, indexChange.value);      
-      }
+
     }
   }
 

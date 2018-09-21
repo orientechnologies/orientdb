@@ -1,20 +1,19 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.delta.ODocumentDelta;
-import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializer;
-import com.orientechnologies.orient.core.delta.ODocumentDeltaSerializerI;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -43,13 +42,12 @@ import java.util.Map;
 public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public static final int FACTORYID = 43;
 
-  private volatile    boolean                                         hasResponse;
-  private             OLogSequenceNumber                              lastLSN;
-  private             List<ORecordOperation>                          ops;
-  private             List<ORecordOperationRequest>                   operations;
-  private             OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType         = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
-  private transient   int                                             retryCount         = 0;
-  public static final boolean                                         useDeltasForUpdate = false;
+  private volatile  boolean                                         hasResponse;
+  private           OLogSequenceNumber                              lastLSN;
+  private           List<ORecordOperation>                          ops;
+  private           List<ORecordOperationRequest>                   operations;
+  private           OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
+  private transient int                                             retryCount = 0;
 
   public OTransactionPhase1Task() {
     ops = new ArrayList<>();
@@ -72,15 +70,9 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
       request.setId(txEntry.getRecord().getIdentity());
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
       switch (txEntry.type) {
-      case ORecordOperation.CREATED: {
-        byte[] newRec = ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false);
-        request.setRecord(newRec);
-        request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
-      }
-      break;
+      case ORecordOperation.CREATED:
       case ORecordOperation.UPDATED:
-        byte[] deltaRec = ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), useDeltasForUpdate);
-        request.setRecord(deltaRec);
+        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), false));
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
       case ORecordOperation.DELETED:
@@ -159,7 +151,6 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   }
 
   private void convert(ODatabaseDocumentInternal database) {
-    ops.clear();
     for (ORecordOperationRequest req : operations) {
       byte type = req.getType();
       if (type == ORecordOperation.LOADED) {
@@ -168,21 +159,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
 
       ORecord record = null;
       switch (type) {
-      case ORecordOperation.CREATED: {
+      case ORecordOperation.CREATED:
+      case ORecordOperation.UPDATED: {
         record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
         ORecordInternal.setRecordSerializer(record, database.getSerializer());
-      }
-      break;
-      case ORecordOperation.UPDATED: {        
-        if (useDeltasForUpdate) {          
-          ODocumentDeltaSerializerI serializer = ODocumentDeltaSerializer.getActiveSerializer();
-          ODocumentDelta updateRecord = serializer.fromStream(new BytesContainer(req.getRecord()));
-          ORecordOperation op = new ORecordOperation(updateRecord, type);
-          ops.add(op);
-        } else {
-          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);          
-        }
-        
       }
       break;
       case ORecordOperation.DELETED:
@@ -193,13 +173,10 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
         }
         break;
       }
-      if (type == ORecordOperation.CREATED || type == ORecordOperation.DELETED || (type == ORecordOperation.UPDATED
-          && !useDeltasForUpdate)) {
-        ORecordInternal.setIdentity(record, (ORecordId) req.getId());
-        ORecordInternal.setVersion(record, req.getVersion());
-        ORecordOperation op = new ORecordOperation(record, type);
-        ops.add(op);
-      }
+      ORecordInternal.setIdentity(record, (ORecordId) req.getId());
+      ORecordInternal.setVersion(record, req.getVersion());
+      ORecordOperation op = new ORecordOperation(record, type);
+      ops.add(op);
     }
     operations.clear();
   }
