@@ -26,8 +26,6 @@ public class ViewManager {
   private final OrientDBInternal orientDB;
   private final String           dbName;
 
-  ViewThread thread;
-
   ODatabaseDocumentInternal liveDb;
 
   /**
@@ -57,7 +55,6 @@ public class ViewManager {
   public ViewManager(OrientDBInternal orientDb, String dbName) {
     this.orientDB = orientDb;
     this.dbName = dbName;
-    init();
   }
 
   protected void init() {
@@ -117,14 +114,45 @@ public class ViewManager {
     }
   }
 
+  public void load() {
+    init();
+    start();
+  }
+
   public void start() {
-    thread = new ViewThread(this, () -> orientDB.openNoAuthorization(dbName));
-    thread.start();
+    schedule();
+  }
+
+  private void schedule() {
+    this.orientDB.scheduleOnce(new TimerTask() {
+      @Override
+      public void run() {
+        orientDB.executeNoAuthorization(dbName, (db) -> {
+          ViewManager.this.updateViews(db);
+          return null;
+        });
+      }
+    }, 1000);
+  }
+
+  private void updateViews(ODatabaseSession db) {
+    try {
+      cleanUnusedViewClusters(db);
+      cleanUnusedViewIndexes(db);
+      OView view = getNextViewToUpdate(db);
+      if (view != null) {
+        updateView(view, db);
+      }
+      //When the run is finished schedule the next run.
+      schedule();
+    } catch (Exception e) {
+      OLogManager.instance().warn(this, "Failed to update views");
+      e.printStackTrace();
+    }
   }
 
   public void close() {
     try {
-      thread.finish();
       if (liveDb != null) {
         ODatabaseDocumentInternal oldDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
         liveDb.activateOnCurrentThread();

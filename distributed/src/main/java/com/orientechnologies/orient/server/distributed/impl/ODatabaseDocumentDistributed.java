@@ -916,6 +916,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterCreate(doc, this);
         }
+        OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, this);
+        OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, this);
       }
     }
     callbackHooks(ORecordHook.TYPE.AFTER_CREATE, id);
@@ -940,6 +942,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         if (clazz.isTriggered()) {
           OClassTrigger.onRecordAfterUpdate(doc, this);
         }
+        OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, this);
+        OLiveQueryHookV2.addOp(doc, ORecordOperation.UPDATED, this);
       }
     }
     callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
@@ -969,6 +973,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OClassTrigger.onRecordAfterDelete(doc, this);
         }
       }
+      OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, this);
+      OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, this);
     }
     callbackHooks(ORecordHook.TYPE.AFTER_DELETE, id);
   }

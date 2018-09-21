@@ -66,8 +66,9 @@ public class OClusterPositionAllocatorDatabase implements OClusterPositionAlloca
 
   private synchronized void initAllocators(OStorage storage) {
     //Syncrhonized will be replaced when the schema operations will go through the coordinator
+    int clusters = storage.getClusters();
     Collection<? extends OCluster> clusterInstances = storage.getClusterInstances();
-    AtomicLong[] newAllocators = new AtomicLong[clusterInstances.size()];
+    AtomicLong[] newAllocators = new AtomicLong[clusters];
     Map<String, Integer> newNames = new HashMap<>();
 
     for (OCluster cluster : clusterInstances) {
