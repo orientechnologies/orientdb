@@ -277,6 +277,7 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
           if (c.getDatabase() != null && c.getDatabase().getUser() != null) {
             user = c.getDatabase().getUser().getName();
           }
+          internal.setProperty("sessionId", c.getId());
           internal.setProperty("user", user);
           internal.setProperty("database", c.getDatabase().getName());
           internal.setProperty("query", query);
