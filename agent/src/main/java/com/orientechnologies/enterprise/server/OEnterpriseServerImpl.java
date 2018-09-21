@@ -177,8 +177,9 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   @Override
   public void onOpen(ODatabaseInternal iDatabase) {
     OStorage storage = iDatabase.getStorage();
-    if (storage instanceof OEnterpriseLocalPaginatedStorage) {
-      OEnterpriseLocalPaginatedStorage s = (OEnterpriseLocalPaginatedStorage) storage;
+
+    if (storage.getUnderlying() instanceof OEnterpriseLocalPaginatedStorage) {
+      OEnterpriseLocalPaginatedStorage s = (OEnterpriseLocalPaginatedStorage) storage.getUnderlying();
       if (storages.putIfAbsent(storage.getName(), s) == null) {
         storages.put(storage.getName(), s);
         dbListeners.forEach((l) -> l.onOpen(s));

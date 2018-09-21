@@ -22,11 +22,12 @@ public class OrientDBDatabasesMetrics implements OrientDBMetric, OEnterpriseStor
   public OrientDBDatabasesMetrics(OEnterpriseServer server, OMetricsRegistry registry) {
     this.server = server;
     this.registry = registry;
+    server.registerDatabaseListener(this);
   }
 
   @Override
   public void start() {
-    server.registerDatabaseListener(this);
+
   }
 
   @Override

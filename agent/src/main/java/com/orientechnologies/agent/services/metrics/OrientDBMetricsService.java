@@ -75,18 +75,20 @@ public class OrientDBMetricsService implements OEnterpriseService {
     this.settings = deserializeConfig(jsonConfig);
     registry = OMetricsRegistryFactory.createRegistryFor(server, this.settings);
 
+    config();
+
   }
 
   @Override
   public void start() {
 
-    configAndStart();
+    metricSupport.start();
 
     server.registerStatelessCommand(new OrientDBMetricsCommand(server, registry, this));
 
   }
 
-  private void configAndStart() {
+  private void config() {
     if (settings.enabled) {
 
       if (settings.server.enabled) {
@@ -97,7 +99,6 @@ public class OrientDBMetricsService implements OEnterpriseService {
         metricSupport.add(new OrientDBDatabasesMetrics(server, registry));
       }
 
-      metricSupport.start();
     }
   }
 
@@ -191,7 +192,9 @@ public class OrientDBMetricsService implements OEnterpriseService {
 
     saveSettings(settings);
     this.settings = settings;
-    configAndStart();
+    config();
+
+    metricSupport.start();
   }
 
   private void saveSettings(OrientDBMetricsSettings settings) {
