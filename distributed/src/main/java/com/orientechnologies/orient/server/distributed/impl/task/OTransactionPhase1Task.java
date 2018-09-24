@@ -158,8 +158,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
     }
   }
 
-  private void convert(ODatabaseDocumentInternal database) {
-    ops.clear();
+  private void convert(ODatabaseDocumentInternal database) {    
     for (ORecordOperationRequest req : operations) {
       byte type = req.getType();
       if (type == ORecordOperation.LOADED) {
@@ -180,7 +179,8 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
           ORecordOperation op = new ORecordOperation(updateRecord, type);
           ops.add(op);
         } else {
-          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);          
+          record = ORecordSerializerNetworkV37.INSTANCE.fromStream(req.getRecord(), null, null);
+          ORecordInternal.setRecordSerializer(record, database.getSerializer());
         }
         
       }
