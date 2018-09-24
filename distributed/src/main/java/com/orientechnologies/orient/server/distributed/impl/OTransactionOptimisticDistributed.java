@@ -38,10 +38,12 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
   private final Map<ORID, ORecord>     updatedRecords = new HashMap<>();
   private final Set<ORID>              deletedRecord  = new HashSet<>();
   private       List<ORecordOperation> changes;
+  private boolean useDeltas;
 
-  public OTransactionOptimisticDistributed(ODatabaseDocumentInternal database, List<ORecordOperation> changes) {
+  public OTransactionOptimisticDistributed(ODatabaseDocumentInternal database, List<ORecordOperation> changes, boolean useDeltas) {
     super(database);
     this.changes = changes;
+    this.useDeltas = useDeltas;
   }
 
   public void begin(List<ORecordOperationRequest> operations, List<OIndexOperationRequest> indexes) {
@@ -64,7 +66,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
       }
       break;
       case ORecordOperation.UPDATED: {
-        if (OTransactionPhase1Task.useDeltasForUpdate) {
+        if (useDeltas) {
           ODocumentDeltaSerializerI serializer = ODocumentDeltaSerializer.getActiveSerializer();
           ODocumentDelta updateRecord = serializer.fromStream(new BytesContainer(req.getRecord()));
           ORecordOperation op = new ORecordOperation(updateRecord, type);
@@ -85,7 +87,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         break;
       }
       if (type == ORecordOperation.CREATED || type == ORecordOperation.DELETED ||
-          (type == ORecordOperation.UPDATED && !OTransactionPhase1Task.useDeltasForUpdate)){
+          (type == ORecordOperation.UPDATED && !useDeltas)){
         ORecordInternal.setIdentity(record, (ORecordId) req.getId());
         ORecordInternal.setVersion(record, req.getVersion());
         ORecordOperation op = new ORecordOperation(record, type);
@@ -163,7 +165,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         if (change.getRecord() instanceof ODocument) {
           ODocument original = null;
           OIdentifiable updateRecord = null;
-          if (OTransactionPhase1Task.useDeltasForUpdate) {
+          if (useDeltas) {
             updateRecord = change.getRecordContainer();
           } else {
             updateRecord = change.getRecord();
@@ -173,7 +175,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
           if (original == null)
             throw new ORecordNotFoundException(updateRecord.getIdentity());
 
-          if (OTransactionPhase1Task.useDeltasForUpdate) {
+          if (useDeltas) {
             original = original.mergeDelta((ODocumentDelta) updateRecord);
           } else {
             original.merge((ODocument) updateRecord, false, false);

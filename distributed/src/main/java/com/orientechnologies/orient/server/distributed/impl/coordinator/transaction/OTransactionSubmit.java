@@ -18,14 +18,13 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SUBMIT_REQUEST;
-import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 
 public class OTransactionSubmit implements OSubmitRequest {
   private List<ORecordOperationRequest> operations;
   private List<OIndexOperationRequest>  indexes;
 
-  public OTransactionSubmit(Collection<ORecordOperation> ops, List<OIndexOperationRequest> indexes) {
-    this.operations = genOps(ops);
+  public OTransactionSubmit(Collection<ORecordOperation> ops, List<OIndexOperationRequest> indexes, boolean useDeltas) {
+    this.operations = genOps(ops, useDeltas);
     this.indexes = indexes;
   }
 
@@ -33,7 +32,7 @@ public class OTransactionSubmit implements OSubmitRequest {
 
   }
 
-  public static List<ORecordOperationRequest> genOps(Collection<ORecordOperation> ops) {
+  public static List<ORecordOperationRequest> genOps(Collection<ORecordOperation> ops, boolean useDeltas) {
     List<ORecordOperationRequest> operations = new ArrayList<>();
     for (ORecordOperation txEntry : ops) {
       if (txEntry.type == ORecordOperation.LOADED)
@@ -49,7 +48,7 @@ public class OTransactionSubmit implements OSubmitRequest {
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
       case ORecordOperation.UPDATED:
-        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), OTransactionPhase1Task.useDeltasForUpdate));
+        request.setRecord(ORecordSerializerNetworkV37.INSTANCE.toStream(txEntry.getRecord(), useDeltas));
         request.setContentChanged(ORecordInternal.isContentChanged(txEntry.getRecord()));
         break;
       case ORecordOperation.DELETED:

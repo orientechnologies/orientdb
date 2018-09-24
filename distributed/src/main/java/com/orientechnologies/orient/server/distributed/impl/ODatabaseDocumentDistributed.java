@@ -528,7 +528,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     OSessionOperationId id = new OSessionOperationId();
     id.init();
     Future<OSubmitResponse> future = submitContext
-        .send(id, new OTransactionSubmit(iTx.getRecordOperations(), OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx)));
+        .send(id, new OTransactionSubmit(iTx.getRecordOperations(), OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx), false));
     try {
       OTransactionResponse response = (OTransactionResponse) future.get();
       if (!response.isSuccess()) {
@@ -641,8 +641,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void txFirstPhase(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
-      List<OIndexOperationRequest> indexes) {
-    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>());
+      List<OIndexOperationRequest> indexes, boolean useDeltas) {
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(this, new ArrayList<>(), useDeltas);
     OSharedContextDistributed sharedContext = (OSharedContextDistributed) getSharedContext();
     sharedContext.getDistributedContext().registerTransaction(operationId, tx);
     tx.begin(operations, indexes);
