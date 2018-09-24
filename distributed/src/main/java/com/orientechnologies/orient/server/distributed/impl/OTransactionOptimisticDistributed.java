@@ -289,4 +289,9 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
   public void addUpdatedRid(ORID oldId, ORID id) {
     updatedRids.put(oldId, id);
   }
+  
+  @Override
+  public boolean isUseDeltas(){
+    return useDeltas;
+  }
 }

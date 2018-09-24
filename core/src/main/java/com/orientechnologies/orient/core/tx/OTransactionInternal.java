@@ -90,4 +90,5 @@ public interface OTransactionInternal extends OBasicTransaction {
 
   void setDatabase(ODatabaseDocumentInternal database);
 
+  boolean isUseDeltas();
 }

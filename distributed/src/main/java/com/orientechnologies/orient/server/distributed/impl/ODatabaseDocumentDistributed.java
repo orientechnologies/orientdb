@@ -528,7 +528,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     OSessionOperationId id = new OSessionOperationId();
     id.init();
     Future<OSubmitResponse> future = submitContext
-        .send(id, new OTransactionSubmit(iTx.getRecordOperations(), OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx), false));
+        .send(id, new OTransactionSubmit(iTx.getRecordOperations(), OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx), iTx.isUseDeltas()));
     try {
       OTransactionResponse response = (OTransactionResponse) future.get();
       if (!response.isSuccess()) {

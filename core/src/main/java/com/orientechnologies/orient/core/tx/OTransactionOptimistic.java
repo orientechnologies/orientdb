@@ -586,4 +586,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
   }
 
+  @Override
+  public boolean isUseDeltas() {
+    return false;
+  }
+
 }
