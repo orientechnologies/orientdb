@@ -684,7 +684,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     return wrapped.getSBtreeCollectionManager();
   }
 
-
   @Override
   public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType) {
     return wrapped.recyclePosition(iRecordId, iContent, iVersion, iRecordType);
@@ -1358,9 +1357,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   protected void dropStorageFiles() {
+    dropStorageFiles((OLocalPaginatedStorage) wrapped);
+  }
+
+  public static void dropStorageFiles(OLocalPaginatedStorage storage) {
     // REMOVE distributed-config.json and distributed-sync.json files to allow removal of directory
-    final File dCfg = new File(
-        ((OLocalPaginatedStorage) wrapped).getStoragePath() + "/" + getDistributedManager().FILE_DISTRIBUTED_DB_CONFIG);
+    final File dCfg = new File(storage.getStoragePath() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
 
     try {
       if (dCfg.exists()) {
@@ -1371,8 +1373,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         }
       }
 
-      final File dCfg2 = new File(
-          ((OLocalPaginatedStorage) wrapped).getStoragePath() + "/" + ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME);
+      final File dCfg2 = new File(storage.getStoragePath() + "/" + ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME);
       if (dCfg2.exists()) {
         for (int i = 0; i < 10; ++i) {
           if (dCfg2.delete())
