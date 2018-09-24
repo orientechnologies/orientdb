@@ -6,11 +6,13 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedCoordinator;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
@@ -82,13 +84,16 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public void fullSync(String dbName, String backupPath, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
-    OAbstractPaginatedStorage storage;
+    OAbstractPaginatedStorage storage = null;
     synchronized (this) {
 
       try {
         storage = storages.get(dbName);
 
         if (storage != null) {
+          ODistributedStorage.dropStorageFiles((OLocalPaginatedStorage) storage);
+          OSharedContext context = sharedContexts.remove(dbName);
+          context.close();
           storage.delete();
           storages.remove(dbName);
         }
@@ -96,6 +101,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         embedded = internalCreate(config, storage);
         storages.put(dbName, storage);
       } catch (Exception e) {
+        if (storage != null) {
+          storage.delete();
+        }
+
         throw OException.wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
       }
     }

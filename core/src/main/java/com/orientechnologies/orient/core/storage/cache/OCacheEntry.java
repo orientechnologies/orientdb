@@ -27,13 +27,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALCh
  * @since 7/23/13
  */
 public interface OCacheEntry {
-
-  void markDirty();
-
-  void clearDirty();
-
-  boolean isDirty();
-
   OCachePointer getCachePointer();
 
   void clearCachePointer();

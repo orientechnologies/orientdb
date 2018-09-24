@@ -9,13 +9,27 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import org.junit.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -397,8 +411,6 @@ public class LocalPaginatedClusterWithWALTestIT extends LocalPaginatedClusterTes
               ODurablePage durablePage = new ODurablePage(cacheEntry);
               durablePage.restoreChanges(updatePageRecord.getChanges());
               durablePage.setLsn(new OLogSequenceNumber(0, 0));
-
-              cacheEntry.markDirty();
             } finally {
               expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
             }

@@ -25,7 +25,13 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.*;
+import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
+import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListener;
@@ -514,7 +520,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
           final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, id, index);
           cachePointer.incrementReferrer();
 
-          cacheEntry = new OCacheEntryImpl(composeFileId(storageId, id), index, cachePointer, false);
+          cacheEntry = new OCacheEntryImpl(composeFileId(storageId, id), index, cachePointer);
 
           OCacheEntry oldCacheEntry = content.putIfAbsent(index, cacheEntry);
 

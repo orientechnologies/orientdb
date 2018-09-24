@@ -247,7 +247,6 @@ public class ReadWriteCacheConcurrentTest {
       final ByteBuffer buffer = pointer.getBufferDuplicate();
       buffer.position(systemOffset);
       buffer.put(new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) });
-      cacheEntry.markDirty();
 
       readBuffer.releaseFromWrite(cacheEntry, writeBuffer);
     }

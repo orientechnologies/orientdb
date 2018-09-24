@@ -26,38 +26,37 @@ public class ViewManager {
   private final OrientDBInternal orientDB;
   private final String           dbName;
 
-  ViewThread thread;
-
-  ODatabaseDocumentInternal liveDb;
+  private ODatabaseDocumentInternal liveDb;
 
   /**
    * To retain clusters that are being used in queries until the queries are closed.
    * <p>
    * view -> cluster -> number of visitors
    */
-  ConcurrentMap<Integer, AtomicInteger> viewCluserVisitors  = new ConcurrentHashMap<>();
-  ConcurrentMap<Integer, String>        oldClustersPerViews = new ConcurrentHashMap<>();
-  List<Integer>                         clustersToDrop      = Collections.synchronizedList(new ArrayList<>());
+  private final ConcurrentMap<Integer, AtomicInteger> viewCluserVisitors  = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Integer, String>        oldClustersPerViews = new ConcurrentHashMap<>();
+  private final List<Integer>                         clustersToDrop      = Collections.synchronizedList(new ArrayList<>());
 
   /**
    * To retain indexes that are being used in queries until the queries are closed.
    * <p>
    * view -> index -> number of visitors
    */
-  ConcurrentMap<String, AtomicInteger> viewIndexVisitors  = new ConcurrentHashMap<>();
-  ConcurrentMap<String, String>        oldIndexesPerViews = new ConcurrentHashMap<>();
-  List<String>                         indexesToDrop      = Collections.synchronizedList(new ArrayList<>());
+  private final ConcurrentMap<String, AtomicInteger> viewIndexVisitors  = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, String>        oldIndexesPerViews = new ConcurrentHashMap<>();
+  private final List<String>                         indexesToDrop      = Collections.synchronizedList(new ArrayList<>());
 
-  Map<String, Long> lastUpdateTimestampForView = new HashMap<>();
+  private final Map<String, Long> lastUpdateTimestampForView = new HashMap<>();
 
-  Map<String, Long> lastChangePerClass = new ConcurrentHashMap<>();
+  private final Map<String, Long> lastChangePerClass = new ConcurrentHashMap<>();
 
-  String lastUpdatedView = null;
+  private volatile String    lastUpdatedView = null;
+  private volatile TimerTask lastTask;
+  private volatile boolean   closed          = false;
 
   public ViewManager(OrientDBInternal orientDb, String dbName) {
     this.orientDB = orientDb;
     this.dbName = dbName;
-    init();
   }
 
   protected void init() {
@@ -117,14 +116,49 @@ public class ViewManager {
     }
   }
 
+  public void load() {
+    closed = false;
+    init();
+    start();
+  }
+
   public void start() {
-    thread = new ViewThread(this, () -> orientDB.openNoAuthorization(dbName));
-    thread.start();
+    schedule();
+  }
+
+  private void schedule() {
+    this.lastTask = new TimerTask() {
+      @Override
+      public void run() {
+        if (closed)
+          return;
+        orientDB.executeNoAuthorization(dbName, (db) -> {
+          ViewManager.this.updateViews(db);
+          return null;
+        });
+      }
+    };
+    this.orientDB.scheduleOnce(lastTask, 1000);
+  }
+
+  private void updateViews(ODatabaseSession db) {
+    try {
+      cleanUnusedViewClusters(db);
+      cleanUnusedViewIndexes(db);
+      OView view = getNextViewToUpdate(db);
+      if (view != null) {
+        updateView(view, db);
+      }
+      //When the run is finished schedule the next run.
+      schedule();
+    } catch (Exception e) {
+      OLogManager.instance().warn(this, "Failed to update views");
+      e.printStackTrace();
+    }
   }
 
   public void close() {
     try {
-      thread.finish();
       if (liveDb != null) {
         ODatabaseDocumentInternal oldDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
         liveDb.activateOnCurrentThread();
@@ -137,6 +171,10 @@ public class ViewManager {
     } catch (Exception e) {
       e.printStackTrace();
     }
+    if (lastTask != null) {
+      lastTask.cancel();
+    }
+    closed = true;
   }
 
   public synchronized void cleanUnusedViewClusters(ODatabaseDocument db) {

@@ -21,14 +21,29 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.*;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
+import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileDeletedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Note: all atomic operations methods are designed in context that all operations on single files will be wrapped in shared lock.
@@ -223,7 +238,7 @@ public class OAtomicOperation {
 
     changesContainer.pageChangesMap.put(filledUpTo, pageChangesContainer);
     changesContainer.maxNewPageIndex = filledUpTo;
-    OCacheEntry delegate = new OCacheEntryImpl(fileId, filledUpTo, new OCachePointer(null, null, fileId, filledUpTo), false);
+    OCacheEntry delegate = new OCacheEntryImpl(fileId, filledUpTo, new OCachePointer(null, null, fileId, filledUpTo));
     pageChangesContainer.delegate = delegate;
     return pageChangesContainer;
   }
