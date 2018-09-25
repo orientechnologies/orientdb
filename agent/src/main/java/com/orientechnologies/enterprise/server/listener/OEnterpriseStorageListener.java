@@ -1,5 +1,7 @@
 package com.orientechnologies.enterprise.server.listener;
 
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseLocalPaginatedStorage;
 
 /**
@@ -23,4 +25,11 @@ public interface OEnterpriseStorageListener {
 
   }
 
+
+  default void onCommandStart(ODatabase database, OResultSet result) {
+
+  }
+  default void onCommandEnd(ODatabase database, OResultSet removed) {
+
+  }
 }
