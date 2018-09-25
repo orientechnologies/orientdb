@@ -284,7 +284,7 @@ public interface OrientDBInternal extends AutoCloseable {
 
   OEmbeddedDatabaseInstanceFactory getFactory();
 
-  default void fullSync(String dbName, String backupPath, OrientDBConfig config) {
+  default OStorage fullSync(String dbName, String backupPath, OrientDBConfig config) {
     throw new UnsupportedOperationException();
   }
 }

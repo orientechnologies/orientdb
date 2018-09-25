@@ -41,7 +41,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return plugin;
   }
 
-  public void fullSync(String dbName, String backupPath, OrientDBConfig config) {
+  public OStorage fullSync(String dbName, String backupPath, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
     OAbstractPaginatedStorage storage;
     synchronized (this) {
@@ -63,5 +63,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       }
     }
     storage.restoreFromIncrementalBackup(backupPath);
+    return storage;
   }
 }
