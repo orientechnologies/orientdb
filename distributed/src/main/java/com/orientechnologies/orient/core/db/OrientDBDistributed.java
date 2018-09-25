@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
@@ -82,7 +83,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     this.plugin = plugin;
   }
 
-  public void fullSync(String dbName, String backupPath, OrientDBConfig config) {
+  public OStorage fullSync(String dbName, String backupPath, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
     OAbstractPaginatedStorage storage = null;
     synchronized (this) {
@@ -113,6 +114,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     ODatabaseDocumentEmbedded instance = openNoAuthorization(dbName);
     instance.close();
     checkCoordinator(dbName);
+    return storage;
   }
 
   @Override
