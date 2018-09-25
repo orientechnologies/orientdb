@@ -143,6 +143,6 @@ public class OMoveVertexExecutionPlanner {
     sourceStatement.setTarget(new OFromClause(-1));
     sourceStatement.getTarget().setItem(source);
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(sourceStatement);
-    result.chain(new SubQueryStep(planner.createExecutionPlan(ctx, profilingEnabled, true), ctx, ctx, profilingEnabled));
+    result.chain(new SubQueryStep(planner.createExecutionPlan(ctx, profilingEnabled, false), ctx, ctx, profilingEnabled));
   }
 }
