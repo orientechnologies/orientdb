@@ -1,6 +1,7 @@
 <div class="col-md-12">
     <ul class="nav nav-tabs">
         <li [ngClass]="{'active' : tab === 'running'}" (click)="tab = 'running'"><a href="javascript:void(0)"><span>Running</span></a></li>
+        <li [ngClass]="{'active' : tab === 'stats'}" (click)="tab = 'stats'"><a href="javascript:void(0)"><span>Stats</span></a></li>
     </ul>
 
 
@@ -30,5 +31,6 @@
         </div>
 
         <running-query-profiler [params]="params" *ngIf="tab==='running'"></running-query-profiler>
+        <query-stats [params]="params" *ngIf="tab==='stats'"></query-stats>
     </div>
 </div>
