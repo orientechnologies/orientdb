@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OIndexKeyChange;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OIndexKeyOperation;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OIndexOperationRequest;
@@ -38,7 +37,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
   private final Map<ORID, ORecord>     updatedRecords = new HashMap<>();
   private final Set<ORID>              deletedRecord  = new HashSet<>();
   private       List<ORecordOperation> changes;
-  private boolean useDeltas;
+  private       boolean                useDeltas;
 
   public OTransactionOptimisticDistributed(ODatabaseDocumentInternal database, List<ORecordOperation> changes, boolean useDeltas) {
     super(database);
@@ -135,8 +134,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
     if (change.getRecordContainer() instanceof ORecord && change.getRecord() instanceof ODocument) {      
       ODocument rec = (ODocument) change.getRecord();
       switch (change.getType()) {
-      case ORecordOperation.CREATED:
-        if (change.getRecord() instanceof ODocument) {
+      case ORecordOperation.CREATED: {
           ODocument doc = (ODocument) change.getRecord();
           OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, database);
           OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, database);
@@ -161,25 +159,15 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
           createdRecords.put(change.getRID().copy(), change.getRecord());
         }
         break;
-      case ORecordOperation.UPDATED:
-        if (change.getRecord() instanceof ODocument) {
-          ODocument original = null;
-          OIdentifiable updateRecord = null;
-          if (useDeltas) {
-            updateRecord = change.getRecordContainer();
-          } else {
-            updateRecord = change.getRecord();
-          }
+      case ORecordOperation.UPDATED: {
+          OIdentifiable updateRecord = change.getRecord();                      
 
-          original = database.load(updateRecord.getIdentity());
-          if (original == null)
+          ODocument original = database.load(updateRecord.getIdentity());
+          if (original == null){
             throw new ORecordNotFoundException(updateRecord.getIdentity());
-
-          if (useDeltas) {
-            original = original.mergeDelta((ODocumentDelta) updateRecord);
-          } else {
-            original.merge((ODocument) updateRecord, false, false);
           }
+
+          original.merge((ODocument) updateRecord, false, false);          
 
           ODocument updateDoc = original;
           OLiveQueryHook.addOp(updateDoc, ORecordOperation.UPDATED, database);
@@ -201,8 +189,7 @@ public class OTransactionOptimisticDistributed extends OTransactionOptimistic {
         }
         updatedRecords.put(change.getRID(), change.getRecord());
         break;
-      case ORecordOperation.DELETED:
-        if (change.getRecord() instanceof ODocument) {
+      case ORecordOperation.DELETED: {        
           ODocument doc = (ODocument) change.getRecord();
           OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
           if (clazz != null) {

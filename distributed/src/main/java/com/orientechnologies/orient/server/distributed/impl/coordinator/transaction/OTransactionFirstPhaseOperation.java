@@ -34,7 +34,7 @@ public class OTransactionFirstPhaseOperation implements ONodeRequest {
   private OSessionOperationId           operationId;
   private List<ORecordOperationRequest> operations;
   private List<OIndexOperationRequest>  indexes;
-  protected static final boolean useDeltas = false;
+  protected static final boolean        useDeltas = false;
 
   public OTransactionFirstPhaseOperation(OSessionOperationId operationId, List<ORecordOperationRequest> operations,
       List<OIndexOperationRequest> indexes) {
