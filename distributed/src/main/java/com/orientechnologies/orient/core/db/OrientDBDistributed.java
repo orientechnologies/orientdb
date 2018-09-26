@@ -63,6 +63,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       }
     }
     storage.restoreFromIncrementalBackup(backupPath);
+    ODatabaseRecordThreadLocal.instance().remove();
     return storage;
   }
 }
