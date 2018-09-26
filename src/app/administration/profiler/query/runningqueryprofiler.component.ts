@@ -20,7 +20,10 @@ export class RunningQueryProfilerComponent
   handle: any;
 
   @Input()
-  params: any;
+  server: string;
+  @Input()
+  database: string;
+
   constructor(private profiler: ProfilerService) {}
 
   ngOnInit(): void {
@@ -30,10 +33,12 @@ export class RunningQueryProfilerComponent
   }
 
   fetchQueries() {
-    if (this.params.server) {
-      this.profiler.runningQueries(this.params).then(response => {
-        this.queries = response.result;
-      });
+    if (this.server) {
+      this.profiler
+        .runningQueries({ server: this.server, db: this.database })
+        .then(response => {
+          this.queries = response.result;
+        });
     }
   }
   ngOnChanges(simpleChange: SimpleChanges) {

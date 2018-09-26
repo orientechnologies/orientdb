@@ -24,26 +24,38 @@
                     <thead>
                         <tr>
 
+                            <th>Database</th>
                             <th>Query</th>
                             <th>Count</th>
                             <th>Min</th>
                             <th>Mean</th>
                             <th>Max</th>
-                            <th>Start Time</th>
-                            <th>Elapsed Time</th>
+                            <!-- <th>P50</th>
+                            <th>P75</th>
+                            <th>P95</th>
+                            <th>P98</th>
+                            <th>P99</th>
+                            <th>P999</th>
+                            <th>Stddev</th> -->
 
                         </tr>
                     </thead>
 
                     <tbody>
                         <tr *ngFor="let q of queries | filter : searchText : fields">
+                            <td>{{ q.database }}</td>
                             <td>{{ q.query }}</td>
                             <td>{{ q.count }}</td>
                             <td>{{ q.min }}</td>
                             <td>{{ q.mean }}</td>
                             <td>{{ q.max }}</td>
-                            <td>{{ q.startTime | date : 'medium' }}</td>
-                            <td>{{ q.elapsedTimeMillis }}</td>
+                            <!-- <td>{{ q.p50 }}</td>
+                            <td>{{ q.p75 }}</td>
+                            <td>{{ q.p95 }}</td>
+                            <td>{{ q.p98 }}</td>
+                            <td>{{ q.p99 }}</td>
+                            <td>{{ q.p999 }}</td>
+                            <td>{{ q.stddev }}</td> -->
                         </tr>
                     </tbody>
                 </table>

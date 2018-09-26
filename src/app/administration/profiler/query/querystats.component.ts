@@ -19,7 +19,9 @@ export class QueryStatsComponent implements OnInit, OnDestroy, OnChanges {
   handle: any;
 
   @Input()
-  params: any;
+  server: string;
+  @Input()
+  database: string;
   constructor(private metrics: MetricService) {}
 
   ngOnInit(): void {
@@ -29,16 +31,23 @@ export class QueryStatsComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   fetchQueries() {
-    if (this.params.server) {
+    if (this.server) {
       this.metrics.getMetrics().then(response => {
-        let histo = response.clusterStats[this.params.server].histograms;
+        let histo = response.clusterStats[this.server].histograms;
         this.queries = Object.keys(histo)
           .filter(k => {
             return k.match(/db.*query./g) != null;
           })
+          .filter(k => {
+            let db = k.substring(k.indexOf("db.") + 3, k.indexOf(".query."));
+            return this.database ? this.database === db : true;
+          })
           .map(k => {
+            let query = k.substring(k.indexOf(".query.") + 7, k.length);
+            let db = k.substring(k.indexOf("db.") + 3, k.indexOf(".query."));
             return Object.assign({}, histo[k], {
-              query: k.substring(k.indexOf(".query.") + 7, k.length)
+              query: query,
+              database: db
             });
           });
       });

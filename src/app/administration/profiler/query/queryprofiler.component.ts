@@ -9,9 +9,11 @@ import { ProfilerService, MetricService } from "../../../core/services";
 export class QueryProfilerComponent implements OnInit {
   tab = "running";
 
-  params = { database: null, server: null };
   databases: any;
   servers: string[];
+
+  database = null;
+  server = null;
   constructor(private metrics: MetricService) {}
 
   ngOnInit(): void {
@@ -19,7 +21,7 @@ export class QueryProfilerComponent implements OnInit {
       response => {
         this.databases = response[0].databases;
         this.servers = Object.keys(response[1].clusterStats);
-        this.params.server = this.servers[0];
+        this.server = this.servers[0];
       }
     );
   }
