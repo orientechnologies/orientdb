@@ -94,7 +94,7 @@ public abstract class OSchemaShared implements OCloseable {
     internalClasses.add("orids");
   }
 
-  static final class ClusterIdsAreEmptyException extends Exception {
+  protected static final class ClusterIdsAreEmptyException extends Exception {
   }
 
   public OSchemaShared() {
