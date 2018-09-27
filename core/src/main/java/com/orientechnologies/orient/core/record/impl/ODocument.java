@@ -349,9 +349,10 @@ public class ODocument extends ORecordAbstract
    *
    * @param iFieldName     The property name
    * @param iPropertyValue The property value
+   * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public void setProperty(final String iFieldName, Object iPropertyValue) {
-    setProperty(iFieldName, iPropertyValue, OCommonConst.EMPTY_TYPES_ARRAY);
+  public ODocument setProperty(final String iFieldName, Object iPropertyValue) {
+    return setProperty(iFieldName, iPropertyValue, OCommonConst.EMPTY_TYPES_ARRAY);
   }
 
   /**
@@ -360,8 +361,9 @@ public class ODocument extends ORecordAbstract
    * @param iPropetyName   The property name
    * @param iPropertyValue The property value
    * @param iFieldType     Forced type (not auto-determined)
+   * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public void setProperty(String iPropetyName, Object iPropertyValue, OType... iFieldType) {
+  public ODocument setProperty(String iPropetyName, Object iPropertyValue, OType... iFieldType) {
     if (iPropetyName == null)
       throw new IllegalArgumentException("Field is null");
 
@@ -370,10 +372,10 @@ public class ODocument extends ORecordAbstract
 
     if (ODocumentHelper.ATTRIBUTE_CLASS.equals(iPropetyName)) {
       setClassName(iPropertyValue.toString());
-      return;
+      return this;
     } else if (ODocumentHelper.ATTRIBUTE_RID.equals(iPropetyName)) {
       _recordId.fromString(iPropertyValue.toString());
-      return;
+      return this;
     } else if (ODocumentHelper.ATTRIBUTE_VERSION.equals(iPropetyName)) {
       if (iPropertyValue != null) {
         int v;
@@ -385,7 +387,7 @@ public class ODocument extends ORecordAbstract
 
         _recordVersion = v;
       }
-      return;
+      return this;
     }
 
     checkForLoading();
@@ -419,7 +421,7 @@ public class ODocument extends ORecordAbstract
       if (iPropertyValue == null) {
         if (oldValue == null)
           // BOTH NULL: UNCHANGED
-          return;
+          return this;
       } else {
 
         try {
@@ -430,7 +432,7 @@ public class ODocument extends ORecordAbstract
                 setDirty();
 
               // SAVE VALUE: UNCHANGED
-              return;
+              return this;
             }
           }
         } catch (Exception e) {
@@ -488,6 +490,7 @@ public class ODocument extends ORecordAbstract
         entry.setChanged(true);
       }
     }
+    return this;
   }
 
   public <RET> RET removeProperty(final String iFieldName) {

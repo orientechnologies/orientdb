@@ -261,13 +261,15 @@ public class OVertexDelegate implements OVertex {
   }
 
   @Override
-  public void setProperty(String name, Object value) {
+  public OVertexDelegate setProperty(String name, Object value) {
     element.setProperty(name, value);
+    return this;
   }
 
   @Override
-  public void setProperty(String name, Object value, OType... fieldType) {
+  public OVertexDelegate setProperty(String name, Object value, OType... fieldType) {
     element.setProperty(name, value, fieldType);
+    return this;
   }
 
   @Override

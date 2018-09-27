@@ -48,16 +48,18 @@ public interface OElement extends ORecord{
    * Sets a property value
    * @param name the property name
    * @param value the property value
+   * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public void setProperty(String name, Object value);
+  public <RET extends OElement> RET setProperty(String name, Object value);
 
   /**
    * Sets a property value
    * @param name the property name
    * @param value the property value
    * @param fieldType Forced type (not auto-determined)
+   * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public void setProperty(String name, Object value, OType... fieldType);
+  public <RET extends OElement> RET setProperty(String name, Object value, OType... fieldType);
 
   /**
    * Remove a property

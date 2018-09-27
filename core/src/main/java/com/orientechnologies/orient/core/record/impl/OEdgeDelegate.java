@@ -150,19 +150,21 @@ public class OEdgeDelegate implements OEdge {
   }
 
   @Override
-  public void setProperty(String name, Object value) {
+  public OEdgeDelegate setProperty(String name, Object value) {
     if (element == null) {
       promoteToRegularEdge();
     }
     element.setProperty(name, value);
+    return this;
   }
 
   @Override
-  public void setProperty(String name, Object value, OType... fieldType) {
+  public OEdgeDelegate setProperty(String name, Object value, OType... fieldType) {
     if (element == null) {
       promoteToRegularEdge();
     }
     element.setProperty(name, value, fieldType);
+    return this;
   }
 
   private void promoteToRegularEdge() {

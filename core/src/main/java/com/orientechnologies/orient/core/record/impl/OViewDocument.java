@@ -29,7 +29,7 @@ public class OViewDocument extends ODocument {
   }
 
   @Override
-  public void setProperty(String iFieldName, Object iPropertyValue) {
+  public OViewDocument setProperty(String iFieldName, Object iPropertyValue) {
     super.setProperty(iFieldName, iPropertyValue);
     if (view != null && view.isUpdatable()) {
       String originField = view.getOriginRidField();
@@ -43,5 +43,6 @@ public class OViewDocument extends ODocument {
         }
       }
     }
+    return this;
   }
 }
