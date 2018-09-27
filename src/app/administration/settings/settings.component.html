@@ -3,10 +3,13 @@
     <div class="col-md-12">
         <ul class="nav nav-tabs">
             <li *ngIf="canViewMetrics" [ngClass]="{'active' : tab === 'metrics'}" (click)="tab = 'metrics'"><a href="javascript:void(0)"><span>Metrics</span></a></li>
+            <li *ngIf="canViewPermissions" [ngClass]="{'active' : tab === 'permissions'}" (click)="tab = 'permissions'"><a
+                    href="javascript:void(0)"><span>Permissions</span></a></li>
 
         </ul>
         <div class="tab-content row">
             <metrics-settings [canEdit]="canEditMetrics" *ngIf="tab === 'metrics' && canViewMetrics"></metrics-settings>
+            <permission-settings *ngIf="tab === 'permissions' && canViewPermissions"></permission-settings>
         </div>
     </div>
 </div>

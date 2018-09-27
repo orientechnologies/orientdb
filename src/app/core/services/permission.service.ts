@@ -37,7 +37,7 @@ class PermissionService {
       headers: headers
     };
   }
-  allPermissions(params) {
+  allPermissions() {
     let url = API + "permissions/all";
     return this.http
       .get(url, this.getOptions())

@@ -51,7 +51,8 @@ import {
   QueryProfilerComponent,
   RunningQueryProfilerComponent,
   ClusterCrudComponent,
-  QueryStatsComponent
+  QueryStatsComponent,
+  PermissionSettingsComponent
 } from "./administration";
 
 import {
@@ -121,5 +122,6 @@ export const APP_DECLARATIONS = [
   QueryProfilerComponent,
   RunningQueryProfilerComponent,
   ClusterCrudComponent,
-  QueryStatsComponent
+  QueryStatsComponent,
+  PermissionSettingsComponent
 ];
