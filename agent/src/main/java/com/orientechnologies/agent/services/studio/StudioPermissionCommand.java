@@ -44,23 +44,24 @@ public class StudioPermissionCommand extends OServerCommandAuthenticatedServerAb
 
     if (parts.length == 2) {
 
-      Map<String, Set<String>> m = new HashMap<>();
-      Set<String> permissions;
       ObjectMapper mapper = new ObjectMapper();
       switch (parts[1]) {
       case "all":
 
-        permissions = Arrays.asList(EnterprisePermissions.values()).stream().map((c) -> c.toString()).collect(Collectors.toSet());
+        Map<String, Map<String, String>> output = new HashMap<>();
+        Map<String, String> perm = Arrays.asList(EnterprisePermissions.values()).stream()
+            .collect(Collectors.toMap(EnterprisePermissions::getPermission, EnterprisePermissions::getDescription));
         mapper = new ObjectMapper();
-        m.put("permissions", permissions);
+        output.put("permissions", perm);
         iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON,
-            mapper.writeValueAsString(m), null);
+            mapper.writeValueAsString(output), null);
         break;
       case "mine":
         String user = getUser(iRequest);
 
+        Map<String, Set<String>> m = new HashMap<>();
         if (user != null) {
-          permissions = Arrays.asList(EnterprisePermissions.values()).stream()
+          Set<String> permissions = Arrays.asList(EnterprisePermissions.values()).stream()
               .filter((c) -> server.isAllowed(user, c.toString())).map((c) -> c.toString()).collect(Collectors.toSet());
           m.put("permissions", permissions);
           iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON,
