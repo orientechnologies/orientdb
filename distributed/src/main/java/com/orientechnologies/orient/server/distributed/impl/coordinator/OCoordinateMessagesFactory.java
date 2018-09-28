@@ -9,6 +9,8 @@ public class OCoordinateMessagesFactory {
   public static final int TRANSACTION_FIRST_PHASE_RESPONSE  = 1;
   public static final int TRANSACTION_SECOND_PHASE_REQUEST  = 2;
   public static final int TRANSACTION_SECOND_PHASE_RESPONSE = 2;
+  public static final int SEQUENCE_ACTION_REQUEST           = 3;
+  public static final int SEQUENCE_ACTION_RESPONSE          = 3;
 
   public ONodeResponse createOperationResponse(int responseType) {
     switch (responseType) {
