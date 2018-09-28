@@ -28,6 +28,7 @@
                             <th>Session ID</th>
                             <th>Database</th>
                             <th>User</th>
+                            <th>Language</th>
                             <th>Statement</th>
                             <th>Start Time</th>
                             <th>Elapsed Time</th>
@@ -41,6 +42,7 @@
                             <td>{{ q.sessionId }}</td>
                             <td>{{ q.database }}</td>
                             <td>{{ q.user }}</td>
+                            <td>{{ q.language }}</td>
                             <td>{{ q.query }}</td>
                             <td>{{ q.startTime | date : 'medium' }}</td>
                             <td>{{ q.elapsedTimeMillis }}</td>

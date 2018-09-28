@@ -43,10 +43,16 @@ export class QueryStatsComponent implements OnInit, OnDestroy, OnChanges {
             return this.database ? this.database === db : true;
           })
           .map(k => {
-            let query = k.substring(k.indexOf(".query.") + 7, k.length);
+            let statement = k.substring(k.indexOf(".query.") + 7, k.length);
+            let language = statement.substring(0, statement.indexOf("."));
+            let query = statement.substring(
+              statement.indexOf(".")+1,
+              statement.length
+            );
             let db = k.substring(k.indexOf("db.") + 3, k.indexOf(".query."));
             return Object.assign({}, histo[k], {
               query: query,
+              language: language,
               database: db
             });
           });

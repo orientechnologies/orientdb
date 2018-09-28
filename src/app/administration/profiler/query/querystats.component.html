@@ -25,6 +25,7 @@
                         <tr>
 
                             <th>Database</th>
+                            <th>Language</th>
                             <th>Query</th>
                             <th>Count</th>
                             <th>Min</th>
@@ -44,6 +45,7 @@
                     <tbody>
                         <tr *ngFor="let q of queries | filter : searchText : fields">
                             <td>{{ q.database }}</td>
+                            <td>{{ q.language }}</td>
                             <td>{{ q.query }}</td>
                             <td>{{ q.count }}</td>
                             <td>{{ q.min }}</td>
