@@ -279,6 +279,7 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
           Optional<QueryInfo> info = getQueryInfo(resultSet);
 
           info.ifPresent((it) -> {
+            internal.setProperty("language", it.getLanguage());
             internal.setProperty("query", it.getStatement());
             internal.setProperty("startTime", it.getStartTime());
             internal.setProperty("elapsedTimeMillis", it.getElapsedTimeMillis());

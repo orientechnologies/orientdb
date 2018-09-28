@@ -34,14 +34,18 @@ public class OrientDBDatabaseQueryMetrics implements OrientDBMetric {
 
   @Override
   public void stop() {
+    queries.forEach((s, v) -> {
 
-    queries.forEach((s, v) -> registry.remove(String.format(OGlobalMetrics.DATABASE_QUERY_STATS.name, this.storage, s)));
+      String[] split = s.split(".", 1);
+      registry.remove(String.format(OGlobalMetrics.DATABASE_QUERY_STATS.name, this.storage, split[0], split[1]));
+
+    });
   }
 
   public void onResultSet(OResultSet resultSet) {
 
     server.getQueryInfo(resultSet).ifPresent((it) -> {
-      OHistogram histogram = queries.computeIfAbsent(it.getStatement(), (k) -> registry
+      OHistogram histogram = queries.computeIfAbsent(it.getLanguage() + "." + it.getStatement(), (k) -> registry
           .histogram(String.format(OGlobalMetrics.DATABASE_QUERY_STATS.name, this.storage, it.getLanguage(), it.getStatement()),
               OGlobalMetrics.DATABASE_CREATE_OPS.description));
       histogram.update(it.getElapsedTimeMillis());
