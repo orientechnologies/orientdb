@@ -1,10 +1,12 @@
 package com.orientechnologies.enterprise.server;
 
 import com.orientechnologies.agent.operation.NodesManager;
+import com.orientechnologies.agent.services.metrics.server.database.QueryInfo;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseConnectionListener;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseStorageListener;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OSystemDatabase;
@@ -60,4 +62,6 @@ public interface OEnterpriseServer {
   OServerSecurity getSecurity();
 
   List<OResult> listQueries(Optional<Function<OClientConnection, Boolean>> filter);
+
+  Optional<QueryInfo> getQueryInfo(OResultSet resultSet);
 }

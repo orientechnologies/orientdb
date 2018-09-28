@@ -12,7 +12,7 @@ public enum OGlobalMetrics {
       "server.runtime.diskCache", "Stats about Disk Cache"), SERVER_DISK_SPACE("server.disk.space",
       "Stats about disk space"), DATABASE_READ_OPS("db.%s.readOps", "Stats on read operations"), DATABASE_CREATE_OPS(
       "db.%s.createOps", "Stats on create operations"), DATABASE_UPDATE_OPS("db.%s.updateOps",
-      "Stats on update operations"), DATABASE_QUERY_STATS("db.%s.query.%s", "Stats on queries"), DATABASE_DELETE_OPS(
+      "Stats on update operations"), DATABASE_QUERY_STATS("db.%s.query.%s.%s", "Stats on queries"), DATABASE_DELETE_OPS(
       "db.%s.deleteOps", "Stats on delete operations"), DATABASE_COMMIT_OPS("db.%s.commitOps",
       "Stats on commit operations"), DATABASE_ROLLBACK_OPS("db.%s.rollbackOps", "Stats on rollback operations");
 

@@ -29,7 +29,7 @@ public interface OEnterpriseStorageListener {
   default void onCommandStart(ODatabase database, OResultSet result) {
 
   }
-  default void onCommandEnd(ODatabase database, OResultSet removed) {
+  default void onCommandEnd(ODatabase database, OResultSet result) {
 
   }
 }

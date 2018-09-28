@@ -73,6 +73,11 @@ public class OrientDBDatabasesMetrics implements OrientDBMetric, OEnterpriseStor
   @Override
   public void onCommandStart(ODatabase database, OResultSet result) {
 
+
+  }
+
+  @Override
+  public void onCommandEnd(ODatabase database, OResultSet result) {
     OrientDBDatabaseQueryMetrics queryMetrics = queries.get(database.getName());
     if (queryMetrics != null) {
 

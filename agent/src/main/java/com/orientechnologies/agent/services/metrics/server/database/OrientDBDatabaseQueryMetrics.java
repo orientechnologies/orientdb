@@ -5,14 +5,9 @@ import com.orientechnologies.agent.profiler.metrics.OHistogram;
 import com.orientechnologies.agent.services.metrics.OGlobalMetrics;
 import com.orientechnologies.agent.services.metrics.OrientDBMetric;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.sql.parser.OLocalResultSet;
-import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -45,33 +40,15 @@ public class OrientDBDatabaseQueryMetrics implements OrientDBMetric {
 
   public void onResultSet(OResultSet resultSet) {
 
-    Optional<OExecutionPlan> plan = resultSet.getExecutionPlan();
-
-    String query = plan.map((p -> {
-      String q = "";
-      if (p instanceof OInternalExecutionPlan) {
-        String stm = ((OInternalExecutionPlan) p).getStatement();
-        if (stm != null) {
-          q = stm;
-        }
-      }
-      return q;
-    })).orElse("");
-
-    if (resultSet instanceof OLocalResultSetLifecycleDecorator) {
-      OResultSet oResultSet = ((OLocalResultSetLifecycleDecorator) resultSet).getInternal();
-      if (oResultSet instanceof OLocalResultSet) {
-        long totalExecutionTime = ((OLocalResultSet) oResultSet).getTotalExecutionTime();
-
-        OHistogram histogram = queries.computeIfAbsent(query, (k) -> registry
-            .histogram(String.format(OGlobalMetrics.DATABASE_QUERY_STATS.name, this.storage, query),
-                OGlobalMetrics.DATABASE_CREATE_OPS.description));
-
-        histogram.update(totalExecutionTime);
-
-      }
-    }
+    server.getQueryInfo(resultSet).ifPresent((it) -> {
+      OHistogram histogram = queries.computeIfAbsent(it.getStatement(), (k) -> registry
+          .histogram(String.format(OGlobalMetrics.DATABASE_QUERY_STATS.name, this.storage, it.getLanguage(), it.getStatement()),
+              OGlobalMetrics.DATABASE_CREATE_OPS.description));
+      histogram.update(it.getElapsedTimeMillis());
+    });
 
   }
 
 }
+
+
