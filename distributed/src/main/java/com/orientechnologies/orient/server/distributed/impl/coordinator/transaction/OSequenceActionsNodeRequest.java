@@ -15,7 +15,13 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
+import com.orientechnologies.orient.client.remote.message.sequence.OSequenceActionRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.metadata.sequence.OSequence;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedExecutor;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OLogId;
@@ -24,6 +30,7 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeRes
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.List;
 
 /**
  *
@@ -31,9 +38,55 @@ import java.io.IOException;
  */
 public class OSequenceActionsNodeRequest implements ONodeRequest{
 
+  List<OSequenceActionRequest> actions;
+  
+  public OSequenceActionsNodeRequest(){
+    
+  }
+  
+  public OSequenceActionsNodeRequest(List<OSequenceActionRequest> actions){
+    this.actions = actions;
+  }
+  
   @Override
   public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor, ODatabaseDocumentInternal session) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    for (OSequenceActionRequest actionRequest : actions){
+      OSequenceAction action = actionRequest.getAction();
+      ODatabaseDocumentDistributed db = (ODatabaseDocumentDistributed) session;
+      OSequenceLibrary sequences = db.getMetadata().getSequenceLibrary();
+      String sequenceName = action.getSequenceName();
+      int actionType = action.getActionType();
+      OSequence targetSequence = null;
+      if (actionType != OSequenceAction.CREATE){
+        targetSequence = sequences.getSequence(sequenceName);
+        if (targetSequence == null){
+          //TODO throw some exception
+        }
+      }
+      switch (actionType){
+        case OSequenceAction.CREATE:
+          OSequence sequence = sequences.createSequence(sequenceName, action.getSequenceType(), action.getParameters());
+          if (sequence == null){
+            //TODO throw some exception
+          }
+          break;
+        case OSequenceAction.REMOVE:
+          sequences.dropSequence(sequenceName);
+          break;
+        case OSequenceAction.CURRENT:
+          targetSequence.current();
+          break;
+        case OSequenceAction.NEXT:
+          targetSequence.next();
+          break;
+        case OSequenceAction.RESET:
+          targetSequence.reset();
+          break;
+        case OSequenceAction.UPDATE:
+          targetSequence.updateParams(action.getParameters());
+          break;
+      }
+    }
   }
 
   @Override
@@ -48,7 +101,7 @@ public class OSequenceActionsNodeRequest implements ONodeRequest{
 
   @Override
   public int getRequestType() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return OCoordinateMessagesFactory.SEQUENCE_ACTION_REQUEST;
   }
   
 }

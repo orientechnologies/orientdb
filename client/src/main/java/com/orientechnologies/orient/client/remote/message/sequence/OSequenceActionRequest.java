@@ -127,14 +127,16 @@ public class OSequenceActionRequest {
     byte[] sequenceNameBytes = action.getSequenceName().getBytes("UTF8");
     out.writeInt(sequenceNameBytes.length);
     out.write(sequenceNameBytes);
-    OSequence.CreateParams params = action.getParameters();
+    out.writeByte(action.getSequenceType().getVal());
     
+    OSequence.CreateParams params = action.getParameters();    
     serializeLong(params.start, out);
     serializeInt(params.increment, out);
     serializeInt(params.cacheSize, out);
     serializeLong(params.limitValue, out);
     serializeOrderType(params.orderType, out);
     serializeBoolean(params.recyclable, out);
+    serializeBoolean(params.turnLimitOff, out);
   }
   
   public void deserialize(DataInput in) throws IOException{
@@ -142,6 +144,12 @@ public class OSequenceActionRequest {
     int nameLength = in.readInt();
     byte[] nameBytes = new byte[nameLength];
     in.readFully(nameBytes);
+    byte sequenceTypeByte = in.readByte();
+    OSequence.SEQUENCE_TYPE sequenceType = OSequence.SEQUENCE_TYPE.fromVal(sequenceTypeByte);
+    if (sequenceType == null){
+      //TODO throw some other exception;
+      throw new IOException("Inavlid sequnce type value: " + sequenceTypeByte);
+    }
     String sequenceName = new String(nameBytes, "UTF8");
     OSequence.CreateParams params = new OSequence.CreateParams();
     params.resetNull();
@@ -151,7 +159,8 @@ public class OSequenceActionRequest {
     params.limitValue = deserializeLong(in);
     params.orderType = deserializeOrderType(in);
     params.recyclable = deserializeBoolean(in);
-    action = new OSequenceAction(actionType, sequenceName, params);
+    params.turnLimitOff = deserializeBoolean(in);
+    action = new OSequenceAction(actionType, sequenceName, params, sequenceType);
   }
 
   public OSequenceAction getAction() {

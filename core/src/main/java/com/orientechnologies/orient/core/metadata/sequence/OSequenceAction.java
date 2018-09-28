@@ -26,15 +26,20 @@ public class OSequenceAction {
   public static final int CURRENT = 3;
   public static final int NEXT = 4;
   public static final int RESET = 5;
+  public static final int UPDATE = 6;
 
   private final int actionType;
   private final String sequenceName;
   private final OSequence.CreateParams parameters;
+  //we need it for create action
+  private final OSequence.SEQUENCE_TYPE sequenceType;
 
-  public OSequenceAction(int actionType, String sequenceName, OSequence.CreateParams params){
+  public OSequenceAction(int actionType, String sequenceName, OSequence.CreateParams params,
+          OSequence.SEQUENCE_TYPE sequenceType){
     this.actionType = actionType;
     this.sequenceName = sequenceName;
     this.parameters = params;
+    this.sequenceType = sequenceType;
   }
 
   public int getActionType() {
@@ -48,5 +53,9 @@ public class OSequenceAction {
   public OSequence.CreateParams getParameters() {
     return parameters;
   }  
-  
+
+  public OSequence.SEQUENCE_TYPE getSequenceType() {
+    return sequenceType;
+  }
+    
 }

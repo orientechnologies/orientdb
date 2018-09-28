@@ -76,7 +76,7 @@ public class OSequenceActionsSubmit implements OSubmitRequest{
 
   @Override
   public int getRequestType() {
-    return OCoordinateMessagesFactory.SEQUENCE_ACTION_REQUEST;
+    return OCoordinateMessagesFactory.SEQUENCE_ACTIONS_SUBMIT_REQUEST;
   }
   
 }

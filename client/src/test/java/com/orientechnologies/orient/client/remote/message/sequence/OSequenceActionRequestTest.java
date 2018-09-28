@@ -36,7 +36,7 @@ public class OSequenceActionRequestTest {
   @Test
   public void testSerializeDeserialize(){
     OSequence.CreateParams params = new OSequence.CreateParams().setLimitValue(123l);
-    OSequenceAction action = new OSequenceAction(OSequenceAction.CREATE, "testName", params);
+    OSequenceAction action = new OSequenceAction(OSequenceAction.CREATE, "testName", params, OSequence.SEQUENCE_TYPE.ORDERED);
     OSequenceActionRequest request = new OSequenceActionRequest(action);
     ByteArrayOutputStream arrayOutput = new ByteArrayOutputStream();
     DataOutput out = new DataOutputStream(arrayOutput);

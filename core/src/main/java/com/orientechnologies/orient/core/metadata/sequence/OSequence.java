@@ -139,7 +139,29 @@ public abstract class OSequence {
   }
 
   public enum SEQUENCE_TYPE {
-    CACHED, ORDERED,;
+    CACHED((byte)0), 
+    ORDERED((byte)1);
+    
+    private byte val;
+    
+    SEQUENCE_TYPE(byte val){
+      this.val = val;
+    }
+    
+    public byte getVal(){
+      return val;
+    }
+    
+    public static SEQUENCE_TYPE fromVal(byte val){
+      switch (val){
+        case 0:
+          return CACHED;
+        case 1:
+          return ORDERED;
+        default:
+          return null;
+      }
+    }
   }
 
   private int maxRetry = DEF_MAX_RETRY;
