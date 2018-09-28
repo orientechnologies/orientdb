@@ -36,7 +36,7 @@ public class OrientDBDatabaseQueryMetrics implements OrientDBMetric {
   public void stop() {
     queries.forEach((s, v) -> {
 
-      String[] split = s.split(".", 1);
+      String[] split = s.split("\\.", 2);
       registry.remove(String.format(OGlobalMetrics.DATABASE_QUERY_STATS.name, this.storage, split[0], split[1]));
 
     });
