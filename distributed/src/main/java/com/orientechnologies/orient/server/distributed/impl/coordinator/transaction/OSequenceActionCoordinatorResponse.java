@@ -15,30 +15,45 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
-import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeResponse;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitResponse;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 /**
  *
- * @author marko
+ * @author mdjurovi
  */
-public class OSequenceActionsNodeResponse implements ONodeResponse{
-
+public class OSequenceActionCoordinatorResponse implements OSubmitResponse{
+  
+  private int failedOn = 0;
+  private int limitReachedOn = 0;
+  
+  public OSequenceActionCoordinatorResponse(){
+    
+  }
+  
+  public OSequenceActionCoordinatorResponse(int failedOnNo, int limitReachedOnNo){
+    failedOn = failedOnNo;
+    limitReachedOn = limitReachedOnNo;
+  }
+  
   @Override
   public void serialize(DataOutput output) throws IOException {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    output.writeInt(failedOn);
+    output.writeInt(limitReachedOn);
   }
 
   @Override
   public void deserialize(DataInput input) throws IOException {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    failedOn = input.readInt();
+    limitReachedOn = input.readInt();
   }
 
   @Override
   public int getResponseType() {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    return OCoordinateMessagesFactory.SEQUENCE_ACTION_COORDINATOR_RESPONSE;
   }
   
 }

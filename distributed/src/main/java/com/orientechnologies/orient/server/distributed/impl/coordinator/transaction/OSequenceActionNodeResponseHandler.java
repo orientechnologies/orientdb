@@ -20,21 +20,54 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistrib
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeResponse;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ORequestContext;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OResponseHandler;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author marko
  */
-public class OSequenceActionsNodeResponseHandler implements OResponseHandler{
+public class OSequenceActionNodeResponseHandler implements OResponseHandler{
 
+  private int responseCount = 0;
+  private final List<ODistributedMember> failedActionNode = new ArrayList<>();
+  private final List<ODistributedMember> limitReachedNodes = new ArrayList<>();
+  private OSessionOperationId operationId;
+  
+  private OSequenceActionNodeResponseHandler(){
+    
+  }
+  
+  public OSequenceActionNodeResponseHandler(OSessionOperationId operationId){
+    this.operationId = operationId;
+  }
+  
   @Override
   public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member, ONodeResponse response) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    responseCount++;    
+    OSequenceActionNodeResponse responseFromNode = (OSequenceActionNodeResponse)response;
+    switch(responseFromNode.getResponseResultType()){
+      case SUCCESS:
+        break;
+      case ERROR:
+        failedActionNode.add(member);
+        break;
+      case LIMIT_REACHED:
+        limitReachedNodes.add(member);
+        break;
+    }
+    if (responseCount == context.getInvolvedMembers().size()){
+      OSequenceActionCoordinatorResponse submitedActionResponse = new OSequenceActionCoordinatorResponse(failedActionNode.size(), limitReachedNodes.size());
+      coordinator.reply(member, operationId, submitedActionResponse);
+      return true;
+    }
+    return false;
   }
 
   @Override
   public boolean timeout(ODistributedCoordinator coordinator, ORequestContext context) {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    //TODO think about timeouts
+    return false;
   }
   
 }

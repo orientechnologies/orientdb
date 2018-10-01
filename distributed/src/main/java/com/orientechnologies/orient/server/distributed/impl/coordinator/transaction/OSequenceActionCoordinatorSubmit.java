@@ -24,59 +24,55 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitR
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *
  * @author marko
  */
-public class OSequenceActionsSubmit implements OSubmitRequest{  
+public class OSequenceActionCoordinatorSubmit implements OSubmitRequest{  
   
-  private List<OSequenceActionRequest> actions = null;
+  private OSequenceActionRequest action = null;
   
-  public OSequenceActionsSubmit(){
+  public OSequenceActionCoordinatorSubmit(){
     
   }
   
-  public OSequenceActionsSubmit(List<OSequenceAction> actions){
-    this.actions = new ArrayList<>();
-    for (OSequenceAction action : actions){
-      OSequenceActionRequest actionrequest = new OSequenceActionRequest(action);
-      this.actions.add(actionrequest);
-    }
+  public OSequenceActionCoordinatorSubmit(OSequenceAction action){
+    this.action = new OSequenceActionRequest(action);      
   }
   
   @Override
   public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
-    OSequenceActionsNodeRequest nodeRequest = new OSequenceActionsNodeRequest();
-    OSequenceActionsNodeResponseHandler nodeResponseHandler = new OSequenceActionsNodeResponseHandler();
+    OSequenceActionNodeRequest nodeRequest = new OSequenceActionNodeRequest();
+    OSequenceActionNodeResponseHandler nodeResponseHandler = new OSequenceActionNodeResponseHandler(operationId);
     
     coordinator.sendOperation(this, nodeRequest, nodeResponseHandler);
   }
 
   @Override
   public void serialize(DataOutput output) throws IOException {
-    output.writeInt(actions.size());
-    for (OSequenceActionRequest actionsRequest : actions){
-      actionsRequest.serialize(output);
+    if (action != null){
+      output.writeByte(1);
+      action.serialize(output);
+    }
+    else{
+      output.writeByte(0);
     }
   }
 
   @Override
   public void deserialize(DataInput input) throws IOException {
-    this.actions = new ArrayList<>();
-    int size = input.readInt();
-    for (int i = 0; i < size; i++){
-      OSequenceActionRequest actionrequest = new OSequenceActionRequest();
-      actionrequest.deserialize(input);
-      actions.add(actionrequest);
+    byte flag = input.readByte();
+    action = null;
+    if (flag > 0){
+      action = new OSequenceActionRequest();
+      action.deserialize(input);
     }
   }
 
   @Override
   public int getRequestType() {
-    return OCoordinateMessagesFactory.SEQUENCE_ACTIONS_SUBMIT_REQUEST;
+    return OCoordinateMessagesFactory.SEQUENCE_ACTION_COORDINATOR_SUBMIT;
   }
   
 }

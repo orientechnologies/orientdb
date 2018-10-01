@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceLimitReachedException;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedExecutor;
@@ -30,27 +31,26 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeRes
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.List;
 
 /**
  *
  * @author marko
  */
-public class OSequenceActionsNodeRequest implements ONodeRequest{
+public class OSequenceActionNodeRequest implements ONodeRequest{
 
-  List<OSequenceActionRequest> actions;
+  OSequenceActionRequest actionRequest;
   
-  public OSequenceActionsNodeRequest(){
+  public OSequenceActionNodeRequest(){
     
   }
   
-  public OSequenceActionsNodeRequest(List<OSequenceActionRequest> actions){
-    this.actions = actions;
+  public OSequenceActionNodeRequest(OSequenceActionRequest action){
+    actionRequest = action;
   }
   
   @Override
-  public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor, ODatabaseDocumentInternal session) {
-    for (OSequenceActionRequest actionRequest : actions){
+  public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor, ODatabaseDocumentInternal session) {    
+    try{
       OSequenceAction action = actionRequest.getAction();
       ODatabaseDocumentDistributed db = (ODatabaseDocumentDistributed) session;
       OSequenceLibrary sequences = db.getMetadata().getSequenceLibrary();
@@ -60,14 +60,14 @@ public class OSequenceActionsNodeRequest implements ONodeRequest{
       if (actionType != OSequenceAction.CREATE){
         targetSequence = sequences.getSequence(sequenceName);
         if (targetSequence == null){
-          //TODO throw some exception
+          throw new RuntimeException("Sequence with name: " + sequenceName + " doesn't exists");
         }
       }
       switch (actionType){
         case OSequenceAction.CREATE:
           OSequence sequence = sequences.createSequence(sequenceName, action.getSequenceType(), action.getParameters());
           if (sequence == null){
-            //TODO throw some exception
+            throw new RuntimeException("Faled to create sequence: " + sequenceName);
           }
           break;
         case OSequenceAction.REMOVE:
@@ -85,23 +85,43 @@ public class OSequenceActionsNodeRequest implements ONodeRequest{
         case OSequenceAction.UPDATE:
           targetSequence.updateParams(action.getParameters());
           break;
-      }
+      }      
+      return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.SUCCESS, null);
+    }
+    catch (OSequenceLimitReachedException e){
+      return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.LIMIT_REACHED, null);
+    }
+    catch (RuntimeException exc){
+      return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.ERROR, exc.getMessage());
     }
   }
 
   @Override
   public void serialize(DataOutput output) throws IOException {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    if (actionRequest != null){
+      output.writeByte(1);
+      actionRequest.serialize(output);
+    }
+    else{
+      output.write(0);
+    }
   }
 
   @Override
   public void deserialize(DataInput input) throws IOException {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    byte flag = input.readByte();
+    if (flag > 0){
+      actionRequest = new OSequenceActionRequest();
+      actionRequest.deserialize(input);
+    }
+    else{
+      actionRequest = null;
+    }
   }
 
   @Override
   public int getRequestType() {
-    return OCoordinateMessagesFactory.SEQUENCE_ACTION_REQUEST;
+    return OCoordinateMessagesFactory.SEQUENCE_ACTION_NODE_REQUEST;
   }
   
 }
