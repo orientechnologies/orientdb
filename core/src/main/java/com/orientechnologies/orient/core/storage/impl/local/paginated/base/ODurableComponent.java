@@ -27,8 +27,6 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
 import java.io.IOException;
 
@@ -54,11 +52,10 @@ import java.io.IOException;
  * @since 8/27/13
  */
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
-  protected final OAtomicOperationsManager     atomicOperationsManager;
-  protected final OAbstractPaginatedStorage    storage;
-  protected final OReadCache                   readCache;
-  protected final OWriteCache                  writeCache;
-  protected final OPerformanceStatisticManager performanceStatisticManager;
+  protected final OAtomicOperationsManager  atomicOperationsManager;
+  protected final OAbstractPaginatedStorage storage;
+  protected final OReadCache                readCache;
+  protected final OWriteCache               writeCache;
 
   private volatile String name;
   private volatile String fullName;
@@ -78,7 +75,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
-    this.performanceStatisticManager = storage.getPerformanceStatisticManager();
     this.lockName = lockName;
   }
 
@@ -108,7 +104,8 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   /**
-   * @see OAtomicOperationsManager#startAtomicOperation(com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent, boolean)
+   * @see OAtomicOperationsManager#startAtomicOperation(com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent,
+   * boolean)
    */
   protected OAtomicOperation startAtomicOperation(boolean trackNonTxOperations) throws IOException {
     return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
@@ -129,7 +126,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected OCacheEntry loadPageForWrite(OAtomicOperation atomicOperation, long fileId, long pageIndex, boolean checkPinnedPages,
       final int pageCount) throws IOException {
     if (atomicOperation == null)
-      return readCache.loadForWrite(fileId, pageIndex, checkPinnedPages, writeCache, 1, true);
+      return readCache.loadForWrite(fileId, pageIndex, checkPinnedPages, writeCache, 1, true, null);
 
     return atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1);
   }
@@ -149,14 +146,14 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected void pinPage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) {
     if (atomicOperation == null)
-      readCache.pinPage(cacheEntry);
+      readCache.pinPage(cacheEntry, writeCache);
     else
       atomicOperation.pinPage(cacheEntry);
   }
 
   protected OCacheEntry addPage(OAtomicOperation atomicOperation, long fileId) throws IOException {
     if (atomicOperation == null)
-      return readCache.allocateNewPage(fileId, writeCache, true);
+      return readCache.allocateNewPage(fileId, writeCache, true, null);
 
     return atomicOperation.addPage(fileId);
   }
@@ -216,22 +213,4 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     else
       atomicOperation.truncateFile(filedId);
   }
-
-  protected void startOperation() {
-    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
-        .getSessionPerformanceStatistic();
-    if (sessionStoragePerformanceStatistic != null) {
-      sessionStoragePerformanceStatistic
-          .startComponentOperation(getFullName(), OSessionStoragePerformanceStatistic.ComponentType.GENERAL);
-    }
-  }
-
-  protected void completeOperation() {
-    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
-        .getSessionPerformanceStatistic();
-    if (sessionStoragePerformanceStatistic != null) {
-      sessionStoragePerformanceStatistic.completeComponentOperation();
-    }
-  }
-
 }

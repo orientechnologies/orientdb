@@ -94,10 +94,11 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     //otherwise memory size will be set during cache initialization.
   }
 
-  public OStorage createStorage(final String dbName, final Map<String, String> configuration) {
+  public OStorage createStorage(final String dbName, final Map<String, String> configuration, long maxWalSegSize) {
     try {
 
-      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache, files);
+      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache, files,
+          maxWalSegSize);
     } catch (Exception e) {
       final String message =
           "Error on opening database: " + dbName + ". Current location is: " + new java.io.File(".").getAbsolutePath();

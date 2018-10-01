@@ -19,7 +19,6 @@
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.etl.loader.OETLLoader;
 import com.orientechnologies.orient.etl.loader.OETLOrientDBLoader;
 import com.orientechnologies.orient.etl.transformer.OETLVertexTransformer;
 import org.junit.Before;
@@ -44,11 +43,10 @@ public class OETLProcessorTest extends OETLBaseTest {
   public void testMain() throws Exception {
 
     final OETLProcessor processor = new OETLProcessorConfigurator()
-        .parseConfigAndParameters(new String[] {
-            "-dbURL=plocal:/tmp/testMain",
+        .parseConfigAndParameters(new String[] { "-dbURL=plocal:/tmp/orientDBoetl/testMain",
             "./src/test/resources/comment.json" });
 
-    assertThat(processor.getContext().getVariable("dbURL")).isEqualTo("plocal:/tmp/testMain");
+    assertThat(processor.getContext().getVariable("dbURL")).isEqualTo("plocal:/tmp/orientDBoetl/testMain");
 
     OETLOrientDBLoader loader = (OETLOrientDBLoader) processor.getLoader();
     loader.getPool().close();
@@ -60,12 +58,11 @@ public class OETLProcessorTest extends OETLBaseTest {
   public void shouldParseSplitConfiguration() throws Exception {
 
     final OETLProcessor processor = new OETLProcessorConfigurator()
-        .parseConfigAndParameters(new String[] {
-            "-dbURL=plocal:/tmp/shouldParseSplitConfiguration",
+        .parseConfigAndParameters(new String[] { "-dbURL=plocal:/tmp/orientDBoetl/shouldParseSplitConfiguration",
             "./src/test/resources/comment_split_1.json",
             "./src/test/resources/comment_split_2.json" });
 
-    assertThat(processor.getContext().getVariable("dbURL")).isEqualTo("plocal:/tmp/shouldParseSplitConfiguration");
+    assertThat(processor.getContext().getVariable("dbURL")).isEqualTo("plocal:/tmp/orientDBoetl/shouldParseSplitConfiguration");
     assertThat(processor.getTransformers().get(0)).isInstanceOf(OETLVertexTransformer.class);
     assertThat(processor.getExtractor().getName()).isEqualTo("csv");
     OETLOrientDBLoader loader = (OETLOrientDBLoader) processor.getLoader();
@@ -78,7 +75,7 @@ public class OETLProcessorTest extends OETLBaseTest {
   public void shouldExceuteBeginBlocktoExpandVariables() throws Exception {
 
     final OETLProcessor processor = new OETLProcessorConfigurator()
-        .parseConfigAndParameters(new String[] { "-dbURL=plocal:/tmp/shouldExceuteBeginBlocktoExpandVariables",
+        .parseConfigAndParameters(new String[] { "-dbURL=plocal:/tmp/orientDBoetl/shouldExceuteBeginBlocktoExpandVariables",
             "./src/test/resources/comment.json" });
 
     assertThat(processor.context.getVariable("filePath")).isEqualTo("./src/test/resources/comments.csv");

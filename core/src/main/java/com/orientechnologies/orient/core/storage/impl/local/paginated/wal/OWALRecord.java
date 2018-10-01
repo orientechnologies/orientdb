@@ -25,15 +25,15 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
  * @since 25.04.13
  */
 public interface OWALRecord {
-  int toStream(byte[] content, int offset);
-
-  int fromStream(byte[] content, int offset);
-
-  int serializedSize();
-
-  boolean isUpdateMasterRecord();
-
   OLogSequenceNumber getLsn();
 
   void setLsn(OLogSequenceNumber lsn);
+
+  void setDistance(int distance);
+
+  void setDiskSize(int diskSize);
+
+  int getDistance();
+
+  int getDiskSize();
 }

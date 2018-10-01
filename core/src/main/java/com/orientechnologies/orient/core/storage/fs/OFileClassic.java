@@ -561,7 +561,7 @@ public class OFileClassic implements OFile, OClosableItem {
       allocationMode = AllocationMode.DESCRIPTOR;
       int fd = 0;
       try {
-        fd = ONative.instance().open(osFile.toAbsolutePath().toString());
+        fd = ONative.instance().open(osFile.toAbsolutePath().toString(), ONative.O_CREAT | ONative.O_RDONLY | ONative.O_WRONLY);
       } catch (LastErrorException e) {
         OLogManager.instance().warnNoDb(this, "File %s can not be opened using Linux native API,"
                 + " more slower methods of allocation will be used. Error code : %d.", osFile.toAbsolutePath().toString(),

@@ -33,13 +33,13 @@ public class OByteBufferPoolTest {
     final ODirectMemoryAllocator allocator = new ODirectMemoryAllocator();
     final OByteBufferPool byteBufferPool = new OByteBufferPool(42, allocator, 0);
 
-    final ByteBuffer bufferOne = byteBufferPool.acquireDirect(false);
+    final ByteBuffer bufferOne = byteBufferPool.acquireDirect(false, false);
     Assert.assertEquals(42, bufferOne.capacity());
     Assert.assertEquals(42, allocator.getMemoryConsumption());
 
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
 
-    final ByteBuffer bufferTwo = byteBufferPool.acquireDirect(true);
+    final ByteBuffer bufferTwo = byteBufferPool.acquireDirect(true, false);
     Assert.assertEquals(42, bufferTwo.capacity());
     Assert.assertEquals(84, allocator.getMemoryConsumption());
 
@@ -62,20 +62,20 @@ public class OByteBufferPoolTest {
     final ODirectMemoryAllocator allocator = new ODirectMemoryAllocator();
     final OByteBufferPool byteBufferPool = new OByteBufferPool(42, allocator, 2);
 
-    ByteBuffer bufferOne = byteBufferPool.acquireDirect(false);
+    ByteBuffer bufferOne = byteBufferPool.acquireDirect(false, false);
 
     Assert.assertEquals(42, bufferOne.capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
     Assert.assertEquals(42, allocator.getMemoryConsumption());
 
-    ByteBuffer bufferTwo = byteBufferPool.acquireDirect(true);
+    ByteBuffer bufferTwo = byteBufferPool.acquireDirect(true, false);
     Assert.assertEquals(42, bufferTwo.capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
     Assert.assertEquals(84, allocator.getMemoryConsumption());
 
     assertBufferIsClear(bufferTwo);
 
-    ByteBuffer bufferThree = byteBufferPool.acquireDirect(false);
+    ByteBuffer bufferThree = byteBufferPool.acquireDirect(false, false);
 
     Assert.assertEquals(42, bufferThree.capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
@@ -96,7 +96,7 @@ public class OByteBufferPoolTest {
     Assert.assertEquals(2, byteBufferPool.getPoolSize());
     Assert.assertEquals(84, allocator.getMemoryConsumption());
 
-    bufferOne = byteBufferPool.acquireDirect(true);
+    bufferOne = byteBufferPool.acquireDirect(true, false);
 
     Assert.assertEquals(42, bufferOne.capacity());
     Assert.assertEquals(0, bufferOne.position());
@@ -105,7 +105,7 @@ public class OByteBufferPoolTest {
 
     assertBufferIsClear(bufferOne);
 
-    bufferTwo = byteBufferPool.acquireDirect(true);
+    bufferTwo = byteBufferPool.acquireDirect(true, false);
 
     Assert.assertEquals(42, bufferTwo.capacity());
     Assert.assertEquals(0, bufferTwo.position());
@@ -114,7 +114,7 @@ public class OByteBufferPoolTest {
 
     assertBufferIsClear(bufferTwo);
 
-    bufferThree = byteBufferPool.acquireDirect(false);
+    bufferThree = byteBufferPool.acquireDirect(false, false);
 
     Assert.assertEquals(42, bufferThree.capacity());
     Assert.assertEquals(0, bufferThree.position());
@@ -126,7 +126,7 @@ public class OByteBufferPoolTest {
     Assert.assertEquals(1, byteBufferPool.getPoolSize());
     Assert.assertEquals(126, allocator.getMemoryConsumption());
 
-    bufferThree = byteBufferPool.acquireDirect(true);
+    bufferThree = byteBufferPool.acquireDirect(true, false);
 
     Assert.assertEquals(42, bufferThree.capacity());
     Assert.assertEquals(0, bufferThree.position());
@@ -238,11 +238,11 @@ public class OByteBufferPoolTest {
       try {
         while (!stop.get()) {
           if (allocatedBuffers.size() < 500) {
-            ByteBuffer buffer = pool.acquireDirect(false);
+            ByteBuffer buffer = pool.acquireDirect(false, false);
             allocatedBuffers.add(buffer);
           } else if (allocatedBuffers.size() < 1000) {
             if (random.nextDouble() <= 0.5) {
-              ByteBuffer buffer = pool.acquireDirect(false);
+              ByteBuffer buffer = pool.acquireDirect(false, false);
               allocatedBuffers.add(buffer);
             } else {
               final int bufferToRemove = random.nextInt(allocatedBuffers.size());
@@ -251,7 +251,7 @@ public class OByteBufferPoolTest {
             }
           } else {
             if (random.nextDouble() <= 0.4) {
-              ByteBuffer buffer = pool.acquireDirect(false);
+              ByteBuffer buffer = pool.acquireDirect(false, false);
               allocatedBuffers.add(buffer);
             } else {
               final int bufferToRemove = random.nextInt(allocatedBuffers.size());

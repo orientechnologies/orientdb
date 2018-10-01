@@ -42,13 +42,6 @@ public interface OWALChanges {
   void applyChanges(ByteBuffer buffer);
 
   /**
-   * Reverts content of the page to the original values before changes were done.
-   *
-   * @param buffer Page instance
-   */
-  void applyOriginalValues(ByteBuffer buffer);
-
-  /**
    * Return the size of byte array is needed to serialize all data in it.
    *
    * @return the required size.
@@ -65,6 +58,8 @@ public interface OWALChanges {
    * @return the number of written bytes + the offset, can be used as offset of the next operation.
    */
   int toStream(int offset, byte[] stream);
+
+  void toStream(ByteBuffer byteBuffer);
 
   /**
    * Read changes from a stream.
