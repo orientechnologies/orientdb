@@ -43,10 +43,9 @@ public class OETLLoadTransformerTest extends OETLBaseTest {
   @Test
   public void shouldNotUpdateExistingVertices() throws Exception {
     //update graph with CSV: avoid num to be casted to integer forcing string
-    configure(
-        " {source: { content: { value: 'num,name\n10000,FirstNameUpdated' } }, " + "extractor : { csv: {} }," + " transformers: ["
-            + "{load: {  joinFieldName:'num', lookup:'Person.num'}}, " + "{vertex: { class:'Person', skipDuplicates: false}}"
-            + "]," + "loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', tx: true} } }");
+    configure(" {source: { content: { value: 'num,name\n10000,FirstNameUpdated' } }, " + "extractor : { csv: {} }," + " transformers: ["
+        + "{load: {  joinFieldName:'num', lookup:'Person.num'}}, " + "{vertex: { class:'Person', skipDuplicates: false}}" + "],"
+        + "loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', tx: true} } }");
 
     ODatabasePool pool = proc.getLoader().getPool();
     ODatabaseDocument db = pool.acquire();
@@ -103,11 +102,9 @@ public class OETLLoadTransformerTest extends OETLBaseTest {
   public void shouldLoadVertexOnDuplicatedInputSet() throws Exception {
 
     //CSV contains duplicated data
-    configure(
-        "{source: { content: { value: 'num,name\n10000,FirstName\n10001,SecondName\n10000,FirstNameUpdated' } }, extractor : { csv: {} },"
-            + " transformers: [{load: { joinFieldName:'num', lookup:'Person.num'}}, {vertex: {class:'Person', skipDuplicates: true}}],"
-            + " " + "loader: { orientdb: { dbURL: 'memory:" + name.getMethodName()
-            + "', dbType:'graph', useLightweightEdges:false } } }");
+    configure("{source: { content: { value: 'num,name\n10000,FirstName\n10001,SecondName\n10000,FirstNameUpdated' } }, extractor : { csv: {} },"
+        + " transformers: [{load: { joinFieldName:'num', lookup:'Person.num'}}, {vertex: {class:'Person', skipDuplicates: true}}]," + " "
+        + "loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
 
     ODatabasePool pool = proc.getLoader().getPool();
     ODatabaseDocument db = pool.acquire();
@@ -135,4 +132,83 @@ public class OETLLoadTransformerTest extends OETLBaseTest {
     resultSet.close();
   }
 
+  @Test
+  public void loadVerticesCreateEdges() throws Exception {
+    String csv = "depot,store,StartDate,EndDate\n" + "BK,1431,20150212,99991231\n" + "BK,1432,20150119,99991231\n" + "DL,1438,20170506,99991231\n";
+
+    //CSV contains duplicated data
+    configure("{source: { content: { value: '" + csv + "' } }, extractor : { csv: {} },"
+        + "transformers: [{load: { joinFieldName:'depot', lookup:'SupplyChainNode.id'}}"
+        + ", {edge: { class: 'HAS_ROUTE_TO', joinFieldName: '${extractedPayload.store}', lookup: 'SupplyChainNode.id', edgeFields: { 'StartDate': '${extractedPayload.StartDate}', 'EndDate': '${extractedPayload.EndDate}' }, direction: 'out', unresolvedLinkAction: 'NOTHING' } }"
+        + "], loader: { orientdb: { dbURL: 'memory:" + name.getMethodName() + "', dbType:'graph', useLightweightEdges:false } } }");
+
+    ODatabasePool pool = proc.getLoader().getPool();
+    ODatabaseDocument db = pool.acquire();
+
+    db.createEdgeClass("HAS_ROUTE_TO");
+
+    OClass personClass = db.createVertexClass("SupplyChainNode");
+    personClass.createProperty("id", OType.STRING);
+
+    personClass.createIndex("SupplyChainNode.id", OClass.INDEX_TYPE.UNIQUE, "id");
+
+    OVertex vBK = db.newVertex("SupplyChainNode");
+    vBK.setProperty("id", "BK");
+    vBK.save();
+
+    OVertex vDL = db.newVertex("SupplyChainNode");
+    vDL.setProperty("id", "DL");
+    vDL.save();
+
+    OVertex v1431 = db.newVertex("SupplyChainNode");
+    v1431.setProperty("id", "1431");
+    v1431.save();
+
+    OVertex v1432 = db.newVertex("SupplyChainNode");
+    v1432.setProperty("id", "1432");
+    v1432.save();
+
+    OVertex v1438 = db.newVertex("SupplyChainNode");
+    v1438.setProperty("id", "1438");
+    v1438.save();
+
+    db.commit();
+    db.close();
+
+    //run processor
+    proc.execute();
+
+    db = pool.acquire();
+    assertThat(db.countClass("SupplyChainNode")).isEqualTo(5);
+
+    OResultSet resultSet = db.query("SELECT out('HAS_ROUTE_TO').size() as res from SupplyChainNode where id = 'BK'");
+    OResult updated = resultSet.next();
+    assertThat((Integer) updated.getProperty("res")).isEqualTo(2);
+    assertThat(resultSet.hasNext()).isFalse();
+    resultSet.close();
+
+    resultSet = db.query("SELECT out('HAS_ROUTE_TO').size() as res from SupplyChainNode where id = 'DL'");
+    updated = resultSet.next();
+    assertThat((Integer) updated.getProperty("res")).isEqualTo(1);
+    assertThat(resultSet.hasNext()).isFalse();
+    resultSet.close();
+
+    resultSet = db.query("SELECT in('HAS_ROUTE_TO').size() as res from SupplyChainNode where id = '1431'");
+    updated = resultSet.next();
+    assertThat((Integer) updated.getProperty("res")).isEqualTo(1);
+    assertThat(resultSet.hasNext()).isFalse();
+    resultSet.close();
+
+    resultSet = db.query("SELECT in('HAS_ROUTE_TO').size() as res from SupplyChainNode where id = '1432'");
+    updated = resultSet.next();
+    assertThat((Integer) updated.getProperty("res")).isEqualTo(1);
+    assertThat(resultSet.hasNext()).isFalse();
+    resultSet.close();
+
+    resultSet = db.query("SELECT in('HAS_ROUTE_TO').size() as res from SupplyChainNode where id = '1438'");
+    updated = resultSet.next();
+    assertThat((Integer) updated.getProperty("res")).isEqualTo(1);
+    assertThat(resultSet.hasNext()).isFalse();
+    resultSet.close();
+  }
 }
