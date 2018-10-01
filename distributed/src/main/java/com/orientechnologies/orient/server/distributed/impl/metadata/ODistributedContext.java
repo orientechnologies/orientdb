@@ -35,6 +35,7 @@ public class ODistributedContext {
   }
 
   private void initOpLog() {
+//    this.opLog = new OPersistentOperationalLogV1(databaseName, context);
     this.opLog = new OIncrementOperationalLog();
   }
 
