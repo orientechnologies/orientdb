@@ -85,7 +85,7 @@ public class ODocument extends ORecordAbstract
   protected           OImmutableSchema                    _schema;
   private             String                              _className;
   private             OImmutableClass                     _immutableClazz;
-  private             int                                 _immutableSchemaVersion = 1;
+  private             int                                 _immutableSchemaVersion = 1;  
 
   /**
    * Internal constructor used on unmarshalling.
@@ -3883,6 +3883,6 @@ public class ODocument extends ORecordAbstract
       }
     }
     return false;
-  }
-
+  }  
+  
 }

@@ -59,8 +59,8 @@ public class OSequenceCached extends OSequence {
   }
 
   @Override
-  public synchronized boolean updateParams(OSequence.CreateParams params) {
-    boolean any = super.updateParams(params);
+  public synchronized boolean updateParams(OSequence.CreateParams params, boolean calledFromThisNode) {
+    boolean any = super.updateParams(params, calledFromThisNode);
     if (params.cacheSize != null && this.getCacheSize() != params.cacheSize) {
       this.setCacheSize(params.cacheSize);
       any = true;
@@ -99,7 +99,7 @@ public class OSequenceCached extends OSequence {
   }
 
   @Override
-  public long next() throws OSequenceLimitReachedException {
+  protected long nextWork(boolean calledFromThisNode) throws OSequenceLimitReachedException {
     ODatabaseDocumentInternal mainDb = getDatabase();
     boolean tx = mainDb.getTransaction().isActive();
     try {
@@ -188,12 +188,12 @@ public class OSequenceCached extends OSequence {
   }
 
   @Override
-  public synchronized long current() {
+  protected synchronized long currentWork(boolean calledFromThisNode) {
     return this.cacheStart;
   }
 
   @Override
-  public long reset() {
+  protected long resetWork(boolean calledFromThisNode) {
     ODatabaseDocumentInternal mainDb = getDatabase();
     boolean tx = mainDb.getTransaction().isActive();
     try {

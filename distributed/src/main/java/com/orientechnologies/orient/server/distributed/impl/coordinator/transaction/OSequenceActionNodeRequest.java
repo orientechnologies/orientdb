@@ -74,16 +74,16 @@ public class OSequenceActionNodeRequest implements ONodeRequest{
           sequences.dropSequence(sequenceName);
           break;
         case OSequenceAction.CURRENT:
-          targetSequence.current();
+          targetSequence.current(false);
           break;
         case OSequenceAction.NEXT:
-          targetSequence.next();
+          targetSequence.nextWork(false);
           break;
         case OSequenceAction.RESET:
-          targetSequence.reset();
+          targetSequence.resetWork(false);
           break;
         case OSequenceAction.UPDATE:
-          targetSequence.updateParams(action.getParameters());
+          targetSequence.updateParams(action.getParameters(), false);
           break;
       }      
       return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.SUCCESS, null);

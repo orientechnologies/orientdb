@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.*;
@@ -2587,7 +2588,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public void internalCommit(OTransactionInternal transaction) {
     this.getStorage().commit(transaction);
-  }
+  }    
 
   @Override
   public boolean isClusterEdge(int cluster) {

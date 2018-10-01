@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OView;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -265,4 +266,6 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   void internalLockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY lockingStrategy);
 
   void internalUnlockRecord(OIdentifiable iRecord);
+  
+  void sendSequenceAction(OSequenceAction action);
 }

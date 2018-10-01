@@ -70,6 +70,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
 
 /**
@@ -513,6 +514,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                 .getValueAsInteger());
       }
     }
+  }
+  
+  @Override
+  public void sendSequenceAction(OSequenceAction action){
+    
   }
 
   private void distributedCommitV2(OTransactionInternal iTx) {

@@ -24,6 +24,7 @@ import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
@@ -65,7 +66,7 @@ public abstract class OSequence {
 
   private boolean cruacialValueChanged = false;
 
-  public static final SequenceOrderType DEFAULT_ORDER_TYPE = SequenceOrderType.ORDER_POSITIVE;
+  public static final SequenceOrderType DEFAULT_ORDER_TYPE = SequenceOrderType.ORDER_POSITIVE;    
 
   public static class CreateParams {
     public Long              start        = DEFAULT_START;
@@ -184,8 +185,8 @@ public abstract class OSequence {
 
   protected OSequence(final ODocument iDocument) {
     this(iDocument, null);
-  }
-
+  }  
+  
   protected OSequence(final ODocument iDocument, CreateParams params) {
     document = iDocument != null ? iDocument : new ODocument(CLASS_NAME);
     bindOnLocalThread();
@@ -221,6 +222,11 @@ public abstract class OSequence {
     return tlDocument.get();
   }
 
+  private void sendSequenceActionOverCluster(int actionType, CreateParams params){
+    OSequenceAction action = new OSequenceAction(actionType, getName(), params, getSequenceType());
+    tlDocument.get().getDatabase().sendSequenceAction(action);    
+  }
+  
   protected synchronized void initSequence(OSequence.CreateParams params) {
     setStart(params.start);
     setIncrement(params.increment);
@@ -232,7 +238,11 @@ public abstract class OSequence {
     setSequenceType();
   }
 
-  public synchronized boolean updateParams(CreateParams params) {
+  public boolean updateParams(CreateParams params){
+    return updateParams(params, true);
+  }
+          
+  public synchronized boolean updateParams(CreateParams params, boolean calledFromThisNode) {
     boolean any = false;
 
     if (params.start != null && this.getStart() != params.start) {
@@ -265,13 +275,17 @@ public abstract class OSequence {
     }
 
     save();
+    
+    if (calledFromThisNode){
+      sendSequenceActionOverCluster(OSequenceAction.UPDATE, params);
+    }
 
     return any;
   }
 
   public void onUpdate(ODocument iDocument) {
     document = iDocument;
-    this.tlDocument.set(iDocument);
+    this.tlDocument.set(iDocument);    
   }
 
   protected static Long getValue(ODocument doc) {
@@ -391,19 +405,57 @@ public abstract class OSequence {
    * Forwards the sequence by one, and returns the new value.
    */
   @OApi
-  public abstract long next() throws OSequenceLimitReachedException;
+  public long next(){
+    return next(true);
+  }
+  
+  //TODO hide this for regular user
+  public long next(boolean calledFromThisNode) throws OSequenceLimitReachedException{
+    long retVal = nextWork(calledFromThisNode);
+    if (calledFromThisNode){
+      sendSequenceActionOverCluster(OSequenceAction.NEXT, null);
+    }
+    return retVal;
+  }
+  
+  protected abstract long nextWork(boolean calledFromThisNode) throws OSequenceLimitReachedException;
 
   /*
    * Returns the current sequence value. If next() was never called, returns null
    */
   @OApi
-  public abstract long current();
+  public long current(){
+    return current(true);
+  }
+  
+  @OApi
+  public long current(boolean calledFromThisNode){
+    long retVal = currentWork(calledFromThisNode);
+    if (calledFromThisNode){
+      sendSequenceActionOverCluster(OSequenceAction.CURRENT, null);
+    }
+    return retVal;
+  }
+  
+  protected abstract long currentWork(boolean calledFromThisNode);
 
+  
+  public long reset(){
+    return reset(true);
+  }
   /*
    * Resets the sequence value to it's initialized value.
    */
   @OApi
-  public abstract long reset();
+  public long reset(boolean calledFromThisNode){
+    long retVal = resetWork(calledFromThisNode);
+    if (calledFromThisNode){
+      sendSequenceActionOverCluster(OSequenceAction.RESET, null);
+    }
+    return retVal;
+  }
+  
+  protected abstract long resetWork(boolean calledFromThisNode);
 
   /*
    * Returns the sequence type
