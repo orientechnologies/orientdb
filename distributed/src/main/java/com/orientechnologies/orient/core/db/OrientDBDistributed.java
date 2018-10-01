@@ -24,6 +24,7 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -275,4 +276,34 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
     return null;
   }
+
+  @Override
+  public void drop(String name, String user, String password) {
+    synchronized (this) {
+      checkOpen();
+      //This is a temporary fix for distributed drop that avoid scheduled view update to re-open the distributed database while is dropped
+      OSharedContext sharedContext = sharedContexts.get(name);
+      if (sharedContext != null) {
+        sharedContext.getViewManager().close();
+      }
+    }
+
+    ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
+    for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners(); it.hasNext(); ) {
+      it.next().onDrop(db);
+    }
+    db.close();
+    synchronized (this) {
+      if (exists(name, user, password)) {
+        OAbstractPaginatedStorage storage = getOrInitStorage(name);
+        OSharedContext sharedContext = sharedContexts.get(name);
+        if (sharedContext != null)
+          sharedContext.close();
+        storage.delete();
+        storages.remove(name);
+        sharedContexts.remove(name);
+      }
+    }
+  }
+
 }
