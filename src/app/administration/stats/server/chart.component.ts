@@ -46,7 +46,7 @@ class ChartComponent implements OnInit, OnChanges {
       }
       let columns = [["x", new Date()]];
       this.columns.forEach(element => {
-        columns.push([element.name, ...element.values]);
+        columns.push([element.label, ...element.values]);
       });
       this.chart.flow({
         columns: columns,
@@ -60,7 +60,7 @@ class ChartComponent implements OnInit, OnChanges {
     let columns = [["x", new Date()]];
     if (this.columns) {
       this.columns.forEach(element => {
-        columns.push([element.name, ...element.values]);
+        columns.push([element.label, ...element.values]);
       });
     }
 

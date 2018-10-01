@@ -18,6 +18,7 @@ export class MetersAggregator {
     this.metrics.forEach(m => {
       metrics.push({
         name: m.name,
+        label : m.label,
         values: [this.countOps(m.regex, stats) - this.oldMetrics[m.name]]
       });
     });

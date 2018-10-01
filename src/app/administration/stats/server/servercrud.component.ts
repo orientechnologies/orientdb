@@ -30,12 +30,12 @@ class ServerCrudComponent implements OnInit, OnChanges {
   chart: any;
 
   private metrics = [
-    { name: "db.*.readOps", regex: /db.*readOps/g },
-    { name: "db.*.createOps", regex: /db.*createOps/g },
-    { name: "db.*.updateOps", regex: /db.*updateOps/g },
-    { name: "db.*.deleteOps", regex: /db.*deleteOps/g },
-    { name: "db.*.commitOps", regex: /db.*commitOps/g },
-    { name: "db.*.rollbackOps", regex: /db.*rollbackOps/g }
+    { name: "db.*.readOps", label: "Read", regex: /db.*readOps/g },
+    { name: "db.*.createOps", label: "Create", regex: /db.*createOps/g },
+    { name: "db.*.updateOps", label: "Update", regex: /db.*updateOps/g },
+    { name: "db.*.deleteOps", label: "Delete", regex: /db.*deleteOps/g },
+    { name: "db.*.commitOps", label: "Commit", regex: /db.*commitOps/g },
+    { name: "db.*.rollbackOps", label: "Rollback", regex: /db.*rollbackOps/g }
   ];
 
   aggregator: MetersAggregator;
