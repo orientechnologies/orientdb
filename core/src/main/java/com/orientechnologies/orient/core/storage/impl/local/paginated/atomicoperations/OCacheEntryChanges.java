@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageChangesPortion;
 
@@ -15,6 +16,8 @@ public class OCacheEntryChanges implements OCacheEntry {
 
   boolean isNew   = false;
   boolean pinPage = false;
+
+  private OLogSequenceNumber changeLSN;
 
   public OCacheEntryChanges(OCacheEntry entry) {
     delegate = entry;
@@ -100,5 +103,23 @@ public class OCacheEntryChanges implements OCacheEntry {
 
   public OCacheEntry getDelegate() {
     return delegate;
+  }
+
+  @Override
+  public OLogSequenceNumber getEndLSN() {
+    return delegate.getEndLSN();
+  }
+
+  @Override
+  public void setEndLSN(OLogSequenceNumber endLSN) {
+    delegate.setEndLSN(endLSN);
+  }
+
+  OLogSequenceNumber getChangeLSN() {
+    return changeLSN;
+  }
+
+  void setChangeLSN(OLogSequenceNumber walLSN) {
+    this.changeLSN = walLSN;
   }
 }

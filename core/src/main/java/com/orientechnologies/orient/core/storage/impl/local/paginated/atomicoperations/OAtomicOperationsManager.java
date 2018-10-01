@@ -28,7 +28,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -41,17 +41,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -60,7 +52,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -77,8 +68,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
   private volatile boolean trackAtomicOperations = OGlobalConfiguration.TX_TRACK_ATOMIC_OPERATIONS.getValueAsBoolean();
 
-  private final AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
-
   private final LongAdder atomicOperationsCount = new LongAdder();
 
   private final AtomicInteger freezeRequests = new AtomicInteger();
@@ -90,7 +79,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final AtomicReference<WaitingListNode> waitingTail = new AtomicReference<>();
 
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<>();
-  private final OPerformanceStatisticManager performanceStatisticManager;
+  private final           OPerformanceStatisticManager  performanceStatisticManager;
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -107,12 +96,12 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     });
   }
 
-  private final OAbstractPaginatedStorage storage;
-  private final OWriteAheadLog            writeAheadLog;
+  private final OAbstractPaginatedStorage          storage;
+  private final OWriteAheadLog                     writeAheadLog;
   private final OOneEntryPerKeyLockManager<String> lockManager = new OOneEntryPerKeyLockManager<>(true, -1,
       OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
-  private final OReadCache  readCache;
-  private final OWriteCache writeCache;
+  private final OReadCache                         readCache;
+  private final OWriteCache                        writeCache;
 
   private final Map<OOperationUnitId, OPair<String, StackTraceElement[]>> activeAtomicOperations = new ConcurrentHashMap<>();
 
@@ -411,7 +400,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         currentOperation.set(null);
       }
 
-
       final ONestedRollbackException nre = new ONestedRollbackException(writer.toString());
       throw OException.wrapException(nre, exception);
     }
@@ -421,18 +409,17 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       try {
         final boolean useWal = useWal();
 
-        if (!operation.isRollback())
-          operation.commitChanges(useWal ? writeAheadLog : null);
-
-        if (useWal)
-          lsn = writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(),
-              operation.getMetadata());
-        else
+        if (!operation.isRollback()) {
+          lsn = operation.commitChanges(useWal ? writeAheadLog : null);
+        } else {
           lsn = null;
+        }
 
-        // We have to decrement the counter after the disk operations, otherwise, if they
-        // fail, we will be unable to rollback the atomic operation later.
-        operation.decrementCounter();
+        if (useWal) {
+          // We have to decrement the counter after the disk operations, otherwise, if they
+          // fail, we will be unable to rollback the atomic operation later.
+          operation.decrementCounter();
+        }
 
         atomicOperationsCount.decrement();
         if (trackAtomicOperations) {
@@ -510,43 +497,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     assert durableComponent.getLockName() != null;
 
     lockManager.releaseLock(this, durableComponent.getLockName(), OOneEntryPerKeyLockManager.LOCK.SHARED);
-  }
-
-  public void registerMBean() {
-    if (mbeanIsRegistered.compareAndSet(false, true)) {
-      try {
-        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        final ObjectName mbeanName = new ObjectName(getMBeanName());
-
-        if (!server.isRegistered(mbeanName)) {
-          server.registerMBean(this, mbeanName);
-        } else {
-          mbeanIsRegistered.set(false);
-          OLogManager.instance().warn(this,
-              "MBean with name %s has already registered. Probably your system was not shutdown correctly "
-                  + "or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
-        }
-
-      } catch (MalformedObjectNameException | InstanceAlreadyExistsException | NotCompliantMBeanException | MBeanRegistrationException e) {
-        throw OException.wrapException(new OStorageException("Error during registration of atomic manager MBean"), e);
-      }
-    }
-  }
-
-  private String getMBeanName() {
-    return MBEAN_NAME + ",name=" + ObjectName.quote(storage.getName()) + ",id=" + storage.getId();
-  }
-
-  public void unregisterMBean() {
-    if (mbeanIsRegistered.compareAndSet(true, false)) {
-      try {
-        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        final ObjectName mbeanName = new ObjectName(getMBeanName());
-        server.unregisterMBean(mbeanName);
-      } catch (MalformedObjectNameException | InstanceNotFoundException | MBeanRegistrationException e) {
-        throw OException.wrapException(new OStorageException("Error during unregistration of atomic manager MBean"), e);
-      }
-    }
   }
 
   @Override

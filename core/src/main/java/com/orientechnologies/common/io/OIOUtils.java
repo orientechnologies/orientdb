@@ -19,9 +19,21 @@
  */
 package com.orientechnologies.common.io;
 
+import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.util.OPatternConst;
+import com.sun.jna.LastErrorException;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -383,6 +395,33 @@ public class OIOUtils {
       read += r;
     }
   }
+
+  public static void readByteBuffer(ByteBuffer buffer, int fd) throws IOException {
+    int bytesToRead = buffer.limit();
+
+    int read = 0;
+
+    while (read < bytesToRead) {
+      buffer.position(read);
+
+      final int r;
+
+      try {
+        r = (int) ONative.instance().read(fd, buffer, buffer.remaining());
+      } catch (LastErrorException e) {
+        throw new IOException("Error during reading from file", e);
+      }
+
+      if (r < 0) {
+        throw new EOFException("End of file is reached");
+      }
+
+      read += r;
+    }
+
+    buffer.position(read);
+  }
+
 
   public static void writeByteBuffer(ByteBuffer buffer, FileChannel channel, long position) throws IOException {
     int bytesToWrite = buffer.limit();

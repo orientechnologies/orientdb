@@ -23,7 +23,10 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMemory;
 import com.sun.jna.LastErrorException;
 import com.sun.jna.Native;
+import com.sun.jna.NativeLong;
 import com.sun.jna.Platform;
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -38,6 +41,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.ByteBuffer;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -47,6 +51,23 @@ public class ONative {
 
   private static volatile ONative instance = null;
   private static final    Lock    initLock = new ReentrantLock();
+
+  public static final int O_RDONLY = 00;
+  public static final int O_WRONLY = 01;
+  public static final int O_RDWR   = 02;
+  public static final int O_CREAT  = 0100;
+  public static final int O_EXCL   = 0200;
+  public static final int O_APPEND = 02000;
+  public static final int O_TRUNC  = 01000;
+  public static final int O_DIRECT = 040000;
+  public static final int O_SYNC   = 04000000;
+
+  public static final int SEEK_SET = 0;
+  public static final int SEEK_CUR = 1;
+  public static final int SEEK_END = 2;
+
+  public static final int MCL_CURRENT = 1;
+  public static final int MCL_FUTURE  = 2;
 
   public static ONative instance() {
     if (instance != null)
@@ -98,8 +119,7 @@ public class ONative {
 
         if (rlimit.rlim_cur < recommended) {
           OLogManager.instance()
-              .warnNoDb(this, "Value of limit of simultaneously open files is too small, recommended value is %d",
-                  recommended);
+              .warnNoDb(this, "Value of limit of simultaneously open files is too small, recommended value is %d", recommended);
         }
 
         return (int) rlimit.rlim_cur / 2 - 512;
@@ -210,16 +230,71 @@ public class ONative {
     return new MemoryLimitResult(memoryLimit, insideContainer);
   }
 
-  public int open(String path) throws LastErrorException {
-    return C_LIBRARY.open(path, 0x0002);
+  public int open(String path, int flags) throws LastErrorException {
+    return C_LIBRARY.open(path, flags, 0000400 | 0000200);//rw mask
   }
 
   public int fallocate(int fd, long offset, long len) throws LastErrorException {
     return C_LIBRARY.fallocate(fd, 0, offset, len);
   }
 
+  public long read(int fd, ByteBuffer buffer, int count) throws LastErrorException {
+    return C_LIBRARY.read(fd, buffer, count);
+  }
+
+  public long write(int fd, ByteBuffer buffer, int count) throws LastErrorException {
+    return C_LIBRARY.write(fd, buffer, count);
+  }
+
+  public void posix_memalign(PointerByReference memptr, NativeLong alignment, NativeLong size) throws LastErrorException {
+    C_LIBRARY.posix_memalign(memptr, alignment, size);
+  }
+
+  public int getpagesize() throws LastErrorException {
+    return C_LIBRARY.getpagesize();
+  }
+
+  public int pathconf(String path, int name) throws LastErrorException {
+    return C_LIBRARY.pathconf(path, name);
+  }
+
+  public int fsync(int fd) throws IOException {
+    try {
+      return C_LIBRARY.fsync(fd);
+    } catch (LastErrorException e) {
+      throw new IOException("Can not fsync file", e);
+    }
+  }
+
+  public long lseek(int fd, long offset, int whence) throws LastErrorException {
+    return C_LIBRARY.lseek(fd, offset, whence);
+  }
+
   public int close(int fd) throws LastErrorException {
     return C_LIBRARY.close(fd);
+  }
+
+  public int mlockall(int flags) throws LastErrorException {
+    return C_LIBRARY.mlockall(flags);
+  }
+
+  public int mlock(Pointer pointer, long len) throws LastErrorException {
+    return C_LIBRARY.mlock(pointer, len);
+  }
+
+  public int munlock(Pointer pointer, long len) throws LastErrorException {
+    return C_LIBRARY.munlock(pointer, len);
+  }
+
+  public boolean isUnlimitedMemoryLocking() {
+    final OCLibrary.Rlimit rlimit = new OCLibrary.Rlimit();
+    final int result = C_LIBRARY.getrlimit(OCLibrary.RLIMIT_MEMLOCK, rlimit);
+
+    if (result != 0) {
+      return false;
+    }
+
+    return rlimit.rlim_cur == -1;
   }
 
   private long updateMemoryLimit(long memoryLimit, final long newMemoryLimit) {

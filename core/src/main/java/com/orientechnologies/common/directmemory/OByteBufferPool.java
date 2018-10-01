@@ -19,19 +19,25 @@
  */
 package com.orientechnologies.common.directmemory;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.sun.jna.Platform;
+import com.sun.jna.Pointer;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.management.ManagementFactory;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
  * Object of this class works at the same time as factory for <code>DirectByteBuffer</code> objects and pool for
@@ -57,10 +63,14 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    */
   private final int poolSize;
 
-  /**
-   * Name of JMX memory bean
-   */
-  private static final String MBEAN_NAME = "com.orientechnologies.common.directmemory:type=OByteBufferPoolMXBean";
+  private static final int LOCKED_CHUNK_SIZE = 256 * 1024 * 1024; //64M
+
+  private final AtomicReferenceArray<LockedPointerHolder> lockedChuncks    = new AtomicReferenceArray<>(1024);
+  private final AtomicInteger                             lockedChunkIndex = new AtomicInteger();
+
+  private final boolean memoryLockingIsAllowed;
+
+  private final int osPageSize;
 
   /**
    * @return Singleton instance
@@ -92,11 +102,14 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   /**
    * Pool of already allocated pages.
    */
-  private final ConcurrentLinkedQueue<OPointer> pointersPool     = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<OPointer> pointersPool = new ConcurrentLinkedQueue<>();
+
+  private final ConcurrentLinkedQueue<OPointer> lockedPointersPool = new ConcurrentLinkedQueue<>();
+
   /**
    * Size of the pool of pages is kept in separate counter because it is slow to ask pool itself and count all links in the pool.
    */
-  private final AtomicInteger                   pointersPoolSize = new AtomicInteger();
+  private final AtomicInteger pointersPoolSize = new AtomicInteger();
 
   /**
    * Direct memory allocator.
@@ -110,6 +123,14 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     this.pageSize = pageSize;
     this.allocator = ODirectMemoryAllocator.instance();
     this.poolSize = OGlobalConfiguration.DIRECT_MEMORY_POOL_LIMIT.getValueAsInteger();
+
+    memoryLockingIsAllowed = Platform.isLinux() && ONative.instance().isUnlimitedMemoryLocking();
+
+    if (memoryLockingIsAllowed) {
+      osPageSize = ONative.instance().getpagesize();
+    } else {
+      osPageSize = -1;
+    }
   }
 
   /**
@@ -121,6 +142,14 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     this.pageSize = pageSize;
     this.allocator = allocator;
     this.poolSize = poolSize;
+
+    memoryLockingIsAllowed = Platform.isLinux() && ONative.instance().isUnlimitedMemoryLocking();
+
+    if (memoryLockingIsAllowed) {
+      osPageSize = ONative.instance().getpagesize();
+    } else {
+      osPageSize = -1;
+    }
   }
 
   /**
@@ -128,16 +157,66 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    * If there is free (already released) direct memory page we reuse it, otherwise new
    * memory chunk is allocated from direct memory.
    *
-   * @param clear Whether returned buffer should be filled with zeros before return.
+   * @param clear      Whether returned buffer should be filled with zeros before return.
+   * @param lockMemory Prevents memory from swapping, valid only for Linux.
    *
    * @return Direct memory buffer instance.
    */
-  public ByteBuffer acquireDirect(boolean clear) {
-    OPointer pointer = pointersPool.poll();
-    if (pointer != null) {
-      pointersPoolSize.decrementAndGet();
+  public ByteBuffer acquireDirect(boolean clear, boolean lockMemory) {
+    OPointer pointer;
+
+    lockMemory = lockMemory && memoryLockingIsAllowed;
+
+    if (lockMemory) {
+      pointer = lockedPointersPool.poll();
+
+      while (pointer == null) {
+        int lockedIndex = lockedChunkIndex.get();
+        LockedPointerHolder pointerHolder;
+
+        if (lockedIndex >= lockedChuncks.length()) {
+          return acquireDirect(clear, false);
+        }
+
+        pointerHolder = lockedChuncks.get(lockedIndex);
+
+        if (pointerHolder == null) {
+          pointerHolder = new LockedPointerHolder(LOCKED_CHUNK_SIZE);
+
+          if (lockedChuncks.compareAndSet(lockedIndex, null, pointerHolder)) {
+            final OPointer chunkPointer = allocator.allocate(LOCKED_CHUNK_SIZE, osPageSize);
+            ONative.instance().mlock(chunkPointer.getNativePointer(), LOCKED_CHUNK_SIZE);
+            pointerHolder.initPointer(chunkPointer);
+          } else {
+            continue;
+          }
+
+          try {
+            pointer = pointerHolder.nextPage(pageSize);
+          } catch (InterruptedException e) {
+            throw OException.wrapException(new OInterruptedException("Waiting for direct memory allocation was interrupted"), e);
+          }
+        } else {
+          try {
+            pointer = pointerHolder.nextPage(pageSize);
+          } catch (InterruptedException e) {
+            throw OException.wrapException(new OInterruptedException("Waiting for direct memory allocation was interrupted"), e);
+          }
+        }
+
+        //no space left in current locked pointer holder
+        if (pointer == null) {
+          lockedChunkIndex.compareAndSet(lockedIndex, lockedIndex + 1);
+        }
+      }
     } else {
-      pointer = allocator.allocate(pageSize);
+      pointer = pointersPool.poll();
+
+      if (pointer != null) {
+        pointersPoolSize.decrementAndGet();
+      } else {
+        pointer = allocator.allocate(pageSize, -1);
+      }
     }
 
     if (clear) {
@@ -147,7 +226,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     final ByteBuffer buffer = pointer.getNativeByteBuffer();
     buffer.position(0);
 
-    bufferPointerMapping.put(wrapBuffer(buffer), wrapPointer(pointer));
+    bufferPointerMapping.put(wrapBuffer(buffer), wrapPointer(pointer, lockMemory));
     return buffer;
   }
 
@@ -165,12 +244,16 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
       throw new IllegalArgumentException(String.format("Buffer %X is not acquired", System.identityHashCode(buffer)));
     }
 
-    long poolSize = pointersPoolSize.incrementAndGet();
-    if (poolSize > this.poolSize) {
-      pointersPoolSize.decrementAndGet();
-      allocator.deallocate(holder.pointer);
+    if (holder.lockMemory) {
+      lockedPointersPool.add(holder.pointer);
     } else {
-      pointersPool.add(holder.pointer);
+      long poolSize = pointersPoolSize.incrementAndGet();
+      if (poolSize > this.poolSize) {
+        pointersPoolSize.decrementAndGet();
+        allocator.deallocate(holder.pointer);
+      } else {
+        pointersPool.add(holder.pointer);
+      }
     }
   }
 
@@ -183,7 +266,8 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   }
 
   /**
-   * Writes passed in message into the log with provided {@link ByteBuffer} identity hash code and checks whether buffer was released
+   * Writes passed in message into the log with provided {@link ByteBuffer} identity hash code and checks whether buffer was
+   * released
    * to pool.
    *
    * @param prefix Prefix to add to the log message
@@ -246,44 +330,21 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     }
 
     bufferPointerMapping.clear();
-  }
 
-  /**
-   * Registers the MBean for this byte buffer pool.
-   *
-   * @see OByteBufferPoolMXBean
-   */
-  public void registerMBean() {
-    try {
-      final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-      final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
+    final int lockedIndex = lockedChunkIndex.get();
 
-      if (!server.isRegistered(mbeanName)) {
-        server.registerMBean(this, mbeanName);
-      } else {
-        OLogManager.instance().warnNoDb(this,
-            "MBean with name %s has already registered. Probably your system was not shutdown correctly"
-                + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
+    for (int i = 0; i <= lockedIndex; i++) {
+      final LockedPointerHolder holder = lockedChuncks.get(i);
+
+      if (holder != null) {
+        ONative.instance().munlock(holder.pointer.getNativePointer(), holder.pointer.getSize());
+        allocator.deallocate(holder.pointer);
+        lockedChuncks.set(i, null);
       }
-
-    } catch (Exception e) {
-      OLogManager.instance().errorNoDb(this, "Error during registration of MBean", e);
     }
-  }
 
-  /**
-   * Unregisters the MBean for this byte buffer pool.
-   *
-   * @see OByteBufferPoolMXBean
-   */
-  public void unregisterMBean() {
-    try {
-      final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-      final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
-      server.unregisterMBean(mbeanName);
-    } catch (Exception e) {
-      OLogManager.instance().errorNoDb(this, "Error during de-registration of MBean", e);
-    }
+    lockedChunkIndex.set(0);
+    lockedPointersPool.clear();
   }
 
   /**
@@ -316,10 +377,12 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   private static final class PointerHolder {
     private final OPointer  pointer;
     private final Exception allocation;
+    private final boolean   lockMemory;
 
-    PointerHolder(OPointer pointer, Exception allocation) {
+    PointerHolder(OPointer pointer, Exception allocation, boolean lockMemory) {
       this.pointer = pointer;
       this.allocation = allocation;
+      this.lockMemory = lockMemory;
     }
   }
 
@@ -327,11 +390,11 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     return new ByteBufferHolder(byteBuffer);
   }
 
-  private PointerHolder wrapPointer(OPointer pointer) {
+  private PointerHolder wrapPointer(OPointer pointer, boolean lockMemory) {
     if (TRACK) {
-      return new PointerHolder(pointer, new Exception());
+      return new PointerHolder(pointer, new Exception(), lockMemory);
     } else {
-      return new PointerHolder(pointer, null);
+      return new PointerHolder(pointer, null, lockMemory);
     }
   }
 
@@ -345,4 +408,37 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     return writer.toString();
   }
 
+  private static final class LockedPointerHolder {
+    private volatile OPointer pointer;
+    private final    long     size;
+
+    private final AtomicLong     position = new AtomicLong();
+    private final CountDownLatch latch    = new CountDownLatch(1);
+
+    LockedPointerHolder(long size) {
+      this.size = size;
+    }
+
+    private OPointer nextPage(int pageSize) throws InterruptedException {
+      final long ps = position.getAndAdd(pageSize);
+      if (ps >= size) {
+        return null;
+      }
+
+      if (pointer == null) {
+        awaitInit();
+      }
+
+      return new OPointer(new Pointer(Pointer.nativeValue(pointer.getNativePointer()) + ps), pageSize);
+    }
+
+    private void awaitInit() throws InterruptedException {
+      latch.await();
+    }
+
+    private void initPointer(OPointer pointer) {
+      this.pointer = pointer;
+      latch.countDown();
+    }
+  }
 }

@@ -19,14 +19,14 @@
   */
 package com.orientechnologies.orient.core.engine;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.Map;
 
 public interface OEngine {
   String getName();
 
-  OStorage createStorage(String iURL, Map<String, String> parameters);
+  OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize);
 
   void removeStorage(OStorage iStorage);
 

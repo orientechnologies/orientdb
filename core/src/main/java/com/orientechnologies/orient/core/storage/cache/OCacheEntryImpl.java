@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.storage.cache;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.util.Objects;
@@ -95,6 +96,16 @@ public class OCacheEntryImpl implements OCacheEntry {
   @Override
   public OWALChanges getChanges() {
     return null;
+  }
+
+  @Override
+  public OLogSequenceNumber getEndLSN() {
+    return dataPointer.getEndLSN();
+  }
+
+  @Override
+  public void setEndLSN(OLogSequenceNumber endLSN) {
+    dataPointer.setEndLSN(endLSN);
   }
 
   @Override
