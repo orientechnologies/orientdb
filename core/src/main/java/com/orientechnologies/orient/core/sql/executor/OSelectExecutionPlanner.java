@@ -1366,9 +1366,13 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleLet(OSelectExecutionPlan plan, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
+    // this could be invoked multiple times
+    // so it can be optimized
+    // checking whether the execution plan already contains some LET steps
+    // and in case skip
     if (info.perRecordLetClause != null) {
       List<OLetItem> items = info.perRecordLetClause.getItems();
-      if (info.distributedPlanCreated) {
+      if (plan.steps.size() > 0 || info.distributedPlanCreated) {
         for (OLetItem item : items) {
           if (item.getExpression() != null) {
             plan.chain(new LetExpressionStep(item.getVarName(), item.getExpression(), ctx, profilingEnabled));
@@ -1511,6 +1515,9 @@ public class OSelectExecutionPlanner {
             subPlan.chain(new DistinctExecutionStep(ctx, profilingEnabled));
           }
           if (!block.getSubBlocks().isEmpty()) {
+            if ((info.perRecordLetClause != null && refersToLet(block.getSubBlocks()))) {
+              handleLet(subPlan, info, ctx, profilingEnabled);
+            }
             subPlan.chain(new FilterStep(createWhereFrom(block), ctx, profilingEnabled));
           }
           resultSubPlans.add(subPlan);
@@ -1593,6 +1600,18 @@ public class OSelectExecutionPlanner {
     } else {
       return false;
     }
+  }
+
+  private boolean refersToLet(List<OBooleanExpression> subBlocks) {
+    if (subBlocks == null) {
+      return false;
+    }
+    for (OBooleanExpression exp : subBlocks) {
+      if (exp.toString().startsWith("$")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private List<OBinaryCondition> filterIndexedFunctionsWithoutIndex(List<OBinaryCondition> indexedFunctionConditions,
@@ -1811,6 +1830,16 @@ public class OSelectExecutionPlanner {
         info.orderApplied = true;
       }
       if (desc.remainingCondition != null && !desc.remainingCondition.isEmpty()) {
+        if ((info.perRecordLetClause != null && refersToLet(Collections.singletonList(desc.remainingCondition)))) {
+          OSelectExecutionPlan stubPlan = new OSelectExecutionPlan(ctx);
+          boolean prevCreatedDist = info.distributedPlanCreated;
+          info.distributedPlanCreated = true; //little hack, check this!!!
+          handleLet(stubPlan, info, ctx, profilingEnabled);
+          for (OExecutionStep step : stubPlan.getSteps()) {
+            result.add((OExecutionStepInternal) step);
+          }
+          info.distributedPlanCreated = prevCreatedDist;
+        }
         result.add(new FilterStep(createWhereFrom(desc.remainingCondition), ctx, profilingEnabled));
       }
     } else {

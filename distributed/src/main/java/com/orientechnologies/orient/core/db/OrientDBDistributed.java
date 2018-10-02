@@ -2,11 +2,15 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OCommandCache;
+import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.util.HashMap;
@@ -37,7 +41,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return plugin;
   }
 
-  public void fullSync(String dbName, String backupPath, OrientDBConfig config) {
+  public OStorage fullSync(String dbName, String backupPath, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
     OAbstractPaginatedStorage storage;
     synchronized (this) {
@@ -46,6 +50,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         storage = storages.get(dbName);
 
         if (storage != null) {
+          OCommandCacheSoftRefs.clearFiles(storage);
+          ODistributedStorage.dropStorageFiles(storage);
           storage.delete();
           storages.remove(dbName);
         }
@@ -57,5 +63,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       }
     }
     storage.restoreFromIncrementalBackup(backupPath);
+    ODatabaseRecordThreadLocal.instance().remove();
+    return storage;
   }
 }
