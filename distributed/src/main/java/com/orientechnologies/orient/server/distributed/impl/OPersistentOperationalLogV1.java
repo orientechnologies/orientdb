@@ -5,16 +5,15 @@ import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.OLogId;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeRequest;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.OOperationLog;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.OOperationLogEntry;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
 import java.io.*;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OPersistentOperationalLogV1 implements OOperationLog {
+
+  private OCoordinateMessagesFactory factory;
 
   private static class OplogInfo {
     int  currentFileNum;
@@ -138,6 +137,10 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       }
       file.seek(file.length() - 16); //length plus magic
       long size = file.readLong();
+      long magic = file.readLong();
+      if (magic != MAGIC) {
+        throw new IllegalStateException();
+      }
       file.seek(file.length() - 16 - size - 12);
       return new AtomicLong(file.readLong());
     } catch (IOException e) {
@@ -180,6 +183,31 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     } catch (IOException e) {
       throw new ODistributedException("Cannot write oplog: " + e.getMessage());
     }
+  }
+
+  private OOperationLogEntry readRecord(DataInputStream stream) {
+    try {
+      long logId = stream.readLong();
+      int totalPacketSize = stream.readInt();
+      int packetType = stream.readInt();
+      ONodeRequest request = getCoordinateMessagesFactory().createOperationRequest(packetType);
+      request.deserialize(stream);
+      stream.readLong();//length, again
+      long magic = stream.readLong();
+      if (magic != MAGIC) {
+//        throw //TODO
+      }
+      return new OOperationLogEntry(new OLogId(logId), request);
+    } catch (Exception e) {
+      return null;//TODO manage broken log
+    }
+  }
+
+  private OCoordinateMessagesFactory getCoordinateMessagesFactory() {
+    if (this.factory == null) {
+      this.factory = new OCoordinateMessagesFactory();//TODO
+    }
+    return factory;
   }
 
   private void createNewStreamFile() {
