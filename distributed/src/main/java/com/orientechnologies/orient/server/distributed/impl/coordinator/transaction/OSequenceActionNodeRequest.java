@@ -32,6 +32,7 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeRes
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
@@ -96,6 +97,7 @@ public class OSequenceActionNodeRequest implements ONodeRequest{
           break;
       }
       //want to return result only from node that initiated whole action
+      //know how to process this in Handler
       if (!Objects.equals(nodeFrom.getName(), initialNodeName)){
         result = null;
       }
@@ -119,6 +121,15 @@ public class OSequenceActionNodeRequest implements ONodeRequest{
     else{
       output.write(0);
     }
+    if (initialNodeName != null){
+      output.writeByte(1);
+      byte[] nodeNameBytes = initialNodeName.getBytes(StandardCharsets.UTF_8.name());
+      output.writeInt(nodeNameBytes.length);
+      output.write(nodeNameBytes);
+    }
+    else{
+      output.writeByte(0);
+    }
   }
 
   @Override
@@ -130,6 +141,16 @@ public class OSequenceActionNodeRequest implements ONodeRequest{
     }
     else{
       actionRequest = null;
+    }
+    flag = input.readByte();
+    if (flag > 0){
+      int length = input.readInt();
+      byte[] nodeNameBytes = new byte[length];
+      input.readFully(nodeNameBytes);
+      initialNodeName = new String(nodeNameBytes, StandardCharsets.UTF_8.name());
+    }
+    else{
+      initialNodeName = null;
     }
   }
 
