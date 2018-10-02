@@ -48,16 +48,16 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     }
   }
 
-  private static final long   MAGIC                = 6148914691236517205L; //101010101010101010101010101010101010101010101010101010101010101
-  private final        String OPLOG_INFO_FILE      = "oplog.opl";
-  private final        String OPLOG_FILE           = "oplog_$NUM$.opl";
-  private final        int    LOG_ENTRIES_PER_FILE = 16 * 1024;
+  protected static final long   MAGIC                = 6148914691236517205L; //101010101010101010101010101010101010101010101010101010101010101
+  protected static final String OPLOG_INFO_FILE      = "oplog.opl";
+  protected static final String OPLOG_FILE           = "oplog_$NUM$.opl";
+  protected static final int    LOG_ENTRIES_PER_FILE = 16 * 1024;
 
   private final String    storagePath;
   private       OplogInfo info;
 
-  private       FileOutputStream fileOutput;
-  private final DataOutputStream stream;
+  private FileOutputStream fileOutput;
+  private DataOutputStream stream;
 
   private AtomicLong inc;
 
@@ -75,17 +75,23 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   private DataOutputStream initStream(OplogInfo info) {
-    String fileName = OPLOG_FILE.replace("$NUM$", "" + info.currentFileNum);
+    String filePath = calculateLogFileFullPath(info.currentFileNum);
     try {
-      File file = new File(storagePath + File.separator + fileName);
+      File file = new File(filePath);
       if (!file.exists()) {
         file.createNewFile();
       }
       this.fileOutput = new FileOutputStream(file, true);
       return new DataOutputStream(fileOutput);
     } catch (IOException e) {
-      throw new ODistributedException("Cannot create oplog file " + fileName + ": " + e.getMessage());
+      throw new ODistributedException("Cannot create oplog file " + info.currentFileNum + ": " + e.getMessage());
     }
+  }
+
+  protected String calculateLogFileFullPath(int fileNum) {
+    String fileName = OPLOG_FILE.replace("$NUM$", "" + fileNum);
+    String fullPath = storagePath + File.separator + fileName;
+    return fullPath;
   }
 
   private OplogInfo readInfo() {
@@ -111,7 +117,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
   private void initNewInfoFile(File infoFile, OplogInfo result) {
     try {
-      result.currentFileNum = 0;
+      result.currentFileNum = -1;
       result.firstFileNum = 0;
       result.keepUntil = 0;
       infoFile.createNewFile();
@@ -214,12 +220,19 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     info.currentFileNum++;
     File infoFile = new File(storagePath, OPLOG_INFO_FILE);
     writeInfo(infoFile, info);
-    initStream(info);
+    if (stream != null) {
+      try {
+        stream.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+    stream = initStream(info);
   }
 
   @Override
   public Iterator<OOperationLogEntry> iterate(OLogId from, OLogId to) {
-    throw new UnsupportedOperationException(); // TODO
+    return new OPersistentOperationalLogIterator(this, from, to);
   }
 
   public void close() {
