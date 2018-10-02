@@ -13,13 +13,13 @@ public class ORequestContext {
   private ONodeRequest                           nodeRequest;
   private Collection<ODistributedMember>         involvedMembers;
   private Map<ODistributedMember, ONodeResponse> responses = new ConcurrentHashMap<>();
-  private ODistributedCoordinator                coordinator;
+  private ODistributedCoordinatorInternal        coordinator;
   private int                                    quorum;
   private OResponseHandler                       handler;
   private TimerTask                              timerTask;
   private OLogId                                 requestId;
 
-  public ORequestContext(ODistributedCoordinator coordinator, OSubmitRequest submitRequest, ONodeRequest nodeRequest,
+  public ORequestContext(ODistributedCoordinatorInternal coordinator, OSubmitRequest submitRequest, ONodeRequest nodeRequest,
       Collection<ODistributedMember> involvedMembers, OResponseHandler handler, OLogId requestId) {
     this.coordinator = coordinator;
     this.submitRequest = submitRequest;
@@ -27,13 +27,13 @@ public class ORequestContext {
     this.involvedMembers = involvedMembers;
     this.handler = handler;
     this.quorum = (involvedMembers.size() / 2) + 1;
-    this.requestId =requestId;
+    this.requestId = requestId;
 
     timerTask = new TimerTask() {
       @Override
       public void run() {
         coordinator.executeOperation(() -> {
-          if (handler.timeout(coordinator, ORequestContext.this)  ) {
+          if (handler.timeout(coordinator, ORequestContext.this)) {
             finish();
           }
         });
@@ -48,7 +48,8 @@ public class ORequestContext {
 
   public void receive(ODistributedMember member, ONodeResponse response) {
     responses.put(member, response);
-    if(handler.receive(coordinator, this, member, response)){
+    if (handler.receive(coordinator, this, member, response)) {
+      timerTask.cancel();
       finish();
     }
   }

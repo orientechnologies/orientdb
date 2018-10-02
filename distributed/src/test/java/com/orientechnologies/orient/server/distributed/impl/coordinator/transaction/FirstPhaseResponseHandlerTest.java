@@ -20,7 +20,7 @@ import static org.mockito.Mockito.times;
 public class FirstPhaseResponseHandlerTest {
 
   @Mock
-  private ODistributedCoordinator coordinator;
+  private ODatabaseCoordinator coordinator;
 
   @Before
   public void before() {

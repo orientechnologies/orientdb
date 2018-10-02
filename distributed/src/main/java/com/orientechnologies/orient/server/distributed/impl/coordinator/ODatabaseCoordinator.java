@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.*;
 
-public class ODistributedCoordinator implements AutoCloseable {
+public class ODatabaseCoordinator implements AutoCloseable, ODistributedCoordinatorInternal {
 
   private final ExecutorService                        requestExecutor;
   private final OOperationLog                          operationLog;
@@ -16,7 +16,7 @@ public class ODistributedCoordinator implements AutoCloseable {
   private final ODistributedLockManager                lockManager;
   private final OClusterPositionAllocator              allocator;
 
-  public ODistributedCoordinator(ExecutorService requestExecutor, OOperationLog operationLog, ODistributedLockManager lockManager,
+  public ODatabaseCoordinator(ExecutorService requestExecutor, OOperationLog operationLog, ODistributedLockManager lockManager,
       OClusterPositionAllocator allocator) {
     this.requestExecutor = requestExecutor;
     this.operationLog = operationLog;
@@ -73,11 +73,11 @@ public class ODistributedCoordinator implements AutoCloseable {
 
   }
 
-  protected void executeOperation(Runnable runnable) {
+  public void executeOperation(Runnable runnable) {
     requestExecutor.execute(runnable);
   }
 
-  protected void finish(OLogId requestId) {
+  public void finish(OLogId requestId) {
     contexts.remove(requestId);
   }
 

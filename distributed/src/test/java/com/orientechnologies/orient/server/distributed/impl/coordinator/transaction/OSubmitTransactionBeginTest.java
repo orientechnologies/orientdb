@@ -17,7 +17,7 @@ public class OSubmitTransactionBeginTest {
 
   @Test
   public void testBegin() throws InterruptedException {
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), new MockOperationLog(),
+    ODatabaseCoordinator coordinator = new ODatabaseCoordinator(Executors.newSingleThreadExecutor(), new MockOperationLog(),
         new ODistributedLockManagerImpl(0), new OMockAllocator());
 
     MockChannel cOne = new MockChannel();

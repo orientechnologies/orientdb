@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.transac
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
+import com.orientechnologies.orient.core.db.ODistributedCoordinator;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;

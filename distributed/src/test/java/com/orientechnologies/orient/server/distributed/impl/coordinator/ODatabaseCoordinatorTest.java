@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
+import com.orientechnologies.orient.core.db.ODistributedCoordinator;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 import org.junit.Test;
@@ -14,14 +15,14 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class ODistributedCoordinatorTest {
+public class ODatabaseCoordinatorTest {
 
   @Test
   public void simpleOperationTest() throws InterruptedException {
     CountDownLatch responseReceived = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
+    ODatabaseCoordinator coordinator = new ODatabaseCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
         null);
     MockChannel channel = new MockChannel();
     channel.coordinator = coordinator;
@@ -75,7 +76,7 @@ public class ODistributedCoordinatorTest {
     CountDownLatch responseReceived = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
+    ODatabaseCoordinator coordinator = new ODatabaseCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
         null);
     MockChannel channel = new MockChannel();
     channel.coordinator = coordinator;
@@ -181,7 +182,7 @@ public class ODistributedCoordinatorTest {
     CountDownLatch timedOut = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
+    ODatabaseCoordinator coordinator = new ODatabaseCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
         null);
     MockChannel channel = new MockChannel();
     channel.coordinator = coordinator;
@@ -231,9 +232,9 @@ public class ODistributedCoordinatorTest {
   }
 
   private static class MockChannel implements ODistributedChannel {
-    public ODistributedCoordinator coordinator;
-    public CountDownLatch          reply;
-    public ODistributedMember      member;
+    public ODatabaseCoordinator coordinator;
+    public CountDownLatch       reply;
+    public ODistributedMember   member;
 
     @Override
     public void sendRequest(String database, OLogId id, ONodeRequest request) {

@@ -52,7 +52,7 @@ public class CoordinatorTxTest {
     ODistributedExecutor eThree = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(), OrientDBInternal.extract(this.three),
         "none");
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), new MockOperationLog(),
+    ODatabaseCoordinator coordinator = new ODatabaseCoordinator(Executors.newSingleThreadExecutor(), new MockOperationLog(),
         null, null);
 
     MemberChannel cOne = new MemberChannel(eOne, coordinator);
@@ -88,13 +88,13 @@ public class CoordinatorTxTest {
    * different nodes that would do the half of this job.
    */
   private static class MemberChannel implements ODistributedChannel {
-    public  ODistributedExecutor    executor;
-    public  ODistributedCoordinator coordinator;
-    public  ODistributedMember      member;
-    public  CountDownLatch          latch     = new CountDownLatch(1);
-    private AtomicLong              callCount = new AtomicLong(1);
+    public  ODistributedExecutor executor;
+    public  ODatabaseCoordinator coordinator;
+    public  ODistributedMember   member;
+    public  CountDownLatch       latch     = new CountDownLatch(1);
+    private AtomicLong           callCount = new AtomicLong(1);
 
-    public MemberChannel(ODistributedExecutor executor, ODistributedCoordinator coordinator) {
+    public MemberChannel(ODistributedExecutor executor, ODatabaseCoordinator coordinator) {
       this.executor = executor;
       this.coordinator = coordinator;
     }

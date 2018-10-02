@@ -19,7 +19,7 @@ public class ODistributedContext {
   private Map<OSessionOperationId, OTransactionContext> transactions;
   private ODistributedExecutor                          executor;
   private OSubmitContext                                submitContext;
-  private ODistributedCoordinator                       coordinator;
+  private ODatabaseCoordinator                          coordinator;
   private OrientDBInternal                              context;
   private String                                        databaseName;
   private OOperationLog                                 opLog;
@@ -60,13 +60,13 @@ public class ODistributedContext {
     return submitContext;
   }
 
-  public synchronized ODistributedCoordinator getCoordinator() {
+  public synchronized ODatabaseCoordinator getCoordinator() {
     return coordinator;
   }
 
   public synchronized void makeCoordinator(String nodeName, OSharedContext context) {
     if (coordinator == null) {
-      coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), opLog, new ODistributedLockManagerImpl(0),
+      coordinator = new ODatabaseCoordinator(Executors.newSingleThreadExecutor(), opLog, new ODistributedLockManagerImpl(0),
           new OClusterPositionAllocatorDatabase(context));
       OLoopBackDistributeMember loopBack = new OLoopBackDistributeMember(nodeName, databaseName, submitContext, coordinator,
           executor);

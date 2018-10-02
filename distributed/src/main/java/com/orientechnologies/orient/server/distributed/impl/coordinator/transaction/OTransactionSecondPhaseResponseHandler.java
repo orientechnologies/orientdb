@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
+import com.orientechnologies.orient.core.db.ODistributedCoordinator;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
 import java.util.List;

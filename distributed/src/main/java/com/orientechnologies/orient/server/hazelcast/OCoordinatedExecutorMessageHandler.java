@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.server.hazelcast;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODistributedCoordinator;
 import com.orientechnologies.orient.core.db.OrientDBDistributed;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedCoordinator;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedExecutor;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitContext;

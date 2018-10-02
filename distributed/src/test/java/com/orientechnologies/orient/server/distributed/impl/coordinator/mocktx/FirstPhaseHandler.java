@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.mocktx;
 
+import com.orientechnologies.orient.core.db.ODistributedCoordinator;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
 public class FirstPhaseHandler implements OResponseHandler {

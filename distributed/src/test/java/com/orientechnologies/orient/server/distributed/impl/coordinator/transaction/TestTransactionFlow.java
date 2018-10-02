@@ -76,7 +76,7 @@ public class TestTransactionFlow {
       submit = new OTransactionSubmit(txOps, indexes, false);
     }
 
-    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(),
+    ODatabaseCoordinator coordinator = new ODatabaseCoordinator(Executors.newSingleThreadExecutor(),
         new OIncrementOperationalLog(), new ODistributedLockManagerImpl(0), new OMockAllocator());
     RecordChannel channel = new RecordChannel();
     ODistributedMember member = new ODistributedMember("one", "test", channel);
