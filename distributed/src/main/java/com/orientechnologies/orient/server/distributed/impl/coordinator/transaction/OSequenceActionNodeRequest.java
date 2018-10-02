@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.message.sequence.OSequenceActionRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
@@ -31,6 +32,8 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeRes
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 /**
  *
@@ -38,24 +41,27 @@ import java.io.IOException;
  */
 public class OSequenceActionNodeRequest implements ONodeRequest{
 
-  OSequenceActionRequest actionRequest;
+  private OSequenceActionRequest actionRequest;
+  private String initialNodeName;
   
   public OSequenceActionNodeRequest(){
     
   }
   
-  public OSequenceActionNodeRequest(OSequenceActionRequest action){
+  public OSequenceActionNodeRequest(OSequenceActionRequest action, String initialNodeName){
     actionRequest = action;
+    this.initialNodeName = initialNodeName;
   }
   
   @Override
   public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor, ODatabaseDocumentInternal session) {    
+    int actionType = -1;
     try{
       OSequenceAction action = actionRequest.getAction();
       ODatabaseDocumentDistributed db = (ODatabaseDocumentDistributed) session;
       OSequenceLibrary sequences = db.getMetadata().getSequenceLibrary();
       String sequenceName = action.getSequenceName();
-      int actionType = action.getActionType();
+      actionType = action.getActionType();
       OSequence targetSequence = null;
       if (actionType != OSequenceAction.CREATE){
         targetSequence = sequences.getSequence(sequenceName);
@@ -63,36 +69,44 @@ public class OSequenceActionNodeRequest implements ONodeRequest{
           throw new RuntimeException("Sequence with name: " + sequenceName + " doesn't exists");
         }
       }
+      Object result = null;
       switch (actionType){
         case OSequenceAction.CREATE:
-          OSequence sequence = sequences.createSequence(sequenceName, action.getSequenceType(), action.getParameters());
+          OSequence sequence = sequences.createSequence(sequenceName, action.getSequenceType(), action.getParameters(), false);
           if (sequence == null){
             throw new RuntimeException("Faled to create sequence: " + sequenceName);
           }
+          result = sequence.getName();
           break;
         case OSequenceAction.REMOVE:
-          sequences.dropSequence(sequenceName);
+          sequences.dropSequence(sequenceName, false);
+          result = sequenceName;
           break;
         case OSequenceAction.CURRENT:
-          targetSequence.current(false);
+          result = targetSequence.current(false);
           break;
         case OSequenceAction.NEXT:
-          targetSequence.nextWork(false);
+          result = targetSequence.next(false);
           break;
         case OSequenceAction.RESET:
-          targetSequence.resetWork(false);
+          result = targetSequence.reset(false);
           break;
         case OSequenceAction.UPDATE:
-          targetSequence.updateParams(action.getParameters(), false);
+          result = targetSequence.updateParams(action.getParameters(), false);
           break;
-      }      
-      return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.SUCCESS, null);
+      }
+      //want to return result only from node that initiated whole action
+      if (!Objects.equals(nodeFrom.getName(), initialNodeName)){
+        result = null;
+      }
+      return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.SUCCESS, null, result);      
     }
     catch (OSequenceLimitReachedException e){
-      return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.LIMIT_REACHED, null);
+      return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.LIMIT_REACHED, null, null);
     }
-    catch (RuntimeException exc){
-      return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.ERROR, exc.getMessage());
+    catch (RuntimeException | ExecutionException | InterruptedException exc){
+      OLogManager.instance().error(this, "Can not execute sequence action: " + actionType, exc, (Object)null);
+      return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.ERROR, exc.getMessage(), null);
     }
   }
 

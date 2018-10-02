@@ -66,6 +66,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal.closeAllOnShutdown;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by tglman on 20/07/16.
@@ -1557,5 +1559,10 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public void unlock(ORID recordId) throws OLockException {
     checkOpenness();
     internal.unlock(recordId);
+  }
+
+  @Override
+  public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 }

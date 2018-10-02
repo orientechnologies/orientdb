@@ -189,6 +189,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
     return false;
   }
+  
+  @Override
+  public boolean isDistributed(){
+    return true;
+  }
 
   @Override
   public ODatabaseDocumentInternal copy() {
@@ -517,8 +522,30 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
   
   @Override
-  public void sendSequenceAction(OSequenceAction action){
-    
+  public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException{
+    ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
+    try {
+      dManager.waitUntilNodeOnline();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    ODistributedDatabaseImpl sharedDistributeDb = (ODistributedDatabaseImpl) dManager.getMessageService().getDatabase(getName());
+    OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
+    sharedDistributeDb.waitForOnline();
+    OSessionOperationId id = new OSessionOperationId();
+    id.init();
+    OSequenceActionCoordinatorSubmit submitAction = new OSequenceActionCoordinatorSubmit(action, dManager.getLocalNodeName());
+    Future<OSubmitResponse> future = submitContext
+        .send(id, submitAction);
+    try {
+      OSequenceActionCoordinatorResponse response = (OSequenceActionCoordinatorResponse) future.get(); 
+      if (!response.isSuccess()) {
+        throw new ODatabaseException("failed");
+      }
+      return (T)response.getResultOfSenderNode();
+    } catch (InterruptedException | ExecutionException e) {
+      throw e;
+    }
   }
 
   private void distributedCommitV2(OTransactionInternal iTx) {

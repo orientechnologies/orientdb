@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -12,6 +13,7 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceHelper;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -90,7 +92,14 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
 
     final ODatabaseDocument database = getDatabase();
 
-    database.getMetadata().getSequenceLibrary().createSequence(this.sequenceName, this.sequenceType, this.params);
+    try{
+      database.getMetadata().getSequenceLibrary().createSequence(this.sequenceName, this.sequenceType, this.params);
+    }
+    catch (ExecutionException | InterruptedException exc){
+      String message = "Unable to execute command: " + exc.getMessage();
+      OLogManager.instance().error(this, message, exc, (Object) null);
+      throw new OCommandExecutionException(message);
+    }
 
     return database.getMetadata().getSequenceLibrary().getSequenceCount();
   }

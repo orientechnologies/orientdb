@@ -14,11 +14,13 @@ import org.junit.rules.ExternalResource;
 
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.Assert;
 
 /**
  * Created by frank on 22/04/2016.
@@ -52,8 +54,13 @@ public class OSequenceTest {
 
   @Test
   public void shouldCreateSeqWithGivenAttribute() {
-    sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.ORDERED, new OSequence.CreateParams().setDefaults());
-
+    try{
+      sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.ORDERED, new OSequence.CreateParams().setDefaults());
+    }
+    catch (ExecutionException | InterruptedException exc){
+      Assert.assertTrue("Can not create sequence", false);
+    }
+    
     assertThat(sequences.getSequenceCount()).isEqualTo(1);
     assertThat(sequences.getSequenceNames()).contains("MYSEQ");
 

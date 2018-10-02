@@ -81,6 +81,7 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -1262,8 +1263,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
   }
   
   @Override
-  public void sendSequenceAction(OSequenceAction action){
-    
+  public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException{
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
           
 }

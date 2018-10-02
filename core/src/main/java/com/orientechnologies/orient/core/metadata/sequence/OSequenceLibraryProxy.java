@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
 
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -50,16 +51,38 @@ public class OSequenceLibraryProxy extends OProxedResource<OSequenceLibraryImpl>
   }
 
   @Override
-  public OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params) {
-    return delegate.createSequence(database, iName, sequenceType, params);
+  public OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params) throws ExecutionException, InterruptedException{
+    return createSequence(iName, sequenceType, params, database.isDistributed());
+  }
+  
+  @Override
+  public OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params, boolean executeViaDistributed) throws ExecutionException, InterruptedException{
+    if (executeViaDistributed){
+      OSequenceAction action = new OSequenceAction(OSequenceAction.CREATE, iName, params, sequenceType);
+      return database.sendSequenceAction(action);
+    }
+    else{
+      return delegate.createSequence(database, iName, sequenceType, params);
+    }
   }
 
   @Override
   @Deprecated
-  public void dropSequence(String iName) {
-    delegate.dropSequence(database, iName);
+  public void dropSequence(String iName) throws ExecutionException, InterruptedException{
+    dropSequence(iName, database.isDistributed());
   }
 
+  @Override
+  public void dropSequence(String iName, boolean executeViaDistributed) throws ExecutionException, InterruptedException{
+    if (executeViaDistributed){
+      OSequenceAction action = new OSequenceAction(OSequenceAction.REMOVE, iName, null, null);
+      database.sendSequenceAction(action);
+    }
+    else{
+      delegate.dropSequence(database, iName);
+    }
+  }
+  
   @Override
   public void create() {
     delegate.create(database);

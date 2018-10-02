@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
+import java.util.concurrent.ExecutionException;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -30,7 +31,12 @@ public class ODropSequenceStatementExecutionTest {
   @Test
   public void testPlain() {
     String name = "testPlain";
-    db.getMetadata().getSequenceLibrary().createSequence(name, OSequence.SEQUENCE_TYPE.CACHED, new OSequence.CreateParams());
+    try{
+      db.getMetadata().getSequenceLibrary().createSequence(name, OSequence.SEQUENCE_TYPE.CACHED, new OSequence.CreateParams());
+    }
+    catch (ExecutionException | InterruptedException exc){
+      Assert.assertTrue("Creating sequence failed", false);
+    }
 
     Assert.assertNotNull(db.getMetadata().getSequenceLibrary().getSequence(name));
     OResultSet result = db.command("drop sequence " + name);
@@ -67,7 +73,12 @@ public class ODropSequenceStatementExecutionTest {
     OResultSet result = db.command("drop sequence " + name + " if exists");
     Assert.assertFalse(result.hasNext());
 
-    db.getMetadata().getSequenceLibrary().createSequence(name, OSequence.SEQUENCE_TYPE.CACHED, new OSequence.CreateParams());
+    try{
+      db.getMetadata().getSequenceLibrary().createSequence(name, OSequence.SEQUENCE_TYPE.CACHED, new OSequence.CreateParams());
+    }
+    catch (ExecutionException | InterruptedException exc){
+      Assert.assertTrue("Creating sequence failed", false);
+    }
 
     Assert.assertNotNull(db.getMetadata().getSequenceLibrary().getSequence(name));
     result = db.command("drop sequence " + name + " if exists");

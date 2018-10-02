@@ -24,7 +24,6 @@ import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
@@ -35,6 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -222,9 +222,9 @@ public abstract class OSequence {
     return tlDocument.get();
   }
 
-  private void sendSequenceActionOverCluster(int actionType, CreateParams params){
+  private <T> T sendSequenceActionOverCluster(int actionType, CreateParams params) throws ExecutionException, InterruptedException{    
     OSequenceAction action = new OSequenceAction(actionType, getName(), params, getSequenceType());
-    tlDocument.get().getDatabase().sendSequenceAction(action);    
+    return tlDocument.get().getDatabase().sendSequenceAction(action);    
   }
   
   protected synchronized void initSequence(OSequence.CreateParams params) {
@@ -238,11 +238,18 @@ public abstract class OSequence {
     setSequenceType();
   }
 
-  public boolean updateParams(CreateParams params){
-    return updateParams(params, true);
+  public boolean updateParams(CreateParams params) throws ExecutionException, InterruptedException{
+    return updateParams(params, isOnDistributted());
   }
-          
-  public synchronized boolean updateParams(CreateParams params, boolean calledFromThisNode) {
+  
+  protected boolean isOnDistributted(){
+    return tlDocument.get().getDatabase().isDistributed();
+  }
+  
+  public synchronized boolean updateParams(CreateParams params, boolean executeViaDistributed) throws ExecutionException, InterruptedException{
+    if (executeViaDistributed){
+      return sendSequenceActionOverCluster(OSequenceAction.UPDATE, params);
+    }
     boolean any = false;
 
     if (params.start != null && this.getStart() != params.start) {
@@ -275,11 +282,7 @@ public abstract class OSequence {
     }
 
     save();
-    
-    if (calledFromThisNode){
-      sendSequenceActionOverCluster(OSequenceAction.UPDATE, params);
-    }
-
+        
     return any;
   }
 
@@ -405,57 +408,66 @@ public abstract class OSequence {
    * Forwards the sequence by one, and returns the new value.
    */
   @OApi
-  public long next(){
-    return next(true);
+  public long next() throws OSequenceLimitReachedException, ExecutionException, InterruptedException{
+    return next(isOnDistributted());
   }
   
   //TODO hide this for regular user
-  public long next(boolean calledFromThisNode) throws OSequenceLimitReachedException{
-    long retVal = nextWork(calledFromThisNode);
-    if (calledFromThisNode){
-      sendSequenceActionOverCluster(OSequenceAction.NEXT, null);
+  public long next(boolean executeViaDistributed) throws OSequenceLimitReachedException, ExecutionException, InterruptedException{
+    long retVal;
+    if (executeViaDistributed){
+      retVal = sendSequenceActionOverCluster(OSequenceAction.NEXT, null);
     }
+    else{
+      retVal = nextWork();
+    }    
     return retVal;
   }
   
-  protected abstract long nextWork(boolean calledFromThisNode) throws OSequenceLimitReachedException;
+  public abstract long nextWork() throws OSequenceLimitReachedException;
 
   /*
    * Returns the current sequence value. If next() was never called, returns null
    */
   @OApi
-  public long current(){
-    return current(true);
+  public long current() throws ExecutionException, InterruptedException{    
+    return current(isOnDistributted());
   }
   
   @OApi
-  public long current(boolean calledFromThisNode){
-    long retVal = currentWork(calledFromThisNode);
-    if (calledFromThisNode){
-      sendSequenceActionOverCluster(OSequenceAction.CURRENT, null);
+  public long current(boolean executeViaDistributed) throws ExecutionException, InterruptedException{
+    long retVal;
+    if (executeViaDistributed){
+      retVal = sendSequenceActionOverCluster(OSequenceAction.CURRENT, null);
     }
+    else{
+      retVal = currentWork();
+    }    
     return retVal;
   }
   
-  protected abstract long currentWork(boolean calledFromThisNode);
+  protected abstract long currentWork();
 
   
-  public long reset(){
-    return reset(true);
+  public long reset() throws ExecutionException, InterruptedException{
+    return reset(isOnDistributted());
   }
   /*
    * Resets the sequence value to it's initialized value.
    */
   @OApi
-  public long reset(boolean calledFromThisNode){
-    long retVal = resetWork(calledFromThisNode);
-    if (calledFromThisNode){
-      sendSequenceActionOverCluster(OSequenceAction.RESET, null);
+  public long reset(boolean executeViaDistributed) throws ExecutionException, InterruptedException{
+    long retVal;
+    if (executeViaDistributed){
+      retVal = sendSequenceActionOverCluster(OSequenceAction.RESET, null);
     }
+    else{
+      retVal = resetWork();
+    }    
     return retVal;
   }
   
-  protected abstract long resetWork(boolean calledFromThisNode);
+  public abstract long resetWork();
 
   /*
    * Returns the sequence type

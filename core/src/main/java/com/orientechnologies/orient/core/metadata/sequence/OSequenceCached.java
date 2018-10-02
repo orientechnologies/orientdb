@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -59,7 +60,7 @@ public class OSequenceCached extends OSequence {
   }
 
   @Override
-  public synchronized boolean updateParams(OSequence.CreateParams params, boolean calledFromThisNode) {
+  public synchronized boolean updateParams(OSequence.CreateParams params, boolean calledFromThisNode) throws ExecutionException, InterruptedException{
     boolean any = super.updateParams(params, calledFromThisNode);
     if (params.cacheSize != null && this.getCacheSize() != params.cacheSize) {
       this.setCacheSize(params.cacheSize);
@@ -99,7 +100,7 @@ public class OSequenceCached extends OSequence {
   }
 
   @Override
-  protected long nextWork(boolean calledFromThisNode) throws OSequenceLimitReachedException {
+  public long nextWork() throws OSequenceLimitReachedException {
     ODatabaseDocumentInternal mainDb = getDatabase();
     boolean tx = mainDb.getTransaction().isActive();
     try {
@@ -188,12 +189,12 @@ public class OSequenceCached extends OSequence {
   }
 
   @Override
-  protected synchronized long currentWork(boolean calledFromThisNode) {
+  protected synchronized long currentWork() {
     return this.cacheStart;
   }
 
   @Override
-  protected long resetWork(boolean calledFromThisNode) {
+  public long resetWork() {
     ODatabaseDocumentInternal mainDb = getDatabase();
     boolean tx = mainDb.getTransaction().isActive();
     try {

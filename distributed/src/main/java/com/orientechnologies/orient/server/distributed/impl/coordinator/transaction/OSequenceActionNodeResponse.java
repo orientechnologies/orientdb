@@ -57,14 +57,43 @@ public class OSequenceActionNodeResponse implements ONodeResponse{
   
   private Type responseResultType;
   private String message;
+  private Object responseResult;
   
   public OSequenceActionNodeResponse(){
     
   }
   
-  public OSequenceActionNodeResponse(Type responseType, String message){
+  public OSequenceActionNodeResponse(Type responseType, String message, Object responseResult){
     this.responseResultType = responseType;
     this.message = message;
+    this.responseResult = responseResult;
+  }  
+  
+  private static void serializeResult(DataOutput output, Object result) throws IOException{
+    if (result == null){
+      output.writeByte(0);
+    }
+    if (result instanceof String){
+      output.writeByte(1);
+      byte[] resBytes = ((String)result).getBytes(StandardCharsets.UTF_8.name());
+      output.writeInt(resBytes.length);
+      output.write(resBytes);
+    }
+    else if (result instanceof Integer){
+      output.writeByte(2);
+      output.writeInt((Integer)result);
+    }
+    else if (result instanceof Long){
+      output.writeByte(3);
+      output.writeLong((Long)result);
+    }
+    else if (result instanceof Boolean){
+      output.writeByte(4);
+      output.writeBoolean((Boolean)result);
+    }
+    else{
+      throw new IllegalArgumentException("Result type not supported: " + result.getClass().getSimpleName());
+    }
   }
   
   @Override
@@ -78,8 +107,30 @@ public class OSequenceActionNodeResponse implements ONodeResponse{
       output.writeInt(messageBytes.length);
       output.write(messageBytes);
     }
+    serializeResult(output, responseResult);
   }
 
+  private static Object deserializeResult(DataInput input) throws IOException{
+    byte typeFlag = input.readByte();
+    switch (typeFlag){
+      case 0:
+        return null;
+      case 1:
+        int dataLength = input.readInt();
+        byte[] dataBytes = new byte[dataLength];
+        input.readFully(dataBytes);
+        return new String(dataBytes, StandardCharsets.UTF_8.name());
+      case 2:
+        return input.readInt();
+      case 3:
+        return input.readLong();
+      case 4:
+        return input.readBoolean();
+      default:
+        throw new IllegalArgumentException("Inavlid type value");
+    }
+  }
+  
   @Override
   public void deserialize(DataInput input) throws IOException {
     byte resultTypeOrd = input.readByte();
@@ -91,6 +142,7 @@ public class OSequenceActionNodeResponse implements ONodeResponse{
       input.readFully(messageBytes);
       message = new String(messageBytes, StandardCharsets.UTF_8.name());
     }
+    responseResult = deserializeResult(input);
   }
 
   public Type getResponseResultType(){
@@ -100,6 +152,10 @@ public class OSequenceActionNodeResponse implements ONodeResponse{
   @Override
   public int getResponseType() {
     return OCoordinateMessagesFactory.SEQUENCE_ACTION_NODE_RESPONSE;
+  }
+  
+  public Object getResponseResult(){
+    return responseResult;
   }
   
 }

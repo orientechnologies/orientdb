@@ -31,19 +31,19 @@ import java.io.IOException;
  */
 public class OSequenceActionCoordinatorSubmit implements OSubmitRequest{  
   
-  private OSequenceActionRequest action = null;
+  private OSequenceActionRequest action = null;  
   
   public OSequenceActionCoordinatorSubmit(){
     
   }
   
-  public OSequenceActionCoordinatorSubmit(OSequenceAction action){
-    this.action = new OSequenceActionRequest(action);      
+  public OSequenceActionCoordinatorSubmit(OSequenceAction action, String initialNodeName){
+    this.action = new OSequenceActionRequest(action);
   }
   
   @Override
-  public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
-    OSequenceActionNodeRequest nodeRequest = new OSequenceActionNodeRequest();
+  public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {    
+    OSequenceActionNodeRequest nodeRequest = new OSequenceActionNodeRequest(action, member.getName());
     OSequenceActionNodeResponseHandler nodeResponseHandler = new OSequenceActionNodeResponseHandler(operationId);
     
     coordinator.sendOperation(this, nodeRequest, nodeResponseHandler);

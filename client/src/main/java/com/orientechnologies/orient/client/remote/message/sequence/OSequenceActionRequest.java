@@ -29,14 +29,14 @@ import java.nio.charset.StandardCharsets;
  */
 public class OSequenceActionRequest {
   
-  private OSequenceAction action = null;
+  private OSequenceAction action = null;  
   
   public OSequenceActionRequest(){
     
   }
   
   public OSequenceActionRequest(OSequenceAction action){
-    this.action = action;
+    this.action = action;    
   }
   
   private void serializeInt(Integer val, DataOutput out) throws IOException{
@@ -142,7 +142,7 @@ public class OSequenceActionRequest {
     }
     else{
       out.writeInt(-1);
-    }
+    }    
   }
   
   public void deserialize(DataInput in) throws IOException{

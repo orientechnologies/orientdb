@@ -47,7 +47,7 @@ public class OSequenceOrdered extends OSequence {
   }
 
   @Override
-  protected synchronized long nextWork(boolean calledFromThisNode) throws OSequenceLimitReachedException {
+  public synchronized long nextWork() throws OSequenceLimitReachedException {
     ODatabaseDocumentInternal mainDb = getDatabase();
     boolean tx = mainDb.getTransaction().isActive();
     try {
@@ -117,7 +117,7 @@ public class OSequenceOrdered extends OSequence {
   }
 
   @Override
-  protected synchronized long currentWork(boolean calledFromThisNode) {
+  protected synchronized long currentWork() {
     return callRetry(new Callable<Long>() {
       @Override
       public Long call() throws Exception {
@@ -127,7 +127,7 @@ public class OSequenceOrdered extends OSequence {
   }
 
   @Override
-  protected synchronized long resetWork(boolean calledFromThisNode) {
+  public synchronized long resetWork() {
     return callRetry(new Callable<Long>() {
       @Override
       public Long call() throws Exception {

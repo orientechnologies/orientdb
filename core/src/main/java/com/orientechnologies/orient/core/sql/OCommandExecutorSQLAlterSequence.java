@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -9,6 +10,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -75,10 +77,20 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
 
     final ODatabaseDocument database = getDatabase();
     OSequence sequence = database.getMetadata().getSequenceLibrary().getSequence(this.sequenceName);
-
-    final boolean result = sequence.updateParams(this.params);
-    sequence.reset();
-    sequence.save(getDatabase());
+    
+    boolean result;
+    try{
+      result = sequence.updateParams(this.params);
+      //TODO check, but reset should not be here
+//      sequence.reset();
+    }
+    catch (ExecutionException | InterruptedException exc){
+      String message = "Unable to execute command: " + exc.getMessage();
+      OLogManager.instance().error(this, message, exc, (Object) null);
+      throw new OCommandExecutionException(message);
+    }
+    //TODO save also shouldn't be here update is enough
+//    sequence.save(getDatabase());
     return result;
   }
 

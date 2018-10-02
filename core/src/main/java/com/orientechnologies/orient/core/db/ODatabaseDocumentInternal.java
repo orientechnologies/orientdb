@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseInternal<ORecord> {
 
@@ -267,5 +268,9 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
 
   void internalUnlockRecord(OIdentifiable iRecord);
   
-  void sendSequenceAction(OSequenceAction action);
+  <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException;
+  
+  default boolean isDistributed(){
+    return false;
+  }
 }

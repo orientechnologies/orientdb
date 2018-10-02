@@ -19,10 +19,10 @@
  */
 package com.orientechnologies.orient.core.metadata.sequence;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
 
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -33,11 +33,13 @@ public interface OSequenceLibrary {
 
   int getSequenceCount();
 
-  OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params);
+  OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params) throws ExecutionException, InterruptedException;
+  OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params, boolean executeViaDistributed) throws ExecutionException, InterruptedException;
 
   OSequence getSequence(String iName);
 
-  void dropSequence(String iName);
+  void dropSequence(String iName) throws ExecutionException, InterruptedException;
+  void dropSequence(String iName, boolean executeViaDistributed) throws ExecutionException, InterruptedException;
 
   @Deprecated
   void create();

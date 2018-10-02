@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -14,6 +15,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 public class OAlterSequenceStatement extends ODDLStatement {
   OIdentifier name;
@@ -88,7 +90,14 @@ public class OAlterSequenceStatement extends ODDLStatement {
       params.turnLimitOff = true;
     }
 
-    sequence.updateParams(params);
+    try{
+      sequence.updateParams(params);
+    }
+    catch (ExecutionException | InterruptedException exc){
+      String message = "Unable to execute command: " + exc.getMessage();
+      OLogManager.instance().error(this, message, exc, (Object) null);
+      throw new OCommandExecutionException(message);
+    }
     sequence.save(database);
 
     OInternalResultSet result = new OInternalResultSet();

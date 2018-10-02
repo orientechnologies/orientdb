@@ -28,7 +28,8 @@ import java.io.IOException;
 public class OSequenceActionCoordinatorResponse implements OSubmitResponse{
   
   private int failedOn = 0;
-  private int limitReachedOn = 0;
+  private int limitReachedOn = 0;  
+  private Object resultOfSenderNode;
   
   public OSequenceActionCoordinatorResponse(){
     
@@ -55,5 +56,33 @@ public class OSequenceActionCoordinatorResponse implements OSubmitResponse{
   public int getResponseType() {
     return OCoordinateMessagesFactory.SEQUENCE_ACTION_COORDINATOR_RESPONSE;
   }
+  
+  public boolean isSuccess(){
+    return failedOn <= 0;
+  }
+
+  public Object getResultOfSenderNode() {
+    return resultOfSenderNode;
+  }
+
+  public void setResultOfSenderNode(Object resultOfSenderNode) {
+    this.resultOfSenderNode = resultOfSenderNode;
+  }
+
+  public int getFailedOn() {
+    return failedOn;
+  }
+
+  public void setFailedOn(int failedOn) {
+    this.failedOn = failedOn;
+  }
+
+  public int getLimitReachedOn() {
+    return limitReachedOn;
+  }
+
+  public void setLimitReachedOn(int limitReachedOn) {
+    this.limitReachedOn = limitReachedOn;
+  }    
   
 }

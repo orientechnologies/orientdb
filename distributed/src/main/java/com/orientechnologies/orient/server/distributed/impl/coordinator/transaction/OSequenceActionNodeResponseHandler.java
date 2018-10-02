@@ -33,6 +33,7 @@ public class OSequenceActionNodeResponseHandler implements OResponseHandler{
   private final List<ODistributedMember> failedActionNode = new ArrayList<>();
   private final List<ODistributedMember> limitReachedNodes = new ArrayList<>();
   private OSessionOperationId operationId;
+  private Object senderResult = null;
   
   private OSequenceActionNodeResponseHandler(){
     
@@ -48,6 +49,9 @@ public class OSequenceActionNodeResponseHandler implements OResponseHandler{
     OSequenceActionNodeResponse responseFromNode = (OSequenceActionNodeResponse)response;
     switch(responseFromNode.getResponseResultType()){
       case SUCCESS:
+        if (senderResult != null){
+          senderResult = responseFromNode.getResponseResult();
+        }
         break;
       case ERROR:
         failedActionNode.add(member);
@@ -58,6 +62,7 @@ public class OSequenceActionNodeResponseHandler implements OResponseHandler{
     }
     if (responseCount == context.getInvolvedMembers().size()){
       OSequenceActionCoordinatorResponse submitedActionResponse = new OSequenceActionCoordinatorResponse(failedActionNode.size(), limitReachedNodes.size());
+      submitedActionResponse.setResultOfSenderNode(senderResult);
       coordinator.reply(member, operationId, submitedActionResponse);
       return true;
     }
