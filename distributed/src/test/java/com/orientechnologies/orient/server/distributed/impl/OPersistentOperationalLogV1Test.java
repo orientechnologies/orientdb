@@ -11,6 +11,7 @@ import org.junit.Test;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OPersistentOperationalLogV1Test {
@@ -71,6 +72,84 @@ public class OPersistentOperationalLogV1Test {
 
       OOperationLogEntry next = log.readRecord(inStream);
       Assert.assertNull(next);
+
+    } finally {
+      for (File file1 : file.toFile().listFiles()) {
+        file1.delete();
+      }
+      file.toFile().delete();
+    }
+  }
+
+  @Test
+  public void testIterate() throws IOException {
+
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString()) {
+      protected OCoordinateMessagesFactory getCoordinateMessagesFactory() {
+        return new OCoordinateMessagesFactory() {
+          @Override
+          public ONodeRequest createOperationRequest(int requestType) {
+            return new OPhase1Tx();
+          }
+        };
+      }
+    };
+
+    try {
+      int totLogEntries = 50_000;
+      for (int i = 0; i < totLogEntries; i++) {
+        OPhase1Tx item = new OPhase1Tx();
+        OLogId id = log.log(item);
+        log.logReceived(id, item);
+      }
+
+      int nextEntry = 10_000;
+      Iterator<OOperationLogEntry> iteartor = log.iterate(new OLogId(nextEntry), new OLogId(totLogEntries - 1));
+      while (nextEntry < totLogEntries) {
+        OOperationLogEntry item = iteartor.next();
+        Assert.assertEquals(nextEntry++, item.getLogId().getId());
+      }
+      Assert.assertFalse(iteartor.hasNext());
+
+    } finally {
+      for (File file1 : file.toFile().listFiles()) {
+        file1.delete();
+      }
+      file.toFile().delete();
+    }
+  }
+
+  @Test
+  public void testIterate2() throws IOException {
+
+    Path file = Files.createTempDirectory(".");
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString()) {
+      protected OCoordinateMessagesFactory getCoordinateMessagesFactory() {
+        return new OCoordinateMessagesFactory() {
+          @Override
+          public ONodeRequest createOperationRequest(int requestType) {
+            return new OPhase1Tx();
+          }
+        };
+      }
+    };
+
+    try {
+      int totLogEntries = 50_000;
+
+      for (int i = 0; i < totLogEntries; i++) {
+        OPhase1Tx item = new OPhase1Tx();
+        OLogId id = log.log(item);
+        log.logReceived(id, item);
+      }
+
+      Iterator<OOperationLogEntry> iteartor = log.iterate(new OLogId(10_000), new OLogId(40_000 - 1));
+      for (int i = 10_000; i < 40_000; i++) {
+        OOperationLogEntry item = iteartor.next();
+        Assert.assertEquals(i, item.getLogId().getId());
+      }
+      Assert.assertFalse(iteartor.hasNext());
 
     } finally {
       for (File file1 : file.toFile().listFiles()) {
