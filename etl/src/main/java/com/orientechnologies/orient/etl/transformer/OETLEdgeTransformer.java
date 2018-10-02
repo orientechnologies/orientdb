@@ -112,9 +112,7 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
       else
         throw new OETLTransformException(getName() + ": input type '" + o + "' is not supported");
 
-      Object joinCurrentValue = resolve(joinFieldName);
-      if (joinCurrentValue == null)
-        joinCurrentValue = joinValue != null ? joinValue : vertex.getProperty(joinFieldName);
+      final Object joinCurrentValue = joinValue != null ? joinValue : vertex.getProperty(joinFieldName);
 
       if (OMultiValue.isMultiValue(joinCurrentValue)) {
         // RESOLVE SINGLE JOINS
