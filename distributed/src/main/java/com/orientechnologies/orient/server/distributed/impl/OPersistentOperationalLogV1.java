@@ -61,7 +61,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
   private AtomicLong inc;
 
-  public OPersistentOperationalLogV1 newInstance(String databaseName, OrientDBInternal context) {
+  public static OPersistentOperationalLogV1 newInstance(String databaseName, OrientDBInternal context) {
     OAbstractPaginatedStorage s = ((OrientDBDistributed) context).getStorage(databaseName);
     OLocalPaginatedStorage storage = (OLocalPaginatedStorage) s.getUnderlying();
     return new OPersistentOperationalLogV1(storage.getStoragePath().toString());
