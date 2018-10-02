@@ -165,7 +165,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     writeRecord(stream, logId, request);
   }
 
-  private void writeRecord(DataOutputStream stream, OLogId logId, ONodeRequest request) {
+  protected void writeRecord(DataOutputStream stream, OLogId logId, ONodeRequest request) {
     ByteArrayOutputStream outArray = new ByteArrayOutputStream();
     DataOutput out = new DataOutputStream(outArray);
     try {
@@ -185,7 +185,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     }
   }
 
-  private OOperationLogEntry readRecord(DataInputStream stream) {
+  protected OOperationLogEntry readRecord(DataInputStream stream) {
     try {
       long logId = stream.readLong();
       int totalPacketSize = stream.readInt();
@@ -203,7 +203,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     }
   }
 
-  private OCoordinateMessagesFactory getCoordinateMessagesFactory() {
+  protected OCoordinateMessagesFactory getCoordinateMessagesFactory() {
     if (this.factory == null) {
       this.factory = new OCoordinateMessagesFactory();//TODO
     }

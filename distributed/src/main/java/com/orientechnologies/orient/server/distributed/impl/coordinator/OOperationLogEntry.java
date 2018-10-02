@@ -9,11 +9,11 @@ public class OOperationLogEntry {
     this.request = request;
   }
 
-  OLogId getLogId() {
+  public OLogId getLogId() {
     return this.logId;
   }
 
-  ONodeRequest getRequest() {
+  public ONodeRequest getRequest() {
     return this.request;
   }
 }
