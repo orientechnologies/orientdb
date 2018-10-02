@@ -1764,9 +1764,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   protected void dropStorageFiles() {
+    dropStorageFiles(wrapped);
+
+  }
+
+  public static void dropStorageFiles(OAbstractPaginatedStorage wrapped) {
     // REMOVE distributed-config.json and distributed-sync.json files to allow removal of directory
     final File dCfg = new File(
-        ((OLocalPaginatedStorage) wrapped).getStoragePath() + "/" + getDistributedManager().FILE_DISTRIBUTED_DB_CONFIG);
+        ((OLocalPaginatedStorage) wrapped).getStoragePath() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
 
     try {
       if (dCfg.exists()) {

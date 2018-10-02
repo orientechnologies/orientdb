@@ -62,6 +62,9 @@ public class OBackgroundBackup implements Runnable {
         try {
           OWriteAheadLog wal = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getWALInstance();
           OLogSequenceNumber lsn = wal.end();
+          if (lsn == null) {
+            lsn = new OLogSequenceNumber(-1, -1);
+          }
           wal.addCutTillLimit(lsn);
 
           resultedBackupFile.delete();
