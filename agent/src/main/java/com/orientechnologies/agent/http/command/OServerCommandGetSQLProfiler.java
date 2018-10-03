@@ -30,18 +30,18 @@ import java.io.StringWriter;
 import java.util.Optional;
 
 public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope {
-  private static final String[]          NAMES = { "GET|sqlProfiler/*", "POST|sqlProfiler/*" };
+  private static final String[]          NAMES = { "GET|sqlProfiler/*" };
   private final        OEnterpriseServer eeServer;
 
   public OServerCommandGetSQLProfiler(OEnterpriseServer server) {
-    super(EnterprisePermissions.SERVER_PROFILER.toString());
+    super(EnterprisePermissions.SERVER_METRICS.toString());
 
     this.eeServer = server;
   }
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: sqlProfiler/<command>/[<config>]|[<from>]");
+    final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: sqlProfiler/<command>");
 
     iRequest.data.commandInfo = "Profiler information";
 
@@ -50,12 +50,7 @@ public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope
       if (isLocalNode(iRequest)) {
         final String db = parts[1];
         if ("GET".equalsIgnoreCase(iRequest.httpMethod)) {
-
           doGet(iRequest, iResponse, parts, db);
-
-        } else if ("POST".equalsIgnoreCase(iRequest.httpMethod)) {
-          Orient.instance().getProfiler().resetRealtime("db." + db + ".command");
-          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
         }
       } else {
         proxyRequest(iRequest, iResponse);
