@@ -44,7 +44,7 @@ public class OSequenceActionCoordinatorSubmit implements OSubmitRequest{
   @Override
   public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {    
     OSequenceActionNodeRequest nodeRequest = new OSequenceActionNodeRequest(action, member.getName());
-    OSequenceActionNodeResponseHandler nodeResponseHandler = new OSequenceActionNodeResponseHandler(operationId);
+    OSequenceActionNodeResponseHandler nodeResponseHandler = new OSequenceActionNodeResponseHandler(operationId, member);
     
     coordinator.sendOperation(this, nodeRequest, nodeResponseHandler);
   }

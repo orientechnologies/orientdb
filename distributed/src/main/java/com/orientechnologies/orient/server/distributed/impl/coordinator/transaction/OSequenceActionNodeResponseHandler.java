@@ -33,15 +33,17 @@ public class OSequenceActionNodeResponseHandler implements OResponseHandler{
   private int responseCount = 0;
   private final List<ODistributedMember> failedActionNode = new ArrayList<>();
   private final List<ODistributedMember> limitReachedNodes = new ArrayList<>();
-  private OSessionOperationId operationId;
+  private final OSessionOperationId operationId;
   private Object senderResult = null;
+  private final ODistributedMember initiator;
   
-  private OSequenceActionNodeResponseHandler(){
-    
-  }
+//  private OSequenceActionNodeResponseHandler(){
+//    
+//  }
   
-  public OSequenceActionNodeResponseHandler(OSessionOperationId operationId){
+  public OSequenceActionNodeResponseHandler(OSessionOperationId operationId, ODistributedMember initiator){
     this.operationId = operationId;
+    this.initiator = initiator;
   }
   
   @Override
@@ -67,7 +69,7 @@ public class OSequenceActionNodeResponseHandler implements OResponseHandler{
       List<String> limitReachedNodeNames = limitReachedNodes.stream().map(ODistributedMember::getName).collect(Collectors.toList());
       OSequenceActionCoordinatorResponse submitedActionResponse = new OSequenceActionCoordinatorResponse(failedNodesNames, limitReachedNodeNames, 
               senderResult, context.getInvolvedMembers().size());      
-      coordinator.reply(member, operationId, submitedActionResponse);
+      coordinator.reply(initiator, operationId, submitedActionResponse);
       return true;
     }
     return false;
