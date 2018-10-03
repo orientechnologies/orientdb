@@ -41,7 +41,9 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.engine.OEngine;
+import com.orientechnologies.orient.core.enterprise.OEnterpriseEndpoint;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -68,6 +70,7 @@ import java.io.InputStream;
 import java.util.*;
 
 public class OEnterpriseAgent extends OServerPluginAbstract
+
     implements ODatabaseLifecycleListener, OPluginLifecycleListener, OServerLifecycleListener {
   public static final String     EE                = "ee.";
   private             String     enterpriseVersion = "";
@@ -533,6 +536,21 @@ public class OEnterpriseAgent extends OServerPluginAbstract
 
   public <T extends OEnterpriseService> Optional<T> getServiceByClass(Class<T> klass) {
     return (Optional<T>) this.services.stream().filter(c -> c.getClass().equals(klass)).findFirst();
+  }
+
+  @Override
+  public void haSetDbStatus(ODatabaseDocument db, String status) {
+    throw new UnsupportedOperationException("HA SET STATUS is not supported");
+  }
+
+  @Override
+  public void haSetRole(ODatabaseDocument db, String status) {
+    throw new UnsupportedOperationException("HA SET ROLE is not supported");
+  }
+
+  @Override
+  public void haSetOwner(ODatabaseDocument db, String status) {
+    throw new UnsupportedOperationException("HA SET OWNER is not supported");
   }
 
 }
