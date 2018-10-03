@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
@@ -388,9 +389,9 @@ public class OSelectExecutionPlanner {
       return null;
     } else if (item.getIdentifier() != null) {
       String className = item.getIdentifier().getStringValue();
-      OClass clazz = db.getMetadata().getSchema().getClass(className);
+      OClass clazz = getSchemaFromContext(ctx).getClass(className);
       if (clazz == null) {
-        clazz = db.getMetadata().getSchema().getView(className);
+        clazz = getSchemaFromContext(ctx).getView(className);
       }
       if (clazz == null) {
         return null;
@@ -632,9 +633,10 @@ public class OSelectExecutionPlanner {
     }
     if (info.whereClause != null && info.target != null && info.target.getItem().getIdentifier() != null) {
       String className = info.target.getItem().getIdentifier().getStringValue();
-      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(className);
-      if(clazz==null){
-        clazz = ctx.getDatabase().getMetadata().getSchema().getView(className);
+      OSchema schema = getSchemaFromContext(ctx);
+      OClass clazz = schema.getClass(className);
+      if (clazz == null) {
+        clazz = schema.getView(className);
       }
       if (clazz != null) {
         info.whereClause.getBaseExpression().rewriteIndexChainsAsSubqueries(ctx, clazz);
@@ -1471,7 +1473,7 @@ public class OSelectExecutionPlanner {
       orderByRidAsc = false;
     }
     String className = identifier.getStringValue();
-    OSchema schema = ctx.getDatabase().getMetadata().getSchema();
+    OSchema schema = getSchemaFromContext(ctx);
 
     AbstractExecutionStep fetcher;
     if (schema.getClass(className) != null) {
@@ -1493,7 +1495,7 @@ public class OSelectExecutionPlanner {
     if (queryTarget == null) {
       return false;
     }
-    OSchema schema = ctx.getDatabase().getMetadata().getSchema();
+    OSchema schema = getSchemaFromContext(ctx);
     OClass clazz = schema.getClass(queryTarget.getStringValue());
     if (clazz == null) {
       clazz = schema.getView(queryTarget.getStringValue());
@@ -1665,7 +1667,7 @@ public class OSelectExecutionPlanner {
 
   private boolean handleClassWithIndexForSortOnly(OSelectExecutionPlan plan, OIdentifier queryTarget, Set<String> filterClusters,
       QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
-    OSchema schema = ctx.getDatabase().getMetadata().getSchema();
+    OSchema schema = getSchemaFromContext(ctx);
     OClass clazz = schema.getClass(queryTarget.getStringValue());
     if (clazz == null) {
       clazz = schema.getView(queryTarget.getStringValue());
@@ -1726,7 +1728,7 @@ public class OSelectExecutionPlanner {
       info.flattenedWhereClause = null;
       return true;
     }
-    OSchema schema = ctx.getDatabase().getMetadata().getSchema();
+    OSchema schema = getSchemaFromContext(ctx);
     OClass clazz = schema.getClass(targetClass.getStringValue());
     if (clazz == null) {
       clazz = schema.getView(targetClass.getStringValue());
@@ -1789,9 +1791,9 @@ public class OSelectExecutionPlanner {
     List<OExecutionStepInternal> result = handleClassAsTargetWithIndex(targetClass, filterClusters, info, ctx, profilingEnabled);
     if (result == null) {
       result = new ArrayList<>();
-      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass);
+      OClass clazz = getSchemaFromContext(ctx).getClass(targetClass);
       if (clazz == null) {
-        clazz = ctx.getDatabase().getMetadata().getSchema().getView(targetClass);
+        clazz = getSchemaFromContext(ctx).getView(targetClass);
       }
       if (clazz == null) {
         throw new OCommandExecutionException("Cannot find class " + targetClass);
@@ -1826,9 +1828,9 @@ public class OSelectExecutionPlanner {
       return null;
     }
 
-    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass);
+    OClass clazz = getSchemaFromContext(ctx).getClass(targetClass);
     if (clazz == null) {
-      clazz = ctx.getDatabase().getMetadata().getSchema().getView(targetClass);
+      clazz = getSchemaFromContext(ctx).getView(targetClass);
     }
     if (clazz == null) {
       throw new OCommandExecutionException("Cannot find class " + targetClass);
@@ -1884,6 +1886,10 @@ public class OSelectExecutionPlanner {
       result.add(createParallelIndexFetch(optimumIndexSearchDescriptors, filterClusters, ctx, profilingEnabled));
     }
     return result;
+  }
+
+  private static OSchema getSchemaFromContext(OCommandContext ctx) {
+    return ((OMetadataInternal) ctx.getDatabase().getMetadata()).getImmutableSchemaSnapshot();
   }
 
   private boolean fullySorted(OOrderBy orderBy, OAndBlock conditions, OIndex idx) {
