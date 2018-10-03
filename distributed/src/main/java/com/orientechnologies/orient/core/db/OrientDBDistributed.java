@@ -4,6 +4,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -176,6 +177,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private synchronized void checkCoordinator(String database) {
+    if (!isDistributedVersionTwo())
+      return;
+
     if (!database.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
       OSharedContext shared = sharedContexts.get(database);
       if (shared instanceof OSharedContextDistributed) {
@@ -202,7 +206,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   }
 
+  private boolean isDistributedVersionTwo() {
+    return getConfigurations().getConfigurations().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION)
+        == 2;
+  }
+
   public synchronized void nodeJoin(String nodeName, ODistributedChannel channel) {
+    if (!isDistributedVersionTwo())
+      return;
     members.put(nodeName, channel);
     for (OSharedContext context : sharedContexts.values()) {
       if (isContextToIgnore(context))
@@ -222,6 +233,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public synchronized void nodeLeave(String nodeName) {
+    if (!isDistributedVersionTwo())
+      return;
     members.remove(nodeName);
     for (OSharedContext context : sharedContexts.values()) {
       if (isContextToIgnore(context))
@@ -242,6 +255,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public synchronized void setCoordinator(String lockManager, boolean isSelf) {
+    if (!isDistributedVersionTwo())
+      return;
     this.coordinatorName = lockManager;
     if (isSelf) {
       if (!coordinator) {
