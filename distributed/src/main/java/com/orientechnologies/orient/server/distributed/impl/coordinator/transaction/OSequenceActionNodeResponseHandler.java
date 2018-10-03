@@ -22,6 +22,7 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.ORequest
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OResponseHandler;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -49,7 +50,8 @@ public class OSequenceActionNodeResponseHandler implements OResponseHandler{
     OSequenceActionNodeResponse responseFromNode = (OSequenceActionNodeResponse)response;
     switch(responseFromNode.getResponseResultType()){
       case SUCCESS:
-        if (senderResult != null){
+        //sender result is different from null only from node that initialized whole process
+        if (senderResult == null){
           senderResult = responseFromNode.getResponseResult();
         }
         break;
@@ -61,8 +63,10 @@ public class OSequenceActionNodeResponseHandler implements OResponseHandler{
         break;
     }
     if (responseCount == context.getInvolvedMembers().size()){
-      OSequenceActionCoordinatorResponse submitedActionResponse = new OSequenceActionCoordinatorResponse(failedActionNode.size(), limitReachedNodes.size());
-      submitedActionResponse.setResultOfSenderNode(senderResult);
+      List<String> failedNodesNames = failedActionNode.stream().map(ODistributedMember::getName).collect(Collectors.toList());
+      List<String> limitReachedNodeNames = limitReachedNodes.stream().map(ODistributedMember::getName).collect(Collectors.toList());
+      OSequenceActionCoordinatorResponse submitedActionResponse = new OSequenceActionCoordinatorResponse(failedNodesNames, limitReachedNodeNames, 
+              senderResult, context.getInvolvedMembers().size());      
       coordinator.reply(member, operationId, submitedActionResponse);
       return true;
     }

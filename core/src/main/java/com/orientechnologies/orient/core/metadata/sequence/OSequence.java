@@ -66,7 +66,9 @@ public abstract class OSequence {
 
   private boolean cruacialValueChanged = false;
 
-  public static final SequenceOrderType DEFAULT_ORDER_TYPE = SequenceOrderType.ORDER_POSITIVE;    
+  public static final SequenceOrderType DEFAULT_ORDER_TYPE = SequenceOrderType.ORDER_POSITIVE; 
+  
+  private static int replicationProtocolVersion = OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
 
   public static class CreateParams {
     public Long              start        = DEFAULT_START;
@@ -238,8 +240,9 @@ public abstract class OSequence {
     setSequenceType();
   }
 
-  public boolean updateParams(CreateParams params) throws ExecutionException, InterruptedException{
-    return updateParams(params, isOnDistributted());
+  public boolean updateParams(CreateParams params) throws ExecutionException, InterruptedException{   
+    boolean shouldGoOverDistributted = isOnDistributted() && (replicationProtocolVersion > 1);
+    return updateParams(params, shouldGoOverDistributted);
   }
   
   protected boolean isOnDistributted(){
@@ -409,7 +412,8 @@ public abstract class OSequence {
    */
   @OApi
   public long next() throws OSequenceLimitReachedException, ExecutionException, InterruptedException{
-    return next(isOnDistributted());
+    boolean shouldGoOverDistributted = isOnDistributted() && (replicationProtocolVersion > 1);
+    return next(shouldGoOverDistributted);
   }
   
   //TODO hide this for regular user
@@ -431,7 +435,8 @@ public abstract class OSequence {
    */
   @OApi
   public long current() throws ExecutionException, InterruptedException{    
-    return current(isOnDistributted());
+    boolean shouldGoOverDistributted = isOnDistributted() && (replicationProtocolVersion > 1);
+    return current(shouldGoOverDistributted);
   }
   
   @OApi
@@ -450,7 +455,8 @@ public abstract class OSequence {
 
   
   public long reset() throws ExecutionException, InterruptedException{
-    return reset(isOnDistributted());
+    boolean shouldGoOverDistributted = isOnDistributted() && (replicationProtocolVersion > 1);
+    return reset(shouldGoOverDistributted);
   }
   /*
    * Resets the sequence value to it's initialized value.

@@ -69,9 +69,10 @@ public class OSequenceActionNodeResponse implements ONodeResponse{
     this.responseResult = responseResult;
   }  
   
-  private static void serializeResult(DataOutput output, Object result) throws IOException{
+  protected static void serializeResult(DataOutput output, Object result) throws IOException{
     if (result == null){
       output.writeByte(0);
+      return;
     }
     if (result instanceof String){
       output.writeByte(1);
@@ -100,7 +101,7 @@ public class OSequenceActionNodeResponse implements ONodeResponse{
   public void serialize(DataOutput output) throws IOException {
     output.writeByte(responseResultType.getVal());
     if (message == null){
-      output.write(-1);
+      output.writeInt(-1);
     }
     else{
       byte[] messageBytes = message.getBytes(StandardCharsets.UTF_8.name());
@@ -110,7 +111,7 @@ public class OSequenceActionNodeResponse implements ONodeResponse{
     serializeResult(output, responseResult);
   }
 
-  private static Object deserializeResult(DataInput input) throws IOException{
+  protected static Object deserializeResult(DataInput input) throws IOException{
     byte typeFlag = input.readByte();
     switch (typeFlag){
       case 0:

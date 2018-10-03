@@ -131,14 +131,20 @@ public class OSequenceActionRequest {
       out.write(sequenceNameBytes);
       out.writeByte(action.getSequenceType().getVal());
 
-      OSequence.CreateParams params = action.getParameters();    
-      serializeLong(params.start, out);
-      serializeInt(params.increment, out);
-      serializeInt(params.cacheSize, out);
-      serializeLong(params.limitValue, out);
-      serializeOrderType(params.orderType, out);
-      serializeBoolean(params.recyclable, out);
-      serializeBoolean(params.turnLimitOff, out);
+      OSequence.CreateParams params = action.getParameters();
+      if (params == null){
+        out.writeByte(0);
+      }
+      else{
+        out.writeByte(1);
+        serializeLong(params.start, out);
+        serializeInt(params.increment, out);
+        serializeInt(params.cacheSize, out);
+        serializeLong(params.limitValue, out);
+        serializeOrderType(params.orderType, out);
+        serializeBoolean(params.recyclable, out);
+        serializeBoolean(params.turnLimitOff, out);
+      }
     }
     else{
       out.writeInt(-1);
@@ -157,15 +163,19 @@ public class OSequenceActionRequest {
         throw new IOException("Inavlid sequnce type value: " + sequenceTypeByte);
       }
       String sequenceName = new String(nameBytes, StandardCharsets.UTF_8.name());
-      OSequence.CreateParams params = new OSequence.CreateParams();
-      params.resetNull();
-      params.start = deserializeLong(in);
-      params.increment = deserializeInt(in);
-      params.cacheSize = deserializeInt(in);
-      params.limitValue = deserializeLong(in);
-      params.orderType = deserializeOrderType(in);
-      params.recyclable = deserializeBoolean(in);
-      params.turnLimitOff = deserializeBoolean(in);
+      OSequence.CreateParams params = null;
+      byte paramsNullFlag = in.readByte();
+      if (paramsNullFlag > 0){
+        params = new OSequence.CreateParams();
+        params.resetNull();
+        params.start = deserializeLong(in);
+        params.increment = deserializeInt(in);
+        params.cacheSize = deserializeInt(in);
+        params.limitValue = deserializeLong(in);
+        params.orderType = deserializeOrderType(in);
+        params.recyclable = deserializeBoolean(in);
+        params.turnLimitOff = deserializeBoolean(in);
+      }
       action = new OSequenceAction(actionType, sequenceName, params, sequenceType);
     }
     else {

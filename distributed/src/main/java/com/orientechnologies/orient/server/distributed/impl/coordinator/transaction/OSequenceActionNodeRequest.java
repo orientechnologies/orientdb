@@ -60,6 +60,7 @@ public class OSequenceActionNodeRequest implements ONodeRequest{
     try{
       OSequenceAction action = actionRequest.getAction();
       ODatabaseDocumentDistributed db = (ODatabaseDocumentDistributed) session;
+      String localName = db.getLocalNodeName();
       OSequenceLibrary sequences = db.getMetadata().getSequenceLibrary();
       String sequenceName = action.getSequenceName();
       actionType = action.getActionType();
@@ -97,8 +98,9 @@ public class OSequenceActionNodeRequest implements ONodeRequest{
           break;
       }
       //want to return result only from node that initiated whole action
-      //know how to process this in Handler
-      if (!Objects.equals(nodeFrom.getName(), initialNodeName)){
+      //know how to process this in Handler      
+      if (!Objects.equals(localName, initialNodeName)){
+        System.out.println("EXECUTE ON OTHER NODE THAN SENDER");
         result = null;
       }
       return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.SUCCESS, null, result);      

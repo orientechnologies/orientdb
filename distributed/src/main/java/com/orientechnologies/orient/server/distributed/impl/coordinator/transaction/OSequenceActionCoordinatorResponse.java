@@ -20,6 +20,9 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitR
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -27,29 +30,82 @@ import java.io.IOException;
  */
 public class OSequenceActionCoordinatorResponse implements OSubmitResponse{
   
-  private int failedOn = 0;
-  private int limitReachedOn = 0;  
+  private List<String> failedOn;
+  private List<String> limitReachedOn;
   private Object resultOfSenderNode;
+  private int nodesInvolved = 0;
   
   public OSequenceActionCoordinatorResponse(){
     
   }
   
-  public OSequenceActionCoordinatorResponse(int failedOnNo, int limitReachedOnNo){
+  public OSequenceActionCoordinatorResponse(List<String> failedOnNo, List<String> limitReachedOnNo, Object result, int numOfNodes){
     failedOn = failedOnNo;
     limitReachedOn = limitReachedOnNo;
+    resultOfSenderNode = result;
+    this.nodesInvolved = numOfNodes;
+  }
+  
+  private static void serializeList(DataOutput output, List<String> list) throws IOException{
+    if (list == null){
+      output.writeByte(-1);
+    }
+    else{
+      output.writeByte(1);
+      output.writeInt(list.size());
+      for (String str : list){
+        if (str == null){
+          output.writeByte(0);
+        }
+        else{
+          output.writeByte(1);
+          byte[] strBytes = str.getBytes(StandardCharsets.UTF_8.name());
+          output.writeInt(strBytes.length);
+          output.write(strBytes);
+        }
+      }
+    }
+  }
+  
+  private static List<String> deserializeList(DataInput input) throws IOException{
+    byte nullFlag = input.readByte();
+    if (nullFlag > -1){
+      int listSize = input.readInt();
+      List<String> retList = new ArrayList<>();
+      for (int i = 0; i < listSize; i++){
+        byte stringByte = input.readByte();
+        if (stringByte > 0){
+          int bytesLength = input.readInt();
+          byte[] strBytes = new byte[bytesLength];
+          input.readFully(strBytes);
+          String str = new String(strBytes, StandardCharsets.UTF_8);
+          retList.add(str);
+        }
+        else{
+          retList.add(null);
+        }
+      }
+      return retList;
+    }
+    else{
+      return null;
+    }
   }
   
   @Override
   public void serialize(DataOutput output) throws IOException {
-    output.writeInt(failedOn);
-    output.writeInt(limitReachedOn);
+    serializeList(output, failedOn);
+    serializeList(output, limitReachedOn);
+    output.writeInt(nodesInvolved);
+    OSequenceActionNodeResponse.serializeResult(output, resultOfSenderNode);
   }
 
   @Override
   public void deserialize(DataInput input) throws IOException {
-    failedOn = input.readInt();
-    limitReachedOn = input.readInt();
+    failedOn = deserializeList(input);
+    limitReachedOn = deserializeList(input);
+    nodesInvolved = input.readInt();
+    resultOfSenderNode = OSequenceActionNodeResponse.deserializeResult(input);
   }
 
   @Override
@@ -58,31 +114,22 @@ public class OSequenceActionCoordinatorResponse implements OSubmitResponse{
   }
   
   public boolean isSuccess(){
-    return failedOn <= 0;
+    return failedOn.size() <= 0;
   }
 
   public Object getResultOfSenderNode() {
     return resultOfSenderNode;
-  }
+  }  
 
-  public void setResultOfSenderNode(Object resultOfSenderNode) {
-    this.resultOfSenderNode = resultOfSenderNode;
-  }
-
-  public int getFailedOn() {
+  public List<String> getFailedOn() {
     return failedOn;
-  }
+  }  
 
-  public void setFailedOn(int failedOn) {
-    this.failedOn = failedOn;
-  }
-
-  public int getLimitReachedOn() {
+  public List<String> getLimitReachedOn() {
     return limitReachedOn;
-  }
-
-  public void setLimitReachedOn(int limitReachedOn) {
-    this.limitReachedOn = limitReachedOn;
-  }    
+  }      
   
+  public int getNumberOfNodesInvolved(){
+    return nodesInvolved;
+  }
 }

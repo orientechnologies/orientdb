@@ -202,4 +202,8 @@ public class OTransactionSubmit implements OSubmitRequest {
   public int getRequestType() {
     return TRANSACTION_SUBMIT_REQUEST;
   }
+  
+  public boolean isEmpty(){
+    return operations.isEmpty();
+  }
 }

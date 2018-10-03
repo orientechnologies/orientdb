@@ -50,7 +50,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     executeCachedSequenceTest(dbs, "seq1");
   }
 
-  private void executeCachedSequenceTest(final ODatabaseDocument[] dbs, final String sequenceName) {
+  private void executeCachedSequenceTest(final ODatabaseDocument[] dbs, final String sequenceName) throws ExecutionException, InterruptedException{
     // Assuming seq2.next() is called once after calling seq1.next() once, and cache size is
     // C, seq2.current() - seq1.current() = C
 
