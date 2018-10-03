@@ -17,8 +17,8 @@ import java.util.Map;
  * <br><br>
  * <code>
  * select from foo<br>
- * let _$$$SUBQUERY$$_0 = (select name from bar)<br>
- * where name in _$$$SUBQUERY$$_0
+ * let $$$SUBQUERY$$_0 = (select name from bar)<br>
+ * where name in $$$SUBQUERY$$_0
  * </code>
  * <br>
  *
@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class SubQueryCollector {
 
-  protected static final String GENERATED_ALIAS_PREFIX = "_$$$SUBQUERY$$_";
+  protected static final String GENERATED_ALIAS_PREFIX = "$$$SUBQUERY$$_";
   protected              int    nextAliasId            = 0;
 
   protected Map<OIdentifier, OStatement> subQueries = new HashMap<>();

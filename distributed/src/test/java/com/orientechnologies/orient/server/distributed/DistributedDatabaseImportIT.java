@@ -35,8 +35,8 @@ public class DistributedDatabaseImportIT {
   @Test
   public void test() throws IOException {
     OrientDB ctx1 = server0.getContext();
-    ctx1.create("test", ODatabaseType.PLOCAL);
-    ODatabaseSession session = ctx1.open("test", "admin", "admin");
+    ctx1.create("import-test", ODatabaseType.PLOCAL);
+    ODatabaseSession session = ctx1.open("import-test", "admin", "admin");
     session.createClass("testa");
     ODatabaseExport export = new ODatabaseExport((ODatabaseDocumentInternal) session, "target/export.tar.gz", iText -> {
     });
@@ -44,8 +44,8 @@ public class DistributedDatabaseImportIT {
     export.close();
     session.close();
 
-    ctx1.create("test1", ODatabaseType.PLOCAL);
-    ODatabaseSession session1 = ctx1.open("test1", "admin", "admin");
+    ctx1.create("imported-test", ODatabaseType.PLOCAL);
+    ODatabaseSession session1 = ctx1.open("imported-test", "admin", "admin");
     ODatabaseImport imp = new ODatabaseImport((ODatabaseDocumentInternal) session1, "target/export.tar.gz", iText -> {
     });
     imp.importDatabase();
@@ -53,15 +53,15 @@ public class DistributedDatabaseImportIT {
     session1.close();
 
     OrientDB ctx2 = server1.getContext();
-    ODatabaseSession session2 = ctx2.open("test1", "admin", "admin");
+    ODatabaseSession session2 = ctx2.open("imported-test", "admin", "admin");
     assertTrue(session2.getMetadata().getSchema().existsClass("testa"));
     session2.close();
   }
 
   @After
   public void after() throws InterruptedException {
-    server0.dropDatabase("test");
-    server0.dropDatabase("test1");
+    server0.dropDatabase("import-test");
+    server0.dropDatabase("imported-test");
     server0.shutdown();
     server1.shutdown();
     server2.shutdown();

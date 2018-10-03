@@ -2,15 +2,19 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedCoordinator;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
@@ -20,6 +24,7 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -80,15 +85,19 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     this.plugin = plugin;
   }
 
-  public void fullSync(String dbName, String backupPath, OrientDBConfig config) {
+  public OStorage fullSync(String dbName, String backupPath, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
-    OAbstractPaginatedStorage storage;
+    OAbstractPaginatedStorage storage = null;
     synchronized (this) {
 
       try {
         storage = storages.get(dbName);
 
         if (storage != null) {
+          OCommandCacheSoftRefs.clearFiles(storage);
+          ODistributedStorage.dropStorageFiles((OLocalPaginatedStorage) storage);
+          OSharedContext context = sharedContexts.remove(dbName);
+          context.close();
           storage.delete();
           storages.remove(dbName);
         }
@@ -96,6 +105,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         embedded = internalCreate(config, storage);
         storages.put(dbName, storage);
       } catch (Exception e) {
+        if (storage != null) {
+          storage.delete();
+        }
+
         throw OException.wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
       }
     }
@@ -104,6 +117,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     ODatabaseDocumentEmbedded instance = openNoAuthorization(dbName);
     instance.close();
     checkCoordinator(dbName);
+    return storage;
   }
 
   @Override
@@ -262,4 +276,34 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
     return null;
   }
+
+  @Override
+  public void drop(String name, String user, String password) {
+    synchronized (this) {
+      checkOpen();
+      //This is a temporary fix for distributed drop that avoid scheduled view update to re-open the distributed database while is dropped
+      OSharedContext sharedContext = sharedContexts.get(name);
+      if (sharedContext != null) {
+        sharedContext.getViewManager().close();
+      }
+    }
+
+    ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
+    for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners(); it.hasNext(); ) {
+      it.next().onDrop(db);
+    }
+    db.close();
+    synchronized (this) {
+      if (exists(name, user, password)) {
+        OAbstractPaginatedStorage storage = getOrInitStorage(name);
+        OSharedContext sharedContext = sharedContexts.get(name);
+        if (sharedContext != null)
+          sharedContext.close();
+        storage.delete();
+        storages.remove(name);
+        sharedContexts.remove(name);
+      }
+    }
+  }
+
 }

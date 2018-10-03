@@ -496,7 +496,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return null;
   }
 
-  private void checkOpen() {
+  protected void checkOpen() {
     if (!open)
       throw new ODatabaseException("OrientDB Instance is closed");
   }

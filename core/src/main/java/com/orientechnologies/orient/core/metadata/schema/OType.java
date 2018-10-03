@@ -27,6 +27,7 @@ import com.orientechnologies.common.types.OBinary;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -46,7 +47,7 @@ import java.util.*;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public enum OType {
+public enum OType implements OTypeInterface {
   BOOLEAN("Boolean", 0, Boolean.class, new Class<?>[] { Number.class }),
 
   INTEGER("Integer", 1, Integer.class, new Class<?>[] { Number.class }),
@@ -182,7 +183,8 @@ public enum OType {
    *
    * @return the identifier of the type.
    */
-  public int getId() {
+  @Override
+  public final int getId() {
     return id;
   }
 
@@ -256,7 +258,7 @@ public enum OType {
   private static boolean checkLinkCollection(Collection<?> toCheck) {
     boolean empty = true;
     for (Object object : toCheck) {
-      if (object != null && !(object instanceof OIdentifiable))
+      if (object != null && (!(object instanceof OIdentifiable) || (object instanceof ODocumentDelta)))
         return false;
       else if (object != null)
         empty = false;
@@ -764,6 +766,10 @@ public enum OType {
   public boolean isMultiValue() {
     return this == EMBEDDEDLIST || this == EMBEDDEDMAP || this == EMBEDDEDSET || this == LINKLIST || this == LINKMAP
         || this == LINKSET || this == LINKBAG;
+  }
+
+  public boolean isList() {
+    return this == EMBEDDEDLIST || this == LINKLIST;
   }
 
   public boolean isLink() {

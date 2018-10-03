@@ -56,7 +56,7 @@ public class FirstPhaseOperationTest {
       ele.setProperty("one", "val");
       session.save(ele);
       Collection<ORecordOperation> txOps = ((OTransactionOptimistic) session.getTransaction()).getRecordOperations();
-      networkOps = OTransactionSubmit.genOps(txOps);
+      networkOps = OTransactionSubmit.genOps(txOps, OTransactionFirstPhaseOperation.useDeltas);
     }
 
     OTransactionFirstPhaseOperation ops = new OTransactionFirstPhaseOperation(new OSessionOperationId(), networkOps,
@@ -85,7 +85,7 @@ public class FirstPhaseOperationTest {
       ele.setProperty("one", "val10");
       session.save(ele);
       Collection<ORecordOperation> txOps = ((OTransactionOptimistic) session.getTransaction()).getRecordOperations();
-      networkOps = OTransactionSubmit.genOps(txOps);
+      networkOps = OTransactionSubmit.genOps(txOps, OTransactionFirstPhaseOperation.useDeltas);
     }
 
     try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
@@ -126,7 +126,7 @@ public class FirstPhaseOperationTest {
       session.save(ele);
       OTransactionOptimistic tx = (OTransactionOptimistic) session.getTransaction();
       Collection<ORecordOperation> txOps = tx.getRecordOperations();
-      networkOps = OTransactionSubmit.genOps(txOps);
+      networkOps = OTransactionSubmit.genOps(txOps, OTransactionFirstPhaseOperation.useDeltas);
       Map<String, OTransactionIndexChanges> indexOperations = tx.getIndexOperations();
       indexes = OTransactionSubmit.genIndexes(indexOperations, tx);
     }

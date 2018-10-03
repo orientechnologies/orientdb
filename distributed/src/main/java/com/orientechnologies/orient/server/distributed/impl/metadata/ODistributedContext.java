@@ -22,15 +22,21 @@ public class ODistributedContext {
   private ODistributedCoordinator                       coordinator;
   private OrientDBInternal                              context;
   private String                                        databaseName;
+  private OOperationLog                                 opLog;
 
   public ODistributedContext(OStorage storage, OrientDBDistributed context) {
     transactions = new ConcurrentHashMap<>();
-    executor = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new OIncrementOperationalLog(), context,
-        storage.getName());
+    executor = new ODistributedExecutor(Executors.newSingleThreadExecutor(), opLog, context, storage.getName());
     submitContext = new OSubmitContextImpl();
     coordinator = null;
     this.context = context;
     this.databaseName = storage.getName();
+    initOpLog();
+  }
+
+  private void initOpLog() {
+//    this.opLog = OPersistentOperationalLogV1.newInstance(databaseName, context);
+    this.opLog = new OIncrementOperationalLog();
   }
 
   public void registerTransaction(OSessionOperationId requestId, OTransactionInternal tx) {
@@ -60,8 +66,8 @@ public class ODistributedContext {
 
   public synchronized void makeCoordinator(String nodeName, OSharedContext context) {
     if (coordinator == null) {
-      coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), new OIncrementOperationalLog(),
-          new ODistributedLockManagerImpl(0), new OClusterPositionAllocatorDatabase(context));
+      coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), opLog, new ODistributedLockManagerImpl(0),
+          new OClusterPositionAllocatorDatabase(context));
       OLoopBackDistributeMember loopBack = new OLoopBackDistributeMember(nodeName, databaseName, submitContext, coordinator,
           executor);
       coordinator.join(loopBack);
