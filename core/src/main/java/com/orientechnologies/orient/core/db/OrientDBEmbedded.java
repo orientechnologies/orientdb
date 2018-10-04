@@ -259,6 +259,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
     try {
       OAbstractPaginatedStorage storage;
       synchronized (this) {
+        OSharedContext context = sharedContexts.remove(name);
+        if (context != null) {
+          context.close();
+        }
         storage = getOrInitStorage(name);
         storages.put(name, storage);
       }
@@ -480,10 +484,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public synchronized void forceDatabaseClose(String iDatabaseName) {
     OAbstractPaginatedStorage storage = storages.remove(iDatabaseName);
     if (storage != null) {
-      OSharedContext ctx = sharedContexts.get(iDatabaseName);
+      OSharedContext ctx = sharedContexts.remove(iDatabaseName);
       if (ctx != null) {
         ctx.close();
-        sharedContexts.remove(iDatabaseName);
       }
       storage.shutdown();
     }

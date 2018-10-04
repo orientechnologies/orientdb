@@ -114,7 +114,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       }
     }
     storage.restoreFromIncrementalBackup(backupPath);
-    //THIS MAKE SURE THAT THE SHARED CONTEXT IS INITED.
+    //DROP AND CREATE THE SHARED CONTEXT SU HAS CORRECT INFORMATION.
+    synchronized (this) {
+      OSharedContext context = sharedContexts.remove(dbName);
+      context.close();
+    }
     ODatabaseDocumentEmbedded instance = openNoAuthorization(dbName);
     instance.close();
     checkCoordinator(dbName);
