@@ -1129,6 +1129,9 @@ OStatement StatementInternal():
                 |
                 LOOKAHEAD(HaSyncClusterStatement())
                 result = HaSyncClusterStatement()
+                |
+                LOOKAHEAD(HaSetStatement())
+                result = HaSetStatement()
             )
         )
         |
@@ -5020,6 +5023,21 @@ OHaSyncClusterStatement HaSyncClusterStatement():
                 "-merge" {jjtThis.modeMerge = true;}
             )
         ]
+    )
+    { return jjtThis; }
+}
+
+OHaSetStatement HaSetStatement():
+{
+ Token token;
+}
+{
+    (
+        <HA> <SET>
+        jjtThis.operation = Identifier()
+        jjtThis.key = Expression()
+        <EQ>
+        jjtThis.value = Expression()
     )
     { return jjtThis; }
 }
