@@ -89,8 +89,8 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
       OLogManager.instance().error(this, message, exc, (Object) null);
       throw new OCommandExecutionException(message);
     }
-    //TODO save also shouldn't be here update is enough
-//    sequence.save(getDatabase());
+    //TODO check if save shouldn't be here update is enough
+    sequence.save(getDatabase());
     return result;
   }
 
