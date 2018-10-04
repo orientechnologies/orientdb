@@ -44,8 +44,11 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.enterprise.OEnterpriseEndpoint;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -56,6 +59,8 @@ import com.orientechnologies.orient.server.OServerLifecycleListener;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -71,7 +76,7 @@ import java.util.*;
 
 public class OEnterpriseAgent extends OServerPluginAbstract
 
-    implements ODatabaseLifecycleListener, OPluginLifecycleListener, OServerLifecycleListener {
+    implements ODatabaseLifecycleListener, OPluginLifecycleListener, OServerLifecycleListener, OEnterpriseEndpoint {
   public static final String     EE                = "ee.";
   private             String     enterpriseVersion = "";
   public              OServer    server;
@@ -539,18 +544,69 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   }
 
   @Override
-  public void haSetDbStatus(ODatabaseDocument db, String status) {
-    throw new UnsupportedOperationException("HA SET STATUS is not supported");
+  public void haSetDbStatus(ODatabaseDocument database, String nodeName, String status) {
+
+    database.checkSecurity(ORule.ResourceGeneric.SERVER, "status", ORole.PERMISSION_UPDATE);
+
+    if (!(database instanceof ODatabaseDocumentDistributed)) {
+      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
+    }
+
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getStorageDistributed()
+        .getDistributedManager();
+    if (dManager == null || !dManager.isEnabled())
+      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
+
+    final String databaseName = database.getName();
+
+    final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
+
+    dManager.setDatabaseStatus(nodeName, databaseName, ODistributedServerManager.DB_STATUS.valueOf(status));
   }
 
   @Override
-  public void haSetRole(ODatabaseDocument db, String status) {
-    throw new UnsupportedOperationException("HA SET ROLE is not supported");
+  public void haSetRole(ODatabaseDocument database, String serverName, String role) {
+    database.checkSecurity(ORule.ResourceGeneric.SERVER, "status", ORole.PERMISSION_UPDATE);
+
+    if (!(database instanceof ODatabaseDocumentDistributed)) {
+      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
+    }
+
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getStorageDistributed()
+        .getDistributedManager();
+    if (dManager == null || !dManager.isEnabled())
+      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
+
+    final String databaseName = database.getName();
+
+    final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
+
+    final OModifiableDistributedConfiguration newCfg = cfg.modify();
+    newCfg.setServerRole(serverName, ODistributedConfiguration.ROLES.valueOf(role));
+    dManager.updateCachedDatabaseConfiguration(databaseName, newCfg, true);
   }
 
   @Override
-  public void haSetOwner(ODatabaseDocument db, String status) {
-    throw new UnsupportedOperationException("HA SET OWNER is not supported");
+  public void haSetOwner(ODatabaseDocument database, String clusterName, String owner) {
+    database.checkSecurity(ORule.ResourceGeneric.SERVER, "status", ORole.PERMISSION_UPDATE);
+
+    if (!(database instanceof ODatabaseDocumentDistributed)) {
+      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
+    }
+
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getStorageDistributed()
+        .getDistributedManager();
+    if (dManager == null || !dManager.isEnabled())
+      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
+
+    final String databaseName = database.getName();
+
+    final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
+
+    final OModifiableDistributedConfiguration newCfg = cfg.modify();
+    newCfg.setServerOwner(clusterName, owner);
+    dManager.updateCachedDatabaseConfiguration(databaseName, newCfg, true);
+
   }
 
 }
