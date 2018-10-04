@@ -392,7 +392,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     timer.cancel();
     executor.shutdown();
     try {
-      if (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
+      while (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
         OLogManager.instance().warn(this, "Failed waiting background operations termination");
         executor.shutdownNow();
       }
