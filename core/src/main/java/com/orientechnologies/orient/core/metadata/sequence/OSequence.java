@@ -206,12 +206,13 @@ public abstract class OSequence {
 
   public void save() {
     ODocument doc = tlDocument.get();
-    doc.save();
+    doc = doc.save();
     onUpdate(doc);
   }
 
   public void save(ODatabaseDocument database) {
-    database.save(tlDocument.get());
+    ODocument doc = database.save(tlDocument.get());
+    onUpdate(doc);
   }
 
   void bindOnLocalThread() {

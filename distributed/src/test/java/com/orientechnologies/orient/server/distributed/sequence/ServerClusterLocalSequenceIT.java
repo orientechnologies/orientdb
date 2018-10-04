@@ -28,6 +28,7 @@ public class ServerClusterLocalSequenceIT extends AbstractServerClusterSequenceT
     }
   }
 
+  @Override
   protected String getDatabaseURL(final ServerRun server) {
     return "plocal:" + ServerRun.getDatabasePath(server.getServerId(), getDatabaseName());
   }

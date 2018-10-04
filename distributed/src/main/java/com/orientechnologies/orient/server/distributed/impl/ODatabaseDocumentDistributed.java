@@ -503,7 +503,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public void internalCommit(OTransactionInternal iTx) {
-    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed() || iTx.isSequenceTransaction()) {
       //Exclusive for handling schema manipulation, remove after refactor for distributed schema
       super.internalCommit(iTx);
     } else {
