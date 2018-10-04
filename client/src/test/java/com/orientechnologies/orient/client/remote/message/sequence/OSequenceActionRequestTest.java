@@ -53,12 +53,13 @@ public class OSequenceActionRequestTest {
       
       Assert.assertEquals(newRequest.getAction().getActionType(), action.getActionType());
       Assert.assertEquals(newRequest.getAction().getSequenceName(), action.getSequenceName());
-      Assert.assertEquals(newRequest.getAction().getParameters().cacheSize, action.getParameters().cacheSize);
-      Assert.assertEquals(newRequest.getAction().getParameters().increment, action.getParameters().increment);
-      Assert.assertEquals(newRequest.getAction().getParameters().limitValue, action.getParameters().limitValue);
-      Assert.assertEquals(newRequest.getAction().getParameters().orderType, action.getParameters().orderType);
-      Assert.assertEquals(newRequest.getAction().getParameters().recyclable, action.getParameters().recyclable);
-      Assert.assertEquals(newRequest.getAction().getParameters().start, action.getParameters().start);
+      Assert.assertEquals(newRequest.getAction().getParameters().getCacheSize(), action.getParameters().getCacheSize());
+      Assert.assertEquals(newRequest.getAction().getParameters().getIncrement(), action.getParameters().getIncrement());
+      Assert.assertEquals(newRequest.getAction().getParameters().getLimitValue(), action.getParameters().getLimitValue());
+      Assert.assertEquals(newRequest.getAction().getParameters().getOrderType(), action.getParameters().getOrderType());
+      Assert.assertEquals(newRequest.getAction().getParameters().getRecyclable(), action.getParameters().getRecyclable());
+      Assert.assertEquals(newRequest.getAction().getParameters().getStart(), action.getParameters().getStart());
+      Assert.assertEquals(newRequest.getAction().getParameters().getCurrentValue(), action.getParameters().getCurrentValue());
     }
     catch (IOException exc){
       Assert.assertTrue(false);

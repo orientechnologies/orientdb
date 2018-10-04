@@ -71,13 +71,14 @@ public abstract class OSequence {
   private static int replicationProtocolVersion = OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
 
   public static class CreateParams {
-    public Long              start        = DEFAULT_START;
-    public Integer           increment    = DEFAULT_INCREMENT;
-    public Integer           cacheSize    = DEFAULT_CACHE;
-    public Long              limitValue   = DEFAULT_LIMIT_VALUE;
-    public SequenceOrderType orderType    = DEFAULT_ORDER_TYPE;
-    public Boolean           recyclable   = DEFAULT_RECYCLABLE_VALUE;
-    public Boolean           turnLimitOff = false;
+    protected Long              start        = DEFAULT_START;
+    protected Integer           increment    = DEFAULT_INCREMENT;
+    protected Integer           cacheSize    = DEFAULT_CACHE;
+    protected Long              limitValue   = DEFAULT_LIMIT_VALUE;
+    protected SequenceOrderType orderType    = DEFAULT_ORDER_TYPE;
+    protected Boolean           recyclable   = DEFAULT_RECYCLABLE_VALUE;
+    protected Boolean           turnLimitOff = false;
+    protected Long              currentValue = null;
 
     public CreateParams setStart(Long start) {
       this.start = start;
@@ -113,6 +114,11 @@ public abstract class OSequence {
       this.turnLimitOff = turnLimitOff;
       return this;
     }
+    
+    public CreateParams setCurrentValue(Long currentValue){
+      this.currentValue = currentValue;
+      return this;
+    }
 
     public CreateParams() {
     }
@@ -125,6 +131,7 @@ public abstract class OSequence {
       orderType = null;
       recyclable = null;
       turnLimitOff = false;
+      currentValue = null;
       return this;
     }
 
@@ -136,9 +143,43 @@ public abstract class OSequence {
       orderType = orderType == null ? DEFAULT_ORDER_TYPE : orderType;
       recyclable = recyclable == null ? DEFAULT_RECYCLABLE_VALUE : recyclable;
       turnLimitOff = turnLimitOff == null ? false : turnLimitOff;
-
+      currentValue = currentValue == null ? null : currentValue;
       return this;
     }
+
+    public Long getStart() {
+      return start;
+    }
+
+    public Integer getIncrement() {
+      return increment;
+    }
+
+    public Integer getCacheSize() {
+      return cacheSize;
+    }
+
+    public Long getLimitValue() {
+      return limitValue;
+    }
+
+    public SequenceOrderType getOrderType() {
+      return orderType;
+    }
+
+    public Boolean getRecyclable() {
+      return recyclable;
+    }
+
+    public Boolean getTurnLimitOff() {
+      return turnLimitOff;
+    }
+
+    public Long getCurrentValue() {
+      return currentValue;
+    }
+    
+    
   }
 
   public enum SEQUENCE_TYPE {
@@ -233,7 +274,12 @@ public abstract class OSequence {
   protected synchronized void initSequence(OSequence.CreateParams params) {
     setStart(params.start);
     setIncrement(params.increment);
-    setValue(params.start);
+    if (params.currentValue == null){
+      setValue(params.start);
+    }
+    else{
+      setValue(params.currentValue);
+    }
     setLimitValue(params.limitValue);
     setOrderType(params.orderType);
     setRecyclable(params.recyclable);

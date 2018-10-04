@@ -116,9 +116,9 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     }    
 
     params.setOrderType(positive ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.ORDER_NEGATIVE);
-    result.setProperty("orderType", params.orderType.toString());
+    result.setProperty("orderType", params.getOrderType().toString());
     params.setRecyclable(cyclic);
-    result.setProperty("recycable", params.recyclable);
+    result.setProperty("recycable", params.getRecyclable());
 
     return params;
   }

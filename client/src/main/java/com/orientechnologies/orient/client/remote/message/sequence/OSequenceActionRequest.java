@@ -137,13 +137,14 @@ public class OSequenceActionRequest {
       }
       else{
         out.writeByte(1);
-        serializeLong(params.start, out);
-        serializeInt(params.increment, out);
-        serializeInt(params.cacheSize, out);
-        serializeLong(params.limitValue, out);
-        serializeOrderType(params.orderType, out);
-        serializeBoolean(params.recyclable, out);
-        serializeBoolean(params.turnLimitOff, out);
+        serializeLong(params.getStart(), out);
+        serializeInt(params.getIncrement(), out);
+        serializeInt(params.getCacheSize(), out);
+        serializeLong(params.getLimitValue(), out);
+        serializeOrderType(params.getOrderType(), out);
+        serializeBoolean(params.getRecyclable(), out);
+        serializeBoolean(params.getTurnLimitOff(), out);
+        serializeLong(params.getCurrentValue(), out);
       }
     }
     else{
@@ -168,13 +169,14 @@ public class OSequenceActionRequest {
       if (paramsNullFlag > 0){
         params = new OSequence.CreateParams();
         params.resetNull();
-        params.start = deserializeLong(in);
-        params.increment = deserializeInt(in);
-        params.cacheSize = deserializeInt(in);
-        params.limitValue = deserializeLong(in);
-        params.orderType = deserializeOrderType(in);
-        params.recyclable = deserializeBoolean(in);
-        params.turnLimitOff = deserializeBoolean(in);
+        params.setStart(deserializeLong(in));
+        params.setIncrement(deserializeInt(in));
+        params.setCacheSize(deserializeInt(in));
+        params.setLimitValue(deserializeLong(in));
+        params.setOrderType(deserializeOrderType(in));
+        params.setRecyclable(deserializeBoolean(in));
+        params.setTurnLimitOff(deserializeBoolean(in));
+        params.setCurrentValue(deserializeLong(in));
       }
       action = new OSequenceAction(actionType, sequenceName, params, sequenceType);
     }
