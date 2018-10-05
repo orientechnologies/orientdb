@@ -129,7 +129,8 @@ public class OSequenceActionRequest {
       byte[] sequenceNameBytes = action.getSequenceName().getBytes(StandardCharsets.UTF_8.name());
       out.writeInt(sequenceNameBytes.length);
       out.write(sequenceNameBytes);
-      out.writeByte(action.getSequenceType().getVal());
+      serializeLong(action.getCurrentValue(), out);
+      out.writeByte(action.getSequenceType().getVal());      
 
       OSequence.CreateParams params = action.getParameters();
       if (params == null){
@@ -158,12 +159,14 @@ public class OSequenceActionRequest {
       int nameLength = in.readInt();
       byte[] nameBytes = new byte[nameLength];
       in.readFully(nameBytes);
+      String sequenceName = new String(nameBytes, StandardCharsets.UTF_8.name());
+      Long currentValue = deserializeLong(in);        
       byte sequenceTypeByte = in.readByte();
       OSequence.SEQUENCE_TYPE sequenceType = OSequence.SEQUENCE_TYPE.fromVal(sequenceTypeByte);
       if (sequenceType == null){        
         throw new IOException("Inavlid sequnce type value: " + sequenceTypeByte);
       }
-      String sequenceName = new String(nameBytes, StandardCharsets.UTF_8.name());
+                        
       OSequence.CreateParams params = null;
       byte paramsNullFlag = in.readByte();
       if (paramsNullFlag > 0){
@@ -178,7 +181,12 @@ public class OSequenceActionRequest {
         params.setTurnLimitOff(deserializeBoolean(in));
         params.setCurrentValue(deserializeLong(in));
       }
-      action = new OSequenceAction(actionType, sequenceName, params, sequenceType);
+      if (currentValue != null){
+        action = new OSequenceAction(sequenceName, currentValue);
+      }
+      else{
+        action = new OSequenceAction(actionType, sequenceName, params, sequenceType);
+      }
     }
     else {
       action = null;

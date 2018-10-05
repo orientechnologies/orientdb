@@ -20,6 +20,7 @@ import com.orientechnologies.orient.client.remote.message.sequence.OSequenceActi
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceCached;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLimitReachedException;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
@@ -95,6 +96,15 @@ public class OSequenceActionNodeRequest implements ONodeRequest{
           break;
         case OSequenceAction.UPDATE:
           result = targetSequence.updateParams(action.getParameters(), false);
+          break;
+        case OSequenceAction.SET_NEXT:
+          if (targetSequence.getSequenceType() == OSequence.SEQUENCE_TYPE.CACHED){
+            OSequenceCached cached = (OSequenceCached)targetSequence;
+            result = cached.nextWithNewCurrentValue(action.getCurrentValue(), false);
+          }
+          else{
+            throw new RuntimeException("Action SET_NEXT is reserved only for CACHED sequences");
+          }
           break;
       }
       //want to return result only from node that initiated whole action

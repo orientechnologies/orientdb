@@ -60,14 +60,17 @@ public class OSequenceCached extends OSequence {
   }
 
   @Override
-  public synchronized boolean updateParams(OSequence.CreateParams params, boolean calledFromThisNode) throws ExecutionException, InterruptedException{
-    boolean any = super.updateParams(params, calledFromThisNode);
-    if (params.cacheSize != null && this.getCacheSize() != params.cacheSize) {
-      this.setCacheSize(params.cacheSize);
-      any = true;
-    }
-    firstCache = true;
-    save();
+  public synchronized boolean updateParams(OSequence.CreateParams params, boolean executeViaDistributed) throws ExecutionException, InterruptedException{
+    boolean any = super.updateParams(params, executeViaDistributed);
+    if (!executeViaDistributed){
+      if (params.cacheSize != null && this.getCacheSize() != params.cacheSize) {
+        this.setCacheSize(params.cacheSize);
+        any = true;
+      }            
+      
+      firstCache = true;
+      save();
+    }    
     return any;
   }
 
@@ -99,6 +102,46 @@ public class OSequenceCached extends OSequence {
     }
   }
 
+  private boolean signalToAllocateCache(){
+    if (orderType == SequenceOrderType.ORDER_POSITIVE) {
+      if (cacheStart + increment > cacheEnd && !(limitValue != null && cacheStart + increment > limitValue)){
+        return true;
+      }
+    }
+    else{
+      if (cacheStart - increment < cacheEnd && !(limitValue != null && cacheStart - increment < limitValue)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  private <T> T sendSequenceActionSetAndNext(long value) throws ExecutionException, InterruptedException{    
+    OSequenceAction action = new OSequenceAction(getName(), value);
+    return tlDocument.get().getDatabase().sendSequenceAction(action);    
+  }
+  
+  //want to be atomic
+  //first set new current value then call next
+  public long nextWithNewCurrentValue(long currentValue, boolean executeViaDistributed) throws OSequenceLimitReachedException, ExecutionException, InterruptedException{
+    if (!executeViaDistributed){
+      cacheStart = currentValue;
+      return nextWork();
+    }
+    else{
+      return sendSequenceActionSetAndNext(currentValue);
+    }
+  }
+  
+  @Override
+  public long next() throws OSequenceLimitReachedException, ExecutionException, InterruptedException{
+    boolean shouldGoOverDistributted = isOnDistributted() && (replicationProtocolVersion > 1) && signalToAllocateCache();
+    if (shouldGoOverDistributted){
+      return nextWithNewCurrentValue(cacheStart, true);
+    }
+    return nextWork();
+  }
+  
   @Override
   public long nextWork() throws OSequenceLimitReachedException {
     ODatabaseDocumentInternal mainDb = getDatabase();
@@ -122,7 +165,7 @@ public class OSequenceCached extends OSequence {
                 detectedCrucialValueChange = true;
               }
               if (orderType == SequenceOrderType.ORDER_POSITIVE) {
-                if (cacheStart + increment > cacheEnd && !(limitValue != null && cacheStart + increment > limitValue)) {
+                if (signalToAllocateCache()) {
                   boolean cachedbefore = !firstCache;
                   allocateCache(getCacheSize(), finalDb);
                   if (!cachedbefore) {
@@ -138,7 +181,7 @@ public class OSequenceCached extends OSequence {
                   cacheStart = cacheStart + increment;
                 }
               } else {
-                if (cacheStart - increment < cacheEnd && !(limitValue != null && cacheStart - increment < limitValue)) {
+                if (signalToAllocateCache()) {
                   boolean cachedbefore = !firstCache;
                   allocateCache(getCacheSize(), finalDb);
                   if (!cachedbefore) {
@@ -272,6 +315,6 @@ public class OSequenceCached extends OSequence {
       this.cacheEnd = newValue + 1;
     }
     firstCache = false;
-  }
+  }   
 
 }

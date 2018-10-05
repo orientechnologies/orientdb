@@ -62,23 +62,24 @@ public abstract class OSequence {
   private static final String FIELD_TYPE = "type";
 
   private ODocument document;
-  private ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();
+  ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();
 
   private boolean cruacialValueChanged = false;
 
   public static final SequenceOrderType DEFAULT_ORDER_TYPE = SequenceOrderType.ORDER_POSITIVE; 
   
-  private static int replicationProtocolVersion = OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
+  protected static int replicationProtocolVersion = OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
 
   public static class CreateParams {
     protected Long              start        = DEFAULT_START;
     protected Integer           increment    = DEFAULT_INCREMENT;
+    //significant only for cached sequences
     protected Integer           cacheSize    = DEFAULT_CACHE;
     protected Long              limitValue   = DEFAULT_LIMIT_VALUE;
     protected SequenceOrderType orderType    = DEFAULT_ORDER_TYPE;
     protected Boolean           recyclable   = DEFAULT_RECYCLABLE_VALUE;
     protected Boolean           turnLimitOff = false;
-    protected Long              currentValue = null;
+    protected Long              currentValue = null;    
 
     public CreateParams setStart(Long start) {
       this.start = start;
@@ -118,7 +119,7 @@ public abstract class OSequence {
     public CreateParams setCurrentValue(Long currentValue){
       this.currentValue = currentValue;
       return this;
-    }
+    }      
 
     public CreateParams() {
     }
@@ -131,7 +132,7 @@ public abstract class OSequence {
       orderType = null;
       recyclable = null;
       turnLimitOff = false;
-      currentValue = null;
+      currentValue = null;      
       return this;
     }
 
@@ -143,7 +144,7 @@ public abstract class OSequence {
       orderType = orderType == null ? DEFAULT_ORDER_TYPE : orderType;
       recyclable = recyclable == null ? DEFAULT_RECYCLABLE_VALUE : recyclable;
       turnLimitOff = turnLimitOff == null ? false : turnLimitOff;
-      currentValue = currentValue == null ? null : currentValue;
+      currentValue = currentValue == null ? null : currentValue;      
       return this;
     }
 
@@ -282,7 +283,7 @@ public abstract class OSequence {
     }
     setLimitValue(params.limitValue);
     setOrderType(params.orderType);
-    setRecyclable(params.recyclable);
+    setRecyclable(params.recyclable);    
 
     setSequenceType();
   }
@@ -331,6 +332,10 @@ public abstract class OSequence {
       this.setLimitValue(null);
     }
 
+    if (params.currentValue != null && getValue() != params.currentValue){
+      this.setValue(params.currentValue);
+    }        
+    
     save();
         
     return any;
@@ -348,7 +353,7 @@ public abstract class OSequence {
     return doc.field(FIELD_VALUE, OType.LONG);
   }
 
-  protected synchronized Long getValue() {
+  protected synchronized long getValue() {
     return getValue(tlDocument.get());
   }
 
@@ -573,4 +578,5 @@ public abstract class OSequence {
           .wrapException(new OSequenceException("Error in transactional processing of " + getName() + "." + method + "()"), e);
     }
   }
+  
 }

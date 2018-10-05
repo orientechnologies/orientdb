@@ -27,19 +27,31 @@ public class OSequenceAction {
   public static final int NEXT = 4;
   public static final int RESET = 5;
   public static final int UPDATE = 6;
+  public static final int SET_NEXT = 7;
 
   private final int actionType;
   private final String sequenceName;
   private final OSequence.CreateParams parameters;
   //we need it for create action
   private final OSequence.SEQUENCE_TYPE sequenceType;
+  private final Long currentValue;
 
+  //to use only for SET_NEXT on CACHED sequences
+  public OSequenceAction(String sequenceName, long currentvalue){
+    actionType = SET_NEXT;
+    this.currentValue = currentvalue;
+    this.sequenceName = sequenceName;
+    parameters = null;
+    sequenceType = OSequence.SEQUENCE_TYPE.CACHED;
+  }
+  
   public OSequenceAction(int actionType, String sequenceName, OSequence.CreateParams params,
           OSequence.SEQUENCE_TYPE sequenceType){
     this.actionType = actionType;
     this.sequenceName = sequenceName;
     this.parameters = params;
     this.sequenceType = sequenceType;
+    currentValue = null;
   }
 
   public int getActionType() {
@@ -56,6 +68,10 @@ public class OSequenceAction {
 
   public OSequence.SEQUENCE_TYPE getSequenceType() {
     return sequenceType;
+  }
+
+  public Long getCurrentValue() {
+    return currentValue;
   }
     
 }

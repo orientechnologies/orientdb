@@ -25,7 +25,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
 
   private static final int THREAD_COUNT     = 2;
   private static final int THREAD_POOL_SIZE = 2;
-  private static final int CACHE_SIZE       = 27;
+  private static final int CACHE_SIZE       = 3;
 
   private AtomicLong failures = new AtomicLong();
 
@@ -67,10 +67,10 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     Assert.assertEquals(seq1.getSequenceType(), SEQUENCE_TYPE.CACHED);
 
     dbs[0].activateOnCurrentThread();
-    long v1 = seq1.next();
+    long v1 = seq1.next();    
 
     dbs[1].activateOnCurrentThread();
-    long v2 = seq2.next();
+    long v2 = seq2.next();        
     
     int protocolVersion = OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
     if (protocolVersion != 2){
@@ -79,7 +79,15 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
       Assert.assertEquals((long) CACHE_SIZE, v2 - v1);
     }
     else{
-      Assert.assertEquals(1l, v2 - v1);
+      //in the last cycle sequences should be synchronized
+      for (int i = 1; i < CACHE_SIZE; i++){
+        Assert.assertEquals(v1, v2 + (i - 1));
+        dbs[0].activateOnCurrentThread();
+        v1 = seq1.next();
+        dbs[1].activateOnCurrentThread();
+        v2 = seq2.current();
+      }
+      Assert.assertEquals(v1, v2);
     }
   }
 
