@@ -503,11 +503,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public void internalCommit(OTransactionInternal iTx) {
-    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed() || iTx.isSequenceTransaction()) {
+    int protocolVersion = OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger();
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed() || 
+            (iTx.isSequenceTransaction() && protocolVersion == 2)) {
       //Exclusive for handling schema manipulation, remove after refactor for distributed schema
       super.internalCommit(iTx);
     } else {
-      switch (OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger()) {
+      switch (protocolVersion) {
       case 1:
         distributedCommitV1(iTx);
         break;

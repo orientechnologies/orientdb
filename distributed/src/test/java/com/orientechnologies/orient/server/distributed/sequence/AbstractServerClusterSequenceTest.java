@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.sequence;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
@@ -70,10 +71,16 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
 
     dbs[1].activateOnCurrentThread();
     long v2 = seq2.next();
-
-    //TODO review commented line ?
-//    Assert.assertEquals((long) CACHE_SIZE, v2 - v1);
-    Assert.assertEquals(1l, v2 - v1);
+    
+    int protocolVersion = OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
+    if (protocolVersion != 2){
+      //OK this shouldn't be true when sequences are truly synchronized
+      //but if sequences are treated as documents in database , this is true
+      Assert.assertEquals((long) CACHE_SIZE, v2 - v1);
+    }
+    else{
+      Assert.assertEquals(1l, v2 - v1);
+    }
   }
 
   private void executeOrderedSequenceTest(final ODatabaseDocument[] dbs, final String sequenceName) throws Exception {
