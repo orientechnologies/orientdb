@@ -428,7 +428,7 @@ public enum OGlobalConfiguration {
       true),
 
   INDEX_USE_PREFIX_B_TREE("index.usePrefixBTRee", "Indicates that prefix B-Tree should be used for String indexes", Boolean.class,
-      true),
+      false),
 
   /**
    * @see OIndexDefinition#isNullValuesIgnored()
