@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDBDistributed;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -64,7 +66,10 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   public static OPersistentOperationalLogV1 newInstance(String databaseName, OrientDBInternal context) {
     OAbstractPaginatedStorage s = ((OrientDBDistributed) context).getStorage(databaseName);
     OLocalPaginatedStorage storage = (OLocalPaginatedStorage) s.getUnderlying();
-    return new OPersistentOperationalLogV1(storage.getStoragePath().toString());
+
+    OPersistentOperationalLogV1 result = new OPersistentOperationalLogV1(storage.getStoragePath().toString());
+    result.scheduleLogPrune(context, databaseName);
+    return result;
   }
 
   public OPersistentOperationalLogV1(String storageFolder) {
@@ -103,6 +108,16 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       initNewInfoFile(infoFile, result);
     }
     return result;
+  }
+
+  private void writeInfo(OplogInfo info) {
+    File infoFile = new File(storagePath, OPLOG_INFO_FILE);
+    if (infoFile.exists()) {
+      writeInfo(infoFile, info);
+    } else {
+      initNewInfoFile(infoFile, info);
+    }
+
   }
 
   private void writeInfo(File infoFile, OplogInfo result) {
@@ -150,6 +165,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       file.seek(file.length() - 16 - size - 12);
       return new AtomicLong(file.readLong());
     } catch (IOException e) {
+      //TODO recover!
       throw new ODistributedException("Cannot open oplog file: " + e.getMessage());
     }
   }
@@ -233,6 +249,34 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   @Override
   public Iterator<OOperationLogEntry> iterate(OLogId from, OLogId to) {
     return new OPersistentOperationalLogIterator(this, from, to);
+  }
+
+  public synchronized void cutUntil(ODatabaseSession db, OLogId logId) {
+    info.keepUntil = logId.getId();
+    writeInfo(info);
+    scheduleLogPrune(db);
+  }
+
+  private void scheduleLogPrune(ODatabaseSession db) {
+    scheduleLogPrune(((ODatabaseInternal) db).getSharedContext().getOrientDB(), db.getName());
+  }
+
+  private void scheduleLogPrune(OrientDBInternal orient, String dbName) {
+    orient.executeNoAuthorization(dbName, x -> {
+      long lastFileId = info.keepUntil / LOG_ENTRIES_PER_FILE;
+      for (int i = 0; i < lastFileId; i++) {
+        String fileName = calculateLogFileFullPath(i);
+        File file = new File(fileName);
+        if (file.exists()) {
+          try {
+            file.delete();
+          } catch (Exception e) {
+
+          }
+        }
+      }
+      return null;
+    });
   }
 
   public void close() {
