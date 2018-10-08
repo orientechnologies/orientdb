@@ -90,7 +90,7 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
       throw new OCommandExecutionException(message);
     }
     //TODO check if save shouldn't be here update is enough
-    sequence.save(getDatabase());
+    sequence.save();
     return result;
   }
 

@@ -240,8 +240,7 @@ public abstract class OSequence {
         params = new CreateParams().setDefaults();
       }
 
-      initSequence(params);
-      document = getDocument();
+      initSequence(params);      
     }
     cruacialValueChanged = true;
   }
@@ -252,14 +251,14 @@ public abstract class OSequence {
     onUpdate(doc);
   }
 
-  public void save(ODatabaseDocument database) {
-    ODocument doc = database.save(tlDocument.get());
-    onUpdate(doc);
-  }
+//  public void save(ODatabaseDocument database) {
+//    ODocument doc = database.save(tlDocument.get());
+//    onUpdate(doc);
+//  }
 
-  void bindOnLocalThread() {
+  final void bindOnLocalThread() {    
     if (tlDocument.get() == null) {
-      tlDocument.set(document.copy());
+      tlDocument.set(document);
     }
   }
 
@@ -297,7 +296,7 @@ public abstract class OSequence {
     return updateParams(params, shouldGoOverDistributted);
   }
   
-  protected boolean isOnDistributted(){
+  protected boolean isOnDistributted(){    
     return tlDocument.get().getDatabase().isDistributed();
   }
   
@@ -345,8 +344,7 @@ public abstract class OSequence {
     return any;
   }
 
-  public void onUpdate(ODocument iDocument) {
-    document = iDocument;
+  public void onUpdate(ODocument iDocument) {    
     this.tlDocument.set(iDocument);    
   }
 
@@ -434,9 +432,9 @@ public abstract class OSequence {
     setCrucialValueChanged(true);
   }
 
-  protected synchronized ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.instance().get();
-  }
+//  protected synchronized ODatabaseDocumentInternal getDatabase() {
+//    return ODatabaseRecordThreadLocal.instance().get();
+//  }
 
   public static String getSequenceName(final ODocument iDocument) {
     return iDocument.field(FIELD_NAME, OType.STRING);
@@ -549,8 +547,9 @@ public abstract class OSequence {
         return callable.call();
       } catch (OConcurrentModificationException ignore) {
         try {
+          ODatabaseDocumentInternal db = tlDocument.get().getDatabase();
           Thread.sleep(1 + new Random()
-              .nextInt(getDatabase().getConfiguration().getValueAsInteger(OGlobalConfiguration.SEQUENCE_RETRY_DELAY)));
+              .nextInt(db.getConfiguration().getValueAsInteger(OGlobalConfiguration.SEQUENCE_RETRY_DELAY)));
         } catch (InterruptedException ignored) {
           Thread.currentThread().interrupt();
           break;

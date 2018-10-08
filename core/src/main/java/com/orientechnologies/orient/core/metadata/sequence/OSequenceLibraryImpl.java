@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -81,12 +80,7 @@ public class OSequenceLibraryImpl {
     reloadIfNeeded(database);
     OSequence seq;
     synchronized (this) {
-      seq = sequences.get(name);
-      if (seq != null && seq.getDocument() != null){
-        ORecord tmp = database.getRecord(seq.getDocument());
-        int a = 0;
-        ++a;
-      }
+      seq = sequences.get(name);      
       if (seq == null) {
         load(database);
         seq = sequences.get(name);
@@ -109,7 +103,7 @@ public class OSequenceLibraryImpl {
     validateSequenceNoExists(key);
 
     final OSequence sequence = OSequenceHelper.createSequence(sequenceType, params, null).setName(iName);
-    sequence.save(database);        
+    sequence.save();        
     sequences.put(key, sequence);
 
     return sequence;

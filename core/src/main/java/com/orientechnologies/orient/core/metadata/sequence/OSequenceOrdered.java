@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.concurrent.Callable;
@@ -47,73 +46,53 @@ public class OSequenceOrdered extends OSequence {
   }
 
   @Override
-  public synchronized long nextWork() throws OSequenceLimitReachedException {
-    ODatabaseDocumentInternal mainDb = getDatabase();
-    boolean tx = mainDb.getTransaction().isActive();
-    try {
-      ODatabaseDocumentInternal db = mainDb;
-      if (tx) {
-        db = mainDb.copy();
-        db.activateOnCurrentThread();
-      }
-      try {
-        ODatabaseDocumentInternal finalDb = db;
-        return callRetry(true, new Callable<Long>() {
-          @Override
-          public Long call() throws Exception {
-            long newValue;
-            Long limitVlaue = getLimitValue();
-            if (getOrderType() == SequenceOrderType.ORDER_POSITIVE) {
-              newValue = getValue() + getIncrement();
-              if (limitVlaue != null && newValue > limitVlaue) {
-                if (getRecyclable()) {
-                  newValue = getStart();
-                } else {
-                  throw new OSequenceLimitReachedException("Limit reached");
-                }
-              }
+  public synchronized long nextWork() throws OSequenceLimitReachedException {    
+    return callRetry(true, new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        long newValue;
+        Long limitVlaue = getLimitValue();
+        if (getOrderType() == SequenceOrderType.ORDER_POSITIVE) {
+          newValue = getValue() + getIncrement();
+          if (limitVlaue != null && newValue > limitVlaue) {
+            if (getRecyclable()) {
+              newValue = getStart();
             } else {
-              newValue = getValue() - getIncrement();
-              if (limitVlaue != null && newValue < limitVlaue) {
-                if (getRecyclable()) {
-                  newValue = getStart();
-                } else {
-                  throw new OSequenceLimitReachedException("Limit reached");
-                }
-              }
+              throw new OSequenceLimitReachedException("Limit reached");
             }
-
-            setValue(newValue);
-
-            save(finalDb);
-
-            Long limitValue = getLimitValue();
-            if (limitValue != null && !getRecyclable()) {
-              float increment = getIncrement();
-              float tillEnd = Math.abs(limitValue - newValue) / increment;
-              float delta = Math.abs(limitValue - getStart()) / increment;
-              //warning on 1%
-              if ((float) tillEnd <= ((float) delta / 100.f) || tillEnd <= 1) {
-                String warningMessage =
-                    "Non-recyclable sequence: " + getName() + " reaching limt, current value: " + newValue + " limit value: "
-                        + limitValue + " with step: " + increment;
-                OLogManager.instance().warn(this, warningMessage);
-              }
-            }
-
-            return newValue;
           }
-        }, "next");
-      } finally {
-        if (tx) {
-          db.close();
+        } else {
+          newValue = getValue() - getIncrement();
+          if (limitVlaue != null && newValue < limitVlaue) {
+            if (getRecyclable()) {
+              newValue = getStart();
+            } else {
+              throw new OSequenceLimitReachedException("Limit reached");
+            }
+          }
         }
+
+        setValue(newValue);
+
+        save();
+
+        Long limitValue = getLimitValue();
+        if (limitValue != null && !getRecyclable()) {
+          float increment = getIncrement();
+          float tillEnd = Math.abs(limitValue - newValue) / increment;
+          float delta = Math.abs(limitValue - getStart()) / increment;
+          //warning on 1%
+          if ((float) tillEnd <= ((float) delta / 100.f) || tillEnd <= 1) {
+            String warningMessage =
+                "Non-recyclable sequence: " + getName() + " reaching limt, current value: " + newValue + " limit value: "
+                    + limitValue + " with step: " + increment;
+            OLogManager.instance().warn(this, warningMessage);
+          }
+        }
+
+        return newValue;
       }
-    } finally {
-      if (tx) {
-        mainDb.activateOnCurrentThread();
-      }
-    }
+    }, "next");      
   }
 
   @Override
@@ -133,7 +112,7 @@ public class OSequenceOrdered extends OSequence {
       public Long call() throws Exception {
         long newValue = getStart();
         setValue(newValue);
-        save(getDatabase());
+        save();
 
         return newValue;
       }
