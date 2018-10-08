@@ -288,8 +288,12 @@ public abstract class OSequence {
     setSequenceType();
   }
 
+  protected boolean shouldGoOverDistrtibute(){
+    return isOnDistributted() && (replicationProtocolVersion == 2);
+  }
+  
   public boolean updateParams(CreateParams params) throws ExecutionException, InterruptedException{   
-    boolean shouldGoOverDistributted = isOnDistributted() && (replicationProtocolVersion > 1);
+    boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
     return updateParams(params, shouldGoOverDistributted);
   }
   
@@ -464,7 +468,7 @@ public abstract class OSequence {
    */
   @OApi
   public long next() throws OSequenceLimitReachedException, ExecutionException, InterruptedException{
-    boolean shouldGoOverDistributted = isOnDistributted() && (replicationProtocolVersion > 1);
+    boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
     return next(shouldGoOverDistributted);
   }
   
@@ -487,7 +491,7 @@ public abstract class OSequence {
    */
   @OApi
   public long current() throws ExecutionException, InterruptedException{    
-    boolean shouldGoOverDistributted = isOnDistributted() && (replicationProtocolVersion > 1);
+    boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
     return current(shouldGoOverDistributted);
   }
   
@@ -507,7 +511,7 @@ public abstract class OSequence {
 
   
   public long reset() throws ExecutionException, InterruptedException{
-    boolean shouldGoOverDistributted = isOnDistributted() && (replicationProtocolVersion > 1);
+    boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
     return reset(shouldGoOverDistributted);
   }
   /*
@@ -536,10 +540,12 @@ public abstract class OSequence {
     tlDocument.set(tlDocument.get().reload(null, true));
   }
 
-  protected <T> T callRetry(final Callable<T> callable, final String method) {
+  protected <T> T callRetry(boolean reloadSequence, final Callable<T> callable, final String method) {
     for (int retry = 0; retry < maxRetry; ++retry) {
       try {
-        reloadSequence();
+        if (reloadSequence){
+          reloadSequence();
+        }
         return callable.call();
       } catch (OConcurrentModificationException ignore) {
         try {

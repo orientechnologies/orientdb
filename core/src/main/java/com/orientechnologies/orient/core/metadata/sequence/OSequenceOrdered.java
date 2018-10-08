@@ -58,7 +58,7 @@ public class OSequenceOrdered extends OSequence {
       }
       try {
         ODatabaseDocumentInternal finalDb = db;
-        return callRetry(new Callable<Long>() {
+        return callRetry(true, new Callable<Long>() {
           @Override
           public Long call() throws Exception {
             long newValue;
@@ -118,7 +118,7 @@ public class OSequenceOrdered extends OSequence {
 
   @Override
   protected synchronized long currentWork() {
-    return callRetry(new Callable<Long>() {
+    return callRetry(true, new Callable<Long>() {
       @Override
       public Long call() throws Exception {
         return getValue();
@@ -128,7 +128,7 @@ public class OSequenceOrdered extends OSequence {
 
   @Override
   public synchronized long resetWork() {
-    return callRetry(new Callable<Long>() {
+    return callRetry(true, new Callable<Long>() {
       @Override
       public Long call() throws Exception {
         long newValue = getStart();

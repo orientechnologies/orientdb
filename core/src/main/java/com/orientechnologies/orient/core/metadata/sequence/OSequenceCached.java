@@ -84,6 +84,7 @@ public class OSequenceCached extends OSequence {
 
   private void doRecycle(ODatabaseDocumentInternal finalDb) {
     if (recyclable) {
+      reloadSequence();
       setValue(getStart());
       allocateCache(getCacheSize(), finalDb);
     } else {
@@ -125,8 +126,13 @@ public class OSequenceCached extends OSequence {
   //first set new current value then call next
   public long nextWithNewCurrentValue(long currentValue, boolean executeViaDistributed) throws OSequenceLimitReachedException, ExecutionException, InterruptedException{
     if (!executeViaDistributed){
-      cacheStart = currentValue;
-      return nextWork();
+      //we don't want synchronization on whole method, because called with executeViaDistributed == true
+      //will later call nextWithNewCurrentValue with parameter executeViaDistributed == false
+      //and that will cause deadlock
+      synchronized(this){
+        cacheStart = currentValue;
+        return nextWork();
+      }
     }
     else{
       return sendSequenceActionSetAndNext(currentValue);
@@ -134,8 +140,13 @@ public class OSequenceCached extends OSequence {
   }
   
   @Override
+  protected boolean shouldGoOverDistrtibute(){
+    return isOnDistributted() && (replicationProtocolVersion == 2) && signalToAllocateCache();
+  }
+  
+  @Override
   public long next() throws OSequenceLimitReachedException, ExecutionException, InterruptedException{
-    boolean shouldGoOverDistributted = isOnDistributted() && (replicationProtocolVersion > 1) && signalToAllocateCache();
+    boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
     if (shouldGoOverDistributted){
       return nextWithNewCurrentValue(cacheStart, true);
     }
@@ -154,7 +165,7 @@ public class OSequenceCached extends OSequence {
       }
       try {
         ODatabaseDocumentInternal finalDb = db;
-        return callRetry(new Callable<Long>() {
+        return callRetry(signalToAllocateCache(), new Callable<Long>() {
           @Override
           public Long call() throws Exception {
             synchronized (OSequenceCached.this) {
@@ -248,7 +259,7 @@ public class OSequenceCached extends OSequence {
       }
       try {
         ODatabaseDocumentInternal finalDb = db;
-        return callRetry(new Callable<Long>() {
+        return callRetry(true, new Callable<Long>() {
           @Override
           public Long call() throws Exception {
             synchronized (OSequenceCached.this) {
