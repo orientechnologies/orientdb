@@ -447,7 +447,7 @@ public enum OType {
           return ((Collection) iValue).iterator().next();
         }
         return iValue.toString();
-      } else if (iTargetClass.equals(OIdentifiable.class)) {
+      } else if (OIdentifiable.class.isAssignableFrom(iTargetClass)) {
         if (OMultiValue.isMultiValue(iValue)) {
           List<OIdentifiable> result = new ArrayList<OIdentifiable>();
           for (Object o : OMultiValue.getMultiValueIterable(iValue)) {
