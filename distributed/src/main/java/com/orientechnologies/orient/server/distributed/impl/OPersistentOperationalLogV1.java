@@ -260,11 +260,11 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       stream.readLong();//length, again
       long magic = stream.readLong();
       if (magic != MAGIC) {
-//        throw //TODO
+        throw new ODistributedException("Invalid OpLog magic number for entry " + logId);
       }
       return new OOperationLogEntry(new OLogId(logId), request);
     } catch (Exception e) {
-      return null;//TODO manage broken log
+      return null;
     }
   }
 
@@ -276,7 +276,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   private void createNewStreamFile() {
-    info.currentFileNum = (int)(this.inc.get()/LOG_ENTRIES_PER_FILE);
+    info.currentFileNum = (int) (this.inc.get() / LOG_ENTRIES_PER_FILE);
     File infoFile = new File(storagePath, OPLOG_INFO_FILE);
     writeInfo(infoFile, info);
     if (stream != null) {
