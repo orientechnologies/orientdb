@@ -62,7 +62,7 @@ public abstract class OSequence {
   private static final String FIELD_TYPE = "type";
 
   private ODocument document;
-  ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();
+//  ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();
 
   private boolean cruacialValueChanged = false;
 
@@ -245,10 +245,9 @@ public abstract class OSequence {
     cruacialValueChanged = true;
   }
 
-  public void save() {
-    ODocument doc = tlDocument.get();
-    doc = doc.save();
-    onUpdate(doc);
+  public void save() {        
+    document = document.save();
+    onUpdate(document);
   }
 
 //  public void save(ODatabaseDocument database) {
@@ -257,18 +256,16 @@ public abstract class OSequence {
 //  }
 
   final void bindOnLocalThread() {
-    if (tlDocument.get() == null) {
-      tlDocument.set(document);
-    }
+    
   }
 
   public final ODocument getDocument() {
-    return tlDocument.get();
+    return document;
   }
 
   private <T> T sendSequenceActionOverCluster(int actionType, CreateParams params) throws ExecutionException, InterruptedException{    
     OSequenceAction action = new OSequenceAction(actionType, getName(), params, getSequenceType());
-    return tlDocument.get().getDatabase().sendSequenceAction(action);    
+    return document.getDatabase().sendSequenceAction(action);    
   }
   
   protected final synchronized void initSequence(OSequence.CreateParams params) {
@@ -297,7 +294,7 @@ public abstract class OSequence {
   }
   
   protected boolean isOnDistributted(){    
-    return tlDocument.get().getDatabase().isDistributed();
+    return document.getDatabase().isDistributed();
   }
   
   public synchronized boolean updateParams(CreateParams params, boolean executeViaDistributed) throws ExecutionException, InterruptedException{
@@ -345,7 +342,7 @@ public abstract class OSequence {
   }
 
   public void onUpdate(ODocument iDocument) {    
-    this.tlDocument.set(iDocument);    
+    document = iDocument;
   }
 
   protected static Long getValue(ODocument doc) {
@@ -356,48 +353,48 @@ public abstract class OSequence {
   }
 
   protected synchronized long getValue() {
-    return getValue(tlDocument.get());
+    return getValue(document);
   }
 
   protected synchronized void setValue(long value) {
-    tlDocument.get().field(FIELD_VALUE, value);
+    document.field(FIELD_VALUE, value);
     setCrucialValueChanged(true);
   }
 
   protected synchronized int getIncrement() {
-    return tlDocument.get().field(FIELD_INCREMENT, OType.INTEGER);
+    return document.field(FIELD_INCREMENT, OType.INTEGER);
   }
 
   protected synchronized void setLimitValue(Long limitValue) {
-    tlDocument.get().field(FIELD_LIMIT_VALUE, limitValue);
+    document.field(FIELD_LIMIT_VALUE, limitValue);
     setCrucialValueChanged(true);
   }
 
   protected synchronized Long getLimitValue() {
-    return tlDocument.get().field(FIELD_LIMIT_VALUE, OType.LONG);
+    return document.field(FIELD_LIMIT_VALUE, OType.LONG);
   }
 
   protected synchronized void setOrderType(SequenceOrderType orderType) {
-    tlDocument.get().field(FIELD_ORDER_TYPE, orderType.getValue());
+    document.field(FIELD_ORDER_TYPE, orderType.getValue());
     setCrucialValueChanged(true);
   }
 
   protected synchronized SequenceOrderType getOrderType() {
-    byte val = tlDocument.get().field(FIELD_ORDER_TYPE);
+    byte val = document.field(FIELD_ORDER_TYPE);
     return SequenceOrderType.fromValue(val);
   }
 
   protected synchronized void setIncrement(int value) {
-    tlDocument.get().field(FIELD_INCREMENT, value);
+    document.field(FIELD_INCREMENT, value);
     setCrucialValueChanged(true);
   }
 
   protected synchronized long getStart() {
-    return tlDocument.get().field(FIELD_START, OType.LONG);
+    return document.field(FIELD_START, OType.LONG);
   }
 
   protected synchronized void setStart(long value) {
-    tlDocument.get().field(FIELD_START, value);
+    document.field(FIELD_START, value);
     setCrucialValueChanged(true);
   }
 
@@ -410,25 +407,25 @@ public abstract class OSequence {
   }
 
   public synchronized String getName() {
-    return getSequenceName(tlDocument.get());
+    return getSequenceName(document);
   }
 
   public synchronized OSequence setName(final String name) {
-    tlDocument.get().field(FIELD_NAME, name);
+    document.field(FIELD_NAME, name);
     return this;
   }
 
   public synchronized boolean getRecyclable() {
-    return tlDocument.get().field(FIELD_RECYCLABLE, OType.BOOLEAN);
+    return document.field(FIELD_RECYCLABLE, OType.BOOLEAN);
   }
 
   public synchronized void setRecyclable(final boolean recyclable) {
-    tlDocument.get().field(FIELD_RECYCLABLE, recyclable);
+    document.field(FIELD_RECYCLABLE, recyclable);
     setCrucialValueChanged(true);
   }
 
   private synchronized void setSequenceType() {
-    tlDocument.get().field(FIELD_TYPE, getSequenceType());
+    document.field(FIELD_TYPE, getSequenceType());
     setCrucialValueChanged(true);
   }
 
@@ -535,19 +532,19 @@ public abstract class OSequence {
   public abstract SEQUENCE_TYPE getSequenceType();
 
   protected void reloadSequence() {
-    tlDocument.set(tlDocument.get().reload(null, true));
+    document.reload(null, true);
   }
 
   protected <T> T callRetry(boolean reloadSequence, final Callable<T> callable, final String method) {
     for (int retry = 0; retry < maxRetry; ++retry) {
       try {
-        if (reloadSequence){
-          reloadSequence();
-        }
+//        if (reloadSequence){
+//          reloadSequence();
+//        }
         return callable.call();
       } catch (OConcurrentModificationException ignore) {
         try {
-          ODatabaseDocumentInternal db = tlDocument.get().getDatabase();
+          ODatabaseDocumentInternal db = document.getDatabase();
           Thread.sleep(1 + new Random()
               .nextInt(db.getConfiguration().getValueAsInteger(OGlobalConfiguration.SEQUENCE_RETRY_DELAY)));
         } catch (InterruptedException ignored) {

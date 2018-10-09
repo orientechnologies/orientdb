@@ -123,7 +123,7 @@ public class OSequenceCached extends OSequence {
   
   private <T> T sendSequenceActionSetAndNext(long value) throws ExecutionException, InterruptedException{    
     OSequenceAction action = new OSequenceAction(getName(), value);
-    return tlDocument.get().getDatabase().sendSequenceAction(action);    
+    return getDocument().getDatabase().sendSequenceAction(action);    
   }
   
   //want to be atomic
@@ -162,8 +162,7 @@ public class OSequenceCached extends OSequence {
     return callRetry(signalToAllocateCache(), new Callable<Long>() {
       @Override
       public Long call() throws Exception {
-        synchronized (OSequenceCached.this) {
-
+        synchronized (OSequenceCached.this) {          
           boolean detectedCrucialValueChange = false;
           if (getCrucilaValueChanged()) {
             reloadCrucialValues();
@@ -177,21 +176,13 @@ public class OSequenceCached extends OSequence {
                 if (limitValue != null && cacheStart + increment > limitValue) {
                   doRecycle();
                 } else {
-                  cacheStart = cacheStart + increment;
-                  if (generated.contains(cacheStart)){
-                    int a = 0;
-                    ++a;
-                  }
+                  cacheStart = cacheStart + increment;                  
                 }
               }
             } else if (limitValue != null && cacheStart + increment > limitValue) {
               doRecycle();
             } else {
-              cacheStart = cacheStart + increment;
-              if (generated.contains(cacheStart)){
-                int a = 0;
-                ++a;
-              }
+              cacheStart = cacheStart + increment;              
             }
           } else {
             if (signalToAllocateCache()) {
@@ -227,12 +218,7 @@ public class OSequenceCached extends OSequence {
             }
           }
 
-          firstCache = false;
-          if (generated.contains(cacheStart)){
-            int a = 0;
-            ++a;
-          }
-          generated.add(cacheStart);
+          firstCache = false;          
           return cacheStart;
         }
       }
@@ -274,7 +260,7 @@ public class OSequenceCached extends OSequence {
     getDocument().field(FIELD_CACHE, cacheSize);
   }
 
-  private void allocateCache(int cacheSize) {
+  private void allocateCache(int cacheSize) {        
     if (getCrucilaValueChanged()) {
       reloadCrucialValues();
       setCrucialValueChanged(false);
@@ -292,8 +278,8 @@ public class OSequenceCached extends OSequence {
       if (limitValue != null && newValue < limitValue) {
         newValue = limitValue;
       }
-    }
-    setValue(newValue);
+    }    
+    setValue(newValue);    
     save();
 
     this.cacheStart = value;
