@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.metadata.sequence;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.HashSet;
+import java.util.Set;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -42,6 +44,8 @@ public class OSequenceCached extends OSequence {
   private boolean           recyclable;
   private String name = null;
 
+  private Set<Long> generated = new HashSet<>();
+  
   public OSequenceCached() {
     this(null, null);
   }
@@ -52,6 +56,15 @@ public class OSequenceCached extends OSequence {
 
   public OSequenceCached(final ODocument iDocument, OSequence.CreateParams params) {
     super(iDocument, params);
+    //this is extension of initSequence
+    if (iDocument == null){
+      if (params == null) {
+        params = new CreateParams().setDefaults();
+      }
+      setCacheSize(params.cacheSize);
+      cacheStart = cacheEnd = 0L;
+      allocateCache(getCacheSize());
+    }
     if (iDocument != null) {
       firstCache = true;
       cacheStart = cacheEnd = getValue(iDocument);
@@ -71,15 +84,7 @@ public class OSequenceCached extends OSequence {
       save();
     }    
     return any;
-  }
-
-  @Override
-  protected void initSequence(OSequence.CreateParams params) {
-    super.initSequence(params);
-    setCacheSize(params.cacheSize);
-    cacheStart = cacheEnd = 0L;
-    allocateCache(getCacheSize());
-  }
+  }  
 
   private void doRecycle() {
     if (recyclable) {
@@ -173,12 +178,20 @@ public class OSequenceCached extends OSequence {
                   doRecycle();
                 } else {
                   cacheStart = cacheStart + increment;
+                  if (generated.contains(cacheStart)){
+                    int a = 0;
+                    ++a;
+                  }
                 }
               }
             } else if (limitValue != null && cacheStart + increment > limitValue) {
               doRecycle();
             } else {
               cacheStart = cacheStart + increment;
+              if (generated.contains(cacheStart)){
+                int a = 0;
+                ++a;
+              }
             }
           } else {
             if (signalToAllocateCache()) {
@@ -215,6 +228,11 @@ public class OSequenceCached extends OSequence {
           }
 
           firstCache = false;
+          if (generated.contains(cacheStart)){
+            int a = 0;
+            ++a;
+          }
+          generated.add(cacheStart);
           return cacheStart;
         }
       }
@@ -248,11 +266,11 @@ public class OSequenceCached extends OSequence {
     return SEQUENCE_TYPE.CACHED;
   }
 
-  public int getCacheSize() {
+  public final int getCacheSize() {
     return getDocument().field(FIELD_CACHE, OType.INTEGER);
   }
 
-  public void setCacheSize(int cacheSize) {
+  public final void setCacheSize(int cacheSize) {
     getDocument().field(FIELD_CACHE, cacheSize);
   }
 

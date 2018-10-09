@@ -256,13 +256,13 @@ public abstract class OSequence {
 //    onUpdate(doc);
 //  }
 
-  final void bindOnLocalThread() {    
+  final void bindOnLocalThread() {
     if (tlDocument.get() == null) {
       tlDocument.set(document);
     }
   }
 
-  public ODocument getDocument() {
+  public final ODocument getDocument() {
     return tlDocument.get();
   }
 
@@ -271,7 +271,7 @@ public abstract class OSequence {
     return tlDocument.get().getDatabase().sendSequenceAction(action);    
   }
   
-  protected synchronized void initSequence(OSequence.CreateParams params) {
+  protected final synchronized void initSequence(OSequence.CreateParams params) {
     setStart(params.start);
     setIncrement(params.increment);
     if (params.currentValue == null){
@@ -432,7 +432,7 @@ public abstract class OSequence {
     setCrucialValueChanged(true);
   }
 
-//  protected synchronized ODatabaseDocumentInternal getDatabase() {
+//  protected final synchronized ODatabaseDocumentInternal getDatabase() {
 //    return ODatabaseRecordThreadLocal.instance().get();
 //  }
 
