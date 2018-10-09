@@ -74,7 +74,12 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
   public OPersistentOperationalLogV1(String storageFolder) {
     this.storagePath = storageFolder;
-    this.info = readInfo();
+    try {
+      this.info = readInfo();
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+      throw new ODistributedException("cannot init oplog: " + e.getMessage());
+    }
     this.stream = initStream(info);
     inc = readLastLogId();
   }
@@ -99,11 +104,13 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     return fullPath;
   }
 
-  private OplogInfo readInfo() {
+  private OplogInfo readInfo() throws FileNotFoundException {
     File infoFile = new File(storagePath, OPLOG_INFO_FILE);
     OplogInfo result = new OplogInfo();
     if (infoFile.exists()) {
-      writeInfo(infoFile, result);
+      info = new OplogInfo();
+      info.fromStream(new FileInputStream(infoFile));
+//      writeInfo(infoFile, result);
     } else {
       initNewInfoFile(infoFile, result);
     }
@@ -132,7 +139,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
   private void initNewInfoFile(File infoFile, OplogInfo result) {
     try {
-      result.currentFileNum = -1;
+      result.currentFileNum = 0;
       result.firstFileNum = 0;
       result.keepUntil = 0;
       infoFile.createNewFile();
@@ -149,25 +156,61 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   protected AtomicLong readLastLogId() {
     String filePath = storagePath + File.separator + OPLOG_FILE.replace("$NUM$", "" + info.currentFileNum);
     File f = new File(filePath);
-    if (!f.exists()) {
-      return new AtomicLong(-1);
-    }
     try (RandomAccessFile file = new RandomAccessFile(filePath, "r");) {
+      if (!f.exists()) {
+        f.createNewFile();
+      }
       if (file.length() == 0) {
-        return new AtomicLong(-1);
+        return new AtomicLong(info.currentFileNum * LOG_ENTRIES_PER_FILE - 1);
+      }
+      file.seek(file.length() - 8); //magic
+      long magic = file.readLong();
+      if (magic != MAGIC) {
+        return new AtomicLong(recover());
       }
       file.seek(file.length() - 16); //length plus magic
       long size = file.readLong();
-      long magic = file.readLong();
-      if (magic != MAGIC) {
-        throw new IllegalStateException();
-      }
+
       file.seek(file.length() - 16 - size - 12);
       return new AtomicLong(file.readLong());
     } catch (IOException e) {
-      //TODO recover!
-      throw new ODistributedException("Cannot open oplog file: " + e.getMessage());
+      return new AtomicLong(recover());
     }
+  }
+
+  private long recover() {
+    String oldFilePath = storagePath + File.separator + OPLOG_FILE.replace("$NUM$", "" + info.currentFileNum);
+    File oldFile = new File(oldFilePath);
+    String newFilePath = storagePath + File.separator + OPLOG_FILE.replace("$NUM$", "" + info.currentFileNum) + "_temp";
+    File newFile = new File(newFilePath);
+    if (newFile.exists()) {
+      newFile.delete();
+    }
+    try {
+      newFile.createNewFile();
+
+      DataInputStream readStream = new DataInputStream(new FileInputStream(oldFile));
+      DataOutputStream writeStream = new DataOutputStream(new FileOutputStream(newFile));
+
+      OOperationLogEntry record = readRecord(readStream);
+      while (record != null) {
+        writeRecord(writeStream, record.getLogId(), record.getRequest());
+        record = readRecord(readStream);
+      }
+      readStream.close();
+      writeStream.close();
+
+      File oldFileCopy = new File(oldFile.toString() + "_copy");
+      if (oldFileCopy.exists()) {
+        oldFileCopy.delete();
+      }
+      oldFile.renameTo(oldFileCopy);
+      newFile.renameTo(new File(oldFilePath));
+      oldFile.delete();
+    } catch (IOException e) {
+      throw new ODistributedException("Cannot find oplog file: " + oldFilePath);
+    }
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -233,7 +276,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   private void createNewStreamFile() {
-    info.currentFileNum++;
+    info.currentFileNum = (int)(this.inc.get()/LOG_ENTRIES_PER_FILE);
     File infoFile = new File(storagePath, OPLOG_INFO_FILE);
     writeInfo(infoFile, info);
     if (stream != null) {
