@@ -53,6 +53,15 @@ public class OSequenceCached extends OSequence {
 
   public OSequenceCached(final ODocument iDocument, OSequence.CreateParams params) {
     super(iDocument, params);
+    //this is extension of initSequence
+    if (iDocument == null){
+      if (params == null) {
+        params = new CreateParams().setDefaults();
+      }
+      setCacheSize(params.cacheSize);
+      cacheStart = cacheEnd = 0L;
+      allocateCache(getCacheSize(), getDatabase());
+    }
     if (iDocument != null) {
       firstCache = true;
       cacheStart = cacheEnd = getValue(iDocument);
@@ -72,15 +81,7 @@ public class OSequenceCached extends OSequence {
       save();
     }    
     return any;
-  }
-
-  @Override
-  protected void initSequence(OSequence.CreateParams params) {
-    super.initSequence(params);
-    setCacheSize(params.cacheSize);
-    cacheStart = cacheEnd = 0L;
-    allocateCache(getCacheSize(), getDatabase());
-  }
+  }  
 
   private void doRecycle(ODatabaseDocumentInternal finalDb) {
     if (recyclable) {
@@ -289,15 +290,15 @@ public class OSequenceCached extends OSequence {
     return SEQUENCE_TYPE.CACHED;
   }
 
-  public int getCacheSize() {
+  public final int getCacheSize() {
     return getDocument().field(FIELD_CACHE, OType.INTEGER);
   }
 
-  public void setCacheSize(int cacheSize) {
+  public final void setCacheSize(int cacheSize) {
     getDocument().field(FIELD_CACHE, cacheSize);
   }
 
-  private void allocateCache(int cacheSize, ODatabaseDocumentInternal db) {
+  private final void allocateCache(int cacheSize, ODatabaseDocumentInternal db) {
     if (getCrucilaValueChanged()) {
       reloadCrucialValues();
       setCrucialValueChanged(false);
