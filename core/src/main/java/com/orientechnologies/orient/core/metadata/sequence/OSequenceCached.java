@@ -166,13 +166,13 @@ public class OSequenceCached extends OSequence {
       }
       try {
         ODatabaseDocumentInternal finalDb = db;
-        return callRetry(signalToAllocateCache(), new Callable<Long>() {
+        return callRetry(signalToAllocateCache() || getCrucialValueChanged(), new Callable<Long>() {
           @Override
           public Long call() throws Exception {
             synchronized (OSequenceCached.this) {
 
               boolean detectedCrucialValueChange = false;
-              if (getCrucilaValueChanged()) {
+              if (getCrucialValueChanged()) {
                 reloadCrucialValues();
                 detectedCrucialValueChange = true;
               }
@@ -299,7 +299,7 @@ public class OSequenceCached extends OSequence {
   }
 
   private final void allocateCache(int cacheSize, ODatabaseDocumentInternal db) {
-    if (getCrucilaValueChanged()) {
+    if (getCrucialValueChanged()) {
       reloadCrucialValues();
       setCrucialValueChanged(false);
     }

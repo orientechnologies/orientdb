@@ -221,7 +221,7 @@ public abstract class OSequence {
     }
   }
 
-  protected boolean getCrucilaValueChanged() {
+  protected boolean getCrucialValueChanged() {
     synchronized (this) {
       return cruacialValueChanged;
     }
