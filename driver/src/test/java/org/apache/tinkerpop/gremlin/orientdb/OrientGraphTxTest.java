@@ -5,9 +5,13 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.OVertex;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Transaction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -45,6 +49,85 @@ public class OrientGraphTxTest extends OrientGraphBaseTest {
         Assert.assertEquals(11, tx.getRawDatabase().countClass("Person"));
 
         tx.close();
+    }
+    
+    @Test
+    public void testSequencesParallel() {
+      System.out.println("testSequencesParallel");
+      ODatabaseDocument db = factory.getDatabase(true, true);
+      db.activateOnCurrentThread();
+      db.execute("sql",
+          "CREATE CLASS TestSequence EXTENDS V;\n"
+              + " CREATE SEQUENCE TestSequenceIdSequence TYPE CACHED;\n"
+              + "CREATE PROPERTY TestSequence.mm LONG (MANDATORY TRUE, default \"sequence('TestSequenceIdSequence').next()\");\n");            
+
+
+      OrientGraph graph = null;
+      final int recCount = 50;
+      final int threadCount = 100;
+      try{      
+        Thread[] threads = new Thread[threadCount];
+        for (int j = 0; j < threadCount; j++){
+          final int index = j;
+          Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+              OrientGraph graph = null;
+              try{            
+                if (index % 2 == 0){
+                  graph = factory.getNoTx();
+                }
+                else{
+                  graph = factory.getTx();
+                }
+                for (int i = 0; i < recCount; i++){            
+                  graph.addVertex("TestSequence");
+                }
+                if (index % 2 != 0){
+                  graph.commit();
+                }
+              }
+              finally{
+                if (graph != null){
+                  graph.close();
+                }
+              }
+            }
+          });
+          threads[j] = thread;
+          thread.start();
+        }
+
+        for (int i = 0; i < threads.length; i++){
+          try{
+            threads[i].join();
+          }
+          catch (InterruptedException exc){
+            exc.printStackTrace();
+          }
+        }
+
+        graph = factory.getNoTx();
+        Iterator<Vertex> iter = graph.vertices();
+
+        int counter = 0;
+        Set<Long> vals = new HashSet<>();
+        while (iter.hasNext()){
+          Vertex v = iter.next();
+          VertexProperty<Long> vp = v.property("mm");
+          long a = vp.value();
+          Assert.assertFalse(vals.contains(a));          
+          counter++;
+        }
+        Assert.assertEquals(counter, threadCount * recCount);          
+      }
+      finally{        
+        if (graph != null){
+          graph.close();
+        }
+        db.activateOnCurrentThread();
+        db.execute("sql", "DROP CLASS TestSequence UNSAFE");
+      }
     }
 
     @Test(expected = IllegalStateException.class)
