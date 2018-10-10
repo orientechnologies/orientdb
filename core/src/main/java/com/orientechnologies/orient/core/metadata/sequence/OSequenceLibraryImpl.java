@@ -102,11 +102,14 @@ public class OSequenceLibraryImpl {
     final String key = iName.toUpperCase(Locale.ENGLISH);
     validateSequenceNoExists(key);
 
-    final OSequence sequence = OSequenceHelper.createSequence(sequenceType, params, null).setName(iName);
-    sequence.save();        
-    sequences.put(key, sequence);
+    final String interned = iName.intern();
+    synchronized(interned){
+      final OSequence sequence = OSequenceHelper.createSequence(sequenceType, params, null).setName(iName);
+      sequence.save();        
+      sequences.put(key, sequence);
 
-    return sequence;
+      return sequence;
+    }    
   }
 
   public synchronized void dropSequence(final ODatabaseDocumentInternal database, final String iName) {
