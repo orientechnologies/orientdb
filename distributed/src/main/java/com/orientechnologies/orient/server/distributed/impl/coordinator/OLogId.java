@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Objects;
 
 public class OLogId {
@@ -30,7 +32,10 @@ public class OLogId {
 
   @Override
   public int hashCode() {
-
     return Objects.hash(id);
+  }
+
+  public long getId() {
+    return id;
   }
 }

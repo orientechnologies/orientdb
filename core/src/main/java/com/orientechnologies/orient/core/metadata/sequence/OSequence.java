@@ -255,7 +255,7 @@ public abstract class OSequence {
 //    onUpdate(doc);
 //  }
 
-  final void bindOnLocalThread() {
+  synchronized final void bindOnLocalThread() {
     
   }
 

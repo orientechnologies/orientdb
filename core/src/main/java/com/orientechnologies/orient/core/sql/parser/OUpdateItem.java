@@ -194,7 +194,7 @@ public class OUpdateItem extends SimpleNode {
     return item;
   }
 
-  private Object convertResultToDocument(Object value) {
+  public static Object convertResultToDocument(Object value) {
     if (value instanceof OResult) {
       return ((OResult) value).toElement();
     }
@@ -210,7 +210,7 @@ public class OUpdateItem extends SimpleNode {
     return value;
   }
 
-  private boolean containsOResult(Collection value) {
+  public static boolean containsOResult(Collection value) {
     return value.stream().anyMatch(x -> x instanceof OResult);
   }
 

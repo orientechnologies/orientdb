@@ -201,8 +201,8 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
 
   @Test
   public void testPersonSaving() {
-    final long beginProfiles = database.countClusterElements("Profile");
-    beginCities = database.countClusterElements("City");
+    final long beginProfiles = database.countClass("Profile");
+    beginCities = database.countClass("City");
 
     Country italy = database.newInstance(Country.class, "Italy");
 
@@ -215,8 +215,8 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
         .setLocation(database.newInstance(Address.class, "Residence", garibaldi.getLocation().getCity(), "Piazza di Spagna, 111"));
     database.save(bonaparte);
 
-    Assert.assertEquals(database.countClusterElements("Profile"), beginProfiles + 2);
-    Assert.assertEquals(database.countClusterElements("City"), beginCities + 1);
+    Assert.assertEquals(database.countClass("Profile"), beginProfiles + 2);
+    Assert.assertEquals(database.countClass("City"), beginCities + 1);
   }
 
   @Test(dependsOnMethods = "testPersonSaving")
