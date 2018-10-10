@@ -142,6 +142,19 @@ public class OTraverseStatement extends OStatement {
 
   }
 
+  public boolean refersToParent() {
+    if (projections != null && projections.stream().anyMatch(x -> x.refersToParent())) {
+      return true;
+    }
+    if (this.target != null && this.target.refersToParent()) {
+      return true;
+    }
+    if (this.whileClause != null && this.whileClause.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
+
   @Override
   public OStatement copy() {
     OTraverseStatement result = new OTraverseStatement(-1);
