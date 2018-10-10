@@ -1532,7 +1532,7 @@ public abstract class OClassImpl implements OClass {
     }
   }
 
-  protected static void checkParametersConflict(List<OClass> classes) {
+  public static void checkParametersConflict(List<OClass> classes) {
     final Map<String, OProperty> comulative = new HashMap<String, OProperty>();
     final Map<String, OProperty> properties = new HashMap<String, OProperty>();
 

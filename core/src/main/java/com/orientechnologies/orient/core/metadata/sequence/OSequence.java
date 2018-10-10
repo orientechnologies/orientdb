@@ -257,7 +257,7 @@ public abstract class OSequence {
     onUpdate(doc);
   }
 
-  final void bindOnLocalThread() {
+  synchronized void bindOnLocalThread() {
     if (tlDocument.get() == null) {
       tlDocument.set(document.copy());
     }

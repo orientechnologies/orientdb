@@ -259,6 +259,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
     try {
       OAbstractPaginatedStorage storage;
       synchronized (this) {
+        OSharedContext context = sharedContexts.remove(name);
+        if (context != null) {
+          context.close();
+        }
         storage = getOrInitStorage(name);
         storages.put(name, storage);
       }
@@ -388,7 +392,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     timer.cancel();
     executor.shutdown();
     try {
-      if (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
+      while (!executor.awaitTermination(1, TimeUnit.MINUTES)) {
         OLogManager.instance().warn(this, "Failed waiting background operations termination");
         executor.shutdownNow();
       }
@@ -480,10 +484,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public synchronized void forceDatabaseClose(String iDatabaseName) {
     OAbstractPaginatedStorage storage = storages.remove(iDatabaseName);
     if (storage != null) {
-      OSharedContext ctx = sharedContexts.get(iDatabaseName);
+      OSharedContext ctx = sharedContexts.remove(iDatabaseName);
       if (ctx != null) {
         ctx.close();
-        sharedContexts.remove(iDatabaseName);
       }
       storage.shutdown();
     }
@@ -496,7 +499,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return null;
   }
 
-  private void checkOpen() {
+  protected void checkOpen() {
     if (!open)
       throw new ODatabaseException("OrientDB Instance is closed");
   }

@@ -351,7 +351,9 @@ public class OGraphRepair {
             eventListener.onRepairedVertex(vertex);
 
           message(outputListener, "+ repaired corrupted vertex " + vertex + "\n");
-          vertex.save();
+          if (!checkOnly) {
+            vertex.save();
+          }
         }
       }
 

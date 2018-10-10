@@ -50,6 +50,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     Object params = null;
     String mode = "resultset";
 
+    long begin = System.currentTimeMillis();
     if (iRequest.content != null && !iRequest.content.isEmpty()) {
       // CONTENT REPLACES TEXT
       if (iRequest.content.startsWith("{")) {
@@ -102,6 +103,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       result.getExecutionPlan().ifPresent(x -> additionalContent.put("executionPlan", x.toResult().toElement()));
 
       result.close();
+      long elapsedMs = System.currentTimeMillis() - begin;
 
       String format = null;
       if (fetchPlan != null) {
@@ -111,6 +113,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       if (iRequest.getHeader("TE") != null)
         iResponse.setStreaming(true);
 
+      additionalContent.put("elapsedMs", elapsedMs);
       iResponse.writeResult(response, format, accept, additionalContent, mode);
 
     } finally {
