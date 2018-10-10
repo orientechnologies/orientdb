@@ -189,7 +189,7 @@ public abstract class OSequence {
     database.save(tlDocument.get());
   }
 
-  void bindOnLocalThread() {
+  synchronized void bindOnLocalThread() {
     if (tlDocument.get() == null) {
       tlDocument.set(document.copy());
     }
