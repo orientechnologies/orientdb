@@ -132,7 +132,6 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
       }
 
       ptr = new OPointer(new Pointer(pointer), size);
-      memoryConsumption.add(size);
     } else {
       if (!isLinux) {
         throw new ODirectMemoryAllocationFailedException("Alignment of pointers is allowed only on Linux platforms.");
@@ -143,6 +142,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
       ptr = new OPointer(pointerByReference.getValue(), size);
     }
 
+    memoryConsumption.add(size);
     return track(ptr);
   }
 
