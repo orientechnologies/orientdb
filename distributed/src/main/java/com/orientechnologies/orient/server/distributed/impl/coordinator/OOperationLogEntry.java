@@ -1,10 +1,10 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
 public class OOperationLogEntry {
-  protected OLogId       logId;
-  protected ONodeRequest request;
+  protected OLogId      logId;
+  protected OLogRequest request;
 
-  public OOperationLogEntry(OLogId logId, ONodeRequest request) {
+  public OOperationLogEntry(OLogId logId, OLogRequest request) {
     this.logId = logId;
     this.request = request;
   }
@@ -13,7 +13,7 @@ public class OOperationLogEntry {
     return this.logId;
   }
 
-  public ONodeRequest getRequest() {
+  public OLogRequest getRequest() {
     return this.request;
   }
 }

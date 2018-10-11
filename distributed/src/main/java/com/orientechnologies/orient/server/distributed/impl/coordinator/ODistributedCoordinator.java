@@ -4,9 +4,12 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.transact
 
 import java.util.Map;
 import java.util.Timer;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
-public class ODatabaseCoordinator implements AutoCloseable, ODistributedCoordinatorInternal {
+public class ODistributedCoordinator implements AutoCloseable {
 
   private final ExecutorService                        requestExecutor;
   private final OOperationLog                          operationLog;
@@ -16,7 +19,7 @@ public class ODatabaseCoordinator implements AutoCloseable, ODistributedCoordina
   private final ODistributedLockManager                lockManager;
   private final OClusterPositionAllocator              allocator;
 
-  public ODatabaseCoordinator(ExecutorService requestExecutor, OOperationLog operationLog, ODistributedLockManager lockManager,
+  public ODistributedCoordinator(ExecutorService requestExecutor, OOperationLog operationLog, ODistributedLockManager lockManager,
       OClusterPositionAllocator allocator) {
     this.requestExecutor = requestExecutor;
     this.operationLog = operationLog;

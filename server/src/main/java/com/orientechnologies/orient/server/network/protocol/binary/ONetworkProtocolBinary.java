@@ -150,7 +150,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     return requestType == OChannelBinaryProtocol.DISTRIBUTED_SUBMIT_REQUEST
         || requestType == OChannelBinaryProtocol.DISTRIBUTED_SUBMIT_RESPONSE
         || requestType == OChannelBinaryProtocol.DISTRIBUTED_OPERATION_REQUEST
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_OPERATION_RESPONSE;
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_OPERATION_RESPONSE
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE;
   }
 
   @Override

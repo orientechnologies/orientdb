@@ -1856,6 +1856,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       return new OOperationRequest(coordinateMessagesFactory);
     case DISTRIBUTED_OPERATION_RESPONSE:
       return new OOperationResponse(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST:
+      return new ONetworkStructuralSubmitRequest(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE:
+      return new ONetworkStructuralSubmitResponse(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST:
+      return new OStructuralOperationRequest(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE:
+      return new OStructuralOperationResponse(coordinateMessagesFactory);
     }
     return null;
   }

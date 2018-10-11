@@ -1,6 +1,10 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeRequest;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeResponse;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitRequest;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitResponse;
 
 public interface ODistributedChannel {
   /**
@@ -36,4 +40,12 @@ public interface ODistributedChannel {
    * @param nodeResponse
    */
   void sendResponse(String database, OLogId id, ONodeResponse nodeResponse);
+
+  void sendResponse(OLogId opId, OStructuralNodeResponse response);
+
+  void sendRequest(OLogId id, OStructuralNodeRequest request);
+
+  void reply(OSessionOperationId operationId, OStructuralSubmitResponse response);
+
+  void submit(OSessionOperationId operationId, OStructuralSubmitRequest request);
 }

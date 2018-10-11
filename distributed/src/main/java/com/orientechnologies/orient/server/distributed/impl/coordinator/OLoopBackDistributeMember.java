@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
-import com.orientechnologies.orient.core.db.ODistributedCoordinator;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 
 public class OLoopBackDistributeMember extends ODistributedMember {

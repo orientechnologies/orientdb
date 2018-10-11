@@ -6,6 +6,10 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeRequest;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeResponse;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitRequest;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitResponse;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,7 +21,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class CoordinatorTxTest {
 
@@ -52,7 +55,7 @@ public class CoordinatorTxTest {
     ODistributedExecutor eThree = new ODistributedExecutor(Executors.newSingleThreadExecutor(), new MockOperationLog(), OrientDBInternal.extract(this.three),
         "none");
 
-    ODatabaseCoordinator coordinator = new ODatabaseCoordinator(Executors.newSingleThreadExecutor(), new MockOperationLog(),
+    ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), new MockOperationLog(),
         null, null);
 
     MemberChannel cOne = new MemberChannel(eOne, coordinator);
@@ -88,13 +91,13 @@ public class CoordinatorTxTest {
    * different nodes that would do the half of this job.
    */
   private static class MemberChannel implements ODistributedChannel {
-    public  ODistributedExecutor executor;
-    public  ODatabaseCoordinator coordinator;
-    public  ODistributedMember   member;
-    public  CountDownLatch       latch     = new CountDownLatch(1);
-    private AtomicLong           callCount = new AtomicLong(1);
+    public  ODistributedExecutor    executor;
+    public  ODistributedCoordinator coordinator;
+    public  ODistributedMember      member;
+    public  CountDownLatch          latch     = new CountDownLatch(1);
+    private AtomicLong              callCount = new AtomicLong(1);
 
-    public MemberChannel(ODistributedExecutor executor, ODatabaseCoordinator coordinator) {
+    public MemberChannel(ODistributedExecutor executor, ODistributedCoordinator coordinator) {
       this.executor = executor;
       this.coordinator = coordinator;
     }
@@ -109,6 +112,26 @@ public class CoordinatorTxTest {
     public void sendResponse(String database, OLogId id, ONodeResponse nodeResponse) {
       //This in real case should do a network call on the side of the executor node and this call should be in the coordinator node.
       coordinator.receive(member, id, nodeResponse);
+    }
+
+    @Override
+    public void sendResponse(OLogId opId, OStructuralNodeResponse response) {
+
+    }
+
+    @Override
+    public void sendRequest(OLogId id, OStructuralNodeRequest request) {
+
+    }
+
+    @Override
+    public void reply(OSessionOperationId operationId, OStructuralSubmitResponse response) {
+
+    }
+
+    @Override
+    public void submit(OSessionOperationId operationId, OStructuralSubmitRequest request) {
+
     }
 
     @Override

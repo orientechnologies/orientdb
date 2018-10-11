@@ -2,8 +2,8 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.transac
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results.OConcurrentModificationResult;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OTransactionFirstPhaseResult.Type;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results.OConcurrentModificationResult;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results.OUniqueKeyViolationResult;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.times;
 public class FirstPhaseResponseHandlerTest {
 
   @Mock
-  private ODatabaseCoordinator coordinator;
+  private ODistributedCoordinator coordinator;
 
   @Before
   public void before() {

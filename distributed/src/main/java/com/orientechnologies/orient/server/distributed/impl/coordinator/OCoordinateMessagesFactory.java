@@ -1,6 +1,10 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.*;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeRequest;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeResponse;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitRequest;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitResponse;
 
 public class OCoordinateMessagesFactory {
   public static final int TRANSACTION_SUBMIT_REQUEST           = 1;
@@ -58,4 +62,19 @@ public class OCoordinateMessagesFactory {
     return null;
   }
 
+  public OStructuralNodeResponse createStructuralOperationResponse(int responseType) {
+    return null;
+  }
+
+  public OStructuralNodeRequest createStructuralOperationRequest(int requestType) {
+    return null;
+  }
+
+  public OStructuralSubmitRequest createStructuralSubmitRequest(int requestType) {
+    return null;
+  }
+
+  public OStructuralSubmitResponse createStructuralSubmitResponse(int responseType) {
+    return null;
+  }
 }

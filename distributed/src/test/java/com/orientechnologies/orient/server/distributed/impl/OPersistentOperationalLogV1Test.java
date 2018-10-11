@@ -18,9 +18,11 @@ public class OPersistentOperationalLogV1Test {
 
   @Test
   public void testReadLastId() throws IOException {
+    OCoordinateMessagesFactory factory = new OCoordinateMessagesFactory();
     Path file = Files.createTempDirectory(".");
     try {
-      OPersistentOperationalLogV1 oplog = new OPersistentOperationalLogV1(file.toString());
+      OPersistentOperationalLogV1 oplog = new OPersistentOperationalLogV1(file.toString(),
+          (id) -> factory.createOperationRequest(id));
       OLogId logId = null;
       for (int i = 0; i < 10; i++) {
         OPhase1Tx req = new OPhase1Tx();
@@ -28,7 +30,7 @@ public class OPersistentOperationalLogV1Test {
         oplog.logReceived(logId, req);
       }
       oplog.close();
-      oplog = new OPersistentOperationalLogV1(file.toString());
+      oplog = new OPersistentOperationalLogV1(file.toString(), (id) -> factory.createOperationRequest(id));
       AtomicLong lastLogId = oplog.readLastLogId();
       Assert.assertEquals(logId.getId(), lastLogId.get());
     } finally {
@@ -44,16 +46,7 @@ public class OPersistentOperationalLogV1Test {
   public void testReadRecord() throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString()) {
-      protected OCoordinateMessagesFactory getCoordinateMessagesFactory() {
-        return new OCoordinateMessagesFactory() {
-          @Override
-          public ONodeRequest createOperationRequest(int requestType) {
-            return new OPhase1Tx();
-          }
-        };
-      }
-    };
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
 
     try {
 
@@ -85,16 +78,7 @@ public class OPersistentOperationalLogV1Test {
   public void testIterate() throws IOException {
 
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString()) {
-      protected OCoordinateMessagesFactory getCoordinateMessagesFactory() {
-        return new OCoordinateMessagesFactory() {
-          @Override
-          public ONodeRequest createOperationRequest(int requestType) {
-            return new OPhase1Tx();
-          }
-        };
-      }
-    };
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
 
     try {
       int totLogEntries = 50_000;
@@ -124,16 +108,7 @@ public class OPersistentOperationalLogV1Test {
   public void testIterate2() throws IOException {
 
     Path file = Files.createTempDirectory(".");
-    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString()) {
-      protected OCoordinateMessagesFactory getCoordinateMessagesFactory() {
-        return new OCoordinateMessagesFactory() {
-          @Override
-          public ONodeRequest createOperationRequest(int requestType) {
-            return new OPhase1Tx();
-          }
-        };
-      }
-    };
+    OPersistentOperationalLogV1 log = new OPersistentOperationalLogV1(file.toString(), (id) -> new OPhase1Tx());
 
     try {
       int totLogEntries = 50_000;

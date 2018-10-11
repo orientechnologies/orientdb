@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
-import com.orientechnologies.orient.client.remote.message.OCommit37Response;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitResponse;
 
 import java.io.DataInput;

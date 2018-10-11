@@ -1,7 +1,7 @@
-package com.orientechnologies.orient.server.distributed.impl.coordinator;
+package com.orientechnologies.orient.server.distributed.impl.structural;
 
-import com.orientechnologies.orient.core.db.ODistributedCoordinator;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 import org.junit.Test;
 
@@ -15,29 +15,28 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class ODatabaseCoordinatorTest {
+public class OStructuralCoordinatorTest {
 
   @Test
   public void simpleOperationTest() throws InterruptedException {
     CountDownLatch responseReceived = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODatabaseCoordinator coordinator = new ODatabaseCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
-        null);
-    MockChannel channel = new MockChannel();
+    OStructuralCoordinator coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), operationLog);
+    MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
-    ODistributedMember one = new ODistributedMember("one", null, channel);
+    OStructuralDistributedMember one = new OStructuralDistributedMember("one", channel);
     channel.member = one;
     coordinator.join(one);
 
-    coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
+    coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override
-      public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+      public void begin(OStructuralDistributedMember member, OSessionOperationId operationId, OStructuralCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
-        coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
+        coordinator.sendOperation(this, nodeRequest, new OStructuralResponseHandler() {
           @Override
-          public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
-              ONodeResponse response) {
+          public boolean receive(OStructuralCoordinator coordinator, OStructuralRequestContext context,
+              OStructuralDistributedMember member, OStructuralNodeResponse response) {
             if (context.getResponses().size() == 1) {
               responseReceived.countDown();
             }
@@ -45,7 +44,7 @@ public class ODatabaseCoordinatorTest {
           }
 
           @Override
-          public boolean timeout(ODistributedCoordinator coordinator, ORequestContext context) {
+          public boolean timeout(OStructuralCoordinator coordinator, OStructuralRequestContext context) {
             return true;
           }
         });
@@ -76,28 +75,27 @@ public class ODatabaseCoordinatorTest {
     CountDownLatch responseReceived = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODatabaseCoordinator coordinator = new ODatabaseCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
-        null);
-    MockChannel channel = new MockChannel();
+    OStructuralCoordinator coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), operationLog);
+    MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
     channel.reply = responseReceived;
-    ODistributedMember one = new ODistributedMember("one", null, channel);
+    OStructuralDistributedMember one = new OStructuralDistributedMember("one", channel);
     channel.member = one;
     coordinator.join(one);
 
-    coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
+    coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override
-      public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+      public void begin(OStructuralDistributedMember member, OSessionOperationId operationId, OStructuralCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
-        coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
+        coordinator.sendOperation(this, nodeRequest, new OStructuralResponseHandler() {
           @Override
-          public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
-              ONodeResponse response) {
+          public boolean receive(OStructuralCoordinator coordinator, OStructuralRequestContext context,
+              OStructuralDistributedMember member, OStructuralNodeResponse response) {
             if (context.getResponses().size() == 1) {
-              coordinator.sendOperation(null, new ONodeRequest() {
+              coordinator.sendOperation(null, new OStructuralNodeRequest() {
                 @Override
-                public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
-                    ODatabaseDocumentInternal session) {
+                public OStructuralNodeResponse execute(OStructuralDistributedMember nodeFrom, OLogId opId,
+                    OStructuralDistributedExecutor executor, OrientDBInternal context) {
                   return null;
                 }
 
@@ -115,12 +113,12 @@ public class ODatabaseCoordinatorTest {
                 public int getRequestType() {
                   return 0;
                 }
-              }, new OResponseHandler() {
+              }, new OStructuralResponseHandler() {
                 @Override
-                public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
-                    ONodeResponse response) {
+                public boolean receive(OStructuralCoordinator coordinator, OStructuralRequestContext context,
+                    OStructuralDistributedMember member, OStructuralNodeResponse response) {
                   if (context.getResponses().size() == 1) {
-                    member.reply(new OSessionOperationId(), new OSubmitResponse() {
+                    member.reply(new OSessionOperationId(), new OStructuralSubmitResponse() {
                       @Override
                       public void serialize(DataOutput output) throws IOException {
 
@@ -141,7 +139,7 @@ public class ODatabaseCoordinatorTest {
                 }
 
                 @Override
-                public boolean timeout(ODistributedCoordinator coordinator, ORequestContext context) {
+                public boolean timeout(OStructuralCoordinator coordinator, OStructuralRequestContext context) {
                   return true;
                 }
               });
@@ -150,7 +148,7 @@ public class ODatabaseCoordinatorTest {
           }
 
           @Override
-          public boolean timeout(ODistributedCoordinator coordinator, ORequestContext context) {
+          public boolean timeout(OStructuralCoordinator coordinator, OStructuralRequestContext context) {
             return true;
           }
         });
@@ -182,27 +180,26 @@ public class ODatabaseCoordinatorTest {
     CountDownLatch timedOut = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    ODatabaseCoordinator coordinator = new ODatabaseCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
-        null);
-    MockChannel channel = new MockChannel();
+    OStructuralCoordinator coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), operationLog);
+    MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
-    ODistributedMember one = new ODistributedMember("one", null, channel);
+    OStructuralDistributedMember one = new OStructuralDistributedMember("one", channel);
     channel.member = one;
     coordinator.join(one);
 
-    coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
+    coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override
-      public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+      public void begin(OStructuralDistributedMember member, OSessionOperationId operationId, OStructuralCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
-        coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
+        coordinator.sendOperation(this, nodeRequest, new OStructuralResponseHandler() {
           @Override
-          public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
-              ONodeResponse response) {
+          public boolean receive(OStructuralCoordinator coordinator, OStructuralRequestContext context,
+              OStructuralDistributedMember member, OStructuralNodeResponse response) {
             return false;
           }
 
           @Override
-          public boolean timeout(ODistributedCoordinator coordinator, ORequestContext context) {
+          public boolean timeout(OStructuralCoordinator coordinator, OStructuralRequestContext context) {
             timedOut.countDown();
             return true;
           }
@@ -231,14 +228,28 @@ public class ODatabaseCoordinatorTest {
     assertEquals(0, coordinator.getContexts().size());
   }
 
-  private static class MockChannel implements ODistributedChannel {
-    public ODatabaseCoordinator coordinator;
-    public CountDownLatch       reply;
-    public ODistributedMember   member;
+  private static class MockDistributedChannel implements ODistributedChannel {
+    public OStructuralCoordinator       coordinator;
+    public CountDownLatch               reply;
+    public OStructuralDistributedMember member;
 
     @Override
     public void sendRequest(String database, OLogId id, ONodeRequest request) {
-      coordinator.receive(member, id, new ONodeResponse() {
+    }
+
+    @Override
+    public void sendResponse(String database, OLogId id, ONodeResponse nodeResponse) {
+
+    }
+
+    @Override
+    public void sendResponse(OLogId opId, OStructuralNodeResponse response) {
+      assertTrue(false);
+    }
+
+    @Override
+    public void sendRequest(OLogId id, OStructuralNodeRequest request) {
+      coordinator.receive(member, id, new OStructuralNodeResponse() {
         @Override
         public void serialize(DataOutput output) throws IOException {
 
@@ -254,11 +265,17 @@ public class ODatabaseCoordinatorTest {
           return 0;
         }
       });
+
     }
 
     @Override
-    public void sendResponse(String database, OLogId id, ONodeResponse nodeResponse) {
-      assertTrue(false);
+    public void reply(OSessionOperationId operationId, OStructuralSubmitResponse response) {
+      reply.countDown();
+    }
+
+    @Override
+    public void submit(OSessionOperationId operationId, OStructuralSubmitRequest request) {
+
     }
 
     @Override
@@ -268,15 +285,15 @@ public class ODatabaseCoordinatorTest {
 
     @Override
     public void reply(String database, OSessionOperationId operationId, OSubmitResponse response) {
-      reply.countDown();
+
     }
   }
 
-  private static class MockNodeRequest implements ONodeRequest {
+  private static class MockNodeRequest implements OStructuralNodeRequest {
 
     @Override
-    public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
-        ODatabaseDocumentInternal session) {
+    public OStructuralNodeResponse execute(OStructuralDistributedMember nodeFrom, OLogId opId,
+        OStructuralDistributedExecutor executor, OrientDBInternal context) {
       return null;
     }
 

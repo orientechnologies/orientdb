@@ -4,7 +4,6 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.OCluster
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OMockAllocator implements OClusterPositionAllocator {

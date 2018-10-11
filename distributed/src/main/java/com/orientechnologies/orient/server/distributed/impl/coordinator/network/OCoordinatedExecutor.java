@@ -9,4 +9,12 @@ public interface OCoordinatedExecutor {
   void executeSubmitResponse(ONetworkSubmitResponse response);
 
   void executeSubmitRequest(ONetworkSubmitRequest request);
+
+  void executeStructuralOperationRequest(OStructuralOperationRequest request);
+
+  void executeStructuralOperationResponse(OStructuralOperationResponse response);
+
+  void executeStructuralSubmitRequest(ONetworkStructuralSubmitRequest request);
+
+  void executeStructuralSubmitResponse(ONetworkStructuralSubmitResponse response);
 }
