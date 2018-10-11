@@ -23,8 +23,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -221,7 +219,7 @@ public abstract class OSequence {
     }
   }
 
-  protected boolean getCrucilaValueChanged() {
+  protected boolean getCrucialValueChanged() {
     synchronized (this) {
       return cruacialValueChanged;
     }
@@ -233,7 +231,6 @@ public abstract class OSequence {
   
   protected OSequence(final ODocument iDocument, CreateParams params) {
     document = iDocument != null ? iDocument : new ODocument(CLASS_NAME);
-    bindOnLocalThread();
 
     if (iDocument == null) {
       if (params == null) {
@@ -248,15 +245,6 @@ public abstract class OSequence {
   public void save() {        
     document = document.save();
     onUpdate(document);
-  }
-
-//  public void save(ODatabaseDocument database) {
-//    ODocument doc = database.save(tlDocument.get());
-//    onUpdate(doc);
-//  }
-
-  synchronized final void bindOnLocalThread() {
-    
   }
 
   public final ODocument getDocument() {

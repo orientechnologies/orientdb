@@ -159,12 +159,12 @@ public class OSequenceCached extends OSequence {
   
   @Override
   public long nextWork() throws OSequenceLimitReachedException {           
-    return callRetry(signalToAllocateCache(), new Callable<Long>() {
+    return callRetry(signalToAllocateCache() || getCrucialValueChanged(), new Callable<Long>() {
       @Override
       public Long call() throws Exception {
         synchronized (OSequenceCached.this) {          
           boolean detectedCrucialValueChange = false;
-          if (getCrucilaValueChanged()) {
+          if (getCrucialValueChanged()) {
             reloadCrucialValues();
             detectedCrucialValueChange = true;
           }
@@ -261,7 +261,7 @@ public class OSequenceCached extends OSequence {
   }
 
   private void allocateCache(int cacheSize) {        
-    if (getCrucilaValueChanged()) {
+    if (getCrucialValueChanged()) {
       reloadCrucialValues();
       setCrucialValueChanged(false);
     }

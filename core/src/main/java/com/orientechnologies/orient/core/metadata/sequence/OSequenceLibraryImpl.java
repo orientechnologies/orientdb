@@ -87,10 +87,6 @@ public class OSequenceLibraryImpl {
       }
     }
 
-    if (seq != null) {
-      seq.bindOnLocalThread();
-    }
-
     return seq;
   }
 
