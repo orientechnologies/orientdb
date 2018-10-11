@@ -29,10 +29,12 @@ import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -291,7 +293,7 @@ public enum OType {
    * @return The converted value or the original if no conversion was applied
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  public static Object convert(final Object iValue, final Class<?> iTargetClass) {
+  public static Object convert(Object iValue, final Class<?> iTargetClass) {
     if (iValue == null)
       return null;
 
@@ -475,6 +477,19 @@ public enum OType {
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
+      if (iValue instanceof Collection && ((Collection) iValue).size() == 1 && !Collection.class.isAssignableFrom(iTargetClass)) {
+        //this must be a comparison with the result of a subquery, try to unbox the collection
+        return convert(((Collection) iValue).iterator().next(), iTargetClass);
+      } else if (iValue instanceof OResult && ((OResult) iValue).getPropertyNames().size() == 1 && !OResult.class
+          .isAssignableFrom(iTargetClass)) {
+        // try to unbox OResult with a single property, for subqueries
+        return convert(((OResult) iValue).getProperty(((OResult) iValue).getPropertyNames().iterator().next()), iTargetClass);
+      } else if (iValue instanceof OElement && ((OElement) iValue).getPropertyNames().size() == 1 && !OElement.class
+          .isAssignableFrom(iTargetClass)) {
+        // try to unbox OResult with a single property, for subqueries
+        return convert(((OElement) iValue).getProperty(((OElement) iValue).getPropertyNames().iterator().next()), iTargetClass);
+      }
+
       OLogManager.instance().debug(OType.class, "Error in conversion of value '%s' to type '%s'", e, iValue, iTargetClass);
       return null;
     }
