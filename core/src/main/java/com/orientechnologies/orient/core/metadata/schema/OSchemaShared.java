@@ -644,7 +644,7 @@ public abstract class OSchemaShared implements OCloseable {
   public ODocument toNetworkStream() {
     rwSpinLock.acquireReadLock();
     try {
-      ODocument doc = new ODocument();
+      ODocument document = new ODocument();
       document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
       try {
