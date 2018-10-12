@@ -28,7 +28,6 @@ import com.orientechnologies.orient.server.OServerMain;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -96,7 +95,7 @@ public class JournaledTxStreamingTest {
     Assert.assertFalse(buildDir.exists());
   }
 
-  @Test
+//  @Test
   public void testStreaming() throws IOException {
     Deque<Integer> txs = new ArrayDeque<>();
 
