@@ -26,12 +26,12 @@ public class ODistributedContext {
 
   public ODistributedContext(OStorage storage, OrientDBDistributed context) {
     transactions = new ConcurrentHashMap<>();
+    initOpLog();
     executor = new ODistributedExecutor(Executors.newSingleThreadExecutor(), opLog, context, storage.getName());
     submitContext = new OSubmitContextImpl();
     coordinator = null;
     this.context = context;
     this.databaseName = storage.getName();
-    initOpLog();
   }
 
   private void initOpLog() {

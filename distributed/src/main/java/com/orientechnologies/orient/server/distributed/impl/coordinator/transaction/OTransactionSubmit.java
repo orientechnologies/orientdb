@@ -5,7 +5,10 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -23,6 +26,8 @@ public class OTransactionSubmit implements OSubmitRequest {
   private List<ORecordOperationRequest> operations;
   private List<OIndexOperationRequest>  indexes;
 
+  private static final String _sequencesBaseClass = "OSequence";
+
   public OTransactionSubmit(Collection<ORecordOperation> ops, List<OIndexOperationRequest> indexes, boolean useDeltas) {
     this.operations = genOps(ops, useDeltas);
     this.indexes = indexes;
@@ -32,11 +37,25 @@ public class OTransactionSubmit implements OSubmitRequest {
 
   }
 
+  private static boolean isSequenceDocument(ORecordOperation txEntry) {
+    if (txEntry.record != null && txEntry.record.getRecord() instanceof ODocument) {
+      ODocument doc = txEntry.record.getRecord();
+      OClass docClass = doc.getSchemaClass();
+      if (docClass != null && docClass.isSubClassOf(OSequence.CLASS_NAME)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static List<ORecordOperationRequest> genOps(Collection<ORecordOperation> ops, boolean useDeltas) {
     List<ORecordOperationRequest> operations = new ArrayList<>();
     for (ORecordOperation txEntry : ops) {
       if (txEntry.type == ORecordOperation.LOADED)
         continue;
+      if (isSequenceDocument(txEntry)) {
+        continue;
+      }
       ORecordOperationRequest request = new ORecordOperationRequest();
       request.setType(txEntry.type);
       request.setVersion(txEntry.getRecord().getVersion());
@@ -181,5 +200,9 @@ public class OTransactionSubmit implements OSubmitRequest {
   @Override
   public int getRequestType() {
     return TRANSACTION_SUBMIT_REQUEST;
+  }
+
+  public boolean isEmpty() {
+    return operations.isEmpty();
   }
 }

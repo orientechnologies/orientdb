@@ -16,6 +16,7 @@ public class ServerClusterLocalSequenceIT extends AbstractServerClusterSequenceT
     final long previous = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsLong();
     try {
       OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.setValue(0);
+//      OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.setValue(2);
 
       init(2);
       prepare(false);
@@ -27,6 +28,7 @@ public class ServerClusterLocalSequenceIT extends AbstractServerClusterSequenceT
     }
   }
 
+  @Override
   protected String getDatabaseURL(final ServerRun server) {
     return "plocal:" + ServerRun.getDatabasePath(server.getServerId(), getDatabaseName());
   }

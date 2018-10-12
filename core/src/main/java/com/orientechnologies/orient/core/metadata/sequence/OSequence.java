@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -61,20 +62,24 @@ public abstract class OSequence {
   private static final String FIELD_TYPE = "type";
 
   private ODocument document;
-  private ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();
+  ThreadLocal<ODocument> tlDocument = new ThreadLocal<ODocument>();
 
   private boolean cruacialValueChanged = false;
 
   public static final SequenceOrderType DEFAULT_ORDER_TYPE = SequenceOrderType.ORDER_POSITIVE;
 
+  protected static int replicationProtocolVersion = OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
+
   public static class CreateParams {
-    public Long              start        = DEFAULT_START;
-    public Integer           increment    = DEFAULT_INCREMENT;
-    public Integer           cacheSize    = DEFAULT_CACHE;
-    public Long              limitValue   = DEFAULT_LIMIT_VALUE;
-    public SequenceOrderType orderType    = DEFAULT_ORDER_TYPE;
-    public Boolean           recyclable   = DEFAULT_RECYCLABLE_VALUE;
-    public Boolean           turnLimitOff = false;
+    protected Long              start        = DEFAULT_START;
+    protected Integer           increment    = DEFAULT_INCREMENT;
+    //significant only for cached sequences
+    protected Integer           cacheSize    = DEFAULT_CACHE;
+    protected Long              limitValue   = DEFAULT_LIMIT_VALUE;
+    protected SequenceOrderType orderType    = DEFAULT_ORDER_TYPE;
+    protected Boolean           recyclable   = DEFAULT_RECYCLABLE_VALUE;
+    protected Boolean           turnLimitOff = false;
+    protected Long              currentValue = null;
 
     public CreateParams setStart(Long start) {
       this.start = start;
@@ -111,6 +116,11 @@ public abstract class OSequence {
       return this;
     }
 
+    public CreateParams setCurrentValue(Long currentValue) {
+      this.currentValue = currentValue;
+      return this;
+    }
+
     public CreateParams() {
     }
 
@@ -122,6 +132,7 @@ public abstract class OSequence {
       orderType = null;
       recyclable = null;
       turnLimitOff = false;
+      currentValue = null;
       return this;
     }
 
@@ -133,13 +144,67 @@ public abstract class OSequence {
       orderType = orderType == null ? DEFAULT_ORDER_TYPE : orderType;
       recyclable = recyclable == null ? DEFAULT_RECYCLABLE_VALUE : recyclable;
       turnLimitOff = turnLimitOff == null ? false : turnLimitOff;
-
+      currentValue = currentValue == null ? null : currentValue;
       return this;
     }
+
+    public Long getStart() {
+      return start;
+    }
+
+    public Integer getIncrement() {
+      return increment;
+    }
+
+    public Integer getCacheSize() {
+      return cacheSize;
+    }
+
+    public Long getLimitValue() {
+      return limitValue;
+    }
+
+    public SequenceOrderType getOrderType() {
+      return orderType;
+    }
+
+    public Boolean getRecyclable() {
+      return recyclable;
+    }
+
+    public Boolean getTurnLimitOff() {
+      return turnLimitOff;
+    }
+
+    public Long getCurrentValue() {
+      return currentValue;
+    }
+
   }
 
   public enum SEQUENCE_TYPE {
-    CACHED, ORDERED,;
+    CACHED((byte) 0), ORDERED((byte) 1);
+
+    private byte val;
+
+    SEQUENCE_TYPE(byte val) {
+      this.val = val;
+    }
+
+    public byte getVal() {
+      return val;
+    }
+
+    public static SEQUENCE_TYPE fromVal(byte val) {
+      switch (val) {
+      case 0:
+        return CACHED;
+      case 1:
+        return ORDERED;
+      default:
+        return null;
+      }
+    }
   }
 
   private int maxRetry = DEF_MAX_RETRY;
@@ -154,7 +219,7 @@ public abstract class OSequence {
     }
   }
 
-  protected boolean getCrucilaValueChanged() {
+  protected boolean getCrucialValueChanged() {
     synchronized (this) {
       return cruacialValueChanged;
     }
@@ -181,12 +246,13 @@ public abstract class OSequence {
 
   public void save() {
     ODocument doc = tlDocument.get();
-    doc.save();
+    doc = doc.save();
     onUpdate(doc);
   }
 
   public void save(ODatabaseDocument database) {
-    database.save(tlDocument.get());
+    ODocument doc = database.save(tlDocument.get());
+    onUpdate(doc);
   }
 
   synchronized void bindOnLocalThread() {
@@ -195,14 +261,23 @@ public abstract class OSequence {
     }
   }
 
-  public ODocument getDocument() {
+  public final ODocument getDocument() {
     return tlDocument.get();
   }
 
-  protected synchronized void initSequence(OSequence.CreateParams params) {
+  private <T> T sendSequenceActionOverCluster(int actionType, CreateParams params) throws ExecutionException, InterruptedException {
+    OSequenceAction action = new OSequenceAction(actionType, getName(), params, getSequenceType());
+    return tlDocument.get().getDatabase().sendSequenceAction(action);
+  }
+
+  protected final synchronized void initSequence(OSequence.CreateParams params) {
     setStart(params.start);
     setIncrement(params.increment);
-    setValue(params.start);
+    if (params.currentValue == null) {
+      setValue(params.start);
+    } else {
+      setValue(params.currentValue);
+    }
     setLimitValue(params.limitValue);
     setOrderType(params.orderType);
     setRecyclable(params.recyclable);
@@ -210,7 +285,24 @@ public abstract class OSequence {
     setSequenceType();
   }
 
-  public synchronized boolean updateParams(CreateParams params) {
+  protected boolean shouldGoOverDistrtibute() {
+    return isOnDistributted() && (replicationProtocolVersion == 2);
+  }
+
+  public boolean updateParams(CreateParams params) throws ExecutionException, InterruptedException {
+    boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
+    return updateParams(params, shouldGoOverDistributted);
+  }
+
+  protected boolean isOnDistributted() {
+    return tlDocument.get().getDatabase().isDistributed();
+  }
+
+  public synchronized boolean updateParams(CreateParams params, boolean executeViaDistributed)
+      throws ExecutionException, InterruptedException {
+    if (executeViaDistributed) {
+      return sendSequenceActionOverCluster(OSequenceAction.UPDATE, params);
+    }
     boolean any = false;
 
     if (params.start != null && this.getStart() != params.start) {
@@ -242,6 +334,10 @@ public abstract class OSequence {
       this.setLimitValue(null);
     }
 
+    if (params.currentValue != null && getValue() != params.currentValue) {
+      this.setValue(params.currentValue);
+    }
+
     save();
 
     return any;
@@ -259,7 +355,7 @@ public abstract class OSequence {
     return doc.field(FIELD_VALUE, OType.LONG);
   }
 
-  protected synchronized Long getValue() {
+  protected synchronized long getValue() {
     return getValue(tlDocument.get());
   }
 
@@ -336,7 +432,7 @@ public abstract class OSequence {
     setCrucialValueChanged(true);
   }
 
-  protected synchronized ODatabaseDocumentInternal getDatabase() {
+  protected final synchronized ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.instance().get();
   }
 
@@ -369,19 +465,66 @@ public abstract class OSequence {
    * Forwards the sequence by one, and returns the new value.
    */
   @OApi
-  public abstract long next() throws OSequenceLimitReachedException;
+  public long next() throws OSequenceLimitReachedException, ExecutionException, InterruptedException {
+    boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
+    return next(shouldGoOverDistributted);
+  }
+
+  //TODO hide this for regular user
+  public long next(boolean executeViaDistributed) throws OSequenceLimitReachedException, ExecutionException, InterruptedException {
+    long retVal;
+    if (executeViaDistributed) {
+      retVal = sendSequenceActionOverCluster(OSequenceAction.NEXT, null);
+    } else {
+      retVal = nextWork();
+    }
+    return retVal;
+  }
+
+  public abstract long nextWork() throws OSequenceLimitReachedException;
 
   /*
    * Returns the current sequence value. If next() was never called, returns null
    */
   @OApi
-  public abstract long current();
+  public long current() throws ExecutionException, InterruptedException {
+    boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
+    return current(shouldGoOverDistributted);
+  }
+
+  @OApi
+  public long current(boolean executeViaDistributed) throws ExecutionException, InterruptedException {
+    long retVal;
+    if (executeViaDistributed) {
+      retVal = sendSequenceActionOverCluster(OSequenceAction.CURRENT, null);
+    } else {
+      retVal = currentWork();
+    }
+    return retVal;
+  }
+
+  protected abstract long currentWork();
+
+  public long reset() throws ExecutionException, InterruptedException {
+    boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
+    return reset(shouldGoOverDistributted);
+  }
 
   /*
    * Resets the sequence value to it's initialized value.
    */
   @OApi
-  public abstract long reset();
+  public long reset(boolean executeViaDistributed) throws ExecutionException, InterruptedException {
+    long retVal;
+    if (executeViaDistributed) {
+      retVal = sendSequenceActionOverCluster(OSequenceAction.RESET, null);
+    } else {
+      retVal = resetWork();
+    }
+    return retVal;
+  }
+
+  public abstract long resetWork();
 
   /*
    * Returns the sequence type
@@ -392,10 +535,12 @@ public abstract class OSequence {
     tlDocument.set(tlDocument.get().reload(null, true));
   }
 
-  protected <T> T callRetry(final Callable<T> callable, final String method) {
+  protected <T> T callRetry(boolean reloadSequence, final Callable<T> callable, final String method) {
     for (int retry = 0; retry < maxRetry; ++retry) {
       try {
-        reloadSequence();
+        if (reloadSequence) {
+          reloadSequence();
+        }
         return callable.call();
       } catch (OConcurrentModificationException ignore) {
         try {
@@ -434,4 +579,5 @@ public abstract class OSequence {
           .wrapException(new OSequenceException("Error in transactional processing of " + getName() + "." + method + "()"), e);
     }
   }
+
 }

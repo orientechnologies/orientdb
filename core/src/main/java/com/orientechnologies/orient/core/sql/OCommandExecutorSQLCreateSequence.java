@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -12,6 +13,7 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceHelper;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -63,13 +65,13 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
           }
         } else if (temp.equals(KEYWORD_START)) {
           String startAsString = parserRequiredWord(true, "Expected <start value>");
-          this.params.start = Long.parseLong(startAsString);
+          this.params.setStart(Long.parseLong(startAsString));
         } else if (temp.equals(KEYWORD_INCREMENT)) {
           String incrementAsString = parserRequiredWord(true, "Expected <increment value>");
-          this.params.increment = Integer.parseInt(incrementAsString);
+          this.params.setIncrement(Integer.parseInt(incrementAsString));
         } else if (temp.equals(KEYWORD_CACHE)) {
           String cacheAsString = parserRequiredWord(true, "Expected <cache value>");
-          this.params.cacheSize = Integer.parseInt(cacheAsString);
+          this.params.setCacheSize(Integer.parseInt(cacheAsString));
         }
       }
 
@@ -90,7 +92,13 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
 
     final ODatabaseDocument database = getDatabase();
 
-    database.getMetadata().getSequenceLibrary().createSequence(this.sequenceName, this.sequenceType, this.params);
+    try {
+      database.getMetadata().getSequenceLibrary().createSequence(this.sequenceName, this.sequenceType, this.params);
+    } catch (ExecutionException | InterruptedException exc) {
+      String message = "Unable to execute command: " + exc.getMessage();
+      OLogManager.instance().error(this, message, exc, (Object) null);
+      throw new OCommandExecutionException(message);
+    }
 
     return database.getMetadata().getSequenceLibrary().getSequenceCount();
   }
