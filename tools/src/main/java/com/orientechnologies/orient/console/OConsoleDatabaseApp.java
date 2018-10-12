@@ -1397,6 +1397,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       if (dbCfg.getName() != null)
         resultSet.add(new ODocument().field("NAME", "Name").field("VALUE", dbCfg.getName()));
 
+      resultSet.add(new ODocument().field("NAME", "Server Version").field("VALUE", (OConstants.getVersionMajor()+"."+OConstants.getVersionMinor()+"."+OConstants.getVersionHotfix())));
       resultSet.add(new ODocument().field("NAME", "Version").field("VALUE", dbCfg.getVersion()));
       resultSet.add(new ODocument().field("NAME", "Conflict-Strategy").field("VALUE", dbCfg.getConflictStrategy()));
       resultSet.add(new ODocument().field("NAME", "Date-Format").field("VALUE", dbCfg.getDateFormat()));
