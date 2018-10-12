@@ -70,8 +70,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
+
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLimitReachedException;
+
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
 
 /**
@@ -190,9 +192,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
     return false;
   }
-  
+
   @Override
-  public boolean isDistributed(){
+  public boolean isDistributed() {
     return true;
   }
 
@@ -504,8 +506,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public void internalCommit(OTransactionInternal iTx) {
     int protocolVersion = OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger();
-    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed() || 
-            (iTx.isSequenceTransaction() && protocolVersion == 2)) {
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed() || (iTx.isSequenceTransaction() && protocolVersion == 2)) {
       //Exclusive for handling schema manipulation, remove after refactor for distributed schema
       super.internalCommit(iTx);
     } else {
@@ -523,9 +524,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
     }
   }
-  
+
   @Override
-  public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException{
+  public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException {
     ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
     try {
       dManager.waitUntilNodeOnline();
@@ -538,42 +539,39 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     OSessionOperationId id = new OSessionOperationId();
     id.init();
     OSequenceActionCoordinatorSubmit submitAction = new OSequenceActionCoordinatorSubmit(action, dManager.getLocalNodeName());
-    Future<OSubmitResponse> future = submitContext
-        .send(id, submitAction);
-    try{
-      OSequenceActionCoordinatorResponse response = (OSequenceActionCoordinatorResponse) future.get(); 
-      if (!response.isSuccess()) {        
-        if (response.getFailedOn().size() > 0){
+    Future<OSubmitResponse> future = submitContext.send(id, submitAction);
+    try {
+      OSequenceActionCoordinatorResponse response = (OSequenceActionCoordinatorResponse) future.get();
+      if (!response.isSuccess()) {
+        if (response.getFailedOn().size() > 0) {
           throw new ODatabaseException("Sequence action failed on: " + response.getFailedOn() + " nodes");
-        }        
-      }
-      if (response.getLimitReachedOn().size() > 0){
-        if (response.getLimitReachedOn().size() == response.getNumberOfNodesInvolved()){
-          throw new OSequenceLimitReachedException("Sequence limit reached on: " + response.getLimitReachedOn() + " nodes");
         }
-        else{
+      }
+      if (response.getLimitReachedOn().size() > 0) {
+        if (response.getLimitReachedOn().size() == response.getNumberOfNodesInvolved()) {
+          throw new OSequenceLimitReachedException("Sequence limit reached on: " + response.getLimitReachedOn() + " nodes");
+        } else {
           throw new ODatabaseException("Inconsistent sequence limit reached on: " + response.getLimitReachedOn() + " nodes");
         }
       }
-      
+
       Object a = response.getResultOfSenderNode();
-      return (T)a;
-    }
-    catch (InterruptedException | ExecutionException e){
+      return (T) a;
+    } catch (InterruptedException | ExecutionException e) {
       throw e;
-    }
-    catch (ODatabaseException exc){
+    } catch (ODatabaseException exc) {
       //TODO think about rollback
       throw exc;
     }
   }
 
   private void distributedCommitV2(OTransactionInternal iTx) {
-    OTransactionSubmit ts = new OTransactionSubmit(iTx.getRecordOperations(), OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx), iTx.isUseDeltas());
-    if (ts.isEmpty()){
+    OTransactionSubmit ts = new OTransactionSubmit(iTx.getRecordOperations(),
+        OTransactionSubmit.genIndexes(iTx.getIndexOperations(), iTx), iTx.isUseDeltas());
+    if (ts.isEmpty()) {
       return;
     }
-    
+
     ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
     try {
       dManager.waitUntilNodeOnline();
@@ -585,7 +583,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     sharedDistributeDb.waitForOnline();
     OSessionOperationId id = new OSessionOperationId();
     id.init();
-    
+
     Future<OSubmitResponse> future = submitContext.send(id, ts);
     try {
       OTransactionResponse response = (OTransactionResponse) future.get();

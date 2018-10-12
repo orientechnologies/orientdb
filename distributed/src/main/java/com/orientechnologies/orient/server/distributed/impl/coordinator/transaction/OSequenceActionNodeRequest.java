@@ -30,6 +30,7 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistrib
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeRequest;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeResponse;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -38,27 +39,27 @@ import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 /**
- *
  * @author marko
  */
-public class OSequenceActionNodeRequest implements ONodeRequest{
+public class OSequenceActionNodeRequest implements ONodeRequest {
 
   private OSequenceActionRequest actionRequest;
-  private String initialNodeName;
-  
-  public OSequenceActionNodeRequest(){
-    
+  private String                 initialNodeName;
+
+  public OSequenceActionNodeRequest() {
+
   }
-  
-  public OSequenceActionNodeRequest(OSequenceActionRequest action, String initialNodeName){
+
+  public OSequenceActionNodeRequest(OSequenceActionRequest action, String initialNodeName) {
     actionRequest = action;
     this.initialNodeName = initialNodeName;
   }
-  
+
   @Override
-  public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor, ODatabaseDocumentInternal session) {    
+  public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
+      ODatabaseDocumentInternal session) {
     int actionType = -1;
-    try{
+    try {
       OSequenceAction action = actionRequest.getAction();
       ODatabaseDocumentDistributed db = (ODatabaseDocumentDistributed) session;
       String localName = db.getLocalNodeName();
@@ -66,80 +67,75 @@ public class OSequenceActionNodeRequest implements ONodeRequest{
       String sequenceName = action.getSequenceName();
       actionType = action.getActionType();
       OSequence targetSequence = null;
-      if (actionType != OSequenceAction.CREATE){
+      if (actionType != OSequenceAction.CREATE) {
         targetSequence = sequences.getSequence(sequenceName);
-        if (targetSequence == null){
+        if (targetSequence == null) {
           throw new RuntimeException("Sequence with name: " + sequenceName + " doesn't exists");
         }
       }
       Object result = null;
-      switch (actionType){
-        case OSequenceAction.CREATE:
-          OSequence sequence = sequences.createSequence(sequenceName, action.getSequenceType(), action.getParameters(), false);
-          if (sequence == null){
-            throw new RuntimeException("Faled to create sequence: " + sequenceName);
-          }
-          result = sequence.getName();
-          break;
-        case OSequenceAction.REMOVE:
-          sequences.dropSequence(sequenceName, false);
-          result = sequenceName;
-          break;
-        case OSequenceAction.CURRENT:
-          result = targetSequence.current(false);
-          break;
-        case OSequenceAction.NEXT:
-          result = targetSequence.next(false);
-          break;
-        case OSequenceAction.RESET:
-          result = targetSequence.reset(false);
-          break;
-        case OSequenceAction.UPDATE:
-          result = targetSequence.updateParams(action.getParameters(), false);
-          break;
-        case OSequenceAction.SET_NEXT:
-          if (targetSequence.getSequenceType() == OSequence.SEQUENCE_TYPE.CACHED){
-            OSequenceCached cached = (OSequenceCached)targetSequence;
-            result = cached.nextWithNewCurrentValue(action.getCurrentValue(), false);
-          }
-          else{
-            throw new RuntimeException("Action SET_NEXT is reserved only for CACHED sequences");
-          }
-          break;
+      switch (actionType) {
+      case OSequenceAction.CREATE:
+        OSequence sequence = sequences.createSequence(sequenceName, action.getSequenceType(), action.getParameters(), false);
+        if (sequence == null) {
+          throw new RuntimeException("Faled to create sequence: " + sequenceName);
+        }
+        result = sequence.getName();
+        break;
+      case OSequenceAction.REMOVE:
+        sequences.dropSequence(sequenceName, false);
+        result = sequenceName;
+        break;
+      case OSequenceAction.CURRENT:
+        result = targetSequence.current(false);
+        break;
+      case OSequenceAction.NEXT:
+        result = targetSequence.next(false);
+        break;
+      case OSequenceAction.RESET:
+        result = targetSequence.reset(false);
+        break;
+      case OSequenceAction.UPDATE:
+        result = targetSequence.updateParams(action.getParameters(), false);
+        break;
+      case OSequenceAction.SET_NEXT:
+        if (targetSequence.getSequenceType() == OSequence.SEQUENCE_TYPE.CACHED) {
+          OSequenceCached cached = (OSequenceCached) targetSequence;
+          result = cached.nextWithNewCurrentValue(action.getCurrentValue(), false);
+        } else {
+          throw new RuntimeException("Action SET_NEXT is reserved only for CACHED sequences");
+        }
+        break;
       }
       //want to return result only from node that initiated whole action
       //know how to process this in Handler      
-      if (!Objects.equals(localName, initialNodeName)){
+      if (!Objects.equals(localName, initialNodeName)) {
         System.out.println("EXECUTE ON OTHER NODE THAN SENDER");
         result = null;
       }
-      return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.SUCCESS, null, result);      
-    }
-    catch (OSequenceLimitReachedException e){
+      return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.SUCCESS, null, result);
+    } catch (OSequenceLimitReachedException e) {
       return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.LIMIT_REACHED, null, null);
-    }
-    catch (RuntimeException | ExecutionException | InterruptedException exc){
-      OLogManager.instance().error(this, "Can not execute sequence action: " + actionType, exc, (Object)null);
+    } catch (RuntimeException | ExecutionException | InterruptedException exc) {
+      OLogManager.instance().error(this, "Can not execute sequence action: " + actionType, exc, (Object) null);
       return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.ERROR, exc.getMessage(), null);
     }
   }
 
   @Override
   public void serialize(DataOutput output) throws IOException {
-    if (actionRequest != null){
+    if (actionRequest != null) {
       output.writeByte(1);
       actionRequest.serialize(output);
-    }
-    else{
+    } else {
       output.write(0);
     }
-    if (initialNodeName != null){
+    if (initialNodeName != null) {
       output.writeByte(1);
       byte[] nodeNameBytes = initialNodeName.getBytes(StandardCharsets.UTF_8.name());
       output.writeInt(nodeNameBytes.length);
       output.write(nodeNameBytes);
-    }
-    else{
+    } else {
       output.writeByte(0);
     }
   }
@@ -147,21 +143,19 @@ public class OSequenceActionNodeRequest implements ONodeRequest{
   @Override
   public void deserialize(DataInput input) throws IOException {
     byte flag = input.readByte();
-    if (flag > 0){
+    if (flag > 0) {
       actionRequest = new OSequenceActionRequest();
       actionRequest.deserialize(input);
-    }
-    else{
+    } else {
       actionRequest = null;
     }
     flag = input.readByte();
-    if (flag > 0){
+    if (flag > 0) {
       int length = input.readInt();
       byte[] nodeNameBytes = new byte[length];
       input.readFully(nodeNameBytes);
       initialNodeName = new String(nodeNameBytes, StandardCharsets.UTF_8.name());
-    }
-    else{
+    } else {
       initialNodeName = null;
     }
   }
@@ -170,5 +164,5 @@ public class OSequenceActionNodeRequest implements ONodeRequest{
   public int getRequestType() {
     return OCoordinateMessagesFactory.SEQUENCE_ACTION_NODE_REQUEST;
   }
-  
+
 }

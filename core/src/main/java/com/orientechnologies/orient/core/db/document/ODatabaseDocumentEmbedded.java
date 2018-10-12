@@ -1261,10 +1261,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkIfActive();
     internalUnlockRecord(recordId);
   }
-  
+
   @Override
-  public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException{
+  public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException {
     throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
-          
+
 }

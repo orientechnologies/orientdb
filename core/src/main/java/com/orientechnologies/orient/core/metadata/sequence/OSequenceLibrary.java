@@ -33,12 +33,16 @@ public interface OSequenceLibrary {
 
   int getSequenceCount();
 
-  OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params) throws ExecutionException, InterruptedException;
-  OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params, boolean executeViaDistributed) throws ExecutionException, InterruptedException;
+  OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params)
+      throws ExecutionException, InterruptedException;
+
+  OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params, boolean executeViaDistributed)
+      throws ExecutionException, InterruptedException;
 
   OSequence getSequence(String iName);
 
   void dropSequence(String iName) throws ExecutionException, InterruptedException;
+
   void dropSequence(String iName, boolean executeViaDistributed) throws ExecutionException, InterruptedException;
 
   @Deprecated

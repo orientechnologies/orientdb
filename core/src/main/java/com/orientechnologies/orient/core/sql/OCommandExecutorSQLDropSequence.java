@@ -21,7 +21,8 @@ public class OCommandExecutorSQLDropSequence extends OCommandExecutorSQLAbstract
 
   private String sequenceName;
 
-  @Override public OCommandExecutorSQLDropSequence parse(OCommandRequest iRequest) {
+  @Override
+  public OCommandExecutorSQLDropSequence parse(OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
     String queryText = textRequest.getText();
@@ -45,16 +46,16 @@ public class OCommandExecutorSQLDropSequence extends OCommandExecutorSQLAbstract
     return this;
   }
 
-  @Override public Object execute(Map<Object, Object> iArgs) {
+  @Override
+  public Object execute(Map<Object, Object> iArgs) {
     if (this.sequenceName == null) {
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
     }
 
     final ODatabaseDocument database = getDatabase();
-    try{
+    try {
       database.getMetadata().getSequenceLibrary().dropSequence(this.sequenceName);
-    }
-    catch (ExecutionException | InterruptedException exc){
+    } catch (ExecutionException | InterruptedException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
       OLogManager.instance().error(this, message, exc, (Object) null);
       throw new OCommandExecutionException(message);
@@ -62,11 +63,13 @@ public class OCommandExecutorSQLDropSequence extends OCommandExecutorSQLAbstract
     return true;
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "DROP SEQUENCE <sequence>";
   }
 
-  @Override public QUORUM_TYPE getQuorumType() {
+  @Override
+  public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }
 }

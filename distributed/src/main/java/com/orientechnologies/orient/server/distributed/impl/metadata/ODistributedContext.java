@@ -31,7 +31,7 @@ public class ODistributedContext {
     submitContext = new OSubmitContextImpl();
     coordinator = null;
     this.context = context;
-    this.databaseName = storage.getName();   
+    this.databaseName = storage.getName();
   }
 
   private void initOpLog() {

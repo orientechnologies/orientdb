@@ -94,14 +94,13 @@ public interface OTransactionInternal extends OBasicTransaction {
   void setDatabase(ODatabaseDocumentInternal database);
 
   boolean isUseDeltas();
-  
-  default boolean isSequenceTransaction(){
-    for (ORecordOperation txEntry : getRecordOperations()){
-      if (txEntry.record != null && 
-          txEntry.record.getRecord() instanceof ODocument){
+
+  default boolean isSequenceTransaction() {
+    for (ORecordOperation txEntry : getRecordOperations()) {
+      if (txEntry.record != null && txEntry.record.getRecord() instanceof ODocument) {
         ODocument doc = txEntry.record.getRecord();
         OClass docClass = doc.getSchemaClass();
-        if (docClass != null && (!docClass.isSubClassOf(OSequence.CLASS_NAME))){
+        if (docClass != null && (!docClass.isSubClassOf(OSequence.CLASS_NAME))) {
           return false;
         }
       }

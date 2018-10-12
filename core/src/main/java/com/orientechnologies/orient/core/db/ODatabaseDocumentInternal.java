@@ -267,10 +267,10 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
   void internalLockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY lockingStrategy);
 
   void internalUnlockRecord(OIdentifiable iRecord);
-  
+
   <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException;
-  
-  default boolean isDistributed(){
+
+  default boolean isDistributed() {
     return false;
   }
 }

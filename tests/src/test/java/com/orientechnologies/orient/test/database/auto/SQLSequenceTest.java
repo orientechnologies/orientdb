@@ -81,14 +81,13 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testFree() throws ExecutionException, InterruptedException{
+  public void testFree() throws ExecutionException, InterruptedException {
     OSequenceLibrary sequenceManager = database.getMetadata().getSequenceLibrary();
 
     OSequence seq = null;
-    try{
+    try {
       seq = sequenceManager.createSequence("seqSQLOrdered", OSequence.SEQUENCE_TYPE.ORDERED, null);
-    }
-    catch (ExecutionException | InterruptedException exc){
+    } catch (ExecutionException | InterruptedException exc) {
       Assert.assertTrue(false, "Unable to create sequence");
     }
 
@@ -97,11 +96,10 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
       sequenceManager.createSequence("seqSQLOrdered", OSequence.SEQUENCE_TYPE.ORDERED, null);
     } catch (OSequenceException se) {
       err = se;
-    }
-    catch (ExecutionException | InterruptedException exc){
+    } catch (ExecutionException | InterruptedException exc) {
       Assert.assertTrue(false, "Unable to create sequence");
     }
-    
+
     Assert.assertTrue(err == null || err.getMessage().toLowerCase(Locale.ENGLISH).contains("already exists"),
         "Creating two ordered sequences with same name doesn't throw an exception");
 
@@ -111,17 +109,16 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
     testUsage(seq, FIRST_START);
 
     //
-    try{
+    try {
       seq.updateParams(new OSequence.CreateParams().setStart(SECOND_START).setCacheSize(13));
-    }
-    catch (ExecutionException | InterruptedException exc){
+    } catch (ExecutionException | InterruptedException exc) {
       Assert.assertTrue(false, "Unable to update paramas");
     }
     testUsage(seq, SECOND_START);
   }
 
-  private void testUsage(OSequence seq, long reset) throws ExecutionException, InterruptedException{
-    for (int i = 0; i < 2; ++i) {      
+  private void testUsage(OSequence seq, long reset) throws ExecutionException, InterruptedException {
+    for (int i = 0; i < 2; ++i) {
       Assert.assertEquals(seq.reset(), reset);
       Assert.assertEquals(seq.current(), reset);
       Assert.assertEquals(seq.next(), reset + 1L);
@@ -130,7 +127,7 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
       Assert.assertEquals(seq.next(), reset + 3L);
       Assert.assertEquals(seq.next(), reset + 4L);
       Assert.assertEquals(seq.current(), reset + 4L);
-      Assert.assertEquals(seq.reset(), reset);      
+      Assert.assertEquals(seq.reset(), reset);
     }
   }
 }

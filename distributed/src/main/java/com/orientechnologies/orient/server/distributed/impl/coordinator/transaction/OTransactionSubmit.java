@@ -25,7 +25,7 @@ import static com.orientechnologies.orient.server.distributed.impl.coordinator.O
 public class OTransactionSubmit implements OSubmitRequest {
   private List<ORecordOperationRequest> operations;
   private List<OIndexOperationRequest>  indexes;
-  
+
   private static final String _sequencesBaseClass = "OSequence";
 
   public OTransactionSubmit(Collection<ORecordOperation> ops, List<OIndexOperationRequest> indexes, boolean useDeltas) {
@@ -37,24 +37,23 @@ public class OTransactionSubmit implements OSubmitRequest {
 
   }
 
-  private static boolean isSequenceDocument(ORecordOperation txEntry){
-    if (txEntry.record != null && 
-        txEntry.record.getRecord() instanceof ODocument){
+  private static boolean isSequenceDocument(ORecordOperation txEntry) {
+    if (txEntry.record != null && txEntry.record.getRecord() instanceof ODocument) {
       ODocument doc = txEntry.record.getRecord();
       OClass docClass = doc.getSchemaClass();
-      if (docClass != null && docClass.isSubClassOf(OSequence.CLASS_NAME)){
+      if (docClass != null && docClass.isSubClassOf(OSequence.CLASS_NAME)) {
         return true;
       }
     }
     return false;
   }
-  
+
   public static List<ORecordOperationRequest> genOps(Collection<ORecordOperation> ops, boolean useDeltas) {
     List<ORecordOperationRequest> operations = new ArrayList<>();
     for (ORecordOperation txEntry : ops) {
       if (txEntry.type == ORecordOperation.LOADED)
         continue;
-      if (isSequenceDocument(txEntry)){
+      if (isSequenceDocument(txEntry)) {
         continue;
       }
       ORecordOperationRequest request = new ORecordOperationRequest();
@@ -202,8 +201,8 @@ public class OTransactionSubmit implements OSubmitRequest {
   public int getRequestType() {
     return TRANSACTION_SUBMIT_REQUEST;
   }
-  
-  public boolean isEmpty(){
+
+  public boolean isEmpty() {
     return operations.isEmpty();
   }
 }

@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
+
 import org.junit.Assert;
 
 import static org.junit.Assert.assertEquals;
@@ -80,10 +81,9 @@ public class ODatabaseMetadataUpdateListener {
 
   @Test
   public void testSequenceUpdate() {
-    try{
+    try {
       session.getMetadata().getSequenceLibrary().createSequence("sequence1", OSequence.SEQUENCE_TYPE.ORDERED, null);
-    }
-    catch (ExecutionException | InterruptedException exc){
+    } catch (ExecutionException | InterruptedException exc) {
       Assert.assertTrue("Failed to create sequence", false);
     }
     assertEquals(count, 1);

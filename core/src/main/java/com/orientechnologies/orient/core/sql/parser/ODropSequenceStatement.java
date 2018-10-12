@@ -27,21 +27,21 @@ public class ODropSequenceStatement extends ODDLStatement {
     super(p, id);
   }
 
-  @Override public OResultSet executeDDL(OCommandContext ctx) {
+  @Override
+  public OResultSet executeDDL(OCommandContext ctx) {
     final ODatabase database = ctx.getDatabase();
     OSequence sequence = database.getMetadata().getSequenceLibrary().getSequence(this.name.getStringValue());
     if (sequence == null) {
-      if(ifExists){
+      if (ifExists) {
         return new OInternalResultSet();
-      }else {
+      } else {
         throw new OCommandExecutionException("Sequence not found: " + name);
       }
     }
 
-    try{
+    try {
       database.getMetadata().getSequenceLibrary().dropSequence(name.getStringValue());
-    }
-    catch (ExecutionException | InterruptedException exc){
+    } catch (ExecutionException | InterruptedException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
       OLogManager.instance().error(this, message, exc, (Object) null);
       throw new OCommandExecutionException(message);
@@ -55,22 +55,25 @@ public class ODropSequenceStatement extends ODDLStatement {
     return rs;
   }
 
-  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DROP SEQUENCE ");
     name.toString(params, builder);
-    if(ifExists){
+    if (ifExists) {
       builder.append(" IF EXISTS");
     }
   }
 
-  @Override public ODropSequenceStatement copy() {
+  @Override
+  public ODropSequenceStatement copy() {
     ODropSequenceStatement result = new ODropSequenceStatement(-1);
     result.name = name == null ? null : name.copy();
     result.ifExists = this.ifExists;
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -78,7 +81,7 @@ public class ODropSequenceStatement extends ODDLStatement {
 
     ODropSequenceStatement that = (ODropSequenceStatement) o;
 
-    if(this.ifExists!= that.ifExists){
+    if (this.ifExists != that.ifExists) {
       return false;
     }
     if (name != null ? !name.equals(that.name) : that.name != null)
@@ -87,7 +90,8 @@ public class ODropSequenceStatement extends ODDLStatement {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return name != null ? name.hashCode() : 0;
   }
 }

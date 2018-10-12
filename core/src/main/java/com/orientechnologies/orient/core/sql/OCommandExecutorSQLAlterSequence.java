@@ -77,14 +77,13 @@ public class OCommandExecutorSQLAlterSequence extends OCommandExecutorSQLAbstrac
 
     final ODatabaseDocument database = getDatabase();
     OSequence sequence = database.getMetadata().getSequenceLibrary().getSequence(this.sequenceName);
-    
+
     boolean result;
-    try{
+    try {
       result = sequence.updateParams(this.params);
       //TODO check, but reset should not be here
 //      sequence.reset();
-    }
-    catch (ExecutionException | InterruptedException exc){
+    } catch (ExecutionException | InterruptedException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
       OLogManager.instance().error(this, message, exc, (Object) null);
       throw new OCommandExecutionException(message);

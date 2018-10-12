@@ -20,55 +20,56 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistrib
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ONodeResponse;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ORequestContext;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OResponseHandler;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- *
  * @author marko
  */
-public class OSequenceActionNodeResponseHandler implements OResponseHandler{
+public class OSequenceActionNodeResponseHandler implements OResponseHandler {
 
-  private int responseCount = 0;
-  private final List<ODistributedMember> failedActionNode = new ArrayList<>();
+  private       int                      responseCount     = 0;
+  private final List<ODistributedMember> failedActionNode  = new ArrayList<>();
   private final List<ODistributedMember> limitReachedNodes = new ArrayList<>();
-  private final OSessionOperationId operationId;
-  private Object senderResult = null;
-  private final ODistributedMember initiator;
-  
+  private final OSessionOperationId      operationId;
+  private       Object                   senderResult      = null;
+  private final ODistributedMember       initiator;
+
 //  private OSequenceActionNodeResponseHandler(){
 //    
 //  }
-  
-  public OSequenceActionNodeResponseHandler(OSessionOperationId operationId, ODistributedMember initiator){
+
+  public OSequenceActionNodeResponseHandler(OSessionOperationId operationId, ODistributedMember initiator) {
     this.operationId = operationId;
     this.initiator = initiator;
   }
-  
+
   @Override
-  public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member, ONodeResponse response) {
-    responseCount++;    
-    OSequenceActionNodeResponse responseFromNode = (OSequenceActionNodeResponse)response;
-    switch(responseFromNode.getResponseResultType()){
-      case SUCCESS:
-        //sender result is different from null only from node that initialized whole process
-        if (senderResult == null){
-          senderResult = responseFromNode.getResponseResult();
-        }
-        break;
-      case ERROR:
-        failedActionNode.add(member);
-        break;
-      case LIMIT_REACHED:
-        limitReachedNodes.add(member);
-        break;
+  public boolean receive(ODistributedCoordinator coordinator, ORequestContext context, ODistributedMember member,
+      ONodeResponse response) {
+    responseCount++;
+    OSequenceActionNodeResponse responseFromNode = (OSequenceActionNodeResponse) response;
+    switch (responseFromNode.getResponseResultType()) {
+    case SUCCESS:
+      //sender result is different from null only from node that initialized whole process
+      if (senderResult == null) {
+        senderResult = responseFromNode.getResponseResult();
+      }
+      break;
+    case ERROR:
+      failedActionNode.add(member);
+      break;
+    case LIMIT_REACHED:
+      limitReachedNodes.add(member);
+      break;
     }
-    if (responseCount == context.getInvolvedMembers().size()){
+    if (responseCount == context.getInvolvedMembers().size()) {
       List<String> failedNodesNames = failedActionNode.stream().map(ODistributedMember::getName).collect(Collectors.toList());
       List<String> limitReachedNodeNames = limitReachedNodes.stream().map(ODistributedMember::getName).collect(Collectors.toList());
-      OSequenceActionCoordinatorResponse submitedActionResponse = new OSequenceActionCoordinatorResponse(failedNodesNames, limitReachedNodeNames, 
-              senderResult, context.getInvolvedMembers().size());      
+      OSequenceActionCoordinatorResponse submitedActionResponse = new OSequenceActionCoordinatorResponse(failedNodesNames,
+          limitReachedNodeNames, senderResult, context.getInvolvedMembers().size());
       coordinator.reply(initiator, operationId, submitedActionResponse);
       return true;
     }
@@ -80,5 +81,5 @@ public class OSequenceActionNodeResponseHandler implements OResponseHandler{
     //TODO think about timeouts
     return false;
   }
-  
+
 }

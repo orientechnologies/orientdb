@@ -33,7 +33,7 @@ import java.util.concurrent.ExecutionException;
  */
 public class OSequenceLibraryProxy extends OProxedResource<OSequenceLibraryImpl> implements OSequenceLibrary {
   private static int replicationProtocolVersion = OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
-  
+
   public OSequenceLibraryProxy(final OSequenceLibraryImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
@@ -54,41 +54,41 @@ public class OSequenceLibraryProxy extends OProxedResource<OSequenceLibraryImpl>
   }
 
   @Override
-  public OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params) throws ExecutionException, InterruptedException{
+  public OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params)
+      throws ExecutionException, InterruptedException {
     boolean shouldGoOverDistributted = database.isDistributed() && (replicationProtocolVersion > 1);
     return createSequence(iName, sequenceType, params, shouldGoOverDistributted);
   }
-  
+
   @Override
-  public OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params, boolean executeViaDistributed) throws ExecutionException, InterruptedException{
-    if (executeViaDistributed){
+  public OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params,
+      boolean executeViaDistributed) throws ExecutionException, InterruptedException {
+    if (executeViaDistributed) {
       OSequenceAction action = new OSequenceAction(OSequenceAction.CREATE, iName, params, sequenceType);
       String sequenceName = database.sendSequenceAction(action);
       return delegate.getSequence(database, sequenceName);
-    }
-    else{
+    } else {
       return delegate.createSequence(database, iName, sequenceType, params);
     }
   }
 
   @Override
   @Deprecated
-  public void dropSequence(String iName) throws ExecutionException, InterruptedException{
+  public void dropSequence(String iName) throws ExecutionException, InterruptedException {
     boolean shouldGoOverDistributted = database.isDistributed() && (replicationProtocolVersion > 1);
     dropSequence(iName, shouldGoOverDistributted);
   }
 
   @Override
-  public void dropSequence(String iName, boolean executeViaDistributed) throws ExecutionException, InterruptedException{
-    if (executeViaDistributed){
+  public void dropSequence(String iName, boolean executeViaDistributed) throws ExecutionException, InterruptedException {
+    if (executeViaDistributed) {
       OSequenceAction action = new OSequenceAction(OSequenceAction.REMOVE, iName, null, null);
       database.sendSequenceAction(action);
-    }
-    else{
+    } else {
       delegate.dropSequence(database, iName);
     }
   }
-  
+
   @Override
   public void create() {
     delegate.create(database);

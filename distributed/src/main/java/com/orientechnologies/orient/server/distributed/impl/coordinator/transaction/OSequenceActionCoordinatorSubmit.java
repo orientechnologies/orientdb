@@ -21,41 +21,40 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordin
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedCoordinator;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitRequest;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 /**
- *
  * @author marko
  */
-public class OSequenceActionCoordinatorSubmit implements OSubmitRequest{  
-  
-  private OSequenceActionRequest action = null;  
-  
-  public OSequenceActionCoordinatorSubmit(){
-    
+public class OSequenceActionCoordinatorSubmit implements OSubmitRequest {
+
+  private OSequenceActionRequest action = null;
+
+  public OSequenceActionCoordinatorSubmit() {
+
   }
-  
-  public OSequenceActionCoordinatorSubmit(OSequenceAction action, String initialNodeName){
+
+  public OSequenceActionCoordinatorSubmit(OSequenceAction action, String initialNodeName) {
     this.action = new OSequenceActionRequest(action);
   }
-  
+
   @Override
-  public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {    
+  public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
     OSequenceActionNodeRequest nodeRequest = new OSequenceActionNodeRequest(action, member.getName());
     OSequenceActionNodeResponseHandler nodeResponseHandler = new OSequenceActionNodeResponseHandler(operationId, member);
-    
+
     coordinator.sendOperation(this, nodeRequest, nodeResponseHandler);
   }
 
   @Override
   public void serialize(DataOutput output) throws IOException {
-    if (action != null){
+    if (action != null) {
       output.writeByte(1);
       action.serialize(output);
-    }
-    else{
+    } else {
       output.writeByte(0);
     }
   }
@@ -64,7 +63,7 @@ public class OSequenceActionCoordinatorSubmit implements OSubmitRequest{
   public void deserialize(DataInput input) throws IOException {
     byte flag = input.readByte();
     action = null;
-    if (flag > 0){
+    if (flag > 0) {
       action = new OSequenceActionRequest();
       action.deserialize(input);
     }
@@ -74,5 +73,5 @@ public class OSequenceActionCoordinatorSubmit implements OSubmitRequest{
   public int getRequestType() {
     return OCoordinateMessagesFactory.SEQUENCE_ACTION_COORDINATOR_SUBMIT;
   }
-  
+
 }
