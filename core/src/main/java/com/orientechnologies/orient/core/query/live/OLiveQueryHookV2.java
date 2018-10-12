@@ -238,7 +238,8 @@ public class OLiveQueryHookV2 {
     return result;
   }
 
-  private static Object unboxRidbags(Object value) {
+  public static Object unboxRidbags(Object value) {
+    //TODO move it to some helper class
     if (value instanceof ORidBag) {
       List<OIdentifiable> result = new ArrayList<>(((ORidBag) value).size());
       for (OIdentifiable oIdentifiable : (ORidBag) value) {
