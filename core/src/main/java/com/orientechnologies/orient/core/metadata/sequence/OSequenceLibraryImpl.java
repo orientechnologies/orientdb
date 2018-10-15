@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TY
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -76,11 +77,11 @@ public class OSequenceLibraryImpl {
   }
 
   public OSequence getSequence(final ODatabaseDocumentInternal database, final String iName) {
-    final String name = iName.toUpperCase(Locale.ENGLISH);      
+    final String name = iName.toUpperCase(Locale.ENGLISH);
     reloadIfNeeded(database);
     OSequence seq;
     synchronized (this) {
-      seq = sequences.get(name);      
+      seq = sequences.get(name);
       if (seq == null) {
         load(database);
         seq = sequences.get(name);

@@ -15,9 +15,13 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class OPersistentOperationalLogV1 implements OOperationLog {
 
-  private OCoordinateMessagesFactory factory;
+  private OLogRequestFactory factory;
 
-  private static class OplogInfo {
+  public interface OLogRequestFactory {
+    OLogRequest createLogRequest(int requestId);
+  }
+
+  private static class OpLogInfo {
     int  currentFileNum;
     int  firstFileNum;
     long keepUntil;
@@ -56,23 +60,24 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   protected static final int    LOG_ENTRIES_PER_FILE = 16 * 1024;
 
   private final String    storagePath;
-  private       OplogInfo info;
+  private       OpLogInfo info;
 
   private FileOutputStream fileOutput;
   private DataOutputStream stream;
 
   private AtomicLong inc;
 
-  public static OPersistentOperationalLogV1 newInstance(String databaseName, OrientDBInternal context) {
+  public static OPersistentOperationalLogV1 newInstance(String databaseName, OrientDBInternal context, OLogRequestFactory factory) {
     OAbstractPaginatedStorage s = ((OrientDBDistributed) context).getStorage(databaseName);
     OLocalPaginatedStorage storage = (OLocalPaginatedStorage) s.getUnderlying();
 
-    OPersistentOperationalLogV1 result = new OPersistentOperationalLogV1(storage.getStoragePath().toString());
+    OPersistentOperationalLogV1 result = new OPersistentOperationalLogV1(storage.getStoragePath().toString(), factory);
     result.scheduleLogPrune(context, databaseName);
     return result;
   }
 
-  public OPersistentOperationalLogV1(String storageFolder) {
+  public OPersistentOperationalLogV1(String storageFolder, OLogRequestFactory factory) {
+    this.factory = factory;
     this.storagePath = storageFolder;
     try {
       this.info = readInfo();
@@ -84,7 +89,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     inc = readLastLogId();
   }
 
-  private DataOutputStream initStream(OplogInfo info) {
+  private DataOutputStream initStream(OpLogInfo info) {
     String filePath = calculateLogFileFullPath(info.currentFileNum);
     try {
       File file = new File(filePath);
@@ -104,11 +109,11 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     return fullPath;
   }
 
-  private OplogInfo readInfo() throws FileNotFoundException {
+  private OpLogInfo readInfo() throws FileNotFoundException {
     File infoFile = new File(storagePath, OPLOG_INFO_FILE);
-    OplogInfo result = new OplogInfo();
+    OpLogInfo result = new OpLogInfo();
     if (infoFile.exists()) {
-      info = new OplogInfo();
+      info = new OpLogInfo();
       info.fromStream(new FileInputStream(infoFile));
 //      writeInfo(infoFile, result);
     } else {
@@ -117,7 +122,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     return result;
   }
 
-  private void writeInfo(OplogInfo info) {
+  private void writeInfo(OpLogInfo info) {
     File infoFile = new File(storagePath, OPLOG_INFO_FILE);
     if (infoFile.exists()) {
       writeInfo(infoFile, info);
@@ -127,7 +132,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
   }
 
-  private void writeInfo(File infoFile, OplogInfo result) {
+  private void writeInfo(File infoFile, OpLogInfo result) {
     try {
       FileOutputStream stream = new FileOutputStream(infoFile);
       result.toStream(stream);
@@ -137,7 +142,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     }
   }
 
-  private void initNewInfoFile(File infoFile, OplogInfo result) {
+  private void initNewInfoFile(File infoFile, OpLogInfo result) {
     try {
       result.currentFileNum = 0;
       result.firstFileNum = 0;
@@ -214,23 +219,23 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
   }
 
   @Override
-  public OLogId log(ONodeRequest request) {
+  public OLogId log(OLogRequest request) {
     return new OLogId(inc.incrementAndGet());
   }
 
   @Override
-  public void logReceived(OLogId logId, ONodeRequest request) {
+  public void logReceived(OLogId logId, OLogRequest request) {
     write(logId, request);
   }
 
-  private void write(OLogId logId, ONodeRequest request) {
+  private void write(OLogId logId, OLogRequest request) {
     if (logId.getId() % LOG_ENTRIES_PER_FILE == 0) {
       createNewStreamFile();
     }
     writeRecord(stream, logId, request);
   }
 
-  protected void writeRecord(DataOutputStream stream, OLogId logId, ONodeRequest request) {
+  protected void writeRecord(DataOutputStream stream, OLogId logId, OLogRequest request) {
     ByteArrayOutputStream outArray = new ByteArrayOutputStream();
     DataOutput out = new DataOutputStream(outArray);
     try {
@@ -255,7 +260,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
       long logId = stream.readLong();
       int totalPacketSize = stream.readInt();
       int packetType = stream.readInt();
-      ONodeRequest request = getCoordinateMessagesFactory().createOperationRequest(packetType);
+      OLogRequest request = getCoordinateMessagesFactory().createLogRequest(packetType);
       request.deserialize(stream);
       stream.readLong();//length, again
       long magic = stream.readLong();
@@ -268,10 +273,7 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
     }
   }
 
-  protected OCoordinateMessagesFactory getCoordinateMessagesFactory() {
-    if (this.factory == null) {
-      this.factory = new OCoordinateMessagesFactory();//TODO
-    }
+  protected OLogRequestFactory getCoordinateMessagesFactory() {
     return factory;
   }
 

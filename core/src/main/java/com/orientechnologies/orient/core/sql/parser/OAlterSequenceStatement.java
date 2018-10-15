@@ -24,8 +24,8 @@ public class OAlterSequenceStatement extends ODDLStatement {
   OExpression cache;
   Boolean     positive;
   Boolean     cyclic;
-  OExpression limitValue; 
-  boolean turnLimitOff = false;
+  OExpression limitValue;
+  boolean     turnLimitOff = false;
 
   public OAlterSequenceStatement(int id) {
     super(id);
@@ -85,15 +85,14 @@ public class OAlterSequenceStatement extends ODDLStatement {
         throw new OCommandExecutionException("invalid cache value for a sequence: " + val);
       }
       params.setLimitValue(((Number) val).longValue());
-    }    
+    }
     if (turnLimitOff) {
       params.setTurnLimitOff(true);
     }
 
-    try{
+    try {
       sequence.updateParams(params);
-    }
-    catch (ExecutionException | InterruptedException exc){
+    } catch (ExecutionException | InterruptedException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
       OLogManager.instance().error(this, message, exc, (Object) null);
       throw new OCommandExecutionException(message);
@@ -157,7 +156,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
     if (limitValue != null) {
       builder.append(" LIMIT ");
       limitValue.toString(params, builder);
-    }    
+    }
     if (turnLimitOff) {
       builder.append(" NOLIMIT");
     }
@@ -172,7 +171,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
     result.cache = cache == null ? null : cache.copy();
     result.positive = positive;
     result.cyclic = cyclic;
-    result.limitValue = limitValue == null ? null : limitValue.copy();    
+    result.limitValue = limitValue == null ? null : limitValue.copy();
     return result;
   }
 
@@ -201,8 +200,8 @@ public class OAlterSequenceStatement extends ODDLStatement {
     }
     if (!Objects.equals(limitValue, that.limitValue)) {
       return false;
-    }    
-    if (turnLimitOff != that.turnLimitOff){
+    }
+    if (turnLimitOff != that.turnLimitOff) {
       return false;
     }
 
@@ -217,7 +216,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
     result = 31 * result + (cache != null ? cache.hashCode() : 0);
     result = 31 * result + (positive != null ? positive.hashCode() : 0);
     result = 31 * result + (cyclic != null ? cyclic.hashCode() : 0);
-    result = 31 * result + (limitValue != null ? limitValue.hashCode() : 0);    
+    result = 31 * result + (limitValue != null ? limitValue.hashCode() : 0);
     result = 31 * result + Boolean.hashCode(turnLimitOff);
     return result;
   }

@@ -4,6 +4,10 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeRequest;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeResponse;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitRequest;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitResponse;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -20,15 +24,15 @@ public class OSubmitTransactionBeginTest {
     ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), new MockOperationLog(),
         new ODistributedLockManagerImpl(0), new OMockAllocator());
 
-    MockChannel cOne = new MockChannel();
+    MockDistributedChannel cOne = new MockDistributedChannel();
     ODistributedMember mOne = new ODistributedMember("one", null, cOne);
     coordinator.join(mOne);
 
-    MockChannel cTwo = new MockChannel();
+    MockDistributedChannel cTwo = new MockDistributedChannel();
     ODistributedMember mTwo = new ODistributedMember("two", null, cTwo);
     coordinator.join(mTwo);
 
-    MockChannel cThree = new MockChannel();
+    MockDistributedChannel cThree = new MockDistributedChannel();
     ODistributedMember mThree = new ODistributedMember("three", null, cThree);
     coordinator.join(mThree);
 
@@ -42,7 +46,7 @@ public class OSubmitTransactionBeginTest {
     assertTrue(cThree.sentRequest.await(1, TimeUnit.SECONDS));
   }
 
-  private class MockChannel implements ODistributedChannel {
+  private class MockDistributedChannel implements ODistributedChannel {
     private CountDownLatch sentRequest = new CountDownLatch(1);
 
     @Override
@@ -52,6 +56,26 @@ public class OSubmitTransactionBeginTest {
 
     @Override
     public void sendResponse(String database, OLogId id, ONodeResponse nodeResponse) {
+
+    }
+
+    @Override
+    public void sendResponse(OLogId opId, OStructuralNodeResponse response) {
+
+    }
+
+    @Override
+    public void sendRequest(OLogId id, OStructuralNodeRequest request) {
+
+    }
+
+    @Override
+    public void reply(OSessionOperationId operationId, OStructuralSubmitResponse response) {
+
+    }
+
+    @Override
+    public void submit(OSessionOperationId operationId, OStructuralSubmitRequest request) {
 
     }
 

@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ORequestContext {
@@ -27,13 +29,13 @@ public class ORequestContext {
     this.involvedMembers = involvedMembers;
     this.handler = handler;
     this.quorum = (involvedMembers.size() / 2) + 1;
-    this.requestId =requestId;
+    this.requestId = requestId;
 
     timerTask = new TimerTask() {
       @Override
       public void run() {
         coordinator.executeOperation(() -> {
-          if (handler.timeout(coordinator, ORequestContext.this)  ) {
+          if (handler.timeout(coordinator, ORequestContext.this)) {
             finish();
           }
         });
@@ -48,7 +50,8 @@ public class ORequestContext {
 
   public void receive(ODistributedMember member, ONodeResponse response) {
     responses.put(member, response);
-    if(handler.receive(coordinator, this, member, response)){
+    if (handler.receive(coordinator, this, member, response)) {
+      timerTask.cancel();
       finish();
     }
   }

@@ -1,18 +1,22 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.*;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeRequest;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeResponse;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitRequest;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitResponse;
 
 public class OCoordinateMessagesFactory {
-  public static final int TRANSACTION_SUBMIT_REQUEST        = 1;
-  public static final int TRANSACTION_SUBMIT_RESPONSE       = 1;
-  public static final int TRANSACTION_FIRST_PHASE_REQUEST   = 1;
-  public static final int TRANSACTION_FIRST_PHASE_RESPONSE  = 1;
-  public static final int TRANSACTION_SECOND_PHASE_REQUEST  = 2;
-  public static final int TRANSACTION_SECOND_PHASE_RESPONSE = 2;  
+  public static final int TRANSACTION_SUBMIT_REQUEST           = 1;
+  public static final int TRANSACTION_SUBMIT_RESPONSE          = 1;
+  public static final int TRANSACTION_FIRST_PHASE_REQUEST      = 1;
+  public static final int TRANSACTION_FIRST_PHASE_RESPONSE     = 1;
+  public static final int TRANSACTION_SECOND_PHASE_REQUEST     = 2;
+  public static final int TRANSACTION_SECOND_PHASE_RESPONSE    = 2;
   public static final int SEQUENCE_ACTION_COORDINATOR_SUBMIT   = 3;
-  public static final int SEQUENCE_ACTION_COORDINATOR_RESPONSE  = 3;
-  public static final int SEQUENCE_ACTION_NODE_REQUEST           = 4;
-  public static final int SEQUENCE_ACTION_NODE_RESPONSE          = 4;
+  public static final int SEQUENCE_ACTION_COORDINATOR_RESPONSE = 3;
+  public static final int SEQUENCE_ACTION_NODE_REQUEST         = 4;
+  public static final int SEQUENCE_ACTION_NODE_RESPONSE        = 4;
 
   public ONodeResponse createOperationResponse(int responseType) {
     switch (responseType) {
@@ -58,4 +62,19 @@ public class OCoordinateMessagesFactory {
     return null;
   }
 
+  public OStructuralNodeResponse createStructuralOperationResponse(int responseType) {
+    return null;
+  }
+
+  public OStructuralNodeRequest createStructuralOperationRequest(int requestType) {
+    return null;
+  }
+
+  public OStructuralSubmitRequest createStructuralSubmitRequest(int requestType) {
+    return null;
+  }
+
+  public OStructuralSubmitResponse createStructuralSubmitResponse(int responseType) {
+    return null;
+  }
 }

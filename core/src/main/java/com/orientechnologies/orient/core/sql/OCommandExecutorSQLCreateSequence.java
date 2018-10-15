@@ -92,10 +92,9 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
 
     final ODatabaseDocument database = getDatabase();
 
-    try{
+    try {
       database.getMetadata().getSequenceLibrary().createSequence(this.sequenceName, this.sequenceType, this.params);
-    }
-    catch (ExecutionException | InterruptedException exc){
+    } catch (ExecutionException | InterruptedException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
       OLogManager.instance().error(this, message, exc, (Object) null);
       throw new OCommandExecutionException(message);

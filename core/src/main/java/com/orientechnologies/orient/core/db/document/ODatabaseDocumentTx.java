@@ -66,7 +66,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal.closeAllOnShutdown;
+
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
+
 import java.util.concurrent.ExecutionException;
 
 /**

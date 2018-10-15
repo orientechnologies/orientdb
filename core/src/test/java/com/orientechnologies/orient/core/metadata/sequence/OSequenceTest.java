@@ -20,6 +20,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.Assert;
 
 /**
@@ -30,7 +31,7 @@ public class OSequenceTest {
   private ODatabaseDocument db;
 
   @Rule
-  public ExternalResource resource = new ExternalResource() {
+  public  ExternalResource resource = new ExternalResource() {
     @Override
     protected void before() throws Throwable {
       db = new ODatabaseDocumentTx("memory:" + OSequenceTest.class.getName());
@@ -54,13 +55,12 @@ public class OSequenceTest {
 
   @Test
   public void shouldCreateSeqWithGivenAttribute() {
-    try{
+    try {
       sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.ORDERED, new OSequence.CreateParams().setDefaults());
-    }
-    catch (ExecutionException | InterruptedException exc){
+    } catch (ExecutionException | InterruptedException exc) {
       Assert.assertTrue("Can not create sequence", false);
     }
-    
+
     assertThat(sequences.getSequenceCount()).isEqualTo(1);
     assertThat(sequences.getSequenceNames()).contains("MYSEQ");
 
@@ -525,14 +525,14 @@ public class OSequenceTest {
     assertThat(myseq.next()).isEqualTo(5);
     assertThat(myseq.next()).isEqualTo(6);
     assertThat(myseq.next()).isEqualTo(7);
-    
+
     sequences.dropSequence("MYSEQ");
   }
-  
+
   @Test
   public void testTurnLimitOnCached() throws Exception {
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
-        setIncrement(1).        
+        setIncrement(1).
         setOrderType(SequenceOrderType.ORDER_POSITIVE);
     sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.CACHED, params);
     OSequence myseq = sequences.getSequence("MYSEQ");
@@ -540,10 +540,10 @@ public class OSequenceTest {
     assertThat(myseq.next()).isEqualTo(1);
     assertThat(myseq.next()).isEqualTo(2);
     assertThat(myseq.next()).isEqualTo(3);
-    
+
     params = new OSequence.CreateParams().resetNull().setLimitValue(3l);
     myseq.updateParams(params);
-    
+
     Byte exceptionsCought = 0;
     try {
       myseq.next();
@@ -551,10 +551,10 @@ public class OSequenceTest {
       exceptionsCought++;
     }
     assertThat(exceptionsCought).isEqualTo((byte) 1);
-    
+
     sequences.dropSequence("MYSEQ");
   }
-  
+
   @Test
   public void testTurnLimitOffOrdered() throws Exception {
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
@@ -582,14 +582,14 @@ public class OSequenceTest {
     assertThat(myseq.next()).isEqualTo(5);
     assertThat(myseq.next()).isEqualTo(6);
     assertThat(myseq.next()).isEqualTo(7);
-    
+
     sequences.dropSequence("MYSEQ");
   }
-  
+
   @Test
   public void testTurnLimitOnOrdered() throws Exception {
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
-        setIncrement(1).        
+        setIncrement(1).
         setOrderType(SequenceOrderType.ORDER_POSITIVE);
     sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
     OSequence myseq = sequences.getSequence("MYSEQ");
@@ -597,10 +597,10 @@ public class OSequenceTest {
     assertThat(myseq.next()).isEqualTo(1);
     assertThat(myseq.next()).isEqualTo(2);
     assertThat(myseq.next()).isEqualTo(3);
-    
+
     params = new OSequence.CreateParams().resetNull().setLimitValue(3l);
     myseq.updateParams(params);
-    
+
     Byte exceptionsCought = 0;
     try {
       myseq.next();
@@ -608,47 +608,47 @@ public class OSequenceTest {
       exceptionsCought++;
     }
     assertThat(exceptionsCought).isEqualTo((byte) 1);
-    
+
     sequences.dropSequence("MYSEQ");
   }
-  
+
   @Test
   public void testAfterNextCache() throws Exception {
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L).
         setIncrement(1).
-        setLimitValue(10l).    
+        setLimitValue(10l).
         setOrderType(SequenceOrderType.ORDER_POSITIVE);
     sequences.createSequence("mySeq", OSequence.SEQUENCE_TYPE.CACHED, params);
     OSequence myseq = sequences.getSequence("MYSEQ");
     assertThat(myseq.next()).isEqualTo(1);
-    assertThat(myseq.next()).isEqualTo(2); 
-    
+    assertThat(myseq.next()).isEqualTo(2);
+
     params = new OSequence.CreateParams().resetNull().setRecyclable(true).setCacheSize(3);
     myseq.updateParams(params);
-    
+
     assertThat(myseq.next()).isEqualTo(3);
     assertThat(myseq.next()).isEqualTo(4);
-    
+
     assertThat(myseq.next()).isEqualTo(5);
     assertThat(myseq.next()).isEqualTo(6);
     assertThat(myseq.next()).isEqualTo(7);
     assertThat(myseq.next()).isEqualTo(8);
-    
+
     params = new OSequence.CreateParams().resetNull().setLimitValue(11l);
     myseq.updateParams(params);
-    
+
     assertThat(myseq.next()).isEqualTo(9);
     assertThat(myseq.next()).isEqualTo(10);
     assertThat(myseq.next()).isEqualTo(11);
     assertThat(myseq.next()).isEqualTo(0);
     assertThat(myseq.next()).isEqualTo(1);
-    
+
     params = new OSequence.CreateParams().resetNull().setLimitValue(12l);
     myseq.updateParams(params);
-    
+
     assertThat(myseq.next()).isEqualTo(2);
     assertThat(myseq.next()).isEqualTo(3);
-    
+
     sequences.dropSequence("MYSEQ");
   }
 }

@@ -1,6 +1,9 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -11,6 +14,10 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.impl.OIncrementOperationalLog;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeRequest;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeResponse;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitRequest;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitResponse;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -116,6 +123,26 @@ public class TestTransactionFlow {
 
     @Override
     public void sendResponse(String database, OLogId id, ONodeResponse nodeResponse) {
+
+    }
+
+    @Override
+    public void sendResponse(OLogId opId, OStructuralNodeResponse response) {
+
+    }
+
+    @Override
+    public void sendRequest(OLogId id, OStructuralNodeRequest request) {
+
+    }
+
+    @Override
+    public void reply(OSessionOperationId operationId, OStructuralSubmitResponse response) {
+
+    }
+
+    @Override
+    public void submit(OSessionOperationId operationId, OStructuralSubmitRequest request) {
 
     }
   }

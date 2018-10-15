@@ -24,7 +24,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -214,7 +216,7 @@ public class OLiveQueryHookV2 {
   private static OResultInternal calculateBefore(ODocument iDocument) {
     OResultInternal result = new OResultInternal();
     for (String prop : iDocument.getPropertyNames()) {
-      result.setProperty(prop, iDocument.getProperty(prop));
+      result.setProperty(prop, unboxRidbags(iDocument.getProperty(prop)));
     }
     result.setProperty("@rid", iDocument.getIdentity());
     result.setProperty("@class", iDocument.getClassName());
@@ -228,11 +230,24 @@ public class OLiveQueryHookV2 {
   private static OResultInternal calculateAfter(ODocument iDocument) {
     OResultInternal result = new OResultInternal();
     for (String prop : iDocument.getPropertyNames()) {
-      result.setProperty(prop, iDocument.getProperty(prop));
+      result.setProperty(prop, unboxRidbags(iDocument.getProperty(prop)));
     }
     result.setProperty("@rid", iDocument.getIdentity());
     result.setProperty("@class", iDocument.getClassName());
     result.setProperty("@version", iDocument.getVersion() + 1);
     return result;
   }
+
+  public static Object unboxRidbags(Object value) {
+    //TODO move it to some helper class
+    if (value instanceof ORidBag) {
+      List<OIdentifiable> result = new ArrayList<>(((ORidBag) value).size());
+      for (OIdentifiable oIdentifiable : (ORidBag) value) {
+        result.add(oIdentifiable);
+      }
+      return result;
+    }
+    return value;
+  }
+
 }

@@ -41,7 +41,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.OFixUpdateRecor
 import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordTask;
 import org.junit.Assert;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;

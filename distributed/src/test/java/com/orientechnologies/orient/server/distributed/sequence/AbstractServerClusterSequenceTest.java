@@ -29,7 +29,6 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
 
   private AtomicLong failures = new AtomicLong();
 
-
   @Override
   public String getDatabaseName() {
     return "distributed";
@@ -51,7 +50,8 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     executeCachedSequenceTest(dbs, "seq1");
   }
 
-  private void executeCachedSequenceTest(final ODatabaseDocument[] dbs, final String sequenceName) throws ExecutionException, InterruptedException{
+  private void executeCachedSequenceTest(final ODatabaseDocument[] dbs, final String sequenceName)
+      throws ExecutionException, InterruptedException {
     // Assuming seq2.next() is called once after calling seq1.next() once, and cache size is
     // C, seq2.current() - seq1.current() = C
 
@@ -67,20 +67,19 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     Assert.assertEquals(seq1.getSequenceType(), SEQUENCE_TYPE.CACHED);
 
     dbs[0].activateOnCurrentThread();
-    long v1 = seq1.next();    
+    long v1 = seq1.next();
 
     dbs[1].activateOnCurrentThread();
-    long v2 = seq2.next();        
-    
+    long v2 = seq2.next();
+
     int protocolVersion = OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
-    if (protocolVersion != 2){
+    if (protocolVersion != 2) {
       //OK this shouldn't be true when sequences are truly synchronized
       //but if sequences are treated as documents in database , this is true
       Assert.assertEquals((long) CACHE_SIZE, v2 - v1);
-    }
-    else{
+    } else {
       //in the last cycle sequences should be synchronized
-      for (int i = 1; i < CACHE_SIZE; i++){
+      for (int i = 1; i < CACHE_SIZE; i++) {
         Assert.assertEquals(v1, v2 + (i - 1));
         dbs[0].activateOnCurrentThread();
         v1 = seq1.next();

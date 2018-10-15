@@ -21,6 +21,9 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistrib
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
 import com.orientechnologies.orient.server.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralDistributedContext;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralCoordinator;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralDistributedMember;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.InputStream;
@@ -39,9 +42,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private final    Map<String, ODistributedChannel> members     = new HashMap<>();
   private volatile boolean                          coordinator = false;
   private volatile String                           coordinatorName;
+  private final    OStructuralDistributedContext    structuralDistributedContext;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
+    structuralDistributedContext = new OStructuralDistributedContext();
   }
 
   @Override
@@ -146,8 +151,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void create(String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
-    super.create(name, user, password, type, config);
-    checkCoordinator(name);
+    if (isDistributedVersionTwo()) {
+
+      //This initialize the distributed configuration.
+      plugin.getDatabaseConfiguration(name);
+      checkCoordinator(name);
+    } else {
+      super.create(name, user, password, type, config);
+    }
   }
 
   @Override
@@ -234,6 +245,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         c.join(member);
       }
     }
+    if (coordinator && structuralDistributedContext.getCoordinator() != null) {
+      OStructuralDistributedMember member = new OStructuralDistributedMember(nodeName, channel);
+      structuralDistributedContext.getCoordinator().join(member);
+    }
   }
 
   public synchronized void nodeLeave(String nodeName) {
@@ -249,6 +264,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         ODistributedCoordinator c = distributed.getCoordinator();
         if (c == null) {
           c.leave(c.getMember(nodeName));
+        }
+        OStructuralCoordinator s = structuralDistributedContext.getCoordinator();
+        if (s != null) {
+          s.leave(s.getMember(nodeName));
         }
       }
     }
@@ -274,6 +293,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
             distributed.getCoordinator().join(member);
           }
         }
+        structuralDistributedContext.makeCoordinator(lockManager);
+        OStructuralCoordinator structuralCoordinator = structuralDistributedContext.getCoordinator();
+        for (Map.Entry<String, ODistributedChannel> node : members.entrySet()) {
+          OStructuralDistributedMember member = new OStructuralDistributedMember(node.getKey(), node.getValue());
+          structuralCoordinator.join(member);
+        }
         coordinator = true;
       }
     } else {
@@ -284,6 +309,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         ODistributedMember member = new ODistributedMember(lockManager, context.getStorage().getName(), members.get(lockManager));
         distributed.setExternalCoordinator(member);
       }
+      structuralDistributedContext.setExternalCoordinator(new OStructuralDistributedMember(lockManager, members.get(lockManager)));
       coordinator = false;
     }
   }
@@ -294,6 +320,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       return ((OSharedContextDistributed) shared).getDistributedContext();
     }
     return null;
+  }
+
+  public OStructuralDistributedContext getStructuralDistributedContext() {
+    return structuralDistributedContext;
   }
 
   @Override

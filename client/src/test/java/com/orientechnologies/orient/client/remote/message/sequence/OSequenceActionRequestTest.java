@@ -17,6 +17,7 @@ package com.orientechnologies.orient.client.remote.message.sequence;
 
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
@@ -24,33 +25,33 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 /**
- *
  * @author marko
  */
 public class OSequenceActionRequestTest {
-  
+
   @Test
-  public void testSerializeDeserialize(){
+  public void testSerializeDeserialize() {
     OSequence.CreateParams params = new OSequence.CreateParams().setLimitValue(123l);
     OSequenceAction action = new OSequenceAction(OSequenceAction.CREATE, "testName", params, OSequence.SEQUENCE_TYPE.ORDERED);
     OSequenceActionRequest request = new OSequenceActionRequest(action);
     ByteArrayOutputStream arrayOutput = new ByteArrayOutputStream();
     DataOutput out = new DataOutputStream(arrayOutput);
-    try{
-      request.serialize(out);  
+    try {
+      request.serialize(out);
       arrayOutput.flush();
       byte[] bytes = arrayOutput.toByteArray();
       arrayOutput.close();
-      
+
       ByteArrayInputStream arrayInput = new ByteArrayInputStream(bytes);
       DataInput in = new DataInputStream(arrayInput);
       OSequenceActionRequest newRequest = new OSequenceActionRequest();
       newRequest.deserialize(in);
-      
+
       Assert.assertEquals(newRequest.getAction().getActionType(), action.getActionType());
       Assert.assertEquals(newRequest.getAction().getSequenceName(), action.getSequenceName());
       Assert.assertEquals(newRequest.getAction().getParameters().getCacheSize(), action.getParameters().getCacheSize());
@@ -60,10 +61,9 @@ public class OSequenceActionRequestTest {
       Assert.assertEquals(newRequest.getAction().getParameters().getRecyclable(), action.getParameters().getRecyclable());
       Assert.assertEquals(newRequest.getAction().getParameters().getStart(), action.getParameters().getStart());
       Assert.assertEquals(newRequest.getAction().getParameters().getCurrentValue(), action.getParameters().getCurrentValue());
-    }
-    catch (IOException exc){
+    } catch (IOException exc) {
       Assert.assertTrue(false);
     }
   }
-  
+
 }

@@ -27,9 +27,9 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
   OExpression start;
   OExpression increment;
   OExpression cache;
-  boolean positive = OSequence.DEFAULT_ORDER_TYPE == SequenceOrderType.ORDER_POSITIVE;
-  boolean cyclic   = OSequence.DEFAULT_RECYCLABLE_VALUE;
-  OExpression limitValue;  
+  boolean     positive = OSequence.DEFAULT_ORDER_TYPE == SequenceOrderType.ORDER_POSITIVE;
+  boolean     cyclic   = OSequence.DEFAULT_RECYCLABLE_VALUE;
+  OExpression limitValue;
 
   public OCreateSequenceStatement(int id) {
     super(id);
@@ -54,10 +54,9 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     result.setProperty("operation", "create sequence");
     result.setProperty("name", name.getStringValue());
 
-    try{
+    try {
       executeInternal(ctx, result);
-    }
-    catch (ExecutionException | InterruptedException exc){
+    } catch (ExecutionException | InterruptedException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
       OLogManager.instance().error(this, message, exc, (Object) null);
       throw new OCommandExecutionException(message);
@@ -68,7 +67,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     return rs;
   }
 
-  private void executeInternal(OCommandContext ctx, OResultInternal result) throws ExecutionException, InterruptedException{
+  private void executeInternal(OCommandContext ctx, OResultInternal result) throws ExecutionException, InterruptedException {
     OSequence.CreateParams params = createParams(ctx, result);
     OSequence.SEQUENCE_TYPE seqType = type == TYPE_CACHED ? OSequence.SEQUENCE_TYPE.CACHED : OSequence.SEQUENCE_TYPE.ORDERED;
     result.setProperty("type", seqType.toString());
@@ -113,7 +112,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
       } else {
         throw new OCommandExecutionException("Invalid limit value: " + o);
       }
-    }    
+    }
 
     params.setOrderType(positive ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.ORDER_NEGATIVE);
     result.setProperty("orderType", params.getOrderType().toString());
@@ -157,7 +156,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     if (limitValue != null) {
       builder.append(" LIMIT ");
       limitValue.toString(params, builder);
-    }    
+    }
     if (cyclic != OSequence.DEFAULT_RECYCLABLE_VALUE) {
       builder.append(" CYCLE ").append(Boolean.toString(cyclic).toUpperCase());
     }
@@ -177,7 +176,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     result.start = start == null ? null : start.copy();
     result.increment = increment == null ? null : increment.copy();
     result.cache = cache == null ? null : cache.copy();
-    result.limitValue = limitValue == null ? null : limitValue.copy();    
+    result.limitValue = limitValue == null ? null : limitValue.copy();
     result.cyclic = cyclic;
     result.positive = positive;
     return result;
@@ -205,7 +204,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     if (cache != null ? !cache.equals(that.cache) : that.cache != null)
       return false;
     if (limitValue != null ? !limitValue.equals(that.limitValue) : that.limitValue != null)
-      return false;    
+      return false;
     if (cyclic != that.cyclic) {
       return false;
     }
@@ -220,7 +219,7 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     result = 31 * result + (start != null ? start.hashCode() : 0);
     result = 31 * result + (increment != null ? increment.hashCode() : 0);
     result = 31 * result + (cache != null ? cache.hashCode() : 0);
-    result = 31 * result + (limitValue != null ? limitValue.hashCode() : 0);    
+    result = 31 * result + (limitValue != null ? limitValue.hashCode() : 0);
     result = 31 * result + Boolean.hashCode(cyclic);
     result = 31 * result + Boolean.hashCode(positive);
     return result;

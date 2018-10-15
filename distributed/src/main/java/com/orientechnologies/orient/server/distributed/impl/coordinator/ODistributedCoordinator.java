@@ -4,7 +4,10 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.transact
 
 import java.util.Map;
 import java.util.Timer;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class ODistributedCoordinator implements AutoCloseable {
 
@@ -73,11 +76,11 @@ public class ODistributedCoordinator implements AutoCloseable {
 
   }
 
-  protected void executeOperation(Runnable runnable) {
+  public void executeOperation(Runnable runnable) {
     requestExecutor.execute(runnable);
   }
 
-  protected void finish(OLogId requestId) {
+  public void finish(OLogId requestId) {
     contexts.remove(requestId);
   }
 

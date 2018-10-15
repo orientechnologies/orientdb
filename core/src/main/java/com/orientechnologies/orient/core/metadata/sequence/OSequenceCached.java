@@ -33,16 +33,16 @@ import java.util.concurrent.ExecutionException;
  * @since 3/3/2015
  */
 public class OSequenceCached extends OSequence {
-  private static final String FIELD_CACHE = "cache";
-  private long    cacheStart;
-  private long    cacheEnd;
-  private boolean firstCache;
-  private int     increment;
-  private Long limitValue = null;
-  private Long              startValue;
-  private SequenceOrderType orderType;
-  private boolean           recyclable;
-  private String name = null;
+  private static final String            FIELD_CACHE = "cache";
+  private              long              cacheStart;
+  private              long              cacheEnd;
+  private              boolean           firstCache;
+  private              int               increment;
+  private              Long              limitValue  = null;
+  private              Long              startValue;
+  private              SequenceOrderType orderType;
+  private              boolean           recyclable;
+  private              String            name        = null;
 
   private Set<Long> generated = new HashSet<>();
   
@@ -57,7 +57,7 @@ public class OSequenceCached extends OSequence {
   public OSequenceCached(final ODocument iDocument, OSequence.CreateParams params) {
     super(iDocument, params);
     //this is extension of initSequence
-    if (iDocument == null){
+    if (iDocument == null) {
       if (params == null) {
         params = new CreateParams().setDefaults();
       }
@@ -72,19 +72,20 @@ public class OSequenceCached extends OSequence {
   }
 
   @Override
-  public synchronized boolean updateParams(OSequence.CreateParams params, boolean executeViaDistributed) throws ExecutionException, InterruptedException{
+  public synchronized boolean updateParams(OSequence.CreateParams params, boolean executeViaDistributed)
+      throws ExecutionException, InterruptedException {
     boolean any = super.updateParams(params, executeViaDistributed);
-    if (!executeViaDistributed){
+    if (!executeViaDistributed) {
       if (params.cacheSize != null && this.getCacheSize() != params.cacheSize) {
         this.setCacheSize(params.cacheSize);
         any = true;
-      }            
-      
+      }
+
       firstCache = true;
       save();
-    }    
+    }
     return any;
-  }  
+  }
 
   private void doRecycle() {
     if (recyclable) {
@@ -107,56 +108,55 @@ public class OSequenceCached extends OSequence {
     }
   }
 
-  private boolean signalToAllocateCache(){
+  private boolean signalToAllocateCache() {
     if (orderType == SequenceOrderType.ORDER_POSITIVE) {
-      if (cacheStart + increment > cacheEnd && !(limitValue != null && cacheStart + increment > limitValue)){
+      if (cacheStart + increment > cacheEnd && !(limitValue != null && cacheStart + increment > limitValue)) {
         return true;
       }
-    }
-    else{
+    } else {
       if (cacheStart - increment < cacheEnd && !(limitValue != null && cacheStart - increment < limitValue)) {
         return true;
       }
     }
     return false;
   }
-  
-  private <T> T sendSequenceActionSetAndNext(long value) throws ExecutionException, InterruptedException{    
+
+  private <T> T sendSequenceActionSetAndNext(long value) throws ExecutionException, InterruptedException {
     OSequenceAction action = new OSequenceAction(getName(), value);
-    return getDocument().getDatabase().sendSequenceAction(action);    
+    return getDocument().getDatabase().sendSequenceAction(action);
   }
-  
+
   //want to be atomic
   //first set new current value then call next
-  public long nextWithNewCurrentValue(long currentValue, boolean executeViaDistributed) throws OSequenceLimitReachedException, ExecutionException, InterruptedException{
-    if (!executeViaDistributed){
+  public long nextWithNewCurrentValue(long currentValue, boolean executeViaDistributed)
+      throws OSequenceLimitReachedException, ExecutionException, InterruptedException {
+    if (!executeViaDistributed) {
       //we don't want synchronization on whole method, because called with executeViaDistributed == true
       //will later call nextWithNewCurrentValue with parameter executeViaDistributed == false
       //and that will cause deadlock
-      synchronized(this){
+      synchronized (this) {
         cacheStart = currentValue;
         return nextWork();
       }
-    }
-    else{
+    } else {
       return sendSequenceActionSetAndNext(currentValue);
     }
   }
-  
+
   @Override
-  protected boolean shouldGoOverDistrtibute(){
+  protected boolean shouldGoOverDistrtibute() {
     return isOnDistributted() && (replicationProtocolVersion == 2) && signalToAllocateCache();
   }
-  
+
   @Override
-  public long next() throws OSequenceLimitReachedException, ExecutionException, InterruptedException{
+  public long next() throws OSequenceLimitReachedException, ExecutionException, InterruptedException {
     boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
-    if (shouldGoOverDistributted){
+    if (shouldGoOverDistributted) {
       return nextWithNewCurrentValue(cacheStart, true);
     }
     return nextWork();
   }
-  
+
   @Override
   public long nextWork() throws OSequenceLimitReachedException {           
     return callRetry(signalToAllocateCache() || getCrucialValueChanged(), new Callable<Long>() {
@@ -289,6 +289,6 @@ public class OSequenceCached extends OSequence {
       this.cacheEnd = newValue + 1;
     }
     firstCache = false;
-  }   
+  }
 
 }

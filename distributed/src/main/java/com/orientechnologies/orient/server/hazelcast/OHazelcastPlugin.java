@@ -57,9 +57,6 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.impl.*;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedCoordinator;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.OLoopBackDistributeMember;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.network.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
@@ -1859,6 +1856,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       return new OOperationRequest(coordinateMessagesFactory);
     case DISTRIBUTED_OPERATION_RESPONSE:
       return new OOperationResponse(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST:
+      return new ONetworkStructuralSubmitRequest(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE:
+      return new ONetworkStructuralSubmitResponse(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST:
+      return new OStructuralOperationRequest(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE:
+      return new OStructuralOperationResponse(coordinateMessagesFactory);
     }
     return null;
   }
