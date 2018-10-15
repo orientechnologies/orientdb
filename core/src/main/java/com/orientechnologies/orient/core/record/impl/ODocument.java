@@ -3060,7 +3060,13 @@ public class ODocument extends ORecordAbstract
       ODocumentEntry entry = _fields != null ? _fields.get(prop.getName()) : null;
       if (entry != null && entry.exist()) {
         if (entry.type == null || entry.type != prop.getType()) {
+          boolean preChanged = entry.changed;
+          boolean preCreated = entry.created;;
           field(prop.getName(), entry.value, prop.getType());
+          if(_recordId.isNew()){
+            entry.changed = preChanged;
+            entry.created = preCreated;
+          }
         }
       } else {
         String defValue = prop.getDefaultValue();
