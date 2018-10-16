@@ -477,8 +477,7 @@ public abstract class OSequence {
     boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
     return next(shouldGoOverDistributted);
   }
-
-  //TODO hide this for regular user
+  
   long next(boolean executeViaDistributed) throws OSequenceLimitReachedException, ODatabaseException {
     long retVal;
     if (executeViaDistributed) {

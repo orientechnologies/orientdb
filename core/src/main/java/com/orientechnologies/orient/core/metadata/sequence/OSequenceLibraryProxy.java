@@ -57,7 +57,7 @@ public class OSequenceLibraryProxy extends OSequenceLibraryAbstract {
   @Override
   public OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params)
       throws ExecutionException, InterruptedException {
-    boolean shouldGoOverDistributted = database.isDistributed() && (replicationProtocolVersion > 1);
+    boolean shouldGoOverDistributted = database.isDistributed() && (replicationProtocolVersion == 2);
     return createSequence(iName, sequenceType, params, shouldGoOverDistributted);
   }
 
@@ -82,7 +82,7 @@ public class OSequenceLibraryProxy extends OSequenceLibraryAbstract {
   @Override
   @Deprecated
   public void dropSequence(String iName) throws ODatabaseException {
-    boolean shouldGoOverDistributted = database.isDistributed() && (replicationProtocolVersion > 1);
+    boolean shouldGoOverDistributted = database.isDistributed() && (replicationProtocolVersion == 2);
     dropSequence(iName, shouldGoOverDistributted);
   }
 
