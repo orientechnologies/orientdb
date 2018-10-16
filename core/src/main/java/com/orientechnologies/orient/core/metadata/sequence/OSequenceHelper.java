@@ -71,7 +71,7 @@ public class OSequenceHelper {
       ((OSequenceLibraryAbstract)sequenceLibary).dropSequence(name, false);
     }
     else{
-      throw new ODatabaseException("Sequence library invalid class: " + sequenceLibary.getClass().getName());
+      throw new ODatabaseException("Sequence library invalid class: " + sequenceLibary.getClass().getName() + ". Sequnce library should implement be derived form OSequenceLibraryAbstract");
     }
   }
   
@@ -80,7 +80,7 @@ public class OSequenceHelper {
       return ((OSequenceLibraryAbstract)sequenceLibary).createSequence(sequenceName, sequenceType, params, false);
     }
     else{
-      throw new ODatabaseException("Sequence library invalid class: " + sequenceLibary.getClass().getName());
+      throw new ODatabaseException("Sequence library invalid class: " + sequenceLibary.getClass().getName() + ". Sequnce library should implement be derived form OSequenceLibraryAbstract");
     }
   }
 }
