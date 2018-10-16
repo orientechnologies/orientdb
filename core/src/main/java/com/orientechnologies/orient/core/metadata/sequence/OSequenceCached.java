@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -67,10 +68,10 @@ public class OSequenceCached extends OSequence {
       cacheStart = cacheEnd = getValue(iDocument);
     }
   }
-
+  
   @Override
-  public synchronized boolean updateParams(OSequence.CreateParams params, boolean executeViaDistributed)
-      throws ExecutionException, InterruptedException {
+  synchronized boolean updateParams(OSequence.CreateParams params, boolean executeViaDistributed)
+      throws ODatabaseException {
     boolean any = super.updateParams(params, executeViaDistributed);
     if (!executeViaDistributed) {
       if (params.cacheSize != null && this.getCacheSize() != params.cacheSize) {
