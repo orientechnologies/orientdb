@@ -151,8 +151,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void create(String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
-    if (isDistributedVersionTwo()) {
-
+    //if (isDistributedVersionTwo()) {
+    if (false) {
       //This initialize the distributed configuration.
       plugin.getDatabaseConfiguration(name);
       checkCoordinator(name);
