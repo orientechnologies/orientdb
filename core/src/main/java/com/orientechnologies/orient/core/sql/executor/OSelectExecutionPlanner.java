@@ -1527,6 +1527,9 @@ public class OSelectExecutionPlanner {
           OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
           subPlan.chain(step);
           if (!block.getSubBlocks().isEmpty()) {
+            if ((info.perRecordLetClause != null && refersToLet(block.getSubBlocks()))) {
+              handleLet(subPlan, info, ctx, profilingEnabled);
+            }
             subPlan.chain(new FilterStep(createWhereFrom(block), ctx, profilingEnabled));
           }
           resultSubPlans.add(subPlan);
@@ -1573,6 +1576,9 @@ public class OSelectExecutionPlanner {
           plan.chain(step);
           plan.chain(new FilterByClustersStep(filterClusters, ctx, profilingEnabled));
           if (!block.getSubBlocks().isEmpty()) {
+            if ((info.perRecordLetClause != null && refersToLet(block.getSubBlocks()))) {
+              handleLet(plan, info, ctx, profilingEnabled);
+            }
             plan.chain(new FilterStep(createWhereFrom(block), ctx, profilingEnabled));
           }
         } else {
