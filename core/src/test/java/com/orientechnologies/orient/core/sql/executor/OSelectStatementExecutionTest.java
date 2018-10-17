@@ -3778,4 +3778,22 @@ public class OSelectStatementExecutionTest {
       Assert.assertTrue(result.getExecutionPlan().get().getSteps().stream().anyMatch(x -> x instanceof FetchFromIndexStep));
     }
   }
+
+  @Test
+  public void testListOfMapsContains() {
+    String className = "testListOfMapsContains";
+
+    OClass clazz1 = db.createClassIfNotExist(className);
+    OProperty prop = clazz1.createProperty("thelist", OType.EMBEDDEDLIST, OType.EMBEDDEDMAP);
+
+    db.command("INSERT INTO "+className+" SET thelist = [{name:\"Jack\"}]").close();
+    db.command("INSERT INTO "+className+" SET thelist = [{name:\"Joe\"}]").close();
+
+
+    try (OResultSet result = db.query("select from " + className + " where thelist CONTAINS ( name = ?)", "Jack")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+  }
 }
