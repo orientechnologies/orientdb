@@ -56,22 +56,21 @@ public class OSequenceLibraryProxy extends OSequenceLibraryAbstract {
 
   @Override
   public OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params)
-      throws ExecutionException, InterruptedException {
+      throws ODatabaseException {
     boolean shouldGoOverDistributted = database.isDistributed() && (replicationProtocolVersion == 2);
     return createSequence(iName, sequenceType, params, shouldGoOverDistributted);
   }
 
   @Override
-  OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params,
-      boolean executeViaDistributed) throws ODatabaseException {
+  OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params, boolean executeViaDistributed)
+      throws ODatabaseException {
     if (executeViaDistributed) {
       OSequenceAction action = new OSequenceAction(OSequenceAction.CREATE, iName, params, sequenceType);
-      try{
+      try {
         String sequenceName = database.sendSequenceAction(action);
         return delegate.getSequence(database, sequenceName);
-      }
-      catch (InterruptedException | ExecutionException exc){
-        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[])null);
+      } catch (InterruptedException | ExecutionException exc) {
+        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
     } else {
@@ -90,11 +89,10 @@ public class OSequenceLibraryProxy extends OSequenceLibraryAbstract {
   void dropSequence(String iName, boolean executeViaDistributed) throws ODatabaseException {
     if (executeViaDistributed) {
       OSequenceAction action = new OSequenceAction(OSequenceAction.REMOVE, iName, null, null);
-      try{
+      try {
         database.sendSequenceAction(action);
-      }
-      catch (InterruptedException | ExecutionException exc){
-        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[])null);
+      } catch (InterruptedException | ExecutionException exc) {
+        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
     } else {

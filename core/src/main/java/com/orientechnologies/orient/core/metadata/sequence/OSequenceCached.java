@@ -33,16 +33,16 @@ import java.util.concurrent.ExecutionException;
  * @since 3/3/2015
  */
 public class OSequenceCached extends OSequence {
-  private static final String            FIELD_CACHE = "cache";
-  private              long              cacheStart;
-  private              long              cacheEnd;
-  private              boolean           firstCache;
-  private              int               increment;
-  private              Long              limitValue  = null;
-  private              Long              startValue;
-  private              SequenceOrderType orderType;
-  private              boolean           recyclable;
-  private              String            name        = null;
+  private static final String FIELD_CACHE = "cache";
+  private long    cacheStart;
+  private long    cacheEnd;
+  private boolean firstCache;
+  private int     increment;
+  private Long limitValue = null;
+  private Long              startValue;
+  private SequenceOrderType orderType;
+  private boolean           recyclable;
+  private String name = null;
 
   public OSequenceCached() {
     this(null, null);
@@ -68,10 +68,9 @@ public class OSequenceCached extends OSequence {
       cacheStart = cacheEnd = getValue(iDocument);
     }
   }
-  
+
   @Override
-  synchronized boolean updateParams(OSequence.CreateParams params, boolean executeViaDistributed)
-      throws ODatabaseException {
+  synchronized boolean updateParams(OSequence.CreateParams params, boolean executeViaDistributed) throws ODatabaseException {
     boolean any = super.updateParams(params, executeViaDistributed);
     if (!executeViaDistributed) {
       if (params.cacheSize != null && this.getCacheSize() != params.cacheSize) {
@@ -126,8 +125,8 @@ public class OSequenceCached extends OSequence {
 
   //want to be atomic
   //first set new current value then call next
-  public long nextWithNewCurrentValue(long currentValue, boolean executeViaDistributed)
-      throws OSequenceLimitReachedException, ExecutionException, InterruptedException {
+  protected long nextWithNewCurrentValue(long currentValue, boolean executeViaDistributed)
+      throws OSequenceLimitReachedException, ODatabaseException {
     if (!executeViaDistributed) {
       //we don't want synchronization on whole method, because called with executeViaDistributed == true
       //will later call nextWithNewCurrentValue with parameter executeViaDistributed == false
@@ -137,7 +136,13 @@ public class OSequenceCached extends OSequence {
         return nextWork();
       }
     } else {
-      return sendSequenceActionSetAndNext(currentValue);
+      try{
+        return sendSequenceActionSetAndNext(currentValue);
+      }
+      catch (InterruptedException | ExecutionException exc){
+        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
+        throw new ODatabaseException(exc.getMessage());
+      }
     }
   }
 
@@ -147,10 +152,10 @@ public class OSequenceCached extends OSequence {
   }
 
   @Override
-  public long next() throws OSequenceLimitReachedException, ExecutionException, InterruptedException {
+  public long next() throws OSequenceLimitReachedException, ODatabaseException {
     boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
-    if (shouldGoOverDistributted) {
-      return nextWithNewCurrentValue(cacheStart, true);
+    if (shouldGoOverDistributted) {      
+      return nextWithNewCurrentValue(cacheStart, true);      
     }
     return nextWork();
   }

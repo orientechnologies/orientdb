@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.SequenceOrderType;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
@@ -15,7 +16,6 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 
 public class OAlterSequenceStatement extends ODDLStatement {
   OIdentifier name;
@@ -92,7 +92,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
 
     try {
       sequence.updateParams(params);
-    } catch (ExecutionException | InterruptedException exc) {
+    } catch (ODatabaseException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
       OLogManager.instance().error(this, message, exc, (Object) null);
       throw new OCommandExecutionException(message);

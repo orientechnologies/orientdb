@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 
 import java.util.concurrent.ExecutionException;
@@ -35,7 +35,7 @@ public class OAlterSequenceStatementExecutionTest {
     try {
       db.getMetadata().getSequenceLibrary()
           .createSequence(sequenceName, OSequence.SEQUENCE_TYPE.ORDERED, new OSequence.CreateParams());
-    } catch (ExecutionException | InterruptedException exc) {
+    } catch (ODatabaseException exc) {
       Assert.assertTrue("Failed to create sequence", false);
     }
 
@@ -50,7 +50,7 @@ public class OAlterSequenceStatementExecutionTest {
     Assert.assertNotNull(seq);
     try {
       Assert.assertEquals(20, seq.next());
-    } catch (ExecutionException | InterruptedException exc) {
+    } catch (ODatabaseException exc) {
       Assert.assertTrue("Failed to call next", false);
     }
   }

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -87,7 +88,7 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
     OSequence seq = null;
     try {
       seq = sequenceManager.createSequence("seqSQLOrdered", OSequence.SEQUENCE_TYPE.ORDERED, null);
-    } catch (ExecutionException | InterruptedException exc) {
+    } catch (ODatabaseException exc) {
       Assert.assertTrue(false, "Unable to create sequence");
     }
 
@@ -96,7 +97,7 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
       sequenceManager.createSequence("seqSQLOrdered", OSequence.SEQUENCE_TYPE.ORDERED, null);
     } catch (OSequenceException se) {
       err = se;
-    } catch (ExecutionException | InterruptedException exc) {
+    } catch (ODatabaseException exc) {
       Assert.assertTrue(false, "Unable to create sequence");
     }
 
@@ -111,7 +112,7 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
     //
     try {
       seq.updateParams(new OSequence.CreateParams().setStart(SECOND_START).setCacheSize(13));
-    } catch (ExecutionException | InterruptedException exc) {
+    } catch (ODatabaseException exc) {
       Assert.assertTrue(false, "Unable to update paramas");
     }
     testUsage(seq, SECOND_START);

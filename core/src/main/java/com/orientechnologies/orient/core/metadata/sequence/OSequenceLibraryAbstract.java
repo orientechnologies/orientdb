@@ -20,18 +20,17 @@ import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
- *
  * @author mdjurovi
  */
-public abstract class OSequenceLibraryAbstract extends OProxedResource<OSequenceLibraryImpl> implements OSequenceLibrary{
-  
+public abstract class OSequenceLibraryAbstract extends OProxedResource<OSequenceLibraryImpl> implements OSequenceLibrary {
+
   public OSequenceLibraryAbstract(final OSequenceLibraryImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
-  
+
   abstract void dropSequence(String iName, boolean executeViaDistributed) throws ODatabaseException;
-  
-  abstract OSequence createSequence(String iName, OSequence.SEQUENCE_TYPE sequenceType, OSequence.CreateParams params, boolean executeViaDistributed)
-      throws ODatabaseException;
-  
+
+  abstract OSequence createSequence(String iName, OSequence.SEQUENCE_TYPE sequenceType, OSequence.CreateParams params,
+      boolean executeViaDistributed) throws ODatabaseException;
+
 }

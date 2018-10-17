@@ -78,14 +78,15 @@ public class OSequenceActionNodeRequest implements ONodeRequest {
       Object result = null;
       switch (actionType) {
       case OSequenceAction.CREATE:
-        OSequence sequence = OSequenceHelper.createSequenceOnLocal(sequences, sequenceName, action.getSequenceType(), action.getParameters());
+        OSequence sequence = OSequenceHelper
+            .createSequenceOnLocal(sequences, sequenceName, action.getSequenceType(), action.getParameters());
         if (sequence == null) {
           throw new ODatabaseException("Faled to create sequence: " + sequenceName);
         }
         result = sequence.getName();
         break;
       case OSequenceAction.REMOVE:
-        OSequenceHelper.dropLocalSequence(sequences, sequenceName);        
+        OSequenceHelper.dropLocalSequence(sequences, sequenceName);
         result = sequenceName;
         break;
       case OSequenceAction.CURRENT:
@@ -101,9 +102,9 @@ public class OSequenceActionNodeRequest implements ONodeRequest {
         result = OSequenceHelper.updateParamsOnLocal(action.getParameters(), targetSequence);
         break;
       case OSequenceAction.SET_NEXT:
-        if (targetSequence.getSequenceType() == OSequence.SEQUENCE_TYPE.CACHED) {
+        if (targetSequence != null && targetSequence.getSequenceType() == OSequence.SEQUENCE_TYPE.CACHED) {
           OSequenceCached cached = (OSequenceCached) targetSequence;
-          result = cached.nextWithNewCurrentValue(action.getCurrentValue(), false);
+          result = OSequenceHelper.sequenceNextWithNewCurrentValueOnLocal(cached, action.getCurrentValue());          
         } else {
           throw new RuntimeException("Action SET_NEXT is reserved only for CACHED sequences");
         }
@@ -118,7 +119,7 @@ public class OSequenceActionNodeRequest implements ONodeRequest {
       return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.SUCCESS, null, result);
     } catch (OSequenceLimitReachedException e) {
       return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.LIMIT_REACHED, null, null);
-    } catch (RuntimeException | ExecutionException | InterruptedException exc) {
+    } catch (RuntimeException exc) {
       OLogManager.instance().error(this, "Can not execute sequence action: " + actionType, exc, (Object) null);
       return new OSequenceActionNodeResponse(OSequenceActionNodeResponse.Type.ERROR, exc.getMessage(), null);
     }

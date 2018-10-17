@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.sequence;
 
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
 
 import java.util.Set;
@@ -33,12 +34,11 @@ public interface OSequenceLibrary {
 
   int getSequenceCount();
 
-  OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params)
-      throws ExecutionException, InterruptedException;  
+  OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params) throws ODatabaseException;
 
   OSequence getSequence(String iName);
 
-  void dropSequence(String iName) throws ExecutionException, InterruptedException;  
+  void dropSequence(String iName) throws ODatabaseException;
 
   @Deprecated
   void create();

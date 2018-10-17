@@ -20,11 +20,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
-import java.util.concurrent.ExecutionException;
 
 /**
  * Reset a sequence. It returns the first sequence number after reset.
@@ -55,7 +55,7 @@ public class OSQLMethodReset extends OAbstractSQLMethod {
 
     try {
       return ((OSequence) iThis).reset();
-    } catch (ExecutionException | InterruptedException exc) {
+    } catch (ODatabaseException exc) {
       String message = "Unable to execute command: " + exc.getMessage();
       OLogManager.instance().error(this, message, exc, (Object) null);
       throw new OCommandExecutionException(message);
