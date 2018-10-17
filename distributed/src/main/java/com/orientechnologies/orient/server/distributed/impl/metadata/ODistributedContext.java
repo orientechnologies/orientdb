@@ -20,6 +20,7 @@ public class ODistributedContext {
   private ODistributedExecutor                          executor;
   private OSubmitContext                                submitContext;
   private ODistributedCoordinator                       coordinator;
+  private OClusterPositionAllocatorDatabase             allocator;
   private OrientDBInternal                              context;
   private String                                        databaseName;
   private OOperationLog                                 opLog;
@@ -66,8 +67,9 @@ public class ODistributedContext {
 
   public synchronized void makeCoordinator(String nodeName, OSharedContext context) {
     if (coordinator == null) {
+      allocator = new OClusterPositionAllocatorDatabase(context);
       coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), opLog, new ODistributedLockManagerImpl(0),
-          new OClusterPositionAllocatorDatabase(context));
+          allocator);
       OLoopBackDistributeMember loopBack = new OLoopBackDistributeMember(nodeName, databaseName, submitContext, coordinator,
           executor);
       coordinator.join(loopBack);
@@ -81,14 +83,22 @@ public class ODistributedContext {
     if (coordinator != null) {
       coordinator.close();
       coordinator = null;
+      allocator = null;
     }
     submitContext.setCoordinator(lockManager);
     executor.join(lockManager);
   }
 
   public synchronized void close() {
-    if (coordinator != null)
+    if (coordinator != null) {
       coordinator.close();
+    }
     executor.close();
+  }
+
+  public synchronized void reload() {
+    if (allocator != null) {
+      allocator.reload();
+    }
   }
 }

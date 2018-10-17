@@ -108,6 +108,7 @@ public class OSharedContextDistributed extends OSharedContext {
       sequenceLibrary.load(database);
       commandCache.clear();
       scheduler.load(database);
+      distributedContext.reload();
       return null;
     });
   }
