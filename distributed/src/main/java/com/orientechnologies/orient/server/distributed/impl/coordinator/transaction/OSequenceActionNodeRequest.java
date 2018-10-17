@@ -18,9 +18,11 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.transac
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.message.sequence.OSequenceActionRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceCached;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceHelper;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLimitReachedException;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
@@ -70,33 +72,33 @@ public class OSequenceActionNodeRequest implements ONodeRequest {
       if (actionType != OSequenceAction.CREATE) {
         targetSequence = sequences.getSequence(sequenceName);
         if (targetSequence == null) {
-          throw new RuntimeException("Sequence with name: " + sequenceName + " doesn't exists");
+          throw new ODatabaseException("Sequence with name: " + sequenceName + " doesn't exists");
         }
       }
       Object result = null;
       switch (actionType) {
       case OSequenceAction.CREATE:
-        OSequence sequence = sequences.createSequence(sequenceName, action.getSequenceType(), action.getParameters(), false);
+        OSequence sequence = OSequenceHelper.createSequenceOnLocal(sequences, sequenceName, action.getSequenceType(), action.getParameters());
         if (sequence == null) {
-          throw new RuntimeException("Faled to create sequence: " + sequenceName);
+          throw new ODatabaseException("Faled to create sequence: " + sequenceName);
         }
         result = sequence.getName();
         break;
       case OSequenceAction.REMOVE:
-        sequences.dropSequence(sequenceName, false);
+        OSequenceHelper.dropLocalSequence(sequences, sequenceName);        
         result = sequenceName;
         break;
       case OSequenceAction.CURRENT:
-        result = targetSequence.current(false);
+        result = OSequenceHelper.sequenceCurrentOnLocal(targetSequence);
         break;
       case OSequenceAction.NEXT:
-        result = targetSequence.next(false);
+        result = OSequenceHelper.sequenceNextOnLocal(targetSequence);
         break;
       case OSequenceAction.RESET:
-        result = targetSequence.reset(false);
+        result = OSequenceHelper.resetSequenceOnLocal(targetSequence);
         break;
       case OSequenceAction.UPDATE:
-        result = targetSequence.updateParams(action.getParameters(), false);
+        result = OSequenceHelper.updateParamsOnLocal(action.getParameters(), targetSequence);
         break;
       case OSequenceAction.SET_NEXT:
         if (targetSequence.getSequenceType() == OSequence.SEQUENCE_TYPE.CACHED) {

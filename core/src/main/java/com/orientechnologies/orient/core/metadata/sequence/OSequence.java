@@ -20,10 +20,12 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -282,10 +284,16 @@ public abstract class OSequence {
     return document.getDatabase().isDistributed();
   }
 
-  public synchronized boolean updateParams(CreateParams params, boolean executeViaDistributed)
-      throws ExecutionException, InterruptedException {
+  synchronized boolean updateParams(CreateParams params, boolean executeViaDistributed)
+      throws ODatabaseException {
     if (executeViaDistributed) {
-      return sendSequenceActionOverCluster(OSequenceAction.UPDATE, params);
+      try{
+        return sendSequenceActionOverCluster(OSequenceAction.UPDATE, params);
+      }
+      catch (InterruptedException | ExecutionException exc){
+        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[])null);
+        throw new ODatabaseException(exc.getMessage());
+      }
     }
     boolean any = false;
 
@@ -452,12 +460,17 @@ public abstract class OSequence {
     boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
     return next(shouldGoOverDistributted);
   }
-
-  //TODO hide this for regular user
-  public long next(boolean executeViaDistributed) throws OSequenceLimitReachedException, ExecutionException, InterruptedException {
+  
+  long next(boolean executeViaDistributed) throws OSequenceLimitReachedException, ODatabaseException {
     long retVal;
     if (executeViaDistributed) {
-      retVal = sendSequenceActionOverCluster(OSequenceAction.NEXT, null);
+      try{
+        retVal = sendSequenceActionOverCluster(OSequenceAction.NEXT, null);
+      }
+      catch (InterruptedException | ExecutionException exc){
+        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[])null);
+        throw new ODatabaseException(exc.getMessage());
+      }
     } else {
       retVal = nextWork();
     }
@@ -471,15 +484,21 @@ public abstract class OSequence {
    */
   @OApi
   public long current() throws ExecutionException, InterruptedException {
-    boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
-    return current(shouldGoOverDistributted);
+    //boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
+    //current should never go through distributed
+    return current(false);
   }
-
-  @OApi
-  public long current(boolean executeViaDistributed) throws ExecutionException, InterruptedException {
+  
+  long current(boolean executeViaDistributed) throws ODatabaseException {
     long retVal;
     if (executeViaDistributed) {
-      retVal = sendSequenceActionOverCluster(OSequenceAction.CURRENT, null);
+      try{
+        retVal = sendSequenceActionOverCluster(OSequenceAction.CURRENT, null);
+      }
+      catch (InterruptedException | ExecutionException exc){
+        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[])null);
+        throw new ODatabaseException(exc.getMessage());
+      }
     } else {
       retVal = currentWork();
     }
@@ -495,12 +514,17 @@ public abstract class OSequence {
 
   /*
    * Resets the sequence value to it's initialized value.
-   */
-  @OApi
-  public long reset(boolean executeViaDistributed) throws ExecutionException, InterruptedException {
+   */ 
+  long reset(boolean executeViaDistributed) throws ODatabaseException {
     long retVal;
     if (executeViaDistributed) {
-      retVal = sendSequenceActionOverCluster(OSequenceAction.RESET, null);
+      try{
+        retVal = sendSequenceActionOverCluster(OSequenceAction.RESET, null);
+      }
+      catch (InterruptedException | ExecutionException exc){
+        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[])null);
+        throw new ODatabaseException(exc.getMessage());
+      }
     } else {
       retVal = resetWork();
     }

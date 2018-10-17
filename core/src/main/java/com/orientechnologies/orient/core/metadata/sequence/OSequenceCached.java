@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.HashSet;
@@ -44,7 +45,7 @@ public class OSequenceCached extends OSequence {
   private              boolean           recyclable;
   private              String            name        = null;
 
-  private Set<Long> generated = new HashSet<>();
+  private final Set<Long> generated = new HashSet<>();
   
   public OSequenceCached() {
     this(null, null);
@@ -70,10 +71,10 @@ public class OSequenceCached extends OSequence {
       cacheStart = cacheEnd = getValue(iDocument);
     }
   }
-
+  
   @Override
-  public synchronized boolean updateParams(OSequence.CreateParams params, boolean executeViaDistributed)
-      throws ExecutionException, InterruptedException {
+  synchronized boolean updateParams(OSequence.CreateParams params, boolean executeViaDistributed)
+      throws ODatabaseException {
     boolean any = super.updateParams(params, executeViaDistributed);
     if (!executeViaDistributed) {
       if (params.cacheSize != null && this.getCacheSize() != params.cacheSize) {
