@@ -3772,7 +3772,8 @@ public class OSelectStatementExecutionTest {
       elem1.save();
     }
 
-    try (OResultSet result = db.query("select from " + className + " where themap CONTAINSKEY ? AND thestring = ?", "key10", "thestring10")) {
+    try (OResultSet result = db
+        .query("select from " + className + " where themap CONTAINSKEY ? AND thestring = ?", "key10", "thestring10")) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Map<String, Object> map = item.getProperty("themap");
@@ -3816,13 +3817,35 @@ public class OSelectStatementExecutionTest {
     OClass clazz1 = db.createClassIfNotExist(className);
     OProperty prop = clazz1.createProperty("thelist", OType.EMBEDDEDLIST, OType.EMBEDDEDMAP);
 
-    db.command("INSERT INTO "+className+" SET thelist = [{name:\"Jack\"}]").close();
-    db.command("INSERT INTO "+className+" SET thelist = [{name:\"Joe\"}]").close();
-
+    db.command("INSERT INTO " + className + " SET thelist = [{name:\"Jack\"}]").close();
+    db.command("INSERT INTO " + className + " SET thelist = [{name:\"Joe\"}]").close();
 
     try (OResultSet result = db.query("select from " + className + " where thelist CONTAINS ( name = ?)", "Jack")) {
       Assert.assertTrue(result.hasNext());
       result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+  }
+
+  @Test
+  public void testOrderByWithCollate() {
+    String className = "testOrderByWithCollate";
+
+    OClass clazz1 = db.createClassIfNotExist(className);
+
+    db.command("INSERT INTO " + className + " SET name = 'A', idx = 0").close();
+    db.command("INSERT INTO " + className + " SET name = 'C', idx = 2").close();
+    db.command("INSERT INTO " + className + " SET name = 'E', idx = 4").close();
+    db.command("INSERT INTO " + className + " SET name = 'b', idx = 1").close();
+    db.command("INSERT INTO " + className + " SET name = 'd', idx = 3").close();
+
+    try (OResultSet result = db.query("select from " + className + " order by name asc collate ci")) {
+      for (int i = 0; i < 5; i++) {
+        Assert.assertTrue(result.hasNext());
+        OResult item = result.next();
+        int val = item.getProperty("idx");
+        Assert.assertEquals(i, val);
+      }
       Assert.assertFalse(result.hasNext());
     }
   }

@@ -791,6 +791,15 @@ public class OSelectStatementTest {
     checkWrongSyntax("select from V WHERE foo CONTAINSANY ");
   }
 
+  @Test
+  public void testOrderByCollate() {
+    checkRightSyntax("select from V order by foo asc collate ci");
+    checkRightSyntax("select from V order by foo asc collate ci, bar desc collate ci");
+    checkRightSyntax("select from V order by foo collate ci, bar collate ci");
+    checkWrongSyntax("select from V order by foo collate ");
+    checkWrongSyntax("select from V order by foo asc collate ");
+  }
+
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());
     OrientSql osql = new OrientSql(is);
