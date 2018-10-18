@@ -246,4 +246,8 @@ public class OOrderByItem {
     result = 31 * result + (collate != null ? collate.hashCode() : 0);
     return result;
   }
+
+  public OExpression getCollate() {
+    return collate;
+  }
 }
