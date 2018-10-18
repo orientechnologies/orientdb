@@ -3250,6 +3250,7 @@ OOrderBy OrderBy():
                 )
             )
             [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+            [ <COLLATE> lastItem.collate = Expression() ]
         )
         |
         (
@@ -3271,6 +3272,7 @@ OOrderBy OrderBy():
                 )
             )
             [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+            [ <COLLATE> lastItem.collate = Expression() ]
             <RPAREN>
         )
 	)
@@ -3295,6 +3297,7 @@ OOrderBy OrderBy():
                     )
                 )
                 [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+                [ <COLLATE> lastItem.collate = Expression() ]
             )
             |
             (
@@ -3316,6 +3319,7 @@ OOrderBy OrderBy():
                     )
                 )
                 [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+                [ <COLLATE> lastItem.collate = Expression() ]
                 <RPAREN>
             )
         )
