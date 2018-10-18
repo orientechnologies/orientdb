@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
@@ -12,7 +13,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Locale;
-import java.util.concurrent.ExecutionException;
 
 import org.junit.Assert;
 
@@ -83,7 +83,7 @@ public class ODatabaseMetadataUpdateListener {
   public void testSequenceUpdate() {
     try {
       session.getMetadata().getSequenceLibrary().createSequence("sequence1", OSequence.SEQUENCE_TYPE.ORDERED, null);
-    } catch (ExecutionException | InterruptedException exc) {
+    } catch (ODatabaseException exc) {
       Assert.assertTrue("Failed to create sequence", false);
     }
     assertEquals(count, 1);

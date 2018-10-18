@@ -1,12 +1,11 @@
-  package com.orientechnologies.orient.core.sql.executor;
+package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
-
-import java.util.concurrent.ExecutionException;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -35,7 +34,7 @@ public class ODropSequenceStatementExecutionTest {
     String name = "testPlain";
     try {
       db.getMetadata().getSequenceLibrary().createSequence(name, OSequence.SEQUENCE_TYPE.CACHED, new OSequence.CreateParams());
-    } catch (ExecutionException | InterruptedException exc) {
+    } catch (ODatabaseException exc) {
       Assert.assertTrue("Creating sequence failed", false);
     }
 
@@ -76,7 +75,7 @@ public class ODropSequenceStatementExecutionTest {
 
     try {
       db.getMetadata().getSequenceLibrary().createSequence(name, OSequence.SEQUENCE_TYPE.CACHED, new OSequence.CreateParams());
-    } catch (ExecutionException | InterruptedException exc) {
+    } catch (ODatabaseException exc) {
       Assert.assertTrue("Creating sequence failed", false);
     }
 

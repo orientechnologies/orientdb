@@ -275,7 +275,7 @@ public abstract class OSequence {
     return isOnDistributted() && (replicationProtocolVersion == 2);
   }
 
-  public boolean updateParams(CreateParams params) throws ExecutionException, InterruptedException {
+  public boolean updateParams(CreateParams params) throws ODatabaseException {
     boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
     return updateParams(params, shouldGoOverDistributted);
   }
@@ -284,14 +284,12 @@ public abstract class OSequence {
     return document.getDatabase().isDistributed();
   }
 
-  synchronized boolean updateParams(CreateParams params, boolean executeViaDistributed)
-      throws ODatabaseException {
+  synchronized boolean updateParams(CreateParams params, boolean executeViaDistributed) throws ODatabaseException {
     if (executeViaDistributed) {
-      try{
+      try {
         return sendSequenceActionOverCluster(OSequenceAction.UPDATE, params);
-      }
-      catch (InterruptedException | ExecutionException exc){
-        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[])null);
+      } catch (InterruptedException | ExecutionException exc) {
+        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
     }
@@ -456,19 +454,18 @@ public abstract class OSequence {
    * Forwards the sequence by one, and returns the new value.
    */
   @OApi
-  public long next() throws OSequenceLimitReachedException, ExecutionException, InterruptedException {
+  public long next() throws OSequenceLimitReachedException, ODatabaseException {
     boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
     return next(shouldGoOverDistributted);
   }
-  
+
   long next(boolean executeViaDistributed) throws OSequenceLimitReachedException, ODatabaseException {
     long retVal;
     if (executeViaDistributed) {
-      try{
+      try {
         retVal = sendSequenceActionOverCluster(OSequenceAction.NEXT, null);
-      }
-      catch (InterruptedException | ExecutionException exc){
-        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[])null);
+      } catch (InterruptedException | ExecutionException exc) {
+        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
     } else {
@@ -483,20 +480,19 @@ public abstract class OSequence {
    * Returns the current sequence value. If next() was never called, returns null
    */
   @OApi
-  public long current() throws ExecutionException, InterruptedException {
+  public long current() throws ODatabaseException {
     //boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
     //current should never go through distributed
     return current(false);
   }
-  
+
   long current(boolean executeViaDistributed) throws ODatabaseException {
     long retVal;
     if (executeViaDistributed) {
-      try{
+      try {
         retVal = sendSequenceActionOverCluster(OSequenceAction.CURRENT, null);
-      }
-      catch (InterruptedException | ExecutionException exc){
-        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[])null);
+      } catch (InterruptedException | ExecutionException exc) {
+        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
     } else {
@@ -507,22 +503,21 @@ public abstract class OSequence {
 
   protected abstract long currentWork();
 
-  public long reset() throws ExecutionException, InterruptedException {
+  public long reset() throws ODatabaseException {
     boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
     return reset(shouldGoOverDistributted);
   }
 
   /*
    * Resets the sequence value to it's initialized value.
-   */ 
+   */
   long reset(boolean executeViaDistributed) throws ODatabaseException {
     long retVal;
     if (executeViaDistributed) {
-      try{
+      try {
         retVal = sendSequenceActionOverCluster(OSequenceAction.RESET, null);
-      }
-      catch (InterruptedException | ExecutionException exc){
-        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[])null);
+      } catch (InterruptedException | ExecutionException exc) {
+        OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
     } else {

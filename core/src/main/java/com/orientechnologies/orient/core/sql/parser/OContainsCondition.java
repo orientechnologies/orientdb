@@ -6,6 +6,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 
 import java.util.*;
@@ -156,6 +157,10 @@ public class OContainsCondition extends OBooleanExpression {
           return true;
         } else if (item instanceof OResult && condition.evaluate((OResult) item, ctx)) {
           return true;
+        } else if (item instanceof Map) {
+          OResultInternal res = new OResultInternal();
+          ((Map<String, Object>) item).entrySet().forEach(x -> res.setProperty(x.getKey(), x.getValue()));
+          return condition.evaluate(res, ctx);
         }
       }
       return false;
