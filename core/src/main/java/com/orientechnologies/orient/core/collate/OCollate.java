@@ -19,6 +19,8 @@
   */
 package com.orientechnologies.orient.core.collate;
 
+import com.orientechnologies.common.comparator.ODefaultComparator;
+
 import java.io.Serializable;
 
 /**
@@ -30,4 +32,8 @@ public interface OCollate extends Serializable {
   String getName();
 
   Object transform(Object obj);
+
+  default int compareForOrderBy(Object o1, Object o2) {
+    return new ODefaultComparator().compare(transform(o1), transform(o2));
+  }
 }

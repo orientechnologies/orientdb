@@ -73,7 +73,7 @@ public class OCaseInsensitiveCollate extends ODefaultComparator implements OColl
   }
 
   @Override
-  public int compare(Object objectOne, Object objectTwo) {
+  public int compareForOrderBy(Object objectOne, Object objectTwo) {
     Object newObj1 = transform(objectOne);
     Object newObj2 = transform(objectTwo);
     int result = super.compare(newObj1, newObj2);
