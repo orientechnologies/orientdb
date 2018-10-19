@@ -199,7 +199,7 @@ public class ReadWriteDiskCacheTest {
         true, true);
     writeBuffer.loadRegisteredFiles();
 
-    readBuffer = new O2QCache(READ_CACHE_MAX_MEMORY, PAGE_SIZE, false, 50);
+    readBuffer = new O2QCache(READ_CACHE_MAX_MEMORY, PAGE_SIZE, false, 50, true, 10);
   }
 
   @Test

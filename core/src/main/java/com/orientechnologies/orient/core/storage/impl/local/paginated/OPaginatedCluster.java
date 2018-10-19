@@ -159,22 +159,17 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   @Override
   public boolean exists() {
-    startOperation();
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
-        acquireSharedLock();
-        try {
-          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-          return isFileExists(atomicOperation, getFullName());
-        } finally {
-          releaseSharedLock();
-        }
+        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+        return isFileExists(atomicOperation, getFullName());
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
     } finally {
-      completeOperation();
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
@@ -2015,7 +2010,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
     return positions;
   }
-
 
   public OPaginatedClusterDebug readDebug(long clusterPosition) throws IOException {
     try {

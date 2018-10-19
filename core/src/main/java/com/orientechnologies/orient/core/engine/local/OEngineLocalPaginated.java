@@ -73,7 +73,9 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
     readCache = new O2QCache(calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true,
-        OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger());
+        OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger(),
+        OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS.getValueAsBoolean(),
+        OGlobalConfiguration.DISK_CACHE_STATISTICS_INTERVAL.getValueAsInteger());
   }
 
   private long calculateReadCacheMaxMemory(final long cacheSize) {

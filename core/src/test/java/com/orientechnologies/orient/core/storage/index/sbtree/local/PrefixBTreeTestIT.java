@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -59,6 +60,7 @@ public class PrefixBTreeTestIT {
   }
 
   @Test
+  @Ignore
   public void testRandom() {
     final int keysCount = 100_000_000;
     TreeMap<Integer, String> keys = new TreeMap<>();
