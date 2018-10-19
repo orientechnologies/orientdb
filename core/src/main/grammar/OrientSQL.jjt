@@ -3234,6 +3234,9 @@ OBooleanExpression MatchesCondition():
     (
     	jjtThis.expression = Expression() <MATCHES>
     	(
+    	    LOOKAHEAD(Expression())
+    	    ( jjtThis.rightExpression = Expression() )
+    	    |
     	    ( jjtThis.right = String() )
     	    |
     	    ( token = <CHARACTER_LITERAL> {jjtThis.right = token.image;} )
