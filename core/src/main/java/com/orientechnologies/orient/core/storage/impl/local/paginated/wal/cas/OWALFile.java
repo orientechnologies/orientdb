@@ -35,7 +35,7 @@ public interface OWALFile extends Closeable {
     }
 
     return new OWALChannelFile(
-        FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.APPEND));
+        FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
   }
 
   static OWALFile createReadWALFile(Path path, boolean allowDirectIO, int blockSize) throws IOException {
