@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
-import java.util.Comparator;
 import java.util.Map;
 
 /**
@@ -112,11 +111,7 @@ public class OOrderByItem {
     }
 
     if (collateStrategy != null) {
-      if (collateStrategy instanceof Comparator) {
-        return ((Comparator) collateStrategy).compare(aVal, bVal);
-      }
-      aVal = collateStrategy.transform(aVal);
-      bVal = collateStrategy.transform(bVal);
+      return collateStrategy.compareForOrderBy(aVal, bVal);
     }
 
     if (aVal == null) {
