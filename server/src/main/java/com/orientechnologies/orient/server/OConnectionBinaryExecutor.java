@@ -894,7 +894,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
             result.add(iText);
         }
       });
-      imp.setOptions(request.getImporPath());
+      imp.setOptions(request.getOptions());
       imp.importDatabase();
       imp.close();
       new File(request.getImporPath()).delete();
