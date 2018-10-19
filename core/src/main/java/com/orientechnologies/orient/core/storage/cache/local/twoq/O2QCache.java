@@ -26,6 +26,7 @@ import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableBoolean;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OLoadCacheStateException;
@@ -38,18 +39,30 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -109,6 +122,9 @@ public class O2QCache implements OReadCache {
    */
   private final int percentOfPinnedPages;
 
+  private final LongAdder cacheRequests = new LongAdder();
+  private final LongAdder cacheHits     = new LongAdder();
+
   private final OReadersWriterSpinLock                 cacheLock       = new OReadersWriterSpinLock();
   private final OPartitionedLockManager<Object>        fileLockManager = new OPartitionedLockManager<>(true);
   private final OPartitionedLockManager<PageKey>       pageLockManager = new OPartitionedLockManager<>();
@@ -124,7 +140,8 @@ public class O2QCache implements OReadCache {
    *
    * @see #MAX_PERCENT_OF_PINED_PAGES
    */
-  public O2QCache(final long readCacheMaxMemory, final int pageSize, final boolean checkMinSize, final int percentOfPinnedPages) {
+  public O2QCache(final long readCacheMaxMemory, final int pageSize, final boolean checkMinSize, final int percentOfPinnedPages,
+      final boolean printCacheStatistics, final int cacheStatisticsInterval) {
     if (percentOfPinnedPages > MAX_PERCENT_OF_PINED_PAGES)
       throw new IllegalArgumentException(
           "Percent of pinned pages cannot be more than " + percentOfPinnedPages + " but passed value is " + percentOfPinnedPages);
@@ -148,6 +165,25 @@ public class O2QCache implements OReadCache {
       am = new ConcurrentLRUList();
       a1out = new ConcurrentLRUList();
       a1in = new ConcurrentLRUList();
+
+      if (printCacheStatistics) {
+        Orient.instance().scheduleTask(new TimerTask() {
+          @Override
+          public void run() {
+            long cacheRequests = O2QCache.this.cacheRequests.sum();
+            long cacheHits = O2QCache.this.cacheHits.sum();
+
+            final MemoryData memoryData = memoryDataContainer.get();
+
+            OLogManager.instance().infoNoDb(this, "Read cache stat: cache hits %d percents, cache size is %d percent",
+                cacheRequests > 0 ? 100 * cacheHits / cacheRequests : -1,
+                100 * (am.size() + a1in.size() + memoryData.pinnedPages) / memoryData.maxSize);
+
+            O2QCache.this.cacheRequests.add(-cacheRequests);
+            O2QCache.this.cacheHits.add(-cacheHits);
+          }
+        }, cacheStatisticsInterval * 1_000L, cacheStatisticsInterval * 1_000L);
+      }
     } finally {
       cacheLock.releaseWriteLock();
     }
@@ -423,8 +459,6 @@ public class O2QCache implements OReadCache {
 
     Lock fileLock;
     Lock[] pageLocks;
-
-    final OModifiableBoolean cacheHit = new OModifiableBoolean(false);
 
     cacheLock.acquireReadLock();
     try {
