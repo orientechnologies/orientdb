@@ -6,14 +6,16 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class OMatchesCondition extends OBooleanExpression {
-  protected OExpression     expression;
+  protected OExpression expression;
+
   protected String          right;
+  protected OExpression     rightExpression;
   protected OInputParameter rightParam;
 
   public OMatchesCondition(int id) {
@@ -36,6 +38,13 @@ public class OMatchesCondition extends OBooleanExpression {
     String regex = right;
     if (regex != null) {
       regex = regex.substring(1, regex.length() - 1);
+    } else if (rightExpression != null) {
+      Object val = rightExpression.execute(currentRecord, ctx);
+      if (val instanceof String) {
+        regex = (String) val;
+      } else {
+        return false;
+      }
     } else {
       Object paramVal = rightParam.getValue(ctx.getInputParameters());
       if (paramVal instanceof String) {
@@ -69,6 +78,13 @@ public class OMatchesCondition extends OBooleanExpression {
     String regex = right;
     if (regex != null) {
       regex = regex.substring(1, regex.length() - 1);
+    } else if (rightExpression != null) {
+      Object val = rightExpression.execute(currentRecord, ctx);
+      if (val instanceof String) {
+        regex = (String) val;
+      } else {
+        return false;
+      }
     } else {
       Object paramVal = rightParam.getValue(ctx.getInputParameters());
       if (paramVal instanceof String) {
@@ -87,6 +103,8 @@ public class OMatchesCondition extends OBooleanExpression {
     builder.append(" MATCHES ");
     if (right != null) {
       builder.append(right);
+    } else if (rightExpression != null) {
+      rightExpression.toString(params, builder);
     } else {
       rightParam.toString(params, builder);
     }
@@ -94,28 +112,45 @@ public class OMatchesCondition extends OBooleanExpression {
 
   @Override
   public boolean supportsBasicCalculation() {
-    return expression.supportsBasicCalculation();
+    if (!expression.supportsBasicCalculation()) {
+      return false;
+    }
+    if (rightExpression != null && !rightExpression.supportsBasicCalculation()) {
+      return false;
+    }
+    return true;
   }
 
   @Override
   protected int getNumberOfExternalCalculations() {
+    int result = 0;
     if (expression != null && !expression.supportsBasicCalculation()) {
-      return 1;
+      result++;
     }
-    return 0;
+    if (rightExpression != null && !rightExpression.supportsBasicCalculation()) {
+      result++;
+    }
+    return result;
   }
 
   @Override
   protected List<Object> getExternalCalculationConditions() {
+    List<Object> result = new ArrayList<>();
     if (expression != null && !expression.supportsBasicCalculation()) {
-      return (List) Collections.singletonList(expression);
+      result.add(expression);
     }
-    return Collections.EMPTY_LIST;
+    if (rightExpression != null && !rightExpression.supportsBasicCalculation()) {
+      result.add(rightExpression);
+    }
+    return result;
   }
 
   @Override
   public boolean needsAliases(Set<String> aliases) {
     if (expression.needsAliases(aliases)) {
+      return true;
+    }
+    if (rightExpression.needsAliases(aliases)) {
       return true;
     }
     return false;
@@ -127,17 +162,24 @@ public class OMatchesCondition extends OBooleanExpression {
     result.expression = expression == null ? null : expression.copy();
     result.right = right;
     result.rightParam = rightParam == null ? null : rightParam.copy();
+    result.rightExpression = rightExpression == null ? null : rightExpression.copy();
     return result;
   }
 
   @Override
   public void extractSubQueries(SubQueryCollector collector) {
     expression.extractSubQueries(collector);
+    if (rightExpression != null) {
+      rightExpression.extractSubQueries(collector);
+    }
   }
 
   @Override
   public boolean refersToParent() {
     if (expression != null && expression.refersToParent()) {
+      return true;
+    }
+    if (rightExpression != null && rightExpression.refersToParent()) {
       return true;
     }
     return false;
@@ -156,28 +198,39 @@ public class OMatchesCondition extends OBooleanExpression {
       return false;
     if (right != null ? !right.equals(that.right) : that.right != null)
       return false;
-    if (rightParam != null ? !rightParam.equals(that.rightParam) : that.rightParam != null)
+    if (rightExpression != null ? !rightExpression.equals(that.rightExpression) : that.rightExpression != null)
       return false;
-
-    return true;
+    return rightParam != null ? rightParam.equals(that.rightParam) : that.rightParam == null;
   }
 
   @Override
   public int hashCode() {
     int result = expression != null ? expression.hashCode() : 0;
     result = 31 * result + (right != null ? right.hashCode() : 0);
+    result = 31 * result + (rightExpression != null ? rightExpression.hashCode() : 0);
     result = 31 * result + (rightParam != null ? rightParam.hashCode() : 0);
     return result;
   }
 
   @Override
   public List<String> getMatchPatternInvolvedAliases() {
-    return expression.getMatchPatternInvolvedAliases();
+    List<String> result = new ArrayList<>();
+    result.addAll(expression.getMatchPatternInvolvedAliases());
+    if (rightExpression != null) {
+      result.addAll(rightExpression.getMatchPatternInvolvedAliases());
+    }
+    return result;
   }
 
   @Override
   public boolean isCacheable() {
-    return expression.isCacheable();
+    if (!expression.isCacheable()) {
+      return false;
+    }
+    if (rightExpression != null && !rightExpression.isCacheable()) {
+      return false;
+    }
+    return true;
   }
 
 }
