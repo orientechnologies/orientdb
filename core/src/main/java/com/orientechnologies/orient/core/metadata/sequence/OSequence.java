@@ -24,6 +24,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
@@ -246,6 +248,11 @@ public abstract class OSequence {
     document = document.save();
     onUpdate(document);
   }
+  
+  public void save(ODatabaseDocument database) {
+    ODocument doc = database.save(document);
+    onUpdate(doc);
+  }
 
   public final ODocument getDocument() {
     return document;
@@ -421,9 +428,9 @@ public abstract class OSequence {
     setCrucialValueChanged(true);
   }
 
-//  protected final synchronized ODatabaseDocumentInternal getDatabase() {
-//    return ODatabaseRecordThreadLocal.instance().get();
-//  }
+  protected final synchronized ODatabaseDocumentInternal getDatabase() {
+    return ODatabaseRecordThreadLocal.instance().get();
+  }
 
   public static String getSequenceName(final ODocument iDocument) {
     return iDocument.field(FIELD_NAME, OType.STRING);

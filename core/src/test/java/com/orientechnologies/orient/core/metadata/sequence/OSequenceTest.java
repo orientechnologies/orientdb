@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -149,8 +150,9 @@ public class OSequenceTest {
   }
 
   @Test
-  @Ignore
+//  @Ignore
   public void shouldSequenceMTNoTx() throws Exception {
+    System.out.println("sequences MT test NO TX");
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L);
     OSequence mtSeq = sequences.createSequence("mtSeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
     mtSeq.setMaxRetry(1000);
@@ -192,12 +194,13 @@ public class OSequenceTest {
   }
 
   @Test
-  @Ignore
+//  @Ignore
   public void shouldSequenceMTTx() throws Exception {
+    System.out.println("sequences MT test TX");
     OSequence.CreateParams params = new OSequence.CreateParams().setStart(0L);
     OSequence mtSeq = sequences.createSequence("mtSeq", OSequence.SEQUENCE_TYPE.ORDERED, params);
-    final int count = 1000;
-    final int threads = 2;
+    final int count = 10000;
+    final int threads = 20;
     final CountDownLatch latch = new CountDownLatch(count);
     final AtomicInteger errors = new AtomicInteger(0);
     final AtomicInteger success = new AtomicInteger(0);
@@ -248,10 +251,10 @@ public class OSequenceTest {
     latch.await();
 
     assertThat(errors.get()).isEqualTo(0);
-    assertThat(success.get()).isEqualTo(1000);
+    assertThat(success.get()).isEqualTo(count);
     mtSeq.reloadSequence();
-    assertThat(mtSeq.getDocument().getVersion()).isEqualTo(1001);
-    assertThat(mtSeq.current()).isEqualTo(1000);
+    assertThat(mtSeq.getDocument().getVersion()).isEqualTo(count + 1);
+    assertThat(mtSeq.current()).isEqualTo(count);
   }
 
   @Test

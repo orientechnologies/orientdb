@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -165,70 +166,86 @@ public class OSequenceCached extends OSequence {
 
   @Override
   public long nextWork() throws OSequenceLimitReachedException {           
-    return callRetry(signalToAllocateCache() || getCrucialValueChanged(), new Callable<Long>() {
-      @Override
-      public Long call() throws Exception {
-        synchronized (OSequenceCached.this) {          
-          boolean detectedCrucialValueChange = false;
-          if (getCrucialValueChanged()) {
-            reloadCrucialValues();
-            detectedCrucialValueChange = true;
-          }
-          if (orderType == SequenceOrderType.ORDER_POSITIVE) {
-            if (signalToAllocateCache()) {
-              boolean cachedbefore = !firstCache;
-              allocateCache(getCacheSize());
-              if (!cachedbefore) {
-                if (limitValue != null && cacheStart + increment > limitValue) {
-                  doRecycle();
-                } else {
-                  cacheStart = cacheStart + increment;                  
-                }
-              }
-            } else if (limitValue != null && cacheStart + increment > limitValue) {
-              doRecycle();
-            } else {
-              cacheStart = cacheStart + increment;              
-            }
-          } else {
-            if (signalToAllocateCache()) {
-              boolean cachedbefore = !firstCache;
-              allocateCache(getCacheSize());
-              if (!cachedbefore) {
-                if (limitValue != null && cacheStart - increment < limitValue) {
-                  doRecycle();
-                } else {
-                  cacheStart = cacheStart - increment;
-                }
-              }
-            } else if (limitValue != null && cacheStart - increment < limitValue) {
-              doRecycle();
-            } else {
-              cacheStart = cacheStart - increment;
-            }
-          }
-
-          if (detectedCrucialValueChange) {
-            setCrucialValueChanged(false);
-          }
-
-          if (limitValue != null && !recyclable) {
-            float tillEnd = Math.abs(limitValue - cacheStart) / (float) increment;
-            float delta = Math.abs(limitValue - startValue) / (float) increment;
-            //warning on 1%
-            if ((float) tillEnd <= ((float) delta / 100.f) || tillEnd <= 1) {
-              String warningMessage =
-                  "Non-recyclable sequence: " + name + " reaching limt, current value: " + cacheStart + " limit value: "
-                      + limitValue + " with step: " + increment;
-              OLogManager.instance().warn(this, warningMessage);
-            }
-          }
-
-          firstCache = false;          
-          return cacheStart;
-        }
+    ODatabaseDocumentInternal mainDb = getDatabase();
+    boolean tx = mainDb.getTransaction().isActive();
+    try {
+      ODatabaseDocumentInternal db = mainDb;
+      if (tx) {
+        db = mainDb.copy();
+        db.activateOnCurrentThread();
       }
-    }, "next");        
+      final ODatabaseDocumentInternal finalDb = db;
+      
+      return callRetry(signalToAllocateCache() || getCrucialValueChanged(), new Callable<Long>() {
+        @Override
+        public Long call() throws Exception {
+          synchronized (OSequenceCached.this) {          
+            boolean detectedCrucialValueChange = false;
+            if (getCrucialValueChanged()) {
+              reloadCrucialValues();
+              detectedCrucialValueChange = true;
+            }
+            if (orderType == SequenceOrderType.ORDER_POSITIVE) {
+              if (signalToAllocateCache()) {
+                boolean cachedbefore = !firstCache;
+                allocateCache(getCacheSize(), finalDb);
+                if (!cachedbefore) {
+                  if (limitValue != null && cacheStart + increment > limitValue) {
+                    doRecycle();
+                  } else {
+                    cacheStart = cacheStart + increment;                  
+                  }
+                }
+              } else if (limitValue != null && cacheStart + increment > limitValue) {
+                doRecycle();
+              } else {
+                cacheStart = cacheStart + increment;              
+              }
+            } else {
+              if (signalToAllocateCache()) {
+                boolean cachedbefore = !firstCache;
+                allocateCache(getCacheSize(), finalDb);
+                if (!cachedbefore) {
+                  if (limitValue != null && cacheStart - increment < limitValue) {
+                    doRecycle();
+                  } else {
+                    cacheStart = cacheStart - increment;
+                  }
+                }
+              } else if (limitValue != null && cacheStart - increment < limitValue) {
+                doRecycle();
+              } else {
+                cacheStart = cacheStart - increment;
+              }
+            }
+
+            if (detectedCrucialValueChange) {
+              setCrucialValueChanged(false);
+            }
+
+            if (limitValue != null && !recyclable) {
+              float tillEnd = Math.abs(limitValue - cacheStart) / (float) increment;
+              float delta = Math.abs(limitValue - startValue) / (float) increment;
+              //warning on 1%
+              if ((float) tillEnd <= ((float) delta / 100.f) || tillEnd <= 1) {
+                String warningMessage =
+                    "Non-recyclable sequence: " + name + " reaching limt, current value: " + cacheStart + " limit value: "
+                        + limitValue + " with step: " + increment;
+                OLogManager.instance().warn(this, warningMessage);
+              }
+            }
+
+            firstCache = false;          
+            return cacheStart;
+          }
+        }
+      }, "next");       
+    }
+    finally{
+      if (tx){
+        mainDb.activateOnCurrentThread();
+      }
+    }
   }
 
   @Override
@@ -238,19 +255,35 @@ public class OSequenceCached extends OSequence {
 
   @Override
   public long resetWork() {
-    return callRetry(true, new Callable<Long>() {
-      @Override
-      public Long call() throws Exception {
-        synchronized (OSequenceCached.this) {
-          long newValue = getStart();
-          setValue(newValue);
-          save();
-          firstCache = true;
-          allocateCache(getCacheSize());
-          return newValue;
-        }
+    ODatabaseDocumentInternal mainDb = getDatabase();
+    boolean tx = mainDb.getTransaction().isActive();
+    try {
+      ODatabaseDocumentInternal db = mainDb;
+      if (tx) {
+        db = mainDb.copy();
+        db.activateOnCurrentThread();
       }
-    }, "reset");          
+      final ODatabaseDocumentInternal finalDb = db;
+      
+      return callRetry(true, new Callable<Long>() {
+        @Override
+        public Long call() throws Exception {
+          synchronized (OSequenceCached.this) {
+            long newValue = getStart();
+            setValue(newValue);
+            save(finalDb);
+            firstCache = true;
+            allocateCache(getCacheSize(), finalDb);
+            return newValue;
+          }
+        }
+      }, "reset");  
+    }
+    finally{
+      if (tx){
+        mainDb.activateOnCurrentThread();
+      }
+    }
   }
 
   @Override
@@ -266,7 +299,11 @@ public class OSequenceCached extends OSequence {
     getDocument().field(FIELD_CACHE, cacheSize);
   }
 
-  private void allocateCache(int cacheSize) {        
+  private void allocateCache(int cacheSize){
+    allocateCache(cacheSize, getDatabase());
+  }
+  
+  private void allocateCache(int cacheSize, ODatabaseDocumentInternal db) {        
     if (getCrucialValueChanged()) {
       reloadCrucialValues();
       setCrucialValueChanged(false);
@@ -286,7 +323,7 @@ public class OSequenceCached extends OSequence {
       }
     }    
     setValue(newValue);    
-    save();
+    save(db);
 
     this.cacheStart = value;
     if (orederType == SequenceOrderType.ORDER_POSITIVE) {
