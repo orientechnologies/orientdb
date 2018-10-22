@@ -23,7 +23,9 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 /**
  * Transforms a value to date. If the conversion is not possible, null is returned.
@@ -48,7 +50,13 @@ public class OSQLMethodAsDate extends OAbstractSQLMethod {
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
     if (iThis != null) {
       if (iThis instanceof Date) {
-        return iThis;
+        Calendar cal = new GregorianCalendar();
+        cal.setTime((Date) iThis);
+        cal.set(Calendar.HOUR, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
       } else if (iThis instanceof Number) {
         return new Date(((Number) iThis).longValue());
       } else {
