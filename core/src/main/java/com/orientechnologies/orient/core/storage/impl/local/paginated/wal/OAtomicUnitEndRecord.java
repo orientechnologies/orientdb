@@ -20,11 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -32,6 +27,12 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordOperationMetadata;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
+
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -45,7 +46,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   public OAtomicUnitEndRecord() {
   }
 
-  OAtomicUnitEndRecord(final OOperationUnitId operationUnitId, final boolean rollback,
+  public OAtomicUnitEndRecord(final OOperationUnitId operationUnitId, final boolean rollback,
       final Map<String, OAtomicOperationMetadata<?>> atomicOperationMetadataMap) {
     super(operationUnitId);
 
@@ -96,6 +97,34 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
     }
 
     return offset;
+  }
+
+  @Override
+  public void toStream(final ByteBuffer buffer) {
+    super.toStream(buffer);
+
+    buffer.put(rollback ? (byte) 1 : 0);
+
+    if (atomicOperationMetadataMap.size() > 0) {
+      for (final Map.Entry<String, OAtomicOperationMetadata<?>> entry : atomicOperationMetadataMap.entrySet()) {
+        if (entry.getKey().equals(ORecordOperationMetadata.RID_METADATA_KEY)) {
+          buffer.put((byte) 1);
+
+          final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) entry.getValue();
+          final Set<ORID> rids = recordOperationMetadata.getValue();
+          buffer.putInt(rids.size());
+
+          for (final ORID rid : rids) {
+            buffer.putLong(rid.getClusterPosition());
+            buffer.putInt(rid.getClusterId());
+          }
+        } else {
+          throw new IllegalStateException("Invalid metadata key " + ORecordOperationMetadata.RID_METADATA_KEY);
+        }
+      }
+    } else {
+      buffer.put((byte) 0);
+    }
   }
 
   @Override
@@ -167,5 +196,10 @@ public class OAtomicUnitEndRecord extends OOperationUnitBodyRecord {
   @Override
   public String toString() {
     return toString("rollback=" + rollback);
+  }
+
+  @Override
+  public byte getId() {
+    return WALRecordTypes.ATOMIC_UNIT_END_RECORD;
   }
 }

@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
@@ -18,6 +20,10 @@ public class OOrderByItem {
   protected String    recordAttr;
   protected ORid      rid;
   protected String type = ASC;
+  protected OExpression collate;
+
+  //calculated at run time
+  private OCollate collateStrategy;
 
   public String getAlias() {
     return alias;
@@ -66,6 +72,10 @@ public class OOrderByItem {
     if (type != null) {
       builder.append(" " + type);
     }
+    if (collate != null) {
+      builder.append(" COLLATE ");
+      collate.toString(params, builder);
+    }
   }
 
   public int compare(OResult a, OResult b, OCommandContext ctx) {
@@ -87,6 +97,23 @@ public class OOrderByItem {
       aVal = modifier.execute(a, aVal, ctx);
       bVal = modifier.execute(b, bVal, ctx);
     }
+    if (collate != null && collateStrategy == null) {
+      Object collateVal = collate.execute(new OResultInternal(), ctx);
+      if (collateVal == null) {
+        collateVal = collate.toString();
+        if (collateVal.equals("null")) {
+          collateVal = null;
+        }
+      }
+      if (collateVal != null) {
+        collateStrategy = OSQLEngine.getCollate(String.valueOf(collateVal));
+      }
+    }
+
+    if (collateStrategy != null) {
+      return collateStrategy.compareForOrderBy(aVal, bVal);
+    }
+
     if (aVal == null) {
       if (bVal == null) {
         result = 0;
@@ -116,6 +143,7 @@ public class OOrderByItem {
     result.recordAttr = recordAttr;
     result.rid = rid == null ? null : rid.copy();
     result.type = type;
+    result.collate = this.collate == null ? null : collate.copy();
     return result;
   }
 
@@ -130,6 +158,9 @@ public class OOrderByItem {
       return true;
     }
     if (modifier != null && modifier.refersToParent()) {
+      return true;
+    }
+    if (collate != null && collate.refersToParent()) {
       return true;
     }
     return false;
@@ -154,6 +185,9 @@ public class OOrderByItem {
       result.setProperty("rid", rid.serialize());
     }
     result.setProperty("type", type);
+    if (collate != null) {
+      result.setProperty("collate", collate.serialize());
+    }
     return result;
   }
 
@@ -169,5 +203,46 @@ public class OOrderByItem {
       rid.deserialize(fromResult.getProperty("rid"));
     }
     type = DESC.equals(fromResult.getProperty("type")) ? DESC : ASC;
+    if (fromResult.getProperty("collate") != null) {
+      collate = new OExpression(-1);
+      collate.deserialize(fromResult.getProperty("collate"));
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OOrderByItem that = (OOrderByItem) o;
+
+    if (alias != null ? !alias.equals(that.alias) : that.alias != null)
+      return false;
+    if (modifier != null ? !modifier.equals(that.modifier) : that.modifier != null)
+      return false;
+    if (recordAttr != null ? !recordAttr.equals(that.recordAttr) : that.recordAttr != null)
+      return false;
+    if (rid != null ? !rid.equals(that.rid) : that.rid != null)
+      return false;
+    if (type != null ? !type.equals(that.type) : that.type != null)
+      return false;
+    return collate != null ? collate.equals(that.collate) : that.collate == null;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = alias != null ? alias.hashCode() : 0;
+    result = 31 * result + (modifier != null ? modifier.hashCode() : 0);
+    result = 31 * result + (recordAttr != null ? recordAttr.hashCode() : 0);
+    result = 31 * result + (rid != null ? rid.hashCode() : 0);
+    result = 31 * result + (type != null ? type.hashCode() : 0);
+    result = 31 * result + (collate != null ? collate.hashCode() : 0);
+    return result;
+  }
+
+  public OExpression getCollate() {
+    return collate;
   }
 }

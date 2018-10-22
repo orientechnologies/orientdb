@@ -92,9 +92,9 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
       metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
 
     if (FULLTEXT.toString().equalsIgnoreCase(indexType)) {
-
+      final int binaryFormatVersion = pagStorage.getConfiguration().getBinaryFormatVersion();
       OLuceneFullTextIndex index = new OLuceneFullTextIndex(name, indexType, algorithm, version, pagStorage,
-          valueContainerAlgorithm, metadata);
+          valueContainerAlgorithm, metadata, binaryFormatVersion);
 
       return index;
     }

@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OCompactedLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtree.OSBTreeMapEntryIterator;
@@ -68,7 +68,7 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
     tree = new OSBTreeBonsaiLocal<>(fileName.substring(0, fileName.length() - INDEX_FILE_EXTENSION.length()), INDEX_FILE_EXTENSION,
         storage);
 
-    tree.create(OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
+    tree.create(OCompactedLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
   }
 
   public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer, boolean durableMode,

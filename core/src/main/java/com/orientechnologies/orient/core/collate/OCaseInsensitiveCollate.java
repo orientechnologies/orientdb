@@ -25,9 +25,8 @@ import java.util.*;
 
 /**
  * Case insensitive collate.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
- * 
  */
 public class OCaseInsensitiveCollate extends ODefaultComparator implements OCollate {
   public static final String NAME = "ci";
@@ -40,17 +39,17 @@ public class OCaseInsensitiveCollate extends ODefaultComparator implements OColl
     if (obj instanceof String)
       return ((String) obj).toLowerCase(Locale.ENGLISH);
 
-    if(obj instanceof Set){
+    if (obj instanceof Set) {
       Set result = new HashSet();
-      for(Object o:(Set)obj){
+      for (Object o : (Set) obj) {
         result.add(transform(o));
       }
       return result;
     }
 
-    if(obj instanceof List){
+    if (obj instanceof List) {
       List result = new ArrayList();
-      for(Object o:(List)obj){
+      for (Object o : (List) obj) {
         result.add(transform(o));
       }
       return result;
@@ -65,12 +64,25 @@ public class OCaseInsensitiveCollate extends ODefaultComparator implements OColl
 
   @Override
   public boolean equals(Object obj) {
-    if (obj==null || obj.getClass() != this.getClass())
+    if (obj == null || obj.getClass() != this.getClass())
       return false;
 
     final OCaseInsensitiveCollate that = (OCaseInsensitiveCollate) obj;
 
     return getName().equals(that.getName());
+  }
+
+  @Override
+  public int compareForOrderBy(Object objectOne, Object objectTwo) {
+    Object newObj1 = transform(objectOne);
+    Object newObj2 = transform(objectTwo);
+    int result = super.compare(newObj1, newObj2);
+    if (result == 0) {
+      //case insensitive are the same, fall back to case sensitive to have a decent ordering of upper vs lower case
+      result = super.compare(objectOne, objectTwo);
+    }
+
+    return result;
   }
 
   @Override

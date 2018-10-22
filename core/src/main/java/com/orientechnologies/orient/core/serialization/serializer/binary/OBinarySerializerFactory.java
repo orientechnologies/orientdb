@@ -20,24 +20,40 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.binary;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.*;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
+import com.orientechnologies.common.serialization.types.OBooleanSerializer;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OCharSerializer;
+import com.orientechnologies.common.serialization.types.ODateSerializer;
+import com.orientechnologies.common.serialization.types.ODateTimeSerializer;
+import com.orientechnologies.common.serialization.types.ODecimalSerializer;
+import com.orientechnologies.common.serialization.types.ODoubleSerializer;
+import com.orientechnologies.common.serialization.types.OFloatSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.ONullSerializer;
+import com.orientechnologies.common.serialization.types.OShortSerializer;
+import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.common.serialization.types.OUTF8Serializer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OCompactedLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedIndexRIDContainerSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 /**
  * This class is responsible for obtaining OBinarySerializer realization, by it's id of type of object that should be serialized.
- * 
- * 
+ *
  * @author Evgeniy Degtiarenko (gmandnepr-at-gmail.com)
  */
 public class OBinarySerializerFactory {
@@ -45,10 +61,10 @@ public class OBinarySerializerFactory {
   /**
    * Size of the type identifier block size
    */
-  public static final int                                               TYPE_IDENTIFIER_SIZE   = 1;
-  private final ConcurrentMap<Byte, OBinarySerializer<?>>               serializerIdMap        = new ConcurrentHashMap<Byte, OBinarySerializer<?>>();
-  private final ConcurrentMap<Byte, Class<? extends OBinarySerializer>> serializerClassesIdMap = new ConcurrentHashMap<Byte, Class<? extends OBinarySerializer>>();
-  private final ConcurrentMap<OType, OBinarySerializer<?>>              serializerTypeMap      = new ConcurrentHashMap<OType, OBinarySerializer<?>>();
+  public static final int                                                     TYPE_IDENTIFIER_SIZE   = 1;
+  private final       ConcurrentMap<Byte, OBinarySerializer<?>>               serializerIdMap        = new ConcurrentHashMap<Byte, OBinarySerializer<?>>();
+  private final       ConcurrentMap<Byte, Class<? extends OBinarySerializer>> serializerClassesIdMap = new ConcurrentHashMap<Byte, Class<? extends OBinarySerializer>>();
+  private final       ConcurrentMap<OType, OBinarySerializer<?>>              serializerTypeMap      = new ConcurrentHashMap<OType, OBinarySerializer<?>>();
 
   private OBinarySerializerFactory() {
   }
@@ -82,6 +98,11 @@ public class OBinarySerializerFactory {
     // STATEFUL SERIALIER
     factory.registerSerializer(OSimpleKeySerializer.ID, OSimpleKeySerializer.class);
 
+    factory.registerSerializer(OCompactedLinkSerializer.INSTANCE, null);
+    factory.registerSerializer(OMixedIndexRIDContainerSerializer.INSTANCE, null);
+
+    factory.registerSerializer(OUTF8Serializer.INSTANCE, null);
+
     return factory;
   }
 
@@ -112,9 +133,9 @@ public class OBinarySerializerFactory {
 
   /**
    * Obtain OBinarySerializer instance by it's id.
-   * 
-   * @param identifier
-   *          is serializes identifier.
+   *
+   * @param identifier is serializes identifier.
+   *
    * @return OBinarySerializer instance.
    */
   public OBinarySerializer<?> getObjectSerializer(final byte identifier) {
@@ -133,9 +154,9 @@ public class OBinarySerializerFactory {
 
   /**
    * Obtain OBinarySerializer realization for the OType
-   * 
-   * @param type
-   *          is the OType to obtain serializer algorithm for
+   *
+   * @param type is the OType to obtain serializer algorithm for
+   *
    * @return OBinarySerializer instance
    */
   @SuppressWarnings("unchecked")

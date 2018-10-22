@@ -22,7 +22,7 @@ public class ODirectMemoryAllocatorTest {
   @Test
   public void testAllocateDeallocate() {
     final ODirectMemoryAllocator directMemoryAllocator = new ODirectMemoryAllocator();
-    final OPointer pointer = directMemoryAllocator.allocate(42);
+    final OPointer pointer = directMemoryAllocator.allocate(42, -1);
     Assert.assertNotNull(pointer);
 
     Assert.assertEquals(42, directMemoryAllocator.getMemoryConsumption());
@@ -38,14 +38,14 @@ public class ODirectMemoryAllocatorTest {
   public void testNegativeOrZeroIsPassedToAllocate() {
     final ODirectMemoryAllocator directMemoryAllocator = new ODirectMemoryAllocator();
     try {
-      directMemoryAllocator.allocate(0);
+      directMemoryAllocator.allocate(0, -1);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       Assert.assertTrue(true);
     }
 
     try {
-      directMemoryAllocator.allocate(-1);
+      directMemoryAllocator.allocate(-1, -1);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       Assert.assertTrue(true);
@@ -66,7 +66,7 @@ public class ODirectMemoryAllocatorTest {
   @Test
   public void testFillPointerWithZeros() {
     final ODirectMemoryAllocator directMemoryAllocator = new ODirectMemoryAllocator();
-    final OPointer pointer = directMemoryAllocator.allocate(256);
+    final OPointer pointer = directMemoryAllocator.allocate(256, -1);
     pointer.clear();
 
     final ByteBuffer buffer = pointer.getNativeByteBuffer();

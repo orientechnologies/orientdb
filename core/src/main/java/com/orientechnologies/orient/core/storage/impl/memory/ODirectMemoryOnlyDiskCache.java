@@ -48,7 +48,6 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -76,11 +75,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     this.pageSize = pageSize;
     this.id = id;
     this.performanceStatisticManager = performanceStatisticManager;
-  }
-
-  @Override
-  public OPerformanceStatisticManager getPerformanceStatisticManager() {
-    return performanceStatisticManager;
   }
 
   /**
@@ -161,6 +155,10 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
+  public void checkCacheOverflow() throws InterruptedException {
+  }
+
+  @Override
   public long addFile(String fileName, long fileId, OWriteCache writeCache) {
     int intId = extractFileId(fileId);
 
@@ -184,7 +182,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public OCacheEntry loadForWrite(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
-      boolean verifyChecksums) throws IOException {
+      boolean verifyChecksums, OLogSequenceNumber startLSN) throws IOException {
 
     final OCacheEntry cacheEntry = doLoad(fileId, pageIndex);
 
@@ -240,11 +238,11 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void pinPage(OCacheEntry cacheEntry) {
+  public void pinPage(OCacheEntry cacheEntry, OWriteCache writeCache) {
   }
 
   @Override
-  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums) {
+  public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums, OLogSequenceNumber startLSN) {
     final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
         .getSessionPerformanceStatistic();
 
@@ -643,7 +641,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public CountDownLatch store(long fileId, long pageIndex, OCachePointer dataPointer) {
+  public void store(long fileId, long pageIndex, OCachePointer dataPointer) {
     throw new UnsupportedOperationException();
   }
 
@@ -656,12 +654,12 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public OLogSequenceNumber getMinimalNotFlushedLSN() {
+  public Long getMinimalNotFlushedSegment() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void updateDirtyPagesTable(OCachePointer pointer) {
+  public void updateDirtyPagesTable(OCachePointer pointer, OLogSequenceNumber startLSN) {
   }
 
   @Override
@@ -721,7 +719,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
     return firstIntId == secondIntId;
   }
-
 
   @Override
   public String restoreFileById(long fileId) throws IOException {

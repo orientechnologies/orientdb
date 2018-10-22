@@ -19,11 +19,7 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -41,7 +37,7 @@ public class OEngineRemote extends OEngineAbstract {
   public OEngineRemote() {
   }
 
-  public OStorageRemote createStorage(final String iURL, final Map<String, String> iConfiguration) {
+  public OStorageRemote createStorage(final String iURL, final Map<String, String> iConfiguration, long maxWalSegSize) {
     throw new OStorageException("deprecated");
   }
 

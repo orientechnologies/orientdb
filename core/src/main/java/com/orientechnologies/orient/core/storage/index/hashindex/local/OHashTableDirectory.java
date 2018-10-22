@@ -53,7 +53,6 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public void create() throws IOException {
-    startOperation();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation(false);
       acquireExclusiveLock();
@@ -72,7 +71,6 @@ public class OHashTableDirectory extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
@@ -109,7 +107,6 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   public void open() throws IOException {
-    startOperation();
     try {
       acquireExclusiveLock();
       try {
@@ -129,12 +126,10 @@ public class OHashTableDirectory extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public void close() throws IOException {
-    startOperation();
     try {
       acquireExclusiveLock();
       try {
@@ -143,12 +138,10 @@ public class OHashTableDirectory extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public void delete() throws IOException {
-    startOperation();
     try {
       final OAtomicOperation atomicOperation = startAtomicOperation(false);
       acquireExclusiveLock();
@@ -165,12 +158,10 @@ public class OHashTableDirectory extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   void deleteWithoutOpen() throws IOException {
-    startOperation();
     try {
       final OAtomicOperation atomicOperation = startAtomicOperation(false);
       acquireExclusiveLock();
@@ -191,12 +182,10 @@ public class OHashTableDirectory extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   int addNewNode(byte maxLeftChildDepth, byte maxRightChildDepth, byte nodeLocalDepth, long[] newNode) throws IOException {
-    startOperation();
     try {
       int nodeIndex;
 
@@ -274,12 +263,10 @@ public class OHashTableDirectory extends ODurableComponent {
 
       return nodeIndex;
     } finally {
-      completeOperation();
     }
   }
 
   void deleteNode(int nodeIndex) throws IOException {
-    startOperation();
     try {
       final OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
@@ -320,12 +307,10 @@ public class OHashTableDirectory extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   byte getMaxLeftChildDepth(int nodeIndex) throws IOException {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -346,12 +331,10 @@ public class OHashTableDirectory extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 
   void setMaxLeftChildDepth(int nodeIndex, byte maxLeftChildDepth) throws IOException {
-    startOperation();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
@@ -375,12 +358,10 @@ public class OHashTableDirectory extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   byte getMaxRightChildDepth(int nodeIndex) throws IOException {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -400,12 +381,10 @@ public class OHashTableDirectory extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 
   void setMaxRightChildDepth(int nodeIndex, byte maxRightChildDepth) throws IOException {
-    startOperation();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
@@ -429,12 +408,10 @@ public class OHashTableDirectory extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   byte getNodeLocalDepth(int nodeIndex) throws IOException {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -454,12 +431,10 @@ public class OHashTableDirectory extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 
   void setNodeLocalDepth(int nodeIndex, byte localNodeDepth) throws IOException {
-    startOperation();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
@@ -482,12 +457,10 @@ public class OHashTableDirectory extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   long[] getNode(int nodeIndex) throws IOException {
-    startOperation();
     try {
       final long[] node = new long[LEVEL_SIZE];
 
@@ -513,12 +486,10 @@ public class OHashTableDirectory extends ODurableComponent {
 
       return node;
     } finally {
-      completeOperation();
     }
   }
 
   void setNode(int nodeIndex, long[] node) throws IOException {
-    startOperation();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
@@ -544,12 +515,10 @@ public class OHashTableDirectory extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   long getNodePointer(int nodeIndex, int index) throws IOException {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -569,12 +538,10 @@ public class OHashTableDirectory extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 
   void setNodePointer(int nodeIndex, int index, long pointer) throws IOException {
-    startOperation();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
@@ -597,12 +564,10 @@ public class OHashTableDirectory extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public void clear() throws IOException {
-    startOperation();
     try {
       OAtomicOperation atomicOperation = startAtomicOperation(true);
       acquireExclusiveLock();
@@ -623,12 +588,10 @@ public class OHashTableDirectory extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
-      completeOperation();
     }
   }
 
   public void flush() throws IOException {
-    startOperation();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -642,7 +605,6 @@ public class OHashTableDirectory extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
-      completeOperation();
     }
   }
 

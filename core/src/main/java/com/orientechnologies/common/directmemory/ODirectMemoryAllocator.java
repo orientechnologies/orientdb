@@ -21,14 +21,15 @@
 package com.orientechnologies.common.directmemory;
 
 import com.orientechnologies.common.exception.ODirectMemoryAllocationFailedException;
+import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.sun.jna.Native;
+import com.sun.jna.NativeLong;
+import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.PointerByReference;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import java.lang.management.ManagementFactory;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -45,10 +46,6 @@ import java.util.concurrent.atomic.LongAdder;
  * @see OGlobalConfiguration#DIRECT_MEMORY_POOL_LIMIT
  */
 public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
-  /**
-   * Name of JMX bean
-   */
-  private static final String MBEAN_NAME = "com.orientechnologies.common.directmemory:type=ODirectMemoryAllocatorMXBean";
 
   /**
    * Whether we should track memory leaks during application execution
@@ -88,6 +85,8 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
    */
   private final LongAdder memoryConsumption = new LongAdder();
 
+  private final boolean isLinux = Platform.isLinux();
+
   /**
    * @return singleton instance.
    */
@@ -120,19 +119,30 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
    *
    * @throws ODirectMemoryAllocationFailedException if it is impossible to allocate amount of direct memory of given size
    */
-  public OPointer allocate(int size) {
+  public OPointer allocate(int size, int align) {
     if (size <= 0) {
       throw new IllegalArgumentException("Size of allocated memory can not be less or equal to 0");
     }
 
-    final long pointer = Native.malloc(size);
-    if (pointer == 0) {
-      throw new ODirectMemoryAllocationFailedException("Can not allocate direct memory chunk of size " + size);
+    final OPointer ptr;
+    if (align <= 0) {
+      final long pointer = Native.malloc(size);
+      if (pointer == 0) {
+        throw new ODirectMemoryAllocationFailedException("Can not allocate direct memory chunk of size " + size);
+      }
+
+      ptr = new OPointer(new Pointer(pointer), size);
+    } else {
+      if (!isLinux) {
+        throw new ODirectMemoryAllocationFailedException("Alignment of pointers is allowed only on Linux platforms.");
+      }
+
+      final PointerByReference pointerByReference = new PointerByReference();
+      ONative.instance().posix_memalign(pointerByReference, new NativeLong(align), new NativeLong(size));
+      ptr = new OPointer(pointerByReference.getValue(), size);
     }
 
-    final OPointer ptr = new OPointer(new Pointer(pointer), size);
     memoryConsumption.add(size);
-
     return track(ptr);
   }
 
@@ -220,44 +230,6 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
   }
 
   /**
-   * Registers the MBean for this byte buffer pool.
-   *
-   * @see OByteBufferPoolMXBean
-   */
-  public void registerMBean() {
-    try {
-      final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-      final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
-
-      if (!server.isRegistered(mbeanName)) {
-        server.registerMBean(this, mbeanName);
-      } else {
-        OLogManager.instance().warnNoDb(this,
-            "MBean with name %s has already registered. Probably your system was not shutdown correctly"
-                + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
-      }
-
-    } catch (Exception e) {
-      OLogManager.instance().errorNoDb(this, "Error during MBean registration", e);
-    }
-  }
-
-  /**
-   * Unregisters the MBean for this byte buffer pool.
-   *
-   * @see OByteBufferPoolMXBean
-   */
-  public void unregisterMBean() {
-    try {
-      final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-      final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
-      server.unregisterMBean(mbeanName);
-    } catch (Exception e) {
-      OLogManager.instance().errorNoDb(this, "Error during MBean de-registration", e);
-    }
-  }
-
-  /**
    * Removes direct memory pointer from container of weak references, it is done just after memory which was referenced by this
    * pointer will be deallocated. So no memory leaks can be caused by this pointer.
    */
@@ -328,5 +300,4 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
   private static int id(Object object) {
     return System.identityHashCode(object);
   }
-
 }

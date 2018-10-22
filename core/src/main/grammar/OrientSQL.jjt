@@ -3234,6 +3234,9 @@ OBooleanExpression MatchesCondition():
     (
     	jjtThis.expression = Expression() <MATCHES>
     	(
+    	    LOOKAHEAD(Expression())
+    	    ( jjtThis.rightExpression = Expression() )
+    	    |
     	    ( jjtThis.right = String() )
     	    |
     	    ( token = <CHARACTER_LITERAL> {jjtThis.right = token.image;} )
@@ -3276,6 +3279,7 @@ OOrderBy OrderBy():
                 )
             )
             [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+            [ <COLLATE> lastItem.collate = Expression() ]
         )
         |
         (
@@ -3297,6 +3301,7 @@ OOrderBy OrderBy():
                 )
             )
             [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+            [ <COLLATE> lastItem.collate = Expression() ]
             <RPAREN>
         )
 	)
@@ -3321,6 +3326,7 @@ OOrderBy OrderBy():
                     )
                 )
                 [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+                [ <COLLATE> lastItem.collate = Expression() ]
             )
             |
             (
@@ -3342,6 +3348,7 @@ OOrderBy OrderBy():
                     )
                 )
                 [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+                [ <COLLATE> lastItem.collate = Expression() ]
                 <RPAREN>
             )
         )

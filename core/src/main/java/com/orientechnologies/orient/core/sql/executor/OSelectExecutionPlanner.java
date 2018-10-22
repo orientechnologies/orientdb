@@ -1692,6 +1692,9 @@ public class OSelectExecutionPlanner {
       String orderType = null;
       for (int i = 0; i < info.orderBy.getItems().size(); i++) {
         OOrderByItem orderItem = info.orderBy.getItems().get(i);
+        if (orderItem.getCollate() != null) {
+          return false;
+        }
         String indexField = indexFields.get(i);
         if (i == 0) {
           orderType = orderItem.getType();
@@ -1899,6 +1902,10 @@ public class OSelectExecutionPlanner {
   }
 
   private boolean fullySorted(OOrderBy orderBy, OAndBlock conditions, OIndex idx) {
+    if (orderBy.getItems().stream().anyMatch(x -> x.getCollate() != null)) {
+      return false;
+    }
+
     if (!idx.supportsOrderedIterations())
       return false;
 

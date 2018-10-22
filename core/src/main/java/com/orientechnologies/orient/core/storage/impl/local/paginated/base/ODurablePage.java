@@ -284,15 +284,6 @@ public class ODurablePage {
     changes.applyChanges(buffer);
   }
 
-  public void rollbackChanges(OWALChanges changes) {
-    assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
-
-    final ByteBuffer buffer = cacheEntry.getCachePointer().getBuffer();
-
-    buffer.position(0);
-    changes.applyOriginalValues(buffer);
-  }
-
   public void setLsn(OLogSequenceNumber lsn) {
     assert cacheEntry.getCachePointer().getBuffer() == null || cacheEntry.isLockAcquiredByCurrentThread();
 

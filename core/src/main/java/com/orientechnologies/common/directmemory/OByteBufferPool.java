@@ -22,16 +22,12 @@ package com.orientechnologies.common.directmemory;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.management.ManagementFactory;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Object of this class works at the same time as factory for <code>DirectByteBuffer</code> objects and pool for
@@ -56,11 +52,6 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    * Limit of direct memory pointers are hold inside of the pool
    */
   private final int poolSize;
-
-  /**
-   * Name of JMX memory bean
-   */
-  private static final String MBEAN_NAME = "com.orientechnologies.common.directmemory:type=OByteBufferPoolMXBean";
 
   /**
    * @return Singleton instance
@@ -92,11 +83,12 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   /**
    * Pool of already allocated pages.
    */
-  private final ConcurrentLinkedQueue<OPointer> pointersPool     = new ConcurrentLinkedQueue<>();
+  private final ConcurrentLinkedQueue<OPointer> pointersPool = new ConcurrentLinkedQueue<>();
+
   /**
    * Size of the pool of pages is kept in separate counter because it is slow to ask pool itself and count all links in the pool.
    */
-  private final AtomicInteger                   pointersPoolSize = new AtomicInteger();
+  private final AtomicInteger pointersPoolSize = new AtomicInteger();
 
   /**
    * Direct memory allocator.
@@ -133,11 +125,14 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    * @return Direct memory buffer instance.
    */
   public ByteBuffer acquireDirect(boolean clear) {
-    OPointer pointer = pointersPool.poll();
+    OPointer pointer;
+
+    pointer = pointersPool.poll();
+
     if (pointer != null) {
       pointersPoolSize.decrementAndGet();
     } else {
-      pointer = allocator.allocate(pageSize);
+      pointer = allocator.allocate(pageSize, -1);
     }
 
     if (clear) {
@@ -172,6 +167,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     } else {
       pointersPool.add(holder.pointer);
     }
+
   }
 
   /**
@@ -180,28 +176,6 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   @Override
   public int getPoolSize() {
     return pointersPoolSize.get();
-  }
-
-  /**
-   * Writes passed in message into the log with provided {@link ByteBuffer} identity hash code and checks whether buffer was released
-   * to pool.
-   *
-   * @param prefix Prefix to add to the log message
-   * @param buffer Buffer to check whether it is acquired or not
-   */
-  public void logTrackedBufferInfo(String prefix, ByteBuffer buffer) {
-    if (TRACK) {
-      final StringBuilder builder = new StringBuilder();
-      builder.append("DIRECT-TRACK: ").append(prefix).append(String.format(" buffer `%X` ", System.identityHashCode(buffer)));
-
-      PointerHolder holder = bufferPointerMapping.get(wrapBuffer(buffer));
-      if (holder == null)
-        builder.append("untracked");
-      else
-        builder.append("allocated from: ").append('\n').append(getStackTraceAsString(holder.allocation)).append('\n');
-
-      OLogManager.instance().errorNoDb(this, builder.toString(), null);
-    }
   }
 
   /**
@@ -246,44 +220,6 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     }
 
     bufferPointerMapping.clear();
-  }
-
-  /**
-   * Registers the MBean for this byte buffer pool.
-   *
-   * @see OByteBufferPoolMXBean
-   */
-  public void registerMBean() {
-    try {
-      final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-      final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
-
-      if (!server.isRegistered(mbeanName)) {
-        server.registerMBean(this, mbeanName);
-      } else {
-        OLogManager.instance().warnNoDb(this,
-            "MBean with name %s has already registered. Probably your system was not shutdown correctly"
-                + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
-      }
-
-    } catch (Exception e) {
-      OLogManager.instance().errorNoDb(this, "Error during registration of MBean", e);
-    }
-  }
-
-  /**
-   * Unregisters the MBean for this byte buffer pool.
-   *
-   * @see OByteBufferPoolMXBean
-   */
-  public void unregisterMBean() {
-    try {
-      final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-      final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
-      server.unregisterMBean(mbeanName);
-    } catch (Exception e) {
-      OLogManager.instance().errorNoDb(this, "Error during de-registration of MBean", e);
-    }
   }
 
   /**
@@ -334,15 +270,4 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
       return new PointerHolder(pointer, null);
     }
   }
-
-  /**
-   * @return Wellformed stack trace of exception.
-   */
-  private static String getStackTraceAsString(Throwable throwable) {
-    @SuppressWarnings("resource")
-    final StringWriter writer = new StringWriter();
-    throwable.printStackTrace(new PrintWriter(writer));
-    return writer.toString();
-  }
-
 }

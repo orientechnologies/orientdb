@@ -15,12 +15,13 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
+
+import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -94,6 +95,11 @@ public class OOperationUnitId {
     offset += OLongSerializer.LONG_SIZE;
 
     return offset;
+  }
+
+  public void toStream(ByteBuffer buffer) {
+    buffer.putLong(sId);
+    buffer.putLong(lId);
   }
 
   public int fromStream(byte[] content, int offset) {

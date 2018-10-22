@@ -303,11 +303,6 @@ public class OWALChangesTree implements OWALChanges {
   }
 
   @Override
-  public void applyOriginalValues(ByteBuffer buffer) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public int serializedSize() {
     return serializedSize;
   }
@@ -841,5 +836,10 @@ public class OWALChangesTree implements OWALChanges {
   @Override
   public boolean hasChanges() {
     return root != null;
+  }
+
+  @Override
+  public void toStream(ByteBuffer byteBuffer) {
+    throw new UnsupportedOperationException();
   }
 }

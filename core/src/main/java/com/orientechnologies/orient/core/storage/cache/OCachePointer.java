@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -52,6 +52,8 @@ public class OCachePointer {
 
   private final long fileId;
   private final long pageIndex;
+
+  private OLogSequenceNumber endLSN;
 
   public OCachePointer(final ByteBuffer buffer, final OByteBufferPool bufferPool, final long fileId, final long pageIndex) {
     this.buffer = buffer;
@@ -168,7 +170,7 @@ public class OCachePointer {
    *
    * @return Whether pointer lock (read or write )is acquired
    */
-  public boolean isLockAcquiredByCurrentThread() {
+  boolean isLockAcquiredByCurrentThread() {
     return readWriteLock.getReadHoldCount() > 0 || readWriteLock.isWriteLockedByCurrentThread();
   }
 
@@ -203,15 +205,6 @@ public class OCachePointer {
     version++;
   }
 
-  public boolean tryAcquireExclusiveLock() {
-    boolean result = readWriteLock.writeLock().tryLock();
-
-    if (result) {
-      version++;
-    }
-
-    return result;
-  }
 
   public long getVersion() {
     return version;
@@ -232,31 +225,6 @@ public class OCachePointer {
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   public boolean tryAcquireSharedLock() {
     return readWriteLock.readLock().tryLock();
-  }
-
-  @Override
-  protected void finalize() throws Throwable {
-    super.finalize();
-
-    boolean needInfo = false;
-
-    if (getReaders(readersWritersReferrer.get()) != 0) {
-      needInfo = true;
-      OLogManager.instance().error(this, "OCachePointer.finalize: readers != 0", null);
-    }
-    if (getWriters(readersWritersReferrer.get()) != 0) {
-      needInfo = true;
-      OLogManager.instance().error(this, "OCachePointer.finalize: writers != 0", null);
-    }
-
-    if (needInfo && buffer != null)
-      bufferPool.logTrackedBufferInfo("finalizing", buffer);
-
-    if (referrersCount.get() > 0 && buffer != null) {
-      if (!needInfo) // not logged yet
-        bufferPool.logTrackedBufferInfo("finalizing", buffer);
-      bufferPool.release(buffer);
-    }
   }
 
   @Override
@@ -287,16 +255,16 @@ public class OCachePointer {
     return "OCachePointer{" + "referrersCount=" + referrersCount + ", usagesCount=" + usagesCounter + '}';
   }
 
-  private long composeReadersWriters(int readers, int writers) {
+  private static long composeReadersWriters(int readers, int writers) {
     return ((long) writers) << WRITERS_OFFSET | readers;
   }
 
-  private int getReaders(long readersWriters) {
+  private static int getReaders(long readersWriters) {
     //noinspection PointlessBitwiseExpression
     return (int) (readersWriters & READERS_MASK);
   }
 
-  private int getWriters(long readersWriters) {
+  private static int getWriters(long readersWriters) {
     return (int) (readersWriters >>> WRITERS_OFFSET);
   }
 
@@ -306,4 +274,11 @@ public class OCachePointer {
     void removeOnlyWriters(long fileId, long pageIndex);
   }
 
+  public OLogSequenceNumber getEndLSN() {
+    return endLSN;
+  }
+
+  void setEndLSN(OLogSequenceNumber endLSN) {
+    this.endLSN = endLSN;
+  }
 }

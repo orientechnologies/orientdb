@@ -139,7 +139,10 @@ public enum OGlobalConfiguration {
       }),
 
   DISK_WRITE_CACHE_PART("storage.diskCache.writeCachePart", "Percentage of disk cache, which is used as write cache", Integer.class,
-      15),
+      5),
+
+  DISK_WRITE_CACHE_SHUTDOWN_TIMEOUT("storage.diskCache.writeCacheShutdownTimeout",
+      "Timeout of shutdown of write cache for single task in min.", Integer.class, 30),
 
   DISK_WRITE_CACHE_PAGE_TTL("storage.diskCache.writeCachePageTTL",
       "Max time until a page will be flushed from write cache (in seconds)", Long.class, 24 * 60 * 60),
@@ -218,6 +221,15 @@ public enum OGlobalConfiguration {
   STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
       "Indicates whether a full checkpoint should be performed, if storage was opened", Boolean.class, true),
 
+  STORAGE_CALL_FSYNC("storage.callFsync", "Call fsync during fuzzy checkpoints or WAL writes, true by default", Boolean.class,
+      true),
+
+  STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS("storage.printWALPerformanceStatistics",
+      "Periodically prints statistics about WAL performance", Boolean.class, false),
+
+  STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL("storage.walPerformanceStatisticsInterval",
+      "Interval in seconds between consequent reports of WAL performance statistics", Integer.class, 10),
+
   STORAGE_TRACK_CHANGED_RECORDS_IN_WAL("storage.trackChangedRecordsInWAL",
       "If this flag is set metadata which contains rids of changed records is added at the end of each atomic operation",
       Boolean.class, false),
@@ -235,8 +247,14 @@ public enum OGlobalConfiguration {
       Boolean.class, true),
 
   WAL_CACHE_SIZE("storage.wal.cacheSize",
-      "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) If set to 0, caching will be disabled", Integer.class,
-      3000),
+      "Maximum size of WAL cache (in amount of WAL pages, each page is 4k) If set to 0, caching will be disabled", Integer.class,
+      65536),
+
+  WAL_BUFFER_SIZE("storage.wal.bufferSize",
+      "Size of the direct memory WAL buffer which is used inside of " + "the background write thread (in MB)", Integer.class, 128),
+
+  WAL_SEGMENTS_INTERVAL("storage.wal.segmentsInterval",
+      "Maximum interval in time in min. after which new WAL segment will be added", Integer.class, 30),
 
   WAL_FILE_AUTOCLOSE_INTERVAL("storage.wal.fileAutoCloseInterval",
       "Interval in seconds after which WAL file will be closed if there is no "
@@ -245,9 +263,17 @@ public enum OGlobalConfiguration {
   WAL_SEGMENT_BUFFER_SIZE("storage.wal.segmentBufferSize",
       "Size of the buffer which contains WAL records in serialized format " + "in megabytes", Integer.class, 32),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, 128),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, -1),
+
+  WAL_MAX_SEGMENT_SIZE_PERCENT("storage.wal.maxSegmentSizePercent",
+      "Maximum size of single WAL segment in percent of initial free space", Integer.class, 5),
+
+  WAL_MIN_SEG_SIZE("storage.wal.minSegSize", "Minimal value of maximum WAL segment size in MB", Integer.class, 6 * 1024),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk (in megabytes)", Integer.class, -1),
+
+  WAL_ALLOW_DIRECT_IO("storage.wal.allowDirectIO",
+      "Allows usage of direct IO API on Linux OS to avoid keeping of WAL data in " + "OS buffer", Boolean.class, true),
 
   WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
 
@@ -278,6 +304,22 @@ public enum OGlobalConfiguration {
 
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer (in kilobytes). !!! NEVER CHANGE THIS VALUE !!!",
       Integer.class, 64),
+
+  DISK_CACHE_PRINT_CACHE_STATISTICS("storage.diskCache.printCacheStatistics",
+      "Print information about write cache performance metrics", Boolean.class, false),
+
+  DISK_CACHE_STATISTICS_INTERVAL("storage.diskCache.cacheStatisticsInterval",
+      "Period in sec. after which information about write cache performance metrics will be printed", Integer.class, 10),
+
+  DISK_CACHE_PRINT_FLUSH_TILL_SEGMENT_STATISTICS("storage.diskCache.printFlushTillSegmentStatistics",
+      "Print information about write cache state when it is requested to flush all data operations on which are logged "
+          + "till provided WAL segment", Boolean.class, true),
+
+  DISK_CACHE_PRINT_FLUSH_FILE_STATISTICS("storage.diskCache.printFlushFileStatistics",
+      "Print information about write cache state when it is requested to flush all data of file specified", Boolean.class, true),
+
+  DISK_CACHE_PRINT_FILE_REMOVE_STATISTICS("storage.diskCache.printFileRemoveStatistics",
+      "Print information about write cache state when it is requested to clear all data of file specified", Boolean.class, true),
 
   DISK_CACHE_WAL_SIZE_TO_START_FLUSH("storage.diskCache.walSizeToStartFlush",
       "WAL size after which pages in write cache will be started to flush", Long.class, 6 * 1024L * 1024 * 1024),
@@ -384,6 +426,9 @@ public enum OGlobalConfiguration {
   INDEX_DURABLE_IN_NON_TX_MODE("index.durableInNonTxMode",
       "Indicates whether index implementation for plocal storage will be durable in non-Tx mode (true by default)", Boolean.class,
       true),
+
+  INDEX_USE_PREFIX_B_TREE("index.usePrefixBTRee", "Indicates that prefix B-Tree should be used for String indexes", Boolean.class,
+      false),
 
   /**
    * @see OIndexDefinition#isNullValuesIgnored()
