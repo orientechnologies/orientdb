@@ -58,7 +58,14 @@ public class OSQLMethodAsDate extends OAbstractSQLMethod {
         cal.set(Calendar.MILLISECOND, 0);
         return cal.getTime();
       } else if (iThis instanceof Number) {
-        return new Date(((Number) iThis).longValue());
+        Date val = new Date(((Number) iThis).longValue());
+        Calendar cal = new GregorianCalendar();
+        cal.setTime(val);
+        cal.set(Calendar.HOUR, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
       } else {
         try {
           return ODatabaseRecordThreadLocal.instance().get().getStorage().getConfiguration().getDateFormatInstance()
