@@ -10,10 +10,10 @@ import java.util.Optional;
  */
 public abstract class AbstractExecutionStep implements OExecutionStepInternal {
 
-  protected final OCommandContext ctx;
-  protected Optional<OExecutionStepInternal> prev     = Optional.empty();
-  protected Optional<OExecutionStepInternal> next     = Optional.empty();
-  protected boolean                          timedOut = false;
+  protected final OCommandContext                  ctx;
+  protected       Optional<OExecutionStepInternal> prev     = Optional.empty();
+  protected       Optional<OExecutionStepInternal> next     = Optional.empty();
+  protected       boolean                          timedOut = false;
 
   protected boolean profilingEnabled = false;
 
@@ -50,8 +50,14 @@ public abstract class AbstractExecutionStep implements OExecutionStepInternal {
     prev.ifPresent(p -> p.sendTimeout());
   }
 
+  private boolean alreadyClosed = false;
+
   @Override
   public void close() {
+    if (alreadyClosed) {
+      return;
+    }
+    alreadyClosed = true;
     prev.ifPresent(p -> p.close());
   }
 
