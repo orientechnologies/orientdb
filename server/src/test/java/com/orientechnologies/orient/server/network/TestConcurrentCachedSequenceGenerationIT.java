@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
