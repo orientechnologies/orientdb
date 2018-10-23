@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -38,6 +39,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.QUERY_LIVE_SUPPORT;
 
 public class OLiveQueryHookV2 {
 
@@ -113,10 +116,10 @@ public class OLiveQueryHookV2 {
   }
 
   public static Integer subscribe(Integer token, OLiveQueryListenerV2 iListener, ODatabaseInternal db) {
-    if (Boolean.FALSE.equals(db.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT))) {
+    if (Boolean.FALSE.equals(db.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) {
       OLogManager.instance().warn(db,
           "Live query support is disabled impossible to subscribe a listener, set '%s' to true for enable the live query support",
-          OGlobalConfiguration.QUERY_LIVE_SUPPORT.getKey());
+          QUERY_LIVE_SUPPORT.getKey());
       return -1;
     }
     OLiveQueryOps ops = getOpsReference(db);
@@ -131,10 +134,10 @@ public class OLiveQueryHookV2 {
   }
 
   public static void unsubscribe(Integer id, ODatabaseInternal db) {
-    if (Boolean.FALSE.equals(db.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT))) {
+    if (Boolean.FALSE.equals(db.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) {
       OLogManager.instance().warn(db,
           "Live query support is disabled impossible to unsubscribe a listener, set '%s' to true for enable the live query support",
-          OGlobalConfiguration.QUERY_LIVE_SUPPORT.getKey());
+          QUERY_LIVE_SUPPORT.getKey());
       return;
     }
     try {
@@ -148,7 +151,7 @@ public class OLiveQueryHookV2 {
   }
 
   public static void notifyForTxChanges(ODatabaseDocument database) {
-    if (Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
+    if (Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT)))
       return;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) database);
     List<OLiveQueryOp> list;
@@ -165,16 +168,21 @@ public class OLiveQueryHookV2 {
   }
 
   public static void removePendingDatabaseOps(ODatabaseDocument database) {
-    if (Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
+    if (database.isClosed() || Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT)))
       return;
-    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) database);
-    synchronized (ops.pendingOps) {
-      ops.pendingOps.remove(database);
+    try {
+      OLiveQueryOps ops = getOpsReference((ODatabaseInternal) database);
+      synchronized (ops.pendingOps) {
+        ops.pendingOps.remove(database);
+      }
+    } catch (ODatabaseException ex) {
+      //This catch and log the exception because in some case is suppressing the real exception
+      OLogManager.instance().error(database, "Error cleaning the live query resources", ex);
     }
   }
 
   public static void addOp(ODocument iDocument, byte iType, ODatabaseDocument database) {
-    if (Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
+    if (Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT)))
       return;
     ODatabaseDocument db = database;
     OLiveQueryOps ops = getOpsReference((ODatabaseInternal) db);
