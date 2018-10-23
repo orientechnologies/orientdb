@@ -88,11 +88,11 @@ public class OSequenceCached extends OSequence {
     return any;
   }
 
-  private void doRecycle() {
+  private void doRecycle(ODatabaseDocumentInternal db) {
     if (recyclable) {
       reloadSequence();
       setValue(getStart());
-      allocateCache(getCacheSize());
+      allocateCache(getCacheSize(), db);
     } else {
       throw new OSequenceLimitReachedException("Limit reached");
     }
@@ -191,13 +191,13 @@ public class OSequenceCached extends OSequence {
                 allocateCache(getCacheSize(), finalDb);
                 if (!cachedbefore) {
                   if (limitValue != null && cacheStart + increment > limitValue) {
-                    doRecycle();
+                    doRecycle(finalDb);
                   } else {
                     cacheStart = cacheStart + increment;                  
                   }
                 }
               } else if (limitValue != null && cacheStart + increment > limitValue) {
-                doRecycle();
+                doRecycle(finalDb);
               } else {
                 cacheStart = cacheStart + increment;              
               }
@@ -207,13 +207,13 @@ public class OSequenceCached extends OSequence {
                 allocateCache(getCacheSize(), finalDb);
                 if (!cachedbefore) {
                   if (limitValue != null && cacheStart - increment < limitValue) {
-                    doRecycle();
+                    doRecycle(finalDb);
                   } else {
                     cacheStart = cacheStart - increment;
                   }
                 }
               } else if (limitValue != null && cacheStart - increment < limitValue) {
-                doRecycle();
+                doRecycle(finalDb);
               } else {
                 cacheStart = cacheStart - increment;
               }
