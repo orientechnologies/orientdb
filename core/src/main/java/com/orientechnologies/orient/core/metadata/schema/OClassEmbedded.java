@@ -10,9 +10,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -87,7 +85,6 @@ public class OClassEmbedded extends OClassImpl {
       if (unsafe)
         cmd.append(" unsafe ");
 
-      final OStorage storage = database.getStorage();
       if (isDistributedCommand(database)) {
         final OProperty prop = (OProperty) OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
           @Override
@@ -96,10 +93,7 @@ public class OClassEmbedded extends OClassImpl {
           }
         });
 
-        final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
+        owner.sendCommand(database, cmd.toString());
 
         return prop;
       } else
@@ -125,14 +119,9 @@ public class OClassEmbedded extends OClassImpl {
 
     acquireSchemaWriteLock();
     try {
-      final OStorage storage = database.getStorage();
-
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` encryption %s", name, iValue);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
+        owner.sendCommand(database, cmd);
         setEncryptionInternal(database, iValue);
       } else
         setEncryptionInternal(database, iValue);
@@ -149,13 +138,9 @@ public class OClassEmbedded extends OClassImpl {
 
     acquireSchemaWriteLock();
     try {
-      final OStorage storage = database.getStorage();
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` clusterselection '%s'", name, value);
-        OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-        database.command(commandSQL).execute();
-
+        owner.sendCommand(database, cmd);
         setClusterSelectionInternal(value);
       } else
         setClusterSelectionInternal(value);
@@ -181,21 +166,16 @@ public class OClassEmbedded extends OClassImpl {
       releaseSchemaWriteLock();
     }
   }
-  
+
   public OClassImpl setCustom(final String name, final String value) {
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
-      final OStorage storage = database.getStorage();
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` custom `%s`=%s", getName(), name, value);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
+        owner.sendCommand(database, cmd);
         setCustomInternal(name, value);
       } else
         setCustomInternal(name, value);
@@ -212,13 +192,9 @@ public class OClassEmbedded extends OClassImpl {
 
     acquireSchemaWriteLock();
     try {
-      final OStorage storage = database.getStorage();
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` custom clear", getName());
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-        database.command(commandSQL).execute();
-
+        owner.sendCommand(database, cmd);
         clearCustomInternal();
       } else
         clearCustomInternal();
@@ -250,24 +226,18 @@ public class OClassEmbedded extends OClassImpl {
     }
     acquireSchemaWriteLock();
     try {
-      final OStorage storage = database.getStorage();
-
-      final StringBuilder sb = new StringBuilder();
-      if (classes != null && classes.size() > 0) {
-        for (OClass superClass : classes) {
-          sb.append('`').append(superClass.getName()).append("`,");
-        }
-        sb.deleteCharAt(sb.length() - 1);
-      } else
-        sb.append("null");
-
-      final String cmd = String.format("alter class `%s` superclasses %s", name, sb);
       if (isDistributedCommand(database)) {
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
+        final StringBuilder sb = new StringBuilder();
+        if (classes != null && classes.size() > 0) {
+          for (OClass superClass : classes) {
+            sb.append('`').append(superClass.getName()).append("`,");
+          }
+          sb.deleteCharAt(sb.length() - 1);
+        } else
+          sb.append("null");
 
-        database.command(commandSQL).execute();
-
+        final String cmd = String.format("alter class `%s` superclasses %s", name, sb);
+        owner.sendCommand(database, cmd);
         setSuperClassesInternal(classes);
       } else
         setSuperClassesInternal(classes);
@@ -302,15 +272,10 @@ public class OClassEmbedded extends OClassImpl {
     checkParametersConflict(superClass);
     acquireSchemaWriteLock();
     try {
-      final OStorage storage = database.getStorage();
       if (isDistributedCommand(database)) {
         final String cmd = String
             .format("alter class `%s` superclass +`%s`", name, superClass != null ? superClass.getName() : null);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
+        owner.sendCommand(database, cmd);
         addSuperClassInternal(database, superClass);
       } else
         addSuperClassInternal(database, superClass);
@@ -357,15 +322,10 @@ public class OClassEmbedded extends OClassImpl {
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     acquireSchemaWriteLock();
     try {
-      final OStorage storage = database.getStorage();
       if (isDistributedCommand(database)) {
         final String cmd = String
             .format("alter class `%s` superclass -`%s`", name, superClass != null ? superClass.getName() : null);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
+        owner.sendCommand(database, cmd);
         removeSuperClassInternal(superClass);
       } else
         removeSuperClassInternal(superClass);
@@ -445,14 +405,9 @@ public class OClassEmbedded extends OClassImpl {
     acquireSchemaWriteLock();
     try {
 
-      final OStorage storage = database.getStorage();
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` name `%s`", this.name, name);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
+        owner.sendCommand(database, cmd);
         setNameInternal(database, name);
       } else
         setNameInternal(database, name);
@@ -528,15 +483,9 @@ public class OClassEmbedded extends OClassImpl {
     acquireSchemaWriteLock();
     try {
 
-      final OStorage storage = database.getStorage();
       if (isDistributedCommand(database)) {
-
         final String cmd = String.format("alter class `%s` shortname `%s`", name, shortName);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
+        owner.sendCommand(database, cmd);
         setShortNameInternal(database, shortName);
       } else
         setShortNameInternal(database, shortName);
@@ -629,14 +578,9 @@ public class OClassEmbedded extends OClassImpl {
     acquireSchemaReadLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
       if (isDistributedCommand(database)) {
         final String cmd = String.format("truncate cluster %s", clusterName);
-
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
+        owner.sendCommand(database, cmd);
         truncateClusterInternal(clusterName, database);
       } else
         truncateClusterInternal(clusterName, database);
@@ -653,16 +597,10 @@ public class OClassEmbedded extends OClassImpl {
 
     acquireSchemaWriteLock();
     try {
-      final OStorage storage = database.getStorage();
 
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` strictmode %s", name, isStrict);
-
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
+        owner.sendCommand(database, cmd);
         setStrictModeInternal(isStrict);
       } else
         setStrictModeInternal(isStrict);
@@ -699,13 +637,8 @@ public class OClassEmbedded extends OClassImpl {
     acquireSchemaWriteLock();
     try {
       if (isDistributedCommand(database)) {
-
         final String cmd = String.format("alter class `%s` description ?", name);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        final OStorage storage = database.getStorage();
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute(iDescription);
+        owner.sendCommand(database, cmd);
         setDescriptionInternal(iDescription);
       } else
         setDescriptionInternal(iDescription);
@@ -736,16 +669,10 @@ public class OClassEmbedded extends OClassImpl {
 
     acquireSchemaWriteLock();
     try {
-      final OStorage storage = database.getStorage();
-
       if (isDistributedCommand(database)) {
 
         final String cmd = String.format("alter class `%s` addcluster %d", name, clusterId);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
+        owner.sendCommand(database, cmd);
         addClusterIdInternal(database, clusterId);
       } else
         addClusterIdInternal(database, clusterId);
@@ -766,15 +693,9 @@ public class OClassEmbedded extends OClassImpl {
     acquireSchemaWriteLock();
     try {
 
-      final OStorage storage = database.getStorage();
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` removecluster %d", name, clusterId);
-
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
+        owner.sendCommand(database, cmd);
         removeClusterIdInternal(database, clusterId);
       } else
         removeClusterIdInternal(database, clusterId);
@@ -841,7 +762,6 @@ public class OClassEmbedded extends OClassImpl {
       if (!properties.containsKey(propertyName))
         throw new OSchemaException("Property '" + propertyName + "' not found in class " + name + "'");
 
-      final OStorage storage = database.getStorage();
       if (isDistributedCommand(database)) {
         OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
           @Override
@@ -851,10 +771,7 @@ public class OClassEmbedded extends OClassImpl {
           }
         });
 
-        final OCommandSQL commandSQL = new OCommandSQL("drop property " + name + '.' + propertyName);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
+        owner.sendCommand(database, "drop property " + name + '.' + propertyName);
       } else
         OScenarioThreadLocal.executeAsDistributed(new Callable<OProperty>() {
           @Override
@@ -899,17 +816,12 @@ public class OClassEmbedded extends OClassImpl {
     acquireSchemaWriteLock();
     try {
 
-      final OStorage storage = database.getStorage();
       if (isDistributedCommand(database)) {
         final int clusterId = owner.createClusterIfNeeded(database, clusterNameOrId);
         addClusterIdInternal(database, clusterId);
 
         final String cmd = String.format("alter class `%s` addcluster `%s`", name, clusterNameOrId);
-
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
+        owner.sendCommand(database, cmd);
       } else {
         final int clusterId = owner.createClusterIfNeeded(database, clusterNameOrId);
         addClusterIdInternal(database, clusterId);
@@ -927,16 +839,10 @@ public class OClassEmbedded extends OClassImpl {
     acquireSchemaWriteLock();
     try {
 
-      final OStorage storage = database.getStorage();
-
       if (isDistributedCommand(database)) {
         // FORMAT FLOAT LOCALE AGNOSTIC
         final String cmd = String.format("alter class `%s` oversize %s", name, new Float(overSize).toString());
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
+        owner.sendCommand(database, cmd);
         setOverSizeInternal(database, overSize);
       } else
         setOverSizeInternal(database, overSize);
@@ -966,14 +872,9 @@ public class OClassEmbedded extends OClassImpl {
     acquireSchemaWriteLock();
     try {
 
-      final OStorage storage = database.getStorage();
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` abstract %s", name, isAbstract);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
+        owner.sendCommand(database, cmd);
         setAbstractInternal(database, isAbstract);
       } else
         setAbstractInternal(database, isAbstract);

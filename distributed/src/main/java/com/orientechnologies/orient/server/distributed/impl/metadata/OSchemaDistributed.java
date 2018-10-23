@@ -47,24 +47,18 @@ public class OSchemaDistributed extends OSchemaEmbedded {
 
   protected void doDropClass(ODatabaseDocumentInternal database, String className) {
     if (executeThroughDistributedStorage(database)) {
-      final OStorage storage = database.getStorage();
       final StringBuilder cmd;
       cmd = new StringBuilder("drop class ");
       cmd.append(className);
       cmd.append(" unsafe");
 
-      final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;
-      OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
-      commandSQL.addExcludedNode(autoshardedStorage.getNodeId());
-      database.command(commandSQL).execute();
-
+      sendCommand(database, cmd.toString());
       dropClassInternal(database, className);
     } else
       dropClassInternal(database, className);
   }
 
   protected void doDropView(ODatabaseDocumentInternal database, final String name) {
-    final OStorage storage = database.getStorage();
     final StringBuilder cmd;
 
     if (executeThroughDistributedStorage(database)) {
@@ -72,10 +66,7 @@ public class OSchemaDistributed extends OSchemaEmbedded {
       cmd.append(name);
       cmd.append(" unsafe");
 
-      final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;
-      OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
-      commandSQL.addExcludedNode(autoshardedStorage.getNodeId());
-      database.command(commandSQL).execute();
+      sendCommand(database, cmd.toString());
     }
 
     dropViewInternal(database, name);
@@ -84,7 +75,6 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   protected void doRealCreateView(ODatabaseDocumentInternal database, OViewConfig config, int[] clusterIds)
       throws ClusterIdsAreEmptyException {
     if (executeThroughDistributedStorage(database)) {
-      final OStorage storage = database.getStorage();
       StringBuilder cmd = new StringBuilder("create view ");
       cmd.append('`');
       cmd.append(config.getName());
@@ -101,11 +91,7 @@ public class OSchemaDistributed extends OSchemaEmbedded {
         cmd.append(clusterIds[i]);
       }
 
-      final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;
-      OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
-      commandSQL.addExcludedNode(autoshardedStorage.getNodeId());
-
-      final Object res = database.command(commandSQL).execute();
+      sendCommand(database, cmd.toString());
 
     } else {
       createViewInternal(database, config, clusterIds);
@@ -115,7 +101,6 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   protected void doRealCreateClass(ODatabaseDocumentInternal database, String className, List<OClass> superClassesList,
       int[] clusterIds) throws ClusterIdsAreEmptyException {
     if (executeThroughDistributedStorage(database)) {
-      final OStorage storage = database.getStorage();
       StringBuilder cmd = new StringBuilder("create class ");
       cmd.append('`');
       cmd.append(className);
@@ -148,12 +133,7 @@ public class OSchemaDistributed extends OSchemaEmbedded {
       }
 
       createClassInternal(database, className, clusterIds, superClassesList);
-
-      final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;
-      OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
-      commandSQL.addExcludedNode(autoshardedStorage.getNodeId());
-
-      final Object res = database.command(commandSQL).execute();
+      sendCommand(database, cmd.toString());
 
     } else {
       createClassInternal(database, className, clusterIds, superClassesList);

@@ -761,4 +761,5 @@ public class OSchemaEmbedded extends OSchemaShared {
       releaseSchemaWriteLock(database);
     }
   }
+
 }

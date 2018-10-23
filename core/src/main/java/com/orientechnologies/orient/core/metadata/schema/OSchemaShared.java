@@ -41,7 +41,9 @@ import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClust
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
@@ -255,7 +257,8 @@ public abstract class OSchemaShared implements OCloseable {
   public abstract OClass createClass(ODatabaseDocumentInternal database, final String className, int clusters,
       OClass... superClasses);
 
-  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement, Map<String, Object> metadata);
+  public abstract OView createView(ODatabaseDocumentInternal database, final String viewName, String statement,
+      Map<String, Object> metadata);
 
   public abstract OView createView(ODatabaseDocumentInternal database, OViewConfig cfg);
 
@@ -298,7 +301,6 @@ public abstract class OSchemaShared implements OCloseable {
       releaseSchemaReadLock();
     }
   }
-
 
   public OView getViewByClusterId(int clusterId) {
     acquireSchemaReadLock();
@@ -424,8 +426,7 @@ public abstract class OSchemaShared implements OCloseable {
         if (iSave) {
           if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
             saveInternal(database);
-          }
-          else {
+          } else {
             reload(database);
           }
         } else {
@@ -980,4 +981,15 @@ public abstract class OSchemaShared implements OCloseable {
   public ODocument getDocument() {
     return document;
   }
+
+  public void sendCommand(ODatabaseDocumentInternal database, String command) {
+    final OStorage storage = database.getStorage();
+    final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;
+    OCommandSQL commandSQL = new OCommandSQL(command);
+    commandSQL.addExcludedNode(autoshardedStorage.getNodeId());
+
+    database.command(commandSQL).execute();
+
+  }
+
 }
