@@ -70,15 +70,40 @@ public class OArraySingleValuesSelector extends SimpleNode {
           result.add(((Map) iResult).get(index));
         } else if (iResult instanceof OElement && index instanceof String) {
           result.add(((OElement) iResult).getProperty((String) index));
+        } else if (OMultiValue.isMultiValue(iResult)) {
+          Iterator<Object> iter = OMultiValue.getMultiValueIterator(iResult);
+          while (iter.hasNext()) {
+            result.add(calculateValue(iter.next(), index));
+          }
         } else {
           result.add(null);
         }
       }
-      if (this.items.size() == 1) {
+      if (this.items.size() == 1 && result.size() == 1) {
+//      if (this.items.size() == 1) {
         return result.get(0);
       }
     }
     return result;
+  }
+
+  private Object calculateValue(Object item, Object index) {
+    if (index instanceof Integer) {
+      return OMultiValue.getValue(item, ((Integer) index).intValue());
+    } else if (item instanceof Map) {
+      return ((Map) item).get(index);
+    } else if (item instanceof OElement && index instanceof String) {
+      return ((OElement) item).getProperty((String) index);
+    } else if (OMultiValue.isMultiValue(item)) {
+      Iterator<Object> iter = OMultiValue.getMultiValueIterator(item);
+      List<Object> result = new ArrayList<>();
+      while (iter.hasNext()) {
+        result.add(calculateValue(iter.next(), index));
+      }
+      return null;
+    } else {
+      return null;
+    }
   }
 
   public boolean needsAliases(Set<String> aliases) {
