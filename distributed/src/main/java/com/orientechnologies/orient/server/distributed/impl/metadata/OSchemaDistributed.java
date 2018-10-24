@@ -1,14 +1,22 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitResponse;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ddl.ODDLQuerySubmitRequest;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
 
 /**
  * Created by tglman on 22/06/17.
@@ -194,6 +202,20 @@ public class OSchemaDistributed extends OSchemaEmbedded {
 
   @Override
   public void sendCommand(ODatabaseDocumentInternal database, String command) {
-    super.sendCommand(database, command);
+    if (database.getConfiguration().getValueAsInteger(DISTRIBUTED_REPLICATION_PROTOCOL_VERSION) == 2) {
+
+      ODistributedContext distributed = ((OSharedContextDistributed) database.getSharedContext()).getDistributedContext();
+      Future<OSubmitResponse> response = distributed.getSubmitContext()
+          .send(new OSessionOperationId(), new ODDLQuerySubmitRequest(command));
+      try {
+        response.get();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      } catch (ExecutionException e) {
+        e.printStackTrace();
+      }
+    } else {
+      super.sendCommand(database, command);
+    }
   }
 }

@@ -35,7 +35,7 @@ public class ODistributedCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
       @Override
-      public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+      public void begin(ODistributedMember requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
@@ -90,7 +90,7 @@ public class ODistributedCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
       @Override
-      public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+      public void begin(ODistributedMember requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
@@ -195,7 +195,7 @@ public class ODistributedCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
       @Override
-      public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+      public void begin(ODistributedMember requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override

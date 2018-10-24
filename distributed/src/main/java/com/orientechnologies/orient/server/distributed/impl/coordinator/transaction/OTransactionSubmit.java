@@ -121,7 +121,7 @@ public class OTransactionSubmit implements OSubmitRequest {
   }
 
   @Override
-  public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+  public void begin(ODistributedMember requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
     ODistributedLockManager lockManager = coordinator.getLockManager();
 
     //using OPair because there could be different types of values here, so falling back to lexicographic sorting
@@ -158,7 +158,7 @@ public class OTransactionSubmit implements OSubmitRequest {
     for (ORID rid : rids) {
       guards.add(lockManager.lockRecord(rid));
     }
-    OTransactionFirstPhaseResponseHandler responseHandler = new OTransactionFirstPhaseResponseHandler(operationId, this, member,
+    OTransactionFirstPhaseResponseHandler responseHandler = new OTransactionFirstPhaseResponseHandler(operationId, this, requester,
         guards);
     OTransactionFirstPhaseOperation request = new OTransactionFirstPhaseOperation(operationId, this.operations, indexes);
     coordinator.sendOperation(this, request, responseHandler);
