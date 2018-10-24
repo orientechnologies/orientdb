@@ -47,7 +47,7 @@ public class OSequenceOrdered extends OSequence {
   }
 
   @Override
-  public synchronized long nextWork() throws OSequenceLimitReachedException {    
+  public synchronized long nextWork() throws OSequenceLimitReachedException {
     ODatabaseDocumentInternal mainDb = getDatabase();
     boolean tx = mainDb.getTransaction().isActive();
     try {
@@ -102,7 +102,7 @@ public class OSequenceOrdered extends OSequence {
 
           return newValue;
         }
-      }, "next");   
+      }, "next");
     } finally {
       if (tx) {
         mainDb.activateOnCurrentThread();
@@ -141,8 +141,7 @@ public class OSequenceOrdered extends OSequence {
           return newValue;
         }
       }, "reset");
-    }
-    finally{
+    } finally {
       if (tx) {
         mainDb.activateOnCurrentThread();
       }

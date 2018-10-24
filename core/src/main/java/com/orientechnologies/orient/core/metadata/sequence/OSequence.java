@@ -239,16 +239,16 @@ public abstract class OSequence {
         params = new CreateParams().setDefaults();
       }
 
-      initSequence(params);      
+      initSequence(params);
     }
     cruacialValueChanged = true;
   }
 
-  public void save() {        
+  public void save() {
     document = document.save();
     onUpdate(document);
   }
-  
+
   public void save(ODatabaseDocument database) {
     ODocument doc = database.save(document);
     onUpdate(doc);
@@ -286,8 +286,8 @@ public abstract class OSequence {
     boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
     return updateParams(params, shouldGoOverDistributted);
   }
-  
-  protected boolean isOnDistributted(){    
+
+  protected boolean isOnDistributted() {
     return document.getDatabase().isDistributed();
   }
 
@@ -340,7 +340,7 @@ public abstract class OSequence {
     return any;
   }
 
-  public void onUpdate(ODocument iDocument) {    
+  public void onUpdate(ODocument iDocument) {
     document = iDocument;
   }
 
@@ -551,8 +551,8 @@ public abstract class OSequence {
       } catch (OConcurrentModificationException ignore) {
         try {
           ODatabaseDocumentInternal db = document.getDatabase();
-          Thread.sleep(1 + new Random()
-              .nextInt(db.getConfiguration().getValueAsInteger(OGlobalConfiguration.SEQUENCE_RETRY_DELAY)));
+          Thread
+              .sleep(1 + new Random().nextInt(db.getConfiguration().getValueAsInteger(OGlobalConfiguration.SEQUENCE_RETRY_DELAY)));
         } catch (InterruptedException ignored) {
           Thread.currentThread().interrupt();
           break;

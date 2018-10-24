@@ -100,13 +100,13 @@ public class OSequenceLibraryImpl {
     validateSequenceNoExists(key);
 
     final String interned = iName.intern();
-    synchronized(interned){
+    synchronized (interned) {
       final OSequence sequence = OSequenceHelper.createSequence(sequenceType, params, null).setName(iName);
-      sequence.save();        
+      sequence.save();
       sequences.put(key, sequence);
 
       return sequence;
-    }    
+    }
   }
 
   public synchronized void dropSequence(final ODatabaseDocumentInternal database, final String iName) {

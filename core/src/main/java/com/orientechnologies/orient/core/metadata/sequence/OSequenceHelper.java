@@ -45,7 +45,7 @@ public class OSequenceHelper {
     return SEQUENCE_TYPE.valueOf(typeAsString);
   }
 
-  public static OSequence createSequence(ODocument document) {    
+  public static OSequence createSequence(ODocument document) {
     SEQUENCE_TYPE sequenceType = OSequence.getSequenceType(document);
     return createSequence(sequenceType, null, document);
   }
@@ -84,7 +84,7 @@ public class OSequenceHelper {
           + ". Sequnce library should implement be derived form OSequenceLibraryAbstract");
     }
   }
-  
+
   public static long sequenceNextWithNewCurrentValueOnLocal(OSequenceCached seq, long currentValue) throws ODatabaseException {
     return seq.nextWithNewCurrentValue(currentValue, false);
   }

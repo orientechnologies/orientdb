@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -35,19 +36,19 @@ import java.util.concurrent.ExecutionException;
  * @since 3/3/2015
  */
 public class OSequenceCached extends OSequence {
-  private static final String FIELD_CACHE = "cache";
-  private long    cacheStart;
-  private long    cacheEnd;
-  private boolean firstCache;
-  private int     increment;
-  private Long limitValue = null;
-  private Long              startValue;
-  private SequenceOrderType orderType;
-  private boolean           recyclable;
-  private String name = null;
+  private static final String            FIELD_CACHE = "cache";
+  private              long              cacheStart;
+  private              long              cacheEnd;
+  private              boolean           firstCache;
+  private              int               increment;
+  private              Long              limitValue  = null;
+  private              Long              startValue;
+  private              SequenceOrderType orderType;
+  private              boolean           recyclable;
+  private              String            name        = null;
 
   private final Set<Long> generated = new HashSet<>();
-  
+
   public OSequenceCached() {
     this(null, null);
   }
@@ -140,10 +141,9 @@ public class OSequenceCached extends OSequence {
         return nextWork();
       }
     } else {
-      try{
+      try {
         return sendSequenceActionSetAndNext(currentValue);
-      }
-      catch (InterruptedException | ExecutionException exc){
+      } catch (InterruptedException | ExecutionException exc) {
         OLogManager.instance().error(this, exc.getMessage(), exc, (Object[]) null);
         throw new ODatabaseException(exc.getMessage());
       }
@@ -158,14 +158,14 @@ public class OSequenceCached extends OSequence {
   @Override
   public long next() throws OSequenceLimitReachedException, ODatabaseException {
     boolean shouldGoOverDistributted = shouldGoOverDistrtibute();
-    if (shouldGoOverDistributted) {      
-      return nextWithNewCurrentValue(cacheStart, true);      
+    if (shouldGoOverDistributted) {
+      return nextWithNewCurrentValue(cacheStart, true);
     }
     return nextWork();
   }
 
   @Override
-  public long nextWork() throws OSequenceLimitReachedException {           
+  public long nextWork() throws OSequenceLimitReachedException {
     ODatabaseDocumentInternal mainDb = getDatabase();
     boolean tx = mainDb.getTransaction().isActive();
     try {
@@ -175,11 +175,11 @@ public class OSequenceCached extends OSequence {
         db.activateOnCurrentThread();
       }
       final ODatabaseDocumentInternal finalDb = db;
-      
+
       return callRetry(signalToAllocateCache() || getCrucialValueChanged(), new Callable<Long>() {
         @Override
         public Long call() throws Exception {
-          synchronized (OSequenceCached.this) {          
+          synchronized (OSequenceCached.this) {
             boolean detectedCrucialValueChange = false;
             if (getCrucialValueChanged()) {
               reloadCrucialValues();
@@ -193,13 +193,13 @@ public class OSequenceCached extends OSequence {
                   if (limitValue != null && cacheStart + increment > limitValue) {
                     doRecycle(finalDb);
                   } else {
-                    cacheStart = cacheStart + increment;                  
+                    cacheStart = cacheStart + increment;
                   }
                 }
               } else if (limitValue != null && cacheStart + increment > limitValue) {
                 doRecycle(finalDb);
               } else {
-                cacheStart = cacheStart + increment;              
+                cacheStart = cacheStart + increment;
               }
             } else {
               if (signalToAllocateCache()) {
@@ -235,14 +235,13 @@ public class OSequenceCached extends OSequence {
               }
             }
 
-            firstCache = false;          
+            firstCache = false;
             return cacheStart;
           }
         }
-      }, "next");       
-    }
-    finally{
-      if (tx){
+      }, "next");
+    } finally {
+      if (tx) {
         mainDb.activateOnCurrentThread();
       }
     }
@@ -264,7 +263,7 @@ public class OSequenceCached extends OSequence {
         db.activateOnCurrentThread();
       }
       final ODatabaseDocumentInternal finalDb = db;
-      
+
       return callRetry(true, new Callable<Long>() {
         @Override
         public Long call() throws Exception {
@@ -277,10 +276,9 @@ public class OSequenceCached extends OSequence {
             return newValue;
           }
         }
-      }, "reset");  
-    }
-    finally{
-      if (tx){
+      }, "reset");
+    } finally {
+      if (tx) {
         mainDb.activateOnCurrentThread();
       }
     }
@@ -299,11 +297,11 @@ public class OSequenceCached extends OSequence {
     getDocument().field(FIELD_CACHE, cacheSize);
   }
 
-  private void allocateCache(int cacheSize){
+  private void allocateCache(int cacheSize) {
     allocateCache(cacheSize, getDatabase());
   }
-  
-  private void allocateCache(int cacheSize, ODatabaseDocumentInternal db) {        
+
+  private void allocateCache(int cacheSize, ODatabaseDocumentInternal db) {
     if (getCrucialValueChanged()) {
       reloadCrucialValues();
       setCrucialValueChanged(false);
@@ -321,8 +319,8 @@ public class OSequenceCached extends OSequence {
       if (limitValue != null && newValue < limitValue) {
         newValue = limitValue;
       }
-    }    
-    setValue(newValue);    
+    }
+    setValue(newValue);
     save(db);
 
     this.cacheStart = value;
