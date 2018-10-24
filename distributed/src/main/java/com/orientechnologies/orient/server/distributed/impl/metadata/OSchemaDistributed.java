@@ -1,13 +1,14 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by tglman on 22/06/17.
@@ -79,17 +80,68 @@ public class OSchemaDistributed extends OSchemaEmbedded {
       cmd.append('`');
       cmd.append(config.getName());
       cmd.append('`');
+      cmd.append(" from (");
+      cmd.append(config.getQuery());
+      cmd.append(") METADATA {");
+      cmd.append(", updateIntervalSeconds: " + config.getUpdateIntervalSeconds());
+      if (config.getWatchClasses() != null && config.getWatchClasses().size() > 0) {
+        cmd.append(", watchClasses: [\"");
+        cmd.append(config.getWatchClasses().stream().collect(Collectors.joining("\",\"")));
+        cmd.append("\"]");
+      }
+      if (config.getNodes() != null && config.getNodes().size() > 0) {
+        cmd.append(", nodes: [\"");
+        cmd.append(config.getNodes().stream().collect(Collectors.joining("\",\"")));
+        cmd.append("\"]");
+      }
+      if (config.getIndexes() != null && config.getIndexes().size() > 0) {
+        cmd.append(", indexes: [");
+        boolean first = true;
+        for (OViewConfig.OViewIndexConfig index : config.getIndexes()) {
+          if (!first) {
+            cmd.append(", ");
+          }
+          cmd.append("{");
+          cmd.append("type: \"" + index.getType() + "\"");
+          if (index.getEngine() != null) {
+            cmd.append(", engine: \"" + index.getEngine() + "\"");
+          }
+          cmd.append(", properties:{");
+          boolean firstProp = true;
+          for (OPair<String, OType> property : index.getProperties()) {
+            if (!firstProp) {
+              cmd.append(", ");
+            }
+            cmd.append("\"");
+            cmd.append(property.key);
+            cmd.append("\":\"");
+            cmd.append(property.value);
+            cmd.append("\"");
+            firstProp = false;
+          }
+          cmd.append("  }");
+          cmd.append("}");
+          first = false;
+        }
+        cmd.append("]");
+      }
+      if (config.isUpdatable()) {
+        cmd.append(", updatable: true");
+      }
+      if (config.getOriginRidField() != null) {
+        cmd.append(", originRidField: \"");
+        cmd.append(config.getOriginRidField());
+        cmd.append("\"");
+      }
+      if (config.getUpdateStrategy() != null) {
+        cmd.append(", updateStrategy: \"");
+        cmd.append(config.getUpdateStrategy());
+        cmd.append("\"");
+      }
+
+      cmd.append("}");
 
       createViewInternal(database, config, clusterIds);
-
-      cmd.append(" cluster ");
-      for (int i = 0; i < clusterIds.length; ++i) {
-        if (i > 0)
-          cmd.append(',');
-        else
-          cmd.append(' ');
-        cmd.append(clusterIds[i]);
-      }
 
       sendCommand(database, cmd.toString());
 
