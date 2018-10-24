@@ -1,11 +1,18 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
+import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-import com.orientechnologies.orient.core.index.OIndexManagerShared;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Locale;
 
 /**
  * Created by tglman on 23/06/17.
@@ -24,4 +31,78 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
     });
     return this;
   }
+
+  public OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, final String iType, final OIndexDefinition indexDefinition,
+      final int[] clusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata) {
+
+    if (isDistributedCommand(database)) {
+      return distributedCreateIndex(iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata, null, database);
+    }
+
+    return super.createIndex(database, iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata);
+  }
+
+  @Override
+  public OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, final String iType, final OIndexDefinition iIndexDefinition,
+      final int[] iClusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata, final String algorithm) {
+    if (isDistributedCommand(database)) {
+      return distributedCreateIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm,
+          database);
+    }
+
+    return super.createIndex(database, iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
+  }
+
+  public OIndex<?> distributedCreateIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
+      final int[] iClusterIdsToIndex, final OProgressListener progressListener, ODocument metadata, String engine,
+      ODatabaseDocumentInternal database) {
+
+    String createIndexDDL;
+    if (iIndexDefinition != null)
+      createIndexDDL = iIndexDefinition.toCreateIndexDDL(iName, iType, engine);
+    else
+      createIndexDDL = new OSimpleKeyIndexDefinition().toCreateIndexDDL(iName, iType, engine);
+
+    if (metadata != null)
+      createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_METADATA + " " + metadata.toJSON();
+
+    if (progressListener != null)
+      progressListener.onBegin(this, 0, false);
+
+    database.command(new OCommandSQL(createIndexDDL)).execute();
+
+    ORecordInternal.setIdentity(getDocument(), new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()));
+
+    if (progressListener != null)
+      progressListener.onCompletition(this, true);
+
+    reload();
+
+    final Locale locale = getServerLocale();
+    return super.preProcessBeforeReturn(database, super.getIndex(database, iName));
+  }
+
+  private boolean isDistributedCommand(ODatabaseDocumentInternal database) {
+    return database.getStorage().isDistributed() && !((OAutoshardedStorage) database.getStorage()).isLocalEnv();
+  }
+
+  public void dropIndex(ODatabaseDocumentInternal database, final String iIndexName) {
+    if (isDistributedCommand(database)) {
+      distributedDropIndex(database, iIndexName);
+    }
+
+    super.dropIndex(database, iIndexName);
+  }
+
+  public void distributedDropIndex(ODatabaseDocumentInternal database, final String iName) {
+
+    String dropIndexDDL = "DROP INDEX `" + iName + "`";
+
+    database.command(new OCommandSQL(dropIndexDDL)).execute();
+    ORecordInternal.setIdentity(getDocument(), new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()));
+
+    reload();
+
+  }
+
 }

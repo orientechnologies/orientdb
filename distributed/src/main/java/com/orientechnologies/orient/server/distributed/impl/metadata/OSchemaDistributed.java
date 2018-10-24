@@ -192,4 +192,8 @@ public class OSchemaDistributed extends OSchemaEmbedded {
     }
   }
 
+  @Override
+  public void sendCommand(ODatabaseDocumentInternal database, String command) {
+    super.sendCommand(database, command);
+  }
 }

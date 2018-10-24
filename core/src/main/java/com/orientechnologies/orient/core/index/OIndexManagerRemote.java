@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -40,14 +39,14 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   private              AtomicBoolean skipPush         = new AtomicBoolean(false);
   private static final String        QUERY_DROP       = "drop index `%s` if exists";
   private static final long          serialVersionUID = -6570577338095096235L;
-  private OStorage storage;
+  private              OStorage      storage;
 
   public OIndexManagerRemote(OStorage storage) {
     super();
     this.storage = storage;
   }
 
-  public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
+  public OIndex<?> createIndex(ODatabaseDocumentInternal database, final String iName, final String iType, final OIndexDefinition iIndexDefinition,
       final int[] iClusterIdsToIndex, final OProgressListener progressListener, ODocument metadata, String engine) {
 
     String createIndexDDL;
@@ -64,16 +63,16 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       if (progressListener != null)
         progressListener.onBegin(this, 0, false);
 
-      getDatabase().command(createIndexDDL).close();
+      database.command(createIndexDDL).close();
 
-      ORecordInternal.setIdentity(document, new ORecordId(getDatabase().getStorage().getConfiguration().getIndexMgrRecordId()));
+      ORecordInternal.setIdentity(document, new ORecordId(database.getStorage().getConfiguration().getIndexMgrRecordId()));
 
       if (progressListener != null)
         progressListener.onCompletition(this, true);
 
       reload();
 
-      return preProcessBeforeReturn(getDatabase(), indexes.get(iName));
+      return preProcessBeforeReturn(database, indexes.get(iName));
     } catch (OCommandExecutionException x) {
       throw new OIndexException(x.getMessage());
     } finally {
@@ -82,22 +81,21 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, String iType, OIndexDefinition indexDefinition, int[] clusterIdsToIndex,
+  public OIndex<?> createIndex(ODatabaseDocumentInternal database, String iName, String iType, OIndexDefinition indexDefinition, int[] clusterIdsToIndex,
       OProgressListener progressListener, ODocument metadata) {
-    return createIndex(iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata, null);
+    return createIndex(database, iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata, null);
   }
 
-  public OIndexManager dropIndex(final String iIndexName) {
+  public void dropIndex(ODatabaseDocumentInternal database, final String iIndexName) {
     acquireExclusiveLock();
     try {
       final String text = String.format(QUERY_DROP, iIndexName);
-      getDatabase().command(text).close();
+      database.command(text).close();
 
       // REMOVE THE INDEX LOCALLY
       indexes.remove(iIndexName);
       reload();
 
-      return this;
     } finally {
       releaseExclusiveLock();
     }
@@ -108,7 +106,6 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     throw new UnsupportedOperationException("Remote index cannot be streamed");
   }
 
-  @Override
   public void recreateIndexes() {
     throw new UnsupportedOperationException("recreateIndexes()");
   }
@@ -118,7 +115,6 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     throw new UnsupportedOperationException("recreateIndexes(ODatabaseDocumentInternal)");
   }
 
-  @Override
   public void waitTillIndexRestore() {
   }
 
@@ -127,12 +123,10 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     return false;
   }
 
-  @Override
   public boolean autoRecreateIndexesAfterCrash() {
     return false;
   }
 
-  @Override
   public void removeClassPropertyIndex(OIndex<?> idx) {
   }
 

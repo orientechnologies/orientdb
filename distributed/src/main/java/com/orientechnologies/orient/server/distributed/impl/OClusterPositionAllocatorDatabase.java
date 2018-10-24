@@ -3,10 +3,9 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OClusterPositionAllocator;
 
@@ -34,7 +33,7 @@ public class OClusterPositionAllocatorDatabase implements OClusterPositionAlloca
       }
 
       @Override
-      public void onIndexManagerUpdate(String database, OIndexManager indexManager) {
+      public void onIndexManagerUpdate(String database, OIndexManagerAbstract indexManager) {
 
       }
 

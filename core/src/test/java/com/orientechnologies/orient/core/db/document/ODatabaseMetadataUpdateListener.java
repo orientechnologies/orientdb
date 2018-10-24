@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.db.document;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -40,7 +40,7 @@ public class ODatabaseMetadataUpdateListener {
       }
 
       @Override
-      public void onIndexManagerUpdate(String database, OIndexManager indexManager) {
+      public void onIndexManagerUpdate(String database, OIndexManagerAbstract indexManager) {
         count++;
         assertNotNull(indexManager);
       }
