@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingClusterSelectionStrategy;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -1392,7 +1393,7 @@ public abstract class OClassImpl implements OClass {
     final boolean strictSQL = database.getStorage().getConfiguration().isStrictSql();
 
     final StringBuilder builder = new StringBuilder(256);
-    builder.append("select count(*) from ");
+    builder.append("select count(*) as count from ");
     builder.append(getEscapedName(name, strictSQL));
     builder.append(" where ");
     builder.append(getEscapedName(propertyName, strictSQL));
@@ -1408,8 +1409,8 @@ public abstract class OClassImpl implements OClass {
     if (type.isMultiValue())
       builder.append(" and ").append(getEscapedName(propertyName, strictSQL)).append(".size() <> 0 limit 1");
 
-    final List<ODocument> res = database.command(new OCommandSQL(builder.toString())).execute();
-    if (((Long) res.get(0).field("count")) > 0)
+    final OResultSet res = database.command(builder.toString());
+    if (((Long) res.next().getProperty("count")) > 0)
       throw new OSchemaException("The database contains some schema-less data in the property '" + name + "." + propertyName
           + "' that is not compatible with the type " + type + ". Fix those records and change the schema again");
   }

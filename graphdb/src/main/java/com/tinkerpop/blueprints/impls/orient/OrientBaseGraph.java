@@ -1375,7 +1375,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       @Override
       public OClass call(final OrientBaseGraph g) {
         ODatabaseDocument rawGraph = getRawGraph();
-        rawGraph.command(new OCommandSQL("delete vertex " + iTypeName)).execute();
         rawGraph.getMetadata().getSchema().dropClass(iTypeName);
         return null;
       }
