@@ -2022,8 +2022,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       for (ORecordOperation recordOperation : recordOperations) {
         if (recordOperation.type == ORecordOperation.CREATED || recordOperation.type == ORecordOperation.UPDATED) {
           final ORecord record = recordOperation.getRecord();
-          if (record instanceof ODocument)
+          if (record instanceof ODocument) {
             ((ODocument) record).validate();
+          }
         }
 
         if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
@@ -2067,12 +2068,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
         }
         try {
+          checkOpenness();
+
+          makeStorageDirty();
+
+          boolean rollback = false;
+          startStorageTx(transaction);
           try {
-
-            checkOpenness();
-
-            makeStorageDirty();
-            startStorageTx(transaction);
+            final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
             lockClusters(clustersToLock);
 
@@ -2096,7 +2099,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 final int clusterId = clusterOverride == null ? rid.getClusterId() : clusterOverride;
 
                 final OCluster cluster = getClusterById(clusterId);
+
+                assert atomicOperation.getCounter() == 1;
                 OPhysicalPosition physicalPosition = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+                assert atomicOperation.getCounter() == 1;
                 rid.setClusterId(cluster.getId());
 
                 if (rid.getClusterPosition() > -1) {
@@ -2104,11 +2110,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                   // BECAUSE A TRANSACTION HAS BEEN ROLLED BACK BEFORE TO SEND THE REMOTE CREATES. SO THE OWNER NODE DELETED
                   // RECORD HAVING A HIGHER CLUSTER POSITION
                   while (rid.getClusterPosition() > physicalPosition.clusterPosition) {
+                    assert atomicOperation.getCounter() == 1;
                     physicalPosition = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+                    assert atomicOperation.getCounter() == 1;
                   }
 
-                  if (rid.getClusterPosition() != physicalPosition.clusterPosition)
+                  if (rid.getClusterPosition() != physicalPosition.clusterPosition) {
                     throw new OConcurrentCreateException(rid, new ORecordId(rid.getClusterId(), physicalPosition.clusterPosition));
+                  }
                 }
                 positions.put(recordOperation, physicalPosition);
 
@@ -2123,7 +2132,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             checkReadOnlyConditions();
 
             for (ORecordOperation recordOperation : recordOperations) {
+              assert atomicOperation.getCounter() == 1;
               commitEntry(recordOperation, positions.get(recordOperation), database.getSerializer());
+              assert atomicOperation.getCounter() == 1;
               result.add(recordOperation);
             }
 
@@ -2131,34 +2142,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             checkReadOnlyConditions();
 
-            commitIndexes(indexOperations);
-
-            final OLogSequenceNumber lsn = endStorageTx();
-            final DataOutputStream journaledStream = OAbstractPaginatedStorage.journaledStream;
-            if (journaledStream != null) { // send event to journaled tx stream if the streaming is on
-              final int txId = transaction.getClientTransactionId();
-              if (lsn == null || writeAheadLog == null) // if tx is not journaled
-                try {
-                  journaledStream.writeInt(txId);
-                } catch (IOException e) {
-                  OLogManager.instance().error(this, "unable to write tx id into journaled stream", e);
-                }
-              else
-                writeAheadLog.addEventAt(lsn, () -> {
-                  try {
-                    journaledStream.writeInt(txId);
-                  } catch (IOException e) {
-                    OLogManager.instance().error(this, "unable to write tx id into journaled stream", e);
-                  }
-                });
+            commitIndexes(indexOperations, atomicOperation);
+          } catch (IOException | RuntimeException e) {
+            rollback = true;
+            if (e instanceof RuntimeException) {
+              throw ((RuntimeException) e);
+            } else {
+              throw OException.wrapException(new OStorageException("Error during transaction commit"), e);
+            }
+          } finally {
+            if (rollback) {
+              rollback(transaction);
+            } else {
+              endStorageTx(transaction, recordOperations);
             }
 
-            OTransactionAbstract.updateCacheFromEntries(transaction.getDatabase(), recordOperations, true);
-            txCommit.incrementAndGet();
-
-          } catch (IOException | RuntimeException e) {
-            makeRollback(transaction, e);
-          } finally {
             this.transaction.set(null);
           }
         } finally {
@@ -2179,10 +2177,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
       }
 
-      if (OLogManager.instance().isDebugEnabled())
+      if (OLogManager.instance().isDebugEnabled()) {
         OLogManager.instance()
-            .debug(this, "%d Committed transaction %d on database '%s' (result=%s)", Thread.currentThread().getId(),
-                transaction.getId(), database.getName(), result);
+            .debug(this, "%d Committed transaction %d on database '%s' (result=%s)", Thread.currentThread().getId(), transaction.getId(), database.getName(), result);
+      }
 
       return result;
     } catch (RuntimeException ee) {
@@ -2196,7 +2194,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private static void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit) {
+  private static void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit,
+      final OAtomicOperation atomicOperation) {
     final Map<OIndex, OIndexAbstract.IndexTxSnapshot> snapshots = new IdentityHashMap<>();
 
     for (OTransactionIndexChanges changes : indexesToCommit.values()) {
@@ -2204,14 +2203,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OIndexAbstract.IndexTxSnapshot snapshot = new OIndexAbstract.IndexTxSnapshot();
       snapshots.put(index, snapshot);
 
+      assert atomicOperation.getCounter() == 1;
       index.preCommit(snapshot);
+      assert atomicOperation.getCounter() == 1;
     }
 
     for (OTransactionIndexChanges changes : indexesToCommit.values()) {
       final OIndexInternal<?> index = changes.getAssociatedIndex();
       final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
 
+      assert atomicOperation.getCounter() == 1;
       index.addTxOperation(snapshot, changes);
+      assert atomicOperation.getCounter() == 1;
     }
 
     try {
@@ -2219,14 +2222,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final OIndexInternal<?> index = changes.getAssociatedIndex();
         final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
 
+        assert atomicOperation.getCounter() == 1;
         index.commit(snapshot);
+        assert atomicOperation.getCounter() == 1;
       }
     } finally {
       for (OTransactionIndexChanges changes : indexesToCommit.values()) {
         final OIndexInternal<?> index = changes.getAssociatedIndex();
         final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
 
+        assert atomicOperation.getCounter() == 1;
         index.postCommit(snapshot);
+        assert atomicOperation.getCounter() == 1;
       }
     }
   }
@@ -3185,18 +3192,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return engine.hasRangeQuerySupport();
   }
 
-  private void makeRollback(OTransactionInternal clientTx, Exception e) {
-    // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
-    OLogManager.instance()
-        .debug(this, "Error during transaction commit, transaction will be rolled back (tx-id=%d)", e, clientTx.getId());
-    rollback(clientTx);
-    if (e instanceof RuntimeException)
-      throw ((RuntimeException) e);
-    else
-      throw OException.wrapException(new OStorageException("Error during transaction commit"), e);
-
-  }
-
   @Override
   public void rollback(final OTransactionInternal clientTx) {
     try {
@@ -3206,12 +3201,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         try {
           checkOpenness();
 
-          if (transaction.get() == null)
-            return;
+          assert transaction.get() != null;
 
-          if (transaction.get().getClientTx().getId() != clientTx.getId())
+          if (transaction.get().getClientTx().getId() != clientTx.getId()) {
             throw new OStorageException(
                 "Passed in and active transaction are different transactions. Passed in transaction cannot be rolled back.");
+          }
 
           makeStorageDirty();
           rollbackStorageTx();
@@ -4218,10 +4213,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private OLogSequenceNumber endStorageTx() throws IOException {
+  private void endStorageTx(final OTransactionInternal txi, final Collection<ORecordOperation> recordOperations)
+      throws IOException {
     final OLogSequenceNumber lsn = atomicOperationsManager.endAtomicOperation(false);
     assert OAtomicOperationsManager.getCurrentOperation() == null;
-    return lsn;
+
+    OTransactionAbstract.updateCacheFromEntries(txi.getDatabase(), recordOperations, true);
+    txCommit.incrementAndGet();
   }
 
   private void startStorageTx(OTransactionInternal clientTx) throws IOException {
