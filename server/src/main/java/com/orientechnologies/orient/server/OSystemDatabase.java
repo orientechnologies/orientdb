@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 import java.util.UUID;
 
@@ -93,13 +94,13 @@ public class OSystemDatabase {
     return server.getDatabases().openNoAuthorization(getSystemDatabaseName());
   }
 
-  public Object execute(final OCallable<Object, Object> callback, final String sql, final Object... args) {
+  public Object execute(final OCallable<Object, OResultSet> callback, final String sql, final Object... args) {
     final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       // BYPASS SECURITY
       final ODatabase<?> db = openSystemDatabase();
       try {
-        final Object result = db.command(new OCommandSQL(sql)).execute(args);
+        final OResultSet result = db.command(sql,args);
 
         if (callback != null)
           return callback.call(result);

@@ -308,8 +308,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public boolean dropUser(final String iUserName) {
-    final Number removed = getDatabase().<OCommandRequest>command(new OCommandSQL("delete from OUser where name = ?"))
-        .execute(iUserName);
+    final Number removed = getDatabase().command("delete from OUser where name = ?", iUserName).next().getProperty("count");
 
     return removed != null && removed.intValue() > 0;
   }
@@ -362,8 +361,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public boolean dropRole(final String iRoleName) {
-    final Number removed = getDatabase().<OCommandRequest>command(
-        new OCommandSQL("delete from ORole where name = '" + iRoleName + "'")).execute();
+    final Number removed = getDatabase().command("delete from ORole where name = '" + iRoleName + "'").next().getProperty("count");
 
     return removed != null && removed.intValue() > 0;
   }
