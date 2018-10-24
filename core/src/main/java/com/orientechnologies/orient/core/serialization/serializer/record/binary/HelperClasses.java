@@ -36,17 +36,31 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.OTypeInterface;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.*;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.ChangeSerializationHelper;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TimeZone;
+import java.util.UUID;
 
 /**
  * @author mdjurovi
@@ -459,7 +473,11 @@ public class HelperClasses {
     if (pointer == null && context != null) {
       final int clusterId = getHighLevelDocClusterId(ridbag);
       assert clusterId > -1;
-      pointer = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager().createSBTree(clusterId, ownerUuid);
+      try {
+        pointer = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager().createSBTree(clusterId, ownerUuid);
+      } catch (IOException e) {
+        throw OException.wrapException(new ODatabaseException("Error during creation of ridbag"), e);
+      }
     }
 
     ((OSBTreeRidBag) ridbag.getDelegate()).setCollectionPointer(pointer);

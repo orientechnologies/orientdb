@@ -1,17 +1,11 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
-import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -26,29 +20,21 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.MapRecordInfo;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Triple;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.Tuple;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
-import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OBonsaiBucketPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.ChangeSerializationHelper;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.UUID;
 
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.getGlobalProperty;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.getTypeFromValueEmbedded;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readByte;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readOType;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.readString;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.stringFromBytes;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeOType;
+import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.writeString;
 
 public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
 
@@ -106,7 +92,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     boolean matchField = matchFieldName.getFirstVal();
     String fieldName = matchFieldName.getSecondVal();
 
-    Integer fieldLength = OVarIntSerializer.readAsInteger(bytes);
+    int fieldLength = OVarIntSerializer.readAsInteger(bytes);
     OType type = getPropertyTypeFromStream(prop, bytes);
 
     if (!matchField) {
@@ -287,7 +273,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
   public OBinaryField deserializeField(final BytesContainer bytes, final OClass iClass, final String iFieldName) {
     final byte[] field = iFieldName.getBytes();
 
-    final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
+    final OMetadataInternal metadata = ODatabaseRecordThreadLocal.instance().get().getMetadata();
     final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
 
     int headerLength = OVarIntSerializer.readAsInteger(bytes);
@@ -348,11 +334,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     String fieldName;
     OType type;
     int cumulativeSize = 0;
-    while (true) {
-
-      if (bytes.offset >= headerStart + headerLength)
-        break;
-
+    while (bytes.offset < headerStart + headerLength) {
       OGlobalProperty prop;
       final int len = OVarIntSerializer.readAsInteger(bytes);
       int fieldLength;
@@ -425,10 +407,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     final List<String> result = new ArrayList<>();
 
     String fieldName;
-    while (true) {
-      if (bytes.offset >= headerStart + headerLength)
-        break;
-
+    while (bytes.offset < headerStart + headerLength) {
       OGlobalProperty prop;
       final int len = OVarIntSerializer.readAsInteger(bytes);
       if (len > 0) {
@@ -456,7 +435,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
       }
     }
 
-    return result.toArray(new String[result.size()]);
+    return result.toArray(new String[0]);
   }
 
   private void serializeWriteValues(final BytesContainer headerBuffer, final BytesContainer valuesBuffer, final ODocument document,
@@ -555,7 +534,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     serializeDocument(document, bytes, clazz);
   }
 
-  protected OClass serializeClass(final ODocument document, final BytesContainer bytes, boolean serializeClassName) {
+  private OClass serializeClass(final ODocument document, final BytesContainer bytes, boolean serializeClassName) {
     final OClass clazz = ODocumentInternal.getImmutableSchemaClass(document);
     if (serializeClassName) {
       if (clazz != null && document.isEmbedded())
@@ -587,7 +566,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     int headerStart = bytes.offset;
     int cumulativeLength = 0;
 
-    final OMetadataInternal metadata = (OMetadataInternal) ODatabaseRecordThreadLocal.instance().get().getMetadata();
+    final OMetadataInternal metadata = ODatabaseRecordThreadLocal.instance().get().getMetadata();
     final OImmutableSchema _schema = metadata.getImmutableSchemaSnapshot();
 
     while (true) {
@@ -615,6 +594,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
 
         bytes.offset = valuePos;
         Object value = deserializeValue(bytes, type, null, false, fieldLength, serializerVersion, false);
+        //noinspection unchecked
         return (RET) value;
       } else {
         // LOAD GLOBAL PROPERTY BY ID
@@ -635,6 +615,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
         bytes.offset = valuePos;
 
         Object value = deserializeValue(bytes, type, null, false, fieldLength, serializerVersion, false);
+        //noinspection unchecked
         return (RET) value;
       }
     }
