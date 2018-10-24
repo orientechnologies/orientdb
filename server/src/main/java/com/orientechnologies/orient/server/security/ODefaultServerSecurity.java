@@ -288,7 +288,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     if (isEnabled()) {
       return (OUser) server.getSystemDatabase().execute((resultset) -> {
         if (resultset != null && resultset.hasNext())
-          return new OSystemUser(resultset.next().getElement().get().getRecord(), dbName);
+          return new OSystemUser((ODocument) resultset.next().getElement().get().getRecord(), dbName);
         return null;
       }, "select from OUser where name = ? limit 1 fetchplan roles:1", username);
     }
