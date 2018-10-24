@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.index.engine;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
@@ -27,6 +28,7 @@ import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
@@ -35,6 +37,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.index.sbtree.local.OPrefixBTree;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -78,22 +81,36 @@ public class OPrefixBTreeIndexEngine implements OIndexEngine {
       OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
       ODocument metadata, OEncryption encryption) {
 
-    prefixTree.create(keySerializer, valueSerializer, nullPointerSupport, encryption);
+    try {
+      //noinspection unchecked
+      prefixTree.create(keySerializer, valueSerializer, nullPointerSupport, encryption);
+    } catch (IOException e) {
+      throw OException.wrapException(new OIndexException("Error during creation of index " + name), e);
+    }
   }
 
   @Override
   public void delete() {
-    prefixTree.delete();
+    try {
+      prefixTree.delete();
+    } catch (IOException e) {
+      throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
+    }
   }
 
   @Override
   public void deleteWithoutLoad(String indexName) {
-    prefixTree.deleteWithoutLoad();
+    try {
+      prefixTree.deleteWithoutLoad();
+    } catch (IOException e) {
+      throw OException.wrapException(new OIndexException("Error during deletion of index " + name), e);
+    }
   }
 
   @Override
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
       OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties, OEncryption encryption) {
+    //noinspection unchecked
     prefixTree.load(indexName, keySerializer, valueSerializer, nullPointerSupport, encryption);
   }
 
@@ -108,11 +125,15 @@ public class OPrefixBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public boolean remove(Object key) {
-    if (key == null) {
-      return prefixTree.remove(null) != null;
-    }
+    try {
+      if (key == null) {
+        return prefixTree.remove(null) != null;
+      }
 
-    return prefixTree.remove(key.toString()) != null;
+      return prefixTree.remove(key.toString()) != null;
+    } catch (IOException e) {
+      throw OException.wrapException(new OIndexException("Error during removal of key " + key + " in index " + name), e);
+    }
   }
 
   @Override
@@ -122,7 +143,12 @@ public class OPrefixBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public void clear() {
-    prefixTree.clear();
+    try {
+      prefixTree.clear();
+    } catch (IOException e) {
+      throw OException.wrapException(new OIndexException("Error during clear of index " + name), e);
+
+    }
   }
 
   @Override
@@ -173,30 +199,42 @@ public class OPrefixBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public void put(Object key, Object value) {
-    if (key == null) {
-      prefixTree.put(null, value);
-    } else {
-      prefixTree.put(key.toString(), value);
+    try {
+      if (key == null) {
+        prefixTree.put(null, value);
+      } else {
+        prefixTree.put(key.toString(), value);
+      }
+    } catch (IOException e) {
+      throw OException.wrapException(new OIndexException("Error during insertion of key " + key + " in index " + name), e);
     }
   }
 
   @Override
   public void update(Object key, OIndexKeyUpdater<Object> updater) {
-    if (key == null) {
-      prefixTree.update(null, updater, null);
-    } else {
-      prefixTree.update(key.toString(), updater, null);
+    try {
+      if (key == null) {
+        prefixTree.update(null, updater, null);
+      } else {
+        prefixTree.update(key.toString(), updater, null);
+      }
+    } catch (IOException e) {
+      throw OException.wrapException(new OIndexException("Error during update of key " + key + " in index " + name), e);
     }
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
-    if (key == null) {
-      return prefixTree.validatedPut(null, value, (Validator) validator);
-    }
+    try {
+      if (key == null) {
+        return prefixTree.validatedPut(null, value, (Validator) validator);
+      }
 
-    return prefixTree.validatedPut(key.toString(), value, (Validator) validator);
+      return prefixTree.validatedPut(key.toString(), value, (Validator) validator);
+    } catch (IOException e) {
+      throw OException.wrapException(new OIndexException("Error during update of key " + key + " in index " + name), e);
+    }
   }
 
   @Override
@@ -232,9 +270,9 @@ public class OPrefixBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public long size(final ValuesTransformer transformer) {
-    if (transformer == null)
+    if (transformer == null) {
       return prefixTree.size();
-    else {
+    } else {
       int counter = 0;
 
       if (prefixTree.isNullPointerSupport()) {
@@ -295,14 +333,17 @@ public class OPrefixBTreeIndexEngine implements OIndexEngine {
     public Map.Entry<Object, OIdentifiable> nextEntry() {
       if (valuesTransformer == null) {
         final Object entry = treeCursor.next(getPrefetchSize());
+        //noinspection unchecked
         return (Map.Entry<Object, OIdentifiable>) entry;
       }
 
-      if (currentIterator == null)
+      if (currentIterator == null) {
         return null;
+      }
 
       while (!currentIterator.hasNext()) {
         final Object p = treeCursor.next(getPrefetchSize());
+        @SuppressWarnings("unchecked")
         final Map.Entry<Object, OIdentifiable> entry = (Map.Entry<Object, OIdentifiable>) p;
 
         if (entry == null) {

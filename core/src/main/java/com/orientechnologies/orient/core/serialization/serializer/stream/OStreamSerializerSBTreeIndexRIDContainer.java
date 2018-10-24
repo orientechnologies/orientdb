@@ -145,7 +145,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OBinarySerializ
       final int pageOffset = INT_SERIALIZER.deserializeNative(stream, offset + SBTREE_ROOTOFFSET_OFFSET);
       final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer, durable,
+      final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer,
           (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
       return new OIndexRIDContainer(fileId, underlying, durable);
     }
@@ -217,7 +217,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OBinarySerializ
 
       final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer, durable,
+      final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer,
           (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
       return new OIndexRIDContainer(fileId, underlying, durable);
     }
@@ -261,7 +261,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OBinarySerializ
       final int pageOffset = walChanges.getIntValue(buffer, offset + SBTREE_ROOTOFFSET_OFFSET);
       final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer, durable,
+      final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer,
           (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
       return new OIndexRIDContainer(fileId, underlying, durable);
     }

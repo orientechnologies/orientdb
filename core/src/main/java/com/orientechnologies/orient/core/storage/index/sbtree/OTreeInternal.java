@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.index.sbtree;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,7 @@ public interface OTreeInternal<K, V> {
 
   K firstKey();
 
-  V remove(K key);
+  V remove(K key) throws IOException;
 
   /**
    * @author Artem Orobets (enisher-at-gmail.com)

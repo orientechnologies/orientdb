@@ -6,7 +6,6 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OLocalHashTableException;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -15,6 +14,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -27,7 +27,8 @@ import java.util.List;
 /**
  * Implementation of hash index which is based on <a href="http://en.wikipedia.org/wiki/Extendible_hashing">extendible hashing
  * algorithm</a>. The directory for extindible hashing is implemented in
- * {@link com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTableDirectory} class. Directory is not implemented according
+ * {@link com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTableDirectory} class. Directory is not implemented
+ * according
  * to classic algorithm because of its big memory consumption in case of non-uniform data distribution instead it is implemented
  * according too "Multilevel Extendible Hashing Sven Helmer, Thomas Neumann, Guido Moerkotte April 17, 2002". Which has much less
  * memory consumption in case of nonuniform data distribution.
@@ -56,7 +57,8 @@ import java.util.List;
  * To avoid disadvantages listed above entries ara appended to the end of bucket, but their offsets are stored at the beginning of
  * bucket. Offsets are stored in sorted order (ordered by hash code of entity's key) so we need to move only small amount of memory
  * to store entities in sorted order.
- * About indexes of parents of current bucket. When item is removed from bucket we check space which is needed to store all entities
+ * About indexes of parents of current bucket. When item is removed from bucket we check space which is needed to store all
+ * entities
  * of this bucket, it's buddy bucket (bucket which was also created from parent bucket during split) and if space of single bucket
  * is enough to save all entities from both buckets we remove these buckets and put all content in parent bucket. That is why we
  * need indexes of parents of current bucket.
@@ -121,72 +123,61 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
   @Override
   public void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
-      OEncryption encryption, OHashFunction<K> keyHashFunction, boolean nullKeyIsSupported) {
+      OEncryption encryption, OHashFunction<K> keyHashFunction, boolean nullKeyIsSupported) throws IOException {
+    boolean rollback = false;
+    final OAtomicOperation atomicOperation = startAtomicOperation(false);
     try {
-      final OAtomicOperation atomicOperation;
-      try {
-        atomicOperation = startAtomicOperation(false);
-      } catch (IOException e) {
-        throw OException.wrapException(new OIndexException("Error during hash table creation"), e);
-      }
-
       acquireExclusiveLock();
       try {
-        try {
-          this.keyHashFunction = keyHashFunction;
-          this.comparator = new OHashTable.KeyHashCodeComparator<>(this.keyHashFunction);
-          this.encryption = encryption;
+        this.keyHashFunction = keyHashFunction;
+        this.comparator = new OHashTable.KeyHashCodeComparator<>(this.keyHashFunction);
+        this.encryption = encryption;
 
-          if (keyTypes != null)
-            this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
-          else
-            this.keyTypes = null;
-
-          this.nullKeyIsSupported = nullKeyIsSupported;
-
-          this.directory = new OHashTableDirectory(treeStateFileExtension, getName(), getFullName(), storage);
-
-          fileStateId = addFile(atomicOperation, getName() + metadataConfigurationFileExtension);
-
-          directory.create();
-
-          final OCacheEntry hashStateEntry = addPage(atomicOperation, fileStateId);
-          pinPage(atomicOperation, hashStateEntry);
-
-          try {
-            @SuppressWarnings("unused")
-            OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(hashStateEntry, true);
-
-            hashStateEntryIndex = hashStateEntry.getPageIndex();
-          } finally {
-            releasePageFromWrite(atomicOperation, hashStateEntry);
-          }
-
-          final String fileName = getFullName();
-          fileId = addFile(atomicOperation, fileName);
-
-          setKeySerializer(keySerializer);
-          setValueSerializer(valueSerializer);
-
-          initHashTreeState(atomicOperation);
-
-          if (nullKeyIsSupported)
-            nullBucketFileId = addFile(atomicOperation, getName() + nullBucketFileExtension);
-
-          endAtomicOperation(false, null);
-        } catch (IOException e) {
-          endAtomicOperation(true, e);
-          throw e;
-        } catch (Exception e) {
-          endAtomicOperation(true, e);
-          throw OException.wrapException(new OStorageException("Error during local hash table creation"), e);
+        if (keyTypes != null) {
+          this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
+        } else {
+          this.keyTypes = null;
         }
-      } catch (IOException e) {
-        throw OException.wrapException(new OIndexException("Error during local hash table creation"), e);
+
+        this.nullKeyIsSupported = nullKeyIsSupported;
+
+        this.directory = new OHashTableDirectory(treeStateFileExtension, getName(), getFullName(), storage);
+
+        fileStateId = addFile(atomicOperation, getName() + metadataConfigurationFileExtension);
+
+        directory.create(atomicOperation);
+
+        final OCacheEntry hashStateEntry = addPage(atomicOperation, fileStateId);
+        pinPage(atomicOperation, hashStateEntry);
+
+        try {
+          @SuppressWarnings("unused")
+          OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(hashStateEntry, true);
+
+          hashStateEntryIndex = hashStateEntry.getPageIndex();
+        } finally {
+          releasePageFromWrite(atomicOperation, hashStateEntry);
+        }
+
+        final String fileName = getFullName();
+        fileId = addFile(atomicOperation, fileName);
+
+        setKeySerializer(keySerializer);
+        setValueSerializer(valueSerializer);
+
+        initHashTreeState(atomicOperation);
+
+        if (nullKeyIsSupported) {
+          nullBucketFileId = addFile(atomicOperation, getName() + nullBucketFileExtension);
+        }
       } finally {
         releaseExclusiveLock();
       }
+    } catch (Exception e) {
+      rollback = true;
+      throw e;
     } finally {
+      endAtomicOperation(rollback);
     }
   }
 
@@ -201,15 +192,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void setKeySerializer(OBinarySerializer<K> keySerializer) {
+  public void setKeySerializer(OBinarySerializer<K> keySerializer) throws IOException {
+    boolean rollback = false;
+    final OAtomicOperation atomicOperation = startAtomicOperation(true);
     try {
-      final OAtomicOperation atomicOperation;
-      try {
-        atomicOperation = startAtomicOperation(true);
-      } catch (IOException e) {
-        throw OException.wrapException(new OIndexException("Error during hash set serializer for index keys"), e);
-      }
-
       acquireExclusiveLock();
       try {
         this.keySerializer = keySerializer;
@@ -222,26 +208,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           releasePageFromWrite(atomicOperation, hashStateEntry);
         }
 
-        endAtomicOperation(false, null);
-      } catch (IOException e) {
-        rollback(e);
-
-        throw OException.wrapException(new OIndexException("Cannot set serializer for index keys"), e);
-      } catch (Exception e) {
-        rollback(e);
-        throw OException.wrapException(new OStorageException("Cannot set serializer for index keys"), e);
       } finally {
         releaseExclusiveLock();
       }
+    } catch (Exception e) {
+      rollback = true;
+      throw e;
     } finally {
-    }
-  }
-
-  private void rollback(Exception e) {
-    try {
-      endAtomicOperation(true, e);
-    } catch (IOException ioe) {
-      throw OException.wrapException(new OIndexException("Error during operation rollback"), ioe);
+      endAtomicOperation(rollback);
     }
   }
 
@@ -256,15 +230,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void setValueSerializer(OBinarySerializer<V> valueSerializer) {
+  public void setValueSerializer(OBinarySerializer<V> valueSerializer) throws IOException {
+    boolean rollback = false;
+    final OAtomicOperation atomicOperation = startAtomicOperation(true);
     try {
-      final OAtomicOperation atomicOperation;
-      try {
-        atomicOperation = startAtomicOperation(true);
-      } catch (IOException e) {
-        throw OException.wrapException(new OIndexException("Error during hash table set serializer for index values"), e);
-      }
-
       acquireExclusiveLock();
       try {
         this.valueSerializer = valueSerializer;
@@ -277,18 +246,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         } finally {
           releasePageFromWrite(atomicOperation, hashStateEntry);
         }
-
-        endAtomicOperation(false, null);
-      } catch (IOException e) {
-        rollback(e);
-        throw OException.wrapException(new OIndexException("Cannot set serializer for index values"), e);
-      } catch (Exception e) {
-        rollback(e);
-        throw OException.wrapException(new OStorageException("Cannot set serializer for index values"), e);
       } finally {
         releaseExclusiveLock();
       }
+    } catch (Exception e) {
+      rollback = true;
+      throw e;
     } finally {
+      endAtomicOperation(rollback);
     }
   }
 
@@ -297,12 +262,13 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     try {
       acquireSharedLock();
       try {
-        final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
         checkNullSupport(key);
         if (key == null) {
-          if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0)
+          if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
             return null;
+          }
 
           V result;
           OCacheEntry cacheEntry = loadPageForRead(atomicOperation, nullBucketFileId, 0, false);
@@ -319,12 +285,13 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           final long hashCode = keyHashFunction.hashCode(key);
 
-          OHashTable.BucketPath bucketPath = getBucket(hashCode);
+          OHashTable.BucketPath bucketPath = getBucket(hashCode, atomicOperation);
           final long bucketPointer = directory
-              .getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
+              .getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset, atomicOperation);
 
-          if (bucketPointer == 0)
+          if (bucketPointer == 0) {
             return null;
+          }
 
           final long pageIndex = getPageIndex(bucketPointer);
 
@@ -334,8 +301,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
                 encryption);
 
             OHashIndexBucket.Entry<K, V> entry = bucket.find(key, hashCode);
-            if (entry == null)
+            if (entry == null) {
               return null;
+            }
 
             return entry.value;
           } finally {
@@ -364,109 +332,107 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void put(K key, V value) {
+  public void put(K key, V value) throws IOException {
     put(key, value, null);
   }
 
   @Override
-  public boolean validatedPut(K key, V value, OIndexEngine.Validator<K, V> validator) {
+  public boolean validatedPut(K key, V value, OIndexEngine.Validator<K, V> validator) throws IOException {
     return put(key, value, validator);
   }
 
   @Override
-  public V remove(K key) {
-    final OAtomicOperation atomicOperation;
+  public V remove(K key) throws IOException {
+    boolean rollback = false;
+    final OAtomicOperation atomicOperation = startAtomicOperation(true);
     try {
-      atomicOperation = startAtomicOperation(true);
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during hash table entry deletion"), e);
-    }
+      acquireExclusiveLock();
+      try {
+        checkNullSupport(key);
 
-    acquireExclusiveLock();
-    try {
-      checkNullSupport(key);
+        int sizeDiff = 0;
+        if (key != null) {
+          key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
-      int sizeDiff = 0;
-      if (key != null) {
-        key = keySerializer.preprocess(key, (Object[]) keyTypes);
+          final long hashCode = keyHashFunction.hashCode(key);
 
-        final long hashCode = keyHashFunction.hashCode(key);
+          final OHashTable.BucketPath nodePath = getBucket(hashCode, atomicOperation);
+          final long bucketPointer = directory
+              .getNodePointer(nodePath.nodeIndex, nodePath.itemIndex + nodePath.hashMapOffset, atomicOperation);
 
-        final OHashTable.BucketPath nodePath = getBucket(hashCode);
-        final long bucketPointer = directory.getNodePointer(nodePath.nodeIndex, nodePath.itemIndex + nodePath.hashMapOffset);
+          final long pageIndex = getPageIndex(bucketPointer);
+          final V removed;
+          final boolean found;
 
-        final long pageIndex = getPageIndex(bucketPointer);
-        final V removed;
-        final boolean found;
+          final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false);
+          try {
+            final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
+                encryption);
+            final int positionIndex = bucket.getIndex(hashCode, key);
+            found = positionIndex >= 0;
 
-        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false);
-        try {
-          final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
-              encryption);
-          final int positionIndex = bucket.getIndex(hashCode, key);
-          found = positionIndex >= 0;
+            if (found) {
+              removed = bucket.deleteEntry(positionIndex).value;
+              sizeDiff--;
+            } else {
+              removed = null;
+            }
+          } finally {
+            releasePageFromWrite(atomicOperation, cacheEntry);
+          }
 
           if (found) {
-            removed = bucket.deleteEntry(positionIndex).value;
-            sizeDiff--;
-          } else
-            removed = null;
-        } finally {
-          releasePageFromWrite(atomicOperation, cacheEntry);
-        }
+            if (nodePath.parent != null) {
+              final int hashMapSize = 1 << nodePath.nodeLocalDepth;
 
-        if (found) {
-          if (nodePath.parent != null) {
-            final int hashMapSize = 1 << nodePath.nodeLocalDepth;
+              final boolean allMapsContainSameBucket = checkAllMapsContainSameBucket(
+                  directory.getNode(nodePath.nodeIndex, atomicOperation), hashMapSize);
+              if (allMapsContainSameBucket) {
+                mergeNodeToParent(nodePath, atomicOperation);
+              }
+            }
 
-            final boolean allMapsContainSameBucket = checkAllMapsContainSameBucket(directory.getNode(nodePath.nodeIndex),
-                hashMapSize);
-            if (allMapsContainSameBucket)
-              mergeNodeToParent(nodePath);
+            changeSize(sizeDiff, atomicOperation);
+          }
+
+          return removed;
+        } else {
+          if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
+            return null;
+          }
+
+          V removed;
+
+          OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
+          if (cacheEntry == null) {
+            cacheEntry = addPage(atomicOperation, nullBucketFileId);
+          }
+
+          try {
+            final ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, false);
+
+            removed = nullBucket.getValue();
+            if (removed != null) {
+              nullBucket.removeValue();
+              sizeDiff--;
+            }
+          } finally {
+            releasePageFromWrite(atomicOperation, cacheEntry);
           }
 
           changeSize(sizeDiff, atomicOperation);
+
+          return removed;
         }
-
-        endAtomicOperation(false, null);
-        return removed;
-      } else {
-        if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
-          endAtomicOperation(false, null);
-          return null;
-        }
-
-        V removed;
-
-        OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
-        if (cacheEntry == null)
-          cacheEntry = addPage(atomicOperation, nullBucketFileId);
-
-        try {
-          final ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, false);
-
-          removed = nullBucket.getValue();
-          if (removed != null) {
-            nullBucket.removeValue();
-            sizeDiff--;
-          }
-        } finally {
-          releasePageFromWrite(atomicOperation, cacheEntry);
-        }
-
-        changeSize(sizeDiff, atomicOperation);
-
-        endAtomicOperation(false, null);
-        return removed;
+      } finally {
+        releaseExclusiveLock();
       }
-    } catch (IOException e) {
-      rollback(e);
-      throw OException.wrapException(new OIndexException("Error during index removal"), e);
+
     } catch (Exception e) {
-      rollback(e);
-      throw OException.wrapException(new OStorageException("Error during index removal"), e);
+      rollback = true;
+      throw e;
     } finally {
-      releaseExclusiveLock();
+      endAtomicOperation(rollback);
     }
   }
 
@@ -484,30 +450,25 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void clear() {
+  public void clear() throws IOException {
+    boolean rollback = false;
+    final OAtomicOperation atomicOperation = startAtomicOperation(true);
     try {
-      final OAtomicOperation atomicOperation;
-      try {
-        atomicOperation = startAtomicOperation(true);
-      } catch (IOException e) {
-        throw OException.wrapException(new OIndexException("Error during hash table clear"), e);
-      }
-
       acquireExclusiveLock();
       try {
-        if (nullKeyIsSupported)
+        if (nullKeyIsSupported) {
           truncateFile(atomicOperation, nullBucketFileId);
+        }
 
         initHashTreeState(atomicOperation);
-
-        endAtomicOperation(false, null);
-      } catch (Exception e) {
-        rollback(e);
-        throw OException.wrapException(new OLocalHashTableException("Error during hash table clear", this), e);
       } finally {
         releaseExclusiveLock();
       }
+    } catch (Exception e) {
+      rollback = true;
+      throw e;
     } finally {
+      endAtomicOperation(rollback);
     }
   }
 
@@ -518,147 +479,140 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
   @Override
   public OHashIndexBucket.Entry<K, V>[] higherEntries(K key, int limit) {
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
-        acquireSharedLock();
+        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+
+        key = keySerializer.preprocess(key, (Object[]) keyTypes);
+
+        final long hashCode = keyHashFunction.hashCode(key);
+        OHashTable.BucketPath bucketPath = getBucket(hashCode, atomicOperation);
+        long bucketPointer = directory
+            .getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset, atomicOperation);
+
+        long pageIndex = getPageIndex(bucketPointer);
+
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
         try {
-          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+          OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
 
-          key = keySerializer.preprocess(key, (Object[]) keyTypes);
-
-          final long hashCode = keyHashFunction.hashCode(key);
-          OHashTable.BucketPath bucketPath = getBucket(hashCode);
-          long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
-
-          long pageIndex = getPageIndex(bucketPointer);
-
-          OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-          try {
-            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
-                encryption);
-
-            while (bucket.size() == 0 || comparator.compare(bucket.getKey(bucket.size() - 1), key) <= 0) {
-              bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
-              if (bucketPath == null)
-                //noinspection unchecked
-                return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
-
-              releasePageFromRead(atomicOperation, cacheEntry);
-
-              final long nextPointer = directory
-                  .getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
-
-              pageIndex = getPageIndex(nextPointer);
-
-              cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
+          while (bucket.size() == 0 || comparator.compare(bucket.getKey(bucket.size() - 1), key) <= 0) {
+            bucketPath = nextBucketToFind(bucketPath, bucket.getDepth(), atomicOperation);
+            if (bucketPath == null) {
+              //noinspection unchecked
+              return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
             }
 
-            final int index = bucket.getIndex(hashCode, key);
-            final int startIndex;
-            if (index >= 0)
-              startIndex = index + 1;
-            else
-              startIndex = -index - 1;
-
-            final int endIndex;
-            if (limit <= 0)
-              endIndex = bucket.size();
-            else
-              endIndex = Math.min(bucket.size(), startIndex + limit);
-
-            return convertBucketToEntries(bucket, startIndex, endIndex);
-          } finally {
             releasePageFromRead(atomicOperation, cacheEntry);
+
+            final long nextPointer = directory
+                .getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset, atomicOperation);
+
+            pageIndex = getPageIndex(nextPointer);
+
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
           }
 
+          final int index = bucket.getIndex(hashCode, key);
+          final int startIndex;
+          if (index >= 0) {
+            startIndex = index + 1;
+          } else {
+            startIndex = -index - 1;
+          }
+
+          final int endIndex;
+          if (limit <= 0) {
+            endIndex = bucket.size();
+          } else {
+            endIndex = Math.min(bucket.size(), startIndex + limit);
+          }
+
+          return convertBucketToEntries(bucket, startIndex, endIndex);
         } finally {
-          releaseSharedLock();
+          releasePageFromRead(atomicOperation, cacheEntry);
         }
-      } catch (IOException ioe) {
-        throw OException.wrapException(new OLocalHashTableException("Exception during data retrieval", this), ioe);
+
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
+    } catch (IOException ioe) {
+      throw OException.wrapException(new OLocalHashTableException("Exception during data retrieval", this), ioe);
     } finally {
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   @Override
   public void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OEncryption encryption,
       OHashFunction<K> keyHashFunction) {
+    acquireExclusiveLock();
     try {
-      acquireExclusiveLock();
-      try {
-        this.keyHashFunction = keyHashFunction;
-        this.comparator = new OHashTable.KeyHashCodeComparator<>(this.keyHashFunction);
-        if (keyTypes != null)
-          this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
-        else
-          this.keyTypes = null;
-
-        this.encryption = encryption;
-        this.nullKeyIsSupported = nullKeyIsSupported;
-
-        OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-
-        fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension);
-        final OCacheEntry hashStateEntry = loadPageForRead(atomicOperation, fileStateId, 0, true);
-        hashStateEntryIndex = hashStateEntry.getPageIndex();
-
-        directory = new OHashTableDirectory(treeStateFileExtension, name, getFullName(), storage);
-        directory.open();
-
-        pinPage(atomicOperation, hashStateEntry);
-        try {
-          OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
-
-          OBinarySerializerFactory serializerFactory = OBinarySerializerFactory
-              .create(storage.getConfiguration().getBinaryFormatVersion());
-
-          //noinspection unchecked
-          keySerializer = (OBinarySerializer<K>) serializerFactory.getObjectSerializer(page.getKeySerializerId());
-          //noinspection unchecked
-          valueSerializer = (OBinarySerializer<V>) serializerFactory.getObjectSerializer(page.getValueSerializerId());
-
-        } finally {
-          releasePageFromRead(atomicOperation, hashStateEntry);
-        }
-
-        if (nullKeyIsSupported)
-          nullBucketFileId = openFile(atomicOperation, name + nullBucketFileExtension);
-
-        fileId = openFile(atomicOperation, getFullName());
-      } catch (IOException e) {
-        throw OException.wrapException(new OLocalHashTableException("Exception during hash table loading", this), e);
-      } finally {
-        releaseExclusiveLock();
+      this.keyHashFunction = keyHashFunction;
+      this.comparator = new OHashTable.KeyHashCodeComparator<>(this.keyHashFunction);
+      if (keyTypes != null) {
+        this.keyTypes = Arrays.copyOf(keyTypes, keyTypes.length);
+      } else {
+        this.keyTypes = null;
       }
+
+      this.encryption = encryption;
+      this.nullKeyIsSupported = nullKeyIsSupported;
+
+      final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+
+      fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension);
+      final OCacheEntry hashStateEntry = loadPageForRead(atomicOperation, fileStateId, 0, true);
+      hashStateEntryIndex = hashStateEntry.getPageIndex();
+
+      directory = new OHashTableDirectory(treeStateFileExtension, name, getFullName(), storage);
+      directory.open(atomicOperation);
+
+      pinPage(atomicOperation, hashStateEntry);
+      try {
+        OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
+
+        OBinarySerializerFactory serializerFactory = OBinarySerializerFactory
+            .create(storage.getConfiguration().getBinaryFormatVersion());
+
+        //noinspection unchecked
+        keySerializer = (OBinarySerializer<K>) serializerFactory.getObjectSerializer(page.getKeySerializerId());
+        //noinspection unchecked
+        valueSerializer = (OBinarySerializer<V>) serializerFactory.getObjectSerializer(page.getValueSerializerId());
+
+      } finally {
+        releasePageFromRead(atomicOperation, hashStateEntry);
+      }
+
+      if (nullKeyIsSupported) {
+        nullBucketFileId = openFile(atomicOperation, name + nullBucketFileExtension);
+      }
+
+      fileId = openFile(atomicOperation, getFullName());
+    } catch (IOException e) {
+      throw OException.wrapException(new OLocalHashTableException("Exception during hash table loading", this), e);
     } finally {
+      releaseExclusiveLock();
     }
   }
 
   @Override
-  public void deleteWithoutLoad(String name) {
+  public void deleteWithoutLoad(String name) throws IOException {
+    boolean rollback = false;
+    final OAtomicOperation atomicOperation = startAtomicOperation(false);
     try {
-      final OAtomicOperation atomicOperation;
-      try {
-        atomicOperation = startAtomicOperation(false);
-      } catch (IOException e) {
-        throw OException.wrapException(new OLocalHashTableException("Error during hash table deletion", this), e);
-      }
-
       acquireExclusiveLock();
       try {
-
         if (isFileExists(atomicOperation, name + metadataConfigurationFileExtension)) {
           fileStateId = openFile(atomicOperation, name + metadataConfigurationFileExtension);
           deleteFile(atomicOperation, fileStateId);
         }
 
         directory = new OHashTableDirectory(treeStateFileExtension, name, getFullName(), storage);
-        directory.deleteWithoutOpen();
+        directory.deleteWithoutOpen(atomicOperation);
 
         if (isFileExists(atomicOperation, name + nullBucketFileExtension)) {
           final long nullBucketId = openFile(atomicOperation, name + nullBucketFileExtension);
@@ -669,15 +623,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           final long fileId = openFile(atomicOperation, getFullName());
           deleteFile(atomicOperation, fileId);
         }
-
-        endAtomicOperation(false, null);
-      } catch (Exception e) {
-        rollback(e);
-        throw OException.wrapException(new OLocalHashTableException("Cannot delete hash table with name " + name, this), e);
       } finally {
         releaseExclusiveLock();
       }
+    } catch (Exception e) {
+      rollback = true;
+      throw e;
     } finally {
+      endAtomicOperation(rollback);
     }
   }
 
@@ -686,26 +639,28 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     final OHashIndexBucket.Entry<K, V>[] entries = new OHashIndexBucket.Entry[endIndex - startIndex];
     final Iterator<OHashIndexBucket.Entry<K, V>> iterator = bucket.iterator(startIndex);
 
-    for (int i = 0, k = startIndex; k < endIndex; i++, k++)
+    for (int i = 0, k = startIndex; k < endIndex; i++, k++) {
       entries[i] = iterator.next();
+    }
 
     return entries;
   }
 
-  private OHashTable.BucketPath nextBucketToFind(final OHashTable.BucketPath bucketPath, int bucketDepth) throws IOException {
+  private OHashTable.BucketPath nextBucketToFind(final OHashTable.BucketPath bucketPath, int bucketDepth,
+      final OAtomicOperation atomicOperation) throws IOException {
     int offset = bucketPath.nodeGlobalDepth - bucketDepth;
 
     OHashTable.BucketPath currentNode = bucketPath;
-    int nodeLocalDepth = directory.getNodeLocalDepth(bucketPath.nodeIndex);
+    int nodeLocalDepth = directory.getNodeLocalDepth(bucketPath.nodeIndex, atomicOperation);
 
-    assert directory.getNodeLocalDepth(bucketPath.nodeIndex) == bucketPath.nodeLocalDepth;
+    assert directory.getNodeLocalDepth(bucketPath.nodeIndex, atomicOperation) == bucketPath.nodeLocalDepth;
 
     while (offset > 0) {
       offset -= nodeLocalDepth;
       if (offset > 0) {
         currentNode = bucketPath.parent;
         nodeLocalDepth = currentNode.nodeLocalDepth;
-        assert directory.getNodeLocalDepth(currentNode.nodeIndex) == currentNode.nodeLocalDepth;
+        assert directory.getNodeLocalDepth(currentNode.nodeIndex, atomicOperation) == currentNode.nodeLocalDepth;
       }
     }
 
@@ -715,9 +670,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
     final OHashTable.BucketPath bucketPathToFind;
     final int globalIndex = firstStartIndex + interval + currentNode.hashMapOffset;
-    if (globalIndex >= MAX_LEVEL_SIZE)
-      bucketPathToFind = nextLevelUp(currentNode);
-    else {
+    if (globalIndex >= MAX_LEVEL_SIZE) {
+      bucketPathToFind = nextLevelUp(currentNode, atomicOperation);
+    } else {
       final int hashMapSize = 1 << currentNode.nodeLocalDepth;
       final int hashMapOffset = globalIndex / hashMapSize * hashMapSize;
 
@@ -727,13 +682,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           currentNode.nodeLocalDepth, currentNode.nodeGlobalDepth);
     }
 
-    return nextNonEmptyNode(bucketPathToFind);
+    return nextNonEmptyNode(bucketPathToFind, atomicOperation);
   }
 
-  private OHashTable.BucketPath nextNonEmptyNode(OHashTable.BucketPath bucketPath) throws IOException {
+  private OHashTable.BucketPath nextNonEmptyNode(OHashTable.BucketPath bucketPath, final OAtomicOperation atomicOperation)
+      throws IOException {
     nextBucketLoop:
     while (bucketPath != null) {
-      final long[] node = directory.getNode(bucketPath.nodeIndex);
+      final long[] node = directory.getNode(bucketPath.nodeIndex, atomicOperation);
       final int startIndex = bucketPath.itemIndex + bucketPath.hashMapOffset;
       final int endIndex = MAX_LEVEL_SIZE;
 
@@ -756,7 +712,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           final OHashTable.BucketPath parent = new OHashTable.BucketPath(bucketPath.parent, 0, i, bucketPath.nodeIndex,
               bucketPath.nodeLocalDepth, bucketPath.nodeGlobalDepth);
 
-          final int childLocalDepth = directory.getNodeLocalDepth(childNodeIndex);
+          final int childLocalDepth = directory.getNodeLocalDepth(childNodeIndex, atomicOperation);
           bucketPath = new OHashTable.BucketPath(parent, childItemOffset, 0, childNodeIndex, childLocalDepth,
               bucketPath.nodeGlobalDepth + childLocalDepth);
 
@@ -764,19 +720,21 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         }
       }
 
-      bucketPath = nextLevelUp(bucketPath);
+      bucketPath = nextLevelUp(bucketPath, atomicOperation);
     }
 
     return null;
   }
 
-  private OHashTable.BucketPath nextLevelUp(OHashTable.BucketPath bucketPath) throws IOException {
-    if (bucketPath.parent == null)
+  private OHashTable.BucketPath nextLevelUp(OHashTable.BucketPath bucketPath, final OAtomicOperation atomicOperation)
+      throws IOException {
+    if (bucketPath.parent == null) {
       return null;
+    }
 
     final int nodeLocalDepth = bucketPath.nodeLocalDepth;
 
-    assert directory.getNodeLocalDepth(bucketPath.nodeIndex) == bucketPath.nodeLocalDepth;
+    assert directory.getNodeLocalDepth(bucketPath.nodeIndex, atomicOperation) == bucketPath.nodeLocalDepth;
 
     final int pointersSize = 1 << (MAX_LEVEL_DEPTH - nodeLocalDepth);
 
@@ -789,311 +747,305 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     }
 
     final int nextParentIndex = ((parent.itemIndex - MAX_LEVEL_SIZE / 2) / pointersSize + 1) * pointersSize + MAX_LEVEL_SIZE / 2;
-    if (nextParentIndex < MAX_LEVEL_SIZE)
-      return new OHashTable.BucketPath(parent.parent, 0, nextParentIndex, parent.nodeIndex, parent.nodeLocalDepth,
-          parent.nodeGlobalDepth);
+    if (nextParentIndex < MAX_LEVEL_SIZE) {
+      return new BucketPath(parent.parent, 0, nextParentIndex, parent.nodeIndex, parent.nodeLocalDepth, parent.nodeGlobalDepth);
+    }
 
     return nextLevelUp(new OHashTable.BucketPath(parent.parent, 0, MAX_LEVEL_SIZE - 1, parent.nodeIndex, parent.nodeLocalDepth,
-        parent.nodeGlobalDepth));
+        parent.nodeGlobalDepth), atomicOperation);
   }
 
   @Override
   public OHashIndexBucket.Entry<K, V>[] ceilingEntries(K key) {
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
-        acquireSharedLock();
+        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+
+        key = keySerializer.preprocess(key, (Object[]) keyTypes);
+
+        final long hashCode = keyHashFunction.hashCode(key);
+        OHashTable.BucketPath bucketPath = getBucket(hashCode, atomicOperation);
+
+        long bucketPointer = directory
+            .getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset, atomicOperation);
+
+        long pageIndex = getPageIndex(bucketPointer);
+
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
         try {
-          OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-
-          key = keySerializer.preprocess(key, (Object[]) keyTypes);
-
-          final long hashCode = keyHashFunction.hashCode(key);
-          OHashTable.BucketPath bucketPath = getBucket(hashCode);
-
-          long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
-
-          long pageIndex = getPageIndex(bucketPointer);
-
-          OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-          try {
-            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
-                encryption);
-            while (bucket.size() == 0) {
-              bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
-              if (bucketPath == null)
-                //noinspection unchecked
-                return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
-
-              releasePageFromRead(atomicOperation, cacheEntry);
-              final long nextPointer = directory
-                  .getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
-
-              pageIndex = getPageIndex(nextPointer);
-
-              cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
+          OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
+          while (bucket.size() == 0) {
+            bucketPath = nextBucketToFind(bucketPath, bucket.getDepth(), atomicOperation);
+            if (bucketPath == null) {
+              //noinspection unchecked
+              return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
             }
 
-            final int index = bucket.getIndex(hashCode, key);
-            final int startIndex;
-            if (index >= 0)
-              startIndex = index;
-            else
-              startIndex = -index - 1;
-
-            final int endIndex = bucket.size();
-            return convertBucketToEntries(bucket, startIndex, endIndex);
-          } finally {
             releasePageFromRead(atomicOperation, cacheEntry);
+            final long nextPointer = directory
+                .getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset, atomicOperation);
+
+            pageIndex = getPageIndex(nextPointer);
+
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
           }
+
+          final int index = bucket.getIndex(hashCode, key);
+          final int startIndex;
+          if (index >= 0) {
+            startIndex = index;
+          } else {
+            startIndex = -index - 1;
+          }
+
+          final int endIndex = bucket.size();
+          return convertBucketToEntries(bucket, startIndex, endIndex);
         } finally {
-          releaseSharedLock();
+          releasePageFromRead(atomicOperation, cacheEntry);
         }
-      } catch (IOException ioe) {
-        throw OException.wrapException(new OLocalHashTableException("Error during data retrieval", this), ioe);
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
+    } catch (IOException ioe) {
+      throw OException.wrapException(new OLocalHashTableException("Error during data retrieval", this), ioe);
     } finally {
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   @Override
   public OHashIndexBucket.Entry<K, V> firstEntry() {
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
-        acquireSharedLock();
+        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+
+        OHashTable.BucketPath bucketPath = getBucket(HASH_CODE_MIN_VALUE, atomicOperation);
+        long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex, atomicOperation);
+
+        long pageIndex = getPageIndex(bucketPointer);
+
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
         try {
-          OHashTable.BucketPath bucketPath = getBucket(HASH_CODE_MIN_VALUE);
-          long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex);
+          OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
 
-          long pageIndex = getPageIndex(bucketPointer);
-          OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-
-          OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-          try {
-            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
-                encryption);
-
-            while (bucket.size() == 0) {
-              bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
-              if (bucketPath == null)
-                return null;
-
-              releasePageFromRead(atomicOperation, cacheEntry);
-              final long nextPointer = directory
-                  .getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
-
-              pageIndex = getPageIndex(nextPointer);
-
-              cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
+          while (bucket.size() == 0) {
+            bucketPath = nextBucketToFind(bucketPath, bucket.getDepth(), atomicOperation);
+            if (bucketPath == null) {
+              return null;
             }
 
-            return bucket.getEntry(0);
-          } finally {
             releasePageFromRead(atomicOperation, cacheEntry);
+            final long nextPointer = directory
+                .getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset, atomicOperation);
+
+            pageIndex = getPageIndex(nextPointer);
+
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
           }
+
+          return bucket.getEntry(0);
         } finally {
-          releaseSharedLock();
+          releasePageFromRead(atomicOperation, cacheEntry);
         }
-      } catch (IOException ioe) {
-        throw OException.wrapException(new OLocalHashTableException("Exception during data read", this), ioe);
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
+    } catch (IOException ioe) {
+      throw OException.wrapException(new OLocalHashTableException("Exception during data read", this), ioe);
     } finally {
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   @Override
   public OHashIndexBucket.Entry<K, V> lastEntry() {
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
-        acquireSharedLock();
+        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+
+        OHashTable.BucketPath bucketPath = getBucket(HASH_CODE_MAX_VALUE, atomicOperation);
+        long bucketPointer = directory
+            .getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset, atomicOperation);
+
+        long pageIndex = getPageIndex(bucketPointer);
+
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
         try {
-          OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+          OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
 
-          OHashTable.BucketPath bucketPath = getBucket(HASH_CODE_MAX_VALUE);
-          long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
-
-          long pageIndex = getPageIndex(bucketPointer);
-
-          OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-          try {
-            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
-                encryption);
-
-            while (bucket.size() == 0) {
-              final OHashTable.BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
-              if (prevBucketPath == null)
-                return null;
-
-              releasePageFromRead(atomicOperation, cacheEntry);
-              final long prevPointer = directory
-                  .getNodePointer(prevBucketPath.nodeIndex, prevBucketPath.itemIndex + prevBucketPath.hashMapOffset);
-
-              pageIndex = getPageIndex(prevPointer);
-
-              cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-
-              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
-
-              bucketPath = prevBucketPath;
+          while (bucket.size() == 0) {
+            final OHashTable.BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth(), atomicOperation);
+            if (prevBucketPath == null) {
+              return null;
             }
 
-            return bucket.getEntry(bucket.size() - 1);
-          } finally {
             releasePageFromRead(atomicOperation, cacheEntry);
+            final long prevPointer = directory
+                .getNodePointer(prevBucketPath.nodeIndex, prevBucketPath.itemIndex + prevBucketPath.hashMapOffset, atomicOperation);
+
+            pageIndex = getPageIndex(prevPointer);
+
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+
+            bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
+
+            bucketPath = prevBucketPath;
           }
+
+          return bucket.getEntry(bucket.size() - 1);
         } finally {
-          releaseSharedLock();
+          releasePageFromRead(atomicOperation, cacheEntry);
         }
-      } catch (IOException ioe) {
-        throw OException.wrapException(new OLocalHashTableException("Exception during data read", this), ioe);
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
+    } catch (IOException ioe) {
+      throw OException.wrapException(new OLocalHashTableException("Exception during data read", this), ioe);
     } finally {
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   @Override
   public OHashIndexBucket.Entry<K, V>[] lowerEntries(K key) {
+    atomicOperationsManager.acquireReadLock(this);
     try {
-
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
-        acquireSharedLock();
+        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+
+        key = keySerializer.preprocess(key, (Object[]) keyTypes);
+
+        final long hashCode = keyHashFunction.hashCode(key);
+        OHashTable.BucketPath bucketPath = getBucket(hashCode, atomicOperation);
+
+        long bucketPointer = directory
+            .getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset, atomicOperation);
+
+        long pageIndex = getPageIndex(bucketPointer);
+
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
         try {
-          key = keySerializer.preprocess(key, (Object[]) keyTypes);
-
-          final long hashCode = keyHashFunction.hashCode(key);
-          OHashTable.BucketPath bucketPath = getBucket(hashCode);
-
-          long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
-
-          long pageIndex = getPageIndex(bucketPointer);
-          OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-
-          OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-          try {
-            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
-                encryption);
-            while (bucket.size() == 0 || comparator.compare(bucket.getKey(0), key) >= 0) {
-              final OHashTable.BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
-              if (prevBucketPath == null)
-                //noinspection unchecked
-                return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
-
-              releasePageFromRead(atomicOperation, cacheEntry);
-
-              final long prevPointer = directory
-                  .getNodePointer(prevBucketPath.nodeIndex, prevBucketPath.itemIndex + prevBucketPath.hashMapOffset);
-
-              pageIndex = getPageIndex(prevPointer);
-
-              cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
-
-              bucketPath = prevBucketPath;
+          OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
+          while (bucket.size() == 0 || comparator.compare(bucket.getKey(0), key) >= 0) {
+            final OHashTable.BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth(), atomicOperation);
+            if (prevBucketPath == null) {
+              //noinspection unchecked
+              return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
             }
 
-            final int startIndex = 0;
-            final int index = bucket.getIndex(hashCode, key);
-
-            final int endIndex;
-            if (index >= 0)
-              endIndex = index;
-            else
-              endIndex = -index - 1;
-
-            return convertBucketToEntries(bucket, startIndex, endIndex);
-          } finally {
             releasePageFromRead(atomicOperation, cacheEntry);
+
+            final long prevPointer = directory
+                .getNodePointer(prevBucketPath.nodeIndex, prevBucketPath.itemIndex + prevBucketPath.hashMapOffset, atomicOperation);
+
+            pageIndex = getPageIndex(prevPointer);
+
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+            bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
+
+            bucketPath = prevBucketPath;
           }
+
+          final int startIndex = 0;
+          final int index = bucket.getIndex(hashCode, key);
+
+          final int endIndex;
+          if (index >= 0) {
+            endIndex = index;
+          } else {
+            endIndex = -index - 1;
+          }
+
+          return convertBucketToEntries(bucket, startIndex, endIndex);
         } finally {
-          releaseSharedLock();
+          releasePageFromRead(atomicOperation, cacheEntry);
         }
-      } catch (IOException ioe) {
-        throw OException.wrapException(new OLocalHashTableException("Exception during data read", this), ioe);
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
+    } catch (IOException ioe) {
+      throw OException.wrapException(new OLocalHashTableException("Exception during data read", this), ioe);
     } finally {
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   @Override
   public OHashIndexBucket.Entry<K, V>[] floorEntries(K key) {
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
-        acquireSharedLock();
+        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        key = keySerializer.preprocess(key, (Object[]) keyTypes);
+
+        final long hashCode = keyHashFunction.hashCode(key);
+        OHashTable.BucketPath bucketPath = getBucket(hashCode, atomicOperation);
+
+        long bucketPointer = directory
+            .getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset, atomicOperation);
+
+        long pageIndex = getPageIndex(bucketPointer);
+
+        OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
         try {
-          OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-          key = keySerializer.preprocess(key, (Object[]) keyTypes);
-
-          final long hashCode = keyHashFunction.hashCode(key);
-          OHashTable.BucketPath bucketPath = getBucket(hashCode);
-
-          long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
-
-          long pageIndex = getPageIndex(bucketPointer);
-
-          OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-          try {
-            OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes,
-                encryption);
-            while (bucket.size() == 0) {
-              final OHashTable.BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
-              if (prevBucketPath == null)
-                //noinspection unchecked
-                return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
-
-              releasePageFromRead(atomicOperation, cacheEntry);
-
-              final long prevPointer = directory
-                  .getNodePointer(prevBucketPath.nodeIndex, prevBucketPath.itemIndex + prevBucketPath.hashMapOffset);
-
-              pageIndex = getPageIndex(prevPointer);
-
-              cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
-
-              bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
-
-              bucketPath = prevBucketPath;
+          OHashIndexBucket<K, V> bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
+          while (bucket.size() == 0) {
+            final OHashTable.BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth(), atomicOperation);
+            if (prevBucketPath == null) {
+              //noinspection unchecked
+              return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
             }
 
-            final int startIndex = 0;
-            final int index = bucket.getIndex(hashCode, key);
-
-            final int endIndex;
-            if (index >= 0)
-              endIndex = index + 1;
-            else
-              endIndex = -index - 1;
-
-            return convertBucketToEntries(bucket, startIndex, endIndex);
-          } finally {
             releasePageFromRead(atomicOperation, cacheEntry);
+
+            final long prevPointer = directory
+                .getNodePointer(prevBucketPath.nodeIndex, prevBucketPath.itemIndex + prevBucketPath.hashMapOffset, atomicOperation);
+
+            pageIndex = getPageIndex(prevPointer);
+
+            cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+
+            bucket = new OHashIndexBucket<>(cacheEntry, keySerializer, valueSerializer, keyTypes, encryption);
+
+            bucketPath = prevBucketPath;
           }
+
+          final int startIndex = 0;
+          final int index = bucket.getIndex(hashCode, key);
+
+          final int endIndex;
+          if (index >= 0) {
+            endIndex = index + 1;
+          } else {
+            endIndex = -index - 1;
+          }
+
+          return convertBucketToEntries(bucket, startIndex, endIndex);
         } finally {
-          releaseSharedLock();
+          releasePageFromRead(atomicOperation, cacheEntry);
         }
-      } catch (IOException ioe) {
-        throw OException.wrapException(new OLocalHashTableException("Exception during data read", this), ioe);
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
+    } catch (IOException ioe) {
+      throw OException.wrapException(new OLocalHashTableException("Exception during data read", this), ioe);
     } finally {
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
-  private OHashTable.BucketPath prevBucketToFind(final OHashTable.BucketPath bucketPath, int bucketDepth) throws IOException {
+  private OHashTable.BucketPath prevBucketToFind(final OHashTable.BucketPath bucketPath, int bucketDepth,
+      final OAtomicOperation atomicOperation) throws IOException {
     int offset = bucketPath.nodeGlobalDepth - bucketDepth;
 
     OHashTable.BucketPath currentBucket = bucketPath;
@@ -1111,9 +1063,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     final int globalIndex = firstStartIndex + currentBucket.hashMapOffset - 1;
 
     final OHashTable.BucketPath bucketPathToFind;
-    if (globalIndex < 0)
+    if (globalIndex < 0) {
       bucketPathToFind = prevLevelUp(bucketPath);
-    else {
+    } else {
       final int hashMapSize = 1 << currentBucket.nodeLocalDepth;
       final int hashMapOffset = globalIndex / hashMapSize * hashMapSize;
 
@@ -1123,13 +1075,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           currentBucket.nodeLocalDepth, currentBucket.nodeGlobalDepth);
     }
 
-    return prevNonEmptyNode(bucketPathToFind);
+    return prevNonEmptyNode(bucketPathToFind, atomicOperation);
   }
 
-  private OHashTable.BucketPath prevNonEmptyNode(OHashTable.BucketPath nodePath) throws IOException {
+  private OHashTable.BucketPath prevNonEmptyNode(OHashTable.BucketPath nodePath, final OAtomicOperation atomicOperation)
+      throws IOException {
     prevBucketLoop:
     while (nodePath != null) {
-      final long[] node = directory.getNode(nodePath.nodeIndex);
+      final long[] node = directory.getNode(nodePath.nodeIndex, atomicOperation);
       final int startIndex = 0;
       final int endIndex = nodePath.itemIndex + nodePath.hashMapOffset;
 
@@ -1147,7 +1100,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         if (position < 0) {
           final int childNodeIndex = (int) ((position & Long.MAX_VALUE) >> 8);
           final int childItemOffset = (int) position & 0xFF;
-          final int nodeLocalDepth = directory.getNodeLocalDepth(childNodeIndex);
+          final int nodeLocalDepth = directory.getNodeLocalDepth(childNodeIndex, atomicOperation);
           final int endChildIndex = (1 << nodeLocalDepth) - 1;
 
           final OHashTable.BucketPath parent = new OHashTable.BucketPath(nodePath.parent, 0, i, nodePath.nodeIndex,
@@ -1164,9 +1117,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     return null;
   }
 
-  private OHashTable.BucketPath prevLevelUp(OHashTable.BucketPath bucketPath) {
-    if (bucketPath.parent == null)
+  private static OHashTable.BucketPath prevLevelUp(OHashTable.BucketPath bucketPath) {
+    if (bucketPath.parent == null) {
       return null;
+    }
 
     final int nodeLocalDepth = bucketPath.nodeLocalDepth;
     final int pointersSize = 1 << (MAX_LEVEL_DEPTH - nodeLocalDepth);
@@ -1180,130 +1134,118 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     }
 
     final int prevParentIndex = (parent.itemIndex / pointersSize) * pointersSize - 1;
-    if (prevParentIndex >= 0)
-      return new OHashTable.BucketPath(parent.parent, 0, prevParentIndex, parent.nodeIndex, parent.nodeLocalDepth,
-          parent.nodeGlobalDepth);
+    if (prevParentIndex >= 0) {
+      return new BucketPath(parent.parent, 0, prevParentIndex, parent.nodeIndex, parent.nodeLocalDepth, parent.nodeGlobalDepth);
+    }
 
     return prevLevelUp(new OHashTable.BucketPath(parent.parent, 0, 0, parent.nodeIndex, parent.nodeLocalDepth, -1));
   }
 
   @Override
   public long size() {
+    atomicOperationsManager.acquireReadLock(this);
     try {
-      atomicOperationsManager.acquireReadLock(this);
+      acquireSharedLock();
       try {
-        acquireSharedLock();
+        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OCacheEntry hashStateEntry = loadPageForRead(atomicOperation, fileStateId, hashStateEntryIndex, true);
         try {
-          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-          final OCacheEntry hashStateEntry = loadPageForRead(atomicOperation, fileStateId, hashStateEntryIndex, true);
-          try {
-            OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
-            return metadataPage.getRecordsCount();
-          } finally {
-            releasePageFromRead(atomicOperation, hashStateEntry);
-          }
+          OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry, false);
+          return metadataPage.getRecordsCount();
         } finally {
-          releaseSharedLock();
+          releasePageFromRead(atomicOperation, hashStateEntry);
         }
-      } catch (IOException e) {
-        throw OException.wrapException(new OLocalHashTableException("Error during index size request", this), e);
       } finally {
-        atomicOperationsManager.releaseReadLock(this);
+        releaseSharedLock();
       }
+    } catch (IOException e) {
+      throw OException.wrapException(new OLocalHashTableException("Error during index size request", this), e);
     } finally {
+      atomicOperationsManager.releaseReadLock(this);
     }
   }
 
   @Override
   public void close() {
+    acquireExclusiveLock();
     try {
-      acquireExclusiveLock();
-      try {
-        flush();
+      flush();
 
-        directory.close();
-        readCache.closeFile(fileStateId, true, writeCache);
-        readCache.closeFile(fileId, true, writeCache);
-      } catch (IOException e) {
-        throw OException.wrapException(new OLocalHashTableException("Error during hash table close", this), e);
-      } finally {
-        releaseExclusiveLock();
-      }
+      directory.close();
+      readCache.closeFile(fileStateId, true, writeCache);
+      readCache.closeFile(fileId, true, writeCache);
+    } catch (IOException e) {
+      throw OException.wrapException(new OLocalHashTableException("Error during hash table close", this), e);
     } finally {
+      releaseExclusiveLock();
     }
   }
 
   @Override
-  public void delete() {
+  public void delete() throws IOException {
+    boolean rollback = false;
+    final OAtomicOperation atomicOperation = startAtomicOperation(false);
     try {
-      final OAtomicOperation atomicOperation;
-      try {
-        atomicOperation = startAtomicOperation(false);
-      } catch (IOException e) {
-        throw OException.wrapException(new OLocalHashTableException("Error during hash table deletion", this), e);
-      }
-
       acquireExclusiveLock();
       try {
-        directory.delete();
+        directory.delete(atomicOperation);
         deleteFile(atomicOperation, fileStateId);
         deleteFile(atomicOperation, fileId);
 
-        if (nullKeyIsSupported)
+        if (nullKeyIsSupported) {
           deleteFile(atomicOperation, nullBucketFileId);
-
-        endAtomicOperation(false, null);
-      } catch (Exception e) {
-        rollback(e);
-
-        throw OException.wrapException(new OLocalHashTableException("Exception during index deletion", this), e);
+        }
       } finally {
         releaseExclusiveLock();
       }
+    } catch (Exception e) {
+      rollback = true;
+      throw e;
     } finally {
+      endAtomicOperation(rollback);
     }
   }
 
-  private void mergeNodeToParent(OHashTable.BucketPath nodePath) throws IOException {
+  private void mergeNodeToParent(OHashTable.BucketPath nodePath, final OAtomicOperation atomicOperation) throws IOException {
     final int startIndex = findParentNodeStartIndex(nodePath);
     final int localNodeDepth = nodePath.nodeLocalDepth;
     final int hashMapSize = 1 << localNodeDepth;
 
     final int parentIndex = nodePath.parent.nodeIndex;
     for (int i = 0, k = startIndex; i < MAX_LEVEL_SIZE; i += hashMapSize, k++) {
-      directory.setNodePointer(parentIndex, k, directory.getNodePointer(nodePath.nodeIndex, i));
+      directory.setNodePointer(parentIndex, k, directory.getNodePointer(nodePath.nodeIndex, i, atomicOperation), atomicOperation);
     }
 
-    directory.deleteNode(nodePath.nodeIndex);
+    directory.deleteNode(nodePath.nodeIndex, atomicOperation);
 
     if (nodePath.parent.itemIndex < MAX_LEVEL_SIZE / 2) {
-      final int maxChildDepth = directory.getMaxLeftChildDepth(parentIndex);
-      if (maxChildDepth == localNodeDepth)
-        directory.setMaxLeftChildDepth(parentIndex, (byte) getMaxLevelDepth(parentIndex, 0, MAX_LEVEL_SIZE / 2));
+      final int maxChildDepth = directory.getMaxLeftChildDepth(parentIndex, atomicOperation);
+      if (maxChildDepth == localNodeDepth) {
+        directory.setMaxLeftChildDepth(parentIndex, (byte) getMaxLevelDepth(parentIndex, 0, MAX_LEVEL_SIZE / 2, atomicOperation),
+            atomicOperation);
+      }
     } else {
-      final int maxChildDepth = directory.getMaxRightChildDepth(parentIndex);
-      if (maxChildDepth == localNodeDepth)
-        directory.setMaxRightChildDepth(parentIndex, (byte) getMaxLevelDepth(parentIndex, MAX_LEVEL_SIZE / 2, MAX_LEVEL_SIZE));
+      final int maxChildDepth = directory.getMaxRightChildDepth(parentIndex, atomicOperation);
+      if (maxChildDepth == localNodeDepth) {
+        directory.setMaxRightChildDepth(parentIndex,
+            (byte) getMaxLevelDepth(parentIndex, MAX_LEVEL_SIZE / 2, MAX_LEVEL_SIZE, atomicOperation), atomicOperation);
+      }
     }
   }
 
   public void flush() {
+    acquireExclusiveLock();
     try {
-      acquireExclusiveLock();
-      try {
-        writeCache.flush(fileStateId);
-        writeCache.flush(fileId);
+      writeCache.flush(fileStateId);
+      writeCache.flush(fileId);
 
-        directory.flush();
+      directory.flush();
 
-        if (nullKeyIsSupported)
-          writeCache.flush(nullBucketFileId);
-      } catch (IOException e) {
-        throw OException.wrapException(new OLocalHashTableException("Error during hash table flush", this), e);
-      } finally {
-        releaseExclusiveLock();
+      if (nullKeyIsSupported) {
+        writeCache.flush(nullBucketFileId);
       }
     } finally {
+      releaseExclusiveLock();
     }
   }
 
@@ -1312,39 +1254,35 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     atomicOperationsManager.acquireExclusiveLockTillOperationComplete(this);
   }
 
-  private boolean put(K key, V value, OIndexEngine.Validator<K, V> validator) {
-    final OAtomicOperation atomicOperation;
+  private boolean put(K key, V value, OIndexEngine.Validator<K, V> validator) throws IOException {
+    boolean rollback = false;
+    final OAtomicOperation atomicOperation = startAtomicOperation(true);
     try {
-      atomicOperation = startAtomicOperation(true);
-    } catch (IOException e) {
-      throw OException.wrapException(new OIndexException("Error during hash table entry put"), e);
-    }
-    acquireExclusiveLock();
-    try {
+      acquireExclusiveLock();
+      try {
+        checkNullSupport(key);
 
-      checkNullSupport(key);
+        if (key != null) {
+          final int keySize = keySerializer.getObjectSize(key, (Object[]) keyTypes);
+          if (keySize > MAX_KEY_SIZE) {
+            throw new OTooBigIndexKeyException(
+                "Key size is more than allowed, operation was canceled. Current key size " + keySize + ", allowed  " + MAX_KEY_SIZE,
+                getName());
+          }
+        }
 
-      if (key != null) {
-        final int keySize = keySerializer.getObjectSize(key, (Object[]) keyTypes);
-        if (keySize > MAX_KEY_SIZE)
-          throw new OTooBigIndexKeyException(
-              "Key size is more than allowed, operation was canceled. Current key size " + keySize + ", allowed  " + MAX_KEY_SIZE,
-              getName());
+        key = keySerializer.preprocess(key, (Object[]) keyTypes);
+
+        final boolean putResult = doPut(key, value, validator, atomicOperation);
+        return putResult;
+      } finally {
+        releaseExclusiveLock();
       }
-
-      key = keySerializer.preprocess(key, (Object[]) keyTypes);
-
-      final boolean putResult = doPut(key, value, validator, atomicOperation);
-      endAtomicOperation(false, null);
-      return putResult;
-    } catch (IOException e) {
-      rollback(e);
-      throw OException.wrapException(new OIndexException("Error during index update"), e);
     } catch (Exception e) {
-      rollback(e);
-      throw OException.wrapException(new OStorageException("Error during index update"), e);
+      rollback = true;
+      throw e;
     } finally {
-      releaseExclusiveLock();
+      endAtomicOperation(rollback);
     }
   }
 
@@ -1371,14 +1309,16 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
         if (validator != null) {
           final Object result = validator.validate(null, oldValue, value);
-          if (result == OIndexEngine.Validator.IGNORE)
+          if (result == OIndexEngine.Validator.IGNORE) {
             return false;
+          }
 
           value = (V) result;
         }
 
-        if (oldValue != null)
+        if (oldValue != null) {
           sizeDiff--;
+        }
 
         nullBucket.setValue(value);
         sizeDiff++;
@@ -1391,10 +1331,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     } else {
       final long hashCode = keyHashFunction.hashCode(key);
 
-      final OHashTable.BucketPath bucketPath = getBucket(hashCode);
-      final long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
-      if (bucketPointer == 0)
+      final OHashTable.BucketPath bucketPath = getBucket(hashCode, atomicOperation);
+      final long bucketPointer = directory
+          .getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset, atomicOperation);
+      if (bucketPointer == 0) {
         throw new IllegalStateException("In this version of hash table buckets are added through split only.");
+      }
 
       final long pageIndex = getPageIndex(bucketPointer);
 
@@ -1407,8 +1349,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         if (validator != null) {
           final V oldValue = index > -1 ? bucket.getValue(index) : null;
           final Object result = validator.validate(key, oldValue, value);
-          if (result == OIndexEngine.Validator.IGNORE)
+          if (result == OIndexEngine.Validator.IGNORE) {
             return false;
+          }
 
           value = (V) result;
         }
@@ -1445,10 +1388,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         final int bucketDepth = splitResult.newDepth;
 
         if (bucketDepth <= bucketPath.nodeGlobalDepth) {
-          updateNodeAfterBucketSplit(bucketPath, bucketDepth, newBucketPointer, updatedBucketPointer);
+          updateNodeAfterBucketSplit(bucketPath, bucketDepth, newBucketPointer, updatedBucketPointer, atomicOperation);
         } else {
           if (bucketPath.nodeLocalDepth < MAX_LEVEL_DEPTH) {
-            final OHashTable.NodeSplitResult nodeSplitResult = splitNode(bucketPath);
+            final OHashTable.NodeSplitResult nodeSplitResult = splitNode(bucketPath, atomicOperation);
 
             assert !(nodeSplitResult.allLeftHashMapsEqual && nodeSplitResult.allRightHashMapsEqual);
 
@@ -1460,8 +1403,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
             assert nodeSplitResult.allRightHashMapsEqual == checkAllMapsContainSameBucket(newNode, hashMapSize);
 
             int newNodeIndex = -1;
-            if (!nodeSplitResult.allRightHashMapsEqual || bucketPath.itemIndex >= MAX_LEVEL_SIZE / 2)
-              newNodeIndex = directory.addNewNode((byte) 0, (byte) 0, (byte) nodeLocalDepth, newNode);
+            if (!nodeSplitResult.allRightHashMapsEqual || bucketPath.itemIndex >= MAX_LEVEL_SIZE / 2) {
+              newNodeIndex = directory.addNewNode((byte) 0, (byte) 0, (byte) nodeLocalDepth, newNode, atomicOperation);
+            }
 
             final int updatedItemIndex = bucketPath.itemIndex << 1;
             final int updatedOffset = bucketPath.hashMapOffset << 1;
@@ -1474,21 +1418,22 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
               allLeftHashMapsEqual = false;
               final OHashTable.BucketPath updatedBucketPath = new OHashTable.BucketPath(bucketPath.parent, updatedOffset,
                   updatedItemIndex, bucketPath.nodeIndex, nodeLocalDepth, updatedGlobalDepth);
-              updateNodeAfterBucketSplit(updatedBucketPath, bucketDepth, newBucketPointer, updatedBucketPointer);
+              updateNodeAfterBucketSplit(updatedBucketPath, bucketDepth, newBucketPointer, updatedBucketPointer, atomicOperation);
             } else {
               allRightHashMapsEqual = false;
               final OHashTable.BucketPath newBucketPath = new OHashTable.BucketPath(bucketPath.parent,
                   updatedOffset - MAX_LEVEL_SIZE, updatedItemIndex, newNodeIndex, nodeLocalDepth, updatedGlobalDepth);
-              updateNodeAfterBucketSplit(newBucketPath, bucketDepth, newBucketPointer, updatedBucketPointer);
+              updateNodeAfterBucketSplit(newBucketPath, bucketDepth, newBucketPointer, updatedBucketPointer, atomicOperation);
             }
 
             updateNodesAfterSplit(bucketPath, bucketPath.nodeIndex, newNode, nodeLocalDepth, hashMapSize, allLeftHashMapsEqual,
-                allRightHashMapsEqual, newNodeIndex);
+                allRightHashMapsEqual, newNodeIndex, atomicOperation);
 
-            if (allLeftHashMapsEqual)
-              directory.deleteNode(bucketPath.nodeIndex);
+            if (allLeftHashMapsEqual) {
+              directory.deleteNode(bucketPath.nodeIndex, atomicOperation);
+            }
           } else {
-            addNewLevelNode(bucketPath, bucketPath.nodeIndex, newBucketPointer, updatedBucketPointer);
+            addNewLevelNode(bucketPath, bucketPath.nodeIndex, newBucketPointer, updatedBucketPointer, atomicOperation);
           }
         }
       } finally {
@@ -1502,158 +1447,178 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   private void checkNullSupport(K key) {
-    if (key == null && !nullKeyIsSupported)
+    if (key == null && !nullKeyIsSupported) {
       throw new OLocalHashTableException("Null keys are not supported.", this);
+    }
   }
 
   private void updateNodesAfterSplit(OHashTable.BucketPath bucketPath, int nodeIndex, long[] newNode, int nodeLocalDepth,
-      int hashMapSize, boolean allLeftHashMapEquals, boolean allRightHashMapsEquals, int newNodeIndex) throws IOException {
+      int hashMapSize, boolean allLeftHashMapEquals, boolean allRightHashMapsEquals, int newNodeIndex,
+      final OAtomicOperation atomicOperation) throws IOException {
 
     final int startIndex = findParentNodeStartIndex(bucketPath);
 
     final int parentNodeIndex = bucketPath.parent.nodeIndex;
-    assert assertParentNodeStartIndex(bucketPath, directory.getNode(parentNodeIndex), startIndex);
+    assert assertParentNodeStartIndex(bucketPath, directory.getNode(parentNodeIndex, atomicOperation), startIndex);
 
     final int pointersSize = 1 << (MAX_LEVEL_DEPTH - nodeLocalDepth);
     if (allLeftHashMapEquals) {
       for (int i = 0; i < pointersSize; i++) {
-        final long position = directory.getNodePointer(nodeIndex, i * hashMapSize);
-        directory.setNodePointer(parentNodeIndex, startIndex + i, position);
+        final long position = directory.getNodePointer(nodeIndex, i * hashMapSize, atomicOperation);
+        directory.setNodePointer(parentNodeIndex, startIndex + i, position, atomicOperation);
       }
     } else {
-      for (int i = 0; i < pointersSize; i++)
-        directory.setNodePointer(parentNodeIndex, startIndex + i, (bucketPath.nodeIndex << 8) | (i * hashMapSize) | Long.MIN_VALUE);
+      for (int i = 0; i < pointersSize; i++) {
+        directory.setNodePointer(parentNodeIndex, startIndex + i, (bucketPath.nodeIndex << 8) | (i * hashMapSize) | Long.MIN_VALUE,
+            atomicOperation);
+      }
     }
 
     if (allRightHashMapsEquals) {
       for (int i = 0; i < pointersSize; i++) {
         final long position = newNode[i * hashMapSize];
-        directory.setNodePointer(parentNodeIndex, startIndex + pointersSize + i, position);
+        directory.setNodePointer(parentNodeIndex, startIndex + pointersSize + i, position, atomicOperation);
       }
     } else {
-      for (int i = 0; i < pointersSize; i++)
+      for (int i = 0; i < pointersSize; i++) {
         directory.setNodePointer(parentNodeIndex, startIndex + pointersSize + i,
-            (newNodeIndex << 8) | (i * hashMapSize) | Long.MIN_VALUE);
+            (newNodeIndex << 8) | (i * hashMapSize) | Long.MIN_VALUE, atomicOperation);
+      }
     }
 
-    updateMaxChildDepth(bucketPath.parent, bucketPath.nodeLocalDepth + 1);
+    updateMaxChildDepth(bucketPath.parent, bucketPath.nodeLocalDepth + 1, atomicOperation);
   }
 
-  private void updateMaxChildDepth(OHashTable.BucketPath parentPath, int childDepth) throws IOException {
-    if (parentPath == null)
+  private void updateMaxChildDepth(OHashTable.BucketPath parentPath, int childDepth, final OAtomicOperation atomicOperation)
+      throws IOException {
+    if (parentPath == null) {
       return;
+    }
 
     if (parentPath.itemIndex < MAX_LEVEL_SIZE / 2) {
-      final int maxChildDepth = directory.getMaxLeftChildDepth(parentPath.nodeIndex);
-      if (childDepth > maxChildDepth)
-        directory.setMaxLeftChildDepth(parentPath.nodeIndex, (byte) childDepth);
+      final int maxChildDepth = directory.getMaxLeftChildDepth(parentPath.nodeIndex, atomicOperation);
+      if (childDepth > maxChildDepth) {
+        directory.setMaxLeftChildDepth(parentPath.nodeIndex, (byte) childDepth, atomicOperation);
+      }
     } else {
-      final int maxChildDepth = directory.getMaxRightChildDepth(parentPath.nodeIndex);
-      if (childDepth > maxChildDepth)
-        directory.setMaxRightChildDepth(parentPath.nodeIndex, (byte) childDepth);
+      final int maxChildDepth = directory.getMaxRightChildDepth(parentPath.nodeIndex, atomicOperation);
+      if (childDepth > maxChildDepth) {
+        directory.setMaxRightChildDepth(parentPath.nodeIndex, (byte) childDepth, atomicOperation);
+      }
     }
   }
 
-  private boolean assertParentNodeStartIndex(OHashTable.BucketPath bucketPath, long[] parentNode, int calculatedIndex) {
+  private static boolean assertParentNodeStartIndex(OHashTable.BucketPath bucketPath, long[] parentNode, int calculatedIndex) {
     int startIndex = -1;
-    for (int i = 0; i < parentNode.length; i++)
+    for (int i = 0; i < parentNode.length; i++) {
       if (parentNode[i] < 0 && (parentNode[i] & Long.MAX_VALUE) >>> 8 == bucketPath.nodeIndex) {
         startIndex = i;
         break;
       }
+    }
 
     return startIndex == calculatedIndex;
   }
 
-  private int findParentNodeStartIndex(OHashTable.BucketPath bucketPath) {
+  private static int findParentNodeStartIndex(OHashTable.BucketPath bucketPath) {
     final OHashTable.BucketPath parentBucketPath = bucketPath.parent;
     final int pointersSize = 1 << (MAX_LEVEL_DEPTH - bucketPath.nodeLocalDepth);
 
-    if (parentBucketPath.itemIndex < MAX_LEVEL_SIZE / 2)
+    if (parentBucketPath.itemIndex < MAX_LEVEL_SIZE / 2) {
       return (parentBucketPath.itemIndex / pointersSize) * pointersSize;
+    }
 
     return ((parentBucketPath.itemIndex - MAX_LEVEL_SIZE / 2) / pointersSize) * pointersSize + MAX_LEVEL_SIZE / 2;
   }
 
-  private void addNewLevelNode(OHashTable.BucketPath bucketPath, int nodeIndex, long newBucketPointer, long updatedBucketPointer)
-      throws IOException {
+  private void addNewLevelNode(OHashTable.BucketPath bucketPath, int nodeIndex, long newBucketPointer, long updatedBucketPointer,
+      final OAtomicOperation atomicOperation) throws IOException {
     final int newNodeDepth;
     final int newNodeStartIndex;
     final int mapInterval;
 
     if (bucketPath.itemIndex < MAX_LEVEL_SIZE / 2) {
-      final int maxDepth = directory.getMaxLeftChildDepth(bucketPath.nodeIndex);
+      final int maxDepth = directory.getMaxLeftChildDepth(bucketPath.nodeIndex, atomicOperation);
 
-      assert getMaxLevelDepth(bucketPath.nodeIndex, 0, MAX_LEVEL_SIZE / 2) == maxDepth;
+      assert getMaxLevelDepth(bucketPath.nodeIndex, 0, MAX_LEVEL_SIZE / 2, atomicOperation) == maxDepth;
 
-      if (maxDepth > 0)
+      if (maxDepth > 0) {
         newNodeDepth = maxDepth;
-      else
+      } else {
         newNodeDepth = 1;
+      }
 
       mapInterval = 1 << (MAX_LEVEL_DEPTH - newNodeDepth);
       newNodeStartIndex = (bucketPath.itemIndex / mapInterval) * mapInterval;
     } else {
-      final int maxDepth = directory.getMaxRightChildDepth(bucketPath.nodeIndex);
-      assert getMaxLevelDepth(bucketPath.nodeIndex, MAX_LEVEL_SIZE / 2, MAX_LEVEL_SIZE) == maxDepth;
-      if (maxDepth > 0)
+      final int maxDepth = directory.getMaxRightChildDepth(bucketPath.nodeIndex, atomicOperation);
+      assert getMaxLevelDepth(bucketPath.nodeIndex, MAX_LEVEL_SIZE / 2, MAX_LEVEL_SIZE, atomicOperation) == maxDepth;
+      if (maxDepth > 0) {
         newNodeDepth = maxDepth;
-      else
+      } else {
         newNodeDepth = 1;
+      }
 
       mapInterval = 1 << (MAX_LEVEL_DEPTH - newNodeDepth);
       newNodeStartIndex = ((bucketPath.itemIndex - MAX_LEVEL_SIZE / 2) / mapInterval) * mapInterval + MAX_LEVEL_SIZE / 2;
     }
 
-    final int newNodeIndex = directory.addNewNode((byte) 0, (byte) 0, (byte) newNodeDepth, new long[MAX_LEVEL_SIZE]);
+    final int newNodeIndex = directory
+        .addNewNode((byte) 0, (byte) 0, (byte) newNodeDepth, new long[MAX_LEVEL_SIZE], atomicOperation);
 
     final int mapSize = 1 << newNodeDepth;
     for (int i = 0; i < mapInterval; i++) {
       final int nodeOffset = i + newNodeStartIndex;
-      final long bucketPointer = directory.getNodePointer(nodeIndex, nodeOffset);
+      final long bucketPointer = directory.getNodePointer(nodeIndex, nodeOffset, atomicOperation);
 
       if (nodeOffset != bucketPath.itemIndex) {
-        for (int n = i << newNodeDepth; n < (i + 1) << newNodeDepth; n++)
-          directory.setNodePointer(newNodeIndex, n, bucketPointer);
+        for (int n = i << newNodeDepth; n < (i + 1) << newNodeDepth; n++) {
+          directory.setNodePointer(newNodeIndex, n, bucketPointer, atomicOperation);
+        }
       } else {
-        for (int n = i << newNodeDepth; n < (2 * i + 1) << (newNodeDepth - 1); n++)
-          directory.setNodePointer(newNodeIndex, n, updatedBucketPointer);
+        for (int n = i << newNodeDepth; n < (2 * i + 1) << (newNodeDepth - 1); n++) {
+          directory.setNodePointer(newNodeIndex, n, updatedBucketPointer, atomicOperation);
+        }
 
-        for (int n = (2 * i + 1) << (newNodeDepth - 1); n < (i + 1) << newNodeDepth; n++)
-          directory.setNodePointer(newNodeIndex, n, newBucketPointer);
+        for (int n = (2 * i + 1) << (newNodeDepth - 1); n < (i + 1) << newNodeDepth; n++) {
+          directory.setNodePointer(newNodeIndex, n, newBucketPointer, atomicOperation);
+        }
       }
 
-      directory.setNodePointer(nodeIndex, nodeOffset, (newNodeIndex << 8) | (i * mapSize) | Long.MIN_VALUE);
+      directory.setNodePointer(nodeIndex, nodeOffset, (newNodeIndex << 8) | (i * mapSize) | Long.MIN_VALUE, atomicOperation);
     }
 
-    updateMaxChildDepth(bucketPath, newNodeDepth);
+    updateMaxChildDepth(bucketPath, newNodeDepth, atomicOperation);
   }
 
-  private int getMaxLevelDepth(int nodeIndex, int start, int end) throws IOException {
+  private int getMaxLevelDepth(int nodeIndex, int start, int end, final OAtomicOperation atomicOperation) throws IOException {
     int currentIndex = -1;
     int maxDepth = 0;
 
     for (int i = start; i < end; i++) {
-      final long nodePosition = directory.getNodePointer(nodeIndex, i);
-      if (nodePosition >= 0)
+      final long nodePosition = directory.getNodePointer(nodeIndex, i, atomicOperation);
+      if (nodePosition >= 0) {
         continue;
+      }
 
       final int index = (int) ((nodePosition & Long.MAX_VALUE) >>> 8);
-      if (index == currentIndex)
+      if (index == currentIndex) {
         continue;
+      }
 
       currentIndex = index;
 
-      final int nodeLocalDepth = directory.getNodeLocalDepth(index);
-      if (maxDepth < nodeLocalDepth)
+      final int nodeLocalDepth = directory.getNodeLocalDepth(index, atomicOperation);
+      if (maxDepth < nodeLocalDepth) {
         maxDepth = nodeLocalDepth;
+      }
     }
 
     return maxDepth;
   }
 
   private void updateNodeAfterBucketSplit(OHashTable.BucketPath bucketPath, int bucketDepth, long newBucketPointer,
-      long updatedBucketPointer) throws IOException {
+      long updatedBucketPointer, final OAtomicOperation atomicOperation) throws IOException {
     int offset = bucketPath.nodeGlobalDepth - (bucketDepth - 1);
     OHashTable.BucketPath currentNode = bucketPath;
     int nodeLocalDepth = bucketPath.nodeLocalDepth;
@@ -1674,14 +1639,16 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     final int secondStartIndex = firstEndIndex;
     final int secondEndIndex = secondStartIndex + interval;
 
-    for (int i = firstStartIndex; i < firstEndIndex; i++)
-      updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, updatedBucketPointer);
+    for (int i = firstStartIndex; i < firstEndIndex; i++) {
+      updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, updatedBucketPointer, atomicOperation);
+    }
 
-    for (int i = secondStartIndex; i < secondEndIndex; i++)
-      updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, newBucketPointer);
+    for (int i = secondStartIndex; i < secondEndIndex; i++) {
+      updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, newBucketPointer, atomicOperation);
+    }
   }
 
-  private boolean checkAllMapsContainSameBucket(long[] newNode, int hashMapSize) {
+  private static boolean checkAllMapsContainSameBucket(long[] newNode, int hashMapSize) {
     int n = 0;
     boolean allHashMapsEquals = true;
     while (n < newNode.length) {
@@ -1704,7 +1671,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     return allHashMapsEquals;
   }
 
-  private boolean assertAllNodesAreFilePointers(boolean allHashMapsEquals, long[] newNode, int hashMapSize) {
+  private static boolean assertAllNodesAreFilePointers(boolean allHashMapsEquals, long[] newNode, int hashMapSize) {
     if (allHashMapsEquals) {
       int n = 0;
       while (n < newNode.length) {
@@ -1720,7 +1687,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     return true;
   }
 
-  private OHashTable.NodeSplitResult splitNode(OHashTable.BucketPath bucketPath) throws IOException {
+  private OHashTable.NodeSplitResult splitNode(OHashTable.BucketPath bucketPath, final OAtomicOperation atomicOperation)
+      throws IOException {
     final long[] newNode = new long[MAX_LEVEL_SIZE];
     final int hashMapSize = 1 << (bucketPath.nodeLocalDepth + 1);
 
@@ -1731,12 +1699,13 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     int mapCounter = 0;
     long firstPosition = -1;
 
-    long[] node = directory.getNode(bucketPath.nodeIndex);
+    long[] node = directory.getNode(bucketPath.nodeIndex, atomicOperation);
 
     for (int i = MAX_LEVEL_SIZE / 2; i < MAX_LEVEL_SIZE; i++) {
       final long position = node[i];
-      if (hashMapItemsAreEqual && mapCounter == 0)
+      if (hashMapItemsAreEqual && mapCounter == 0) {
         firstPosition = position;
+      }
 
       newNode[2 * (i - MAX_LEVEL_SIZE / 2)] = position;
       newNode[2 * (i - MAX_LEVEL_SIZE / 2) + 1] = position;
@@ -1745,8 +1714,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         hashMapItemsAreEqual = firstPosition == position;
         mapCounter += 2;
 
-        if (mapCounter >= hashMapSize)
+        if (mapCounter >= hashMapSize) {
           mapCounter = 0;
+        }
       }
     }
 
@@ -1757,8 +1727,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     final long[] updatedNode = new long[node.length];
     for (int i = 0; i < MAX_LEVEL_SIZE / 2; i++) {
       final long position = node[i];
-      if (hashMapItemsAreEqual && mapCounter == 0)
+      if (hashMapItemsAreEqual && mapCounter == 0) {
         firstPosition = position;
+      }
 
       updatedNode[2 * i] = position;
       updatedNode[2 * i + 1] = position;
@@ -1768,15 +1739,18 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
         mapCounter += 2;
 
-        if (mapCounter >= hashMapSize)
+        if (mapCounter >= hashMapSize) {
           mapCounter = 0;
+        }
       }
     }
 
     allLeftItemsAreEqual = hashMapItemsAreEqual;
 
-    directory.setNode(bucketPath.nodeIndex, updatedNode);
-    directory.setNodeLocalDepth(bucketPath.nodeIndex, (byte) (directory.getNodeLocalDepth(bucketPath.nodeIndex) + 1));
+    directory.setNode(bucketPath.nodeIndex, updatedNode, atomicOperation);
+    directory
+        .setNodeLocalDepth(bucketPath.nodeIndex, (byte) (directory.getNodeLocalDepth(bucketPath.nodeIndex, atomicOperation) + 1),
+            atomicOperation);
 
     return new OHashTable.NodeSplitResult(newNode, allLeftItemsAreEqual, allRightItemsAreEqual);
   }
@@ -1793,10 +1767,11 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     bucket.init(newBucketDepth);
 
     for (OHashIndexBucket.Entry<K, V> entry : entries) {
-      if (((keyHashFunction.hashCode(entry.key) >>> (HASH_CODE_SIZE - newBucketDepth)) & 1) == 0)
+      if (((keyHashFunction.hashCode(entry.key) >>> (HASH_CODE_SIZE - newBucketDepth)) & 1) == 0) {
         bucket.appendEntry(entry.hashCode, entry.key, entry.value);
-      else
+      } else {
         newBucket.appendEntry(entry.hashCode, entry.key, entry.value);
+      }
     }
 
     assert checkBucketDepth(bucket);
@@ -1829,32 +1804,35 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   private boolean checkBucketDepth(OHashIndexBucket<K, V> bucket) {
     int bucketDepth = bucket.getDepth();
 
-    if (bucket.size() == 0)
+    if (bucket.size() == 0) {
       return true;
+    }
 
     final Iterator<OHashIndexBucket.Entry<K, V>> positionIterator = bucket.iterator();
 
     long firstValue = keyHashFunction.hashCode(positionIterator.next().key) >>> (HASH_CODE_SIZE - bucketDepth);
     while (positionIterator.hasNext()) {
       final long value = keyHashFunction.hashCode(positionIterator.next().key) >>> (HASH_CODE_SIZE - bucketDepth);
-      if (value != firstValue)
+      if (value != firstValue) {
         return false;
+      }
     }
 
     return true;
   }
 
-  private void updateBucket(int nodeIndex, int itemIndex, int offset, long newBucketPointer) throws IOException {
-    final long position = directory.getNodePointer(nodeIndex, itemIndex + offset);
-    if (position >= 0)
-      directory.setNodePointer(nodeIndex, itemIndex + offset, newBucketPointer);
-    else {
+  private void updateBucket(int nodeIndex, int itemIndex, int offset, long newBucketPointer, final OAtomicOperation atomicOperation)
+      throws IOException {
+    final long position = directory.getNodePointer(nodeIndex, itemIndex + offset, atomicOperation);
+    if (position >= 0) {
+      directory.setNodePointer(nodeIndex, itemIndex + offset, newBucketPointer, atomicOperation);
+    } else {
       final int childNodeIndex = (int) ((position & Long.MAX_VALUE) >>> 8);
       final int childOffset = (int) (position & 0xFF);
-      final int childNodeDepth = directory.getNodeLocalDepth(childNodeIndex);
+      final int childNodeDepth = directory.getNodeLocalDepth(childNodeIndex, atomicOperation);
       final int interval = 1 << childNodeDepth;
       for (int i = 0; i < interval; i++) {
-        updateBucket(childNodeIndex, i, childOffset, newBucketPointer);
+        updateBucket(childNodeIndex, i, childOffset, newBucketPointer, atomicOperation);
       }
     }
   }
@@ -1877,11 +1855,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     }
 
     final long[] rootTree = new long[MAX_LEVEL_SIZE];
-    for (int pageIndex = 0; pageIndex < MAX_LEVEL_SIZE; pageIndex++)
+    for (int pageIndex = 0; pageIndex < MAX_LEVEL_SIZE; pageIndex++) {
       rootTree[pageIndex] = createBucketPointer(pageIndex);
+    }
 
-    directory.clear();
-    directory.addNewNode((byte) 0, (byte) 0, (byte) MAX_LEVEL_DEPTH, rootTree);
+    directory.clear(atomicOperation);
+    directory.addNewNode((byte) 0, (byte) 0, (byte) MAX_LEVEL_DEPTH, rootTree, atomicOperation);
 
     OCacheEntry hashStateEntry = loadPageForWrite(atomicOperation, fileStateId, hashStateEntryIndex, true);
     try {
@@ -1892,16 +1871,16 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     }
   }
 
-  private long createBucketPointer(long pageIndex) {
+  private static long createBucketPointer(long pageIndex) {
     return pageIndex + 1;
   }
 
-  private long getPageIndex(long bucketPointer) {
+  private static long getPageIndex(long bucketPointer) {
     return bucketPointer - 1;
   }
 
-  private OHashTable.BucketPath getBucket(final long hashCode) throws IOException {
-    int localNodeDepth = directory.getNodeLocalDepth(0);
+  private OHashTable.BucketPath getBucket(final long hashCode, final OAtomicOperation atomicOperation) throws IOException {
+    int localNodeDepth = directory.getNodeLocalDepth(0, atomicOperation);
     int nodeDepth = localNodeDepth;
     OHashTable.BucketPath parentNode;
     int nodeIndex = 0;
@@ -1910,14 +1889,15 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     int index = (int) ((hashCode >>> (HASH_CODE_SIZE - nodeDepth)) & (LEVEL_MASK >>> (MAX_LEVEL_DEPTH - localNodeDepth)));
     OHashTable.BucketPath currentNode = new OHashTable.BucketPath(null, 0, index, 0, localNodeDepth, nodeDepth);
     do {
-      final long position = directory.getNodePointer(nodeIndex, index + offset);
-      if (position >= 0)
+      final long position = directory.getNodePointer(nodeIndex, index + offset, atomicOperation);
+      if (position >= 0) {
         return currentNode;
+      }
 
       nodeIndex = (int) ((position & Long.MAX_VALUE) >>> 8);
       offset = (int) (position & OFFSET_MASK);
 
-      localNodeDepth = directory.getNodeLocalDepth(nodeIndex);
+      localNodeDepth = directory.getNodeLocalDepth(nodeIndex, atomicOperation);
       nodeDepth += localNodeDepth;
 
       index = (int) ((hashCode >>> (HASH_CODE_SIZE - nodeDepth)) & (LEVEL_MASK >>> (MAX_LEVEL_DEPTH - localNodeDepth)));

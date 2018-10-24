@@ -69,7 +69,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
   private static final String EXPECTED_DB_NAME = "sbtreeWithWALTestExpected";
 
   @Before
-  public void before() {
+  public void before() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/" + DIR_NAME;
 
@@ -90,7 +90,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     orientDB.close();
   }
 
-  private void createActualSBTree() {
+  private void createActualSBTree() throws Exception {
     orientDB.create(ACTUAL_DB_NAME, ODatabaseType.PLOCAL);
 
     databaseDocumentTx = orientDB.open(ACTUAL_DB_NAME, "admin", "admin");
@@ -201,28 +201,28 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
   @Test
   @Ignore
   @Override
-  public void testNullKeysInSBTree() {
+  public void testNullKeysInSBTree() throws Exception {
     super.testNullKeysInSBTree();
   }
 
   @Test
   @Ignore
   @Override
-  public void testIterateEntriesMajor() {
+  public void testIterateEntriesMajor() throws Exception {
     super.testIterateEntriesMajor();
   }
 
   @Test
   @Ignore
   @Override
-  public void testIterateEntriesMinor() {
+  public void testIterateEntriesMinor() throws Exception {
     super.testIterateEntriesMinor();
   }
 
   @Test
   @Ignore
   @Override
-  public void testIterateEntriesBetween() {
+  public void testIterateEntriesBetween() throws Exception {
     super.testIterateEntriesBetween();
   }
 

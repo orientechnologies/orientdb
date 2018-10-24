@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 
+import java.io.IOException;
 import java.util.UUID;
 
 /**
@@ -76,8 +77,9 @@ public abstract class OSBTreeCollectionManagerAbstract
     GLOBAL_MASK = size - 1;
 
     final Object[] locks = new Object[size];
-    for (int i = 0; i < locks.length; i++)
+    for (int i = 0; i < locks.length; i++) {
       locks[i] = new Object();
+    }
 
     GLOBAL_LOCKS = locks;
   }
@@ -122,8 +124,9 @@ public abstract class OSBTreeCollectionManagerAbstract
       mask = size - 1;
 
       locks = new Object[size];
-      for (int i = 0; i < locks.length; i++)
+      for (int i = 0; i < locks.length; i++) {
         locks[i] = new Object();
+      }
     } else {
       shift = GLOBAL_SHIFT;
       mask = GLOBAL_MASK;
@@ -146,12 +149,12 @@ public abstract class OSBTreeCollectionManagerAbstract
   }
 
   @Override
-  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId) {
+  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId) throws IOException {
     return loadSBTree(createSBTree(clusterId, null));
   }
 
   @Override
-  public OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID) {
+  public OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID) throws IOException {
     OSBTreeBonsai<OIdentifiable, Integer> tree = createTree(clusterId);
     return tree.getCollectionPointer();
   }
@@ -212,24 +215,27 @@ public abstract class OSBTreeCollectionManagerAbstract
       SBTreeBonsaiContainer container = treeCache.getQuietly(cacheKey);
       assert container != null;
 
-      if (container.usagesCounter != 0)
+      if (container.usagesCounter != 0) {
         throw new IllegalStateException("Cannot delete SBTreeBonsai instance because it is used in other thread.");
+      }
 
       treeCache.remove(cacheKey);
     }
   }
 
   private void evict() {
-    if (treeCache.size() <= cacheMaxSize)
+    if (treeCache.size() <= cacheMaxSize) {
       return;
+    }
 
     for (CacheKey cacheKey : treeCache.ascendingKeySetWithLimit(evictionThreshold)) {
       final Object treeLock = treesSubsetLock(cacheKey);
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (treeLock) {
         SBTreeBonsaiContainer container = treeCache.getQuietly(cacheKey);
-        if (container != null && container.usagesCounter == 0)
+        if (container != null && container.usagesCounter == 0) {
           treeCache.remove(cacheKey);
+        }
       }
     }
   }
@@ -243,7 +249,7 @@ public abstract class OSBTreeCollectionManagerAbstract
     treeCache.keySet().removeIf(cacheKey -> cacheKey.storage == storage);
   }
 
-  protected abstract OSBTreeBonsai<OIdentifiable, Integer> createTree(int clusterId);
+  protected abstract OSBTreeBonsai<OIdentifiable, Integer> createTree(int clusterId) throws IOException;
 
   protected abstract OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer);
 
@@ -271,7 +277,7 @@ public abstract class OSBTreeCollectionManagerAbstract
     private final OStorage                 storage;
     private final OBonsaiCollectionPointer pointer;
 
-    public CacheKey(OStorage storage, OBonsaiCollectionPointer pointer) {
+    CacheKey(OStorage storage, OBonsaiCollectionPointer pointer) {
       this.storage = storage;
       this.pointer = pointer;
     }

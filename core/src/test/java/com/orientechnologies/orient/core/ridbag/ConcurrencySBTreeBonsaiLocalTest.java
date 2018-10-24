@@ -12,7 +12,11 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ConcurrencySBTreeBonsaiLocalTest {
 
@@ -44,7 +48,7 @@ public class ConcurrencySBTreeBonsaiLocalTest {
               atomManager.startAtomicOperation(tree1, false);
               for (int i = 2000; i < 3000; i++)
                 tree1.put(new ORecordId(10, i), 1);
-              atomManager.endAtomicOperation(false, null);
+              atomManager.endAtomicOperation(false);
 
             } catch (Exception e) {
               throw new RuntimeException(e);
@@ -57,7 +61,7 @@ public class ConcurrencySBTreeBonsaiLocalTest {
         // Is supposed to go in deadlock correct that goes in timeout
       }
 
-      atomManager.endAtomicOperation(false, null);
+      atomManager.endAtomicOperation(false);
       ex.get();
 
       OSBTreeRidBag bag = new OSBTreeRidBag();

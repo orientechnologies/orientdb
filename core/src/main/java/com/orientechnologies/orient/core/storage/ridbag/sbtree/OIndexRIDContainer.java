@@ -111,12 +111,12 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
         else
           fileId = atomicOperation.addFile(fileName);
 
-        storage.getAtomicOperationsManager().endAtomicOperation(false, null);
+        storage.getAtomicOperationsManager().endAtomicOperation(false);
         return fileId;
       }
     } catch (IOException e) {
       try {
-        storage.getAtomicOperationsManager().endAtomicOperation(true, e);
+        storage.getAtomicOperationsManager().endAtomicOperation(true);
       } catch (IOException ioe) {
         throw OException.wrapException(new OIndexEngineException("Error of rollback of atomic operation", fileName), ioe);
       }
