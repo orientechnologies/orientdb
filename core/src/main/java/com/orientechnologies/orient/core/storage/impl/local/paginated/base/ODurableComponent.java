@@ -43,7 +43,7 @@ import java.io.IOException;
  * To support of "atomic operation" concept following should be done:
  * <ol>
  * <li>Call {@link #startAtomicOperation(boolean)} method.</li>
- * <li>Call {@link #endAtomicOperation(boolean, Exception)} method when atomic operation completes, passed in parameter should be
+ * <li>Call {@link #endAtomicOperation(boolean)} method when atomic operation completes, passed in parameter should be
  * <code>false</code> if atomic operation completes with success and <code>true</code> if there were some exceptions and it is
  * needed to rollback given operation.</li>
  * </ol>
@@ -62,7 +62,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   private final String extension;
 
-  private volatile String lockName;
+  private final String lockName;
 
   public ODurableComponent(OAbstractPaginatedStorage storage, String name, String extension, String lockName) {
     super(true);
@@ -99,8 +99,8 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return extension;
   }
 
-  protected void endAtomicOperation(boolean rollback, Exception e) throws IOException {
-    atomicOperationsManager.endAtomicOperation(rollback, e);
+  protected void endAtomicOperation(boolean rollback) throws IOException {
+    atomicOperationsManager.endAtomicOperation(rollback);
   }
 
   /**
@@ -111,22 +111,19 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
   }
 
-  protected long getFilledUpTo(OAtomicOperation atomicOperation, long fileId) throws IOException {
-    if (atomicOperation == null)
+  protected long getFilledUpTo(OAtomicOperation atomicOperation, long fileId) {
+    if (atomicOperation == null) {
       return writeCache.getFilledUpTo(fileId);
+    }
 
     return atomicOperation.filledUpTo(fileId);
   }
 
   protected OCacheEntry loadPageForWrite(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
       final boolean checkPinnedPages) throws IOException {
-    return loadPageForWrite(atomicOperation, fileId, pageIndex, checkPinnedPages, 1);
-  }
-
-  protected OCacheEntry loadPageForWrite(OAtomicOperation atomicOperation, long fileId, long pageIndex, boolean checkPinnedPages,
-      final int pageCount) throws IOException {
-    if (atomicOperation == null)
+    if (atomicOperation == null) {
       return readCache.loadForWrite(fileId, pageIndex, checkPinnedPages, writeCache, 1, true, null);
+    }
 
     return atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1);
   }
@@ -138,79 +135,82 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected OCacheEntry loadPageForRead(OAtomicOperation atomicOperation, long fileId, long pageIndex, boolean checkPinnedPages,
       final int pageCount) throws IOException {
-    if (atomicOperation == null)
+    if (atomicOperation == null) {
       return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
+    }
 
     return atomicOperation.loadPageForRead(fileId, pageIndex, checkPinnedPages, pageCount);
   }
 
   protected void pinPage(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) {
-    if (atomicOperation == null)
+    if (atomicOperation == null) {
       readCache.pinPage(cacheEntry, writeCache);
-    else
+    } else {
       atomicOperation.pinPage(cacheEntry);
+    }
   }
 
   protected OCacheEntry addPage(OAtomicOperation atomicOperation, long fileId) throws IOException {
-    if (atomicOperation == null)
+    if (atomicOperation == null) {
       return readCache.allocateNewPage(fileId, writeCache, true, null);
+    }
 
     return atomicOperation.addPage(fileId);
   }
 
   protected void releasePageFromWrite(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) {
-    if (atomicOperation == null)
+    if (atomicOperation == null) {
       readCache.releaseFromWrite(cacheEntry, writeCache);
-    else
+    } else {
       atomicOperation.releasePageFromWrite(cacheEntry);
+    }
   }
 
   protected void releasePageFromRead(OAtomicOperation atomicOperation, OCacheEntry cacheEntry) {
-    if (atomicOperation == null)
+    if (atomicOperation == null) {
       readCache.releaseFromRead(cacheEntry, writeCache);
-    else
+    } else {
       atomicOperation.releasePageFromRead(cacheEntry);
+    }
   }
 
   protected long addFile(OAtomicOperation atomicOperation, String fileName) throws IOException {
-    if (atomicOperation == null)
+    if (atomicOperation == null) {
       return readCache.addFile(fileName, writeCache);
+    }
 
     return atomicOperation.addFile(fileName);
   }
 
   protected long openFile(OAtomicOperation atomicOperation, String fileName) throws IOException {
-    if (atomicOperation == null)
+    if (atomicOperation == null) {
       return writeCache.loadFile(fileName);
+    }
 
     return atomicOperation.loadFile(fileName);
   }
 
   protected void deleteFile(OAtomicOperation atomicOperation, long fileId) throws IOException {
-    if (atomicOperation == null)
+    if (atomicOperation == null) {
       readCache.deleteFile(fileId, writeCache);
-    else
+    } else {
       atomicOperation.deleteFile(fileId);
+    }
   }
 
   protected boolean isFileExists(OAtomicOperation atomicOperation, String fileName) {
-    if (atomicOperation == null)
+    if (atomicOperation == null) {
       return writeCache.exists(fileName);
+    }
 
     return atomicOperation.isFileExists(fileName);
   }
 
-  protected boolean isFileExists(OAtomicOperation atomicOperation, long fileId) {
-    if (atomicOperation == null)
-      return writeCache.exists(fileId);
-
-    return atomicOperation.isFileExists(fileId);
-  }
-
   protected void truncateFile(OAtomicOperation atomicOperation, long filedId) throws IOException {
-    if (atomicOperation == null)
+    if (atomicOperation == null) {
       readCache.truncateFile(filedId, writeCache);
-    else
+    } else {
       atomicOperation.truncateFile(filedId);
+    }
   }
 }

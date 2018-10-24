@@ -509,7 +509,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         OLogManager.instance()
             .error(this, "Index '" + engineData.getName() + "' cannot be created and will be removed from configuration", e);
 
-        engine.deleteWithoutLoad(engineData.getName());
+        try {
+          engine.deleteWithoutLoad(engineData.getName());
+        } catch (IOException ioe) {
+          OLogManager.instance().error(this, "Can not delete index " + engineData.getName(), ioe);
+        }
       }
     }
   }
@@ -1942,9 +1946,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               }
             }
           }
-          atomicOperationsManager.endAtomicOperation(false, null);
+          atomicOperationsManager.endAtomicOperation(false);
         } catch (RuntimeException e) {
-          atomicOperationsManager.endAtomicOperation(true, e);
+          atomicOperationsManager.endAtomicOperation(true);
           throw e;
         }
 
@@ -2741,13 +2745,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       T result = callback.callEngine(engine);
 
       if (atomicOperation)
-        atomicOperationsManager.endAtomicOperation(false, null);
+        atomicOperationsManager.endAtomicOperation(false);
 
       return result;
     } catch (Exception e) {
       try {
         if (atomicOperation)
-          atomicOperationsManager.endAtomicOperation(true, e);
+          atomicOperationsManager.endAtomicOperation(true);
 
         throw OException.wrapException(new OStorageException("Cannot put key value entry in index"), e);
       } catch (IOException ioe) {
@@ -2774,10 +2778,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       engine.update(key, valueCreator);
 
-      atomicOperationsManager.endAtomicOperation(false, null);
+      atomicOperationsManager.endAtomicOperation(false);
     } catch (OInvalidIndexEngineIdException e) {
       try {
-        atomicOperationsManager.endAtomicOperation(true, e);
+        atomicOperationsManager.endAtomicOperation(true);
       } catch (IOException ioe) {
         throw OException.wrapException(new OStorageException("Error during operation rollback"), ioe);
       }
@@ -2785,7 +2789,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw e;
     } catch (Exception e) {
       try {
-        atomicOperationsManager.endAtomicOperation(true, e);
+        atomicOperationsManager.endAtomicOperation(true);
         throw OException.wrapException(new OStorageException("Cannot put key value entry in index"), e);
       } catch (IOException ioe) {
         throw OException.wrapException(new OStorageException("Error during operation rollback"), ioe);
@@ -4327,8 +4331,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private OLogSequenceNumber endStorageTx() throws IOException {
-    final OLogSequenceNumber lsn = atomicOperationsManager.endAtomicOperation(false, null);
-    assert atomicOperationsManager.getCurrentOperation() == null;
+    final OLogSequenceNumber lsn = atomicOperationsManager.endAtomicOperation(false);
+    assert OAtomicOperationsManager.getCurrentOperation() == null;
     return lsn;
   }
 
@@ -4337,7 +4341,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (storageTx != null && storageTx.getClientTx().getId() != clientTx.getId())
       rollback(clientTx);
 
-    assert atomicOperationsManager.getCurrentOperation() == null;
+    assert OAtomicOperationsManager.getCurrentOperation() == null;
 
     transaction.set(new OStorageTransaction(clientTx));
     try {
@@ -4352,9 +4356,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (writeAheadLog == null || transaction.get() == null)
       return;
 
-    atomicOperationsManager.endAtomicOperation(true, null);
+    atomicOperationsManager.endAtomicOperation(true);
 
-    assert atomicOperationsManager.getCurrentOperation() == null;
+    assert OAtomicOperationsManager.getCurrentOperation() == null;
   }
 
   private void recoverIfNeeded() throws Exception {
@@ -4398,9 +4402,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
           context.executeOperations(this);
-        atomicOperationsManager.endAtomicOperation(false, null);
+        atomicOperationsManager.endAtomicOperation(false);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
+        atomicOperationsManager.endAtomicOperation(true);
 
         if (e instanceof OOfflineClusterException)
           throw (OOfflineClusterException) e;
@@ -4474,9 +4478,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
           context.executeOperations(this);
-        atomicOperationsManager.endAtomicOperation(false, null);
+        atomicOperationsManager.endAtomicOperation(false);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
+        atomicOperationsManager.endAtomicOperation(true);
 
         OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", e);
 
@@ -4530,12 +4534,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
           context.executeOperations(this);
-        atomicOperationsManager.endAtomicOperation(false, null);
+        atomicOperationsManager.endAtomicOperation(false);
       } catch (RuntimeException e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
+        atomicOperationsManager.endAtomicOperation(true);
         throw e;
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
+        atomicOperationsManager.endAtomicOperation(true);
 
         OLogManager.instance().error(this, "Error on recycling record " + rid + " (cluster: " + cluster + ")", e);
 
@@ -4584,9 +4588,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
           context.executeOperations(this);
-        atomicOperationsManager.endAtomicOperation(false, null);
+        atomicOperationsManager.endAtomicOperation(false);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
+        atomicOperationsManager.endAtomicOperation(true);
         OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
         return new OStorageOperationResult<>(false);
       }
@@ -4620,9 +4624,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (context != null)
           context.executeOperations(this);
 
-        atomicOperationsManager.endAtomicOperation(false, null);
+        atomicOperationsManager.endAtomicOperation(false);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
+        atomicOperationsManager.endAtomicOperation(true);
         OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
 
         return new OStorageOperationResult<>(false);
@@ -4923,10 +4927,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected void closeIndexes(boolean onDelete) {
     for (OIndexEngine engine : indexEngines) {
       if (engine != null) {
-        if (onDelete)
-          engine.delete();
-        else
+        if (onDelete) {
+          try {
+            engine.delete();
+          } catch (IOException e) {
+            OLogManager.instance().error(this, "Can not delete index engine " + engine.getName(), e);
+          }
+        } else {
           engine.close();
+        }
       }
     }
 
@@ -5637,7 +5646,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private void lockRidBags(final TreeMap<Integer, OCluster> clusters, final TreeMap<String, OTransactionIndexChanges> indexes,
       OIndexManager manager) {
-    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+    final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
     for (Integer clusterId : clusters.keySet())
       atomicOperationsManager

@@ -30,7 +30,7 @@ public class LocalHashTableIterationTestIT {
   private OLocalHashTable<Integer, String> localHashTable;
 
   @Before
-  public void beforeClass() {
+  public void beforeClass() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
       buildDirectory = ".";
@@ -66,7 +66,7 @@ public class LocalHashTableIterationTestIT {
   }
 
   @After
-  public void afterMethod() {
+  public void afterMethod() throws Exception {
     localHashTable.clear();
   }
 

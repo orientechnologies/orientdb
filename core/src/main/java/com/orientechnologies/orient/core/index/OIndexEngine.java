@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -41,28 +42,28 @@ public interface OIndexEngine {
 
   void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
       OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption);
+      ODocument metadata, OEncryption encryption) throws IOException;
 
-  void delete();
+  void delete() throws IOException;
 
-  void deleteWithoutLoad(String indexName);
+  void deleteWithoutLoad(String indexName) throws IOException;
 
   void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
       OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties, OEncryption encryption);
 
   boolean contains(Object key);
 
-  boolean remove(Object key);
+  boolean remove(Object key) throws IOException;
 
-  void clear();
+  void clear() throws IOException;
 
   void close();
 
   Object get(Object key);
 
-  void put(Object key, Object value);
+  void put(Object key, Object value) throws IOException;
 
-  void update(Object key, OIndexKeyUpdater<Object> updater);
+  void update(Object key, OIndexKeyUpdater<Object> updater) throws IOException;
 
   /**
    * Puts the given value under the given key into this index engine. Validates the operation using the provided validator.
@@ -75,7 +76,7 @@ public interface OIndexEngine {
    *
    * @see Validator#validate(Object, Object, Object)
    */
-  boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator);
+  boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) throws IOException;
 
   Object getFirstKey();
 

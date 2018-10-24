@@ -108,7 +108,7 @@ public class OMixedIndexRIDContainerSerializer implements OBinarySerializer<OMix
       tree = null;
     } else {
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      tree = new OIndexRIDContainerSBTree(fileId, new OBonsaiBucketPointer(pageIndex, offset), true,
+      tree = new OIndexRIDContainerSBTree(fileId, new OBonsaiBucketPointer(pageIndex, offset),
           (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
     }
 
@@ -197,7 +197,7 @@ public class OMixedIndexRIDContainerSerializer implements OBinarySerializer<OMix
       tree = null;
     } else {
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      tree = new OIndexRIDContainerSBTree(fileId, new OBonsaiBucketPointer(pageIndex, offset), true,
+      tree = new OIndexRIDContainerSBTree(fileId, new OBonsaiBucketPointer(pageIndex, offset),
           (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
     }
 
@@ -265,7 +265,7 @@ public class OMixedIndexRIDContainerSerializer implements OBinarySerializer<OMix
       tree = null;
     } else {
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      tree = new OIndexRIDContainerSBTree(fileId, new OBonsaiBucketPointer(pageIndex, offset), true,
+      tree = new OIndexRIDContainerSBTree(fileId, new OBonsaiBucketPointer(pageIndex, offset),
           (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
     }
 
@@ -304,7 +304,7 @@ public class OMixedIndexRIDContainerSerializer implements OBinarySerializer<OMix
       tree = null;
     } else {
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      tree = new OIndexRIDContainerSBTree(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset), true,
+      tree = new OIndexRIDContainerSBTree(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset),
           (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
     }
 

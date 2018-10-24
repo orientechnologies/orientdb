@@ -135,10 +135,10 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
 
     final String storageType = storage.getType();
     if (storageType.equals("memory") || storageType.equals("plocal"))
-      indexEngine = new OAutoShardingIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage, version);
+      indexEngine = new OAutoShardingIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OAutoShardingIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage.getUnderlying(),
+      indexEngine = new OAutoShardingIndexEngine(name, (OAbstractPaginatedStorage) storage.getUnderlying(),
           version);
     else if (storageType.equals("remote"))
       // MANAGE REMOTE SHARDED INDEX TO CALL THE INTERESTED SERVER

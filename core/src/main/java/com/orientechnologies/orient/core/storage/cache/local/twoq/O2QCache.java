@@ -297,19 +297,11 @@ public class O2QCache implements OReadCache {
   @Override
   public OCacheEntry loadForRead(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
       boolean verifyChecksums) throws IOException {
-    final OCacheEntry cacheEntry = doLoad(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, verifyChecksums);
-
-    if (cacheEntry != null) {
-      cacheEntry.acquireSharedLock();
-    }
-
-    return cacheEntry;
+    return doLoad(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, verifyChecksums);
   }
 
   @Override
   public void releaseFromRead(OCacheEntry cacheEntry, OWriteCache writeCache) {
-    cacheEntry.releaseSharedLock();
-
     doRelease(cacheEntry);
   }
 

@@ -30,9 +30,11 @@ import com.orientechnologies.orient.core.exception.OAccessToSBtreeCollectionMana
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -81,8 +83,9 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   @Override
   public void onStartup() {
     super.onStartup();
-    if (collectionPointerChanges == null)
+    if (collectionPointerChanges == null) {
       collectionPointerChanges = new CollectionPointerChangesThreadLocal();
+    }
   }
 
   /**
@@ -93,12 +96,13 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   }
 
   private void checkAccess() {
-    if (prohibitAccess)
+    if (prohibitAccess) {
       throw new OAccessToSBtreeCollectionManagerIsProhibitedException(PROHIBITED_EXCEPTION_MESSAGE);
+    }
   }
 
   @Override
-  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId) {
+  public OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId) throws IOException {
     checkAccess();
 
     return super.createAndLoadTree(clusterId);
@@ -115,22 +119,23 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   }
 
   @Override
-  public OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID) {
+  public OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID) throws IOException {
     checkAccess();
 
     final OBonsaiCollectionPointer pointer = super.createSBTree(clusterId, ownerUUID);
 
     if (ownerUUID != null) {
       Map<UUID, OBonsaiCollectionPointer> changedPointers = collectionPointerChanges.get();
-      if (pointer != null && pointer.isValid())
+      if (pointer != null && pointer.isValid()) {
         changedPointers.put(ownerUUID, pointer);
+      }
     }
 
     return pointer;
   }
 
   @Override
-  protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createTree(int clusterId) {
+  protected OSBTreeBonsaiLocal<OIdentifiable, Integer> createTree(int clusterId) throws IOException {
 
     OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(FILE_NAME_PREFIX + clusterId, DEFAULT_EXTENSION,
         storage);
@@ -142,7 +147,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
   @Override
   protected OSBTreeBonsai<OIdentifiable, Integer> loadTree(OBonsaiCollectionPointer collectionPointer) {
     String fileName;
-    OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+    OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
     if (atomicOperation == null) {
       fileName = storage.getWriteCache().fileNameById(collectionPointer.getFileId());
     } else {
@@ -152,10 +157,11 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<>(
         fileName.substring(0, fileName.length() - DEFAULT_EXTENSION.length()), DEFAULT_EXTENSION, storage);
 
-    if (tree.load(collectionPointer.getRootPointer()))
+    if (tree.load(collectionPointer.getRootPointer())) {
       return tree;
-    else
+    } else {
       return null;
+    }
   }
 
   /**
@@ -168,8 +174,9 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
       final OBonsaiCollectionPointer pointer = collection.getPointer();
 
       Map<UUID, OBonsaiCollectionPointer> changedPointers = collectionPointerChanges.get();
-      if (pointer != null && pointer.isValid())
+      if (pointer != null && pointer.isValid()) {
         changedPointers.put(ownerUUID, pointer);
+      }
     }
 
     return null;

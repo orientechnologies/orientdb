@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.storage.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -75,21 +76,21 @@ public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {
    */
   V get(K key);
 
-  boolean put(K key, V value);
+  boolean put(K key, V value) throws IOException;
 
   /**
    * Deletes all entries from tree.
    */
-  void clear();
+  void clear() throws IOException;
 
   /**
    * Deletes whole tree. After this operation tree is no longer usable.
    */
-  void delete();
+  void delete() throws IOException;
 
   long size();
 
-  V remove(K key);
+  V remove(K key) throws IOException;
 
   Collection<V> getValuesMinor(K key, boolean inclusive, int maxValuesToFetch);
 

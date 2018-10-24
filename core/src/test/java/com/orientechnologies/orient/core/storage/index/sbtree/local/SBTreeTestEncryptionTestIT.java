@@ -15,7 +15,7 @@ import java.io.File;
 
 public class SBTreeTestEncryptionTestIT extends SBTreeTestIT {
   @Override
-  public void before() {
+  public void before() throws Exception {
     buildDirectory = System.getProperty("buildDirectory", ".");
 
     dbName = "localSBTreeEncryptedTest";

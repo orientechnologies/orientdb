@@ -34,7 +34,7 @@ public class OSBTreeBonsaiLocalTestIT {
   protected static ODatabaseDocumentTx                        databaseDocumentTx;
 
   @BeforeClass
-  public static void beforeClass() {
+  public static void beforeClass() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
       buildDirectory = "./target";
@@ -264,7 +264,7 @@ public class OSBTreeBonsaiLocalTestIT {
   }
 
   @Test
-  public void testValuesMajor() {
+  public void testValuesMajor() throws Exception {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
     Random random = new Random();
 
@@ -283,7 +283,7 @@ public class OSBTreeBonsaiLocalTestIT {
   }
 
   @Test
-  public void testValuesMinor() {
+  public void testValuesMinor() throws Exception {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
     Random random = new Random();
 
@@ -302,7 +302,7 @@ public class OSBTreeBonsaiLocalTestIT {
   }
 
   @Test
-  public void testValuesBetween() {
+  public void testValuesBetween() throws Exception {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
     Random random = new Random();
 

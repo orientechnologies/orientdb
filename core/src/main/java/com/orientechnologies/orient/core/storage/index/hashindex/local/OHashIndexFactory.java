@@ -122,10 +122,10 @@ public class OHashIndexFactory implements OIndexFactory {
 
     final String storageType = storage.getType();
     if (storageType.equals("memory") || storageType.equals("plocal"))
-      indexEngine = new OHashTableIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage, version);
+      indexEngine = new OHashTableIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OHashTableIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage.getUnderlying(),
+      indexEngine = new OHashTableIndexEngine(name, (OAbstractPaginatedStorage) storage.getUnderlying(),
           version);
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine(name);

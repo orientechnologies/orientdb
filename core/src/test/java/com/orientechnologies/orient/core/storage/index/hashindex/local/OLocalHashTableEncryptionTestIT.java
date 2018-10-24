@@ -23,7 +23,7 @@ public class OLocalHashTableEncryptionTestIT extends OLocalHashTableBase {
   private static final String DB_NAME = "localHashTableEncryptionTest";
 
   @Before
-  public void before() {
+  public void before() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory", ".");
     final File dbDirectory = new File(buildDirectory, DB_NAME);
 
