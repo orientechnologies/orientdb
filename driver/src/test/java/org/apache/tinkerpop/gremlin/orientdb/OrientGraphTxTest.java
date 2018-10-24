@@ -116,7 +116,8 @@ public class OrientGraphTxTest extends OrientGraphBaseTest {
           Vertex v = iter.next();
           VertexProperty<Long> vp = v.property("mm");
           long a = vp.value();
-          Assert.assertFalse(vals.contains(a));          
+          Assert.assertFalse(vals.contains(a));   
+          vals.add(a);
           counter++;
         }
         Assert.assertEquals(counter, threadCount * recCount);          
