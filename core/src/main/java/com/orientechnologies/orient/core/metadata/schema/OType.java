@@ -807,4 +807,8 @@ public enum OType implements OTypeInterface {
   public Class<?>[] getJavaTypes() {
     return null;
   }
+
+  public String getName() {
+    return name;
+  }
 }

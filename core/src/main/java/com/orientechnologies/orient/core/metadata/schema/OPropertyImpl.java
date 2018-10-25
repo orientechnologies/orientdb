@@ -288,7 +288,7 @@ public abstract class OPropertyImpl implements OProperty {
     }
   }
 
-  protected static void checkSupportLinkedClass(OType type) {
+  public static void checkSupportLinkedClass(OType type) {
     if (type != OType.LINK && type != OType.LINKSET && type != OType.LINKLIST && type != OType.LINKMAP && type != OType.EMBEDDED
         && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDMAP && type != OType.LINKBAG)
       throw new OSchemaException("Linked class is not supported for type: " + type);
@@ -303,7 +303,7 @@ public abstract class OPropertyImpl implements OProperty {
     }
   }
 
-  protected static void checkLinkTypeSupport(OType type) {
+  public static void checkLinkTypeSupport(OType type) {
     if (type != OType.EMBEDDEDSET && type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDMAP)
       throw new OSchemaException("Linked type is not supported for type: " + type);
   }

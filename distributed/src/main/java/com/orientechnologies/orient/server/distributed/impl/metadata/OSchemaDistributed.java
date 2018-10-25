@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.metadata.schema.*;
@@ -37,6 +36,9 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   }
 
   public void acquireSchemaWriteLock(ODatabaseDocumentInternal database) {
+    if (isRunLocal(database)) {
+      return;
+    }
     if (executeThroughDistributedStorage(database)) {
       ((OAutoshardedStorage) database.getStorage()).acquireDistributedExclusiveLock(0);
     }
@@ -45,6 +47,9 @@ public class OSchemaDistributed extends OSchemaEmbedded {
 
   @Override
   public void releaseSchemaWriteLock(ODatabaseDocumentInternal database, final boolean iSave) {
+    if (isRunLocal(database)) {
+      return;
+    }
     try {
       super.releaseSchemaWriteLock(database, iSave);
     } finally {
@@ -62,7 +67,9 @@ public class OSchemaDistributed extends OSchemaEmbedded {
       cmd.append(" unsafe");
 
       sendCommand(database, cmd.toString());
-      dropClassInternal(database, className);
+      if (!isRunLocal(database)) {
+        dropClassInternal(database, className);
+      }
     } else
       dropClassInternal(database, className);
   }
@@ -148,8 +155,9 @@ public class OSchemaDistributed extends OSchemaEmbedded {
       }
 
       cmd.append("}");
-
-      createViewInternal(database, config, clusterIds);
+      if (!isRunLocal(database)) {
+        createViewInternal(database, config, clusterIds);
+      }
 
       sendCommand(database, cmd.toString());
 
@@ -191,8 +199,9 @@ public class OSchemaDistributed extends OSchemaEmbedded {
           }
         }
       }
-
-      createClassInternal(database, className, clusterIds, superClassesList);
+      if (!isRunLocal(database)) {
+        createClassInternal(database, className, clusterIds, superClassesList);
+      }
       sendCommand(database, cmd.toString());
 
     } else {
@@ -202,7 +211,7 @@ public class OSchemaDistributed extends OSchemaEmbedded {
 
   @Override
   public void sendCommand(ODatabaseDocumentInternal database, String command) {
-    if (database.getConfiguration().getValueAsInteger(DISTRIBUTED_REPLICATION_PROTOCOL_VERSION) == 2) {
+    if (isDistributeVersionTwo(database)) {
 
       ODistributedContext distributed = ((OSharedContextDistributed) database.getSharedContext()).getDistributedContext();
       Future<OSubmitResponse> response = distributed.getSubmitContext()
@@ -217,5 +226,13 @@ public class OSchemaDistributed extends OSchemaEmbedded {
     } else {
       super.sendCommand(database, command);
     }
+  }
+
+  private boolean isDistributeVersionTwo(ODatabaseDocumentInternal database) {
+    return database.getConfiguration().getValueAsInteger(DISTRIBUTED_REPLICATION_PROTOCOL_VERSION) == 2;
+  }
+
+  protected boolean isRunLocal(ODatabaseDocumentInternal database) {
+    return isDistributeVersionTwo(database) && executeThroughDistributedStorage(database);
   }
 }

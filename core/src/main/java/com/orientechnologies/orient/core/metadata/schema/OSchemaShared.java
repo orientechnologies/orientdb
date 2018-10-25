@@ -958,7 +958,7 @@ public abstract class OSchemaShared implements OCloseable {
     return clId;
   }
 
-  protected int createClusterIfNeeded(ODatabaseDocumentInternal database, String nameOrId) {
+  public int createClusterIfNeeded(ODatabaseDocumentInternal database, String nameOrId) {
     final String[] parts = nameOrId.split(" ");
     int clId = getClusterId(database, parts[0]);
 

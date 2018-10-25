@@ -762,4 +762,8 @@ public class OSchemaEmbedded extends OSchemaShared {
     }
   }
 
+  protected boolean isRunLocal(ODatabaseDocumentInternal database) {
+    return true;
+  }
+
 }

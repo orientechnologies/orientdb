@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.ddl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
 import java.io.DataInput;
@@ -23,7 +24,10 @@ public class ODDLQueryOperationRequest implements ONodeRequest {
   @Override
   public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
       ODatabaseDocumentInternal session) {
-    session.command(query);
+    OScenarioThreadLocal.executeAsDistributed(() -> {
+      return session.command(query);
+    });
+
     return new ODDLQueryOperationResponse();
   }
 
