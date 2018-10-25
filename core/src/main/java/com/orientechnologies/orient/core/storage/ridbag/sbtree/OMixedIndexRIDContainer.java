@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -10,7 +11,6 @@ import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,9 +57,9 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
   private static long resolveFileIdByName(String fileName) {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage()
         .getUnderlying();
-    final OAtomicOperation atomicOperation;
+    boolean rollback = false;
     try {
-      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
+      storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }
@@ -68,21 +68,24 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
       final OReadCache readCache = storage.getReadCache();
       final OWriteCache writeCache = storage.getWriteCache();
 
-      if (writeCache.exists(fileName))
+      if (writeCache.exists(fileName)) {
         return writeCache.fileIdByName(fileName);
-
-      final long fileId = readCache.addFile(fileName, writeCache);
-      storage.getAtomicOperationsManager().endAtomicOperation(false);
-
-      return fileId;
-    } catch (IOException e) {
-      try {
-        storage.getAtomicOperationsManager().endAtomicOperation(true);
-      } catch (IOException ioe) {
-        throw OException.wrapException(new OIndexEngineException("Error of rollback of atomic operation", fileName), ioe);
       }
 
+      final long fileId = readCache.addFile(fileName, writeCache);
+      return fileId;
+    } catch (IOException e) {
+      rollback = true;
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
+    } catch (RuntimeException e) {
+      rollback = true;
+      throw e;
+    } finally {
+      try {
+        storage.getAtomicOperationsManager().endAtomicOperation(rollback);
+      } catch (IOException ioe) {
+        OLogManager.instance().error(OMixedIndexRIDContainer.class, "Error of rollback of atomic operation", ioe);
+      }
     }
   }
 
