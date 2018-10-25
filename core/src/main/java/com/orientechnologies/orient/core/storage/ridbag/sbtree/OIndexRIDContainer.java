@@ -21,13 +21,12 @@
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexEngineException;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
@@ -49,9 +48,11 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private final long               fileId;
   private       Set<OIdentifiable> underlying;
   private       boolean            isEmbedded;
-  private int topThreshold    = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
-  private int bottomThreshold = OGlobalConfiguration.INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
-  private final boolean durableNonTxMode;
+  private       int                topThreshold    = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
+      .getValueAsInteger();
+  private final int                bottomThreshold = OGlobalConfiguration.INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD
+      .getValueAsInteger();
+  private final boolean            durableNonTxMode;
 
   /**
    * Should be called inside of lock to ensure uniqueness of entity on disk !!!
@@ -80,13 +81,10 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     this.topThreshold = topThreshold;
   }
 
-  public void setBottomThreshold(int bottomThreshold) {
-    this.bottomThreshold = bottomThreshold;
-  }
-
-  private long resolveFileIdByName(String fileName) {
+  private static long resolveFileIdByName(String fileName) {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage()
         .getUnderlying();
+    boolean rollback = false;
     final OAtomicOperation atomicOperation;
     try {
       atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
@@ -95,33 +93,23 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     }
 
     try {
-      final OReadCache readCache = storage.getReadCache();
-      final OWriteCache writeCache = storage.getWriteCache();
+      long fileId;
 
-      if (atomicOperation == null) {
-        if (writeCache.exists(fileName))
-          return writeCache.fileIdByName(fileName);
-
-        return readCache.addFile(fileName, writeCache);
+      if (atomicOperation.isFileExists(fileName)) {
+        fileId = atomicOperation.loadFile(fileName);
       } else {
-        long fileId;
-
-        if (atomicOperation.isFileExists(fileName))
-          fileId = atomicOperation.loadFile(fileName);
-        else
-          fileId = atomicOperation.addFile(fileName);
-
-        storage.getAtomicOperationsManager().endAtomicOperation(false);
-        return fileId;
+        fileId = atomicOperation.addFile(fileName);
       }
+      return fileId;
     } catch (IOException e) {
-      try {
-        storage.getAtomicOperationsManager().endAtomicOperation(true);
-      } catch (IOException ioe) {
-        throw OException.wrapException(new OIndexEngineException("Error of rollback of atomic operation", fileName), ioe);
-      }
-
+      rollback = true;
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
+    } finally {
+      try {
+        storage.getAtomicOperationsManager().endAtomicOperation(rollback);
+      } catch (IOException ioe) {
+        OLogManager.instance().error(OMixedIndexRIDContainer.class, "Error of rollback of atomic operation", ioe);
+      }
     }
   }
 
@@ -200,9 +188,9 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
   @Override
   public void clear() {
-    if (isEmbedded)
+    if (isEmbedded) {
       underlying.clear();
-    else {
+    } else {
       final OIndexRIDContainerSBTree tree = (OIndexRIDContainerSBTree) underlying;
       tree.delete();
       underlying = new HashSet<>();
@@ -223,13 +211,15 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   private void checkTopThreshold() {
-    if (isEmbedded && topThreshold < underlying.size())
+    if (isEmbedded && topThreshold < underlying.size()) {
       convertToSbTree();
+    }
   }
 
   private void checkBottomThreshold() {
-    if (!isEmbedded && bottomThreshold > underlying.size())
+    if (!isEmbedded && bottomThreshold > underlying.size()) {
       convertToEmbedded();
+    }
   }
 
   private void convertToEmbedded() {
@@ -240,14 +230,6 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     tree.delete();
     underlying = set;
     isEmbedded = true;
-  }
-
-  /**
-   * If set is embedded convert it not embedded representation.
-   */
-  public void checkNotEmbedded() {
-    if (isEmbedded)
-      convertToSbTree();
   }
 
   private void convertToSbTree() {
