@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db.viewmanager;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
@@ -7,6 +8,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.OElement;
@@ -16,17 +18,13 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class ViewManager {
   private final OrientDBInternal orientDB;
   private final String           dbName;
-
-  private ODatabaseDocumentInternal liveDb;
 
   /**
    * To retain clusters that are being used in queries until the queries are closed.
@@ -51,7 +49,8 @@ public class ViewManager {
   private final Map<String, Long> lastChangePerClass = new ConcurrentHashMap<>();
 
   private volatile String    lastUpdatedView = null;
-  private volatile TimerTask lastTask;
+  private volatile TimerTask timerTask;
+  private volatile Future<?> lastTask;
   private volatile boolean   closed          = false;
 
   public ViewManager(OrientDBInternal orientDb, String dbName) {
@@ -63,57 +62,29 @@ public class ViewManager {
     orientDB.executeNoAuthorization(dbName, (db) -> {
       // do this to make sure that the storage is already initialized and so is the shared context.
       // you just don't need the db passed as a param here
-      registerLiveUpdates();
+      registerLiveUpdates(db);
       return null;
     });
 
   }
 
-  private synchronized void registerLiveUpdates() {
-    if (liveDb == null) {
-      liveDb = orientDB.openNoAuthorization(dbName);
-    }
+  private synchronized void registerLiveUpdates(ODatabaseSession db) {
     boolean liveViewsExist = false;
-    Collection<OView> views = liveDb.getMetadata().getSchema().getViews();
+    Collection<OView> views = db.getMetadata().getSchema().getViews();
     for (OView view : views) {
-      liveViewsExist = registerLiveUpdateFor(view.getName()) || liveViewsExist;
+      liveViewsExist = registerLiveUpdateFor(db, view.getName()) || liveViewsExist;
     }
-    if (!liveViewsExist) {
-      liveDb.close();
-      liveDb = null;
-    }
-
   }
 
-  public synchronized boolean registerLiveUpdateFor(String viewName) {
-    ODatabaseDocumentInternal oldDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    boolean newDb = false;
-    if (liveDb == null) {
-      newDb = true;
-      liveDb = orientDB.openNoAuthorization(dbName);
+  public synchronized boolean registerLiveUpdateFor(ODatabaseSession db, String viewName) {
+    OView view = db.getMetadata().getSchema().getView(viewName);
+    boolean registered = false;
+    if (view.getUpdateStrategy() != null && view.getUpdateStrategy().equalsIgnoreCase(OViewConfig.UPDATE_STRATEGY_LIVE)) {
+      db.live(view.getQuery(), new ViewUpdateListener(view.getName()));
+      registered = true;
     }
-    OView view = liveDb.getMetadata().getSchema().getView(viewName);
-    try {
-      boolean registered = false;
-      if (view.getUpdateStrategy() != null && view.getUpdateStrategy().equalsIgnoreCase(OViewConfig.UPDATE_STRATEGY_LIVE)) {
-        liveDb.activateOnCurrentThread();
-        liveDb.live(view.getQuery(), new ViewUpdateListener(view.getName()));
-        if (oldDb != null) {
 
-        }
-        registered = true;
-      }
-
-      if (newDb && !registered) {
-        liveDb.close();
-        liveDb = null;
-      }
-      return registered;
-    } finally {
-      if (oldDb != null) {
-        oldDb.activateOnCurrentThread();
-      }
-    }
+    return registered;
   }
 
   public void load() {
@@ -127,18 +98,18 @@ public class ViewManager {
   }
 
   private void schedule() {
-    this.lastTask = new TimerTask() {
+    this.timerTask = new TimerTask() {
       @Override
       public void run() {
         if (closed)
           return;
-        orientDB.executeNoAuthorization(dbName, (db) -> {
+        lastTask = orientDB.executeNoAuthorization(dbName, (db) -> {
           ViewManager.this.updateViews(db);
           return null;
         });
       }
     };
-    this.orientDB.scheduleOnce(lastTask, 1000);
+    this.orientDB.scheduleOnce(timerTask, 1000);
   }
 
   private void updateViews(ODatabaseSession db) {
@@ -158,21 +129,17 @@ public class ViewManager {
   }
 
   public void close() {
-    try {
-      if (liveDb != null) {
-        ODatabaseDocumentInternal oldDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
-        liveDb.activateOnCurrentThread();
-        liveDb.close();
-        liveDb = null;
-        if (oldDb != null) {
-          oldDb.activateOnCurrentThread();
-        }
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
+    if (timerTask != null) {
+      timerTask.cancel();
     }
     if (lastTask != null) {
-      lastTask.cancel();
+      try {
+        lastTask.get();
+      } catch (InterruptedException e) {
+        throw OException.wrapException(new OInterruptedException("Terminated while waiting update view to finis"), e);
+      } catch (ExecutionException e) {
+        throw OException.wrapException(new ODatabaseException("Updated view execution error"), e);
+      }
     }
     closed = true;
   }
@@ -440,26 +407,23 @@ public class ViewManager {
   }
 
   public void updateViewAsync(String name, ViewCreationListener listener) {
-
-    new Thread(() -> {
-      ODatabaseDocument db = orientDB.openNoAuthorization(dbName);
-      if (!buildOnThisNode(db, name)) {
-        return;
+    orientDB.executeNoAuthorization(dbName, (databaseSession) -> {
+      if (!buildOnThisNode(databaseSession, name)) {
+        return null;
       }
       try {
-        OView view = db.getMetadata().getSchema().getView(name);
-        updateView(view, db);
+        OView view = databaseSession.getMetadata().getSchema().getView(name);
+        updateView(view, databaseSession);
         if (listener != null) {
-          listener.afterCreate(name);
+          listener.afterCreate(databaseSession, name);
         }
       } catch (Exception e) {
         if (listener != null) {
           listener.onError(name, e);
         }
-      } finally {
-        db.close();
       }
-    }).start();
+      return null;
+    });
   }
 
   public synchronized void startUsingViewCluster(Integer cluster) {

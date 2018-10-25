@@ -256,9 +256,9 @@ public class OSchemaEmbedded extends OSchemaShared {
       ViewManager viewMgr = ((OSharedContextEmbedded) database.getSharedContext()).getViewManager();
       viewMgr.updateViewAsync(result.getName(), new ViewCreationListener() {
         @Override
-        public void afterCreate(String viewName) {
+        public void afterCreate(ODatabaseSession database, String viewName) {
           try {
-            viewMgr.registerLiveUpdateFor(viewName);
+            viewMgr.registerLiveUpdateFor(database, viewName);
           } catch (Exception e) {
             if (listener != null) {
               listener.onError(viewName, e);
@@ -266,7 +266,7 @@ public class OSchemaEmbedded extends OSchemaShared {
             return;
           }
           if (listener != null) {
-            listener.afterCreate(viewName);
+            listener.afterCreate(database, viewName);
           }
         }
 

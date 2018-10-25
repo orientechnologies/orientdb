@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -667,7 +668,7 @@ public class OUpdateStatementExecutionTest {
     CountDownLatch latch = new CountDownLatch(1);
     db.getMetadata().getSchema().createView(cfg, new ViewCreationListener() {
       @Override
-      public void afterCreate(String viewName) {
+      public void afterCreate(ODatabaseSession database, String viewName) {
         latch.countDown();
       }
 

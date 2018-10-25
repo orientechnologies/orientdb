@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -3708,7 +3709,7 @@ public class OSelectStatementExecutionTest {
     db.getMetadata().getSchema().createView(cfg, new ViewCreationListener() {
 
       @Override
-      public void afterCreate(String viewName) {
+      public void afterCreate(ODatabaseSession database, String viewName) {
         latch.countDown();
       }
 
