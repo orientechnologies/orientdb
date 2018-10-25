@@ -8,9 +8,8 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexEngineException;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,12 +21,12 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
-  public static final String INDEX_FILE_EXTENSION = ".irs";
+  private static final String INDEX_FILE_EXTENSION = ".irs";
 
   private final long                     fileId;
   private final Set<ORID>                embeddedSet;
   private       OIndexRIDContainerSBTree tree         = null;
-  private       int                      topThreshold = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
+  private final int                      topThreshold = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
       .getValueAsInteger();
 
   /**
@@ -50,29 +49,26 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     this.tree = tree;
   }
 
-  public void setTopThreshold(int topThreshold) {
-    this.topThreshold = topThreshold;
-  }
-
   private static long resolveFileIdByName(String fileName) {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage()
         .getUnderlying();
     boolean rollback = false;
+    final OAtomicOperation atomicOperation;
     try {
-      storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
+      atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
     } catch (IOException e) {
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }
 
     try {
-      final OReadCache readCache = storage.getReadCache();
-      final OWriteCache writeCache = storage.getWriteCache();
+      long fileId;
 
-      if (writeCache.exists(fileName)) {
-        return writeCache.fileIdByName(fileName);
+      if (atomicOperation.isFileExists(fileName)) {
+        fileId = atomicOperation.loadFile(fileName);
+      } else {
+        fileId = atomicOperation.addFile(fileName);
       }
 
-      final long fileId = readCache.addFile(fileName, writeCache);
       return fileId;
     } catch (IOException e) {
       rollback = true;

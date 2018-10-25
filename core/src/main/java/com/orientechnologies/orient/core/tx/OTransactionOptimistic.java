@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -148,14 +149,13 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     if (txStartCounter < 0)
       throw new OTransactionException("Transaction was rolled back more times than it was started.");
 
-    database.getStorage().callInLock(new Callable<Void>() {
-
-      public Void call() throws Exception {
-
-        database.getStorage().rollback(OTransactionOptimistic.this);
+    final OStorage storage = database.getStorage();
+    if (storage instanceof OStorageProxy) {
+      storage.callInLock((Callable<Void>) () -> {
+        storage.rollback(OTransactionOptimistic.this);
         return null;
-      }
-    }, true);
+      }, true);
+    }
 
     internalRollback();
   }
