@@ -25,7 +25,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -38,21 +40,17 @@ import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClust
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingClusterSelectionStrategy;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Callable;
 
 /**
  * Schema Class implementation.
@@ -1409,10 +1407,11 @@ public abstract class OClassImpl implements OClass {
     if (type.isMultiValue())
       builder.append(" and ").append(getEscapedName(propertyName, strictSQL)).append(".size() <> 0 limit 1");
 
-    final OResultSet res = database.command(builder.toString());
-    if (((Long) res.next().getProperty("count")) > 0)
-      throw new OSchemaException("The database contains some schema-less data in the property '" + name + "." + propertyName
-          + "' that is not compatible with the type " + type + ". Fix those records and change the schema again");
+    try (final OResultSet res = database.command(builder.toString())) {
+      if (((Long) res.next().getProperty("count")) > 0)
+        throw new OSchemaException("The database contains some schema-less data in the property '" + name + "." + propertyName
+            + "' that is not compatible with the type " + type + ". Fix those records and change the schema again");
+    }
   }
 
   protected String getEscapedName(final String iName, final boolean iStrictSQL) {
