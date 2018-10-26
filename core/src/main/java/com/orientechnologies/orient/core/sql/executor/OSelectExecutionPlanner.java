@@ -560,13 +560,18 @@ public class OSelectExecutionPlanner {
     return true;
   }
 
-  private boolean isCount(OProjection aggregateProjection, OProjection projection) {
-    if (aggregateProjection == null || projection == null || aggregateProjection.getItems().size() != 1
-        || projection.getItems().size() != 1) {
+  private static boolean isCountOnly(QueryPlanningInfo info) {
+    if (info.aggregateProjection == null || info.projection == null || info.aggregateProjection.getItems().size() != 1
+        || info.projection.getItems().size() != 1) {
       return false;
     }
-    OProjectionItem item = aggregateProjection.getItems().get(0);
-    return item.getExpression().isCount();
+    OProjectionItem item = info.aggregateProjection.getItems().get(0);
+    OExpression exp = item.getExpression();
+    if (exp.getMathExpression() != null && exp.getMathExpression() instanceof OBaseExpression) {
+      OBaseExpression base = (OBaseExpression) exp.getMathExpression();
+      return base.isCount() && base.getModifier() == null;
+    }
+    return false;
   }
 
   public static void handleUnwind(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
@@ -598,7 +603,7 @@ public class OSelectExecutionPlanner {
       }
       if (info.aggregateProjection != null) {
         result.chain(new AggregateProjectionCalculationStep(info.aggregateProjection, info.groupBy, ctx, profilingEnabled));
-        if (isCountStar(info) && info.groupBy == null) {
+        if (isCountOnly(info) && info.groupBy == null) {
           result.chain(new GuaranteeEmptyCountStep(info.aggregateProjection.getItems().get(0), ctx, profilingEnabled));
         }
 
