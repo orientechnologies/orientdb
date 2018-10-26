@@ -134,13 +134,20 @@ public class ViewManager {
     }
     if (lastTask != null) {
       try {
-        lastTask.get();
+        try {
+          lastTask.get(20, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+          lastTask.cancel(true);
+          lastTask.get();
+        }
+
       } catch (InterruptedException e) {
         throw OException.wrapException(new OInterruptedException("Terminated while waiting update view to finis"), e);
       } catch (ExecutionException e) {
         throw OException.wrapException(new ODatabaseException("Updated view execution error"), e);
       }
     }
+
     closed = true;
   }
 
