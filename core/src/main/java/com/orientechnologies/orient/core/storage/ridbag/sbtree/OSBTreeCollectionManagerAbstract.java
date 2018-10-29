@@ -31,7 +31,10 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -91,6 +94,7 @@ public abstract class OSBTreeCollectionManagerAbstract
   private final Object[]                                                 locks;
   private final ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> treeCache;
   private final OStorage                                                 storage;
+  private final ConcurrentHashMap<CacheKey, List<OBonsaiCollectionPointer>> markedForDeletion = new ConcurrentHashMap<>();
 
   public OSBTreeCollectionManagerAbstract(OStorage storage) {
     this(GLOBAL_TREE_CACHE, storage, GLOBAL_EVICTION_THRESHOLD, GLOBAL_CACHE_MAX_SIZE, GLOBAL_LOCKS);
@@ -168,7 +172,21 @@ public abstract class OSBTreeCollectionManagerAbstract
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (lock) {
-      SBTreeBonsaiContainer container = treeCache.get(cacheKey);
+      SBTreeBonsaiContainer container = treeCache.get(cacheKey);            
+       
+      if (container != null && container.usagesCounter <= 1){
+        List<OBonsaiCollectionPointer> collectionToDelete = markedForDeletion.get(cacheKey);
+        if (collectionToDelete != null){
+          synchronized(collectionToDelete){
+            for (OBonsaiCollectionPointer pointer : collectionToDelete){
+              final CacheKey ck = new CacheKey(storage, pointer);
+              treeCache.remove(ck);
+            }
+            collectionToDelete.clear();
+          }
+        }
+      }
+      
       if (container != null) {
         container.usagesCounter++;
         tree = container.tree;
@@ -183,10 +201,10 @@ public abstract class OSBTreeCollectionManagerAbstract
           treeCache.put(cacheKey, container);
         }
       }
-
+            
     }
 
-    evict();
+    evict();        
 
     return tree;
   }
@@ -216,10 +234,19 @@ public abstract class OSBTreeCollectionManagerAbstract
       assert container != null;
 
       if (container.usagesCounter != 0) {
-        throw new IllegalStateException("Cannot delete SBTreeBonsai instance because it is used in other thread.");
+        List<OBonsaiCollectionPointer> pointersCollection = markedForDeletion.get(cacheKey);
+        //lets say that I know what I am doing
+        if (pointersCollection == null){
+          pointersCollection = new LinkedList<>();
+          markedForDeletion.put(cacheKey, pointersCollection);
+        }
+        synchronized(pointersCollection){
+          pointersCollection.add(collectionPointer);
+        }
       }
-
-      treeCache.remove(cacheKey);
+      else{
+        treeCache.remove(cacheKey);
+      }
     }
   }
 
