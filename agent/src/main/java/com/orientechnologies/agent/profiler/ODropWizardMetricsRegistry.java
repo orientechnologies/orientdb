@@ -13,7 +13,6 @@ import com.orientechnologies.agent.profiler.metrics.*;
 import com.orientechnologies.agent.profiler.metrics.dropwizard.*;
 import com.orientechnologies.agent.profiler.source.CSVAggregateReporter;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsSettings;
-import com.orientechnologies.agent.services.metrics.reporters.CSVAggregatesReporterConfig;
 import com.orientechnologies.agent.services.metrics.reporters.CSVReporter;
 import com.orientechnologies.agent.services.metrics.reporters.ConsoleReporterConfig;
 import com.orientechnologies.agent.services.metrics.reporters.JMXReporter;
@@ -95,7 +94,7 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     consoleReporter = configureConsoleReporter(settings.reporters.console);
     csvReporter = configureCsvReporter(settings.reporters.csv);
 
-    csvAggregates = configureCsvAggregatesReporter(server, settings.reporters.csvAggregates);
+    csvAggregates = configureCsvAggregatesReporter(server, settings.reporters.csv);
 
     if (settings.reporters.prometheus.enabled) {
       CollectorRegistry.defaultRegistry.register(new DropwizardExports(registry));
@@ -159,7 +158,7 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
   }
 
-  private CSVAggregateReporter configureCsvAggregatesReporter(OEnterpriseServer server, CSVAggregatesReporterConfig csvConfig) {
+  private CSVAggregateReporter configureCsvAggregatesReporter(OEnterpriseServer server, CSVReporter csvConfig) {
 
     Boolean enabled = csvConfig.enabled;
     Number interval = csvConfig.interval;
