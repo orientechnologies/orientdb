@@ -18,6 +18,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.enterprise.OEnterpriseEndpoint;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
@@ -794,7 +795,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @param transactionId
    */
   public void commit2pcLocal(ODistributedRequestId transactionId) {
-    commit2pc(transactionId);
+    commit2pc(transactionId, true);
   }
 
   /**
@@ -802,13 +803,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    *
    * @return null returned means that commit failed
    */
-  public Collection<ORecordOperation> commit2pc(ODistributedRequestId transactionId) {
+  public boolean commit2pc(ODistributedRequestId transactionId, boolean local) {
     getStorageDistributed().resetLastValidBackup();
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
 
     ODistributedServerManager manager = getStorageDistributed().getDistributedManager();
     ONewDistributedTxContextImpl txContext = (ONewDistributedTxContextImpl) localDistributedDatabase.getTxContext(transactionId);
-    Collection<ORecordOperation> operations = txContext.getTransaction().getRecordOperations();
 
     if (txContext != null) {
       if (SUCCESS.equals(txContext.getStatus())) {
@@ -821,11 +821,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OLiveQueryHook.removePendingDatabaseOps(this);
           OLiveQueryHookV2.removePendingDatabaseOps(this);
         }
-        return operations;
+        return true;
       } else if (TIMEDOUT.equals(txContext.getStatus())) {
         for (int i = 0; i < 10; i++) {
           try {
-            internalBegin2pc(txContext, false);
+            internalBegin2pc(txContext, local);
             txContext.setStatus(SUCCESS);
             break;
           } catch (Exception ex) {
@@ -860,7 +860,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         });
       }
     }
-    return null;
+    return false;
   }
 
   public boolean rollback2pc(ODistributedRequestId transactionId) {
@@ -1054,6 +1054,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
     }
     return view;
+  }
+
+  public OEnterpriseEndpoint getEnterpriseEndpoint() {
+    OServer server = ((ODistributedStorage) getStorage()).getDistributedManager().getServerInstance();
+    return server.getPlugins().stream().filter(OEnterpriseEndpoint.class::isInstance).findFirst()
+        .map(OEnterpriseEndpoint.class::cast).orElse(null);
   }
 
 }
