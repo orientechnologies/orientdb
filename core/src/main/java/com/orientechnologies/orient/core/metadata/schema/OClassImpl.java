@@ -1415,10 +1415,11 @@ public abstract class OClassImpl extends ODocumentWrapperNoClass implements OCla
     if (type.isMultiValue())
       builder.append(" and ").append(getEscapedName(propertyName, strictSQL)).append(".size() <> 0 limit 1");
 
-    final OResultSet res = database.command(builder.toString());
-    if (((Long) res.next().getProperty("count")) > 0)
-      throw new OSchemaException("The database contains some schema-less data in the property '" + name + "." + propertyName
-          + "' that is not compatible with the type " + type + ". Fix those records and change the schema again");
+    try (final OResultSet res = database.command(builder.toString())) {
+      if (((Long) res.next().getProperty("count")) > 0)
+        throw new OSchemaException("The database contains some schema-less data in the property '" + name + "." + propertyName
+            + "' that is not compatible with the type " + type + ". Fix those records and change the schema again");
+    }
   }
 
   protected String getEscapedName(final String iName, final boolean iStrictSQL) {

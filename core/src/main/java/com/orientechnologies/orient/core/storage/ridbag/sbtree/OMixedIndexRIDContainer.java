@@ -1,14 +1,13 @@
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexEngineException;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
@@ -22,12 +21,12 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
-  public static final String INDEX_FILE_EXTENSION = ".irs";
+  private static final String INDEX_FILE_EXTENSION = ".irs";
 
   private final long                     fileId;
   private final Set<ORID>                embeddedSet;
   private       OIndexRIDContainerSBTree tree         = null;
-  private       int                      topThreshold = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
+  private final int                      topThreshold = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
       .getValueAsInteger();
 
   /**
@@ -50,13 +49,10 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     this.tree = tree;
   }
 
-  public void setTopThreshold(int topThreshold) {
-    this.topThreshold = topThreshold;
-  }
-
   private static long resolveFileIdByName(String fileName) {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage()
         .getUnderlying();
+    boolean rollback = false;
     final OAtomicOperation atomicOperation;
     try {
       atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
@@ -65,24 +61,27 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     }
 
     try {
-      final OReadCache readCache = storage.getReadCache();
-      final OWriteCache writeCache = storage.getWriteCache();
+      long fileId;
 
-      if (writeCache.exists(fileName))
-        return writeCache.fileIdByName(fileName);
-
-      final long fileId = readCache.addFile(fileName, writeCache);
-      storage.getAtomicOperationsManager().endAtomicOperation(false);
+      if (atomicOperation.isFileExists(fileName)) {
+        fileId = atomicOperation.loadFile(fileName);
+      } else {
+        fileId = atomicOperation.addFile(fileName);
+      }
 
       return fileId;
     } catch (IOException e) {
-      try {
-        storage.getAtomicOperationsManager().endAtomicOperation(true);
-      } catch (IOException ioe) {
-        throw OException.wrapException(new OIndexEngineException("Error of rollback of atomic operation", fileName), ioe);
-      }
-
+      rollback = true;
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
+    } catch (RuntimeException e) {
+      rollback = true;
+      throw e;
+    } finally {
+      try {
+        storage.getAtomicOperationsManager().endAtomicOperation(rollback);
+      } catch (IOException ioe) {
+        OLogManager.instance().error(OMixedIndexRIDContainer.class, "Error of rollback of atomic operation", ioe);
+      }
     }
   }
 

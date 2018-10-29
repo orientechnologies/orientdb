@@ -555,7 +555,7 @@ public class OAtomicOperation {
     startCounter--;
   }
 
-  int getCounter() {
+  public int getCounter() {
     return startCounter;
   }
 
