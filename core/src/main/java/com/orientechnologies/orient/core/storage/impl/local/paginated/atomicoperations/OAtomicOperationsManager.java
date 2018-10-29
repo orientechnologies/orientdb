@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -57,6 +58,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -421,6 +423,46 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
             while (iterator.hasPrevious()) {
               final OComponentOperation componentOperation = iterator.previous();
               componentOperation.rollback(storage, operation);
+            }
+          } else {
+            final List<OLogSequenceNumber> componentLSNs = operation.getComponentLSNs();
+
+            if (!componentLSNs.isEmpty()) {
+              int recordsToFetch = componentLSNs.size();
+
+              List<OWriteableWALRecord> records = writeAheadLog.read(componentLSNs.get(0), recordsToFetch);
+              Iterator<OWriteableWALRecord> recordsIterator = records.iterator();
+
+              List<OComponentOperation> componentOperations = new ArrayList<>();
+
+              OLogSequenceNumber lastWALLsn = null;
+              for (OLogSequenceNumber componentLSN : componentLSNs) {
+                while (true) {
+                  if (!recordsIterator.hasNext()) {
+                    records = writeAheadLog.next(lastWALLsn, recordsToFetch);
+                    recordsIterator = records.iterator();
+                  }
+
+                  final OWriteableWALRecord walRecord = recordsIterator.next();
+                  final OLogSequenceNumber walLSN = walRecord.getLsn();
+                  lastWALLsn = walLSN;
+
+                  if (walLSN.equals(componentLSN)) {
+                    final OComponentOperation componentOperation = (OComponentOperation) walRecord;
+                    componentOperations.add(componentOperation);
+                    recordsToFetch--;
+                    break;
+                  }
+                }
+              }
+
+              final ListIterator<OComponentOperation> componentIterator = componentOperations
+                  .listIterator(componentOperations.size());
+
+              while (componentIterator.hasPrevious()) {
+                final OComponentOperation componentOperation = componentIterator.previous();
+                componentOperation.rollback(storage, operation);
+              }
             }
           }
         }

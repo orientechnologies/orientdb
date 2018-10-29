@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.OComponentOperation;
 
 import java.util.ArrayList;
@@ -38,6 +39,11 @@ import java.util.Set;
  * @since 12/3/13
  */
 public class OAtomicOperation {
+  /**
+   * Limit in bytes of total serialized size of component operation records which can be cached in single atomic operation
+   */
+  private static final int OPERATIONS_CACHE_LIMIT = 100 * 1024;
+
   private final OLogSequenceNumber startLSN;
   private final OOperationUnitId   operationUnitId;
 
@@ -48,7 +54,10 @@ public class OAtomicOperation {
   private final Set<String>                              lockedObjects = new HashSet<>();
   private final Map<String, OAtomicOperationMetadata<?>> metadata      = new LinkedHashMap<>();
 
+  private final List<OLogSequenceNumber>  componentLSNs    = new ArrayList<>();
   private final List<OComponentOperation> componentRecords = new ArrayList<>();
+
+  private int totalSerializedSize = 0;
 
   public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId) {
     this.startLSN = startLSN;
@@ -64,8 +73,32 @@ public class OAtomicOperation {
     return operationUnitId;
   }
 
-  public void addComponentOperation(OComponentOperation operation) {
-    componentRecords.add(operation);
+  public void addComponentOperation(OComponentOperation operation, boolean isMemory) {
+    if (isMemory) {
+      componentRecords.add(operation);
+    } else {
+      if (totalSerializedSize > OPERATIONS_CACHE_LIMIT) {
+        componentLSNs.add(operation.getLsn());
+      } else {
+        totalSerializedSize += operation.getBinaryContentLen();
+
+        if (totalSerializedSize > OPERATIONS_CACHE_LIMIT) {
+          for (OWriteableWALRecord record : componentRecords) {
+            componentLSNs.add(record.getLsn());
+          }
+
+          componentLSNs.add(operation.getLsn());
+
+          componentRecords.clear();
+        } else {
+          componentRecords.add(operation);
+        }
+      }
+    }
+  }
+
+  public List<OLogSequenceNumber> getComponentLSNs() {
+    return Collections.unmodifiableList(componentLSNs);
   }
 
   public List<OComponentOperation> getComponentRecords() {

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.sbtreebonsai;
 
+import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
@@ -64,6 +65,19 @@ public final class OSBTreeBonsaiPutOperation extends OSBTreeBonsaiModificationOp
     System.arraycopy(value, 0, content, offset, value.length);
     offset += value.length;
 
+    if (oldValue == null) {
+      offset++;
+    } else {
+      content[offset] = 1;
+      offset++;
+
+      OIntegerSerializer.INSTANCE.serializeNative(oldValue.length, content, offset);
+      offset += OIntegerSerializer.INT_SIZE;
+
+      System.arraycopy(oldValue, 0, content, offset, oldValue.length);
+      offset += oldValue.length;
+    }
+
     return offset;
   }
 
@@ -86,6 +100,19 @@ public final class OSBTreeBonsaiPutOperation extends OSBTreeBonsaiModificationOp
     System.arraycopy(content, offset, value, 0, valueLen);
     offset += valueLen;
 
+    if (content[offset] == 0) {
+      offset++;
+    } else {
+      offset++;
+
+      final int oldValueLen = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+      offset += OIntegerSerializer.INT_SIZE;
+
+      oldValue = new byte[oldValueLen];
+      System.arraycopy(content, offset, oldValue, 0, oldValueLen);
+      offset += oldValueLen;
+    }
+
     return offset;
   }
 
@@ -97,6 +124,15 @@ public final class OSBTreeBonsaiPutOperation extends OSBTreeBonsaiModificationOp
     buffer.put(key);
     buffer.putInt(value.length);
     buffer.put(value);
+
+    if (oldValue == null) {
+      buffer.put((byte) 0);
+    } else {
+      buffer.put((byte) 1);
+
+      buffer.putInt(oldValue.length);
+      buffer.put(oldValue);
+    }
   }
 
   @Override
@@ -107,6 +143,13 @@ public final class OSBTreeBonsaiPutOperation extends OSBTreeBonsaiModificationOp
 
     size += OIntegerSerializer.INT_SIZE;
     size += value.length;
+
+    size += OByteSerializer.BYTE_SIZE;
+
+    if (oldValue != null) {
+      size += OIntegerSerializer.INT_SIZE;
+      size += oldValue.length;
+    }
 
     return size;
   }

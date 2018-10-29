@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal.component.cluster;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
@@ -41,6 +42,9 @@ public final class OAllocatePositionOperation extends OClusterOperation {
   public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
+    OLongSerializer.INSTANCE.serializeNative(position, content, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
     content[offset] = recordType;
     offset++;
 
@@ -51,6 +55,9 @@ public final class OAllocatePositionOperation extends OClusterOperation {
   public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
+    position = OLongSerializer.INSTANCE.deserializeNative(content, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
     recordType = content[offset];
     offset++;
 
@@ -60,12 +67,13 @@ public final class OAllocatePositionOperation extends OClusterOperation {
   @Override
   public void toStream(final ByteBuffer buffer) {
     super.toStream(buffer);
+    buffer.putLong(position);
     buffer.put(recordType);
   }
 
   @Override
   public int serializedSize() {
-    return super.serializedSize() + OByteSerializer.BYTE_SIZE;
+    return super.serializedSize() + OLongSerializer.LONG_SIZE + OByteSerializer.BYTE_SIZE;
   }
 
   @Override
