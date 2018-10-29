@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -437,16 +438,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     int numberOfElements = OVarIntSerializer.readAsInteger(bytes);
 
     for (int i = 0; i < numberOfElements; i++) {
-      byte keyTypeId = readByte(bytes);
+      OType keyType = readOType(bytes, false);
       String key = readString(bytes);
-      int valuePos = readInteger(bytes);
-      byte valueTypeId = readByte(bytes);
-      OType valueType = OType.getById(valueTypeId);
+      int valuePos = readInteger(bytes);      
+      OType valueType = readOType(bytes, false);
       MapRecordInfo recordInfo = new MapRecordInfo();
       recordInfo.fieldStartOffset = valuePos;
       recordInfo.fieldType = valueType;
       recordInfo.key = key;
-      recordInfo.keyType = OType.getById(keyTypeId);
+      recordInfo.keyType = keyType;
       int currentOffset = bytes.offset;
       bytes.offset = valuePos;
 
@@ -474,9 +474,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       //read element
 
       //read data type      
-      byte typeId = readByte(bytes);
-      int fieldStart = bytes.offset;
-      OType dataType = OType.getById(typeId);
+      OType dataType = readOType(bytes, false);
+      int fieldStart = bytes.offset;      
 
       RecordInfo fieldInfo = new RecordInfo();
       fieldInfo.fieldStartOffset = fieldStart;
@@ -1184,8 +1183,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   @Override
   public Tuple<Integer, OType> getPointerAndTypeFromCurrentPosition(BytesContainer bytes) {
     int valuePos = readInteger(bytes);
-    byte typeId = readByte(bytes);
-    OType type = OType.getById(typeId);
+    OType type = readOType(bytes, false);
     return new Tuple<>(valuePos, type);
   }
 

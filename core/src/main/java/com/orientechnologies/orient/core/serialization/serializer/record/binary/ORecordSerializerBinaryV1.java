@@ -631,8 +631,7 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
    */
   private Tuple<Integer, OType> getFieldSizeAndTypeFromCurrentPosition(BytesContainer bytes) {
     int fieldSize = OVarIntSerializer.readAsInteger(bytes);
-    byte typeId = readByte(bytes);
-    OType type = OType.getById(typeId);
+    OType type = readOType(bytes, false);    
     return new Tuple<>(fieldSize, type);
   }
 
@@ -755,9 +754,8 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
       for (int i = 0; i < size; i++) {
         OType keyType = readOType(bytes, false);
         Object key = deserializeValue(bytes, keyType, document);
-        byte typeId = readByte(bytes);
-        if (typeId != -1) {
-          final OType type = OType.getById(typeId);
+        final OType type = HelperClasses.readType(bytes);
+        if (type != null) {          
           Object value = deserializeValue(bytes, type, document);
           result.put(key, value);
         } else
@@ -777,16 +775,15 @@ public class ORecordSerializerBinaryV1 extends ORecordSerializerBinaryV0 {
     int numberOfElements = OVarIntSerializer.readAsInteger(bytes);
 
     for (int i = 0; i < numberOfElements; i++) {
-      byte keyTypeId = readByte(bytes);
+      OType keyType = readOType(bytes, false);
       String key = readString(bytes);
-      byte valueTypeId = readByte(bytes);
-      if (valueTypeId != -1) {
-        OType valueType = OType.getById(valueTypeId);
+      OType valueType = HelperClasses.readType(bytes);
+      if (valueType != null) {        
         MapRecordInfo recordInfo = new MapRecordInfo();
         recordInfo.fieldStartOffset = bytes.offset;
         recordInfo.fieldType = valueType;
         recordInfo.key = key;
-        recordInfo.keyType = OType.getById(keyTypeId);
+        recordInfo.keyType = keyType;
         int currentOffset = bytes.offset;
 
         deserializeValue(bytes, valueType, null, true, -1, serializerVersion, true);

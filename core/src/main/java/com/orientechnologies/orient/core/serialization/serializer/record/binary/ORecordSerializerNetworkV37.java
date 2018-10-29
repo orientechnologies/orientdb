@@ -200,11 +200,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   }
 
   protected OType readOType(final BytesContainer bytes) {
-    byte typeByte = readByte(bytes);
-    if (typeByte == -1){
-      return null;
-    }
-    return OType.getById(typeByte);
+    return HelperClasses.readType(bytes);
   }
 
   private void writeOType(BytesContainer bytes, int pos, OType type) {
