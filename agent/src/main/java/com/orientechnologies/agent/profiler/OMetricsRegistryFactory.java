@@ -10,7 +10,7 @@ public class OMetricsRegistryFactory {
 
   public static OMetricsRegistry createRegistryFor(OEnterpriseServer server, OrientDBMetricsSettings settings) {
 
-    return new ODropWizardMetricsRegistry(settings);
+    return new ODropWizardMetricsRegistry(server, settings);
   }
 
 }

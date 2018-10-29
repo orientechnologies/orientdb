@@ -11,11 +11,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.orientechnologies.agent.profiler.metrics.*;
 import com.orientechnologies.agent.profiler.metrics.dropwizard.*;
+import com.orientechnologies.agent.profiler.source.CSVAggregateReporter;
 import com.orientechnologies.agent.services.metrics.OrientDBMetricsSettings;
+import com.orientechnologies.agent.services.metrics.reporters.CSVAggregatesReporterConfig;
 import com.orientechnologies.agent.services.metrics.reporters.CSVReporter;
 import com.orientechnologies.agent.services.metrics.reporters.ConsoleReporterConfig;
 import com.orientechnologies.agent.services.metrics.reporters.JMXReporter;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
 
@@ -37,25 +40,26 @@ import java.util.function.Supplier;
  */
 public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
-  private final MetricRegistry                 registry        = new MetricRegistry();
-  private       ConcurrentMap<String, OMetric> metrics         = new ConcurrentHashMap<>();
-  private       ConsoleReporter                consoleReporter = null;
-  private       CsvReporter                    csvReporter     = null;
-  private       JmxReporter                    jmxReporter     = null;
-
-  private GraphiteReporter                                        graphiteReporter = null;
-  private OrientDBMetricsSettings                                 settings;
-  private Map<Class<? extends OMetric>, Function<String, Metric>> metricFactory    = new HashMap<>();
+  private final MetricRegistry                                          registry         = new MetricRegistry();
+  private       ConcurrentMap<String, OMetric>                          metrics          = new ConcurrentHashMap<>();
+  private       ConsoleReporter                                         consoleReporter  = null;
+  private       CsvReporter                                             csvReporter      = null;
+  private       JmxReporter                                             jmxReporter      = null;
+  private       CSVAggregateReporter                                    csvAggregates    = null;
+  private       GraphiteReporter                                        graphiteReporter = null;
+  private       OEnterpriseServer                                       server;
+  private       OrientDBMetricsSettings                                 settings;
+  private       Map<Class<? extends OMetric>, Function<String, Metric>> metricFactory    = new HashMap<>();
 
   private transient ObjectMapper mapper;
 
   public ODropWizardMetricsRegistry() {
-    this(new OrientDBMetricsSettings());
+    this(null, new OrientDBMetricsSettings());
   }
 
-  public ODropWizardMetricsRegistry(OrientDBMetricsSettings settings) {
+  public ODropWizardMetricsRegistry(OEnterpriseServer server, OrientDBMetricsSettings settings) {
+    this.server = server;
     this.settings = settings;
-
     configureProfiler(settings);
 
     initFactories(settings);
@@ -91,6 +95,8 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     consoleReporter = configureConsoleReporter(settings.reporters.console);
     csvReporter = configureCsvReporter(settings.reporters.csv);
 
+    csvAggregates = configureCsvAggregatesReporter(server, settings.reporters.csvAggregates);
+
     if (settings.reporters.prometheus.enabled) {
       CollectorRegistry.defaultRegistry.register(new DropwizardExports(registry));
     }
@@ -109,6 +115,7 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
       jmxReporter.start();
 
     }
+
     return jmxReporter;
 
   }
@@ -138,6 +145,28 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
     CsvReporter.Builder builder = CsvReporter.forRegistry(registry);
     CsvReporter csvReporter = null;
+    if (enabled && interval != null && directory != null) {
+      File outputDir = new File(directory);
+      if (!outputDir.exists()) {
+        if (!outputDir.mkdirs()) {
+          OLogManager.instance().warn(this, "Failed to create CSV Aggregates metrics dir {}", outputDir);
+        }
+      }
+      csvReporter = builder.build(outputDir);
+      csvReporter.start(interval.longValue(), TimeUnit.MILLISECONDS);
+    }
+    return csvReporter;
+
+  }
+
+  private CSVAggregateReporter configureCsvAggregatesReporter(OEnterpriseServer server, CSVAggregatesReporterConfig csvConfig) {
+
+    Boolean enabled = csvConfig.enabled;
+    Number interval = csvConfig.interval;
+    String directory = csvConfig.directory;
+
+    CSVAggregateReporter.Builder builder = CSVAggregateReporter.forRegistry(server, registry);
+    CSVAggregateReporter csvReporter = null;
     if (enabled && interval != null && directory != null) {
       File outputDir = new File(directory);
       if (!outputDir.exists()) {
