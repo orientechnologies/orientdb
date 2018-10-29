@@ -41,9 +41,9 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import java.io.*;
@@ -68,8 +68,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   private List<OEnterpriseStorageOperationListener> listeners = Collections.synchronizedList(new ArrayList<>());
 
   public OEnterpriseLocalPaginatedStorage(String name, String filePath, String mode, int id, OReadCache readCache,
-      OClosableLinkedContainer<Long, OFileClassic> files) throws IOException {
-    super(name, filePath, mode, id, readCache, files);
+      OClosableLinkedContainer<Long, OFileClassic> files, long walMaxSize) throws IOException {
+    super(name, filePath, mode, id, readCache, files, walMaxSize);
     OLogManager.instance().info(this, "Enterprise storage installed correctly.");
   }
 
@@ -479,7 +479,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           continue;
         }
 
-        if (zipEntry.getName().toLowerCase(serverLocale).endsWith(ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION)) {
+        if (zipEntry.getName().toLowerCase(serverLocale).endsWith(OCASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION)) {
           addFileToDirectory(zipEntry.getName(), zipInputStream, walTempDir);
 
           continue;
