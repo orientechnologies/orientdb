@@ -177,6 +177,7 @@ public enum OType implements OTypeInterface {
   public static OType getById(final byte iId) {
     if (iId >= 0 && iId < TYPES_BY_ID.length)
       return TYPES_BY_ID[iId];
+    OLogManager.instance().warn(OType.class, "Invalid type index: " + iId, (Object[])null);
     return null;
   }
 
