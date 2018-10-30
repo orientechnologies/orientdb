@@ -80,8 +80,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
    * Entries with not valid id.
    */
   private final IdentityHashMap<OIdentifiable, OModifiableInteger> newEntries        = new IdentityHashMap<>();
-  private       OBonsaiCollectionPointer                           collectionPointer;
-  private       int                                                size;
+  private OBonsaiCollectionPointer collectionPointer;
+  private int                      size;
 
   private boolean autoConvertToRecord = true;
 
@@ -438,16 +438,16 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   //for test let it be linear [50..1000]
-  private int getPrefectchSize(){
+  private int getPrefectchSize() {
     int prefectchSize = 50;
-    if (changes.size() < 1000 && changes.size() >= 0){
+    if (changes.size() < 1000 && changes.size() >= 0) {
       float a = (50.f - 1000.f) / 1000.f;
       float b = 1000.f;
-      prefectchSize = (int)(a * changes.size() + b);
+      prefectchSize = (int) (a * changes.size() + b);
     }
     return prefectchSize;
   }
-  
+
   @Override
   public Iterator<OIdentifiable> iterator() {
     int prefetchSize = getPrefectchSize();
@@ -456,9 +456,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public Iterator<OIdentifiable> rawIterator() {        
+  public Iterator<OIdentifiable> rawIterator() {
     int prefectchSize = getPrefectchSize();
-    OLogManager.instance().debug(this, "!!!!!!!!!!!!!!!!!!!!!!CHANGES SIZE: " + changes.size() + " prefectch size: " + prefectchSize, (Object[])null);
+    OLogManager.instance()
+        .debug(this, "!!!!!!!!!!!!!!!!!!!!!!CHANGES SIZE: " + changes.size() + " prefectch size: " + prefectchSize,
+            (Object[]) null);
     return new RIDBagIterator(new IdentityHashMap<>(newEntries), changes,
         collectionPointer != null ? new SBTreeMapEntryIterator(prefectchSize) : null, false);
   }
@@ -599,7 +601,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
           changes.put(identifiable, new DiffChange(-1));
           size = -1;
         } else
-          // Return immediately to prevent firing of event
+        // Return immediately to prevent firing of event
         {
           return;
         }

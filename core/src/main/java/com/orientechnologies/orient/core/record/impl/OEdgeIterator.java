@@ -40,9 +40,8 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
   private final OPair<ODirection, String> connection;
   private final String[]                  labels;
 
-
-  public OEdgeIterator(final OVertex iSourceVertex, final Object iMultiValue,
-      final Iterator<?> iterator, final OPair<ODirection, String> connection, final String[] iLabels, final int iSize) {
+  public OEdgeIterator(final OVertex iSourceVertex, final Object iMultiValue, final Iterator<?> iterator,
+      final OPair<ODirection, String> connection, final String[] iLabels, final int iSize) {
     this(iSourceVertex, null, iMultiValue, iterator, connection, iLabels, iSize);
   }
 
@@ -84,9 +83,7 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
       return null;
     }
 
-    final OElement value = (OElement)record;
-
-
+    final OElement value = (OElement) record;
 
     final OEdge edge;
     if (value.isVertex()) {
@@ -117,7 +114,8 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
     return iObject.isLabeled(labels);
   }
 
-  @Override public boolean canUseMultiValueDirectly() {
+  @Override
+  public boolean canUseMultiValueDirectly() {
     return true;
   }
 }
