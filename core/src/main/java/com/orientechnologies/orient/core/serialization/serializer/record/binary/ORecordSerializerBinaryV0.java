@@ -539,6 +539,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   protected Object deserializeValue(final BytesContainer bytes, final OType type, final ODocument ownerDocument,
       boolean embeddedAsDocument, int valueLengthInBytes, int serializerVersion, boolean justRunThrough) {
+    if (type == null){
+      throw new ODatabaseException("Invalid type value: null");
+    }
     Object value = null;
     switch (type) {
     case INTEGER:
