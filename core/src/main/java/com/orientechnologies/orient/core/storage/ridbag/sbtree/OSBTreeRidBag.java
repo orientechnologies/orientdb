@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
@@ -436,11 +437,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
 
-  //for test let it be linear
+  //for test let it be linear [50..1000]
   private int getPrefectchSize(){
-    int prefectchSize = 5;
+    int prefectchSize = 50;
     if (changes.size() < 1000 && changes.size() >= 0){
-      float a = (5.f - 1000.f) / 1000.f;
+      float a = (50.f - 1000.f) / 1000.f;
       float b = 1000.f;
       prefectchSize = (int)(a * changes.size() + b);
     }
@@ -457,7 +458,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   @Override
   public Iterator<OIdentifiable> rawIterator() {        
     int prefectchSize = getPrefectchSize();
-    System.out.println("!!!!!!!!!!!!!!!!!!!!!!CHANGES SIZE: " + changes.size() + " prefectch size: " + prefectchSize);
+    OLogManager.instance().debug(this, "!!!!!!!!!!!!!!!!!!!!!!CHANGES SIZE: " + changes.size() + " prefectch size: " + prefectchSize, (Object[])null);
     return new RIDBagIterator(new IdentityHashMap<>(newEntries), changes,
         collectionPointer != null ? new SBTreeMapEntryIterator(prefectchSize) : null, false);
   }
