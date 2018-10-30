@@ -55,6 +55,7 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
     this.labels = iLabels;
   }
 
+  @Override
   public OEdge createGraphElement(final Object iObject) {
     if (iObject instanceof OElement && ((OElement) iObject).isEdge())
       return ((OElement) iObject).asEdge().get();
@@ -63,14 +64,14 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
 
     if (rec == null) {
       // SKIP IT
-      OLogManager.instance().debug(this, "Record (%s) is null", iObject);
+      OLogManager.instance().warn(this, "Record (%s) is null", iObject);
       return null;
     }
 
     final ORecord record = rec.getRecord();
     if (record == null) {
       // SKIP IT
-      OLogManager.instance().debug(this, "Record (%s) is null", rec);
+      OLogManager.instance().warn(this, "Record (%s) is null", rec);
       return null;
     }
 

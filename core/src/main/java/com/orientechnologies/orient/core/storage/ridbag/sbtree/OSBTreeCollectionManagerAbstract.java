@@ -182,8 +182,10 @@ public abstract class OSBTreeCollectionManagerAbstract
               final CacheKey ck = new CacheKey(storage, pointer);
               treeCache.remove(ck);
             }
-            collectionToDelete.clear();
+            collectionToDelete.clear();            
           }
+          //should be safe logical removal because add in is synchronized on same object
+          markedForDeletion.remove(cacheKey);
         }
       }
       

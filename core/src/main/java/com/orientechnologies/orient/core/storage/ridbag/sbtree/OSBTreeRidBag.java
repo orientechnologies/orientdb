@@ -436,16 +436,30 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
 
+  //for test let it be linear
+  private int getPrefectchSize(){
+    int prefectchSize = 5;
+    if (changes.size() < 1000 && changes.size() >= 0){
+      float a = (5.f - 1000.f) / 1000.f;
+      float b = 1000.f;
+      prefectchSize = (int)(a * changes.size() + b);
+    }
+    return prefectchSize;
+  }
+  
   @Override
   public Iterator<OIdentifiable> iterator() {
+    int prefetchSize = getPrefectchSize();
     return new RIDBagIterator(new IdentityHashMap<>(newEntries), changes,
-        collectionPointer != null ? new SBTreeMapEntryIterator(1000) : null, autoConvertToRecord);
+        collectionPointer != null ? new SBTreeMapEntryIterator(prefetchSize) : null, autoConvertToRecord);
   }
 
   @Override
-  public Iterator<OIdentifiable> rawIterator() {
+  public Iterator<OIdentifiable> rawIterator() {        
+    int prefectchSize = getPrefectchSize();
+    System.out.println("!!!!!!!!!!!!!!!!!!!!!!CHANGES SIZE: " + changes.size() + " prefectch size: " + prefectchSize);
     return new RIDBagIterator(new IdentityHashMap<>(newEntries), changes,
-        collectionPointer != null ? new SBTreeMapEntryIterator(1000) : null, false);
+        collectionPointer != null ? new SBTreeMapEntryIterator(prefectchSize) : null, false);
   }
 
   @Override
