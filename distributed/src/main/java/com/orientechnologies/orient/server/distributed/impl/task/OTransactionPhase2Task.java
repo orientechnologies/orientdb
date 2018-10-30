@@ -89,7 +89,7 @@ public class OTransactionPhase2Task extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
     if (success) {
-      if (!((ODatabaseDocumentDistributed) database).commit2pc(transactionId)) {
+      if (!((ODatabaseDocumentDistributed) database).commit2pc(transactionId, false)) {
         retryCount++;
         if (retryCount < database.getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
           OLogManager.instance()

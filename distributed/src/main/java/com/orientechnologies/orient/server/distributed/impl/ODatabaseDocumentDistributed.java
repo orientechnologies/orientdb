@@ -624,10 +624,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @param transactionId
    */
   public void commit2pcLocal(ODistributedRequestId transactionId) {
-    commit2pc(transactionId);
+    commit2pc(transactionId, true);
   }
 
-  public boolean commit2pc(ODistributedRequestId transactionId) {
+  public boolean commit2pc(ODistributedRequestId transactionId, boolean local) {
     getStorageDistributed().resetLastValidBackup();
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
     ODistributedServerManager manager = getStorageDistributed().getDistributedManager();
@@ -647,7 +647,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       } else if (TIMEDOUT.equals(txContext.getStatus())) {
         for (int i = 0; i < 10; i++) {
           try {
-            internalBegin2pc(txContext, false);
+            internalBegin2pc(txContext, local);
             txContext.setStatus(SUCCESS);
             break;
           } catch (Exception ex) {
@@ -779,10 +779,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public OEnterpriseEndpoint getEnterpriseEndpoint() {
     OServer server = ((ODistributedStorage) getStorage()).getDistributedManager().getServerInstance();
-    return server.getPlugins().stream()
-        .filter(OEnterpriseEndpoint.class::isInstance)
-        .findFirst()
-        .map(OEnterpriseEndpoint.class::cast)
-        .orElse(null);
+    return server.getPlugins().stream().filter(OEnterpriseEndpoint.class::isInstance).findFirst()
+        .map(OEnterpriseEndpoint.class::cast).orElse(null);
   }
 }
