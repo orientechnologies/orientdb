@@ -41,24 +41,12 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseType;
-import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.db.OrientDBRemote;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.db.tool.OCheckIndexTool;
-import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
-import com.orientechnologies.orient.core.db.tool.ODatabaseRepair;
+import com.orientechnologies.orient.core.db.tool.*;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORetryQueryException;
@@ -100,33 +88,11 @@ import com.orientechnologies.orient.core.util.OURLHelper;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
@@ -2077,21 +2043,41 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   }
 
-  @ConsoleCommand(description = "Repair database structure")
+  @ConsoleCommand(description = "Repair database structure", splitInWords = false)
   public void repairDatabase(
-      @ConsoleParameter(name = "options", description = "Options: -v", optional = true) final String iOptions) throws IOException {
+      @ConsoleParameter(name = "options", description = "Options: [--fix-graph] [--force-embedded-ridbags] [--fix-links] [-v]] [--fix-ridbags] [--fix-bonsai]", optional = true) String iOptions)
+      throws IOException {
     checkForDatabase();
+    final boolean force_embedded = iOptions == null || iOptions.contains("--force-embedded-ridbags");
+    final boolean fix_graph = iOptions == null || iOptions.contains("--fix-graph");
+    if (force_embedded) {
+      OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(Integer.MAX_VALUE);
+      OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
+    }
+    if (fix_graph || force_embedded) {
+      // REPAIR GRAPH
+      final Map<String, List<String>> options = parseOptions(iOptions);
+      new OGraphRepair().repair(currentDatabase, this, options);
+    }
 
-    message("\nRepairing database...");
+    final boolean fix_links = iOptions == null || iOptions.contains("--fix-links");
+    if (fix_links) {
+      // REPAIR DATABASE AT LOW LEVEL
+      repairDatabase(iOptions);
+    }
 
-    boolean verbose = iOptions != null && iOptions.contains("-v");
+    if (!currentDatabase.getURL().startsWith("plocal")) {
+      message("\n fix-bonsai can be run only on plocal connection \n");
+      return;
+    }
 
-    new ODatabaseRepair().setDatabase(currentDatabase).setOutputListener(new OCommandOutputListener() {
-      @Override
-      public void onMessage(String iText) {
-        message(iText);
-      }
-    }).setVerbose(verbose).run();
+    final boolean fix_ridbags = iOptions == null || iOptions.contains("--fix-ridbags");
+    final boolean fix_bonsai = iOptions == null || iOptions.contains("--fix-bonsai");
+    if (fix_ridbags || fix_bonsai || force_embedded) {
+      OBonsaiTreeRepair repairer = new OBonsaiTreeRepair();
+      repairer.repairDatabaseRidbags(currentDatabase, this);
+    }
+
   }
 
   @ConsoleCommand(description = "Compare two databases")
