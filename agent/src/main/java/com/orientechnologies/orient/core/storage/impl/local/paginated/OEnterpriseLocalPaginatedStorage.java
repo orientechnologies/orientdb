@@ -26,6 +26,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
@@ -74,11 +75,11 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   }
 
   @Override
-  public String incrementalBackup(final String backupDirectory) {
-    return incrementalBackup(new File(backupDirectory));
+  public String incrementalBackup(final String backupDirectory, OCallable<Void, Void> started) {
+    return incrementalBackup(new File(backupDirectory), started);
   }
 
-  private String incrementalBackup(final File backupDirectory) {
+  private String incrementalBackup(final File backupDirectory, OCallable<Void, Void> started) {
     String fileName = "";
 
     if (!backupDirectory.exists()) {
@@ -111,7 +112,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         fileName = getName() + "_" + dateFormat.format(new Date()) + "_" + nextIndex + "_full" + IBU_EXTENSION;
 
       final File ibuFile = new File(backupDirectory, fileName);
-
+      if (started != null)
+        started.call(null);
       rndIBUFile = new RandomAccessFile(ibuFile, "rw");
       try {
         final FileChannel ibuChannel = rndIBUFile.getChannel();
