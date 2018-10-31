@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -37,6 +36,7 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -129,6 +129,8 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
         for (int retry = 0; momentum.get() == null && retry < 10; ++retry)
           Thread.sleep(300);
+
+        backup.getStarted().await(1, TimeUnit.MINUTES);
 
         File backupFile = new File(backup.getFinalBackupPath());
         if (backup.getIncremental().get()) {

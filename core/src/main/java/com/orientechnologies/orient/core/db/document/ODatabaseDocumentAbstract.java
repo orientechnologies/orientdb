@@ -2256,7 +2256,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     checkOpenness();
     checkIfActive();
 
-    return getStorage().incrementalBackup(path);
+    return getStorage().incrementalBackup(path, null);
   }
 
   @Override

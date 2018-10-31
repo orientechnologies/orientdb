@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -30,6 +31,7 @@ public class OBackgroundBackup implements Runnable {
   private final ODistributedDatabase                  dDatabase;
   private final ODistributedRequestId                 requestId;
   private final File                                  completedFile;
+  private       CountDownLatch                        started     = new CountDownLatch(1);
 
   public OBackgroundBackup(OSyncDatabaseTask oSyncDatabaseTask, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database, File resultedBackupFile, String finalBackupPath, OModifiableBoolean incremental,
@@ -70,7 +72,10 @@ public class OBackgroundBackup implements Runnable {
           resultedBackupFile.delete();
 
           try {
-            database.incrementalBackup(finalBackupPath);
+            database.getStorage().incrementalBackup(finalBackupPath, (x) -> {
+              started.countDown();
+              return null;
+            });
           } finally {
             wal.removeCutTillLimit(lsn);
           }
@@ -95,6 +100,7 @@ public class OBackgroundBackup implements Runnable {
                   @Override
                   public Object call() throws Exception {
                     momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
+                    started.countDown();
                     return null;
                   }
                 }, ODistributedServerLog.isDebugEnabled() ? new OCommandOutputListener() {
@@ -152,5 +158,9 @@ public class OBackgroundBackup implements Runnable {
 
   public String getFinalBackupPath() {
     return finalBackupPath;
+  }
+
+  public CountDownLatch getStarted() {
+    return started;
   }
 }

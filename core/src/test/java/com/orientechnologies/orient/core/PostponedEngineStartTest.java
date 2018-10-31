@@ -19,6 +19,7 @@
 
 package com.orientechnologies.orient.core;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -543,7 +544,7 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public String incrementalBackup(String backupDirectory) {
+        public String incrementalBackup(String backupDirectory, OCallable<Void, Void> started) {
           return null;
         }
 
