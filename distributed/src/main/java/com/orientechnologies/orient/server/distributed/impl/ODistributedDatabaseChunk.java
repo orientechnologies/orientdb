@@ -152,4 +152,6 @@ public class ODistributedDatabaseChunk implements OStreamable {
   public OLogSequenceNumber getLastWal() {
     return new OLogSequenceNumber(walSegment, walPosition);
   }
+
+
 }

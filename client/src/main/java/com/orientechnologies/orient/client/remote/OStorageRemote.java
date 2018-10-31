@@ -26,6 +26,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OScheduledThreadPoolExecutorWithLogging;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.ONotSendRequestException;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
@@ -777,7 +778,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   }
 
   @Override
-  public String incrementalBackup(final String backupDirectory) {
+  public String incrementalBackup(final String backupDirectory, OCallable<Void, Void> started) {
     OIncrementalBackupRequest request = new OIncrementalBackupRequest(backupDirectory);
     OIncrementalBackupResponse response = networkOperationNoRetry(request, "Error on incremental backup");
     return response.getFileName();
