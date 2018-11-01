@@ -144,7 +144,7 @@ public class ViewManager {
       } catch (InterruptedException e) {
         throw OException.wrapException(new OInterruptedException("Terminated while waiting update view to finis"), e);
       } catch (ExecutionException e) {
-        throw OException.wrapException(new ODatabaseException("Updated view execution error"), e);
+        OLogManager.instance().warn(this, "Issue terminating view update background operations", e);
       }
     }
 
