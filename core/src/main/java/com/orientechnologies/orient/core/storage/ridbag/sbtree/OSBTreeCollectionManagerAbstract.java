@@ -31,10 +31,9 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -94,7 +93,7 @@ public abstract class OSBTreeCollectionManagerAbstract
   private final Object[]                                                 locks;
   private final ConcurrentLinkedHashMap<CacheKey, SBTreeBonsaiContainer> treeCache;
   private final OStorage                                                 storage;
-  private final ConcurrentHashMap<CacheKey, List<OBonsaiCollectionPointer>> markedForDeletion = new ConcurrentHashMap<>();
+  private final List<CacheKey>[] markedForDeletion;
 
   public OSBTreeCollectionManagerAbstract(OStorage storage) {
     this(GLOBAL_TREE_CACHE, storage, GLOBAL_EVICTION_THRESHOLD, GLOBAL_CACHE_MAX_SIZE, GLOBAL_LOCKS);
@@ -140,6 +139,11 @@ public abstract class OSBTreeCollectionManagerAbstract
 
     Orient.instance().registerWeakOrientStartupListener(this);
     Orient.instance().registerWeakOrientShutdownListener(this);
+    
+    markedForDeletion = new List[locks.length];
+    for (int i = 0; i < markedForDeletion.length; i++){
+      markedForDeletion[i] = new ArrayList<>();
+    }
   }
 
   @Override
@@ -174,19 +178,14 @@ public abstract class OSBTreeCollectionManagerAbstract
     synchronized (lock) {
       SBTreeBonsaiContainer container = treeCache.get(cacheKey);
 
-      if (container != null && container.usagesCounter == 0) {
-        List<OBonsaiCollectionPointer> collectionToDelete = markedForDeletion.get(cacheKey);
-        if (collectionToDelete != null) {
-          synchronized (collectionToDelete) {
-            for (OBonsaiCollectionPointer pointer : collectionToDelete) {
-              final CacheKey ck = new CacheKey(storage, pointer);
-              treeCache.remove(ck);
-            }
-            collectionToDelete.clear();
-          }
-          //should be safe logical removal because add in is synchronized on same object
-          markedForDeletion.remove(cacheKey);
+      if (container != null && container.usagesCounter == 0) {        
+        int index = getLockIndex(cacheKey);
+        //no need for synchronization it is already synchronized with lock object
+        List<CacheKey> toRemove = markedForDeletion[index];
+        for (CacheKey keyToRemove : toRemove){
+          treeCache.remove(keyToRemove);
         }
+        toRemove.clear();
       }
 
       if (container != null) {
@@ -236,14 +235,10 @@ public abstract class OSBTreeCollectionManagerAbstract
       assert container != null;
 
       if (container.usagesCounter != 0) {
-        List<OBonsaiCollectionPointer> pointersCollection = markedForDeletion.get(cacheKey);
-        if (pointersCollection == null) {
-          pointersCollection = new LinkedList<>();
-          markedForDeletion.put(cacheKey, pointersCollection);
-        }
-        synchronized (pointersCollection) {
-          pointersCollection.add(collectionPointer);
-        }
+        int index = getLockIndex(cacheKey);
+        //no need for synchronization it is already synchronized with lock object
+        List<CacheKey> collectionToAddTo = markedForDeletion[index];
+        collectionToAddTo.add(cacheKey);
       } else {
         treeCache.remove(cacheKey);
       }
@@ -284,10 +279,14 @@ public abstract class OSBTreeCollectionManagerAbstract
     return treeCache.size();
   }
 
-  private Object treesSubsetLock(CacheKey cacheKey) {
+  private int getLockIndex(CacheKey cacheKey){
     final int hashCode = cacheKey.hashCode();
     final int index = (hashCode >>> shift) & mask;
-
+    return index;
+  }
+  
+  private Object treesSubsetLock(CacheKey cacheKey) {
+    int index = getLockIndex(cacheKey);
     return locks[index];
   }
 

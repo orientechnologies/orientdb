@@ -460,7 +460,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   public Iterator<OIdentifiable> rawIterator() {
     int prefectchSize = getPrefectchSize();
     OLogManager.instance()
-        .info(this, "!!!!!!!!!!!!!!!!!!!!!!CHANGES SIZE: " + changes.size() + " prefectch size: " + prefectchSize,
+        .debug(this, "!!!!!!!!!!!!!!!!!!!!!!CHANGES SIZE: " + changes.size() + " prefectch size: " + prefectchSize,
             (Object[]) null);
     return new RIDBagIterator(new IdentityHashMap<>(newEntries), changes,
         collectionPointer != null ? new SBTreeMapEntryIterator(prefectchSize) : null, false);
