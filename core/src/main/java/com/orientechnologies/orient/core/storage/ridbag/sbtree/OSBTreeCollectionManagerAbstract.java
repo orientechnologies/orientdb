@@ -174,7 +174,7 @@ public abstract class OSBTreeCollectionManagerAbstract
     synchronized (lock) {
       SBTreeBonsaiContainer container = treeCache.get(cacheKey);
 
-      if (container != null && container.usagesCounter <= 1) {
+      if (container != null && container.usagesCounter == 0) {
         List<OBonsaiCollectionPointer> collectionToDelete = markedForDeletion.get(cacheKey);
         if (collectionToDelete != null) {
           synchronized (collectionToDelete) {

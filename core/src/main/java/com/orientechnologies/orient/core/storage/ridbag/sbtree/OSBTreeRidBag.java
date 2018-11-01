@@ -437,15 +437,16 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
 
-  //for test let it be linear [50..1000]
+  //for test let it be linear [1..10]
   private int getPrefectchSize() {
-    int prefectchSize = 50;
-    if (changes.size() < 1000 && changes.size() >= 0) {
-      float a = (50.f - 1000.f) / 1000.f;
-      float b = 1000.f;
+    int prefectchSize = 1;
+    float downThrashhold = 100.f;
+    if (changes.size() < downThrashhold && changes.size() >= 0) {
+      float b = 10.f;
+      float a = ((float)prefectchSize - b) / downThrashhold;      
       prefectchSize = (int) (a * changes.size() + b);
     }
-    return prefectchSize;
+    return prefectchSize; 
   }
 
   @Override
@@ -459,7 +460,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   public Iterator<OIdentifiable> rawIterator() {
     int prefectchSize = getPrefectchSize();
     OLogManager.instance()
-        .debug(this, "!!!!!!!!!!!!!!!!!!!!!!CHANGES SIZE: " + changes.size() + " prefectch size: " + prefectchSize,
+        .info(this, "!!!!!!!!!!!!!!!!!!!!!!CHANGES SIZE: " + changes.size() + " prefectch size: " + prefectchSize,
             (Object[]) null);
     return new RIDBagIterator(new IdentityHashMap<>(newEntries), changes,
         collectionPointer != null ? new SBTreeMapEntryIterator(prefectchSize) : null, false);
