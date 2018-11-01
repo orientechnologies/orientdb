@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitResponse;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ddl.ODDLQuerySubmitRequest;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
@@ -212,17 +213,7 @@ public class OSchemaDistributed extends OSchemaEmbedded {
   @Override
   public void sendCommand(ODatabaseDocumentInternal database, String command) {
     if (isDistributeVersionTwo(database)) {
-
-      ODistributedContext distributed = ((OSharedContextDistributed) database.getSharedContext()).getDistributedContext();
-      Future<OSubmitResponse> response = distributed.getSubmitContext()
-          .send(new OSessionOperationId(), new ODDLQuerySubmitRequest(command));
-      try {
-        response.get();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      } catch (ExecutionException e) {
-        e.printStackTrace();
-      }
+      ((ODatabaseDocumentDistributed)database).sendDDLCommand(command);
     } else {
       super.sendCommand(database, command);
     }

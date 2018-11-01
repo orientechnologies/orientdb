@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -52,7 +53,9 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitContext;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitResponse;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ddl.ODDLQuerySubmitRequest;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.*;
+import com.orientechnologies.orient.server.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OTransactionContext;
 import com.orientechnologies.orient.server.distributed.impl.task.OCopyDatabaseChunkTask;
@@ -75,6 +78,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DIST
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLimitReachedException;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION;
 import static com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl.Status.*;
 
 /**
@@ -1062,4 +1066,89 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         .map(OEnterpriseEndpoint.class::cast).orElse(null);
   }
 
+  @Override
+  public int addCluster(String iClusterName, Object... iParameters) {
+    if (isRunLocal()) {
+      final StringBuilder cmd = new StringBuilder("create cluster `");
+      cmd.append(iClusterName);
+      cmd.append("`");
+      sendDDLCommand(cmd.toString());
+      return getClusterIdByName(iClusterName);
+    } else {
+      return super.addCluster(iClusterName, iParameters);
+    }
+  }
+
+  @Override
+  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+    if (isRunLocal()) {
+      final StringBuilder cmd = new StringBuilder("create cluster `");
+      cmd.append(iClusterName);
+      cmd.append("`");
+      cmd.append(" ID ");
+      cmd.append(iRequestedId);
+      sendDDLCommand(cmd.toString());
+      return iRequestedId;
+    } else {
+      return super.addCluster(iClusterName, iRequestedId, iParameters);
+    }
+  }
+
+  @Override
+  public boolean dropCluster(String iClusterName, boolean iTruncate) {
+    if (isRunLocal()) {
+      final StringBuilder cmd = new StringBuilder();
+      if (iTruncate) {
+        cmd.append("truncate cluster `");
+      } else {
+        cmd.append("create cluster `");
+      }
+      cmd.append(iClusterName);
+      cmd.append("`");
+      sendDDLCommand(cmd.toString());
+      return true;
+    } else {
+      return super.dropCluster(iClusterName, iTruncate);
+    }
+  }
+
+  @Override
+  public boolean dropCluster(int iClusterId, boolean iTruncate) {
+    if (isRunLocal()) {
+      final StringBuilder cmd = new StringBuilder();
+      if (iTruncate) {
+        cmd.append("truncate cluster ");
+      } else {
+        cmd.append("create cluster ");
+      }
+      cmd.append(iClusterId);
+      sendDDLCommand(cmd.toString());
+      return true;
+    } else {
+      return super.dropCluster(iClusterId, iTruncate);
+    }
+  }
+
+  private boolean isDistributeVersionTwo() {
+    return getConfiguration().getValueAsInteger(DISTRIBUTED_REPLICATION_PROTOCOL_VERSION) == 2;
+  }
+
+  protected boolean isRunLocal() {
+    return isDistributeVersionTwo() && getStorage() instanceof OAutoshardedStorage && !((OAutoshardedStorage) getStorage())
+        .isLocalEnv();
+
+  }
+
+  public void sendDDLCommand(String command) {
+    ODistributedContext distributed = ((OSharedContextDistributed) getSharedContext()).getDistributedContext();
+    Future<OSubmitResponse> response = distributed.getSubmitContext()
+        .send(new OSessionOperationId(), new ODDLQuerySubmitRequest(command));
+    try {
+      response.get();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    } catch (ExecutionException e) {
+      e.printStackTrace();
+    }
+  }
 }

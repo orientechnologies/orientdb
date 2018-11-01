@@ -993,7 +993,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     throw new ODistributedException(
         "Error on creating cluster '" + iClusterName + "' on distributed nodes: local and remote ids assigned are different");
   }
-
+  
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     resetLastValidBackup();
     final AtomicBoolean clId = new AtomicBoolean();
