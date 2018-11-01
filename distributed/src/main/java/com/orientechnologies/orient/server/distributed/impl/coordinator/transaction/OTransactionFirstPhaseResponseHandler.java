@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator.transac
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.lock.OLockGuard;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results.OConcurrentModificationResult;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.results.OUniqueKeyViolationResult;
 
@@ -96,9 +97,7 @@ public class OTransactionFirstPhaseResponseHandler implements OResponseHandler {
         null, operationId);
     coordinator.sendOperation(null, new OTransactionSecondPhaseOperation(operationId, false), responseHandler);
     if (guards != null) {
-      for (OLockGuard guard : guards) {
-        guard.release();
-      }
+      coordinator.getLockManager().unlock(guards);
     }
     if (!replySent) {
       coordinator

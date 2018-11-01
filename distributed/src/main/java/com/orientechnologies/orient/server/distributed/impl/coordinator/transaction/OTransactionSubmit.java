@@ -13,7 +13,11 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedCoordinator;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedLockManager;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitRequest;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.lock.OLockGuard;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -125,7 +129,7 @@ public class OTransactionSubmit implements OSubmitRequest {
     ODistributedLockManager lockManager = coordinator.getLockManager();
 
     //using OPair because there could be different types of values here, so falling back to lexicographic sorting
-    Set<OPair<String, String>> keys = new TreeSet<>();
+    SortedSet<OPair<String, String>> keys = new TreeSet<>();
     for (OIndexOperationRequest change : indexes) {
       for (OIndexKeyChange keyChange : change.getIndexKeyChanges()) {
         if (keyChange.getKey() == null) {
@@ -136,13 +140,9 @@ public class OTransactionSubmit implements OSubmitRequest {
       }
 
     }
-    List<OLockGuard> guards = new ArrayList<>();
-    for (OPair<String, String> key : keys) {
-      guards.add(lockManager.lockIndexKey(key.getKey(), key.getValue()));
-    }
 
     //Sort and lock transaction entry in distributed environment
-    Set<ORID> rids = new TreeSet<>();
+    SortedSet<ORID> rids = new TreeSet<>();
     for (ORecordOperationRequest entry : operations) {
       if (ORecordOperation.CREATED == entry.getType()) {
         int clusterId = entry.getId().getClusterId();
@@ -154,14 +154,12 @@ public class OTransactionSubmit implements OSubmitRequest {
         rids.add(entry.getId());
       }
     }
-
-    for (ORID rid : rids) {
-      guards.add(lockManager.lockRecord(rid));
-    }
-    OTransactionFirstPhaseResponseHandler responseHandler = new OTransactionFirstPhaseResponseHandler(operationId, this, requester,
-        guards);
-    OTransactionFirstPhaseOperation request = new OTransactionFirstPhaseOperation(operationId, this.operations, indexes);
-    coordinator.sendOperation(this, request, responseHandler);
+    lockManager.lock(rids, keys, (guards) -> {
+      OTransactionFirstPhaseResponseHandler responseHandler = new OTransactionFirstPhaseResponseHandler(operationId, this,
+          requester, guards);
+      OTransactionFirstPhaseOperation request = new OTransactionFirstPhaseOperation(operationId, this.operations, indexes);
+      coordinator.sendOperation(this, request, responseHandler);
+    });
   }
 
   @Override

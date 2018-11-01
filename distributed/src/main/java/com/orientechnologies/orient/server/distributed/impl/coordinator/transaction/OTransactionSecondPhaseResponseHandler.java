@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.lock.OLockGuard;
 
 import java.util.List;
 
@@ -30,13 +31,10 @@ public class OTransactionSecondPhaseResponseHandler implements OResponseHandler 
     if (responseCount >= context.getQuorum()) {
       OTransactionSecondPhaseResponse values = (OTransactionSecondPhaseResponse) response;
       if (success) {
-        if (guards != null) {
-          for (OLockGuard guard : guards) {
-            guard.release();
-          }
-          guards.clear();
-        }
         if (!replySent) {
+          if (guards != null) {
+            coordinator.getLockManager().unlock(guards);
+          }
           coordinator.reply(requester, operationId,
               new OTransactionResponse(true, values.getCreatedRecords(), values.getUpdatedRecords(), values.getDeletedRecords()));
           replySent = true;

@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.impl.OClusterPositionAllocatorDatabase;
 import com.orientechnologies.orient.server.distributed.impl.OIncrementOperationalLog;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.lock.ODistributedLockManagerImpl;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 
 import java.util.Map;
@@ -68,7 +69,7 @@ public class ODistributedContext {
   public synchronized void makeCoordinator(String nodeName, OSharedContext context) {
     if (coordinator == null) {
       allocator = new OClusterPositionAllocatorDatabase(context);
-      coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), opLog, new ODistributedLockManagerImpl(0),
+      coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), opLog, new ODistributedLockManagerImpl(),
           allocator);
       OLoopBackDistributeMember loopBack = new OLoopBackDistributeMember(nodeName, databaseName, submitContext, coordinator,
           executor);

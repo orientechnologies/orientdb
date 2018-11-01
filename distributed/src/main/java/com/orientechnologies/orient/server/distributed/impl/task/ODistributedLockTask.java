@@ -131,7 +131,7 @@ public class ODistributedLockTask extends OAbstractReplicatedTask {
     // CHECKS THE LOCK MANAGER SERVER IS STILL AVAILABLE
     if (!dManager.isNodeAvailable(dManager.getLockManagerServer()))
       throw new ODistributedOperationException(
-          "lockManager server '" + dManager.getLockManagerServer() + "' changed during lock " + (acquire ? "acquire" : "release"));
+          "lock server '" + dManager.getLockManagerServer() + "' changed during lock " + (acquire ? "acquire" : "release"));
   }
 
   @Override

@@ -64,7 +64,7 @@ public class ODistributedLockManagerExecutor implements ODistributedLockManager 
 
     if (!localNodeName.equals(manager.getLockManagerServer()))
       throw new ODistributedLockException(
-          "Cannot lock resource '" + resource + "' because current server '" + localNodeName + "' is not the lockManager");
+          "Cannot lock resource '" + resource + "' because current server '" + localNodeName + "' is not the lock");
 
     final ODistributedLock lock = new ODistributedLock(nodeSource);
 

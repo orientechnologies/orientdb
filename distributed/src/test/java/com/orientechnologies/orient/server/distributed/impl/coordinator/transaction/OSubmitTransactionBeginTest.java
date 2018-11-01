@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.lock.ODistributedLockManagerImpl;
 import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeRequest;
 import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeResponse;
 import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitRequest;
@@ -22,7 +23,7 @@ public class OSubmitTransactionBeginTest {
   @Test
   public void testBegin() throws InterruptedException {
     ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), new MockOperationLog(),
-        new ODistributedLockManagerImpl(0), new OMockAllocator());
+        new ODistributedLockManagerImpl(), new OMockAllocator());
 
     MockDistributedChannel cOne = new MockDistributedChannel();
     ODistributedMember mOne = new ODistributedMember("one", null, cOne);

@@ -54,7 +54,7 @@ public enum OGlobalConfiguration {
       "Specifies if running in multi-thread environment. Setting this to false turns off the internal lock management",
       Boolean.class, Boolean.TRUE),
 
-  ENVIRONMENT_LOCK_MANAGER_CONCURRENCY_LEVEL("environment.lockManager.concurrency.level", "Concurrency level of lock manager",
+  ENVIRONMENT_LOCK_MANAGER_CONCURRENCY_LEVEL("environment.lock.concurrency.level", "Concurrency level of lock manager",
       Integer.class, Runtime.getRuntime().availableProcessors() << 3, false),
 
   @Deprecated ENVIRONMENT_ALLOW_JVM_SHUTDOWN("environment.allowJVMShutdown", "Allows the shutdown of the JVM, if needed/requested",

@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.impl.OIncrementOperationalLog;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.lock.ODistributedLockManagerImpl;
 import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeRequest;
 import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeResponse;
 import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitRequest;
@@ -84,7 +85,7 @@ public class TestTransactionFlow {
     }
 
     ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(),
-        new OIncrementOperationalLog(), new ODistributedLockManagerImpl(0), new OMockAllocator());
+        new OIncrementOperationalLog(), new ODistributedLockManagerImpl(), new OMockAllocator());
     RecordChannel channel = new RecordChannel();
     ODistributedMember member = new ODistributedMember("one", "test", channel);
     coordinator.join(member);
