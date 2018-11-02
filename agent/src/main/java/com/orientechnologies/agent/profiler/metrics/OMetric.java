@@ -9,4 +9,8 @@ public interface OMetric {
 
   String getDescription();
 
+  default String getUnitOfMeasure() {
+    return "";
+  }
+
 }

@@ -46,17 +46,17 @@ public class OrientDBServerResourcesMetrics implements OrientDBMetric {
     this.registry.register(OGlobalMetrics.SERVER_RUNTIME_THREADS.name, OGlobalMetrics.SERVER_RUNTIME_THREADS.description,
         ThreadsMetric.class);
 
-    this.registry.gauge(OGlobalMetrics.SERVER_RUNTIME_CPU.name, OGlobalMetrics.SERVER_RUNTIME_CPU.description, this::cpuUsage);
+    this.registry.gauge(OGlobalMetrics.SERVER_RUNTIME_CPU.name, OGlobalMetrics.SERVER_RUNTIME_CPU.description,"Percentage", this::cpuUsage);
 
     this.registry.registerAll(OGlobalMetrics.SERVER_RUNTIME_DISK_CACHE.name, new OMetricSet() {
       @Override
       public Map<String, OMetric> getMetrics() {
 
         Map<String, OMetric> metrics = new HashMap<>();
-        metrics
-            .put("total", registry.newGauge("total", "Total disk cache", OrientDBServerResourcesMetrics.this::getDiskCacheTotal));
-        metrics
-            .put("used", registry.newGauge("used", "Total used disk cache", OrientDBServerResourcesMetrics.this::getDiskCacheUsed));
+        metrics.put("total",
+            registry.newGauge("total", "Total disk cache", "Bytes", OrientDBServerResourcesMetrics.this::getDiskCacheTotal));
+        metrics.put("used",
+            registry.newGauge("used", "Total used disk cache", "Bytes", OrientDBServerResourcesMetrics.this::getDiskCacheUsed));
         return metrics;
       }
 
@@ -81,12 +81,12 @@ public class OrientDBServerResourcesMetrics implements OrientDBMetric {
       public Map<String, OMetric> getMetrics() {
         Map<String, OMetric> metrics = new HashMap<>();
         metrics.put("totalSpace",
-            registry.newGauge("totalSpace", "Total used disk space", OrientDBServerResourcesMetrics.this::getDiskTotal));
+            registry.newGauge("totalSpace", "Total used disk space", "Bytes", OrientDBServerResourcesMetrics.this::getDiskTotal));
         metrics.put("freeSpace",
-            registry.newGauge("freeSpace", "Total free disk space", OrientDBServerResourcesMetrics.this::getDiskFree));
+            registry.newGauge("freeSpace", "Total free disk space", "Bytes", OrientDBServerResourcesMetrics.this::getDiskFree));
 
-        metrics.put("usableSpace",
-            registry.newGauge("usableSpace", "Total usable disk space", OrientDBServerResourcesMetrics.this::getDiskUsable));
+        metrics.put("usableSpace", registry
+            .newGauge("usableSpace", "Total usable disk space", "Bytes", OrientDBServerResourcesMetrics.this::getDiskUsable));
 
         return metrics;
       }
@@ -139,7 +139,6 @@ public class OrientDBServerResourcesMetrics implements OrientDBMetric {
     for (OStorage stg : server.getDatabases().getStorages()) {
       if (stg instanceof OLocalPaginatedStorage) {
         diskCacheUsed += ((OLocalPaginatedStorage) stg).getReadCache().getUsedMemory();
-        break;
       }
     }
 

@@ -24,9 +24,15 @@ public interface OMetricsRegistry {
 
   OMeter meter(String name, String description);
 
+  OMeter meter(String name, String description,String unitOfMeasure);
+
   <T> OGauge<T> gauge(String name, String description, Supplier<T> valueFunction);
 
+  <T> OGauge<T> gauge(String name, String description,String unitOfMeasure, Supplier<T> valueFunction);
+
   <T> OGauge<T> newGauge(String name, String description, Supplier<T> valueFunction);
+
+  <T> OGauge<T> newGauge(String name, String description,String unitOfMeasure, Supplier<T> valueFunction);
 
   OHistogram histogram(String name, String description);
 

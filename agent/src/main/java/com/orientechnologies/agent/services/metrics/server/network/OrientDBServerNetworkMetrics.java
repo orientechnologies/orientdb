@@ -32,7 +32,7 @@ public class OrientDBServerNetworkMetrics implements OrientDBMetric {
   public void start() {
 
     this.networkRequests = this.registry
-        .meter(OGlobalMetrics.SERVER_NETWORK_REQUESTS.name, OGlobalMetrics.SERVER_NETWORK_REQUESTS.description);
+        .meter(OGlobalMetrics.SERVER_NETWORK_REQUESTS.name, OGlobalMetrics.SERVER_NETWORK_REQUESTS.description,"Events/seconds");
 
     server.registerConnectionListener(new OEnterpriseConnectionListener() {
 

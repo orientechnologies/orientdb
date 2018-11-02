@@ -198,18 +198,33 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
 
   @Override
   public OMeter meter(String name, String description) {
-    return registerOrGetMetric(name, (k) -> new DropWizardMeter(registry.meter(k), k, description));
+    return meter(name, description,":");
+  }
+
+  @Override
+  public OMeter meter(String name, String description, String unitOfMeasure) {
+    return registerOrGetMetric(name, (k) -> new DropWizardMeter(registry.meter(k), k, description, unitOfMeasure));
   }
 
   @Override
   public <T> OGauge<T> gauge(String name, String description, Supplier<T> valueFunction) {
+    return gauge(name, description, "", valueFunction);
+  }
+
+  @Override
+  public <T> OGauge<T> gauge(String name, String description, String unitOfMeasure, Supplier<T> valueFunction) {
     return registerOrGetMetric(name,
-        (k) -> new DropWizardGauge<T>(registry.register(k, () -> valueFunction.get()), k, description));
+        (k) -> new DropWizardGauge<T>(registry.register(k, () -> valueFunction.get()), k, description, unitOfMeasure));
   }
 
   @Override
   public <T> OGauge<T> newGauge(String name, String description, Supplier<T> valueFunction) {
     return new DropWizardGauge<T>(valueFunction::get, name, description);
+  }
+
+  @Override
+  public <T> OGauge<T> newGauge(String name, String description, String unitOfMeasure, Supplier<T> valueFunction) {
+    return new DropWizardGauge<T>(valueFunction::get, name, description, unitOfMeasure);
   }
 
   @Override

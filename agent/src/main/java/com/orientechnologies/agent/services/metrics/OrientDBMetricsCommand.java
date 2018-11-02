@@ -159,8 +159,9 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
         iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, valueAsString, null);
         break;
       case "list":
-        Map<String, String> metrics = getMetricsLists(registry.getMetrics(), "");
-        String metricsAsString = mapper.writeValueAsString(metrics);
+        Map<String, MetricInfo> metrics = getMetricsLists(registry.getMetrics(), "");
+        String metricsAsString = mapper
+            .writeValueAsString(new MetricList(metrics.entrySet().stream().map(v -> v.getValue()).collect(Collectors.toList())));
         iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, metricsAsString, null);
         break;
       }
@@ -168,21 +169,70 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
     }
   }
 
-  private Map<String, String> getMetricsLists(Map<String, OMetric> metrics, String prefix) {
+  protected class MetricList {
+    List<MetricInfo> metrics;
 
-    Map<String, String> m = new HashMap<>();
+    public MetricList(List<MetricInfo> metrics) {
+      this.metrics = metrics;
+    }
+
+    public List<MetricInfo> getMetrics() {
+      return metrics;
+    }
+  }
+
+  protected class MetricInfo {
+    String name;
+    String description;
+    String unitOfMeasure;
+
+    public MetricInfo(String name, String description, String unitOfMeasure) {
+      this.name = name;
+      this.description = description;
+      this.unitOfMeasure = unitOfMeasure;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public void setDescription(String description) {
+      this.description = description;
+    }
+
+    public String getUnitOfMeasure() {
+      return unitOfMeasure;
+    }
+
+    public void setUnitOfMeasure(String unitOfMeasure) {
+      this.unitOfMeasure = unitOfMeasure;
+    }
+  }
+
+  private Map<String, MetricInfo> getMetricsLists(Map<String, OMetric> metrics, String prefix) {
+
+    Map<String, MetricInfo> infos = new HashMap<>();
     metrics.forEach((k, v) -> {
       if (v instanceof OMetricSet) {
-        m.putAll(getMetricsLists(((OMetricSet) v).getMetrics(), ((OMetricSet) v).prefix()));
+        infos.putAll(getMetricsLists(((OMetricSet) v).getMetrics(), ((OMetricSet) v).prefix()));
       } else {
         if (prefix != null && !prefix.isEmpty()) {
-          m.put(prefix + "." + k, v.getDescription());
+          infos.put(prefix + "." + k, new MetricInfo(prefix + "." + k, v.getDescription(), v.getUnitOfMeasure()));
         } else {
-          m.put(k, v.getDescription());
+          infos.put(k, new MetricInfo(k, v.getDescription(), v.getUnitOfMeasure()));
+
         }
       }
     });
-    return m;
+    return infos;
 
   }
 

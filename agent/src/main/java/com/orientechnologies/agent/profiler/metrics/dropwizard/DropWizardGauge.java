@@ -9,8 +9,12 @@ import com.orientechnologies.agent.profiler.metrics.OGauge;
 public class DropWizardGauge<T> extends DropWizardGeneric<Gauge<T>> implements OGauge<T> {
 
   public DropWizardGauge(Gauge<T> gauge, String name, String description) {
-    super(gauge, name, description);
+    this(gauge,name,description,"");
 
+  }
+
+  public DropWizardGauge(Gauge<T> gauge, String name, String description, String unitOfMeasure) {
+    super(gauge,name,description,unitOfMeasure);
   }
 
   @Override

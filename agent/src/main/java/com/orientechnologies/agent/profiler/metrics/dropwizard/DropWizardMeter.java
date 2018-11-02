@@ -11,9 +11,12 @@ public class DropWizardMeter extends DropWizardBase implements OMeter {
   private Meter meter;
 
   public DropWizardMeter(Meter meter, String name, String description) {
-    super(name, description);
-    this.meter = meter;
+    this(meter,name,description,"");
+  }
 
+  public DropWizardMeter(Meter meter, String name, String description,String unitOfMeasure) {
+    super(name, description,unitOfMeasure);
+    this.meter = meter;
   }
 
   public void mark() {
@@ -27,5 +30,7 @@ public class DropWizardMeter extends DropWizardBase implements OMeter {
   public long getCount() {
     return meter.getCount();
   }
+
+
 
 }

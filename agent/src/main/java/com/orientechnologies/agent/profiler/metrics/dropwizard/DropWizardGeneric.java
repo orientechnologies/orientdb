@@ -10,7 +10,11 @@ public class DropWizardGeneric<T extends Metric> extends DropWizardBase {
   protected final T metric;
 
   public DropWizardGeneric(T metric, String name, String description) {
-    super(name, description);
+    this(metric, name, description, "");
+  }
+
+  public DropWizardGeneric(T metric, String name, String description, String unitOfMeasure) {
+    super(name, description, unitOfMeasure);
     this.metric = metric;
   }
 
