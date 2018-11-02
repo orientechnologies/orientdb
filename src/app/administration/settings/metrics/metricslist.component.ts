@@ -17,7 +17,7 @@ export class MetricsListComponent implements OnInit {
   @Input()
   metrics: any[];
 
-  fields = ["name", "description"];
+  fields = ["name", "description","unitOfMeasure"];
 
   constructor() {}
 

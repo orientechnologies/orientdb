@@ -31,6 +31,7 @@
               <tr>
                 <th>Metric</th>
                 <th>Description</th>
+                <th>Unit of Measure</th>
               </tr>
             </thead>
 
@@ -38,6 +39,7 @@
               <tr *ngFor="let metric of metrics | filter : searchText : fields">
                 <td>{{metric.name}}</td>
                 <td>{{ metric.description }}</td>
+                <td>{{ metric.unitOfMeasure }}</td>
               </tr>
             </tbody>
           </table>

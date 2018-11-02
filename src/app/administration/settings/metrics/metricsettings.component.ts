@@ -29,9 +29,8 @@ export class MetricsSettingsComponent implements OnInit {
   currentSelected: any;
   currentSelectedName = "jmx";
 
-
   @Input()
-  private canEdit : boolean
+  private canEdit: boolean;
 
   @ViewChild("reporterContainer", { read: ViewContainerRef })
   reporterContainer: ViewContainerRef;
@@ -51,20 +50,16 @@ export class MetricsSettingsComponent implements OnInit {
       this.selectReporter(this.currentSelectedName);
     });
 
-    this.metricService.list().then(metrics => {
-      this.metrics = Object.keys(metrics)
-        .map(k => {
-          return { name: k, description: metrics[k] };
-        })
-        .sort((a, b) => {
-          if (a.name > b.name) {
-            return 1;
-          }
-          if (a.name < b.name) {
-            return -1;
-          }
-          return 0;
-        });
+    this.metricService.list().then(result => {
+      this.metrics = result.metrics.sort((a, b) => {
+        if (a.name > b.name) {
+          return 1;
+        }
+        if (a.name < b.name) {
+          return -1;
+        }
+        return 0;
+      });
     });
   }
 
