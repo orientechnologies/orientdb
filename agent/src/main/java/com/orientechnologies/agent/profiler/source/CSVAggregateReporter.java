@@ -136,7 +136,11 @@ public class CSVAggregateReporter {
   }
 
   private List<List<Object>> getQueryStats(SortedMap<String, Histogram> histograms) {
-    return histograms.entrySet().stream().map((e) -> {
+    return histograms.entrySet().stream().sorted((v1, v2) -> {
+      Snapshot snapshot1 = v1.getValue().getSnapshot();
+      Snapshot snapshot2 = v2.getValue().getSnapshot();
+      return Double.compare(snapshot2.getMean(), snapshot1.getMean());
+    }).map((e) -> {
       List<Object> value = new ArrayList<>();
       String key = e.getKey();
       Histogram h = e.getValue();
@@ -157,7 +161,11 @@ public class CSVAggregateReporter {
   }
 
   private List<List<Object>> getRunningQueries() {
-    return server.listQueries(Optional.empty()).stream().map((r) -> {
+    return server.listQueries(Optional.empty()).stream().sorted((v1, v2) -> {
+      Long l1 = v1.getProperty("elapsedTimeMillis");
+      Long l2 = v2.getProperty("elapsedTimeMillis");
+      return l2.compareTo(l1);
+    }).map((r) -> {
       List<Object> value = new ArrayList<>();
       value.add(r.getProperty("queryId"));
       value.add(r.getProperty("sessionId"));
