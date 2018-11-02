@@ -9,13 +9,11 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -133,7 +131,7 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` encryption %s", name, iValue);
         owner.sendCommand(database, cmd);
-        if(!isRunLocal(database)) {
+        if (!isRunLocal(database)) {
           setEncryptionInternal(database, iValue);
         }
       } else
@@ -175,7 +173,7 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` custom `%s`=%s", getName(), name, value);
         owner.sendCommand(database, cmd);
-        if(!isRunLocal(database)) {
+        if (!isRunLocal(database)) {
           setCustomInternal(name, value);
         }
       } else
@@ -253,7 +251,7 @@ public class OClassDistributed extends OClassEmbedded {
         final String cmd = String
             .format("alter class `%s` superclass +`%s`", name, superClass != null ? superClass.getName() : null);
         owner.sendCommand(database, cmd);
-        if(!isRunLocal(database)) {
+        if (!isRunLocal(database)) {
           addSuperClassInternal(database, superClass);
         }
       } else
@@ -307,7 +305,7 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` name `%s`", this.name, name);
         owner.sendCommand(database, cmd);
-        if(!isRunLocal(database)) {
+        if (!isRunLocal(database)) {
           setNameInternal(database, name);
         }
       } else
@@ -357,7 +355,7 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("truncate cluster %s", clusterName);
         owner.sendCommand(database, cmd);
-        if(!isRunLocal(database)) {
+        if (!isRunLocal(database)) {
           truncateClusterInternal(clusterName, database);
         }
       } else
@@ -379,7 +377,7 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` strictmode %s", name, isStrict);
         owner.sendCommand(database, cmd);
-        if(!isRunLocal(database)) {
+        if (!isRunLocal(database)) {
           setStrictModeInternal(isStrict);
         }
       } else
@@ -457,7 +455,7 @@ public class OClassDistributed extends OClassEmbedded {
       if (isDistributedCommand(database)) {
         final String cmd = String.format("alter class `%s` removecluster %d", name, clusterId);
         owner.sendCommand(database, cmd);
-        if(!isRunLocal(database)) {
+        if (!isRunLocal(database)) {
           removeClusterIdInternal(database, clusterId);
         }
       } else
@@ -580,15 +578,13 @@ public class OClassDistributed extends OClassEmbedded {
   public int getClusterForNewInstance(ODocument doc) {
 
     ODatabaseDocumentDistributed db = (ODatabaseDocumentDistributed) getDatabase();
-    final OStorage storage = db.getStorage();
-    if (!(storage instanceof ODistributedStorage))
-      throw new IllegalStateException("Storage is not distributed");
 
-    ODistributedServerManager manager = ((ODistributedStorage) storage).getDistributedManager();
+    ODistributedServerManager manager = db.getDistributedManager();
     if (bestClusterIds == null)
       readConfiguration(db, manager);
     else {
-      if (lastVersion != ((ODistributedStorage) storage).getConfigurationUpdated()) {
+      ODistributedConfiguration cfg = manager.getDatabaseConfiguration(db.getName());
+      if (lastVersion != cfg.getVersion()) {
         // DISTRIBUTED CFG IS CHANGED: GET BEST CLUSTER AGAIN
         readConfiguration(db, manager);
 
@@ -674,8 +670,7 @@ public class OClassDistributed extends OClassEmbedded {
       newBestClusters[i++] = db.getClusterIdByName(c);
 
     this.bestClusterIds = newBestClusters;
-    final ODistributedStorage storage = db.getStorageDistributed();
-    lastVersion = storage.getConfigurationUpdated();
+    lastVersion = cfg.getVersion();
 
     return cfg;
   }

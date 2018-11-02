@@ -103,7 +103,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @return the name of local node in the cluster
    */
   public String getLocalNodeName() {
-    return getStorageDistributed().getNodeId();
+    return hazelcastPlugin.getLocalNodeName();
   }
 
   /**
@@ -1061,7 +1061,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public OEnterpriseEndpoint getEnterpriseEndpoint() {
-    OServer server = ((ODistributedStorage) getStorage()).getDistributedManager().getServerInstance();
+    OServer server = hazelcastPlugin.getServerInstance();
     return server.getPlugins().stream().filter(OEnterpriseEndpoint.class::isInstance).findFirst()
         .map(OEnterpriseEndpoint.class::cast).orElse(null);
   }
@@ -1150,5 +1150,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (ExecutionException e) {
       e.printStackTrace();
     }
+  }
+
+  public ODistributedServerManager getDistributedManager() {
+    return hazelcastPlugin;
   }
 }
