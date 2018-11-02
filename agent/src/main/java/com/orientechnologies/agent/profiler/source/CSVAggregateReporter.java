@@ -122,10 +122,11 @@ public class CSVAggregateReporter {
     final long timestamp = TimeUnit.MILLISECONDS.toSeconds(clock.getTime());
 
     List<List<Object>> collected = getQueryStats(histograms);
-    report(timestamp, "db.queries", "database,language,query,count,min,mean,max", collected);
+    report(timestamp, "db.queries", "database,language,query,count,min(millis),mean(millis),max(millis)", collected);
 
     List<List<Object>> runningQueries = getRunningQueries();
-    report(timestamp, "db.runningQueries", "queryId,sessionId,database,user,language,query,startTime,elapsedTime", runningQueries);
+    report(timestamp, "db.runningQueries", "queryId,sessionId,database,user,language,query,startTime,elapsedTime(millis)",
+        runningQueries);
 
     List<List<Object>> stats = getConnections();
 
