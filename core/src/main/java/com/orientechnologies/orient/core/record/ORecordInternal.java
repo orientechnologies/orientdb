@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
 public class ORecordInternal {
 
@@ -107,8 +106,14 @@ public class ORecordInternal {
     rec.clearSource();
   }
 
-  public static void addIdentityChangeListener(final ORecord record, final OIdentityChangeListener identityChangeListener) {
-    ((ORecordAbstract) record).addIdentityChangeListener(identityChangeListener);
+  public static void addIdentityChangeListener(ORecord record, final OIdentityChangeListener identityChangeListener) {
+    if (!(record instanceof ORecordAbstract)) {
+      //manage O*Delegate
+      record = record.getRecord();
+    }
+    if (record instanceof ORecordAbstract) {
+      ((ORecordAbstract) record).addIdentityChangeListener(identityChangeListener);
+    }
   }
 
   public static void removeIdentityChangeListener(final ORecord record, final OIdentityChangeListener identityChangeListener) {
