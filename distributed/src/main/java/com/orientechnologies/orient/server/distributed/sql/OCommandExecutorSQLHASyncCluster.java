@@ -93,8 +93,7 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
 
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getStorageDistributed()
-        .getDistributedManager();
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 

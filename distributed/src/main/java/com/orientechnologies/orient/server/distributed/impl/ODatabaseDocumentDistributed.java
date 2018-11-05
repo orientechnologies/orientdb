@@ -86,11 +86,11 @@ import static com.orientechnologies.orient.server.distributed.impl.ONewDistribut
  */
 public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
-  private final OHazelcastPlugin hazelcastPlugin;
+  private final OHazelcastPlugin distributedManager;
 
   public ODatabaseDocumentDistributed(OStorage storage, OHazelcastPlugin hazelcastPlugin) {
     super(storage);
-    this.hazelcastPlugin = hazelcastPlugin;
+    this.distributedManager = hazelcastPlugin;
   }
 
   public ODistributedStorage getStorageDistributed() {
@@ -103,7 +103,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @return the name of local node in the cluster
    */
   public String getLocalNodeName() {
-    return hazelcastPlugin.getLocalNodeName();
+    return distributedManager.getLocalNodeName();
   }
 
   /**
@@ -113,13 +113,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @return the cluster map for current deploy
    */
   public Map<String, Set<String>> getActiveClusterMap() {
-    ODistributedServerManager distributedManager = getStorageDistributed().getDistributedManager();
     if (distributedManager.isOffline() || !distributedManager.isNodeOnline(distributedManager.getLocalNodeName(), getName())
         || OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
       return super.getActiveClusterMap();
     }
     Map<String, Set<String>> result = new HashMap<>();
-    ODistributedConfiguration cfg = getStorageDistributed().getDistributedConfiguration();
+    ODistributedConfiguration cfg = getDistributedConfiguration();
 
     for (String server : distributedManager.getActiveServers()) {
       if (getClustersOnServer(cfg, server).contains("*")) {
@@ -168,7 +167,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    */
   public Map<String, Set<String>> getActiveDataCenterMap() {
     Map<String, Set<String>> result = new HashMap<>();
-    ODistributedConfiguration cfg = getStorageDistributed().getDistributedConfiguration();
+    ODistributedConfiguration cfg = getDistributedConfiguration();
     Set<String> servers = cfg.getRegisteredServers();
     for (String server : servers) {
       String dc = cfg.getDataCenterOfServer(server);
@@ -205,7 +204,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public ODatabaseDocumentInternal copy() {
-    ODatabaseDocumentDistributed database = new ODatabaseDocumentDistributed(getStorage(), hazelcastPlugin);
+    ODatabaseDocumentDistributed database = new ODatabaseDocumentDistributed(getStorage(), distributedManager);
     database.init(getConfig(), getSharedContext());
     String user;
     if (getUser() != null) {
@@ -241,24 +240,23 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public Map<String, Object> getHaStatus(boolean servers, boolean db, boolean latency, boolean messages) {
     checkSecurity(ORule.ResourceGeneric.SERVER, "status", ORole.PERMISSION_READ);
 
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) getStorageDistributed().getDistributedManager();
-    if (dManager == null || !dManager.isEnabled())
+    if (distributedManager == null || !distributedManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
     final String databaseName = getName();
 
-    final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
+    final ODistributedConfiguration cfg = distributedManager.getDatabaseConfiguration(databaseName);
 
     Map<String, Object> row = new HashMap<>();
     final StringBuilder output = new StringBuilder();
     if (servers)
-      row.put("servers", dManager.getClusterConfiguration());
+      row.put("servers", distributedManager.getClusterConfiguration());
     if (db)
       row.put("database", cfg.getDocument());
     if (latency)
-      row.put("latency", ODistributedOutput.formatLatency(dManager, dManager.getClusterConfiguration()));
+      row.put("latency", ODistributedOutput.formatLatency(distributedManager, distributedManager.getClusterConfiguration()));
     if (messages)
-      row.put("messages", ODistributedOutput.formatMessages(dManager, dManager.getClusterConfiguration()));
+      row.put("messages", ODistributedOutput.formatMessages(distributedManager, distributedManager.getClusterConfiguration()));
 
     return row;
   }
@@ -267,8 +265,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public boolean removeHaServer(String serverName) {
     checkSecurity(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE);
 
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) getStorageDistributed().getDistributedManager();
-    if (dManager == null || !dManager.isEnabled())
+    if (distributedManager == null || !distributedManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
     final String databaseName = getName();
@@ -276,24 +273,23 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     // The last parameter (true) indicates to set the node's database status to OFFLINE.
     // If this is changed to false, the node will be set to NOT_AVAILABLE, and then the auto-repairer will
     // re-synchronize the database on the node, and then set it to ONLINE.
-    return dManager.removeNodeFromConfiguration(serverName, databaseName, false, true);
+    return distributedManager.removeNodeFromConfiguration(serverName, databaseName, false, true);
   }
 
   @Override
   public Map<String, Object> syncCluster(String clusterName) {
     checkSecurity(ORule.ResourceGeneric.CLUSTER, "sync", ORole.PERMISSION_UPDATE);
 
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) getStorageDistributed().getDistributedManager();
-    if (dManager == null || !dManager.isEnabled())
+    if (distributedManager == null || !distributedManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
     final String databaseName = getName();
 
-    final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
-    OServer serverInstance = getStorageDistributed().getServer();
+    final ODistributedConfiguration cfg = distributedManager.getDatabaseConfiguration(databaseName);
+    OServer serverInstance = distributedManager.getServerInstance();
     final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
 
-    final String nodeName = dManager.getLocalNodeName();
+    final String nodeName = distributedManager.getLocalNodeName();
 
     final List<String> nodesWhereClusterIsCfg = cfg.getServers(clusterName, null);
     nodesWhereClusterIsCfg.remove(nodeName);
@@ -303,8 +299,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           "Cannot synchronize cluster '" + clusterName + "' because is not configured on any running nodes");
 
     final OSyncClusterTask task = new OSyncClusterTask(clusterName);
-    final ODistributedResponse response = dManager
-        .sendRequest(databaseName, null, nodesWhereClusterIsCfg, task, dManager.getNextMessageIdCounter(),
+    final ODistributedResponse response = distributedManager
+        .sendRequest(databaseName, null, nodesWhereClusterIsCfg, task, distributedManager.getNextMessageIdCounter(),
             ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
     final Map<String, Object> results = (Map<String, Object>) response.getPayload();
@@ -340,9 +336,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
           fileSize = writeDatabaseChunk(nodeName, 1, chunk, out);
           for (int chunkNum = 2; !chunk.last; chunkNum++) {
-            final Object result = dManager.sendRequest(databaseName, null, OMultiValue.getSingletonList(r.getKey()),
+            final Object result = distributedManager.sendRequest(databaseName, null, OMultiValue.getSingletonList(r.getKey()),
                 new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
-                dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+                distributedManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
 
             if (result instanceof Boolean)
               continue;
@@ -442,14 +438,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   public ODistributedResponse executeTaskOnNode(ORemoteTask task, String nodeName) {
 
-    ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
-    if (dManager == null || !dManager.isEnabled())
+    if (distributedManager == null || !distributedManager.isEnabled())
       throw new ODistributedException("OrientDB is not started in distributed mode");
 
     final String databaseName = getName();
 
-    return dManager.sendRequest(databaseName, null, Collections.singletonList(nodeName), task, dManager.getNextMessageIdCounter(),
-        ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
+    return distributedManager
+        .sendRequest(databaseName, null, Collections.singletonList(nodeName), task, distributedManager.getNextMessageIdCounter(),
+            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
   }
 
   @Override
@@ -532,18 +528,19 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException {
-    ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
     try {
-      dManager.waitUntilNodeOnline();
+      distributedManager.waitUntilNodeOnline();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    ODistributedDatabaseImpl sharedDistributeDb = (ODistributedDatabaseImpl) dManager.getMessageService().getDatabase(getName());
+    ODistributedDatabaseImpl sharedDistributeDb = (ODistributedDatabaseImpl) distributedManager.getMessageService()
+        .getDatabase(getName());
     OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
     sharedDistributeDb.waitForOnline();
     OSessionOperationId id = new OSessionOperationId();
     id.init();
-    OSequenceActionCoordinatorSubmit submitAction = new OSequenceActionCoordinatorSubmit(action, dManager.getLocalNodeName());
+    OSequenceActionCoordinatorSubmit submitAction = new OSequenceActionCoordinatorSubmit(action,
+        distributedManager.getLocalNodeName());
     Future<OSubmitResponse> future = submitContext.send(id, submitAction);
     try {
       OSequenceActionCoordinatorResponse response = (OSequenceActionCoordinatorResponse) future.get();
@@ -577,13 +574,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       return;
     }
 
-    ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
     try {
-      dManager.waitUntilNodeOnline();
+      distributedManager.waitUntilNodeOnline();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    ODistributedDatabaseImpl sharedDistributeDb = (ODistributedDatabaseImpl) dManager.getMessageService().getDatabase(getName());
+    ODistributedDatabaseImpl sharedDistributeDb = (ODistributedDatabaseImpl) distributedManager.getMessageService()
+        .getDatabase(getName());
     OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
     sharedDistributeDb.waitForOnline();
     OSessionOperationId id = new OSessionOperationId();
@@ -638,15 +635,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             ((ODocument) record).validate();
         }
       }
-      final ODistributedConfiguration dbCfg = getStorageDistributed().getDistributedConfiguration();
-      ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
-      final String localNodeName = dManager.getLocalNodeName();
+      final ODistributedConfiguration dbCfg = getDistributedConfiguration();
+      final String localNodeName = distributedManager.getLocalNodeName();
       getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
-      ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(), dManager,
-          getStorageDistributed().getLocalDistributedDatabase());
+      ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(),
+          distributedManager, getStorageDistributed().getLocalDistributedDatabase());
       Set<String> otherNodesInQuorum = txManager
           .getAvailableNodesButLocal(dbCfg, txManager.getInvolvedClusters(iTx.getRecordOperations()), getLocalNodeName());
-      List<String> online = dManager.getOnlineNodes(getName());
+      List<String> online = distributedManager.getOnlineNodes(getName());
       if (online.size() < ((otherNodesInQuorum.size() + 1) / 2) + 1) {
         throw new ODistributedException("No enough nodes online to execute the operation, online nodes: " + online);
       }
@@ -723,8 +719,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         //FOR NOW ROLLBACK DO NOTHING ON THE STORAGE ONLY THE CLOSE IS NEEDED
       }
     } catch (OLowDiskSpaceException ex) {
-      getStorageDistributed().getDistributedManager()
-          .setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      distributedManager.setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
     } finally {
       sharedContext.getDistributedContext().closeTransaction(operationId);
@@ -739,7 +734,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     try {
       internalBegin2pc(txContext, local);
       txContext.setStatus(SUCCESS);
-      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      localDistributedDatabase.registerTxContext(requestId, txContext);
     } catch (OConcurrentCreateException ex) {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
         if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
@@ -751,7 +746,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
       txContext.setStatus(FAILED);
-      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      localDistributedDatabase.registerTxContext(requestId, txContext);
       throw ex;
     } catch (OConcurrentModificationException ex) {
       if (retryCount >= 0 && retryCount < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
@@ -764,7 +759,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
       txContext.setStatus(FAILED);
-      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      localDistributedDatabase.registerTxContext(requestId, txContext);
       throw ex;
     } catch (ORecordNotFoundException e) {
       // This error can happen only in deserialization before locks happen, no need to unlock
@@ -772,24 +767,23 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         return false;
       }
       txContext.setStatus(FAILED);
-      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      localDistributedDatabase.registerTxContext(requestId, txContext);
       throw e;
     } catch (ODistributedLockException | OLockException ex) {
       txContext.unlock();
       /// ?? do i've to save this state as well ?
       txContext.setStatus(TIMEDOUT);
-      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      localDistributedDatabase.registerTxContext(requestId, txContext);
       throw ex;
     } catch (ORecordDuplicatedException ex) {
       txContext.setStatus(FAILED);
-      getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+      localDistributedDatabase.registerTxContext(requestId, txContext);
       throw ex;
     } catch (OLowDiskSpaceException ex) {
-      getStorageDistributed().getDistributedManager()
-          .setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      distributedManager.setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
     }
-    getStorageDistributed().getLocalDistributedDatabase().registerTxContext(requestId, txContext);
+    localDistributedDatabase.registerTxContext(requestId, txContext);
     return true;
   }
 
@@ -811,7 +805,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     getStorageDistributed().resetLastValidBackup();
     ODistributedDatabase localDistributedDatabase = getStorageDistributed().getLocalDistributedDatabase();
 
-    ODistributedServerManager manager = getStorageDistributed().getDistributedManager();
     ONewDistributedTxContextImpl txContext = (ONewDistributedTxContextImpl) localDistributedDatabase.getTxContext(transactionId);
 
     if (txContext != null) {
@@ -842,7 +835,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             OLogManager.instance()
                 .warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install",
                     transactionId);
-            manager.installDatabase(false, ODatabaseDocumentDistributed.this.getName(), true, true);
+            distributedManager.installDatabase(false, ODatabaseDocumentDistributed.this.getName(), true, true);
           });
         }
         try {
@@ -860,7 +853,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OLogManager.instance()
               .warn(ODatabaseDocumentDistributed.this, "Reached limit of retry for commit tx:%s forcing database re-install",
                   transactionId);
-          manager.installDatabase(false, ODatabaseDocumentDistributed.this.getName(), true, true);
+          distributedManager.installDatabase(false, ODatabaseDocumentDistributed.this.getName(), true, true);
         });
       }
     }
@@ -886,8 +879,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       OTransactionInternal tx = txContext.getTransaction();
       ((OAbstractPaginatedStorage) this.getStorage().getUnderlying()).commitPreAllocated(tx);
     } catch (OLowDiskSpaceException ex) {
-      getStorageDistributed().getDistributedManager()
-          .setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      distributedManager.setDatabaseStatus(getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
     } finally {
       txContext.destroy();
@@ -1061,7 +1053,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public OEnterpriseEndpoint getEnterpriseEndpoint() {
-    OServer server = hazelcastPlugin.getServerInstance();
+    OServer server = distributedManager.getServerInstance();
     return server.getPlugins().stream().filter(OEnterpriseEndpoint.class::isInstance).findFirst()
         .map(OEnterpriseEndpoint.class::cast).orElse(null);
   }
@@ -1153,6 +1145,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public ODistributedServerManager getDistributedManager() {
-    return hazelcastPlugin;
+    return distributedManager;
   }
+
+  public ODistributedConfiguration getDistributedConfiguration() {
+    return getStorageDistributed().getDistributedConfiguration();
+  }
+
 }
