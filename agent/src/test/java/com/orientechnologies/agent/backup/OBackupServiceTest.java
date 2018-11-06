@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import org.junit.After;
@@ -39,6 +40,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.fail;
@@ -56,7 +58,10 @@ public class OBackupServiceTest {
   private final String         DB_NAME     = "backupDBTest";
   private final String         BACKUP_PATH =
       System.getProperty("buildDirectory", "target") + File.separator + "databases" + File.separator + DB_NAME;
+
   private       OBackupService manager;
+
+
 
   @Before
   public void bootOrientDB() throws Exception {
@@ -307,13 +312,14 @@ public class OBackupServiceTest {
   private void checkExpected(long expected, String uuid) {
     String query;
     if (uuid != null) {
-      query = "select count(*) from OBackupLog where uuid = ?";
+      query = "select count(*) as count from OBackupLog where uuid = ?";
     } else {
-      query = "select count(*) from OBackupLog";
+      query = "select count(*) as count from OBackupLog";
     }
     @SuppressWarnings("unchecked")
-    List<ODocument> execute = (List<ODocument>) server.getSystemDatabase().execute(iArgument -> iArgument, query, uuid);
-    assertThat(execute.get(0).<Long>field("count")).isEqualTo(expected);
+    List<OResult> execute = (List<OResult>) server.getSystemDatabase()
+        .execute(iArgument -> iArgument.stream().collect(Collectors.toList()), query, uuid);
+    assertThat(execute.get(0).<Long>getProperty("count")).isEqualTo(expected);
   }
 
   private void checkSameUnitUids(Collection<ODocument> list) {

@@ -3,8 +3,8 @@ package com.orientechnologies.security.auditing;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.security.AbstractSecurityTest;
 import org.junit.AfterClass;
@@ -14,6 +14,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -101,8 +102,8 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
     }
     String query = "select from OAuditingLog where database = ? and note = ?";
 
-    List<ODocument> result = (List<ODocument>) server.getSystemDatabase()
-        .execute(null, query, TESTDB, "I created a class: TestClass");
+    List<OResult> result = (List<OResult>) server.getSystemDatabase()
+        .execute((res) -> res.stream().collect(Collectors.toList()), query, TESTDB, "I created a class: TestClass");
 
     assertThat(result).isNotNull();
 
@@ -116,7 +117,7 @@ public class SystemDbAuditingTest extends AbstractSecurityTest {
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    result = (List<ODocument>) server.getSystemDatabase().execute(null, query, TESTDB, "I dropped a class: TestClass");
+    result = (List<OResult>) server.getSystemDatabase().execute((res) -> res.stream().collect(Collectors.toList()), query, TESTDB, "I dropped a class: TestClass");
 
     assertThat(result).isNotNull();
 
