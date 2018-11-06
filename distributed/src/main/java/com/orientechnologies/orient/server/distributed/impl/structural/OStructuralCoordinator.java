@@ -4,6 +4,8 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.server.distributed.impl.structural.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,11 +48,11 @@ public class OStructuralCoordinator implements AutoCloseable {
 
   public OStructuralRequestContext sendOperation(OStructuralSubmitRequest submitRequest, OStructuralNodeRequest nodeRequest,
       OStructuralResponseHandler handler) {
+    List<OStructuralDistributedMember> members = new ArrayList<>(this.members.values());
     OLogId id = log(nodeRequest);
-    OStructuralRequestContext context = new OStructuralRequestContext(this, submitRequest, nodeRequest, members.values(), handler,
-        id);
+    OStructuralRequestContext context = new OStructuralRequestContext(this, submitRequest, nodeRequest, members, handler, id);
     contexts.put(id, context);
-    for (OStructuralDistributedMember member : members.values()) {
+    for (OStructuralDistributedMember member : members) {
       member.sendRequest(id, nodeRequest);
     }
     //Get the timeout from the configuration
