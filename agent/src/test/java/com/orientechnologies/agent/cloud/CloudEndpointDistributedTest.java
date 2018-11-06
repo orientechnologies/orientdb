@@ -86,11 +86,11 @@ public class CloudEndpointDistributedTest extends AbstractEnterpriseServerCluste
       connections.getConnections().forEach((c) -> {
         assertThat(c.getConnectionId()).isNotNull();
         assertThat(c.getSince()).isNotNull();
-        assertThat(c.getCommandDetail()).isNotNull();
+//        assertThat(c.getCommandDetail()).isNotNull();
         assertThat(c.getCommandInfo()).isNotNull();
         assertThat(c.getProtocolType()).isNotNull();
         assertThat(c.getProtocolVersion()).isNotNull();
-        assertThat(c.getLastCommandDetail()).isNotNull();
+//        assertThat(c.getLastCommandDetail()).isNotNull();
         assertThat(c.getLastCommandInfo()).isNotNull();
         assertThat(c.getLastCommandOn()).isNotNull();
         assertThat(c.getRemoteAddress()).isNotNull();
