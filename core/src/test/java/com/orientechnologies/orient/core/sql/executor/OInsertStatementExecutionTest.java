@@ -9,10 +9,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 
@@ -351,8 +348,8 @@ public class OInsertStatementExecutionTest {
     String className = "testNestedInsert";
     db.getMetadata().getSchema().createClass(className);
 
-    OResultSet result = db
-        .command("insert into " + className + " set name = 'parent', children = (INSERT INTO " + className + " SET name = 'child')");
+    OResultSet result = db.command(
+        "insert into " + className + " set name = 'parent', children = (INSERT INTO " + className + " SET name = 'child')");
 
     result.close();
 
@@ -365,6 +362,29 @@ public class OInsertStatementExecutionTest {
         Assert.assertEquals(1, ((Collection) item.getProperty("children")).size());
       }
     }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testLinkMapWithSubqueries() {
+    String className = "testLinkMapWithSubqueries";
+    String itemclassName = "testLinkMapWithSubqueriesTheItem";
+
+    db.command("CREATE CLASS " + className);
+    db.command("CREATE CLASS " + itemclassName);
+    db.command("CREATE PROPERTY " + className + ".mymap LINKMAP " + itemclassName);
+
+    db.command("INSERT INTO " + itemclassName + " (name) VALUES ('test')");
+    db.command("INSERT INTO " + className + " (mymap) VALUES ({'A-1': (SELECT FROM " + itemclassName + " WHERE name = 'test')})");
+
+    OResultSet result = db.query("SELECT FROM " + className);
+
+    OResult item = result.next();
+    Map theMap = item.getProperty("mymap");
+    Assert.assertEquals(1, theMap.size());
+    Assert.assertNotNull(theMap.get("A-1"));
+
     Assert.assertFalse(result.hasNext());
     result.close();
   }

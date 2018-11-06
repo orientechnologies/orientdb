@@ -52,6 +52,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -2873,17 +2874,43 @@ public class ODocument extends ORecordAbstract
           convertToEmbeddedType(prop);
           continue;
         }
-        if (linkedType == null)
-          continue;
         final ODocumentEntry entry = _fields.get(prop.getName());
-        if (entry == null)
+        if (entry == null) {
           continue;
-        if (!entry.created && !entry.changed)
+        }
+        if (!entry.created && !entry.changed) {
           continue;
+        }
         Object value = entry.value;
-        if (value == null)
+        if (value == null) {
           continue;
+        }
         try {
+          if (type == OType.LINKMAP) {
+            if (entry.value instanceof Map) {
+              Map<String, Object> map = (Map) entry.value;
+              Map newMap = new ORecordLazyMap(this);
+              boolean changed = false;
+              for (Entry<String, Object> stringObjectEntry : map.entrySet()) {
+                Object val = stringObjectEntry.getValue();
+                if (OMultiValue.isMultiValue(val) && OMultiValue.getSize(val) == 1) {
+                  val = OMultiValue.getFirstValue(val);
+                  if (val instanceof OResult) {
+                    val = ((OResult) val).getIdentity().orElse(null);
+                  }
+                  changed = true;
+                }
+                newMap.put(stringObjectEntry.getKey(), val);
+              }
+              if (changed) {
+                entry.value = newMap;
+              }
+            }
+          }
+
+          if (linkedType == null)
+            continue;
+
           if (type == OType.EMBEDDEDLIST) {
             OTrackedList<Object> list = new OTrackedList<>(this);
             Collection<Object> values = (Collection<Object>) value;
@@ -3323,9 +3350,10 @@ public class ODocument extends ORecordAbstract
       if (entry != null && entry.exist()) {
         if (entry.type == null || entry.type != prop.getType()) {
           boolean preChanged = entry.changed;
-          boolean preCreated = entry.created;;
+          boolean preCreated = entry.created;
+          ;
           field(prop.getName(), entry.value, prop.getType());
-          if(_recordId.isNew()){
+          if (_recordId.isNew()) {
             entry.changed = preChanged;
             entry.created = preCreated;
           }
