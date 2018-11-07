@@ -23,7 +23,6 @@ public class ODistributedLockManagerImpl implements ODistributedLockManager {
 
   private void unlock(OLockGuard guard) {
     Queue<OWaitingTracker> result = locks.get(guard.getKey());
-    System.out.println("unlock:" + guard.getKey().toString());
     assert result != null : guard.getKey().toString();
     OWaitingTracker waiting = result.poll();
     if (waiting != null) {

@@ -45,7 +45,6 @@ public class OPersistentOperationalLogIterator implements Iterator<OOperationLog
       loadNext();
     }
     if (nextEntry == null) {
-      System.out.println(nextIdToLoad);
       throw new NoSuchElementException();
     }
     OOperationLogEntry result = nextEntry;
