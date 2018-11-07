@@ -877,7 +877,7 @@ public class OSelectExecutionPlanner {
       if (!found) {
         OProjectionItem newItem = new OProjectionItem(-1);
         newItem.setExpression(exp);
-        OIdentifier groupByAlias = new OIdentifier("_$$$GROUP_BY_ALIAS$$$_" + i);
+        OIdentifier groupByAlias = new OIdentifier("_$$$GROUP_BY_ALIAS$$$_" + (i++));
         newItem.setAlias(groupByAlias);
         if (info.preAggregateProjection == null) {
           info.preAggregateProjection = new OProjection(-1);
