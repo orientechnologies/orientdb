@@ -9,12 +9,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class OJson extends SimpleNode {
@@ -74,29 +69,30 @@ public class OJson extends SimpleNode {
 
     return doc;
   }
-  
+
   private ODocument toDocument(OResult source, OCommandContext ctx, String className){
     ODocument retDoc = new ODocument(className);
     for (OJsonItem item : items) {
       String name = item.getLeftValue();
       if (name == null || ODocumentHelper.getReservedAttributes().contains(name.toLowerCase(Locale.ENGLISH))) {
         continue;
-      }        
+      }
       Object value = item.right.execute(source, ctx);
       retDoc.field(name, value);
     }
     return retDoc;
   }
-  
+
   /**
    * choosing return type is based on existence of @class field in JSON
    * @param source
    * @param ctx
-   * @return 
+   * @return
    */
   public Object toObjectDetermineType(OResult source, OCommandContext ctx){
     String className = getClassNameForDocument(ctx);
-    if (className != null){
+    Object type = source == null ? null : source.getProperty("@type");
+    if (className != null || (type != null && "d".equalsIgnoreCase(String.valueOf(type)))) {
       return toDocument(source, ctx, className);
     }
     else{
