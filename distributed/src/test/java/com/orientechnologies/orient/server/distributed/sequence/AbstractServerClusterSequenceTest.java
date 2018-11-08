@@ -31,7 +31,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
 
   @Override
   public String getDatabaseName() {
-    return "distributed";
+    return getClass().getSimpleName();
   }
 
   protected abstract String getDatabaseURL(ServerRun server);

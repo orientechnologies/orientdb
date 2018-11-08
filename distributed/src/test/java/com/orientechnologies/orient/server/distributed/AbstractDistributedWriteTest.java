@@ -137,7 +137,7 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
   }
 
   public String getDatabaseName() {
-    return "distributed";
+    return getClass().getSimpleName();
   }
 
   @Override

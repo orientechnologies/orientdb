@@ -27,7 +27,7 @@ public abstract class AbstractServerClusterMergeUpdateTest  extends AbstractServ
   protected abstract String getDatabaseURL(ServerRun server);
 
   public String getDatabaseName() {
-    return "distributed";
+    return getClass().getSimpleName();
   }
 
   public void executeTest() throws Exception {
