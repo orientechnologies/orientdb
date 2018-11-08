@@ -358,7 +358,11 @@ public class ODocument extends ORecordAbstract
    * @param iPropertyValue The property value
    */
   public void setProperty(final String iFieldName, Object iPropertyValue) {
-    setProperty(iFieldName, iPropertyValue, OCommonConst.EMPTY_TYPES_ARRAY);
+    if (iPropertyValue instanceof OElement && !((OElement) iPropertyValue).getSchemaType().isPresent() && !((OElement) iPropertyValue).getIdentity().isValid()) {
+      setProperty(iFieldName, iPropertyValue, OType.EMBEDDED);
+    } else {
+      setProperty(iFieldName, iPropertyValue, OCommonConst.EMPTY_TYPES_ARRAY);
+    }
   }
 
   /**
