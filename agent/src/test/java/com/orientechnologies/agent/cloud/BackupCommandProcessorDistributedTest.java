@@ -8,6 +8,8 @@ import com.orientechnologies.agent.services.backup.log.OBackupLogType;
 import com.orientechnologies.agent.cloud.processor.backup.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.AbstractEnterpriseServerClusterTest;
+import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orientdb.cloud.protocol.Command;
 import com.orientechnologies.orientdb.cloud.protocol.CommandResponse;
@@ -530,6 +532,33 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
       });
       latch.await();
 
+      CountDownLatch propagated = new CountDownLatch(1);
+
+      secondServer.getServerInstance().getDistributedManager()
+          .registerLifecycleListener(new ODistributedLifecycleListener() {
+            @Override
+            public boolean onNodeJoining(String iNode) {
+              return false;
+            }
+
+            @Override
+            public void onNodeJoined(String iNode) {
+
+            }
+
+            @Override
+            public void onNodeLeft(String iNode) {
+
+            }
+
+            @Override
+            public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
+
+              if(iNode.equalsIgnoreCase(secondServer.getNodeName()) && iDatabaseName.equalsIgnoreCase(NEW_DB_NAME)) {
+                propagated.countDown();
+              }
+            }
+          });
       CountDownLatch latch1 = new CountDownLatch(1);
       task.registerListener((cfg1, log) -> {
         if (OBackupLogType.RESTORE_FINISHED.equals(log.getType()) || OBackupLogType.RESTORE_ERROR.equals(log.getType())) {
@@ -554,8 +583,10 @@ public class BackupCommandProcessorDistributedTest extends AbstractEnterpriseSer
 
       latch1.await();
 
-      assertThat(serverInstance.get(0).getServerInstance().existsDatabase(NEW_DB_NAME)).isTrue();
-      assertThat(serverInstance.get(1).getServerInstance().existsDatabase(NEW_DB_NAME)).isTrue();
+      propagated.await();
+
+      assertThat(firstServer.getServerInstance().existsDatabase(NEW_DB_NAME)).isTrue();
+      assertThat(secondServer.getServerInstance().existsDatabase(NEW_DB_NAME)).isTrue();
       return null;
     });
 
