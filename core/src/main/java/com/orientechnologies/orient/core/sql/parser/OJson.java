@@ -84,15 +84,15 @@ public class OJson extends SimpleNode {
   }
 
   /**
-   * choosing return type is based on existence of @class field in JSON
+   * choosing return type is based on existence of @class and @type field in JSON
    * @param source
    * @param ctx
    * @return
    */
   public Object toObjectDetermineType(OResult source, OCommandContext ctx){
     String className = getClassNameForDocument(ctx);
-    Object type = source == null ? null : source.getProperty("@type");
-    if (className != null || (type != null && "d".equalsIgnoreCase(String.valueOf(type)))) {
+    String type =  getTypeForDocument(ctx);
+    if (className != null || (type != null && "d".equalsIgnoreCase(type))) {
       return toDocument(source, ctx, className);
     }
     else{
@@ -132,6 +132,16 @@ public class OJson extends SimpleNode {
     for (OJsonItem item : items) {
       String left = item.getLeftValue();
       if (left != null && left.toLowerCase(Locale.ENGLISH).equals("@class")) {
+        return "" + item.right.execute((OResult) null, ctx);
+      }
+    }
+    return null;
+  }
+
+  private String getTypeForDocument(OCommandContext ctx) {
+    for (OJsonItem item : items) {
+      String left = item.getLeftValue();
+      if (left != null && left.toLowerCase(Locale.ENGLISH).equals("@type")) {
         return "" + item.right.execute((OResult) null, ctx);
       }
     }
