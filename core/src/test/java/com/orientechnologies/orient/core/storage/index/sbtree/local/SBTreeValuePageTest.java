@@ -19,7 +19,7 @@ import java.util.Random;
 public class SBTreeValuePageTest {
   @Test
   public void fillPageDataTest() throws Exception {
-    OByteBufferPool bufferPool = OByteBufferPool.instance();
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     ByteBuffer bufferOne = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointerOne = new OCachePointer(bufferOne, bufferPool, 0, 0);
@@ -69,7 +69,7 @@ public class SBTreeValuePageTest {
 
   @Test
   public void testFreeListPointer() throws Exception {
-    OByteBufferPool bufferPool = OByteBufferPool.instance();
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);

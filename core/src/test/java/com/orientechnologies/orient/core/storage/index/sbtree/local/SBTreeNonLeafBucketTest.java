@@ -24,7 +24,7 @@ import java.util.TreeSet;
 public class SBTreeNonLeafBucketTest {
   @Test
   public void testInitialization() throws Exception {
-    final OByteBufferPool bufferPool = OByteBufferPool.instance();
+    final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     final ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
@@ -59,7 +59,7 @@ public class SBTreeNonLeafBucketTest {
       keys.add(random.nextLong());
     }
 
-    final OByteBufferPool bufferPool = OByteBufferPool.instance();
+    final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     final ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
@@ -125,7 +125,7 @@ public class SBTreeNonLeafBucketTest {
       keys.add(random.nextLong());
     }
 
-    final OByteBufferPool bufferPool = OByteBufferPool.instance();
+    final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     final ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
