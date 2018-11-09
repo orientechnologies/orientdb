@@ -20,6 +20,7 @@
 package com.orientechnologies.common.directmemory;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 import java.nio.ByteBuffer;
@@ -55,14 +56,22 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
   /**
    * @return Singleton instance
+   * @param contextConfiguration
    */
-  public static OByteBufferPool instance() {
+  public static OByteBufferPool instance(OContextConfiguration contextConfiguration) {
     final OByteBufferPool instance = INSTANCE_HOLDER.get();
     if (instance != null) {
       return instance;
     }
 
-    final OByteBufferPool newInstance = new OByteBufferPool(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
+    int bufferSize;
+    if (contextConfiguration != null) {
+      bufferSize = contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE);
+    } else {
+      bufferSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger();
+    }
+
+    final OByteBufferPool newInstance = new OByteBufferPool(bufferSize  * 1024);
     if (INSTANCE_HOLDER.compareAndSet(null, newInstance)) {
       return newInstance;
     }

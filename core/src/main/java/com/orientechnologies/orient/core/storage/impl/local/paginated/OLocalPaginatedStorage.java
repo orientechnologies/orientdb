@@ -613,7 +613,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         .getValueAsBoolean(OGlobalConfiguration.DISK_CACHE_PRINT_FILE_REMOVE_STATISTICS);
 
     final OBinarySerializerFactory binarySerializerFactory = getComponentsFactory().binarySerializerFactory;
-    final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(), writeAheadLog,
+    final OWOWCache wowCache = new OWOWCache(pageSize, OByteBufferPool.instance(contextConfiguration), writeAheadLog,
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL),
         contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT), writeCacheSize, diskCacheSize,
         getStoragePath(), getName(), binarySerializerFactory.getObjectSerializer(OType.STRING), files, getId(),
