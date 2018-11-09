@@ -125,9 +125,9 @@ public class OLiveQueryHook {
   }
 
   public static void removePendingDatabaseOps(ODatabase iDatabase) {
-    if (iDatabase.isClosed() || Boolean.FALSE.equals(iDatabase.getConfiguration().getValue(QUERY_LIVE_SUPPORT)))
-      return;
     try {
+      if (iDatabase.isClosed() || Boolean.FALSE.equals(iDatabase.getConfiguration().getValue(QUERY_LIVE_SUPPORT)))
+        return;
       OLiveQueryOps ops = getOpsReference((ODatabaseInternal) iDatabase);
       synchronized (ops.pendingOps) {
         ops.pendingOps.remove(iDatabase);
