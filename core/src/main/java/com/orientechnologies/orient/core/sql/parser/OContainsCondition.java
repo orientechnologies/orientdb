@@ -149,7 +149,9 @@ public class OContainsCondition extends OBooleanExpression {
         } else if (item instanceof Map) {
           OResultInternal res = new OResultInternal();
           ((Map<String, Object>) item).entrySet().forEach(x -> res.setProperty(x.getKey(), x.getValue()));
-          return condition.evaluate(res, ctx);
+          if (condition.evaluate(res, ctx)) {
+            return true;
+          }
         }
       }
       return false;
