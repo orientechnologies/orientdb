@@ -489,8 +489,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       connection.statsUpdate();
       OServerPluginHelper.invokeHandlerCallbackOnBeforeClientRequest(server, connection, (byte) requestType);
     } catch (RuntimeException e) {
-      if (connection != null)
+      if (connection != null) {
+        connection.endOperation();
         server.getClientConnectionManager().disconnect(connection);
+      }
       ODatabaseRecordThreadLocal.instance().remove();
       throw e;
     }
