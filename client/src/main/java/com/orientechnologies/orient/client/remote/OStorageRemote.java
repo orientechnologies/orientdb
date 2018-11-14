@@ -192,6 +192,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CLIENT_CONNECTION_FETCH_HOST_LIST;
+
 /**
  * This object is bound to each remote ODatabase instances.
  */
@@ -1324,6 +1326,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy, O
   public void updateClusterConfiguration(final String iConnectedURL, final byte[] obj) {
     if (obj == null)
       return;
+    if (!clientConfiguration.getValueAsBoolean(CLIENT_CONNECTION_FETCH_HOST_LIST)) {
+      return;
+    }
 
     // TEMPORARY FIX: DISTRIBUTED MODE DOESN'T SUPPORT TREE BONSAI, KEEP ALWAYS EMBEDDED RIDS
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
