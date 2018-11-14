@@ -94,16 +94,16 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
       }
     }
     if (statement.getTarget().getItem().getIdentifier() == null) {
-      throw new OCommandExecutionException("Live queries can only be edecuted against a Class" + statement);
+      throw new OCommandExecutionException("Live queries can only be edecuted against a Class " + statement);
     }
     if (statement.getOrderBy() != null) {
-      throw new OCommandExecutionException("Live queries do not support ORDER BY" + statement);
+      throw new OCommandExecutionException("Live queries do not support ORDER BY " + statement);
     }
     if (statement.getGroupBy() != null) {
-      throw new OCommandExecutionException("Live queries do not support GROUP BY" + statement);
+      throw new OCommandExecutionException("Live queries do not support GROUP BY " + statement);
     }
     if (statement.getSkip() != null || statement.getLimit() != null) {
-      throw new OCommandExecutionException("Live queries do not support SKIP/LIMIT" + statement);
+      throw new OCommandExecutionException("Live queries do not support SKIP/LIMIT " + statement);
     }
   }
 

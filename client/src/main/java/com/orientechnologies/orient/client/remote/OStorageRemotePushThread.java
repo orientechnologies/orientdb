@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
@@ -17,13 +18,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class OStorageRemotePushThread extends Thread {
 
-  private final    ORemotePushHandler                pushHandler;
-  private final    String                            host;
-  private final    int                               retryDelay;
-  private final    long                              requestTimeout;
-  private          OChannelBinary                    network;
-  private          BlockingQueue<OSubscribeResponse> blockingQueue = new SynchronousQueue<>();
-  private volatile OBinaryRequest                    currentRequest;
+  private final    ORemotePushHandler    pushHandler;
+  private final    String                host;
+  private final    int                   retryDelay;
+  private final    long                  requestTimeout;
+  private          OChannelBinary        network;
+  private          BlockingQueue<Object> blockingQueue = new SynchronousQueue<>();
+  private volatile OBinaryRequest        currentRequest;
 
   public OStorageRemotePushThread(ORemotePushHandler storage, String host, int retryDelay, long requestTimeout) {
     setDaemon(true);
@@ -32,6 +33,14 @@ public class OStorageRemotePushThread extends Thread {
     network = storage.getNetwork(this.host);
     this.retryDelay = retryDelay;
     this.requestTimeout = requestTimeout;
+  }
+
+  public void handleException(Throwable throwable) {
+    try {
+      blockingQueue.put(throwable);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   @Override
@@ -46,12 +55,13 @@ public class OStorageRemotePushThread extends Thread {
           byte messageId = network.readByte();
           OBinaryResponse response = currentRequest.createResponse();
           response.read(network, null);
-          blockingQueue.put((OSubscribeResponse) response);
+          blockingQueue.put(response);
         } else if (res == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
           int currentSessionId = network.readInt();
           byte[] token = network.readBytes();
+          byte messageId = network.readByte();
           //TODO move handle status somewhere else
-          ((OChannelBinaryAsynchClient) network).handleStatus(res, currentSessionId);
+          ((OChannelBinaryAsynchClient) network).handleStatus(res, currentSessionId, this::handleException);
         } else {
           byte push = network.readByte();
           OBinaryPushRequest request = pushHandler.createPush(push);
@@ -71,7 +81,7 @@ public class OStorageRemotePushThread extends Thread {
           }
 
         }
-      } catch (IOException e) {
+      } catch (IOException | OException e) {
         pushHandler.onPushDisconnect(this.network, e);
         while (!currentThread().isInterrupted()) {
           try {
@@ -107,10 +117,14 @@ public class OStorageRemotePushThread extends Thread {
         this.currentRequest.write(network, null);
         network.flush();
       }
-      OSubscribeResponse poll = blockingQueue.poll(requestTimeout, TimeUnit.MILLISECONDS);
+      Object poll = blockingQueue.poll(requestTimeout, TimeUnit.MILLISECONDS);
       if (poll == null)
         return null;
-      return (T) poll.getResponse();
+      if (poll instanceof OSubscribeResponse) {
+        return (T) ((OSubscribeResponse) poll).getResponse();
+      } else if (poll instanceof RuntimeException) {
+        throw (RuntimeException) poll;
+      }
     } catch (IOException e) {
       OLogManager.instance().warn(this, "Exception on subscribe", e);
     } catch (InterruptedException e) {

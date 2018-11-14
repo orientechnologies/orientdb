@@ -262,7 +262,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     getLockWrite().unlock();
   }
 
-  public int handleStatus(final byte iResult, final int iClientTxId) throws IOException {
+  public interface ExceptionHandler {
+    void onException(Throwable ex);
+  }
+
+  public int handleStatus(final byte iResult, final int iClientTxId, ExceptionHandler exceptionHandler) throws IOException {
     if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_OK || iResult == OChannelBinaryProtocol.PUSH_DATA) {
       return iClientTxId;
     } else if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
@@ -271,23 +275,31 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       response.read(this, null);
       byte[] serializedException = response.getVerbose();
       Exception previous = null;
-      if (serializedException != null && serializedException.length > 0)
-        throwSerializedException(serializedException);
+      if (serializedException != null && serializedException.length > 0) {
+        Throwable deserializeException = deserializeException(serializedException);
+        exceptionHandler.onException(deserializeException);
+      }
 
       for (Map.Entry<String, String> entry : response.getMessages().entrySet()) {
         previous = createException(entry.getKey(), entry.getValue(), previous);
       }
 
       if (previous != null) {
-        throw new RuntimeException(previous);
+        exceptionHandler.onException(new RuntimeException(previous));
       } else
-        throw new ONetworkProtocolException("Network response error");
+        exceptionHandler.onException(new ONetworkProtocolException("Network response error"));
 
     } else {
       // PROTOCOL ERROR
       // close();
-      throw new ONetworkProtocolException("Error on reading response from the server");
+      exceptionHandler.onException(new ONetworkProtocolException("Error on reading response from the server"));
     }
+
+    return iClientTxId;
+  }
+
+  public int handleStatus(final byte iResult, final int iClientTxId) throws IOException {
+    return handleStatus(iResult, iClientTxId, this::handleException);
   }
 
   private void setReadResponseTimeout() throws SocketException {
@@ -296,7 +308,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       s.setSoTimeout(getSocketTimeout());
   }
 
-  private void throwSerializedException(final byte[] serializedException) throws IOException {
+  private Throwable deserializeException(final byte[] serializedException) throws IOException {
     final OMemoryInputStream inputStream = new OMemoryInputStream(serializedException);
     final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
 
@@ -309,7 +321,10 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     }
 
     objectInputStream.close();
+    return (Throwable) throwable;
+  }
 
+  public void handleException(Throwable throwable) {
     if (throwable instanceof OException) {
       try {
         final Class<? extends OException> cls = (Class<? extends OException>) throwable.getClass();
@@ -324,14 +339,19 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       }
     }
 
+    if (throwable instanceof RuntimeException) {
+      throw (RuntimeException) throwable;
+    }
     if (throwable instanceof Throwable) {
       throw new OResponseProcessingException("Exception during response processing", (Throwable) throwable);
-    }
-    // WRAP IT
-    else
+    } else {
+      // WRAP IT
       OLogManager.instance().error(this,
           "Error during exception serialization, serialized exception is not Throwable, exception type is " + (throwable != null ?
-              throwable.getClass().getName() : "null"), null);
+              throwable.getClass().getName() :
+              "null"), null);
+    }
+
   }
 
   public void beginRequest(final byte iCommand, final OStorageRemoteSession session) throws IOException {
