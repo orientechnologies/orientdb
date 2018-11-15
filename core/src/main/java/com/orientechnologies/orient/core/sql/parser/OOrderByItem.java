@@ -3,24 +3,26 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
+import java.util.Locale;
 import java.util.Map;
 
 /**
  * Created by luigidellaquila on 06/02/15.
  */
 public class OOrderByItem {
-  public static final String ASC  = "ASC";
-  public static final String DESC = "DESC";
-  protected String    alias;
-  protected OModifier modifier;
-  protected String    recordAttr;
-  protected ORid      rid;
-  protected String type = ASC;
-  protected OExpression collate;
+  public static final String      ASC  = "ASC";
+  public static final String      DESC = "DESC";
+  protected           String      alias;
+  protected           OModifier   modifier;
+  protected           String      recordAttr;
+  protected           ORid        rid;
+  protected           String      type = ASC;
+  protected           OExpression collate;
 
   //calculated at run time
   private OCollate collateStrategy;
@@ -107,6 +109,15 @@ public class OOrderByItem {
       }
       if (collateVal != null) {
         collateStrategy = OSQLEngine.getCollate(String.valueOf(collateVal));
+        if (collateStrategy == null) {
+          collateStrategy = OSQLEngine.getCollate(String.valueOf(collateVal).toUpperCase(Locale.ENGLISH));
+        }
+        if (collateStrategy == null) {
+          collateStrategy = OSQLEngine.getCollate(String.valueOf(collateVal).toLowerCase(Locale.ENGLISH));
+        }
+        if (collateStrategy == null) {
+          throw new OCommandExecutionException("Invalid collate for ORDER BY: " + collateVal);
+        }
       }
     }
 
