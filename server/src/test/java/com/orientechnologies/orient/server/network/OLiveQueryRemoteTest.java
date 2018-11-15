@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -16,7 +15,6 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,21 +72,18 @@ public class OLiveQueryRemoteTest {
     public void onCreate(ODatabaseDocument database, OResult data) {
       ops.add(data);
       latch.countDown();
-
     }
 
     @Override
     public void onUpdate(ODatabaseDocument database, OResult before, OResult after) {
       ops.add(after);
       latch.countDown();
-
     }
 
     @Override
     public void onDelete(ODatabaseDocument database, OResult data) {
       ops.add(data);
       latch.countDown();
-
     }
 
     @Override
@@ -102,16 +97,15 @@ public class OLiveQueryRemoteTest {
     }
   }
 
-  @Test(expected = OCommandExecutionException.class)
+  @Test
   public void testRidSelect() throws InterruptedException {
     MyLiveQueryListener listener = new MyLiveQueryListener(new CountDownLatch(1));
     OVertex item = database.newVertex();
     item.save();
     OLiveQueryMonitor live = database.live("LIVE SELECT FROM " + item.getIdentity(), listener);
-    //TODO: this should be possible
-//    item.setProperty("x", "z");
-//    item.save();
-//    Assert.assertTrue(listener.ended.await(1, TimeUnit.MINUTES));
+    item.setProperty("x", "z");
+    item.save();
+    Assert.assertTrue(listener.latch.await(10, TimeUnit.SECONDS));
   }
 
   @Test
