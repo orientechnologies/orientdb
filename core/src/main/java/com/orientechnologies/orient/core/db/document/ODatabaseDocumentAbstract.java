@@ -1515,7 +1515,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public OVertex newVertex(OClass type) {
     if (type == null) {
-      return newVertex("E");
+      return newVertex("V");
     }
     return newVertex(type.getName());
   }
