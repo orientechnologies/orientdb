@@ -43,7 +43,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public OStorage fullSync(String dbName, String backupPath, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
-    OAbstractPaginatedStorage storage;
+    OAbstractPaginatedStorage storage=null;
     synchronized (this) {
 
       try {
@@ -59,6 +59,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         embedded = internalCreate(config, storage);
         storages.put(dbName, storage);
       } catch (Exception e) {
+        if (storage != null) {
+          storage.delete();
+        }
+
         throw OException.wrapException(new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
       }
     }
