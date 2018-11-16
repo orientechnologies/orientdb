@@ -3,7 +3,9 @@ package com.orientechnologies.orient.core.db.document;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendentOrder;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -136,7 +138,8 @@ public class ODatabaseDocumentTxTest {
 
   @Test
   public void testDocFromJsonEmbedded() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory: testDocFromJsonEmbedded_" + ODatabaseDocumentTxTest.class.getSimpleName());
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(
+        "memory: testDocFromJsonEmbedded_" + ODatabaseDocumentTxTest.class.getSimpleName());
     db.create();
     try {
       OSchemaProxy schema = db.getMetadata().getSchema();
@@ -149,13 +152,10 @@ public class ODatabaseDocumentTxTest {
 
       ODocument doc = new ODocument("Class1");
 
-      doc.fromJSON("{\n" + "    \"account\": \"#25:0\",\n" + "    "
-          + "\"meta\": {"
-          + "   \"created\": \"2016-10-03T21:10:21.77-07:00\",\n" + "        \"ip\": \"0:0:0:0:0:0:0:1\",\n"
-          + "   \"contentType\": \"application/x-www-form-urlencoded\","
-          + "   \"userAgent\": \"PostmanRuntime/2.5.2\""
-          + "},"
-          + "\"data\": \"firstName=Jessica&lastName=Smith\"\n" + "}");
+      doc.fromJSON(
+          "{\n" + "    \"account\": \"#25:0\",\n" + "    " + "\"meta\": {" + "   \"created\": \"2016-10-03T21:10:21.77-07:00\",\n"
+              + "        \"ip\": \"0:0:0:0:0:0:0:1\",\n" + "   \"contentType\": \"application/x-www-form-urlencoded\","
+              + "   \"userAgent\": \"PostmanRuntime/2.5.2\"" + "}," + "\"data\": \"firstName=Jessica&lastName=Smith\"\n" + "}");
 
       db.save(doc);
 
@@ -173,4 +173,21 @@ public class ODatabaseDocumentTxTest {
     }
   }
 
+  @Test
+  public void selectDescTest() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:foo");
+    db.create();
+    String className = "bar";
+    OSchema schema = db.getMetadata().getSchema();
+    schema.createClass(className, 1, schema.getClass(OClass.VERTEX_CLASS_NAME));
+    db.begin();
+
+    ODocument document = new ODocument(className);
+    document.save();
+    ORecordIteratorClassDescendentOrder<ODocument> reverseIterator = new ORecordIteratorClassDescendentOrder<ODocument>(db, db,
+        className, true);
+    Assert.assertTrue(reverseIterator.hasNext());
+    Assert.assertEquals(document, reverseIterator.next());
+    db.close();
+  }
 }
