@@ -4,9 +4,9 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendentOrder;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -455,4 +455,22 @@ public class ODatabaseDocumentTxTest {
     db.newEdge(doc1, doc3, "testEdge");
   }
 
+
+  @Test
+  public void selectDescTest() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:foo");
+    db.create();
+    String className = "bar";
+    OSchema schema = db.getMetadata().getSchema();
+    schema.createClass(className, 1, schema.getClass(OClass.VERTEX_CLASS_NAME));
+    db.begin();
+
+    ODocument document = new ODocument(className);
+    document.save();
+    ORecordIteratorClassDescendentOrder<ODocument> reverseIterator = new ORecordIteratorClassDescendentOrder<ODocument>(db, db,
+        className, true);
+    Assert.assertTrue(reverseIterator.hasNext());
+    Assert.assertEquals(document, reverseIterator.next());
+    db.close();
+  }
 }
