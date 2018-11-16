@@ -359,12 +359,12 @@ public class OMathExpression extends SimpleNode {
 
       @Override
       public Number apply(Float left, Float right) {
-        return null;
+        return apply(left.longValue(), right.longValue());
       }
 
       @Override
       public Number apply(Double left, Double right) {
-        return null;
+        return apply(left.longValue(), right.longValue());
       }
 
       @Override
