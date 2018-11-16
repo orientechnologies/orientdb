@@ -14,13 +14,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.math.BigDecimal;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Deque;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class OMathExpression extends SimpleNode {
@@ -365,12 +359,12 @@ public class OMathExpression extends SimpleNode {
 
       @Override
       public Number apply(Float left, Float right) {
-        return null;
+        return apply(left.longValue(), right.longValue());
       }
 
       @Override
       public Number apply(Double left, Double right) {
-        return null;
+        return apply(left.longValue(), right.longValue());
       }
 
       @Override
