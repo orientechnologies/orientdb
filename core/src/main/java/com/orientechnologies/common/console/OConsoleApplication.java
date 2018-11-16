@@ -295,6 +295,7 @@ public class OConsoleApplication {
   }
 
   protected RESULT execute(String iCommand) {
+    iCommand = iCommand.replaceAll("\n", ";\n");
     iCommand = iCommand.trim();
 
     if (iCommand.length() == 0)
