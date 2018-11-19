@@ -181,6 +181,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
@@ -229,6 +230,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
@@ -1311,12 +1314,11 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
 
     //copy the result-set to make sure that the execution is successful
-    List<OResultInternal> rsCopy = new ArrayList<>(request.getRecordsPerPage());
-    int i = 0;
-    while (rs.hasNext() && i < request.getRecordsPerPage()) {
-      rsCopy.add((OResultInternal) rs.next());
-      i++;
+    Stream<OResult> stream = rs.stream();
+    if (database.getActiveQueries().containsKey(((OLocalResultSetLifecycleDecorator) rs).getQueryId())) {
+      stream = stream.limit(request.getRecordsPerPage());
     }
+    List<OResultInternal> rsCopy = stream.map((r) -> (OResultInternal) r).collect(Collectors.toList());
 
     boolean hasNext = rs.hasNext();
     boolean txChanges = false;
