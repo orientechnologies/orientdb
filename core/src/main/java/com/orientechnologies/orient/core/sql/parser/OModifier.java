@@ -16,7 +16,7 @@ import java.util.*;
 
 public class OModifier extends SimpleNode {
 
-  boolean squareBrackets = false;
+  boolean                    squareBrackets = false;
   OArrayRangeSelector        arrayRange;
   OOrBlock                   condition;
   OArraySingleValuesSelector arraySingleValues;
@@ -450,7 +450,7 @@ public class OModifier extends SimpleNode {
   public boolean isIndexChain(OCommandContext ctx, OClass clazz) {
     if (suffix != null && suffix.isBaseIdentifier()) {
       OProperty prop = clazz.getProperty(suffix.identifier.getStringValue());
-      if (prop.getAllIndexes().stream().anyMatch(idx -> idx.getDefinition().getFields().size() == 1)) {
+      if (prop != null && prop.getAllIndexes().stream().anyMatch(idx -> idx.getDefinition().getFields().size() == 1)) {
         if (next != null) {
           OClass linkedClazz = prop.getLinkedClass();
           return next.isIndexChain(ctx, linkedClazz);
