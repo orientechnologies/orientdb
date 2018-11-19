@@ -21,7 +21,7 @@ public class OSuffixIdentifier extends SimpleNode {
 
   protected OIdentifier      identifier;
   protected ORecordAttribute recordAttribute;
-  protected boolean star = false;
+  protected boolean          star = false;
 
   public OSuffixIdentifier(int id) {
     super(id);
@@ -62,7 +62,10 @@ public class OSuffixIdentifier extends SimpleNode {
     }
     if (identifier != null) {
       String varName = identifier.getStringValue();
-      if (ctx != null && ctx.getVariable(varName) != null) {
+      if (ctx != null && varName.equalsIgnoreCase("$parent")) {
+        return ctx.getParent();
+      }
+      if (varName.startsWith("$") && ctx != null && ctx.getVariable(varName) != null) {
         return ctx.getVariable(varName);
       }
 
@@ -77,7 +80,11 @@ public class OSuffixIdentifier extends SimpleNode {
         if (rec == null) {
           return null;
         }
-        return rec.getProperty(varName);
+        Object result = rec.getProperty(varName);
+        if (result == null && ctx != null) {
+          result = ctx.getVariable(varName);
+        }
+        return result;
       }
       return null;
     }
