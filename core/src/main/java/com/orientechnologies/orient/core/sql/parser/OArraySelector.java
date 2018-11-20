@@ -100,7 +100,8 @@ public class OArraySelector extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -120,7 +121,8 @@ public class OArraySelector extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = rid != null ? rid.hashCode() : 0;
     result = 31 * result + (inputParam != null ? inputParam.hashCode() : 0);
     result = 31 * result + (expression != null ? expression.hashCode() : 0);
@@ -159,7 +161,7 @@ public class OArraySelector extends SimpleNode {
       setValue((List) target, ((Number) idx).intValue(), value, ctx);
     } else if (target instanceof Map) {
       setValue((Map) target, idx, value, ctx);
-    } else if (target.getClass().isArray() && idx instanceof Number) {
+    } else if (target != null && target.getClass().isArray() && idx instanceof Number) {
       setArrayValue(target, ((Number) idx).intValue(), value, ctx);
     }
   }
