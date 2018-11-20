@@ -135,6 +135,8 @@ public class OCreateEdgeExecutionPlanner {
       result.chain(new InsertValuesStep(insertBody.getIdentifierList(), insertBody.getValueExpressions(), ctx, profilingEnabled));
     } else if (insertBody.getContent() != null) {
       result.chain(new UpdateContentStep(insertBody.getContent(), ctx, profilingEnabled));
+    } else if (insertBody.getContentInputParam() != null) {
+      result.chain(new UpdateContentStep(insertBody.getContentInputParam(), ctx, profilingEnabled));
     } else if (insertBody.getSetExpressions() != null) {
       List<OUpdateItem> items = new ArrayList<>();
       for (OInsertSetExpression exp : insertBody.getSetExpressions()) {

@@ -1821,7 +1821,13 @@ OInsertBody InsertBody():
                 )*
             )
             |
-            ( <CONTENT> jjtThis.content = Json() )
+            ( <CONTENT>
+                (
+                    jjtThis.content = Json()
+                    |
+                    jjtThis.contentInputParam = InputParameter()
+                )
+            )
          )
     )
     { return jjtThis; }

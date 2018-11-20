@@ -232,6 +232,38 @@ public class OInsertStatementExecutionTest {
   }
 
   @Test
+  public void testContentWithParam() {
+    String className = "testContentWithParam";
+    db.getMetadata().getSchema().createClass(className);
+
+    Map<String, Object> theContent = new HashMap<>();
+    theContent.put("name", "name1");
+    theContent.put("surname", "surname1");
+    Map<String, Object> params = new HashMap<>();
+    params.put("theContent", theContent);
+    OResultSet result = db.command("insert into " + className + " content :theContent", params);
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals("name1", item.getProperty("name"));
+    }
+    Assert.assertFalse(result.hasNext());
+
+    result = db.query("select from " + className);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals("name1", item.getProperty("name"));
+      Assert.assertEquals("surname1", item.getProperty("surname"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
   public void testLinkConversion() {
     String className1 = "testLinkConversion1";
     String className2 = "testLinkConversion2";
