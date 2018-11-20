@@ -3,12 +3,14 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.sql.parser.OInputParameter;
 import com.orientechnologies.orient.core.sql.parser.OJson;
 
 import java.util.Map;
@@ -18,12 +20,17 @@ import java.util.Optional;
  * Created by luigidellaquila on 09/08/16.
  */
 public class UpdateContentStep extends AbstractExecutionStep {
-  private final OJson json;
+  private OJson           json;
+  private OInputParameter inputParameter;
 
   public UpdateContentStep(OJson json, OCommandContext ctx, boolean profilingEnabled) {
     super(ctx, profilingEnabled);
     this.json = json;
+  }
 
+  public UpdateContentStep(OInputParameter inputParameter, OCommandContext ctx, boolean profilingEnabled) {
+    super(ctx, profilingEnabled);
+    this.inputParameter = inputParameter;
   }
 
   @Override
@@ -97,7 +104,18 @@ public class UpdateContentStep extends AbstractExecutionStep {
       }
     }
     ODocument doc = record.getRecord();
-    doc.merge(json.toDocument(record, ctx), false, false);
+    if (json != null) {
+      doc.merge(json.toDocument(record, ctx), false, false);
+    } else if (inputParameter != null) {
+      Object val = inputParameter.getValue(ctx.getInputParameters());
+      if (val instanceof OElement) {
+        doc.merge((ODocument) ((OElement) val).getRecord(), false, false);
+      } else if (val instanceof Map) {
+        doc.merge(new ODocument().fromMap((Map) val), false, false);
+      } else {
+        throw new OCommandExecutionException("Invalid value for UPDATE CONTENT: " + val);
+      }
+    }
     doc.merge(fieldsToPreserve, true, false);
 
     updated = true;
@@ -113,7 +131,11 @@ public class UpdateContentStep extends AbstractExecutionStep {
     result.append("+ UPDATE CONTENT\n");
     result.append(spaces);
     result.append("  ");
-    result.append(json);
+    if (json != null) {
+      result.append(json);
+    } else {
+      result.append(inputParameter);
+    }
     return result.toString();
   }
 }
