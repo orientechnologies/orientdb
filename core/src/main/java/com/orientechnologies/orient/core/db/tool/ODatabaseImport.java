@@ -1092,28 +1092,29 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     while (jsonReader.lastChar() != ']') {
       rid = importRecord();
 
+      total++;
       if (rid != null) {
         ++lastLapRecords;
         ++totalRecords;
 
         if (rid.getClusterId() != lastRid.getClusterId() || involvedClusters.isEmpty())
           involvedClusters.add(database.getClusterNameById(rid.getClusterId()));
-
-        final long now = System.currentTimeMillis();
-        if (now - last > IMPORT_RECORD_DUMP_LAP_EVERY_MS) {
-          final List<String> sortedClusters = new ArrayList<>(involvedClusters);
-          Collections.sort(sortedClusters);
-
-          listener.onMessage(String
-              .format("\n- Imported %,d records into clusters: %s. Total records imported so far: %,d (%,.2f/sec)", lastLapRecords,
-                  sortedClusters, totalRecords, (float) lastLapRecords * 1000 / (float) IMPORT_RECORD_DUMP_LAP_EVERY_MS));
-
-          // RESET LAP COUNTERS
-          last = now;
-          lastLapRecords = 0;
-          involvedClusters.clear();
-        }
         lastRid = rid;
+      }
+
+      final long now = System.currentTimeMillis();
+      if (now - last > IMPORT_RECORD_DUMP_LAP_EVERY_MS) {
+        final List<String> sortedClusters = new ArrayList<>(involvedClusters);
+        Collections.sort(sortedClusters);
+
+        listener.onMessage(String.format("\n- Imported %,d records into clusters: %s. "
+                + "Total JSON records imported so for %,d .Total records imported so far: %,d (%,.2f/sec)", lastLapRecords, total,
+            sortedClusters, totalRecords, (float) lastLapRecords * 1000 / (float) IMPORT_RECORD_DUMP_LAP_EVERY_MS));
+
+        // RESET LAP COUNTERS
+        last = now;
+        lastLapRecords = 0;
+        involvedClusters.clear();
       }
 
       record = null;

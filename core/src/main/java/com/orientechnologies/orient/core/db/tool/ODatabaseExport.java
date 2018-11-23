@@ -48,7 +48,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
@@ -62,8 +70,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
   protected OJSONWriter writer;
   protected long        recordExported;
-  protected int compressionLevel  = Deflater.BEST_SPEED;
-  protected int compressionBuffer = 16384;              // 16Kb
+  protected int         compressionLevel  = Deflater.BEST_SPEED;
+  protected int         compressionBuffer = 16384;              // 16Kb
 
   private final String tempFileName;
 
@@ -149,6 +157,27 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
     int level = 1;
     listener.onMessage("\nExporting records...");
+
+    if (excludeClasses != null && !excludeClasses.isEmpty()) {
+      final OSchema schema = database.getMetadata().getSchema();
+      for (String cls : excludeClasses) {
+        final OClass schemaClass = schema.getClass(cls);
+        if (schemaClass == null) {
+          listener.onMessage("\nWARN: Can not find class with name " + cls);
+        } else {
+          final int[] clusterIds = schemaClass.getClusterIds();
+          if (clusterIds != null) {
+            for (final int clusterId : clusterIds) {
+              final String clusterName = database.getClusterNameById(clusterId).toUpperCase(Locale.ENGLISH);
+              if (!excludeClusters.contains(clusterName)) {
+                listener.onMessage("\n- Cluster " + clusterName + " will be excluded during the export...");
+                excludeClusters.add(clusterName);
+              }
+            }
+          }
+        }
+      }
+    }
 
     final Set<ORID> brokenRids = new HashSet<>();
 
