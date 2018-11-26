@@ -2043,21 +2043,41 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   }
 
-  @ConsoleCommand(description = "Repair database structure")
+  @ConsoleCommand(description = "Repair database structure", splitInWords = false)
   public void repairDatabase(
-      @ConsoleParameter(name = "options", description = "Options: -v", optional = true) final String iOptions) throws IOException {
+      @ConsoleParameter(name = "options", description = "Options: [--fix-graph] [--force-embedded-ridbags] [--fix-links] [-v]] [--fix-ridbags] [--fix-bonsai]", optional = true) String iOptions)
+      throws IOException {
     checkForDatabase();
+    final boolean force_embedded = iOptions == null || iOptions.contains("--force-embedded-ridbags");
+    final boolean fix_graph = iOptions == null || iOptions.contains("--fix-graph");
+    if (force_embedded) {
+      OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(Integer.MAX_VALUE);
+      OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
+    }
+    if (fix_graph || force_embedded) {
+      // REPAIR GRAPH
+      final Map<String, List<String>> options = parseOptions(iOptions);
+      new OGraphRepair().repair(currentDatabase, this, options);
+    }
 
-    message("\nRepairing database...");
+    final boolean fix_links = iOptions == null || iOptions.contains("--fix-links");
+    if (fix_links) {
+      // REPAIR DATABASE AT LOW LEVEL
+      repairDatabase(iOptions);
+    }
 
-    boolean verbose = iOptions != null && iOptions.contains("-v");
+    if (!currentDatabase.getURL().startsWith("plocal")) {
+      message("\n fix-bonsai can be run only on plocal connection \n");
+      return;
+    }
 
-    new ODatabaseRepair().setDatabase(currentDatabase).setOutputListener(new OCommandOutputListener() {
-      @Override
-      public void onMessage(String iText) {
-        message(iText);
-      }
-    }).setVerbose(verbose).run();
+    final boolean fix_ridbags = iOptions == null || iOptions.contains("--fix-ridbags");
+    final boolean fix_bonsai = iOptions == null || iOptions.contains("--fix-bonsai");
+    if (fix_ridbags || fix_bonsai || force_embedded) {
+      OBonsaiTreeRepair repairer = new OBonsaiTreeRepair();
+      repairer.repairDatabaseRidbags(currentDatabase, this);
+    }
+
   }
 
   @ConsoleCommand(description = "Compare two databases")

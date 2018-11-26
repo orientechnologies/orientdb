@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class MatchPrefetchStep extends AbstractExecutionStep {
 
-  public static final String PREFETCHED_MATCH_ALIAS_PREFIX = "__$$OrientDB_Prefetched_Alias_Prefix__";
+  public static final String PREFETCHED_MATCH_ALIAS_PREFIX = "$$OrientDB_Prefetched_Alias_Prefix__";
 
   private final String                 alias;
   private final OInternalExecutionPlan prefetchExecutionPlan;

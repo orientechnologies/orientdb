@@ -26,7 +26,7 @@ public class OSBTreeCollectionManagerSharedTest extends DatabaseAbstractTest {
   }
 
   @Test
-  public void testEvictionAllReleased() {
+  public void testEvictionAllReleased() throws Exception {
     List<OSBTreeBonsai<OIdentifiable, Integer>> createdTrees = new ArrayList<OSBTreeBonsai<OIdentifiable, Integer>>();
 
     final int clusterId = database.getDefaultClusterId();
@@ -73,7 +73,7 @@ public class OSBTreeCollectionManagerSharedTest extends DatabaseAbstractTest {
   }
 
   @Test
-  public void testEvictionTwoIsNotReleased() {
+  public void testEvictionTwoIsNotReleased() throws Exception {
     List<OSBTreeBonsai<OIdentifiable, Integer>> createdTrees = new ArrayList<OSBTreeBonsai<OIdentifiable, Integer>>();
 
     for (int i = 0; i < 10; i++) {
@@ -143,7 +143,7 @@ public class OSBTreeCollectionManagerSharedTest extends DatabaseAbstractTest {
   }
 
   @Test
-  public void testEvictionFiveIsNotReleased() {
+  public void testEvictionFiveIsNotReleased() throws Exception {
     List<OSBTreeBonsai<OIdentifiable, Integer>> createdTrees = new ArrayList<OSBTreeBonsai<OIdentifiable, Integer>>();
 
     for (int i = 0; i < 10; i++) {

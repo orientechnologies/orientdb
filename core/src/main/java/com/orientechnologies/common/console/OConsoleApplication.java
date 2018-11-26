@@ -52,6 +52,7 @@ public class OConsoleApplication {
   protected boolean                 interactiveMode;
   protected String[]                args;
   protected TreeMap<Method, Object> methods;
+  private boolean isInCollectingMode = false;
 
   public OConsoleApplication(String[] iArgs) {
     this.args = iArgs;
@@ -229,11 +230,12 @@ public class OConsoleApplication {
           out.println("[Started multi-line command. Type just 'end' to finish and execute]");
           commandBuffer.append(commandLine);
           commandLine = null;
+          isInCollectingMode = true;
         } else if (commandLine.startsWith("end") && commandBuffer.length() > 0) {
           // END: FLUSH IT
           commandLine = commandBuffer.toString();
-          commandBuffer.setLength(0);
-
+          commandBuffer.setLength(0);          
+          isInCollectingMode = false;
         } else if (commandBuffer.length() > 0) {
           // BUFFER IT
           commandBuffer.append(' ');
@@ -262,7 +264,7 @@ public class OConsoleApplication {
         }
       }
 
-      if (commandBuffer.length() > 0) {
+      if (!isInCollectingMode && commandBuffer.length() > 0) {
         if (iBatchMode && isEchoEnabled()) {
           out.println();
           out.print(getPrompt());
@@ -293,6 +295,7 @@ public class OConsoleApplication {
   }
 
   protected RESULT execute(String iCommand) {
+    iCommand = iCommand.replaceAll("\n", ";\n");
     iCommand = iCommand.trim();
 
     if (iCommand.length() == 0)

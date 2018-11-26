@@ -154,6 +154,11 @@ public abstract class OViewImpl extends OClassImpl implements OView {
   }
 
   @Override
+  public String getUpdateStrategy() {
+    return cfg.getUpdateStrategy();
+  }
+
+  @Override
   public List<String> getNodes() {
     return cfg.getNodes();
   }
@@ -227,4 +232,5 @@ public abstract class OViewImpl extends OClassImpl implements OView {
       releaseSchemaReadLock();
     }
   }
+
 }

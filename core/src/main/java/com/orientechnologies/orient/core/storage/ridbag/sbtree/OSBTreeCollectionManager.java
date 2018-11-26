@@ -24,13 +24,14 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
 public interface OSBTreeCollectionManager {
-  OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId);
+  OSBTreeBonsai<OIdentifiable, Integer> createAndLoadTree(int clusterId) throws IOException;
 
-  OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID);
+  OBonsaiCollectionPointer createSBTree(int clusterId, UUID ownerUUID) throws IOException;
 
   OSBTreeBonsai<OIdentifiable, Integer> loadSBTree(OBonsaiCollectionPointer collectionPointer);
 

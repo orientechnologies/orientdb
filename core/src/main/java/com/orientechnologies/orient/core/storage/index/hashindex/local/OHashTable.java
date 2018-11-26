@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.io.IOException;
 import java.util.Comparator;
 
 /**
@@ -33,15 +34,15 @@ import java.util.Comparator;
  */
 public interface OHashTable<K, V> {
   void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes, OEncryption encryption,
-      OHashFunction<K> keyHashFunction, boolean nullKeyIsSupported);
+      OHashFunction<K> keyHashFunction, boolean nullKeyIsSupported) throws IOException;
 
   OBinarySerializer<K> getKeySerializer();
 
-  void setKeySerializer(OBinarySerializer<K> keySerializer);
+  void setKeySerializer(OBinarySerializer<K> keySerializer) throws IOException;
 
   OBinarySerializer<V> getValueSerializer();
 
-  void setValueSerializer(OBinarySerializer<V> valueSerializer);
+  void setValueSerializer(OBinarySerializer<V> valueSerializer) throws IOException;
 
   V get(K key);
 
@@ -56,13 +57,13 @@ public interface OHashTable<K, V> {
    *
    * @see OIndexEngine.Validator#validate(Object, Object, Object)
    */
-  boolean validatedPut(K key, V value, OIndexEngine.Validator<K, V> validator);
+  boolean validatedPut(K key, V value, OIndexEngine.Validator<K, V> validator) throws IOException;
 
-  void put(K key, V value);
+  void put(K key, V value) throws IOException;
 
-  V remove(K key);
+  V remove(K key) throws IOException;
 
-  void clear();
+  void clear() throws IOException;
 
   OHashIndexBucket.Entry<K, V>[] higherEntries(K key);
 
@@ -70,7 +71,7 @@ public interface OHashTable<K, V> {
 
   void load(String name, OType[] keyTypes, boolean nullKeyIsSupported, OEncryption encryption, OHashFunction<K> keyHashFunction);
 
-  void deleteWithoutLoad(String name);
+  void deleteWithoutLoad(String name) throws IOException;
 
   OHashIndexBucket.Entry<K, V>[] ceilingEntries(K key);
 
@@ -86,7 +87,7 @@ public interface OHashTable<K, V> {
 
   void close();
 
-  void delete();
+  void delete() throws IOException;
 
   void flush();
 

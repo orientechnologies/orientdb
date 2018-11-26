@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendentOrder;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -21,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
@@ -367,4 +369,108 @@ public class ODatabaseDocumentTxTest {
 
   }
 
+  @Test
+  public void testLinkEdges() {
+    String vertexClass = "testVertex";
+    String edgeClass = "testEdge";
+    OClass vc = db.createClass(vertexClass, "V");
+    db.createClass(edgeClass, "E");
+    vc.createProperty("out_testEdge", OType.LINK);
+    vc.createProperty("in_testEdge", OType.LINK);
+    OVertex doc1 = db.newVertex(vertexClass);
+    doc1.setProperty("name", "first");
+    doc1.save();
+
+    OVertex doc2 = db.newVertex(vertexClass);
+    doc2.setProperty("name", "second");
+    doc2.save();
+    db.newEdge(doc1, doc2, "testEdge");
+
+    try (OResultSet rs = db.query("SELECT out() as o FROM " + vertexClass)) {
+      Assert.assertTrue(rs.hasNext());
+      OResult res = rs.next();
+
+      Object linkedVal = res.getProperty("o");
+      Assert.assertTrue(linkedVal instanceof Collection);
+      Assert.assertEquals(((Collection) linkedVal).size(), 1);
+    }
+
+  }
+
+  @Test
+  public void testLinkOneSide() {
+    String vertexClass = "testVertex";
+    String edgeClass = "testEdge";
+    OClass vc = db.createClass(vertexClass, "V");
+    db.createClass(edgeClass, "E");
+    vc.createProperty("out_testEdge", OType.LINKBAG);
+    vc.createProperty("in_testEdge", OType.LINK);
+    OVertex doc1 = db.newVertex(vertexClass);
+    doc1.setProperty("name", "first");
+    doc1.save();
+
+    OVertex doc2 = db.newVertex(vertexClass);
+    doc2.setProperty("name", "second");
+    doc2.save();
+
+    OVertex doc3 = db.newVertex(vertexClass);
+    doc3.setProperty("name", "third");
+    doc3.save();
+
+    db.newEdge(doc1, doc2, "testEdge");
+    db.newEdge(doc1, doc3, "testEdge");
+
+    try (OResultSet rs = db.query("SELECT out() as o FROM " + vertexClass)) {
+      Assert.assertTrue(rs.hasNext());
+      OResult res = rs.next();
+
+      Object linkedVal = res.getProperty("o");
+      Assert.assertTrue(linkedVal instanceof Collection);
+      Assert.assertEquals(((Collection) linkedVal).size(), 2);
+    }
+
+  }
+
+  @Test(expected = ODatabaseException.class)
+  public void testLinkDuplicate() {
+    String vertexClass = "testVertex";
+    String edgeClass = "testEdge";
+    OClass vc = db.createClass(vertexClass, "V");
+    db.createClass(edgeClass, "E");
+    vc.createProperty("out_testEdge", OType.LINK);
+    vc.createProperty("in_testEdge", OType.LINK);
+    OVertex doc1 = db.newVertex(vertexClass);
+    doc1.setProperty("name", "first");
+    doc1.save();
+
+    OVertex doc2 = db.newVertex(vertexClass);
+    doc2.setProperty("name", "second");
+    doc2.save();
+
+    OVertex doc3 = db.newVertex(vertexClass);
+    doc3.setProperty("name", "third");
+    doc3.save();
+
+    db.newEdge(doc1, doc2, "testEdge");
+    db.newEdge(doc1, doc3, "testEdge");
+  }
+
+
+  @Test
+  public void selectDescTest() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:foo");
+    db.create();
+    String className = "bar";
+    OSchema schema = db.getMetadata().getSchema();
+    schema.createClass(className, 1, schema.getClass(OClass.VERTEX_CLASS_NAME));
+    db.begin();
+
+    ODocument document = new ODocument(className);
+    document.save();
+    ORecordIteratorClassDescendentOrder<ODocument> reverseIterator = new ORecordIteratorClassDescendentOrder<ODocument>(db, db,
+        className, true);
+    Assert.assertTrue(reverseIterator.hasNext());
+    Assert.assertEquals(document, reverseIterator.next());
+    db.close();
+  }
 }

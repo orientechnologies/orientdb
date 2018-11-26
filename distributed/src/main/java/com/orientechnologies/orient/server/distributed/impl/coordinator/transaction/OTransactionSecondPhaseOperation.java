@@ -1,14 +1,18 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
+import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.*;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory.TRANSACTION_SECOND_PHASE_REQUEST;
@@ -29,8 +33,27 @@ public class OTransactionSecondPhaseOperation implements ONodeRequest {
   @Override
   public ONodeResponse execute(ODistributedMember nodeFrom, OLogId opId, ODistributedExecutor executor,
       ODatabaseDocumentInternal session) {
-    ((ODatabaseDocumentDistributed) session).txSecondPhase(operationId, success);
-    return new OTransactionSecondPhaseResponse(true);
+    OTransactionOptimisticDistributed tx = ((ODatabaseDocumentDistributed) session).txSecondPhase(operationId, success);
+
+    List<OCreatedRecordResponse> createdRecords = new ArrayList<>(tx.getCreatedRecords().size());
+    List<OUpdatedRecordResponse> updatedRecords = new ArrayList<>(tx.getUpdatedRecords().size());
+    List<ODeletedRecordResponse> deletedRecords = new ArrayList<>(tx.getDeletedRecord().size());
+    if (tx != null) {
+      for (Map.Entry<ORID, ORecord> entry : tx.getCreatedRecords().entrySet()) {
+        ORecord record = entry.getValue();
+        createdRecords.add(new OCreatedRecordResponse(entry.getKey(), record.getIdentity(), record.getVersion()));
+      }
+
+      for (Map.Entry<ORID, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
+        updatedRecords.add(new OUpdatedRecordResponse(entry.getKey(), entry.getValue().getVersion()));
+      }
+
+      for (ORID id : tx.getDeletedRecord()) {
+        deletedRecords.add(new ODeletedRecordResponse(id));
+      }
+    }
+
+    return new OTransactionSecondPhaseResponse(true, createdRecords, updatedRecords, deletedRecords);
   }
 
   @Override

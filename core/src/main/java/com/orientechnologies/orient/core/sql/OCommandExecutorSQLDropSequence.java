@@ -1,11 +1,13 @@
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 import java.util.Map;
 
@@ -19,7 +21,8 @@ public class OCommandExecutorSQLDropSequence extends OCommandExecutorSQLAbstract
 
   private String sequenceName;
 
-  @Override public OCommandExecutorSQLDropSequence parse(OCommandRequest iRequest) {
+  @Override
+  public OCommandExecutorSQLDropSequence parse(OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
     String queryText = textRequest.getText();
@@ -43,21 +46,30 @@ public class OCommandExecutorSQLDropSequence extends OCommandExecutorSQLAbstract
     return this;
   }
 
-  @Override public Object execute(Map<Object, Object> iArgs) {
+  @Override
+  public Object execute(Map<Object, Object> iArgs) {
     if (this.sequenceName == null) {
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
     }
 
     final ODatabaseDocument database = getDatabase();
-    database.getMetadata().getSequenceLibrary().dropSequence(this.sequenceName);
+    try {
+      database.getMetadata().getSequenceLibrary().dropSequence(this.sequenceName);
+    } catch (ODatabaseException exc) {
+      String message = "Unable to execute command: " + exc.getMessage();
+      OLogManager.instance().error(this, message, exc, (Object) null);
+      throw new OCommandExecutionException(message);
+    }
     return true;
   }
 
-  @Override public String getSyntax() {
+  @Override
+  public String getSyntax() {
     return "DROP SEQUENCE <sequence>";
   }
 
-  @Override public QUORUM_TYPE getQuorumType() {
+  @Override
+  public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }
 }

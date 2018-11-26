@@ -2,8 +2,8 @@ package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.exception.OException;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -24,7 +24,7 @@ public class ONotThreadRWLockManager<T> implements OSimpleRWLockManager<T> {
   }
 
   private final Lock              lock = new ReentrantLock();
-  private final Map<T, LockGuard> map  = new HashMap<>();
+  private final Map<T, LockGuard> map  = new ConcurrentHashMap<>();
 
   public ONotThreadRWLockManager() {
   }

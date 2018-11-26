@@ -38,13 +38,12 @@ import java.util.Map;
 
 /**
  * SQL HA REMOVE SERVER command: removes a server from ha configuration.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String NAME           = "HA REMOVE SERVER";
+  public static final String NAME = "HA REMOVE SERVER";
 
   OHaRemoveServerStatement parsedStatement;
 
@@ -72,8 +71,7 @@ public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstra
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
 
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getStorageDistributed()
-        .getDistributedManager();
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 

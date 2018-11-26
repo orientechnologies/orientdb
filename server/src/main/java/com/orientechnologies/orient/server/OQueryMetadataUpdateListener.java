@@ -2,7 +2,7 @@ package com.orientechnologies.orient.server;
 
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 
 class OQueryMetadataUpdateListener implements OMetadataUpdateListener {
@@ -14,7 +14,7 @@ class OQueryMetadataUpdateListener implements OMetadataUpdateListener {
   }
 
   @Override
-  public void onIndexManagerUpdate(String database, OIndexManager indexManager) {
+  public void onIndexManagerUpdate(String database, OIndexManagerAbstract indexManager) {
     updated = true;
   }
 

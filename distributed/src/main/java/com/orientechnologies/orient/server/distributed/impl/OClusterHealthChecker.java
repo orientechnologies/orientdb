@@ -259,7 +259,7 @@ public class OClusterHealthChecker extends TimerTask {
             for (Map.Entry<String, Object> r : responses.entrySet()) {
               if (!lockManagerServer.equals(r.getValue().toString())) {
                 ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                    "Server '%s' is using server '%s' as lockManager, while current server is using '%s'", r.getKey(), r.getValue(),
+                    "Server '%s' is using server '%s' as lock, while current server is using '%s'", r.getKey(), r.getValue(),
                     lockManagerServer);
               }
             }

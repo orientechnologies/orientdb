@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaRemote;
 import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
@@ -65,7 +66,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -75,6 +75,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import static com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.*;
+
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by tglman on 30/06/16.
@@ -820,5 +822,10 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     checkOpenness();
     checkIfActive();
     internalUnlockRecord(recordId);
+  }
+
+  @Override
+  public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 }

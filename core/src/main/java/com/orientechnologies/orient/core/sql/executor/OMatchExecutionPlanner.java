@@ -75,9 +75,11 @@ public class OMatchExecutionPlanner {
     Map<String, Long> estimatedRootEntries = estimateRootEntries(aliasClasses, aliasClusters, aliasRids, aliasFilters, context);
     Set<String> aliasesToPrefetch = estimatedRootEntries.entrySet().stream().filter(x -> x.getValue() < this.threshold).
         map(x -> x.getKey()).collect(Collectors.toSet());
-    if (estimatedRootEntries.values().contains(0l)) {
-      result.chain(new EmptyStep(context, enableProfiling));
-      return result;
+    for (Map.Entry<String, Long> entry : estimatedRootEntries.entrySet()) {
+      if (entry.getValue() == 0L && !isOptional(entry.getKey())) {
+        result.chain(new EmptyStep(context, enableProfiling));
+        return result;
+      }
     }
 
     addPrefetchSteps(result, aliasesToPrefetch, context, enableProfiling);
@@ -154,6 +156,11 @@ public class OMatchExecutionPlanner {
 
     return result;
 
+  }
+
+  private boolean isOptional(String key) {
+    PatternNode node = this.pattern.aliasToNode.get(key);
+    return node != null && node.isOptionalNode();
   }
 
   private void manageNotPatterns(OSelectExecutionPlan result, Pattern pattern, List<OMatchExpression> notMatchExpressions,

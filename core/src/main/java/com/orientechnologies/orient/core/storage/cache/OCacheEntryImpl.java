@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.core.storage.cache;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -12,30 +14,13 @@ public class OCacheEntryImpl implements OCacheEntry {
   private final long          fileId;
   private final long          pageIndex;
 
-  private boolean dirty;
   private final AtomicInteger usagesCount = new AtomicInteger();
 
-  public OCacheEntryImpl(long fileId, long pageIndex, OCachePointer dataPointer, boolean dirty) {
+  public OCacheEntryImpl(long fileId, long pageIndex, OCachePointer dataPointer) {
     this.fileId = fileId;
     this.pageIndex = pageIndex;
 
     this.dataPointer = dataPointer;
-    this.dirty = dirty;
-  }
-
-  @Override
-  public void markDirty() {
-    this.dirty = true;
-  }
-
-  @Override
-  public void clearDirty() {
-    this.dirty = false;
-  }
-
-  @Override
-  public boolean isDirty() {
-    return dirty;
   }
 
   @Override
@@ -114,42 +99,35 @@ public class OCacheEntryImpl implements OCacheEntry {
   }
 
   @Override
+  public OLogSequenceNumber getEndLSN() {
+    return dataPointer.getEndLSN();
+  }
+
+  @Override
+  public void setEndLSN(OLogSequenceNumber endLSN) {
+    dataPointer.setEndLSN(endLSN);
+  }
+
+  @Override
   public boolean equals(Object o) {
-    if (this == o)
+    if (this == o) {
       return true;
-    if (o == null || getClass() != o.getClass())
+    }
+    if (o == null || getClass() != o.getClass()) {
       return false;
-
+    }
     OCacheEntryImpl that = (OCacheEntryImpl) o;
-
-    if (fileId != that.fileId)
-      return false;
-    if (dirty != that.dirty)
-      return false;
-    if (pageIndex != that.pageIndex)
-      return false;
-    if (usagesCount.get() != that.usagesCount.get())
-      return false;
-    if (dataPointer != null ? !dataPointer.equals(that.dataPointer) : that.dataPointer != null)
-      return false;
-
-    return true;
+    return fileId == that.fileId && pageIndex == that.pageIndex;
   }
 
   @Override
   public int hashCode() {
-    int result = (int) (fileId ^ (fileId >>> 32));
-    result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
-    result = 31 * result + (dataPointer != null ? dataPointer.hashCode() : 0);
-    result = 31 * result + (dirty ? 1 : 0);
-    result = 31 * result + usagesCount.get();
-    return result;
+    return Objects.hash(fileId, pageIndex);
   }
 
   @Override
   public String toString() {
-    return "OReadCacheEntry{" + "fileId=" + fileId + ", pageIndex=" + pageIndex + ", dataPointer=" + dataPointer + ", dirty="
-        + dirty + ", usagesCount=" + usagesCount + '}';
+    return "OCacheEntryImpl{" + "dataPointer=" + dataPointer + ", fileId=" + fileId + ", pageIndex=" + pageIndex + ", usagesCount="
+        + usagesCount + '}';
   }
-
 }

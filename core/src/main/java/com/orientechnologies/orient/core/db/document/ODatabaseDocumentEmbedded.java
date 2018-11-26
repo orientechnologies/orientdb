@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
@@ -80,6 +81,7 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -1259,4 +1261,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkIfActive();
     internalUnlockRecord(recordId);
   }
+
+  @Override
+  public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+
 }

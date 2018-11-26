@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -119,13 +120,20 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     } else if (iSource instanceof ORecordFlat) {
       return iSource.toStream();
     } else {
+      ODocument documentToSerialize = (ODocument) iSource;
+
+      if (iOnlyDelta) {
+        ODocumentDelta deltaDoc = documentToSerialize.getDeltaFromOriginal();
+        return deltaDoc.serialize();
+      }
+
       final BytesContainer container = new BytesContainer();
 
       // WRITE SERIALIZER VERSION
       int pos = container.alloc(1);
       container.bytes[pos] = currentSerializerVersion;
-      // SERIALIZE RECORD
-      serializerByVersion[currentSerializerVersion].serialize((ODocument) iSource, container, false);
+      // SERIALIZE RECORD      
+      serializerByVersion[currentSerializerVersion].serialize(documentToSerialize, container, false);
 
       return container.fitBytes();
     }

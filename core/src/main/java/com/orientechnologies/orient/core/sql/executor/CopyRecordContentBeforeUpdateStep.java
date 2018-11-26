@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -10,10 +11,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * <p>Reads an upstream result set and returns a new result set that contains copies of the original OResult instances
- * </p>
- * <p>This is mainly used from statements that need to copy of the original data before modifying it,
- * eg. UPDATE ... RETURN BEFORE</p>
+ * <p>Reads an upstream result set and returns a new result set that contains copies of the original OResult instances </p> <p>This
+ * is mainly used from statements that need to copy of the original data before modifying it, eg. UPDATE ... RETURN BEFORE</p>
  *
  * @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com)
  */
@@ -48,7 +47,7 @@ public class CopyRecordContentBeforeUpdateStep extends AbstractExecutionStep {
               prevValue.setProperty("@class", ((ODocument) rec).getSchemaClass().getName());
             }
             for (String propName : result.getPropertyNames()) {
-              prevValue.setProperty(propName, result.getProperty(propName));
+              prevValue.setProperty(propName, OLiveQueryHookV2.unboxRidbags(result.getProperty(propName)));
             }
             ((OUpdatableResult) result).previousValue = prevValue;
           } else {

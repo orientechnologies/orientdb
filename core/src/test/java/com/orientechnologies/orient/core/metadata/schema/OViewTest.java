@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import org.junit.After;
@@ -29,7 +30,7 @@ public class OViewTest {
     CountDownLatch latch = new CountDownLatch(1);
     db.getMetadata().getSchema().createView(new OViewConfig("testSimple", "SELECT FROM V"), new ViewCreationListener() {
       @Override
-      public void afterCreate(String viewName) {
+      public void afterCreate(ODatabaseSession database, String viewName) {
         latch.countDown();
       }
 

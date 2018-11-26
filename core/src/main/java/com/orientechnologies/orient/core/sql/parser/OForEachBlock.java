@@ -69,7 +69,7 @@ public class OForEachBlock extends OStatement {
     if (FOREACH_VARIABLE_PROGR < 0) {
       FOREACH_VARIABLE_PROGR = 0;
     }
-    OIdentifier varName = new OIdentifier("__ORIENTDB_FOREACH_VAR_" + nextProg);
+    OIdentifier varName = new OIdentifier("$__ORIENTDB_FOREACH_VAR_" + nextProg);
     plan.chain(new GlobalLetExpressionStep(varName, loopValues, ctx, enableProfiling));
     plan.chain(new ForEachStep(loopVariable, new OExpression(varName), statements, ctx, enableProfiling));
     return plan;
@@ -128,7 +128,7 @@ public class OForEachBlock extends OStatement {
       if (stm instanceof OReturnStatement) {
         return true;
       }
-      if(stm instanceof OForEachBlock && ((OForEachBlock) stm).containsReturn()) {
+      if (stm instanceof OForEachBlock && ((OForEachBlock) stm).containsReturn()) {
         return true;
       }
       if (stm instanceof OIfStatement && ((OIfStatement) stm).containsReturn()) {

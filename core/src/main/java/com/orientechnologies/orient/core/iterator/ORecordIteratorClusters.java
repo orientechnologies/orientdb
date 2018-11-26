@@ -270,6 +270,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
           currentRecord = null;
         }
 
+      record = getTransactionEntry();
       if (record == null)
         record = readCurrentRecord(null, -1);
 

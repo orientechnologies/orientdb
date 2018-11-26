@@ -57,9 +57,6 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.impl.*;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedCoordinator;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.OLoopBackDistributeMember;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.network.*;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
@@ -240,7 +237,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
             OrientDBDistributed distributed = (OrientDBDistributed) serverInstance.getDatabases();
 
-            distributed.nodeJoin(memberName, new ODistributedChannelBinaryProtocol(getLocalNodeName(), getRemoteServer(memberName)));
+            distributed
+                .nodeJoin(memberName, new ODistributedChannelBinaryProtocol(getLocalNodeName(), getRemoteServer(memberName)));
             break;
           }
 
@@ -1137,7 +1135,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       checkAndMakeCoordinator(lockManager);
 
       ODistributedServerLog
-          .info(this, nodeName, null, DIRECTION.NONE, "Server merged the existent cluster, lockManager=%s, merging databases...",
+          .info(this, nodeName, null, DIRECTION.NONE, "Server merged the existent cluster, lock=%s, merging databases...",
               getLockManagerServer());
 
       configurationMap.clearLocalCache();
@@ -1164,7 +1162,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           try {
             // WAIT (MAX 10 SECS) THE LOCK MANAGER IS ONLINE
             ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-                "Merging networks, waiting for the lockManager %s to be reachable...", getLockManagerServer());
+                "Merging networks, waiting for the lock %s to be reachable...", getLockManagerServer());
 
             for (int retry = 0; !getActiveServers().contains(getLockManagerServer()) && retry < 10; ++retry) {
               try {
@@ -1177,7 +1175,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             final String cs = getLockManagerServer();
 
             ODistributedServerLog
-                .info(this, getLocalNodeName(), null, DIRECTION.NONE, "Merging networks, lockManager=%s (active=%s)...", cs,
+                .info(this, getLocalNodeName(), null, DIRECTION.NONE, "Merging networks, lock=%s (active=%s)...", cs,
                     getActiveServers().contains(getLockManagerServer()));
 
             for (final String databaseName : getMessageService().getDatabases()) {
@@ -1196,7 +1194,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             }
           } finally {
             ODistributedServerLog
-                .warn(this, getLocalNodeName(), null, DIRECTION.NONE, "Network merged, lockManager=%s...", getLockManagerServer());
+                .warn(this, getLocalNodeName(), null, DIRECTION.NONE, "Network merged, lock=%s...", getLockManagerServer());
             setNodeStatus(NODE_STATUS.ONLINE);
           }
         }
@@ -1547,7 +1545,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     } catch (Exception e) {
       // IGNORE IT
-      ODistributedServerLog.debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on electing new lockManager", e);
+      ODistributedServerLog.debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on electing new lock", e);
     }
 
     if (nodeLeftName.equals(getLockManagerRequester().getServer())) {
@@ -1671,7 +1669,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final String originalLockManager = lockManagerServer;
 
       ODistributedServerLog.debug(this, nodeName, originalLockManager, DIRECTION.OUT,
-          "lockManager '%s' is unreachable, electing a new lockManager...", originalLockManager);
+          "lock '%s' is unreachable, electing a new lock...", originalLockManager);
 
       int lockManagerServerId = -1;
       if (lockManagerServer != null && registeredNodeByName.containsKey(lockManagerServer))
@@ -1694,7 +1692,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           // TODO: IMPROVE ELECTION BY CHECKING AL THE NODES AGREE ON IT
 
           ODistributedServerLog
-              .debug(this, nodeName, newServer, DIRECTION.OUT, "Trying to elected server '%s' as new lockManager (old=%s)...",
+              .debug(this, nodeName, newServer, DIRECTION.OUT, "Trying to elected server '%s' as new lock (old=%s)...",
                   newServer, originalLockManager);
 
           try {
@@ -1704,7 +1702,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
             configurationMap.put(CONFIG_LOCKMANAGER, getLockManagerRequester().getServer());
 
             ODistributedServerLog
-                .info(this, nodeName, newServer, DIRECTION.OUT, "Elected server '%s' as new lockManager (old=%s)", newServer,
+                .info(this, nodeName, newServer, DIRECTION.OUT, "Elected server '%s' as new lock (old=%s)", newServer,
                     originalLockManager);
 
             break;
@@ -1712,7 +1710,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           } catch (Exception e) {
             // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED, GO AHEAD WITH THE NEXT IN THE LIST
             ODistributedServerLog
-                .info(this, nodeName, newServer, DIRECTION.OUT, "Error on electing server '%s' as new lockManager (error: %s)",
+                .info(this, nodeName, newServer, DIRECTION.OUT, "Error on electing server '%s' as new lock (error: %s)",
                     newServer, e);
           }
         }
@@ -1806,7 +1804,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         if (lockManagerServer != null && lockManagerServer.equals(nodeName)) {
           // LAST LOCK MANAGER WAS CURRENT NODE? TRY TO FORCE A NEW ELECTION
-          OLogManager.instance().info(this, "Found lockManager as current node, even if it was offline. Forcing a new election...");
+          OLogManager.instance().info(this, "Found lock as current node, even if it was offline. Forcing a new election...");
           getLockManagerRequester().setServer(lockManagerServer);
           checkAndMakeCoordinator(lockManagerServer);
           lockManagerServer = electNewLockManager();
@@ -1859,6 +1857,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       return new OOperationRequest(coordinateMessagesFactory);
     case DISTRIBUTED_OPERATION_RESPONSE:
       return new OOperationResponse(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST:
+      return new ONetworkStructuralSubmitRequest(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE:
+      return new ONetworkStructuralSubmitResponse(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST:
+      return new OStructuralOperationRequest(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE:
+      return new OStructuralOperationResponse(coordinateMessagesFactory);
     }
     return null;
   }

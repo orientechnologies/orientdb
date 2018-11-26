@@ -110,12 +110,47 @@ public class OUpdateItem extends SimpleNode {
 
   public void applyUpdate(OResultInternal doc, OCommandContext ctx) {
     Object rightValue = right.execute(doc, ctx);
+    OType type = calculateTypeForThisItem(doc, ctx);
+    OClass linkedType = calculateLinkedTypeForThisItem(doc, ctx);
+    rightValue = convertToType(rightValue, type, linkedType, ctx);
     if (leftModifier == null) {
       applyOperation(doc, left, rightValue, ctx);
     } else {
       Object val = doc.getProperty(left.getStringValue());
       leftModifier.setValue(doc, val, rightValue, ctx);
     }
+  }
+
+  private OClass calculateLinkedTypeForThisItem(OResultInternal doc, OCommandContext ctx) {
+    return null; // TODO
+  }
+
+  private OType calculateTypeForThisItem(OResultInternal doc, OCommandContext ctx) {
+    OElement elem = doc.toElement();
+    OClass clazz = elem.getSchemaType().orElse(null);
+    if (clazz == null) {
+      return null;
+    }
+    return calculateTypeForThisItem(clazz, left.getStringValue(), leftModifier, ctx);
+  }
+
+  private OType calculateTypeForThisItem(OClass clazz, String propName, OModifier modifier, OCommandContext ctx) {
+    OProperty prop = clazz.getProperty(propName);
+    if (prop == null) {
+      return null;
+    }
+    OType type = prop.getType();
+    if (type == OType.LINKMAP && modifier != null) {
+      if (prop.getLinkedClass() != null && modifier.next != null) {
+        if (modifier.suffix == null) {
+          return null;
+        }
+        return calculateTypeForThisItem(prop.getLinkedClass(), modifier.suffix.toString(), modifier.next, ctx);
+      }
+      return OType.LINK;
+    }
+    //TODO specialize more
+    return null;
   }
 
   public void applyOperation(OResultInternal doc, OIdentifier attrName, Object rightValue, OCommandContext ctx) {
@@ -152,26 +187,36 @@ public class OUpdateItem extends SimpleNode {
       return newValue;
     }
 
-    if (newValue instanceof Collection) {
-      if (prop.getType() == OType.LINK) {
-        if (((Collection) newValue).size() == 0) {
-          newValue = null;
-        } else if (((Collection) newValue).size() == 1) {
-          newValue = ((Collection) newValue).iterator().next();
+    OType type = prop.getType();
+    OClass linkedClass = prop.getLinkedClass();
+    return convertToType(newValue, type, linkedClass, ctx);
+  }
+
+  private static Object convertToType(Object value, OType type, OClass linkedClass, OCommandContext ctx) {
+    if (type == null) {
+      return value;
+    }
+    if (value instanceof Collection) {
+      if (type == OType.LINK) {
+        if (((Collection) value).size() == 0) {
+          value = null;
+        } else if (((Collection) value).size() == 1) {
+          value = ((Collection) value).iterator().next();
         } else {
           throw new OCommandExecutionException("Cannot assign a collection to a LINK property");
         }
-      } else if (prop.getType() == OType.EMBEDDEDLIST && prop.getLinkedClass() != null) {
-        return ((Collection) newValue).stream().map(item -> convertToType(item, prop.getLinkedClass(), ctx))
-            .collect(Collectors.toList());
+      } else {
 
-      } else if (prop.getType() == OType.EMBEDDEDSET && prop.getLinkedClass() != null) {
-        return ((Collection) newValue).stream().map(item -> convertToType(item, prop.getLinkedClass(), ctx))
-            .collect(Collectors.toSet());
+        if (type == OType.EMBEDDEDLIST && linkedClass != null) {
+          return ((Collection) value).stream().map(item -> convertToType(item, linkedClass, ctx)).collect(Collectors.toList());
 
+        } else if (type == OType.EMBEDDEDSET && linkedClass != null) {
+          return ((Collection) value).stream().map(item -> convertToType(item, linkedClass, ctx)).collect(Collectors.toSet());
+
+        }
       }
     }
-    return newValue;
+    return value;
   }
 
   private static Object convertToType(Object item, OClass linkedClass, OCommandContext ctx) {
@@ -194,7 +239,7 @@ public class OUpdateItem extends SimpleNode {
     return item;
   }
 
-  private Object convertResultToDocument(Object value) {
+  public static Object convertResultToDocument(Object value) {
     if (value instanceof OResult) {
       return ((OResult) value).toElement();
     }
@@ -210,7 +255,7 @@ public class OUpdateItem extends SimpleNode {
     return value;
   }
 
-  private boolean containsOResult(Collection value) {
+  public static boolean containsOResult(Collection value) {
     return value.stream().anyMatch(x -> x instanceof OResult);
   }
 

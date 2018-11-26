@@ -16,8 +16,8 @@ import java.util.stream.Collectors;
 public class ONestedProjection extends SimpleNode {
   protected List<ONestedProjectionItem> includeItems = new ArrayList<>();
   protected List<ONestedProjectionItem> excludeItems = new ArrayList<>();
-  protected ONestedProjectionItem starItem;
-  private   OInteger              recursion; //not used for now
+  protected ONestedProjectionItem       starItem;
+  private   OInteger                    recursion; //not used for now
 
   public ONestedProjection(int id) {
     super(id);
@@ -96,6 +96,9 @@ public class ONestedProjection extends SimpleNode {
   }
 
   private Object tryExpand(OExpression rootExpr, String propName, Object propValue, OCommandContext ctx, int recursion) {
+    if (this.starItem != null && starItem.expansion != null) {
+      return starItem.expand(rootExpr, propName, propValue, ctx, recursion);
+    }
     for (ONestedProjectionItem item : includeItems) {
       if (item.matches(propName) && item.expansion != null) {
         return item.expand(rootExpr, propName, propValue, ctx, recursion);

@@ -2,7 +2,8 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -12,6 +13,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Locale;
+
+import org.junit.Assert;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -37,7 +40,7 @@ public class ODatabaseMetadataUpdateListener {
       }
 
       @Override
-      public void onIndexManagerUpdate(String database, OIndexManager indexManager) {
+      public void onIndexManagerUpdate(String database, OIndexManagerAbstract indexManager) {
         count++;
         assertNotNull(indexManager);
       }
@@ -78,7 +81,11 @@ public class ODatabaseMetadataUpdateListener {
 
   @Test
   public void testSequenceUpdate() {
-    session.getMetadata().getSequenceLibrary().createSequence("sequence1", OSequence.SEQUENCE_TYPE.ORDERED, null);
+    try {
+      session.getMetadata().getSequenceLibrary().createSequence("sequence1", OSequence.SEQUENCE_TYPE.ORDERED, null);
+    } catch (ODatabaseException exc) {
+      Assert.assertTrue("Failed to create sequence", false);
+    }
     assertEquals(count, 1);
   }
 

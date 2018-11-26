@@ -96,7 +96,7 @@ public class OTransactionPhase1Task extends OAbstractReplicatedTask {
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
     convert(database);
-    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops);
+    OTransactionOptimisticDistributed tx = new OTransactionOptimisticDistributed(database, ops, false);
     OTransactionResultPayload res1 = executeTransaction(requestId, (ODatabaseDocumentDistributed) database, tx, false, retryCount);
     if (res1 == null) {
       retryCount++;

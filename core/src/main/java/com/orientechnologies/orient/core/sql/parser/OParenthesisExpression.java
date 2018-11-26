@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.OInsertExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -57,6 +58,9 @@ public class OParenthesisExpression extends OMathExpression {
     }
     if (statement != null) {
       OInternalExecutionPlan execPlan = statement.createExecutionPlan(ctx, false);
+      if (execPlan instanceof OInsertExecutionPlan) {
+        ((OInsertExecutionPlan) execPlan).executeInternal();
+      }
       OLocalResultSet rs = new OLocalResultSet(execPlan);
       List<OResult> result = new ArrayList<>();
       while (rs.hasNext()) {

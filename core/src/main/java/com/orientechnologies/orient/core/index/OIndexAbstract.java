@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -69,27 +70,29 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
-  protected static final String CONFIG_MAP_RID  = "mapRid";
-  protected static final String CONFIG_CLUSTERS = "clusters";
-  protected final String                    type;
-  protected final ODocument                 metadata;
-  protected final OAbstractPaginatedStorage storage;
-  private final   String                    databaseName;
-  private final   String                    name;
-  private final OReadersWriterSpinLock rwLock         = new OReadersWriterSpinLock();
-  private final AtomicLong             rebuildVersion = new AtomicLong();
-  private final      int                version;
-  protected volatile IndexConfiguration configuration;
-  protected          String             valueContainerAlgorithm;
-  protected int         indexId         = -1;
-  protected Set<String> clustersToIndex = new HashSet<String>();
-  private          String           algorithm;
-  private volatile OIndexDefinition indexDefinition;
-  private volatile boolean             rebuilding       = false;
-  private          Map<String, String> engineProperties = new HashMap<String, String>();
+  protected static final String                    CONFIG_MAP_RID   = "mapRid";
+  protected static final String                    CONFIG_CLUSTERS  = "clusters";
+  protected final        String                    type;
+  protected final        ODocument                 metadata;
+  protected final        OAbstractPaginatedStorage storage;
+  private final          String                    databaseName;
+  private final          String                    name;
+  private final          OReadersWriterSpinLock    rwLock           = new OReadersWriterSpinLock();
+  private final          AtomicLong                rebuildVersion   = new AtomicLong();
+  private final          int                       version;
+  protected volatile     IndexConfiguration        configuration;
+  protected              String                    valueContainerAlgorithm;
+  protected              int                       indexId          = -1;
+  protected              Set<String>               clustersToIndex  = new HashSet<String>();
+  private                String                    algorithm;
+  private volatile       OIndexDefinition          indexDefinition;
+  private volatile       boolean                   rebuilding       = false;
+  private                Map<String, String>       engineProperties = new HashMap<String, String>();
+  protected final        int                       binaryFormatVersion;
 
   public OIndexAbstract(String name, final String type, final String algorithm, final String valueContainerAlgorithm,
-      final ODocument metadata, final int version, final OStorage storage) {
+      final ODocument metadata, final int version, final OStorage storage, int binaryFormatVersion) {
+    this.binaryFormatVersion = binaryFormatVersion;
     acquireExclusiveLock();
     try {
       databaseName = storage.getName();
@@ -190,10 +193,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
    * Creates the index.
    *
    * @param clusterIndexName Cluster name where to place the TreeMap
-   * @param clustersToIndex
-   * @param rebuild
-   * @param progressListener
-   * @param valueSerializer
    */
   public OIndexInternal<?> create(final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener,
@@ -983,7 +982,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   private void removeValuesContainer() {
     if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
 
-      final OAtomicOperation atomicOperation = storage.getAtomicOperationsManager().getCurrentOperation();
+      final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
       final OReadCache readCache = storage.getReadCache();
       final OWriteCache writeCache = storage.getWriteCache();

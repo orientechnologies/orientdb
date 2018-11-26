@@ -61,7 +61,6 @@ public class OSharedContextEmbedded extends OSharedContext {
     });
 
     this.viewManager = new ViewManager(orientDB, storage.getName());
-    this.viewManager.start();
   }
 
   public synchronized void load(ODatabaseDocumentInternal database) {
@@ -78,6 +77,7 @@ public class OSharedContextEmbedded extends OSharedContext {
         scheduler.load(database);
         sequenceLibrary.load(database);
         schema.onPostIndexManagement();
+        viewManager.load();
         loaded = true;
       }
     } finally {

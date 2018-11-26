@@ -117,7 +117,9 @@ public class OFunctionCall extends SimpleNode {
       }
     }
     for (OExpression expr : this.params) {
-      if (record instanceof OIdentifiable) {
+      if(targetObjects instanceof OResult) {
+        paramValues.add(expr.execute((OResult) targetObjects, ctx));
+      }else if (record instanceof OIdentifiable) {
         paramValues.add(expr.execute((OIdentifiable) record, ctx));
       } else if (record instanceof OResult) {
         paramValues.add(expr.execute((OResult) record, ctx));

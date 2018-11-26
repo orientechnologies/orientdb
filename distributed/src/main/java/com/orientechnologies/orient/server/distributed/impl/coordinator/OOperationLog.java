@@ -1,7 +1,24 @@
 package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
-public interface OOperationLog {
-  OLogId log(ONodeRequest request);
+import java.util.Iterator;
 
-  void logReceived(OLogId logId, ONodeRequest request);
+public interface OOperationLog extends AutoCloseable {
+  OLogId log(OLogRequest request);
+
+  void logReceived(OLogId logId, OLogRequest request);
+
+  /**
+   * @param from first entry to get. Null to iterate since the beginning
+   * @param to   last entry to get (included).
+   *
+   * @return
+   */
+  default Iterator<OOperationLogEntry> iterate(OLogId from, OLogId to) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  default void close() {
+
+  }
 }

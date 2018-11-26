@@ -15,18 +15,23 @@
  */
 package com.orientechnologies.orient.core.sharding.auto;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OIndexNotUnique;
+import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.index.engine.ORemoteIndexEngine;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Auto-sharding index factory.<br>
@@ -104,10 +109,14 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
   private OIndexInternal<?> createShardedIndex(final String name, final String indexType, final String valueContainerAlgorithm,
       final ODocument metadata, final OAbstractPaginatedStorage storage, final int version) {
 
+    final int binaryFormatVersion = storage.getConfiguration().getBinaryFormatVersion();
+
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
-      return new OIndexUnique(name, indexType, AUTOSHARDING_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OIndexUnique(name, indexType, AUTOSHARDING_ALGORITHM, version, storage, valueContainerAlgorithm, metadata,
+          binaryFormatVersion);
     } else if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)) {
-      return new OIndexNotUnique(name, indexType, AUTOSHARDING_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OIndexNotUnique(name, indexType, AUTOSHARDING_ALGORITHM, version, storage, valueContainerAlgorithm, metadata,
+          binaryFormatVersion);
     }
 
     throw new OConfigurationException("Unsupported type: " + indexType);
@@ -126,10 +135,10 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
 
     final String storageType = storage.getType();
     if (storageType.equals("memory") || storageType.equals("plocal"))
-      indexEngine = new OAutoShardingIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage, version);
+      indexEngine = new OAutoShardingIndexEngine(name, (OAbstractPaginatedStorage) storage, version);
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OAutoShardingIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage.getUnderlying(),
+      indexEngine = new OAutoShardingIndexEngine(name, (OAbstractPaginatedStorage) storage.getUnderlying(),
           version);
     else if (storageType.equals("remote"))
       // MANAGE REMOTE SHARDED INDEX TO CALL THE INTERESTED SERVER

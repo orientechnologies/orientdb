@@ -16,15 +16,19 @@
  */
 package com.orientechnologies.orient.core.sql.method.sequence;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
+
 /**
  * Returns the current number of a sequence.
- * 
+ *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OSQLMethodCurrent extends OAbstractSQLMethod {
@@ -42,13 +46,19 @@ public class OSQLMethodCurrent extends OAbstractSQLMethod {
 
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
-    if (iThis ==null)
+    if (iThis == null)
       throw new OCommandSQLParsingException("Method 'current()' can be invoked only on OSequence instances, while NULL was found");
 
     if (!(iThis instanceof OSequence))
-      throw new OCommandSQLParsingException("Method 'current()' can be invoked only on OSequence instances, while '"
-          + iThis.getClass() + "' was found");
+      throw new OCommandSQLParsingException(
+          "Method 'current()' can be invoked only on OSequence instances, while '" + iThis.getClass() + "' was found");
 
-    return ((OSequence) iThis).current();
+    try {
+      return ((OSequence) iThis).current();
+    } catch (ODatabaseException exc) {
+      String message = "Unable to execute command: " + exc.getMessage();
+      OLogManager.instance().error(this, message, exc, (Object) null);
+      throw new OCommandExecutionException(message);
+    }
   }
 }

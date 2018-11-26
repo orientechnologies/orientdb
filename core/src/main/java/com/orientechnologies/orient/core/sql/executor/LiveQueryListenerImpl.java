@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -11,6 +10,7 @@ import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
@@ -20,8 +20,10 @@ import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 /**
  * Created by luigidellaquila on 15/06/17.
@@ -34,6 +36,7 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
 
   private final OSelectStatement statement;
   private       String           className;
+  private       List<ORecordId>  rids;
 
   private final Map<Object, Object> params;
 
@@ -58,9 +61,14 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
     }
     this.statement = (OSelectStatement) stm;
     validateStatement(statement);
-    this.className = statement.getTarget().getItem().getIdentifier().getStringValue();
-    if (db.getClass(className) == null) {
-      throw new OCommandExecutionException("Class " + className + " not found in the schema: " + query);
+    if (statement.getTarget().getItem().getIdentifier() != null) {
+      this.className = statement.getTarget().getItem().getIdentifier().getStringValue();
+      if (db.getClass(className) == null) {
+        throw new OCommandExecutionException("Class " + className + " not found in the schema: " + query);
+      }
+    } else if (statement.getTarget().getItem().getRids() != null) {
+      this.rids = statement.getTarget().getItem().getRids().stream()
+          .map(x -> x.toRecordId(new OResultInternal(), new OBasicCommandContext())).collect(Collectors.toList());
     }
     execInSeparateDatabase(new OCallable() {
       @Override
@@ -93,17 +101,17 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
         throw new OCommandExecutionException("Projections cannot be used in live query " + statement);
       }
     }
-    if (statement.getTarget().getItem().getIdentifier() == null) {
-      throw new OCommandExecutionException("Live queries can only be edecuted against a Class" + statement);
+    if (statement.getTarget().getItem().getIdentifier() == null && statement.getTarget().getItem().getRids() == null) {
+      throw new OCommandExecutionException("Live queries can only be executed against a Class or on RIDs" + statement);
     }
     if (statement.getOrderBy() != null) {
-      throw new OCommandExecutionException("Live queries do not support ORDER BY" + statement);
+      throw new OCommandExecutionException("Live queries do not support ORDER BY " + statement);
     }
     if (statement.getGroupBy() != null) {
-      throw new OCommandExecutionException("Live queries do not support GROUP BY" + statement);
+      throw new OCommandExecutionException("Live queries do not support GROUP BY " + statement);
     }
     if (statement.getSkip() != null || statement.getLimit() != null) {
-      throw new OCommandExecutionException("Live queries do not support SKIP/LIMIT" + statement);
+      throw new OCommandExecutionException("Live queries do not support SKIP/LIMIT " + statement);
     }
   }
 
@@ -147,20 +155,37 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
 
   private boolean filter(OResult record) {
     //filter by class
-    Object filterClass = record.getProperty("@class");
-    String recordClassName = String.valueOf(filterClass);
-    if (filterClass == null) {
-      return false;
-    } else if (!(className.equalsIgnoreCase(recordClassName))) {
-      OClass recordClass = this.execDb.getClass(recordClassName);
-      if (recordClass == null) {
+    if (className != null) {
+      Object filterClass = record.getProperty("@class");
+      String recordClassName = String.valueOf(filterClass);
+      if (filterClass == null) {
         return false;
+      } else if (!(className.equalsIgnoreCase(recordClassName))) {
+        OClass recordClass = this.execDb.getClass(recordClassName);
+        if (recordClass == null) {
+          return false;
+        }
+        if (!recordClass.getName().equalsIgnoreCase(className) && !recordClass.isSubClassOf(className)) {
+          return false;
+        }
       }
-      if (!recordClass.getName().equalsIgnoreCase(className) && !recordClass.isSubClassOf(className)) {
+    }
+    if (rids != null) {
+      boolean found = false;
+      for (ORecordId rid : rids) {
+        if (rid.equals(record.getIdentity().orElse(null))) {
+          found = true;
+          break;
+        }
+        if(rid.equals(record.getProperty("@rid"))){
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
         return false;
       }
     }
-
     //filter conditions
     OWhereClause where = statement.getWhereClause();
     if (where == null) {

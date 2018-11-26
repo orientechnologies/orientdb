@@ -27,12 +27,15 @@ import com.orientechnologies.common.types.OBinary;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -46,7 +49,7 @@ import java.util.*;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public enum OType {
+public enum OType implements OTypeInterface {
   BOOLEAN("Boolean", 0, Boolean.class, new Class<?>[] { Number.class }),
 
   INTEGER("Integer", 1, Integer.class, new Class<?>[] { Number.class }),
@@ -174,6 +177,7 @@ public enum OType {
   public static OType getById(final byte iId) {
     if (iId >= 0 && iId < TYPES_BY_ID.length)
       return TYPES_BY_ID[iId];
+    OLogManager.instance().warn(OType.class, "Invalid type index: " + iId, (Object[])null);
     return null;
   }
 
@@ -182,7 +186,8 @@ public enum OType {
    *
    * @return the identifier of the type.
    */
-  public int getId() {
+  @Override
+  public final int getId() {
     return id;
   }
 
@@ -256,7 +261,7 @@ public enum OType {
   private static boolean checkLinkCollection(Collection<?> toCheck) {
     boolean empty = true;
     for (Object object : toCheck) {
-      if (object != null && !(object instanceof OIdentifiable))
+      if (object != null && (!(object instanceof OIdentifiable) || (object instanceof ODocumentDelta)))
         return false;
       else if (object != null)
         empty = false;
@@ -291,7 +296,7 @@ public enum OType {
    * @return The converted value or the original if no conversion was applied
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  public static Object convert(final Object iValue, final Class<?> iTargetClass) {
+  public static Object convert(Object iValue, final Class<?> iTargetClass) {
     if (iValue == null)
       return null;
 
@@ -447,7 +452,7 @@ public enum OType {
           return ((Collection) iValue).iterator().next();
         }
         return iValue.toString();
-      } else if (iTargetClass.equals(OIdentifiable.class)) {
+      } else if (OIdentifiable.class.isAssignableFrom(iTargetClass)) {
         if (OMultiValue.isMultiValue(iValue)) {
           List<OIdentifiable> result = new ArrayList<OIdentifiable>();
           for (Object o : OMultiValue.getMultiValueIterable(iValue)) {
@@ -475,6 +480,19 @@ public enum OType {
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
+      if (iValue instanceof Collection && ((Collection) iValue).size() == 1 && !Collection.class.isAssignableFrom(iTargetClass)) {
+        //this must be a comparison with the result of a subquery, try to unbox the collection
+        return convert(((Collection) iValue).iterator().next(), iTargetClass);
+      } else if (iValue instanceof OResult && ((OResult) iValue).getPropertyNames().size() == 1 && !OResult.class
+          .isAssignableFrom(iTargetClass)) {
+        // try to unbox OResult with a single property, for subqueries
+        return convert(((OResult) iValue).getProperty(((OResult) iValue).getPropertyNames().iterator().next()), iTargetClass);
+      } else if (iValue instanceof OElement && ((OElement) iValue).getPropertyNames().size() == 1 && !OElement.class
+          .isAssignableFrom(iTargetClass)) {
+        // try to unbox OResult with a single property, for subqueries
+        return convert(((OElement) iValue).getProperty(((OElement) iValue).getPropertyNames().iterator().next()), iTargetClass);
+      }
+
       OLogManager.instance().debug(OType.class, "Error in conversion of value '%s' to type '%s'", e, iValue, iTargetClass);
       return null;
     }
@@ -766,6 +784,10 @@ public enum OType {
         || this == LINKSET || this == LINKBAG;
   }
 
+  public boolean isList() {
+    return this == EMBEDDEDLIST || this == LINKLIST;
+  }
+
   public boolean isLink() {
     return this == LINK || this == LINKSET || this == LINKLIST || this == LINKMAP || this == LINKBAG;
   }
@@ -785,5 +807,9 @@ public enum OType {
   @Deprecated
   public Class<?>[] getJavaTypes() {
     return null;
+  }
+
+  public String getName() {
+    return name;
   }
 }

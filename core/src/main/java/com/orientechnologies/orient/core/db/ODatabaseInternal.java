@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.enterprise.OEnterpriseEndpoint;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
@@ -144,6 +145,14 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
    */
   default boolean isSharded() {
     return false;
+  }
+
+  /**
+   *
+   * @return an endpoint for Enterprise features. Null in Community Edition
+   */
+  default OEnterpriseEndpoint getEnterpriseEndpoint() {
+    return null;
   }
 
 }

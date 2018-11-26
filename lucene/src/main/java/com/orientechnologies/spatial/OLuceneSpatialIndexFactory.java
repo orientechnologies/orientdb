@@ -104,8 +104,9 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
       metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
 
     if (OClass.INDEX_TYPE.SPATIAL.toString().equals(indexType)) {
-
-      return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM, version, pagStorage, valueContainerAlgorithm, metadata);
+      final int binaryFormatVersion = pagStorage.getConfiguration().getBinaryFormatVersion();
+      return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM, version, pagStorage, valueContainerAlgorithm, metadata,
+          binaryFormatVersion);
     }
     throw new OConfigurationException("Unsupported type : " + algorithm);
   }

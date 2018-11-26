@@ -38,11 +38,9 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.*;
-import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -56,6 +54,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.*;
@@ -66,7 +65,6 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.*;
@@ -1517,7 +1515,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public OVertex newVertex(OClass type) {
     if (type == null) {
-      return newVertex("E");
+      return newVertex("V");
     }
     return newVertex(type.getName());
   }
@@ -1528,8 +1526,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     if (cl == null || !cl.isEdgeType()) {
       throw new IllegalArgumentException("" + type + " is not an edge class");
     }
-    ODocument doc = new OEdgeDocument(cl);
-    return addEdgeInternal(from, to, type);
+    return addEdgeInternal(from, to, type, false);
   }
 
   @Override
@@ -1540,7 +1537,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return newEdge(from, to, type.getName());
   }
 
-  private OEdge addEdgeInternal(final OVertex currentVertex, final OVertex inVertex, String iClassName, final Object... fields) {
+  private OEdge addEdgeInternal(final OVertex currentVertex, final OVertex inVertex, String iClassName, boolean forceRegular,
+      final Object... fields) {
     if (currentVertex == null)
       throw new IllegalArgumentException("To vertex is null");
     if (inVertex == null)
@@ -1602,7 +1600,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
         // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
 
-        if (isUseLightweightEdges() && (fields == null || fields.length == 0)) {
+        if (isUseLightweightEdges() && (fields == null || fields.length == 0) && !forceRegular) {
           edge = newLightweightEdge(iClassName, from, to);
           OVertexDelegate.createLink(from.getRecord(), to.getRecord(), outFieldName);
           OVertexDelegate.createLink(to.getRecord(), from.getRecord(), inFieldName);
@@ -2254,11 +2252,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   @Override
-  public String incrementalBackup(final String path) throws UnsupportedOperationException{
+  public String incrementalBackup(final String path) throws UnsupportedOperationException {
     checkOpenness();
     checkIfActive();
 
-    return getStorage().incrementalBackup(path);
+    return getStorage().incrementalBackup(path, null);
   }
 
   @Override
@@ -2542,6 +2540,14 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
     return result;
   }
 
+  public OEdge newRegularEdge(String iClassName, OVertex from, OVertex to) {
+    OClass cl = getClass(iClassName);
+    if (cl == null || !cl.isEdgeType()) {
+      throw new IllegalArgumentException("" + iClassName + " is not an edge class");
+    }
+    return addEdgeInternal(from, to, iClassName, true);
+  }
+
   public synchronized void queryStarted(String id, OResultSet rs) {
     if (this.activeQueries.size() > 1 && this.activeQueries.size() % 10 == 0) {
       StringBuilder msg = new StringBuilder();
@@ -2555,10 +2561,14 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       }
     }
     this.activeQueries.put(id, rs);
+
+    getListeners().forEach((it) -> it.onCommandStart(this, rs));
+
   }
 
   public synchronized void queryClosed(String id) {
-    this.activeQueries.remove(id);
+    OResultSet removed = this.activeQueries.remove(id);
+    getListeners().forEach((it) -> it.onCommandEnd(this, removed));
   }
 
   protected synchronized void closeActiveQueries() {

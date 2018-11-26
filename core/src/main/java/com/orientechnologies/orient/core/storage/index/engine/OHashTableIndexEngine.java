@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.storage.index.engine;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
@@ -39,10 +38,10 @@ import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashFunc
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OHashTable;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable;
-import com.orientechnologies.orient.core.storage.index.hashindex.local.OLocalHashTable20;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OMurmurHash3HashFunction;
 import com.orientechnologies.orient.core.storage.index.hashindex.local.OSHA256HashFunction;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -64,25 +63,16 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   private final OHashTable<Object, Object> hashTable;
   private final AtomicLong                 bonsayFileId = new AtomicLong(0);
 
-  private int version;
+  private final int version;
 
   private final String name;
 
-  public OHashTableIndexEngine(String name, Boolean durableInNonTxMode, OAbstractPaginatedStorage storage, int version) {
-
-    boolean durableInNonTx;
-    if (durableInNonTxMode == null)
-      durableInNonTx = storage.getConfiguration().getContextConfiguration()
-          .getValueAsBoolean(OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE);
-    else
-      durableInNonTx = durableInNonTxMode;
-
+  public OHashTableIndexEngine(String name, OAbstractPaginatedStorage storage, int version) {
     this.version = version;
     if (version < 2) {
-      hashTable = new OLocalHashTable20<Object, Object>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
-          NULL_BUCKET_FILE_EXTENSION, durableInNonTx, storage);
+      throw new IllegalStateException("Unsupported version of hash index");
     } else {
-      hashTable = new OLocalHashTable<Object, Object>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+      hashTable = new OLocalHashTable<>(name, METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
           NULL_BUCKET_FILE_EXTENSION, storage);
     }
 
@@ -101,15 +91,18 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
       OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
-      ODocument metadata, OEncryption encryption) {
+      ODocument metadata, OEncryption encryption) throws IOException {
     final OHashFunction<Object> hashFunction;
 
     if (encryption != null) {
+      //noinspection unchecked
       hashFunction = new OSHA256HashFunction<>(keySerializer);
     } else {
+      //noinspection unchecked
       hashFunction = new OMurmurHash3HashFunction<>(keySerializer);
     }
 
+    //noinspection unchecked
     hashTable.create(keySerializer, valueSerializer, keyTypes, encryption, hashFunction, nullPointerSupport);
   }
 
@@ -118,7 +111,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void deleteWithoutLoad(String indexName) {
+  public void deleteWithoutLoad(String indexName) throws IOException {
     hashTable.deleteWithoutLoad(indexName);
   }
 
@@ -128,7 +121,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void delete() {
+  public void delete() throws IOException {
     hashTable.delete();
   }
 
@@ -139,8 +132,10 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     final OHashFunction<Object> hashFunction;
 
     if (encryption != null) {
+      //noinspection unchecked
       hashFunction = new OSHA256HashFunction<>(keySerializer);
     } else {
+      //noinspection unchecked
       hashFunction = new OMurmurHash3HashFunction<>(keySerializer);
     }
     hashTable.load(indexName, keyTypes, nullPointerSupport, encryption, hashFunction);
@@ -152,12 +147,12 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean remove(Object key) {
+  public boolean remove(Object key) throws IOException {
     return hashTable.remove(key) != null;
   }
 
   @Override
-  public void clear() {
+  public void clear() throws IOException {
     hashTable.clear();
   }
 
@@ -172,17 +167,17 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void put(Object key, Object value) {
+  public void put(Object key, Object value) throws IOException {
     hashTable.put(key, value);
   }
 
   @Override
-  public void update(Object key, OIndexKeyUpdater<Object> updater) {
+  public void update(Object key, OIndexKeyUpdater<Object> updater) throws IOException {
     Object value = get(key);
     OIndexUpdateAction<Object> updated = updater.update(value, bonsayFileId);
-    if (updated.isChange())
+    if (updated.isChange()) {
       put(key, updated.getValue());
-    else if (updated.isRemove()) {
+    } else if (updated.isRemove()) {
       remove(key);
     } else if (updated.isNothing()) {
       //Do nothing
@@ -191,15 +186,15 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @SuppressWarnings("unchecked")
   @Override
-  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
+  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) throws IOException {
     return hashTable.validatedPut(key, value, (Validator) validator);
   }
 
   @Override
   public long size(ValuesTransformer transformer) {
-    if (transformer == null)
+    if (transformer == null) {
       return hashTable.size();
-    else {
+    } else {
       long counter = 0;
 
       if (hashTable.isNullKeyIsSupported()) {
@@ -210,14 +205,16 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       }
 
       OHashIndexBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
-      if (firstEntry == null)
+      if (firstEntry == null) {
         return counter;
+      }
 
       OHashIndexBucket.Entry<Object, Object>[] entries = hashTable.ceilingEntries(firstEntry.key);
 
       while (entries.length > 0) {
-        for (OHashIndexBucket.Entry<Object, Object> entry : entries)
+        for (OHashIndexBucket.Entry<Object, Object> entry : entries) {
           counter += transformer.transformFromValue(entry.value).size();
+        }
 
         entries = hashTable.higherEntries(entries[entries.length - 1].key);
       }
@@ -269,27 +266,32 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       private int nextEntriesIndex;
       private OHashIndexBucket.Entry<Object, Object>[] entries;
 
-      private Iterator<OIdentifiable> currentIterator = new OEmptyIterator<OIdentifiable>();
+      private Iterator<OIdentifiable> currentIterator = new OEmptyIterator<>();
       private Object currentKey;
 
       {
         OHashIndexBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
-        if (firstEntry == null)
+        if (firstEntry == null) {
+          //noinspection unchecked
           entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
-        else
+        } else {
           entries = hashTable.ceilingEntries(firstEntry.key);
+        }
 
-        if (entries.length == 0)
+        if (entries.length == 0) {
           currentIterator = null;
+        }
       }
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (currentIterator == null)
+        if (currentIterator == null) {
           return null;
+        }
 
-        if (currentIterator.hasNext())
+        if (currentIterator.hasNext()) {
           return nextCursorValue();
+        }
 
         while (currentIterator != null && !currentIterator.hasNext()) {
           if (entries.length == 0) {
@@ -302,10 +304,11 @@ public final class OHashTableIndexEngine implements OIndexEngine {
           currentKey = bucketEntry.key;
 
           Object value = bucketEntry.value;
-          if (valuesTransformer != null)
+          if (valuesTransformer != null) {
             currentIterator = valuesTransformer.transformFromValue(value).iterator();
-          else
+          } else {
             currentIterator = Collections.singletonList((OIdentifiable) value).iterator();
+          }
 
           nextEntriesIndex++;
 
@@ -316,8 +319,9 @@ public final class OHashTableIndexEngine implements OIndexEngine {
           }
         }
 
-        if (currentIterator != null && !currentIterator.hasNext())
+        if (currentIterator != null && !currentIterator.hasNext()) {
           return nextCursorValue();
+        }
 
         currentIterator = null;
         return null;
@@ -352,27 +356,32 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       private int nextEntriesIndex;
       private OHashIndexBucket.Entry<Object, Object>[] entries;
 
-      private Iterator<OIdentifiable> currentIterator = new OEmptyIterator<OIdentifiable>();
+      private Iterator<OIdentifiable> currentIterator = new OEmptyIterator<>();
       private Object currentKey;
 
       {
         OHashIndexBucket.Entry<Object, Object> lastEntry = hashTable.lastEntry();
-        if (lastEntry == null)
+        if (lastEntry == null) {
+          //noinspection unchecked
           entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
-        else
+        } else {
           entries = hashTable.floorEntries(lastEntry.key);
+        }
 
-        if (entries.length == 0)
+        if (entries.length == 0) {
           currentIterator = null;
+        }
       }
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (currentIterator == null)
+        if (currentIterator == null) {
           return null;
+        }
 
-        if (currentIterator.hasNext())
+        if (currentIterator.hasNext()) {
           return nextCursorValue();
+        }
 
         while (currentIterator != null && !currentIterator.hasNext()) {
           if (entries.length == 0) {
@@ -387,8 +396,9 @@ public final class OHashTableIndexEngine implements OIndexEngine {
           Object value = bucketEntry.value;
           if (valuesTransformer != null) {
             currentIterator = valuesTransformer.transformFromValue(value).iterator();
-          } else
+          } else {
             currentIterator = Collections.singletonList((OIdentifiable) value).iterator();
+          }
 
           nextEntriesIndex--;
 
@@ -399,8 +409,9 @@ public final class OHashTableIndexEngine implements OIndexEngine {
           }
         }
 
-        if (currentIterator != null && !currentIterator.hasNext())
+        if (currentIterator != null && !currentIterator.hasNext()) {
           return nextCursorValue();
+        }
 
         currentIterator = null;
         return null;
@@ -437,10 +448,12 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
       {
         OHashIndexBucket.Entry<Object, Object> firstEntry = hashTable.firstEntry();
-        if (firstEntry == null)
+        if (firstEntry == null) {
+          //noinspection unchecked
           entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
-        else
+        } else {
           entries = hashTable.ceilingEntries(firstEntry.key);
+        }
       }
 
       @Override

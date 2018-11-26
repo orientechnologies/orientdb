@@ -19,13 +19,13 @@ import java.util.Random;
 public class SBTreeValuePageTest {
   @Test
   public void fillPageDataTest() throws Exception {
-    OByteBufferPool bufferPool = OByteBufferPool.instance();
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     ByteBuffer bufferOne = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointerOne = new OCachePointer(bufferOne, bufferPool, 0, 0);
     cachePointerOne.incrementReferrer();
 
-    OCacheEntry cacheEntryOne = new OCacheEntryImpl(0, 0, cachePointerOne, false);
+    OCacheEntry cacheEntryOne = new OCacheEntryImpl(0, 0, cachePointerOne);
     cacheEntryOne.acquireExclusiveLock();
     OSBTreeValuePage valuePageOne = new OSBTreeValuePage(cacheEntryOne, true);
 
@@ -40,7 +40,7 @@ public class SBTreeValuePageTest {
     OCachePointer cachePointerTwo = new OCachePointer(bufferTwo, bufferPool,  0, 0);
     cachePointerTwo.incrementReferrer();
 
-    OCacheEntry cacheEntryTwo = new OCacheEntryImpl(0, 0, cachePointerTwo, false);
+    OCacheEntry cacheEntryTwo = new OCacheEntryImpl(0, 0, cachePointerTwo);
     cacheEntryTwo.acquireExclusiveLock();
 
     OSBTreeValuePage valuePageTwo = new OSBTreeValuePage(cacheEntryTwo, true);
@@ -69,13 +69,13 @@ public class SBTreeValuePageTest {
 
   @Test
   public void testFreeListPointer() throws Exception {
-    OByteBufferPool bufferPool = OByteBufferPool.instance();
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
     OSBTreeValuePage valuePage = new OSBTreeValuePage(cacheEntry, true);

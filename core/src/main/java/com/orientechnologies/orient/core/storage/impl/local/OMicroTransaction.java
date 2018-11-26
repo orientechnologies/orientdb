@@ -750,4 +750,9 @@ public final class OMicroTransaction implements OBasicTransaction, OTransactionI
   public void setDatabase(ODatabaseDocumentInternal database) {
     this.database = database;
   }
+  
+  @Override
+  public boolean isUseDeltas(){
+    return false;
+  }
 }

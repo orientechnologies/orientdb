@@ -128,7 +128,7 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
     } else {
       int i = 0;
       List listStack = stackToList(stack);
-      for (int x = listStack.size(); x >= 0; x--) {
+      for (int x = listStack.size() - 1; x >= 0; x--) {
         final Object o = listStack.get(x);
         if (o instanceof OTraverseRecordProcess) {
           final OIdentifiable record = ((OTraverseRecordProcess) o).getTarget();

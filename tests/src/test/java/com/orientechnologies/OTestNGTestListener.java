@@ -64,7 +64,7 @@ public class OTestNGTestListener implements ISuiteListener {
         //state is verified during shutdown
         orient.shutdown();
       } else {
-        OByteBufferPool.instance().checkMemoryLeaks();
+        OByteBufferPool.instance(null).checkMemoryLeaks();
       }
     }
   }

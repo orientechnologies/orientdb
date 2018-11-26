@@ -19,21 +19,6 @@
  */
 package com.orientechnologies.orient.core;
 
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.directmemory.ODirectMemoryAllocator;
 import com.orientechnologies.common.io.OFileUtils;
@@ -59,6 +44,35 @@ import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Orient extends OListenerManger<OOrientListener> {
   public static final String ORIENTDB_HOME = "ORIENTDB_HOME";
@@ -253,9 +267,6 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (timer == null)
         timer = new Timer(true);
 
-      OByteBufferPool.instance().registerMBean();
-      ODirectMemoryAllocator.instance().registerMBean();
-
       profiler = new OProfilerStub(false);
 
       shutdownHook = new OrientShutdownHook();
@@ -390,13 +401,10 @@ public class Orient extends OListenerManger<OOrientListener> {
       shutdownHandlers.clear();
 
       OLogManager.instance().info(this, "Clearing byte buffer pool");
-      OByteBufferPool.instance().clear();
+      OByteBufferPool.instance(null).clear();
 
-      OByteBufferPool.instance().checkMemoryLeaks();
+      OByteBufferPool.instance(null).checkMemoryLeaks();
       ODirectMemoryAllocator.instance().checkMemoryLeaks();
-
-      OByteBufferPool.instance().unregisterMBean();
-      ODirectMemoryAllocator.instance().unregisterMBean();
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();

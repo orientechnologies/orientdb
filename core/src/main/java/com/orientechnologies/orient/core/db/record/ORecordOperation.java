@@ -45,6 +45,8 @@ public class ORecordOperation implements Comparable {
   public ORecordCallback<Long>    createdCallback = null;
   public ORecordCallback<Integer> updatedCallback = null;
 
+  private Object resultData;
+
   public ORecordOperation() {
   }
 
@@ -80,6 +82,10 @@ public class ORecordOperation implements Comparable {
 
   public ORecord getRecord() {
     return record != null ? record.getRecord() : null;
+  }
+
+  public OIdentifiable getRecordContainer() {
+    return record;
   }
 
   public ORID getRID() {
@@ -127,4 +133,13 @@ public class ORecordOperation implements Comparable {
   public int compareTo(Object o) {
     return record.compareTo(((ORecordOperation) o).record);
   }
+
+  public Object getResultData() {
+    return resultData;
+  }
+
+  public void setResultData(Object resultData) {
+    this.resultData = resultData;
+  }
+
 }

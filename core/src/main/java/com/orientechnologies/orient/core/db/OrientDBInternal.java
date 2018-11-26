@@ -290,7 +290,7 @@ public interface OrientDBInternal extends AutoCloseable {
 
   <X> Future<X> executeNoAuthorization(String database, ODatabaseTask<X> task);
 
-  default void fullSync(String dbName, String backupPath, OrientDBConfig config) {
+  default OStorage fullSync(String dbName, String backupPath, OrientDBConfig config) {
     throw new UnsupportedOperationException();
   }
 }

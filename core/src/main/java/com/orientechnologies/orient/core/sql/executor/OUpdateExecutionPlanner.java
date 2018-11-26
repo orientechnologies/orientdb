@@ -180,6 +180,6 @@ public class OUpdateExecutionPlanner {
       sourceStatement.setTimeout(this.timeout.copy());
     }
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(sourceStatement);
-    result.chain(new SubQueryStep(planner.createExecutionPlan(ctx, profilingEnabled, true), ctx, ctx, profilingEnabled));
+    result.chain(new SubQueryStep(planner.createExecutionPlan(ctx, profilingEnabled, false), ctx, ctx, profilingEnabled));
   }
 }

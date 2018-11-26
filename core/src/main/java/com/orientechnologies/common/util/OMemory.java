@@ -22,12 +22,6 @@ package com.orientechnologies.common.util;
 import com.orientechnologies.common.jna.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
-import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 
 /**
  * Provides various utilities related to memory management and configuration.
@@ -99,39 +93,6 @@ public class OMemory {
       // Ignore
     }
     return size;
-  }
-
-  /**
-   * Parses the size specifier formatted in the JVM style, like 1024k or 4g. Following units are supported: k or K – kilobytes, m or
-   * M – megabytes, g or G – gigabytes. If no unit provided, it is bytes.
-   *
-   * @param text the text to parse.
-   *
-   * @return the parsed size value.
-   *
-   * @throws IllegalArgumentException if size specifier is not recognized as valid.
-   */
-  private static long parseVmArgsSize(String text) throws IllegalArgumentException {
-    if (text == null)
-      throw new IllegalArgumentException("text can't be null");
-    if (text.length() == 0)
-      throw new IllegalArgumentException("text can't be empty");
-
-    final char unit = text.charAt(text.length() - 1);
-    if (Character.isDigit(unit))
-      return Long.parseLong(text);
-
-    final long value = Long.parseLong(text.substring(0, text.length() - 1));
-    switch (Character.toLowerCase(unit)) {
-    case 'g':
-      return value * 1024 * 1024 * 1024;
-    case 'm':
-      return value * 1024 * 1024;
-    case 'k':
-      return value * 1024;
-    }
-
-    throw new IllegalArgumentException("text '" + text + "' is not a size specifier.");
   }
 
   private OMemory() {

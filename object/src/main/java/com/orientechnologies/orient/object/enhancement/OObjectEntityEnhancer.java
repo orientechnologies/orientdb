@@ -94,7 +94,7 @@ public class OObjectEntityEnhancer {
       } else {
         f.setFilter(defaultMethodFilter);
       }
-      c = f.createClass();
+      c = (Class<T>) f.createClass();
     }
     MethodHandler mi = new OObjectProxyMethodHandler(doc);
     ((OObjectProxyMethodHandler) mi).setParentObject(parent);

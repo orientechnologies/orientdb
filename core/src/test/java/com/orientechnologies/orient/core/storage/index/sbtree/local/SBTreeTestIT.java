@@ -42,7 +42,7 @@ public class SBTreeTestIT {
   String dbName;
 
   @Before
-  public void before() {
+  public void before() throws Exception {
     buildDirectory = System.getProperty("buildDirectory", ".") + File.separator + SBTreeTestIT.class.getSimpleName();
 
     dbName = "localSBTreeTest";
@@ -264,7 +264,7 @@ public class SBTreeTestIT {
   }
 
   @Test
-  public void testIterateEntriesMajor() {
+  public void testIterateEntriesMajor() throws Exception {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 
@@ -286,7 +286,7 @@ public class SBTreeTestIT {
   }
 
   @Test
-  public void testIterateEntriesMinor() {
+  public void testIterateEntriesMinor() throws Exception {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 
@@ -308,7 +308,7 @@ public class SBTreeTestIT {
   }
 
   @Test
-  public void testIterateEntriesBetween() {
+  public void testIterateEntriesBetween() throws Exception {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 
@@ -490,7 +490,7 @@ public class SBTreeTestIT {
   }
 
   @Test
-  public void testNullKeysInSBTree() {
+  public void testNullKeysInSBTree() throws Exception {
     final OSBTree<Integer, OIdentifiable> nullSBTree = new OSBTree<>("nullSBTree", ".sbt", ".nbt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
     nullSBTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, true, null);

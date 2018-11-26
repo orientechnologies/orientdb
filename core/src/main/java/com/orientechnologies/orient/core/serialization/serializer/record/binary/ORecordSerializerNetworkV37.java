@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.delta.ODocumentDelta;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -199,7 +200,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   }
 
   protected OType readOType(final BytesContainer bytes) {
-    return OType.getById(readByte(bytes));
+    return HelperClasses.readType(bytes);
   }
 
   private void writeOType(BytesContainer bytes, int pos, OType type) {
@@ -866,8 +867,14 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     } else {
       final BytesContainer container = new BytesContainer();
 
+      ODocument doc = (ODocument) iSource;
       // SERIALIZE RECORD
-      serialize((ODocument) iSource, container, false);
+      if (!iOnlyDelta) {
+        serialize(doc, container, false);
+      } else {
+        ODocumentDelta deltaDoc = doc.getDeltaFromOriginal();
+        return deltaDoc.serialize();
+      }
 
       return container.fitBytes();
     }

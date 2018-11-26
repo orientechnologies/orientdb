@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.common.concur.resource.OSharedContainer;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -235,7 +236,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
   /**
    * @return Backup file name
    */
-  String incrementalBackup(String backupDirectory) throws UnsupportedOperationException;
+  String incrementalBackup(String backupDirectory, OCallable<Void, Void> started) throws UnsupportedOperationException;
 
   void restoreFromIncrementalBackup(String filePath);
 

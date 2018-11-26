@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
@@ -388,9 +389,9 @@ public class OSelectExecutionPlanner {
       return null;
     } else if (item.getIdentifier() != null) {
       String className = item.getIdentifier().getStringValue();
-      OClass clazz = db.getMetadata().getSchema().getClass(className);
+      OClass clazz = getSchemaFromContext(ctx).getClass(className);
       if (clazz == null) {
-        clazz = db.getMetadata().getSchema().getView(className);
+        clazz = getSchemaFromContext(ctx).getView(className);
       }
       if (clazz == null) {
         return null;
@@ -559,13 +560,18 @@ public class OSelectExecutionPlanner {
     return true;
   }
 
-  private boolean isCount(OProjection aggregateProjection, OProjection projection) {
-    if (aggregateProjection == null || projection == null || aggregateProjection.getItems().size() != 1
-        || projection.getItems().size() != 1) {
+  private static boolean isCountOnly(QueryPlanningInfo info) {
+    if (info.aggregateProjection == null || info.projection == null || info.aggregateProjection.getItems().size() != 1
+        || info.projection.getItems().size() != 1) {
       return false;
     }
-    OProjectionItem item = aggregateProjection.getItems().get(0);
-    return item.getExpression().isCount();
+    OProjectionItem item = info.aggregateProjection.getItems().get(0);
+    OExpression exp = item.getExpression();
+    if (exp.getMathExpression() != null && exp.getMathExpression() instanceof OBaseExpression) {
+      OBaseExpression base = (OBaseExpression) exp.getMathExpression();
+      return base.isCount() && base.getModifier() == null;
+    }
+    return false;
   }
 
   public static void handleUnwind(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
@@ -597,7 +603,7 @@ public class OSelectExecutionPlanner {
       }
       if (info.aggregateProjection != null) {
         result.chain(new AggregateProjectionCalculationStep(info.aggregateProjection, info.groupBy, ctx, profilingEnabled));
-        if (isCountStar(info) && info.groupBy == null) {
+        if (isCountOnly(info) && info.groupBy == null) {
           result.chain(new GuaranteeEmptyCountStep(info.aggregateProjection.getItems().get(0), ctx, profilingEnabled));
         }
 
@@ -632,9 +638,10 @@ public class OSelectExecutionPlanner {
     }
     if (info.whereClause != null && info.target != null && info.target.getItem().getIdentifier() != null) {
       String className = info.target.getItem().getIdentifier().getStringValue();
-      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(className);
-      if(clazz==null){
-        clazz = ctx.getDatabase().getMetadata().getSchema().getView(className);
+      OSchema schema = getSchemaFromContext(ctx);
+      OClass clazz = schema.getClass(className);
+      if (clazz == null) {
+        clazz = schema.getView(className);
       }
       if (clazz != null) {
         info.whereClause.getBaseExpression().rewriteIndexChainsAsSubqueries(ctx, clazz);
@@ -870,7 +877,7 @@ public class OSelectExecutionPlanner {
       if (!found) {
         OProjectionItem newItem = new OProjectionItem(-1);
         newItem.setExpression(exp);
-        OIdentifier groupByAlias = new OIdentifier("_$$$GROUP_BY_ALIAS$$$_" + i);
+        OIdentifier groupByAlias = new OIdentifier("_$$$GROUP_BY_ALIAS$$$_" + (i++));
         newItem.setAlias(groupByAlias);
         if (info.preAggregateProjection == null) {
           info.preAggregateProjection = new OProjection(-1);
@@ -1371,9 +1378,13 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleLet(OSelectExecutionPlan plan, QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
+    // this could be invoked multiple times
+    // so it can be optimized
+    // checking whether the execution plan already contains some LET steps
+    // and in case skip
     if (info.perRecordLetClause != null) {
       List<OLetItem> items = info.perRecordLetClause.getItems();
-      if (info.distributedPlanCreated) {
+      if (plan.steps.size() > 0 || info.distributedPlanCreated) {
         for (OLetItem item : items) {
           if (item.getExpression() != null) {
             plan.chain(new LetExpressionStep(item.getVarName(), item.getExpression(), ctx, profilingEnabled));
@@ -1467,7 +1478,7 @@ public class OSelectExecutionPlanner {
       orderByRidAsc = false;
     }
     String className = identifier.getStringValue();
-    OSchema schema = ctx.getDatabase().getMetadata().getSchema();
+    OSchema schema = getSchemaFromContext(ctx);
 
     AbstractExecutionStep fetcher;
     if (schema.getClass(className) != null) {
@@ -1489,7 +1500,7 @@ public class OSelectExecutionPlanner {
     if (queryTarget == null) {
       return false;
     }
-    OSchema schema = ctx.getDatabase().getMetadata().getSchema();
+    OSchema schema = getSchemaFromContext(ctx);
     OClass clazz = schema.getClass(queryTarget.getStringValue());
     if (clazz == null) {
       clazz = schema.getView(queryTarget.getStringValue());
@@ -1530,6 +1541,9 @@ public class OSelectExecutionPlanner {
             subPlan.chain(new DistinctExecutionStep(ctx, profilingEnabled));
           }
           if (!block.getSubBlocks().isEmpty()) {
+            if ((info.perRecordLetClause != null && refersToLet(block.getSubBlocks()))) {
+              handleLet(subPlan, info, ctx, profilingEnabled);
+            }
             subPlan.chain(new FilterStep(createWhereFrom(block), ctx, profilingEnabled));
           }
           resultSubPlans.add(subPlan);
@@ -1543,6 +1557,9 @@ public class OSelectExecutionPlanner {
           OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
           subPlan.chain(step);
           if (!block.getSubBlocks().isEmpty()) {
+            if ((info.perRecordLetClause != null && refersToLet(block.getSubBlocks()))) {
+              handleLet(subPlan, info, ctx, profilingEnabled);
+            }
             subPlan.chain(new FilterStep(createWhereFrom(block), ctx, profilingEnabled));
           }
           resultSubPlans.add(subPlan);
@@ -1589,6 +1606,9 @@ public class OSelectExecutionPlanner {
           plan.chain(step);
           plan.chain(new FilterByClustersStep(filterClusters, ctx, profilingEnabled));
           if (!block.getSubBlocks().isEmpty()) {
+            if ((info.perRecordLetClause != null && refersToLet(block.getSubBlocks()))) {
+              handleLet(plan, info, ctx, profilingEnabled);
+            }
             plan.chain(new FilterStep(createWhereFrom(block), ctx, profilingEnabled));
           }
         } else {
@@ -1616,6 +1636,18 @@ public class OSelectExecutionPlanner {
     } else {
       return false;
     }
+  }
+
+  private boolean refersToLet(List<OBooleanExpression> subBlocks) {
+    if (subBlocks == null) {
+      return false;
+    }
+    for (OBooleanExpression exp : subBlocks) {
+      if (exp.toString().startsWith("$")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private List<OBinaryCondition> filterIndexedFunctionsWithoutIndex(List<OBinaryCondition> indexedFunctionConditions,
@@ -1646,7 +1678,7 @@ public class OSelectExecutionPlanner {
 
   private boolean handleClassWithIndexForSortOnly(OSelectExecutionPlan plan, OIdentifier queryTarget, Set<String> filterClusters,
       QueryPlanningInfo info, OCommandContext ctx, boolean profilingEnabled) {
-    OSchema schema = ctx.getDatabase().getMetadata().getSchema();
+    OSchema schema = getSchemaFromContext(ctx);
     OClass clazz = schema.getClass(queryTarget.getStringValue());
     if (clazz == null) {
       clazz = schema.getView(queryTarget.getStringValue());
@@ -1665,6 +1697,9 @@ public class OSelectExecutionPlanner {
       String orderType = null;
       for (int i = 0; i < info.orderBy.getItems().size(); i++) {
         OOrderByItem orderItem = info.orderBy.getItems().get(i);
+        if (orderItem.getCollate() != null) {
+          return false;
+        }
         String indexField = indexFields.get(i);
         if (i == 0) {
           orderType = orderItem.getType();
@@ -1707,7 +1742,7 @@ public class OSelectExecutionPlanner {
       info.flattenedWhereClause = null;
       return true;
     }
-    OSchema schema = ctx.getDatabase().getMetadata().getSchema();
+    OSchema schema = getSchemaFromContext(ctx);
     OClass clazz = schema.getClass(targetClass.getStringValue());
     if (clazz == null) {
       clazz = schema.getView(targetClass.getStringValue());
@@ -1770,9 +1805,9 @@ public class OSelectExecutionPlanner {
     List<OExecutionStepInternal> result = handleClassAsTargetWithIndex(targetClass, filterClusters, info, ctx, profilingEnabled);
     if (result == null) {
       result = new ArrayList<>();
-      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass);
+      OClass clazz = getSchemaFromContext(ctx).getClass(targetClass);
       if (clazz == null) {
-        clazz = ctx.getDatabase().getMetadata().getSchema().getView(targetClass);
+        clazz = getSchemaFromContext(ctx).getView(targetClass);
       }
       if (clazz == null) {
         throw new OCommandExecutionException("Cannot find class " + targetClass);
@@ -1807,9 +1842,9 @@ public class OSelectExecutionPlanner {
       return null;
     }
 
-    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass);
+    OClass clazz = getSchemaFromContext(ctx).getClass(targetClass);
     if (clazz == null) {
-      clazz = ctx.getDatabase().getMetadata().getSchema().getView(targetClass);
+      clazz = getSchemaFromContext(ctx).getView(targetClass);
     }
     if (clazz == null) {
       throw new OCommandExecutionException("Cannot find class " + targetClass);
@@ -1848,6 +1883,16 @@ public class OSelectExecutionPlanner {
         info.orderApplied = true;
       }
       if (desc.remainingCondition != null && !desc.remainingCondition.isEmpty()) {
+        if ((info.perRecordLetClause != null && refersToLet(Collections.singletonList(desc.remainingCondition)))) {
+          OSelectExecutionPlan stubPlan = new OSelectExecutionPlan(ctx);
+          boolean prevCreatedDist = info.distributedPlanCreated;
+          info.distributedPlanCreated = true; //little hack, check this!!!
+          handleLet(stubPlan, info, ctx, profilingEnabled);
+          for (OExecutionStep step : stubPlan.getSteps()) {
+            result.add((OExecutionStepInternal) step);
+          }
+          info.distributedPlanCreated = prevCreatedDist;
+        }
         result.add(new FilterStep(createWhereFrom(desc.remainingCondition), ctx, profilingEnabled));
       }
     } else {
@@ -1857,7 +1902,15 @@ public class OSelectExecutionPlanner {
     return result;
   }
 
+  private static OSchema getSchemaFromContext(OCommandContext ctx) {
+    return ((OMetadataInternal) ctx.getDatabase().getMetadata()).getImmutableSchemaSnapshot();
+  }
+
   private boolean fullySorted(OOrderBy orderBy, OAndBlock conditions, OIndex idx) {
+    if (orderBy.getItems().stream().anyMatch(x -> x.getCollate() != null)) {
+      return false;
+    }
+
     if (!idx.supportsOrderedIterations())
       return false;
 

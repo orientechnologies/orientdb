@@ -10,6 +10,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author Matan Shukry (matanshukry@gmail.com)
@@ -17,8 +18,8 @@ import java.util.Locale;
  */
 @Test(groups = "sequence")
 public class SequenceTest extends DocumentDBBaseTest {
-  private static final int CACHE_SIZE = 40;
-  private static final long FIRST_START = OSequence.DEFAULT_START;
+  private static final int  CACHE_SIZE   = 40;
+  private static final long FIRST_START  = OSequence.DEFAULT_START;
   private static final long SECOND_START = 31;
 
   @Parameters(value = "url")
@@ -27,12 +28,12 @@ public class SequenceTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void trivialTest() {
+  public void trivialTest() throws ExecutionException, InterruptedException {
     testSequence("seq1", SEQUENCE_TYPE.ORDERED);
     testSequence("seq2", SEQUENCE_TYPE.CACHED);
   }
 
-  private void testSequence(String sequenceName, SEQUENCE_TYPE sequenceType) {
+  private void testSequence(String sequenceName, SEQUENCE_TYPE sequenceType) throws ExecutionException, InterruptedException {
     OSequenceLibrary sequenceLibrary = database.getMetadata().getSequenceLibrary();
 
     OSequence seq = sequenceLibrary.createSequence(sequenceName, sequenceType, null);
@@ -44,8 +45,7 @@ public class SequenceTest extends DocumentDBBaseTest {
       err = se;
     }
     Assert.assertTrue(err == null || err.getMessage().toLowerCase(Locale.ENGLISH).contains("already exists"),
-            "Creating a second " + sequenceType.toString() +
-                    " sequences with same name doesn't throw an exception");
+        "Creating a second " + sequenceType.toString() + " sequences with same name doesn't throw an exception");
 
     OSequence seqSame = sequenceLibrary.getSequence(sequenceName);
     Assert.assertEquals(seqSame, seq);
@@ -63,7 +63,7 @@ public class SequenceTest extends DocumentDBBaseTest {
   }
 
   @Test
-  public void testOrdered() {
+  public void testOrdered() throws ExecutionException, InterruptedException {
     OSequenceLibrary sequenceManager = database.getMetadata().getSequenceLibrary();
 
     OSequence seq = sequenceManager.createSequence("seqOrdered", SEQUENCE_TYPE.ORDERED, null);
@@ -75,7 +75,7 @@ public class SequenceTest extends DocumentDBBaseTest {
       err = se;
     }
     Assert.assertTrue(err == null || err.getMessage().toLowerCase(Locale.ENGLISH).contains("already exists"),
-            "Creating two ordered sequences with same name doesn't throw an exception");
+        "Creating two ordered sequences with same name doesn't throw an exception");
 
     OSequence seqSame = sequenceManager.getSequence("seqOrdered");
     Assert.assertEquals(seqSame, seq);
@@ -87,7 +87,7 @@ public class SequenceTest extends DocumentDBBaseTest {
     testUsage(seq, SECOND_START);
   }
 
-  private void testUsage(OSequence seq, long reset) {
+  private void testUsage(OSequence seq, long reset) throws ExecutionException, InterruptedException {
     for (int i = 0; i < 2; ++i) {
       Assert.assertEquals(seq.reset(), reset);
       Assert.assertEquals(seq.current(), reset);

@@ -40,6 +40,16 @@ public class OTraverseProjectionItem extends SimpleNode {
     return base.toString().equals("*") && modifier == null;
   }
 
+  public boolean refersToParent() {
+    if (base != null && base.refersToParent()) {
+      return true;
+    }
+    if (modifier != null && modifier.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
+
   private Object handleStar(OResult iCurrentRecord, OCommandContext ctx) {
     Set<Object> result = new HashSet<>();
     for (String prop : iCurrentRecord.getPropertyNames()) {
@@ -101,7 +111,8 @@ public class OTraverseProjectionItem extends SimpleNode {
     return result;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (this == o)
       return true;
     if (o == null || getClass() != o.getClass())
@@ -117,7 +128,8 @@ public class OTraverseProjectionItem extends SimpleNode {
     return true;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     int result = (base != null ? base.hashCode() : 0);
     result = 31 * result + (modifier != null ? modifier.hashCode() : 0);
     return result;

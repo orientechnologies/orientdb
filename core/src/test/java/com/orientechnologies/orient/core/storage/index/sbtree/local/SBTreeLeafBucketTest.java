@@ -25,13 +25,13 @@ import java.util.TreeSet;
 public class SBTreeLeafBucketTest {
   @Test
   public void testInitialization() throws Exception {
-    OByteBufferPool bufferPool = OByteBufferPool.instance();
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, true,
@@ -61,11 +61,11 @@ public class SBTreeLeafBucketTest {
       keys.add(random.nextLong());
     }
 
-    OByteBufferPool bufferPool = OByteBufferPool.instance();
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
     cachePointer.incrementReferrer();
@@ -106,11 +106,11 @@ public class SBTreeLeafBucketTest {
       keys.add(random.nextLong());
     }
 
-    OByteBufferPool bufferPool = OByteBufferPool.instance();
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool,0, 0);
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
     cachePointer.incrementReferrer();
@@ -131,8 +131,12 @@ public class SBTreeLeafBucketTest {
 
     Assert.assertEquals(keyIndexMap.size(), treeBucket.size());
 
-    for (int i = 0; i < treeBucket.size(); i++)
-      treeBucket.updateValue(i, new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(i + 5, i + 5)));
+    for (int i = 0; i < treeBucket.size(); i++) {
+      final byte[] rawValue = new byte[OLinkSerializer.RID_SIZE];
+
+      OLinkSerializer.INSTANCE.serializeNativeObject(new ORecordId(i + 5, i + 5), rawValue, 0);
+      treeBucket.updateValue(i, rawValue, new byte[] { 1 });
+    }
 
     for (Map.Entry<Long, Integer> keyIndexEntry : keyIndexMap.entrySet()) {
       OSBTreeBucket.SBTreeEntry<Long, OIdentifiable> entry = treeBucket.getEntry(keyIndexEntry.getValue());
@@ -158,13 +162,13 @@ public class SBTreeLeafBucketTest {
       keys.add(random.nextLong());
     }
 
-    OByteBufferPool bufferPool = OByteBufferPool.instance();
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, true,
@@ -239,13 +243,13 @@ public class SBTreeLeafBucketTest {
       keys.add(random.nextLong());
     }
 
-    OByteBufferPool bufferPool = OByteBufferPool.instance();
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool,0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, true,
@@ -264,7 +268,10 @@ public class SBTreeLeafBucketTest {
 
     int itemsToDelete = originalSize / 2;
     for (int i = 0; i < itemsToDelete; i++) {
-      treeBucket.remove(treeBucket.size() - 1);
+      final byte[] rawKey = treeBucket.getRawKey(i);
+      final byte[] rawValue = treeBucket.getRawValue(i);
+
+      treeBucket.remove(treeBucket.size() - 1, rawKey, rawValue);
     }
 
     Assert.assertEquals(treeBucket.size(), originalSize - itemsToDelete);
@@ -314,13 +321,13 @@ public class SBTreeLeafBucketTest {
 
   @Test
   public void testSetLeftSibling() throws Exception {
-    OByteBufferPool bufferPool = OByteBufferPool.instance();
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, true,
@@ -334,13 +341,13 @@ public class SBTreeLeafBucketTest {
 
   @Test
   public void testSetRightSibling() throws Exception {
-    OByteBufferPool bufferPool = OByteBufferPool.instance();
+    OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     ByteBuffer buffer = bufferPool.acquireDirect(true);
 
     OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
-    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
+    OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, true,

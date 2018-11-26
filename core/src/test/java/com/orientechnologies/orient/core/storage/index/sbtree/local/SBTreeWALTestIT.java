@@ -18,7 +18,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
@@ -26,8 +25,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitBodyRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OCASDiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.cas.OWriteableWALRecord;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Assert;
@@ -38,9 +38,11 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
@@ -67,7 +69,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
   private static final String EXPECTED_DB_NAME = "sbtreeWithWALTestExpected";
 
   @Before
-  public void before() {
+  public void before() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/" + DIR_NAME;
 
@@ -88,13 +90,13 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
     orientDB.close();
   }
 
-  private void createActualSBTree() {
+  private void createActualSBTree() throws Exception {
     orientDB.create(ACTUAL_DB_NAME, ODatabaseType.PLOCAL);
 
     databaseDocumentTx = orientDB.open(ACTUAL_DB_NAME, "admin", "admin");
     actualStorage = (OLocalPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage();
     actualStorageDir = actualStorage.getStoragePath().toString();
-    ODiskWriteAheadLog writeAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
+    OCASDiskWriteAheadLog writeAheadLog = (OCASDiskWriteAheadLog) actualStorage.getWALInstance();
 
     actualStorage.synch();
     writeAheadLog.addCutTillLimit(writeAheadLog.getFlushedLsn());
@@ -199,28 +201,28 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
   @Test
   @Ignore
   @Override
-  public void testNullKeysInSBTree() {
+  public void testNullKeysInSBTree() throws Exception {
     super.testNullKeysInSBTree();
   }
 
   @Test
   @Ignore
   @Override
-  public void testIterateEntriesMajor() {
+  public void testIterateEntriesMajor() throws Exception {
     super.testIterateEntriesMajor();
   }
 
   @Test
   @Ignore
   @Override
-  public void testIterateEntriesMinor() {
+  public void testIterateEntriesMinor() throws Exception {
     super.testIterateEntriesMinor();
   }
 
   @Test
   @Ignore
   @Override
-  public void testIterateEntriesBetween() {
+  public void testIterateEntriesBetween() throws Exception {
     super.testIterateEntriesBetween();
   }
 
@@ -245,72 +247,78 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
   }
 
   private void restoreDataFromWAL() throws IOException {
-    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, false, actualStorage,
-        16 * OWALPage.PAGE_SIZE, 120);
+    OCASDiskWriteAheadLog log = new OCASDiskWriteAheadLog(ACTUAL_DB_NAME, Paths.get(actualStorageDir), Paths.get(actualStorageDir),
+        10_000, 128, 30 * 60 * 1_000_000_000L, 100 * 1024 * 1024, 1000, false, Locale.ENGLISH, -1, -1, 1_000, false, true, false,
+        0);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<>();
+    List<OWriteableWALRecord> walRecords = log.read(lsn, 1_000);
 
     boolean atomicChangeIsProcessed = false;
-    while (lsn != null) {
-      OWALRecord walRecord = log.read(lsn);
-      if (walRecord instanceof OOperationUnitBodyRecord)
-        atomicUnit.add(walRecord);
-
-      if (!atomicChangeIsProcessed) {
-        if (walRecord instanceof OAtomicUnitStartRecord)
-          atomicChangeIsProcessed = true;
-      } else if (walRecord instanceof OAtomicUnitEndRecord) {
-        atomicChangeIsProcessed = false;
-
-        for (OWALRecord restoreRecord : atomicUnit) {
-          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord
-              || restoreRecord instanceof ONonTxOperationPerformedWALRecord)
-            continue;
-
-          if (restoreRecord instanceof OFileCreatedWALRecord) {
-            final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
-            final String fileName = fileCreatedCreatedRecord.getFileName().replace("actualSBTree", "expectedSBTree");
-
-            if (!expectedWriteCache.exists(fileName))
-              expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
-          } else {
-            final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
-
-            final long fileId = updatePageRecord.getFileId();
-            final long pageIndex = updatePageRecord.getPageIndex();
-
-            OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1, false);
-            if (cacheEntry == null) {
-              do {
-                if (cacheEntry != null)
-                  expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
-
-                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, false);
-              } while (cacheEntry.getPageIndex() != pageIndex);
-            }
-
-            try {
-              ODurablePage durablePage = new ODurablePage(cacheEntry);
-              durablePage.restoreChanges(updatePageRecord.getChanges());
-              durablePage.setLsn(new OLogSequenceNumber(0, 0));
-
-              cacheEntry.markDirty();
-            } finally {
-              expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
-            }
-          }
-
+    while (!walRecords.isEmpty()) {
+      for (OWriteableWALRecord walRecord : walRecords) {
+        if (walRecord instanceof OOperationUnitBodyRecord) {
+          atomicUnit.add(walRecord);
         }
-        atomicUnit.clear();
-      } else {
-        Assert.assertTrue("WAL record type is " + walRecord.getClass().getName(),
-            walRecord instanceof OUpdatePageRecord || walRecord instanceof ONonTxOperationPerformedWALRecord
-                || walRecord instanceof OFileCreatedWALRecord || walRecord instanceof OFuzzyCheckpointStartRecord
-                || walRecord instanceof OFuzzyCheckpointEndRecord);
+
+        if (!atomicChangeIsProcessed) {
+          if (walRecord instanceof OAtomicUnitStartRecord) {
+            atomicChangeIsProcessed = true;
+          }
+        } else if (walRecord instanceof OAtomicUnitEndRecord) {
+          atomicChangeIsProcessed = false;
+
+          for (OWALRecord restoreRecord : atomicUnit) {
+            if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord
+                || restoreRecord instanceof ONonTxOperationPerformedWALRecord) {
+              continue;
+            }
+
+            if (restoreRecord instanceof OFileCreatedWALRecord) {
+              final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
+              final String fileName = fileCreatedCreatedRecord.getFileName().replace("actualSBTree", "expectedSBTree");
+
+              if (!expectedWriteCache.exists(fileName)) {
+                expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
+              }
+            } else {
+              final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
+
+              final long fileId = updatePageRecord.getFileId();
+              final long pageIndex = updatePageRecord.getPageIndex();
+
+              OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1, false, null);
+              if (cacheEntry == null) {
+                do {
+                  if (cacheEntry != null) {
+                    expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
+                  }
+
+                  cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, false, null);
+                } while (cacheEntry.getPageIndex() != pageIndex);
+              }
+
+              try {
+                ODurablePage durablePage = new ODurablePage(cacheEntry);
+                durablePage.restoreChanges(updatePageRecord.getChanges());
+                durablePage.setLsn(new OLogSequenceNumber(0, 0));
+              } finally {
+                expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
+              }
+            }
+
+          }
+          atomicUnit.clear();
+        } else {
+          Assert.assertTrue("WAL record type is " + walRecord.getClass().getName(),
+              walRecord instanceof OUpdatePageRecord || walRecord instanceof ONonTxOperationPerformedWALRecord
+                  || walRecord instanceof OFileCreatedWALRecord || walRecord instanceof OFuzzyCheckpointStartRecord
+                  || walRecord instanceof OFuzzyCheckpointEndRecord);
+        }
       }
 
-      lsn = log.next(lsn);
+      walRecords = log.next(walRecords.get(walRecords.size() - 1).getLsn(), 1_000);
     }
 
     Assert.assertTrue(atomicUnit.isEmpty());

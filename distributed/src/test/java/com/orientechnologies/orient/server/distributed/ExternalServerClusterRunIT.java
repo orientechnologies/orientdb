@@ -28,7 +28,7 @@ import org.junit.Test;
  */
 public class ExternalServerClusterRunIT extends AbstractServerClusterTest {
   public String getDatabaseName() {
-    return "distributed";
+    return getClass().getSimpleName();
   }
 
   @Test

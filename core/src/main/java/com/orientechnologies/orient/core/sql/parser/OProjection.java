@@ -99,7 +99,7 @@ public class OProjection extends SimpleNode {
     for (OProjectionItem item : items) {
       if (item.isAll()) {
         for (String alias : iRecord.getPropertyNames()) {
-          result.setProperty(alias, iRecord.getProperty(alias));
+          result.setProperty(alias, item.convert(iRecord.getProperty(alias)));
         }
         if (iRecord.getElement().isPresent()) {
           OElement x = iRecord.getElement().get();

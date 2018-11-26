@@ -2,6 +2,10 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeRequest;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralNodeResponse;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitRequest;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralSubmitResponse;
 import org.junit.Test;
 
 import java.io.DataInput;
@@ -23,7 +27,7 @@ public class ODistributedCoordinatorTest {
 
     ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
         null);
-    MockChannel channel = new MockChannel();
+    MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
     ODistributedMember one = new ODistributedMember("one", null, channel);
     channel.member = one;
@@ -31,7 +35,7 @@ public class ODistributedCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
       @Override
-      public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+      public void begin(ODistributedMember requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
@@ -77,7 +81,7 @@ public class ODistributedCoordinatorTest {
 
     ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
         null);
-    MockChannel channel = new MockChannel();
+    MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
     channel.reply = responseReceived;
     ODistributedMember one = new ODistributedMember("one", null, channel);
@@ -86,7 +90,7 @@ public class ODistributedCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
       @Override
-      public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+      public void begin(ODistributedMember requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
@@ -183,7 +187,7 @@ public class ODistributedCoordinatorTest {
 
     ODistributedCoordinator coordinator = new ODistributedCoordinator(Executors.newSingleThreadExecutor(), operationLog, null,
         null);
-    MockChannel channel = new MockChannel();
+    MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
     ODistributedMember one = new ODistributedMember("one", null, channel);
     channel.member = one;
@@ -191,7 +195,7 @@ public class ODistributedCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OSubmitRequest() {
       @Override
-      public void begin(ODistributedMember member, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
+      public void begin(ODistributedMember requester, OSessionOperationId operationId, ODistributedCoordinator coordinator) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OResponseHandler() {
           @Override
@@ -230,7 +234,7 @@ public class ODistributedCoordinatorTest {
     assertEquals(0, coordinator.getContexts().size());
   }
 
-  private static class MockChannel implements ODistributedChannel {
+  private static class MockDistributedChannel implements ODistributedChannel {
     public ODistributedCoordinator coordinator;
     public CountDownLatch          reply;
     public ODistributedMember      member;
@@ -258,6 +262,26 @@ public class ODistributedCoordinatorTest {
     @Override
     public void sendResponse(String database, OLogId id, ONodeResponse nodeResponse) {
       assertTrue(false);
+    }
+
+    @Override
+    public void sendResponse(OLogId opId, OStructuralNodeResponse response) {
+
+    }
+
+    @Override
+    public void sendRequest(OLogId id, OStructuralNodeRequest request) {
+
+    }
+
+    @Override
+    public void reply(OSessionOperationId operationId, OStructuralSubmitResponse response) {
+
+    }
+
+    @Override
+    public void submit(OSessionOperationId operationId, OStructuralSubmitRequest request) {
+
     }
 
     @Override

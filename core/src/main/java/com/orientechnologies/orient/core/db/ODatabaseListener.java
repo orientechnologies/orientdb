@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OView;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 
 /**
  * Listener Interface for all the events of the Database instances.
@@ -68,6 +69,13 @@ public interface ODatabaseListener {
   }
 
   default void onDropView(ODatabase database, OView view) {
+
+  }
+
+  default void onCommandStart(ODatabase database,OResultSet resultSet) {
+
+  }
+  default void onCommandEnd(ODatabase database,OResultSet resultSet) {
 
   }
 

@@ -28,8 +28,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -50,16 +55,16 @@ public class OIndexFullText extends OIndexMultiValues {
   private static final String  DEF_STOP_WORDS         =
       "the in a at as and or for his her " + "him this that what which while " + "up with be was were is";
   private static       int     DEF_MIN_WORD_LENGTH    = 3;
-  private boolean indexRadix;
-  private String  separatorChars;
-  private String  ignoreChars;
-  private int     minWordLength;
+  private              boolean indexRadix;
+  private              String  separatorChars;
+  private              String  ignoreChars;
+  private              int     minWordLength;
 
   private Set<String> stopWords;
 
   public OIndexFullText(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
+      String valueContainerAlgorithm, ODocument metadata, int binaryFormatVersion) {
+    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata, binaryFormatVersion);
     acquireExclusiveLock();
     try {
       config();
@@ -107,13 +112,17 @@ public class OIndexFullText extends OIndexMultiValues {
         // SAVE THE INDEX ENTRY
         while (true) {
           try {
-            storage.updateIndexEntry(indexId, word, (oldValue,  bonsayFileId) -> {
+            storage.updateIndexEntry(indexId, word, (oldValue, bonsayFileId) -> {
               Set<OIdentifiable> result = null;
 
               if (refsc == null) {
                 // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
                 if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-                  result = new OIndexRIDContainer(getName(), durable, bonsayFileId);
+                  if (binaryFormatVersion >= 13) {
+                    result = new OMixedIndexRIDContainer(getName(), bonsayFileId);
+                  } else {
+                    result = new OIndexRIDContainer(getName(), durable, bonsayFileId);
+                  }
                 } else {
                   throw new IllegalStateException("MBRBTreeContainer is not supported any more");
                 }

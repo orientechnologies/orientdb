@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
@@ -84,6 +85,8 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
@@ -785,8 +788,12 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeSBTreeCreate(OSBTCreateTreeRequest request) {
-    OBonsaiCollectionPointer collectionPointer = connection.getDatabase().getSbTreeCollectionManager()
-        .createSBTree(request.getClusterId(), null);
+    OBonsaiCollectionPointer collectionPointer = null;
+    try {
+      collectionPointer = connection.getDatabase().getSbTreeCollectionManager().createSBTree(request.getClusterId(), null);
+    } catch (IOException e) {
+      throw OException.wrapException(new ODatabaseException("Error during ridbag creation"), e);
+    }
 
     return new OSBTCreateTreeResponse(collectionPointer);
 
@@ -894,7 +901,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
             result.add(iText);
         }
       });
-      imp.setOptions(request.getImporPath());
+      imp.setOptions(request.getOptions());
       imp.importDatabase();
       imp.close();
       new File(request.getImporPath()).delete();
@@ -1161,12 +1168,11 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
 
     //copy the result-set to make sure that the execution is successful
-    List<OResultInternal> rsCopy = new ArrayList<>(request.getRecordsPerPage());
-    int i = 0;
-    while (rs.hasNext() && i < request.getRecordsPerPage()) {
-      rsCopy.add((OResultInternal) rs.next());
-      i++;
+    Stream<OResult> stream = rs.stream();
+    if (database.getActiveQueries().containsKey(((OLocalResultSetLifecycleDecorator) rs).getQueryId())) {
+      stream = stream.limit(request.getRecordsPerPage());
     }
+    List<OResultInternal> rsCopy = stream.map((r) -> (OResultInternal) r).collect(Collectors.toList());
 
     boolean hasNext = rs.hasNext();
     boolean txChanges = false;

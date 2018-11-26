@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.engine.memory;
 
-import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -37,7 +36,7 @@ public class OEngineMemory extends OEngineAbstract {
   public OEngineMemory() {
   }
 
-  public OStorage createStorage(String url, Map<String, String> configuration) {
+  public OStorage createStorage(String url, Map<String, String> configuration, long maxWalSegSize) {
     try {
       return new ODirectMemoryStorage(url, url, getMode(configuration), generateStorageId());
     } catch (Exception e) {

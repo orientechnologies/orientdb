@@ -114,6 +114,11 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR = 113;
   public static final byte REQUEST_RIDBAG_GET_SIZE                 = 114;
 
+  public static final byte DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST     = 115;
+  public static final byte DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE    = 116;
+  public static final byte DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST  = 117;
+  public static final byte DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE = 118;
+
   // TASK
   public static final byte DISTRIBUTED_REQUEST  = 120;
   public static final byte DISTRIBUTED_RESPONSE = 121;

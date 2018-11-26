@@ -19,6 +19,7 @@
 
 package com.orientechnologies.orient.core;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -32,7 +33,13 @@ import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import org.junit.Assert;
@@ -141,7 +148,7 @@ public class PostponedEngineStartTest {
     OEngine engine = ORIENT.getEngineIfRunning(ENGINE2.getName());
     Assert.assertNull(engine);
 
-    final OStorage storage = ENGINE2.createStorage(ENGINE2.getName() + ":storage", null);
+    final OStorage storage = ENGINE2.createStorage(ENGINE2.getName() + ":storage", null, 125 * 1024 * 1024);
     Assert.assertNotNull(storage);
 
     engine = ORIENT.getRunningEngine(ENGINE2.getName());
@@ -203,7 +210,7 @@ public class PostponedEngineStartTest {
     }
 
     @Override
-    public OStorage createStorage(String iURL, Map<String, String> parameters) {
+    public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize) {
       return new OStorage() {
         @Override
         public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
@@ -537,7 +544,7 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public String incrementalBackup(String backupDirectory) {
+        public String incrementalBackup(String backupDirectory, OCallable<Void, Void> started) {
           return null;
         }
 
@@ -647,7 +654,7 @@ public class PostponedEngineStartTest {
     }
 
     @Override
-    public OStorage createStorage(String iURL, Map<String, String> parameters) {
+    public OStorage createStorage(String iURL, Map<String, String> parameters, long maxWalSegSize) {
       throw new UnsupportedOperationException();
     }
 

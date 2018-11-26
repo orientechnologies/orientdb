@@ -3,6 +3,8 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
@@ -82,6 +84,24 @@ public class ORecordAttribute extends SimpleNode {
       return iCurrentRecord.getElement().flatMap(r -> r.getSchemaType()).map(clazz -> clazz.getName()).orElse(null);
     } else if (name.equalsIgnoreCase("@version")) {
       return iCurrentRecord.getRecord().map(r -> r.getVersion()).orElse(null);
+    }
+    return null;
+  }
+
+  public Object evaluate(OElement iCurrentRecord, OCommandContext ctx) {
+    if (iCurrentRecord == null) {
+      return null;
+    }
+    if (name.equalsIgnoreCase("@rid")) {
+      return iCurrentRecord.getIdentity();
+    } else if (name.equalsIgnoreCase("@class")) {
+      return iCurrentRecord.getSchemaType().map(clazz -> clazz.getName()).orElse(null);
+    } else if (name.equalsIgnoreCase("@version")) {
+      ORecord record = iCurrentRecord.getRecord();
+      if (record == null) {
+        return null;
+      }
+      return record.getVersion();
     }
     return null;
   }

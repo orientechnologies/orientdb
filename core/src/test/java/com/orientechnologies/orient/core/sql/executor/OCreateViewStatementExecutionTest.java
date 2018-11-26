@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
@@ -57,7 +58,7 @@ public class OCreateViewStatementExecutionTest {
     CountDownLatch latch = new CountDownLatch(1);
     db.getMetadata().getSchema().createView(cfg, new ViewCreationListener() {
       @Override
-      public void afterCreate(String viewName) {
+      public void afterCreate(ODatabaseSession database, String viewName) {
         latch.countDown();
       }
 
@@ -135,6 +136,116 @@ public class OCreateViewStatementExecutionTest {
     Assert.assertTrue(result.hasNext());
     result.next();
     Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testLiveUpdate() throws InterruptedException {
+    String className = "testLiveUpdateClass";
+    String viewName = "testLiveUpdate";
+    db.createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("name", "name" + i);
+      elem.setProperty("surname", "surname" + i);
+      elem.save();
+    }
+
+    String statement = "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    statement += "updateStrategy:\"live\",";
+    statement += "originRidField:\"origin\"";
+    statement += "}";
+
+    db.command(statement);
+
+    Thread.sleep(1000);
+    
+    db.command("UPDATE " + className + " SET surname = 'changed' WHERE name = 'name3'");
+
+    Thread.sleep(1000);
+
+    OResultSet result = db.query("SELECT FROM " + viewName);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      if (item.getProperty("name").equals("name3")) {
+        Assert.assertEquals("changed", item.getProperty("surname"));
+      } else {
+        Assert.assertEquals("sur" + item.getProperty("name"), item.getProperty("surname"));
+      }
+    }
+    result.close();
+  }
+
+  @Test
+  public void testLiveUpdateInsert() throws InterruptedException {
+    String className = "testLiveUpdateInsertClass";
+    String viewName = "testLiveUpdateInsert";
+    db.createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("name", "name" + i);
+      elem.setProperty("surname", "surname" + i);
+      elem.save();
+    }
+
+    String statement = "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    statement += "updateStrategy:\"live\"";
+    statement += "}";
+
+    db.command(statement);
+
+    Thread.sleep(1000);
+
+    OResultSet result = db.query("SELECT FROM " + viewName);
+    Assert.assertEquals(10, result.stream().count());
+    result.close();
+
+    db.command("insert into " + className + " set name = 'name10', surname = 'surname10'");
+
+    Thread.sleep(1000);
+    result = db.query("SELECT FROM " + viewName);
+    Assert.assertEquals(11, result.stream().count());
+    result.close();
+  }
+
+  @Test
+  public void testLiveUpdateDelete() throws InterruptedException {
+    String className = "testLiveUpdateDeleteClass";
+    String viewName = "testLiveUpdateDelete";
+    db.createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("name", "name" + i);
+      elem.setProperty("surname", "surname" + i);
+      elem.save();
+    }
+
+    String statement = "CREATE VIEW " + viewName + " FROM (SELECT FROM " + className + ") METADATA {";
+    statement += "updateStrategy:\"live\",";
+    statement += "originRidField:\"origin\"";
+    statement += "}";
+
+    db.command(statement);
+
+    Thread.sleep(1000);
+
+    OResultSet result = db.query("SELECT FROM " + viewName);
+    Assert.assertEquals(10, result.stream().count());
+    result.close();
+
+    db.command("DELETE FROM " + className + " WHERE name = 'name3'");
+
+    Thread.sleep(1000);
+    result = db.query("SELECT FROM " + viewName);
+    for (int i = 0; i < 9; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotEquals("name3", item.getProperty("name"));
+    }
     result.close();
   }
 

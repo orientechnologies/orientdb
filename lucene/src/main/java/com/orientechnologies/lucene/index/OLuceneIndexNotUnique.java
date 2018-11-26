@@ -27,13 +27,17 @@ import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndexAbstract;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
-import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import org.apache.lucene.document.Document;
@@ -48,8 +52,8 @@ import java.util.Set;
 public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> implements OLuceneIndex {
 
   public OLuceneIndexNotUnique(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, valueContainerAlgorithm, metadata, version, storage);
+      String valueContainerAlgorithm, ODocument metadata, final int binaryFormatVersion) {
+    super(name, typeId, algorithm, valueContainerAlgorithm, metadata, version, storage, binaryFormatVersion);
   }
 
   @Override
@@ -137,16 +141,20 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
             }
 
           }
-          for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
-            Object key = snapshotEntry.getKey();
-            OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
+          try {
+            for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
+              Object key = snapshotEntry.getKey();
+              OLuceneTxOperations operations = (OLuceneTxOperations) snapshotEntry.getValue();
 
-            indexEngine.put(decodeKey(key), operations.added);
+              indexEngine.put(decodeKey(key), operations.added);
 
+            }
+            OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
+            resetTransactionChanges(transaction);
+            return null;
+          } catch (IOException e) {
+            throw OException.wrapException(new OIndexException("Error during commit of index changes"), e);
           }
-          OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
-          resetTransactionChanges(transaction);
-          return null;
         });
         break;
       } catch (OInvalidIndexEngineIdException e) {

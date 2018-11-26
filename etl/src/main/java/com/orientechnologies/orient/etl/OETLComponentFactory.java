@@ -68,6 +68,7 @@ public class OETLComponentFactory {
     registerTransformer(OETLFieldTransformer.class);
     registerTransformer(OETLJSONTransformer.class);
     registerTransformer(OETLLinkTransformer.class);
+    registerTransformer(OETLLoadTransformer.class);
     registerTransformer(OETLLogTransformer.class);
     registerTransformer(OETLMergeTransformer.class);
     registerTransformer(OETLFlowTransformer.class);

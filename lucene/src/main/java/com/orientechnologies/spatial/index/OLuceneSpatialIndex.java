@@ -31,15 +31,19 @@ import com.orientechnologies.spatial.shape.OShapeFactory;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.spatial4j.shape.Shape;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
 
   OShapeFactory shapeFactory = OShapeFactory.INSTANCE;
 
   public OLuceneSpatialIndex(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
-      String valueContainerAlgorithm, ODocument metadata) {
-    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata);
+      String valueContainerAlgorithm, ODocument metadata, final int binaryFormatVersion) {
+    super(name, typeId, algorithm, version, storage, valueContainerAlgorithm, metadata, binaryFormatVersion);
 
   }
 

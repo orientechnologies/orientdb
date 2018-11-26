@@ -12,11 +12,7 @@ import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,18 +41,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
     final ODatabaseDocumentInternal database = getDatabase();
     acquireSchemaWriteLock();
     try {
-      final OStorage storage = database.getStorage();
-
-      if (isDistributedCommand()) {
-        final String cmd = String.format("alter property %s type %s", getFullNameQuoted(), quoteString(type.toString()));
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setTypeInternal(type);
-      } else
-        setTypeInternal(type);
+      setTypeInternal(type);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -93,20 +78,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (isDistributedCommand()) {
-        final String cmd = String.format("alter property %s name %s", getFullNameQuoted(), quoteString(name));
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setNameInternal(name);
-      } else
-        setNameInternal(name);
-
+      setNameInternal(name);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -136,19 +108,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-      if (isDistributedCommand()) {
-        final String cmd = String.format("alter property %s description %s", getFullNameQuoted(), quoteString(iDescription));
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(new OCommandSQL(cmd)).execute();
-
-        setDescriptionInternal(iDescription);
-      } else
-        setDescriptionInternal(iDescription);
-
+      setDescriptionInternal(iDescription);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -176,19 +136,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (isDistributedCommand()) {
-        final String cmd = String.format("alter property %s collate %s", getFullNameQuoted(), quoteString(collate));
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-        database.command(commandSQL).execute();
-
-        setCollateInternal(collate);
-      } else
-        setCollateInternal(collate);
-
+      setCollateInternal(collate);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -250,19 +198,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      final String cmd = String.format("alter property %s custom clear", getFullNameQuoted());
-      if (isDistributedCommand()) {
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-        database.command(commandSQL).execute();
-
-        clearCustomInternal();
-      } else
-        clearCustomInternal();
-
+      clearCustomInternal();
     } finally {
       releaseSchemaWriteLock();
     }
@@ -285,20 +221,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final String cmd = String.format("alter property %s custom `%s`=%s", getFullNameQuoted(), name, quoteString(value));
-
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-      if (isDistributedCommand()) {
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setCustomInternal(name, value);
-      } else
-        setCustomInternal(name, value);
-
+      setCustomInternal(name, value);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -327,20 +250,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (isDistributedCommand()) {
-        final String cmd = String.format("alter property %s regexp %s", getFullNameQuoted(), quoteString(regexp));
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setRegexpInternal(regexp);
-      } else
-        setRegexpInternal(regexp);
-
+      setRegexpInternal(regexp);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -365,21 +275,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (isDistributedCommand()) {
-        final String cmd = String
-            .format("alter property %s linkedclass %s", getFullNameQuoted(), quoteString(linkedClass.getName()));
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setLinkedClassInternal(linkedClass);
-      } else
-        setLinkedClassInternal(linkedClass);
-
+      setLinkedClassInternal(linkedClass);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -409,20 +305,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-      if (isDistributedCommand()) {
-        final String cmd = String
-            .format("alter property %s linkedtype %s", getFullNameQuoted(), quoteString(linkedType.toString()));
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setLinkedTypeInternal(linkedType);
-      } else
-        setLinkedTypeInternal(linkedType);
-
+      setLinkedTypeInternal(linkedType);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -448,19 +331,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-      if (isDistributedCommand()) {
-        final String cmd = String.format("alter property %s notnull %s", getFullNameQuoted(), isNotNull);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setNotNullInternal(isNotNull);
-      } else
-        setNotNullInternal(isNotNull);
-
+      setNotNullInternal(isNotNull);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -483,20 +354,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-      if (isDistributedCommand()) {
-        final String cmd = String.format("alter property %s default %s", getFullNameQuoted(), quoteString(defaultValue));
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setDefaultValueInternal(defaultValue);
-      } else {
-        setDefaultValueInternal(defaultValue);
-      }
+      setDefaultValueInternal(defaultValue);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -522,19 +380,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-      if (isDistributedCommand()) {
-        final String cmd = String.format("alter property %s max %s", getFullNameQuoted(), quoteString(max));
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setMaxInternal(max);
-      } else
-        setMaxInternal(max);
+      setMaxInternal(max);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -561,19 +407,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-      if (isDistributedCommand()) {
-        final String cmd = String.format("alter property %s min %s", getFullNameQuoted(), quoteString(min));
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setMinInternal(min);
-      } else
-        setMinInternal(min);
+      setMinInternal(min);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -600,19 +434,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-      if (isDistributedCommand()) {
-        final String cmd = String.format("alter property %s readonly %s", getFullNameQuoted(), isReadonly);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setReadonlyInternal(isReadonly);
-      } else
-        setReadonlyInternal(isReadonly);
-
+      setReadonlyInternal(isReadonly);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -638,18 +460,7 @@ public class OPropertyEmbedded extends OPropertyImpl {
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseDocumentInternal database = getDatabase();
-      final OStorage storage = database.getStorage();
-      if (isDistributedCommand()) {
-        final String cmd = String.format("alter property %s mandatory %s", getFullNameQuoted(), isMandatory);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        setMandatoryInternal(isMandatory);
-      } else
-        setMandatoryInternal(isMandatory);
+      setMandatoryInternal(isMandatory);
     } finally {
       releaseSchemaWriteLock();
     }

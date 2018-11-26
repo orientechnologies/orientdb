@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
@@ -117,7 +117,7 @@ public class OPushManager implements OMetadataUpdateListener {
   }
 
   @Override
-  public void onIndexManagerUpdate(String database, OIndexManager indexManager) {
+  public void onIndexManagerUpdate(String database, OIndexManagerAbstract indexManager) {
     OPushIndexManagerRequest request = new OPushIndexManagerRequest(((OIndexManagerShared) indexManager).toNetworkStream());
     genericNotify(this.indexManager, database, request);
   }

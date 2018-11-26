@@ -29,11 +29,11 @@ import static org.junit.Assert.*;
  */
 public class RemoteQuerySupportTest {
 
-  private static final String SERVER_DIRECTORY = "./target/query";
-  private OServer           server;
-  private OrientDB          orientDB;
-  private ODatabaseDocument session;
-  private int               oldPageSize;
+  private static final String            SERVER_DIRECTORY = "./target/query";
+  private              OServer           server;
+  private              OrientDB          orientDB;
+  private              ODatabaseDocument session;
+  private              int               oldPageSize;
 
   @Before
   public void before() throws Exception {
@@ -74,6 +74,22 @@ public class RemoteQuerySupportTest {
       session.save(doc);
     }
     OResultSet res = session.command("select from Some");
+    for (int i = 0; i < 150; i++) {
+      assertTrue(res.hasNext());
+      OResult item = res.next();
+      assertEquals(item.getProperty("prop"), "value");
+    }
+  }
+
+  @Test
+  public void testCommandInsertWithPageOverflow() {
+    for (int i = 0; i < 150; i++) {
+      ODocument doc = new ODocument("Some");
+      doc.setProperty("prop", "value");
+      session.save(doc);
+    }
+
+    OResultSet res = session.command("insert into V from select from Some");
     for (int i = 0; i < 150; i++) {
       assertTrue(res.hasNext());
       OResult item = res.next();

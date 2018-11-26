@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
-import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 
 class SchemaSnapshotOnIndexesUpdateListener implements OMetadataUpdateListener {
   private OSchemaShared schema;
@@ -18,7 +18,7 @@ class SchemaSnapshotOnIndexesUpdateListener implements OMetadataUpdateListener {
   }
 
   @Override
-  public void onIndexManagerUpdate(String database, OIndexManager indexManager) {
+  public void onIndexManagerUpdate(String database, OIndexManagerAbstract indexManager) {
     schema.forceSnapshot(ODatabaseRecordThreadLocal.instance().get());
   }
 

@@ -2,9 +2,14 @@ package com.orientechnologies.orient.server.distributed.impl.coordinator;
 
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Timer;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class ODistributedCoordinator implements AutoCloseable {
 
@@ -47,9 +52,10 @@ public class ODistributedCoordinator implements AutoCloseable {
 
   public ORequestContext sendOperation(OSubmitRequest submitRequest, ONodeRequest nodeRequest, OResponseHandler handler) {
     OLogId id = log(nodeRequest);
-    ORequestContext context = new ORequestContext(this, submitRequest, nodeRequest, members.values(), handler, id);
+    Collection<ODistributedMember> values = new ArrayList<>(members.values());
+    ORequestContext context = new ORequestContext(this, submitRequest, nodeRequest, values, handler, id);
     contexts.put(id, context);
-    for (ODistributedMember member : members.values()) {
+    for (ODistributedMember member : values) {
       member.sendRequest(id, nodeRequest);
     }
     //Get the timeout from the configuration
@@ -73,11 +79,11 @@ public class ODistributedCoordinator implements AutoCloseable {
 
   }
 
-  protected void executeOperation(Runnable runnable) {
+  public void executeOperation(Runnable runnable) {
     requestExecutor.execute(runnable);
   }
 
-  protected void finish(OLogId requestId) {
+  public void finish(OLogId requestId) {
     contexts.remove(requestId);
   }
 

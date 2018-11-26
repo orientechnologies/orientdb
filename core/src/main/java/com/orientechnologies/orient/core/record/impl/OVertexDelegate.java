@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -45,9 +46,9 @@ import java.util.*;
  * @author Luigi Dell'Aquila
  */
 public class OVertexDelegate implements OVertex {
-  private static final String CONNECTION_OUT_PREFIX = "out_";
-  private static final String CONNECTION_IN_PREFIX  = "in_";
-  protected final ODocument element;
+  private static final String    CONNECTION_OUT_PREFIX = "out_";
+  private static final String    CONNECTION_IN_PREFIX  = "in_";
+  protected final      ODocument element;
 
   public OVertexDelegate(ODocument entry) {
     this.element = entry;
@@ -486,13 +487,15 @@ public class OVertexDelegate implements OVertex {
         bag.add(iTo);
         out = bag;
         outType = OType.LINKBAG;
+      } else if (propType == OType.LINK) {
+        out = iTo;
+        outType = OType.LINK;
       } else
-        throw new IllegalStateException(
-            "Type of field provided in schema '" + prop.getType() + "' cannot be used for link creation.");
+        throw new ODatabaseException("Type of field provided in schema '" + prop.getType() + "' cannot be used for link creation.");
 
     } else if (found instanceof OIdentifiable) {
       if (prop != null && propType == OType.LINK)
-        throw new IllegalStateException(
+        throw new ODatabaseException(
             "Type of field provided in schema '" + prop.getType() + "' cannot be used for creation to hold several links.");
 
       if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) {//TODO constant
@@ -520,7 +523,7 @@ public class OVertexDelegate implements OVertex {
       ((Collection<Object>) found).add(iTo);
 
     } else
-      throw new IllegalStateException("Relationship content is invalid on field " + iFieldName + ". Found: " + found);
+      throw new ODatabaseException("Relationship content is invalid on field " + iFieldName + ". Found: " + found);
 
     if (out != null)
       // OVERWRITE IT

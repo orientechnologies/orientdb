@@ -1040,6 +1040,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     } finally {
 
       final ODistributedServerManager.DB_STATUS serverStatus = manager.getDatabaseStatus(manager.getLocalNodeName(), databaseName);
+
       if (serverStatus == ODistributedServerManager.DB_STATUS.ONLINE
           || serverStatus == ODistributedServerManager.DB_STATUS.SYNCHRONIZING) {
         try {

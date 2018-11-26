@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.metadata.security.OSystemUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.*;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.*;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
@@ -285,14 +286,10 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     //** There are cases when we need to retrieve an OUser that is a system user.
 //  if (isEnabled() && !OSystemDatabase.SYSTEM_DB_NAME.equals(dbName)) {
     if (isEnabled()) {
-      return (OUser) server.getSystemDatabase().execute(new OCallable<Object, Object>() {
-        @Override
-        public Object call(Object iArgument) {
-          final List<ODocument> result = (List<ODocument>) iArgument;
-          if (result != null && !result.isEmpty())
-            return new OSystemUser(result.get(0), dbName);
-          return null;
-        }
+      return (OUser) server.getSystemDatabase().execute((resultset) -> {
+        if (resultset != null && resultset.hasNext())
+          return new OSystemUser((ODocument) resultset.next().getElement().get().getRecord(), dbName);
+        return null;
       }, "select from OUser where name = ? limit 1 fetchplan roles:1", username);
     }
     return null;

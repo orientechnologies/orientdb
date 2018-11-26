@@ -2,10 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
 import com.orientechnologies.orient.core.metadata.sequence.SequenceOrderType;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
@@ -22,8 +24,8 @@ public class OAlterSequenceStatement extends ODDLStatement {
   OExpression cache;
   Boolean     positive;
   Boolean     cyclic;
-  OExpression limitValue; 
-  boolean turnLimitOff = false;
+  OExpression limitValue;
+  boolean     turnLimitOff = false;
 
   public OAlterSequenceStatement(int id) {
     super(id);
@@ -55,66 +57,72 @@ public class OAlterSequenceStatement extends ODDLStatement {
       if (!(val instanceof Number)) {
         throw new OCommandExecutionException("invalid start value for a sequence: " + val);
       }
-      params.start = ((Number) val).longValue();
+      params.setStart(((Number) val).longValue());
     }
     if (increment != null) {
       Object val = increment.execute((OIdentifiable) null, ctx);
       if (!(val instanceof Number)) {
         throw new OCommandExecutionException("invalid increment value for a sequence: " + val);
       }
-      params.increment = ((Number) val).intValue();
+      params.setIncrement(((Number) val).intValue());
     }
     if (cache != null) {
       Object val = cache.execute((OIdentifiable) null, ctx);
       if (!(val instanceof Number)) {
         throw new OCommandExecutionException("invalid cache value for a sequence: " + val);
       }
-      params.cacheSize = ((Number) val).intValue();
+      params.setCacheSize(((Number) val).intValue());
     }
     if (positive != null) {
-      params.orderType = positive == true ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.ORDER_NEGATIVE;
+      params.setOrderType(positive == true ? SequenceOrderType.ORDER_POSITIVE : SequenceOrderType.ORDER_NEGATIVE);
     }
     if (cyclic != null) {
-      params.recyclable = cyclic;
+      params.setRecyclable(cyclic);
     }
     if (limitValue != null) {
       Object val = limitValue.execute((OIdentifiable) null, ctx);
       if (!(val instanceof Number)) {
         throw new OCommandExecutionException("invalid cache value for a sequence: " + val);
       }
-      params.limitValue = ((Number) val).longValue();
-    }    
+      params.setLimitValue(((Number) val).longValue());
+    }
     if (turnLimitOff) {
-      params.turnLimitOff = true;
+      params.setTurnLimitOff(true);
     }
 
-    sequence.updateParams(params);
+    try {
+      sequence.updateParams(params);
+    } catch (ODatabaseException exc) {
+      String message = "Unable to execute command: " + exc.getMessage();
+      OLogManager.instance().error(this, message, exc, (Object) null);
+      throw new OCommandExecutionException(message);
+    }
     sequence.save(database);
 
     OInternalResultSet result = new OInternalResultSet();
     OResultInternal item = new OResultInternal();
     item.setProperty("operation", "alter sequence");
     item.setProperty("sequenceName", sequenceName);
-    if (params.start != null) {
-      item.setProperty("start", params.start);
+    if (params.getStart() != null) {
+      item.setProperty("start", params.getStart());
     }
-    if (params.increment != null) {
-      item.setProperty("increment", params.increment);
+    if (params.getIncrement() != null) {
+      item.setProperty("increment", params.getIncrement());
     }
-    if (params.cacheSize != null) {
-      item.setProperty("cacheSize", params.cacheSize);
+    if (params.getCacheSize() != null) {
+      item.setProperty("cacheSize", params.getCacheSize());
     }
-    if (params.limitValue != null) {
-      item.setProperty("limitValue", params.limitValue);
+    if (params.getLimitValue() != null) {
+      item.setProperty("limitValue", params.getLimitValue());
     }
-    if (params.orderType != null) {
-      item.setProperty("orderType", params.orderType.toString());
+    if (params.getOrderType() != null) {
+      item.setProperty("orderType", params.getOrderType().toString());
     }
-    if (params.recyclable != null) {
-      item.setProperty("recycable", params.recyclable);
+    if (params.getRecyclable() != null) {
+      item.setProperty("recycable", params.getRecyclable());
     }
-    if (params.turnLimitOff != null && params.turnLimitOff) {
-      item.setProperty("turnLimitOff", params.turnLimitOff);
+    if (params.getTurnLimitOff() != null && params.getTurnLimitOff()) {
+      item.setProperty("turnLimitOff", params.getTurnLimitOff());
     }
     result.add(item);
     return result;
@@ -148,7 +156,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
     if (limitValue != null) {
       builder.append(" LIMIT ");
       limitValue.toString(params, builder);
-    }    
+    }
     if (turnLimitOff) {
       builder.append(" NOLIMIT");
     }
@@ -163,7 +171,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
     result.cache = cache == null ? null : cache.copy();
     result.positive = positive;
     result.cyclic = cyclic;
-    result.limitValue = limitValue == null ? null : limitValue.copy();    
+    result.limitValue = limitValue == null ? null : limitValue.copy();
     return result;
   }
 
@@ -192,8 +200,8 @@ public class OAlterSequenceStatement extends ODDLStatement {
     }
     if (!Objects.equals(limitValue, that.limitValue)) {
       return false;
-    }    
-    if (turnLimitOff != that.turnLimitOff){
+    }
+    if (turnLimitOff != that.turnLimitOff) {
       return false;
     }
 
@@ -208,7 +216,7 @@ public class OAlterSequenceStatement extends ODDLStatement {
     result = 31 * result + (cache != null ? cache.hashCode() : 0);
     result = 31 * result + (positive != null ? positive.hashCode() : 0);
     result = 31 * result + (cyclic != null ? cyclic.hashCode() : 0);
-    result = 31 * result + (limitValue != null ? limitValue.hashCode() : 0);    
+    result = 31 * result + (limitValue != null ? limitValue.hashCode() : 0);
     result = 31 * result + Boolean.hashCode(turnLimitOff);
     return result;
   }

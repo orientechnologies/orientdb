@@ -29,8 +29,14 @@ import java.util.Set;
  * @author Luigi Dell'Aquila
  */
 public interface OEdge extends OElement {
-  public static final String DIRECITON_OUT = "out";
-  public static final String DIRECITON_IN  = "in";
+  public static final String DIRECTION_OUT = "out";
+  public static final String DIRECTION_IN  = "in";
+
+  //typo!
+  @Deprecated
+  public static final String DIRECITON_OUT = DIRECTION_OUT;
+  @Deprecated
+  public static final String DIRECITON_IN  = DIRECTION_IN;
 
   public OVertex getFrom();
 

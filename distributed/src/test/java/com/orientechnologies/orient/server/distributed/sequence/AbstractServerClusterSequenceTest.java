@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.sequence;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
@@ -24,14 +25,13 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
 
   private static final int THREAD_COUNT     = 2;
   private static final int THREAD_POOL_SIZE = 2;
-  private static final int CACHE_SIZE       = 27;
+  private static final int CACHE_SIZE       = 3;
 
   private AtomicLong failures = new AtomicLong();
 
-
   @Override
   public String getDatabaseName() {
-    return "distributed";
+    return getClass().getSimpleName();
   }
 
   protected abstract String getDatabaseURL(ServerRun server);
@@ -50,7 +50,8 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     executeCachedSequenceTest(dbs, "seq1");
   }
 
-  private void executeCachedSequenceTest(final ODatabaseDocument[] dbs, final String sequenceName) {
+  private void executeCachedSequenceTest(final ODatabaseDocument[] dbs, final String sequenceName)
+      throws ExecutionException, InterruptedException {
     // Assuming seq2.next() is called once after calling seq1.next() once, and cache size is
     // C, seq2.current() - seq1.current() = C
 
@@ -71,7 +72,22 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     dbs[1].activateOnCurrentThread();
     long v2 = seq2.next();
 
-    Assert.assertEquals((long) CACHE_SIZE, v2 - v1);
+    int protocolVersion = OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
+    if (protocolVersion != 2) {
+      //OK this shouldn't be true when sequences are truly synchronized
+      //but if sequences are treated as documents in database , this is true
+      Assert.assertEquals((long) CACHE_SIZE, v2 - v1);
+    } else {
+      //in the last cycle sequences should be synchronized
+      for (int i = 1; i < CACHE_SIZE; i++) {
+        Assert.assertEquals(v1, v2 + (i - 1));
+        dbs[0].activateOnCurrentThread();
+        v1 = seq1.next();
+        dbs[1].activateOnCurrentThread();
+        v2 = seq2.current();
+      }
+      Assert.assertEquals(v1, v2);
+    }
   }
 
   private void executeOrderedSequenceTest(final ODatabaseDocument[] dbs, final String sequenceName) throws Exception {

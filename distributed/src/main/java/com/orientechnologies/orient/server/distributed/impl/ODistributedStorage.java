@@ -95,7 +95,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   private ODistributedStorageEventListener    eventListener;
 
   private volatile ODistributedConfiguration distributedConfiguration;
-  private volatile File                      lastValidBackup = null;
+  private volatile OBackgroundBackup         lastValidBackup = null;
 
   public ODistributedStorage(final OServer iServer, final String dbName) {
     this.serverInstance = iServer;
@@ -684,7 +684,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     return wrapped.getSBtreeCollectionManager();
   }
 
-
   @Override
   public OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType) {
     return wrapped.recyclePosition(iRecordId, iContent, iVersion, iRecordType);
@@ -768,8 +767,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public String incrementalBackup(final String backupDirectory) {
-    return wrapped.incrementalBackup(backupDirectory);
+  public String incrementalBackup(final String backupDirectory, OCallable<Void, Void> started) {
+    return wrapped.incrementalBackup(backupDirectory, null);
   }
 
   @Override
@@ -803,8 +802,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       // REMOVE distributed-config.json and distributed-sync.json files to allow removal of directory
       dropStorageFiles();
     }
-
-    serverInstance.getDatabases().forceDatabaseClose(getName());
 
   }
 
@@ -996,7 +993,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     throw new ODistributedException(
         "Error on creating cluster '" + iClusterName + "' on distributed nodes: local and remote ids assigned are different");
   }
-
+  
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     resetLastValidBackup();
     final AtomicBoolean clId = new AtomicBoolean();
@@ -1326,11 +1323,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           "Cannot execute write operation (" + operation + ") on node '" + localNodeName + "' because is non a master");
   }
 
-  public File getLastValidBackup() {
+  public OBackgroundBackup getLastValidBackup() {
     return lastValidBackup;
   }
 
-  public void setLastValidBackup(final File lastValidBackup) {
+  public void setLastValidBackup(final OBackgroundBackup lastValidBackup) {
     this.lastValidBackup = lastValidBackup;
   }
 
@@ -1360,9 +1357,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   protected void dropStorageFiles() {
+    dropStorageFiles((OLocalPaginatedStorage) wrapped);
+  }
+
+  public static void dropStorageFiles(OLocalPaginatedStorage storage) {
     // REMOVE distributed-config.json and distributed-sync.json files to allow removal of directory
-    final File dCfg = new File(
-        ((OLocalPaginatedStorage) wrapped).getStoragePath() + "/" + getDistributedManager().FILE_DISTRIBUTED_DB_CONFIG);
+    final File dCfg = new File(storage.getStoragePath() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
 
     try {
       if (dCfg.exists()) {
@@ -1373,8 +1373,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         }
       }
 
-      final File dCfg2 = new File(
-          ((OLocalPaginatedStorage) wrapped).getStoragePath() + "/" + ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME);
+      final File dCfg2 = new File(storage.getStoragePath() + "/" + ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME);
       if (dCfg2.exists()) {
         for (int i = 0; i < 10; ++i) {
           if (dCfg2.delete())

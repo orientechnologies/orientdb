@@ -69,29 +69,30 @@ public class OJson extends SimpleNode {
 
     return doc;
   }
-  
+
   private ODocument toDocument(OResult source, OCommandContext ctx, String className){
     ODocument retDoc = new ODocument(className);
     for (OJsonItem item : items) {
       String name = item.getLeftValue();
       if (name == null || ODocumentHelper.getReservedAttributes().contains(name.toLowerCase(Locale.ENGLISH))) {
         continue;
-      }        
+      }
       Object value = item.right.execute(source, ctx);
       retDoc.field(name, value);
     }
     return retDoc;
   }
-  
+
   /**
-   * choosing return type is based on existence of @class field in JSON
+   * choosing return type is based on existence of @class and @type field in JSON
    * @param source
    * @param ctx
-   * @return 
+   * @return
    */
   public Object toObjectDetermineType(OResult source, OCommandContext ctx){
     String className = getClassNameForDocument(ctx);
-    if (className != null){
+    String type =  getTypeForDocument(ctx);
+    if (className != null || (type != null && "d".equalsIgnoreCase(type))) {
       return toDocument(source, ctx, className);
     }
     else{
@@ -131,6 +132,16 @@ public class OJson extends SimpleNode {
     for (OJsonItem item : items) {
       String left = item.getLeftValue();
       if (left != null && left.toLowerCase(Locale.ENGLISH).equals("@class")) {
+        return "" + item.right.execute((OResult) null, ctx);
+      }
+    }
+    return null;
+  }
+
+  private String getTypeForDocument(OCommandContext ctx) {
+    for (OJsonItem item : items) {
+      String left = item.getLeftValue();
+      if (left != null && left.toLowerCase(Locale.ENGLISH).equals("@type")) {
         return "" + item.right.execute((OResult) null, ctx);
       }
     }
