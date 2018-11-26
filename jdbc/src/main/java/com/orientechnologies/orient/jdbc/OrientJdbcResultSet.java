@@ -377,7 +377,7 @@ public class OrientJdbcResultSet implements ResultSet {
     try {
       Boolean r = result.getProperty(columnLabel);
       lastReadWasNull = r == null;
-      return r;
+      return Boolean.TRUE.equals(r);
     } catch (Exception e) {
       throw new SQLException(
           "An error occurred during the retrieval of the boolean value at column '" + columnLabel + "' ---> " + result.toElement()
@@ -395,7 +395,7 @@ public class OrientJdbcResultSet implements ResultSet {
     try {
       Byte r = result.getProperty(columnLabel);
       lastReadWasNull = r == null;
-      return r;
+      return r == null ? 0 : r;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the byte value at column '" + columnLabel + "'", e);
     }
