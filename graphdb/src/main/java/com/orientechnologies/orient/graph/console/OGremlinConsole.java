@@ -69,7 +69,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
       final OConsoleDatabaseApp console = new OGremlinConsole(args);
       if (tty)
-        console.setReader(new TTYConsoleReader());
+        console.setReader(new TTYConsoleReader(console.historyEnabled()));
 
       result = console.run();
 

@@ -74,27 +74,31 @@ public class TTYConsoleReader implements OConsoleReader {
   }
 
   protected final List<String> history           = new ArrayList<String>();
+  private final   boolean      historyEnabled;
   protected       int          cursorPosition    = 0;
   protected       int          oldPromptLength   = 0;
   protected       int          oldTextLength     = 0;
   protected       int          oldCursorPosition = 0;
   protected       int          maxTotalLength    = 0;
-  protected String historyBuffer;
+  protected       String       historyBuffer;
 
   protected Reader inStream;
 
   protected PrintStream         outStream;
   protected OConsoleApplication console;
 
-  public TTYConsoleReader() {
+  public TTYConsoleReader(boolean historyEnabled) {
+    this.historyEnabled = historyEnabled;
     File file = getHistoryFile(true);
     BufferedReader reader;
     try {
       reader = new BufferedReader(new FileReader(file));
-      String historyEntry = reader.readLine();
-      while (historyEntry != null) {
-        history.add(historyEntry);
-        historyEntry = reader.readLine();
+      if (historyEnabled) {
+        String historyEntry = reader.readLine();
+        while (historyEntry != null) {
+          history.add(historyEntry);
+          historyEntry = reader.readLine();
+        }
       }
       if (System.getProperty("file.encoding") != null) {
         inStream = new InputStreamReader(System.in, System.getProperty("file.encoding"));
@@ -303,6 +307,9 @@ public class TTYConsoleReader implements OConsoleReader {
   }
 
   private void writeHistory(int historyNum) throws IOException {
+    if (!historyEnabled) {
+      return;
+    }
     if (historyNum <= MAX_HISTORY_ENTRIES) {
       File historyFile = getHistoryFile(false);
       BufferedWriter writer = new BufferedWriter(new FileWriter(historyFile));
