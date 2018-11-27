@@ -54,7 +54,6 @@ public interface OCluster {
 
   /**
    * Truncates the cluster content. All the entries will be removed.
-   *
    */
   void truncate() throws IOException;
 
@@ -100,9 +99,9 @@ public interface OCluster {
    */
   OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
 
-  /** Check if a rid is existent and deleted or not existent
-   *
-   *  return true only if delete flag is set.
+  /**
+   * Check if a rid is existent and deleted or not existent
+   * return true only if delete flag is set.
    */
   boolean isDeleted(OPhysicalPosition iPPosition) throws IOException;
 
@@ -133,11 +132,7 @@ public interface OCluster {
 
   float recordOverflowGrowFactor();
 
-  boolean isHashBased();
-
   boolean isSystemCluster();
-
-  OClusterEntryIterator absoluteIterator();
 
   OPhysicalPosition[] higherPositions(OPhysicalPosition position) throws IOException;
 
@@ -149,7 +144,6 @@ public interface OCluster {
 
   /**
    * Hides records content by putting tombstone on the records position but does not delete record itself.
-   *
    * <p>This method is used in case of record content itself is broken and cannot be read or deleted. So it is emergence method.
    *
    * @param position Position of record in cluster
@@ -168,4 +162,6 @@ public interface OCluster {
   void acquireAtomicExclusiveLock();
 
   OClusterBrowsePage nextPage(long lastPosition) throws IOException;
+
+  int getBinaryVersion();
 }

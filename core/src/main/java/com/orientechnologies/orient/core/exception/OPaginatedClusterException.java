@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.exception;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com) <lomakin.andrey@gmail.com>.

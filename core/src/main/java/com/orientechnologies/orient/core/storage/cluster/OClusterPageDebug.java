@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated;
+package com.orientechnologies.orient.core.storage.cluster;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 

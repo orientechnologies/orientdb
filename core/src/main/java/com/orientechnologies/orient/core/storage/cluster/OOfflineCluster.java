@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.orientechnologies.orient.core.storage.impl.local.paginated;
+package com.orientechnologies.orient.core.storage.cluster;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
@@ -22,7 +22,10 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 
@@ -37,9 +40,10 @@ import java.io.IOException;
  */
 public class OOfflineCluster implements OCluster {
 
-  private final String                    name;
-  private final int                       id;
-  private final OAbstractPaginatedStorage storageLocal;
+  private final    String                    name;
+  private final    int                       id;
+  private final    OAbstractPaginatedStorage storageLocal;
+  private volatile int                       binaryVersion;
 
   public OOfflineCluster(final OAbstractPaginatedStorage iStorage, final int iId, final String iName) {
     storageLocal = iStorage;
@@ -53,6 +57,7 @@ public class OOfflineCluster implements OCluster {
 
   @Override
   public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException {
+    binaryVersion = iConfig.getBinaryVersion();
   }
 
   @Override
@@ -224,11 +229,6 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public boolean isHashBased() {
-    return false;
-  }
-
-  @Override
   public boolean isSystemCluster() {
     return false;
   }
@@ -236,11 +236,6 @@ public class OOfflineCluster implements OCluster {
   @Override
   public boolean isDeleted(OPhysicalPosition iPPosition) throws IOException {
     return false;
-  }
-
-  @Override
-  public OClusterEntryIterator absoluteIterator() {
-    return null;
   }
 
   @Override
@@ -281,5 +276,10 @@ public class OOfflineCluster implements OCluster {
   @Override
   public OClusterBrowsePage nextPage(long lastPosition) {
     return null;
+  }
+
+  @Override
+  public int getBinaryVersion() {
+    return binaryVersion;
   }
 }

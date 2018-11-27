@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -24,13 +22,13 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
+
+import java.io.IOException;
 
 @Test(groups = "schema")
 public class AbstractClassTest extends DocumentDBBaseTest {

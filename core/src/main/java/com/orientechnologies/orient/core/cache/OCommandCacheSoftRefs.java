@@ -34,12 +34,11 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OLegacyResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;

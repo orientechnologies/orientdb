@@ -15,8 +15,8 @@
 //import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 //import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 //import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-//import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
-//import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+//import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
+//import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 //import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 //import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
 //import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;

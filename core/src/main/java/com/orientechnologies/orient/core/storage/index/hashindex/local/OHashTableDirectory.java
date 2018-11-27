@@ -58,7 +58,7 @@ public class OHashTableDirectory extends ODurableComponent {
     OCacheEntry firstEntry = loadPageForWrite(atomicOperation, fileId, firstEntryIndex, true);
 
     if (firstEntry == null) {
-      firstEntry = addPage(atomicOperation, fileId);
+      firstEntry = addPage(atomicOperation, fileId, false);
       assert firstEntry.getPageIndex() == 0;
     }
 
@@ -144,7 +144,7 @@ public class OHashTableDirectory extends ODurableComponent {
             releasePageFromWrite(atomicOperation, cacheEntry);
           }
 
-          cacheEntry = addPage(atomicOperation, fileId);
+          cacheEntry = addPage(atomicOperation, fileId, false);
         }
 
         try {

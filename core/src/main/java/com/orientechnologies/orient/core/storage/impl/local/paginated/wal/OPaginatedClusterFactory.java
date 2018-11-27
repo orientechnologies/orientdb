@@ -22,22 +22,31 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.cluster.v0.OPaginatedClusterV0;
+import com.orientechnologies.orient.core.storage.cluster.v1.OPaginatedClusterV1;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 10/8/13
  */
-public class OPaginatedClusterFactory {
+public final class OPaginatedClusterFactory {
   public static final OPaginatedClusterFactory INSTANCE = new OPaginatedClusterFactory();
 
-  public OCluster createCluster(String name, int configurationVersion, OAbstractPaginatedStorage storage) {
+  public static OCluster createCluster(final String name, final int configurationVersion, final int binaryVersion,
+      final OAbstractPaginatedStorage storage) {
     if (configurationVersion >= 0 && configurationVersion < 6) {
       throw new OStorageException("You use deprecated version of storage cluster, "
           + "this version is not supported in current implementation. Please do export/import or recreate database.");
     }
 
-    return new OPaginatedCluster(name, storage);
+    switch (binaryVersion) {
+    case 0:
+      return new OPaginatedClusterV0(name, storage);
+    case 1:
+      return new OPaginatedClusterV1(name, storage);
+    default:
+      throw new IllegalStateException("Invalid binary version of cluster " + binaryVersion);
+    }
   }
 }

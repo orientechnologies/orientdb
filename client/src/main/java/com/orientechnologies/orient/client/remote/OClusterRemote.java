@@ -24,7 +24,10 @@ import java.io.IOException;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 
 /**
@@ -187,17 +190,9 @@ public class OClusterRemote implements OCluster {
     throw new UnsupportedOperationException("getRecordsSize()");
   }
 
-  public boolean isHashBased() {
-    return false;
-  }
-
   @Override
   public boolean isSystemCluster() {
     return false;
-  }
-
-  public OClusterEntryIterator absoluteIterator() {
-    throw new UnsupportedOperationException("getRecordsSize()");
   }
 
   @Override
@@ -258,6 +253,11 @@ public class OClusterRemote implements OCluster {
   @Override
   public OClusterBrowsePage nextPage(long lastPosition) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public int getBinaryVersion() {
+    throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
   }
 }
 

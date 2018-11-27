@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
+import com.orientechnologies.orient.core.storage.memory.ODirectMemoryStorage;
 
 import java.util.Map;
 

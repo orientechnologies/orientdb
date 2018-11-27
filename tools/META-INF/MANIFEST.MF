@@ -21,7 +21,7 @@ Export-Package: com.orientechnologies.orient.console;uses:="com.orient
  ommand,com.orientechnologies.orient.core.metadata,com.orientechnologi
  es.orient.core.id,com.orientechnologies.orient.core.record.impl,com.o
  rientechnologies.orient.core.db.record,com.orientechnologies.orient.c
- ore.sql.query,com.orientechnologies.orient.core.storage.impl.memory,c
+ ore.sql.query,com.orientechnologies.orient.core.storage.memory,c
  om.orientechnologies.common.console.annotation,com.orientechnologies.
  orient.core.type"
 Implementation-Title: OrientDB Tools
@@ -68,7 +68,7 @@ Import-Package: com.orientechnologies.common.console,com.orientechnolo
  zation.serializer.record.string,com.orientechnologies.orient.core.sql
  ,com.orientechnologies.orient.core.sql.query,com.orientechnologies.or
  ient.core.storage,com.orientechnologies.orient.core.storage.impl.loca
- l,com.orientechnologies.orient.core.storage.impl.memory,com.orientech
+ l,com.orientechnologies.orient.core.storage.memory,com.orientech
  nologies.orient.core.tx,com.orientechnologies.orient.core.type,com.or
  ientechnologies.orient.enterprise.command
 Specification-Version: 1.0-SNAPSHOT

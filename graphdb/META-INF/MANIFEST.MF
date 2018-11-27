@@ -306,7 +306,7 @@ Import-Package: com.orientechnologies.common.concur.lock,com.orientech
  erialization.serializer.stream,com.orientechnologies.orient.core.sql.
  query,com.orientechnologies.orient.core.storage,com.orientechnologies
  .orient.core.storage.fs,com.orientechnologies.orient.core.storage.imp
- l.local,com.orientechnologies.orient.core.storage.impl.memory,com.ori
+ l.local,com.orientechnologies.orient.core.storage.memory,com.ori
  entechnologies.orient.core.tx,com.orientechnologies.orient.enterprise
  .channel,com.orientechnologies.orient.enterprise.channel.binary,com.o
  rientechnologies.orient.enterprise.channel.text,com.orientechnologies
