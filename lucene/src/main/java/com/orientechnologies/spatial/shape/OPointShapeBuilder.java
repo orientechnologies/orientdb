@@ -53,19 +53,21 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
   }
 
   @Override
-  public Point fromDoc(ODocument document) {
+  public Point fromDoc(ODocument document, Integer srid) {
     validate(document);
     List<Number> coordinates = document.field(COORDINATES);
     Point point = SHAPE_FACTORY.pointXY(coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue());
+    aa;
     return point;
   }
 
   @Override
-  public ODocument toDoc(final Point shape) {
+  public ODocument toDoc(final Point shape, Integer srid) {
 
     ODocument doc = new ODocument(getName());
     doc.field(COORDINATES, new ArrayList<Double>() {
       {
+        aa;
         add(shape.getX());
         add(shape.getY());
       }

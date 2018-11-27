@@ -38,7 +38,13 @@ public class OSTAsBinaryFunction extends OSQLFunctionAbstract {
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
-    return factory.asBinary(iParams[0]);
+    Integer srid = null;
+    if (iParams.length > 1){
+      if (iParams[1] instanceof Integer){
+        srid = (Integer)iParams[1];
+      }
+    }
+    return factory.asBinary(iParams[0], srid);
   }
 
   @Override

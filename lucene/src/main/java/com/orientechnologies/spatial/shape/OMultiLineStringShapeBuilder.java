@@ -41,13 +41,13 @@ public class OMultiLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeomet
   }
 
   @Override
-  public JtsGeometry fromDoc(ODocument document) {
+  public JtsGeometry fromDoc(ODocument document, Integer srid) {
     validate(document);
     List<List<List<Number>>> coordinates = document.field(COORDINATES);
     LineString[] multiLine = new LineString[coordinates.size()];
     int j = 0;
     for (List<List<Number>> coordinate : coordinates) {
-      multiLine[j] = createLineString(coordinate);
+      multiLine[j] = createLineString(coordinate, srid);
       j++;
     }
     return toShape(GEOMETRY_FACTORY.createMultiLineString(multiLine));
@@ -61,14 +61,14 @@ public class OMultiLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeomet
   }
 
   @Override
-  public ODocument toDoc(JtsGeometry shape) {
+  public ODocument toDoc(JtsGeometry shape, Integer srid) {
     final MultiLineString geom = (MultiLineString) shape.getGeom();
 
     List<List<List<Double>>> coordinates = new ArrayList<List<List<Double>>>();
     ODocument doc = new ODocument(getName());
     for (int i = 0; i < geom.getNumGeometries(); i++) {
       final LineString lineString = (LineString) geom.getGeometryN(i);
-      coordinates.add(coordinatesFromLineString(lineString));
+      coordinates.add(coordinatesFromLineString(lineString, srid));
     }
 
     doc.field(COORDINATES, coordinates);

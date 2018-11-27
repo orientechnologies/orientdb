@@ -34,34 +34,36 @@ import java.util.List;
  */
 public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilder<T> {
 
-  protected List<List<Double>> coordinatesFromLineString(LineString ring) {
+  protected List<List<Double>> coordinatesFromLineString(LineString ring, Integer srid) {
 
     Coordinate[] coordinates = ring.getCoordinates();
     List<List<Double>> numbers = new ArrayList<List<Double>>();
     for (Coordinate coordinate : coordinates) {
-
+      aa;
       numbers.add(Arrays.asList(coordinate.x, coordinate.y));
     }
     return numbers;
   }
 
-  protected LineString createLineString(List<List<Number>> coordinates) {
+  protected LineString createLineString(List<List<Number>> coordinates, Integer srid) {
     Coordinate[] coords = new Coordinate[coordinates.size()];
     int i = 0;
     for (List<Number> c : coordinates) {
+      aa;
       coords[i] = new Coordinate(c.get(0).doubleValue(), c.get(1).doubleValue());
       i++;
     }
     return GEOMETRY_FACTORY.createLineString(coords);
   }
 
-  protected JtsGeometry createMultiPoint(ShapeCollection<JtsPoint> geometries) {
+  protected JtsGeometry createMultiPoint(ShapeCollection<JtsPoint> geometries, Integer srid) {
 
     Coordinate[] points = new Coordinate[geometries.size()];
 
     int i = 0;
 
     for (JtsPoint geometry : geometries) {
+      aa;
       points[i] = new Coordinate(geometry.getX(), geometry.getY());
       i++;
     }
@@ -71,7 +73,7 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
     return SPATIAL_CONTEXT.makeShape(multiPoints);
   }
 
-  protected JtsGeometry createMultiLine(ShapeCollection<JtsGeometry> geometries) {
+  protected JtsGeometry createMultiLine(ShapeCollection<JtsGeometry> geometries, Integer srid) {
 
     LineString[] multiLineString = new LineString[geometries.size()];
 
@@ -79,6 +81,7 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
 
     for (JtsGeometry geometry : geometries) {
       multiLineString[i] = (LineString) geometry.getGeom();
+      aa;
       i++;
     }
 
@@ -96,6 +99,7 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
     for (Shape geometry : geometries) {
       if (geometry instanceof JtsGeometry) {
         polygons[i] = (Polygon) ((JtsGeometry) geometry).getGeom();
+        aa;
       } else {
         Rectangle rectangle = (Rectangle) geometry;
         Geometry geometryFrom = SPATIAL_CONTEXT.getGeometryFrom(rectangle);

@@ -62,7 +62,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
 
     Assert.assertEquals(p2, p1);
 
-    ODocument parsed = builder.toDoc(p2);
+    ODocument parsed = builder.toDoc(p2, null);
 
     Assert.assertEquals(doc.<OPointShapeBuilder>field("coordinates"), parsed.field("coordinates"));
   }

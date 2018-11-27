@@ -48,7 +48,7 @@ public class OLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   }
 
   @Override
-  public JtsGeometry fromDoc(ODocument document) {
+  public JtsGeometry fromDoc(ODocument document, Integer srid) {
 
     validate(document);
     List<List<Number>> coordinates = document.field(COORDINATES);
@@ -57,16 +57,17 @@ public class OLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
     int i = 0;
     for (List<Number> coordinate : coordinates) {
       coords[i] = new Coordinate(coordinate.get(0).doubleValue(), coordinate.get(1).doubleValue());
+      aa;
       i++;
     }
     return toShape(GEOMETRY_FACTORY.createLineString(coords));
   }
 
   @Override
-  public ODocument toDoc(JtsGeometry shape) {
+  public ODocument toDoc(JtsGeometry shape, Integer srid) {
     ODocument doc = new ODocument(getName());
     LineString lineString = (LineString) shape.getGeom();
-    doc.field(COORDINATES, coordinatesFromLineString(lineString));
+    doc.field(COORDINATES, coordinatesFromLineString(lineString, srid));
     return doc;
   }
 }

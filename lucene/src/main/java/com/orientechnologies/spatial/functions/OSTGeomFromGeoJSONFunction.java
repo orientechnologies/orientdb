@@ -41,8 +41,14 @@ public class OSTGeomFromGeoJSONFunction extends OSQLFunctionAbstract {
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
     String geom = (String) iParams[0];
+    Integer srid = null;
+    if (iParams.length > 1){
+      if (iParams[1] instanceof Integer){
+        srid = (Integer)iParams[1];
+      }
+    }
     try {
-      return factory.fromGeoJson(geom);
+      return factory.fromGeoJson(geom, srid);
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(String.format("Cannot parse geometry {%s}", geom)), e);
     }

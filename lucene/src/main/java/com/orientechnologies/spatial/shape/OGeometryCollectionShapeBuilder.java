@@ -52,14 +52,14 @@ public class OGeometryCollectionShapeBuilder extends OComplexShapeBuilder<ShapeC
   }
   
   @Override
-  public ShapeCollection<Shape> fromMapGeoJson(Map<String, Object> geoJsonMap) {
+  public ShapeCollection<Shape> fromMapGeoJson(Map<String, Object> geoJsonMap, Integer srid) {
     ODocument doc = new ODocument(getName());
     doc.field("geometries", geoJsonMap.get("geometries"));
-    return fromDoc(doc);
+    return fromDoc(doc, srid);
   }
 
   @Override
-  public ShapeCollection<Shape> fromDoc(ODocument doc) {
+  public ShapeCollection<Shape> fromDoc(ODocument doc, Integer srid) {
 
     List<ODocument> geometries = doc.field("geometries");
 
@@ -67,7 +67,7 @@ public class OGeometryCollectionShapeBuilder extends OComplexShapeBuilder<ShapeC
 
     Geometry[] geoms = new Geometry[geometries.size()];
     for (ODocument geometry : geometries) {
-      Shape shape = shapeFactory.fromDoc(geometry);
+      Shape shape = shapeFactory.fromDoc(geometry, srid);
       shapes.add(shape);
     }
 
@@ -96,12 +96,12 @@ public class OGeometryCollectionShapeBuilder extends OComplexShapeBuilder<ShapeC
   }
 
   @Override
-  public ODocument toDoc(ShapeCollection<Shape> shapes) {
+  public ODocument toDoc(ShapeCollection<Shape> shapes, Integer srid) {
 
     ODocument doc = new ODocument(getName());
     List<ODocument> geometries = new ArrayList<ODocument>(shapes.size());
     for (Shape s : shapes) {
-      geometries.add(shapeFactory.toDoc(s));
+      geometries.add(shapeFactory.toDoc(s, srid));
     }
     doc.field("geometries", geometries);
     return doc;

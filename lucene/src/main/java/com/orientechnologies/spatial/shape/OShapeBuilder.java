@@ -74,16 +74,16 @@ public abstract class OShapeBuilder<T extends Shape> {
 
   public abstract OShapeType getType();
 
-  public abstract T fromDoc(ODocument doc);
+  public abstract T fromDoc(ODocument doc, Integer srid);
 
-  public T fromObject(Object obj) {
+  public T fromObject(Object obj, Integer srid) {
     throw new UnsupportedOperationException();
   }
 
-  public T fromMapGeoJson(Map<String, Object> geoJsonMap) {
+  public T fromMapGeoJson(Map<String, Object> geoJsonMap, Integer srid) {
     ODocument doc = new ODocument(getName());
     doc.field(COORDINATES, geoJsonMap.get(COORDINATES));
-    return fromDoc(doc);
+    return fromDoc(doc, srid);
   }
 
   public abstract void initClazz(ODatabaseInternal db);
@@ -113,15 +113,16 @@ public abstract class OShapeBuilder<T extends Shape> {
     return writer.write(geom);
   }
 
-  public String asText(ODocument document) {
-    return asText(fromDoc(document));
+  public String asText(ODocument document, Integer srid) {
+    return asText(fromDoc(document, srid));
   }
 
-  public String asText(Map<String, Object> geoJson) {
-    return asText(fromMapGeoJson(geoJson));
+  public String asText(Map<String, Object> geoJson, Integer srid) {
+    //srid should be processed in fromMapGeoJson(), so other parameter should be null to avoid double transformation
+    return asText(fromMapGeoJson(geoJson, srid), null);
   }
 
-  public String asText(Object object) {
+  public String asText(Object object, Integer srid) {
     throw new UnsupportedOperationException();
   }
 
@@ -129,13 +130,13 @@ public abstract class OShapeBuilder<T extends Shape> {
     return SPATIAL_CONTEXT.getFormats().getGeoJsonWriter().toString(shape);
   }
 
-  public String asGeoJson(ODocument document) {
-    return asGeoJson(fromDoc(document));
+  public String asGeoJson(ODocument document, Integer srid) {
+    return asGeoJson(fromDoc(document, srid));
   }
 
-  public ODocument fromGeoJson(String geoJson) throws IOException, ParseException {
+  public ODocument fromGeoJson(String geoJson, Integer srid) throws IOException, ParseException {
     Shape shape = SPATIAL_CONTEXT.getFormats().getGeoJsonReader().read(geoJson);
-    return toDoc((T) shape);
+    return toDoc((T) shape, srid);
   }
 
   public void validate(ODocument doc) {
@@ -167,11 +168,11 @@ public abstract class OShapeBuilder<T extends Shape> {
     return entity;
   }
 
-  public abstract ODocument toDoc(T shape);
+  public abstract ODocument toDoc(T shape, Integer srid);
 
-  public ODocument toDoc(String wkt) throws ParseException {
+  public ODocument toDoc(String wkt, Integer srid) throws ParseException {
     T parsed = fromText(wkt);
-    return toDoc(parsed);
+    return toDoc(parsed, srid);
   }
 
   public int getSRID(Shape shape) {

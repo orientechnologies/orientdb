@@ -42,13 +42,14 @@ public class OMultiPointShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   }
 
   @Override
-  public JtsGeometry fromDoc(ODocument document) {
+  public JtsGeometry fromDoc(ODocument document, Integer srid) {
     validate(document);
     List<List<Number>> coordinates = document.field(COORDINATES);
     Coordinate[] coords = new Coordinate[coordinates.size()];
     int i = 0;
     for (List<Number> coordinate : coordinates) {
       coords[i] = new Coordinate(coordinate.get(0).doubleValue(), coordinate.get(1).doubleValue());
+      aa;
       i++;
     }
     return toShape(GEOMETRY_FACTORY.createMultiPoint(coords));
@@ -63,7 +64,7 @@ public class OMultiPointShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   }
 
   @Override
-  public ODocument toDoc(final JtsGeometry shape) {
+  public ODocument toDoc(final JtsGeometry shape, Integer srid) {
     final MultiPoint geom = (MultiPoint) shape.getGeom();
 
     ODocument doc = new ODocument(getName());
@@ -71,6 +72,7 @@ public class OMultiPointShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
       {
         Coordinate[] coordinates = geom.getCoordinates();
         for (Coordinate coordinate : coordinates) {
+          aa;
           add(Arrays.asList(coordinate.x, coordinate.y));
         }
       }

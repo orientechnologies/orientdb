@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.sql.parser.OFromClause;
 import com.orientechnologies.spatial.strategy.SpatialQueryBuilderDWithin;
 import org.locationtech.spatial4j.shape.Shape;
 
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -46,9 +45,9 @@ public class OSTDWithinFunction extends OSpatialFunctionAbstractIndexable {
     if (containsNull(iParams)) {
       return null;
     }
-    Shape shape = factory.fromObject(iParams[0]);
+    Shape shape = factory.fromObject(iParams[0], null);
 
-    Shape shape1 = factory.fromObject(iParams[1]);
+    Shape shape1 = factory.fromObject(iParams[1], null);
 
     Number distance = (Number) iParams[2];
 

@@ -38,9 +38,9 @@ public class OSTDistanceFunction extends OSQLFunctionAbstract {
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
-    Shape shape = factory.fromObject(iParams[0]);
+    Shape shape = factory.fromObject(iParams[0], null);
 
-    Shape shape1 = factory.fromObject(iParams[1]);
+    Shape shape1 = factory.fromObject(iParams[1], null);
 
     return factory.operation().distance(shape, shape1);
   }

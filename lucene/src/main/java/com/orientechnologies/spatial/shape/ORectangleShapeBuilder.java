@@ -54,23 +54,25 @@ public class ORectangleShapeBuilder extends OShapeBuilder<Rectangle> {
   }
 
   @Override
-  public Rectangle fromDoc(ODocument document) {
+  public Rectangle fromDoc(ODocument document, Integer srid) {
     validate(document);
     List<Number> coordinates = document.field(COORDINATES);
 
     Point topLeft = SPATIAL_CONTEXT.makePoint(coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue());
     Point bottomRight = SPATIAL_CONTEXT.makePoint(coordinates.get(2).doubleValue(), coordinates.get(3).doubleValue());
     Rectangle rectangle = SPATIAL_CONTEXT.makeRectangle(topLeft, bottomRight);
+    aa;
     return rectangle;
   }
 
   @Override
-  public ODocument toDoc(final Rectangle shape) {
+  public ODocument toDoc(final Rectangle shape, Integer srid) {
 
     ODocument doc = new ODocument(getName());
 
     doc.field(COORDINATES, new ArrayList<Double>() {
       {
+        aa;
         add(shape.getMinX());
         add(shape.getMinY());
         add(shape.getMaxX());

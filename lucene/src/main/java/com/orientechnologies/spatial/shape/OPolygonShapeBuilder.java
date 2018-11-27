@@ -55,18 +55,18 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   }
 
   @Override
-  public JtsGeometry fromDoc(ODocument document) {
+  public JtsGeometry fromDoc(ODocument document, Integer srid) {
     validate(document);
     List<List<List<Number>>> coordinates = document.field("coordinates");
 
-    return toShape(createPolygon(coordinates));
+    return toShape(createPolygon(coordinates, srid));
   }
 
-  protected Polygon createPolygon(List<List<List<Number>>> coordinates) {
+  protected Polygon createPolygon(List<List<List<Number>>> coordinates, Integer srid) {
     Polygon shape;
     if (coordinates.size() == 1) {
       List<List<Number>> coords = coordinates.get(0);
-      LinearRing linearRing = createLinearRing(coords);
+      LinearRing linearRing = createLinearRing(coords, srid);
       shape = GEOMETRY_FACTORY.createPolygon(linearRing);
     } else {
       int i = 0;
@@ -74,9 +74,9 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
       LinearRing[] holes = new LinearRing[coordinates.size() - 1];
       for (List<List<Number>> coordinate : coordinates) {
         if (i == 0) {
-          outerRing = createLinearRing(coordinate);
+          outerRing = createLinearRing(coordinate, srid);
         } else {
-          holes[i - 1] = createLinearRing(coordinate);
+          holes[i - 1] = createLinearRing(coordinate, srid);
         }
         i++;
       }
@@ -85,34 +85,35 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
     return shape;
   }
 
-  protected LinearRing createLinearRing(List<List<Number>> coords) {
+  protected LinearRing createLinearRing(List<List<Number>> coords, Integer srid) {
     Coordinate[] crs = new Coordinate[coords.size()];
     int i = 0;
     for (List<Number> points : coords) {
       crs[i] = new Coordinate(points.get(0).doubleValue(), points.get(1).doubleValue());
+      aa;
       i++;
     }
     return GEOMETRY_FACTORY.createLinearRing(crs);
   }
 
   @Override
-  public ODocument toDoc(JtsGeometry shape) {
+  public ODocument toDoc(JtsGeometry shape, Integer srid) {
 
     ODocument doc = new ODocument(getName());
     Polygon polygon = (Polygon) shape.getGeom();
-    List<List<List<Double>>> polyCoordinates = coordinatesFromPolygon(polygon);
+    List<List<List<Double>>> polyCoordinates = coordinatesFromPolygon(polygon, srid);
     doc.field(COORDINATES, polyCoordinates);
     return doc;
   }
 
-  protected List<List<List<Double>>> coordinatesFromPolygon(Polygon polygon) {
+  protected List<List<List<Double>>> coordinatesFromPolygon(Polygon polygon, Integer srid) {
     List<List<List<Double>>> polyCoordinates = new ArrayList<List<List<Double>>>();
     LineString exteriorRing = polygon.getExteriorRing();
-    polyCoordinates.add(coordinatesFromLineString(exteriorRing));
+    polyCoordinates.add(coordinatesFromLineString(exteriorRing, srid));
     int i = polygon.getNumInteriorRing();
     for (int j = 0; j < i; j++) {
       LineString interiorRingN = polygon.getInteriorRingN(j);
-      polyCoordinates.add(coordinatesFromLineString(interiorRingN));
+      polyCoordinates.add(coordinatesFromLineString(interiorRingN, srid));
     }
     return polyCoordinates;
   }
