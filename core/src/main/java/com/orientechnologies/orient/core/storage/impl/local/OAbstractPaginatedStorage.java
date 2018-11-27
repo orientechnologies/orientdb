@@ -487,7 +487,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected final void openClusters() throws IOException {
     // OPEN BASIC SEGMENTS
     int pos;
-    addDefaultClusters();
 
     // REGISTER CLUSTER
     final List<OStorageClusterConfiguration> configurationClusters = configuration.getClusters();
