@@ -18,7 +18,7 @@
  *
  */
 
-package com.orientechnologies.orient.core.storage.impl.local.paginated;
+package com.orientechnologies.orient.core.storage.cluster;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 10/7/13
  */
-public class OClusterPositionMapBucket extends ODurablePage {
+public final class OClusterPositionMapBucket extends ODurablePage {
   private static final int NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
   private static final int SIZE_OFFSET      = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int POSITIONS_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -46,8 +46,11 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
   public static final int  MAX_ENTRIES      = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / ENTRY_SIZE;
 
-  public OClusterPositionMapBucket(OCacheEntry cacheEntry) {
+  public OClusterPositionMapBucket(OCacheEntry cacheEntry, boolean clear) {
     super(cacheEntry);
+    if (clear) {
+      setIntValue(SIZE_OFFSET, 0);
+    }
   }
 
   public int add(long pageIndex, int recordPosition) {
@@ -81,12 +84,14 @@ public class OClusterPositionMapBucket extends ODurablePage {
   public PositionEntry get(int index) {
     int size = getIntValue(SIZE_OFFSET);
 
-    if (index >= size)
+    if (index >= size) {
       return null;
+    }
 
     int position = entryPosition(index);
-    if (getByteValue(position) != FILLED)
+    if (getByteValue(position) != FILLED) {
       return null;
+    }
 
     return readEntry(position);
   }
@@ -94,15 +99,17 @@ public class OClusterPositionMapBucket extends ODurablePage {
   public void set(final int index, final PositionEntry entry) {
     final int size = getIntValue(SIZE_OFFSET);
 
-    if (index >= size)
+    if (index >= size) {
       throw new OStorageException("Provided index " + index + " is out of range");
+    }
 
     final int position = entryPosition(index);
     final byte flag = getByteValue(position);
-    if (flag == ALLOCATED)
+    if (flag == ALLOCATED) {
       setByteValue(position, FILLED);
-    else if (flag != FILLED)
+    } else if (flag != FILLED) {
       throw new OStorageException("Provided index " + index + " points to removed entry");
+    }
 
     updateEntry(position, entry);
   }
@@ -110,20 +117,22 @@ public class OClusterPositionMapBucket extends ODurablePage {
   public void resurrect(final int index, final PositionEntry entry) {
     final int size = getIntValue(SIZE_OFFSET);
 
-    if (index >= size)
+    if (index >= size) {
       throw new OStorageException("Cannot resurrect a record: provided index " + index + " is out of range");
+    }
 
     final int position = entryPosition(index);
     final byte flag = getByteValue(position);
-    if (flag == REMOVED)
+    if (flag == REMOVED) {
       setByteValue(position, FILLED);
-    else
+    } else {
       throw new OStorageException("Cannot resurrect a record: provided index " + index + " points to a non removed entry");
+    }
 
     updateEntry(position, entry);
   }
 
-  private int entryPosition(int index) {
+  private static int entryPosition(int index) {
     return index * ENTRY_SIZE + POSITIONS_OFFSET;
   }
 
@@ -138,13 +147,15 @@ public class OClusterPositionMapBucket extends ODurablePage {
   public void remove(int index) {
     int size = getIntValue(SIZE_OFFSET);
 
-    if (index >= size)
+    if (index >= size) {
       return;
+    }
 
     int position = entryPosition(index);
 
-    if (getByteValue(position) != FILLED)
+    if (getByteValue(position) != FILLED) {
       return;
+    }
 
     setByteValue(position, REMOVED);
 
@@ -173,8 +184,9 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
   public boolean exists(final int index) {
     int size = getIntValue(SIZE_OFFSET);
-    if (index >= size)
+    if (index >= size) {
       return false;
+    }
 
     final int position = entryPosition(index);
     return getByteValue(position) == FILLED;
@@ -182,14 +194,15 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
   public byte getStatus(final int index) {
     int size = getIntValue(SIZE_OFFSET);
-    if (index >= size)
+    if (index >= size) {
       return NOT_EXISTENT;
+    }
 
     final int position = entryPosition(index);
     return getByteValue(position);
   }
 
-  public static class PositionEntry {
+  public static final class PositionEntry {
     private final long pageIndex;
     private final int  recordPosition;
 

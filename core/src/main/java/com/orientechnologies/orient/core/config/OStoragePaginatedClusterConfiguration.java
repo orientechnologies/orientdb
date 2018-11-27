@@ -25,23 +25,25 @@ package com.orientechnologies.orient.core.config;
  * @since 09.07.13
  */
 public class OStoragePaginatedClusterConfiguration implements OStorageClusterConfiguration {
-  public static final float DEFAULT_GROW_FACTOR      = (float) 1.2;
-  public              float recordOverflowGrowFactor = DEFAULT_GROW_FACTOR;
-  public              float recordGrowFactor         = DEFAULT_GROW_FACTOR;
-  public           String                    compression;
-  public           String                    encryption;
-  public           String                    encryptionKey;
-  public transient OStorageConfiguration root;
-  public           int                       id;
-  public           String                    name;
-  public           String                    location;
-  public boolean useWal = true;
-  public String conflictStrategy;
-  private STATUS status = STATUS.ONLINE;
+  public static final float                 DEFAULT_GROW_FACTOR      = (float) 1.2;
+  public              float                 recordOverflowGrowFactor = DEFAULT_GROW_FACTOR;
+  public              float                 recordGrowFactor         = DEFAULT_GROW_FACTOR;
+  public              String                compression;
+  public              String                encryption;
+  public              String                encryptionKey;
+  public transient    OStorageConfiguration root;
+  public              int                   id;
+  public              String                name;
+  public              String                location;
+  public              boolean               useWal                   = true;
+  public              String                conflictStrategy;
+  private             STATUS                status                   = STATUS.ONLINE;
+  private final       int                   binaryVersion;
 
   public OStoragePaginatedClusterConfiguration(final OStorageConfiguration root, final int id, final String name,
       final String location, final boolean useWal, final float recordOverflowGrowFactor, final float recordGrowFactor,
-      final String compression, final String iEncryption, final String iEncryptionKey, final String conflictStrategy, final STATUS iStatus) {
+      final String compression, final String iEncryption, final String iEncryptionKey, final String conflictStrategy,
+      final STATUS iStatus, int binaryVersion) {
     this.root = root;
     this.id = id;
     this.name = name;
@@ -54,6 +56,7 @@ public class OStoragePaginatedClusterConfiguration implements OStorageClusterCon
     this.encryptionKey = iEncryptionKey;
     this.conflictStrategy = conflictStrategy;
     this.status = iStatus;
+    this.binaryVersion = binaryVersion;
   }
 
   @Override
@@ -84,5 +87,9 @@ public class OStoragePaginatedClusterConfiguration implements OStorageClusterCon
   @Override
   public void setStatus(final STATUS iStatus) {
     status = iStatus;
+  }
+
+  public int getBinaryVersion() {
+    return binaryVersion;
   }
 }

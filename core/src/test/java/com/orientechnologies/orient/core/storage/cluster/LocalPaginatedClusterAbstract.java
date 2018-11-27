@@ -1,59 +1,38 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated;
+package com.orientechnologies.orient.core.storage.cluster;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.cluster.v0.OPaginatedClusterV0;
 import org.assertj.core.api.Assertions;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeMap;
 
-/**
- * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
- * @since 26.03.13
- */
-
-public class LocalPaginatedClusterTestIT {
+public abstract class LocalPaginatedClusterAbstract {
   protected static String              buildDirectory;
-  static           OPaginatedCluster   paginatedCluster;
-  static           ODatabaseDocumentTx databaseDocumentTx;
-
-  @BeforeClass
-  public static void beforeClass() throws IOException {
-
-    System.out.println("Start LocalPaginatedClusterTestIT");
-    buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null || buildDirectory.isEmpty())
-      buildDirectory = ".";
-
-    buildDirectory += "/localPaginatedClusterTest";
-
-    databaseDocumentTx = new ODatabaseDocumentTx(
-        "plocal:" + buildDirectory + File.separator + LocalPaginatedClusterTestIT.class.getSimpleName());
-    if (databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
-    }
-
-    databaseDocumentTx.create();
-
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
-
-    paginatedCluster = new OPaginatedCluster("paginatedClusterTest", storage);
-    paginatedCluster.configure(storage, 42, "paginatedClusterTest", buildDirectory, -1);
-    paginatedCluster.create(-1);
-  }
+  protected static OPaginatedCluster   paginatedCluster;
+  public static    ODatabaseDocumentTx databaseDocumentTx;
 
   @AfterClass
   public static void afterClass() throws IOException {
     paginatedCluster.delete();
 
     databaseDocumentTx.drop();
-    System.out.println("End LocalPaginatedClusterTestIT");
   }
 
   @Before
@@ -94,7 +73,6 @@ public class LocalPaginatedClusterTestIT {
     Assert.assertNotNull(rawBuffer);
 
     Assert.assertEquals(rawBuffer.version, recordVersion);
-    //    Assert.assertEquals(rawBuffer.buffer, smallRecord);
     Assertions.assertThat(rawBuffer.buffer).isEqualTo(smallRecord);
     Assert.assertEquals(rawBuffer.recordType, 1);
   }
@@ -116,7 +94,6 @@ public class LocalPaginatedClusterTestIT {
     Assert.assertNotNull(rawBuffer);
 
     Assert.assertEquals(rawBuffer.version, recordVersion);
-    //    Assert.assertEquals(rawBuffer.buffer, bigRecord);
     Assertions.assertThat(rawBuffer.buffer).isEqualTo(bigRecord);
     Assert.assertEquals(rawBuffer.recordType, 1);
   }
@@ -125,12 +102,11 @@ public class LocalPaginatedClusterTestIT {
   public void testAddManySmallRecords() throws IOException {
     final int records = 10000;
 
-    long seed = 1426587095601L;
-    System.currentTimeMillis();
+    long seed = System.currentTimeMillis();
     Random mersenneTwisterFast = new Random(seed);
     System.out.println("testAddManySmallRecords seed : " + seed);
 
-    Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -167,7 +143,7 @@ public class LocalPaginatedClusterTestIT {
 
     System.out.println("testAddManyBigRecords seed : " + seed);
 
-    Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -202,7 +178,7 @@ public class LocalPaginatedClusterTestIT {
 
     System.out.println("testAddManyRecords seed : " + seed);
 
-    Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -245,7 +221,7 @@ public class LocalPaginatedClusterTestIT {
   public void testManyAllocatePositionMap() throws IOException {
     final int records = 10000;
 
-    List<OPhysicalPosition> positions = new ArrayList<OPhysicalPosition>();
+    List<OPhysicalPosition> positions = new ArrayList<>();
     for (int i = 0; i < records; i++) {
       OPhysicalPosition position = paginatedCluster.allocatePosition((byte) 'd');
       Assert.assertTrue(position.clusterPosition >= 0);
@@ -270,7 +246,7 @@ public class LocalPaginatedClusterTestIT {
 
     System.out.println("testRemoveHalfSmallRecords seed : " + seed);
 
-    Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -288,7 +264,7 @@ public class LocalPaginatedClusterTestIT {
 
     int deletedRecords = 0;
     Assert.assertEquals(records, paginatedCluster.getEntries());
-    Set<Long> deletedPositions = new HashSet<Long>();
+    Set<Long> deletedPositions = new HashSet<>();
     Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
     while (positionIterator.hasNext()) {
       long clusterPosition = positionIterator.next();
@@ -328,7 +304,7 @@ public class LocalPaginatedClusterTestIT {
 
     System.out.println("testHideHalfSmallRecords seed : " + seed);
 
-    Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -346,7 +322,7 @@ public class LocalPaginatedClusterTestIT {
 
     int hiddenRecords = 0;
     Assert.assertEquals(records, paginatedCluster.getEntries());
-    Set<Long> hiddenPositions = new HashSet<Long>();
+    Set<Long> hiddenPositions = new HashSet<>();
     Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
     while (positionIterator.hasNext()) {
       long clusterPosition = positionIterator.next();
@@ -387,7 +363,7 @@ public class LocalPaginatedClusterTestIT {
 
     System.out.println("testRemoveHalfBigRecords seed : " + seed);
 
-    Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -406,7 +382,7 @@ public class LocalPaginatedClusterTestIT {
 
     int deletedRecords = 0;
     Assert.assertEquals(records, paginatedCluster.getEntries());
-    Set<Long> deletedPositions = new HashSet<Long>();
+    Set<Long> deletedPositions = new HashSet<>();
     Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
     while (positionIterator.hasNext()) {
       long clusterPosition = positionIterator.next();
@@ -447,7 +423,7 @@ public class LocalPaginatedClusterTestIT {
 
     System.out.println("testHideHalfBigRecords seed : " + seed);
 
-    Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -466,7 +442,7 @@ public class LocalPaginatedClusterTestIT {
 
     int hiddenRecords = 0;
     Assert.assertEquals(records, paginatedCluster.getEntries());
-    Set<Long> hiddenPositions = new HashSet<Long>();
+    Set<Long> hiddenPositions = new HashSet<>();
 
     Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
     while (positionIterator.hasNext()) {
@@ -507,7 +483,7 @@ public class LocalPaginatedClusterTestIT {
 
     System.out.println("testRemoveHalfRecords seed : " + seed);
 
-    Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -526,7 +502,7 @@ public class LocalPaginatedClusterTestIT {
 
     int deletedRecords = 0;
     Assert.assertEquals(records, paginatedCluster.getEntries());
-    Set<Long> deletedPositions = new HashSet<Long>();
+    Set<Long> deletedPositions = new HashSet<>();
     Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
     while (positionIterator.hasNext()) {
       long clusterPosition = positionIterator.next();
@@ -567,7 +543,7 @@ public class LocalPaginatedClusterTestIT {
 
     System.out.println("testHideHalfRecords seed : " + seed);
 
-    Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -586,7 +562,7 @@ public class LocalPaginatedClusterTestIT {
 
     int hiddenRecords = 0;
     Assert.assertEquals(records, paginatedCluster.getEntries());
-    Set<Long> hiddenPositions = new HashSet<Long>();
+    Set<Long> hiddenPositions = new HashSet<>();
     Iterator<Long> positionIterator = positionRecordMap.keySet().iterator();
     while (positionIterator.hasNext()) {
       long clusterPosition = positionIterator.next();
@@ -627,7 +603,7 @@ public class LocalPaginatedClusterTestIT {
 
     System.out.println("testRemoveHalfRecordsAndAddAnotherHalfAgain seed : " + seed);
 
-    Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -684,7 +660,7 @@ public class LocalPaginatedClusterTestIT {
 
     System.out.println("testHideHalfRecordsAndAddAnotherHalfAgain seed : " + seed);
 
-    Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -794,7 +770,7 @@ public class LocalPaginatedClusterTestIT {
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1, null);
     Assert.assertEquals(physicalPosition.clusterPosition, 0);
 
-    int updateRecordVersion = 0;
+    int updateRecordVersion;
     updateRecordVersion = -2;
 
     smallRecord = new byte[] { 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3 };
@@ -848,8 +824,8 @@ public class LocalPaginatedClusterTestIT {
     Random mersenneTwisterFast = new Random(seed);
     System.out.println("testUpdateManySmallRecords seed : " + seed);
 
-    Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
-    Set<Long> updatedPositions = new HashSet<Long>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
+    Set<Long> updatedPositions = new HashSet<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -865,7 +841,7 @@ public class LocalPaginatedClusterTestIT {
       positionRecordMap.put(physicalPosition.clusterPosition, smallRecord);
     }
 
-    int newRecordVersion = 0;
+    int newRecordVersion;
     newRecordVersion = recordVersion;
     newRecordVersion++;
 
@@ -908,8 +884,8 @@ public class LocalPaginatedClusterTestIT {
     Random mersenneTwisterFast = new Random(seed);
     System.out.println("testUpdateManyBigRecords seed : " + seed);
 
-    Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
-    Set<Long> updatedPositions = new HashSet<Long>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
+    Set<Long> updatedPositions = new HashSet<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -924,7 +900,7 @@ public class LocalPaginatedClusterTestIT {
       positionRecordMap.put(physicalPosition.clusterPosition, bigRecord);
     }
 
-    int newRecordVersion = 0;
+    int newRecordVersion;
     newRecordVersion = recordVersion;
     newRecordVersion++;
 
@@ -964,12 +940,12 @@ public class LocalPaginatedClusterTestIT {
   public void testUpdateManyRecords() throws IOException {
     final int records = 10000;
 
-    long seed = System.currentTimeMillis();
+    long seed = 543264693766L; //System.currentTimeMillis();
     Random mersenneTwisterFast = new Random(seed);
     System.out.println("testUpdateManyRecords seed : " + seed);
 
-    Map<Long, byte[]> positionRecordMap = new HashMap<Long, byte[]>();
-    Set<Long> updatedPositions = new HashSet<Long>();
+    Map<Long, byte[]> positionRecordMap = new HashMap<>();
+    Set<Long> updatedPositions = new HashSet<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -984,7 +960,7 @@ public class LocalPaginatedClusterTestIT {
       positionRecordMap.put(physicalPosition.clusterPosition, record);
     }
 
-    int newRecordVersion = 0;
+    int newRecordVersion;
     newRecordVersion = recordVersion;
     newRecordVersion++;
 
@@ -1027,7 +1003,7 @@ public class LocalPaginatedClusterTestIT {
     Random mersenneTwisterFast = new Random(seed);
     System.out.println("testForwardIteration seed : " + seed);
 
-    NavigableMap<Long, byte[]> positionRecordMap = new TreeMap<Long, byte[]>();
+    NavigableMap<Long, byte[]> positionRecordMap = new TreeMap<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -1082,7 +1058,7 @@ public class LocalPaginatedClusterTestIT {
     Random mersenneTwisterFast = new Random(seed);
     System.out.println("testBackwardIteration seed : " + seed);
 
-    NavigableMap<Long, byte[]> positionRecordMap = new TreeMap<Long, byte[]>();
+    NavigableMap<Long, byte[]> positionRecordMap = new TreeMap<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -1140,7 +1116,7 @@ public class LocalPaginatedClusterTestIT {
     Random mersenneTwisterFast = new Random(seed);
     System.out.println("testGetPhysicalPosition seed : " + seed);
 
-    Set<OPhysicalPosition> positions = new HashSet<OPhysicalPosition>();
+    Set<OPhysicalPosition> positions = new HashSet<>();
 
     int recordVersion = 0;
     recordVersion++;
@@ -1156,7 +1132,7 @@ public class LocalPaginatedClusterTestIT {
       positions.add(physicalPosition);
     }
 
-    Set<OPhysicalPosition> removedPositions = new HashSet<OPhysicalPosition>();
+    Set<OPhysicalPosition> removedPositions = new HashSet<>();
     for (OPhysicalPosition position : positions) {
       OPhysicalPosition physicalPosition = new OPhysicalPosition();
       physicalPosition.clusterPosition = position.clusterPosition;
@@ -1200,8 +1176,8 @@ public class LocalPaginatedClusterTestIT {
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1, null);
     Assert.assertEquals(physicalPosition.clusterPosition, 0);
 
-    Assert
-        .assertEquals(paginatedCluster.getRecordStatus(physicalPosition.clusterPosition), OPaginatedCluster.RECORD_STATUS.PRESENT);
+    Assert.assertEquals(paginatedCluster.getRecordStatus(physicalPosition.clusterPosition),
+        OPaginatedClusterV0.RECORD_STATUS.PRESENT);
 
     for (int i = 0; i < 1000; ++i) {
       recordVersion++;

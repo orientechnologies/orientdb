@@ -118,7 +118,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
           nullBucketFileId = addFile(atomicOperation, getName() + nullFileExtension);
         }
 
-        OCacheEntry rootCacheEntry = addPage(atomicOperation, fileId);
+        OCacheEntry rootCacheEntry = addPage(atomicOperation, fileId, false);
         try {
           OPrefixBTreeBucket<V> rootBucket = new OPrefixBTreeBucket<>(rootCacheEntry, true, keySerializer, valueSerializer,
               encryption, "");
@@ -329,7 +329,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
           boolean isNew = false;
 
           if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
-            cacheEntry = addPage(atomicOperation, nullBucketFileId);
+            cacheEntry = addPage(atomicOperation, nullBucketFileId, false);
             isNew = true;
           } else {
             cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
@@ -415,7 +415,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
         OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, ROOT_INDEX, false);
         if (cacheEntry == null) {
-          cacheEntry = addPage(atomicOperation, fileId);
+          cacheEntry = addPage(atomicOperation, fileId, false);
         }
 
         try {
@@ -1075,7 +1075,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       String separationKey, List<OPrefixBTreeBucket.SBTreeEntry<V>> rightEntries, OAtomicOperation atomicOperation)
       throws IOException {
 
-    OCacheEntry rightBucketEntry = addPage(atomicOperation, fileId);
+    OCacheEntry rightBucketEntry = addPage(atomicOperation, fileId, false);
 
     final String leftBoundary = leftBoundaries.get(leftBoundaries.size() - 2);
     final String rightBoundary = rightBoundaries.get(rightBoundaries.size() - 2);
@@ -1219,8 +1219,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
       leftEntries.add(bucketToSplit.getRawEntry(i));
     }
 
-    OCacheEntry leftBucketEntry = addPage(atomicOperation, fileId);
-    OCacheEntry rightBucketEntry = addPage(atomicOperation, fileId);
+    OCacheEntry leftBucketEntry = addPage(atomicOperation, fileId, false);
+    OCacheEntry rightBucketEntry = addPage(atomicOperation, fileId, false);
     try {
       OPrefixBTreeBucket<V> newLeftBucket = new OPrefixBTreeBucket<>(leftBucketEntry, splitLeaf, keySerializer, valueSerializer,
           encryption, "");

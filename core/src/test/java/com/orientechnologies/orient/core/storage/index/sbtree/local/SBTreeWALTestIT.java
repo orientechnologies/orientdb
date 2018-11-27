@@ -12,9 +12,9 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cluster.OClusterPage;
+import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
@@ -295,7 +295,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
                     expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
                   }
 
-                  cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, false, null);
+                  cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, false, null, false);
                 } while (cacheEntry.getPageIndex() != pageIndex);
               }
 

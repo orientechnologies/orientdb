@@ -3,8 +3,8 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 
 public class OStorageClusterConfigurationRemote implements OStorageClusterConfiguration {
-  private int    id;
-  private String name;
+  private final int    id;
+  private final String name;
 
   public OStorageClusterConfigurationRemote(int id, String name) {
     this.id = id;
@@ -38,6 +38,11 @@ public class OStorageClusterConfigurationRemote implements OStorageClusterConfig
 
   @Override
   public void setStatus(STATUS iStatus) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public int getBinaryVersion() {
     throw new UnsupportedOperationException();
   }
 }

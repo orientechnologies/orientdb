@@ -36,4 +36,6 @@ public interface OStorageClusterConfiguration {
   STATUS getStatus();
 
   void setStatus(STATUS iStatus);
+
+  int getBinaryVersion();
 }

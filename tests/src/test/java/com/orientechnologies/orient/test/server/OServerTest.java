@@ -1,13 +1,9 @@
 package com.orientechnologies.orient.test.server;
 
-import com.orientechnologies.orient.core.storage.fs.OFile;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
+import org.testng.annotations.Test;
 
 import java.io.File;
 

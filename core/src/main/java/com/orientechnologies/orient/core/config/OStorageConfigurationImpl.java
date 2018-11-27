@@ -30,8 +30,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -233,7 +233,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     dateFormat = DEFAULT_DATE_FORMAT;
     dateTimeFormat = DEFAULT_DATETIME_FORMAT;
     binaryFormatVersion = 0;
-    clusters = Collections.synchronizedList(new ArrayList<OStorageClusterConfiguration>());
+    clusters = Collections.synchronizedList(new ArrayList<>());
     localeLanguage = Locale.getDefault().getLanguage();
     localeCountry = Locale.getDefault().getCountry();
     timeZone = TimeZone.getDefault();
@@ -468,17 +468,25 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
             determineStorageCompression = clusterCompression;
 
           String clusterEncryption = null;
-          if (version >= 15)
+          if (version >= 15) {
             clusterEncryption = read(values[index++]);
+          }
 
           final String clusterConflictStrategy = read(values[index++]);
 
           OStorageClusterConfiguration.STATUS status;
           status = OStorageClusterConfiguration.STATUS.valueOf(read(values[index++]));
 
+          final int clusterBinaryVersion;
+          if (version >= 21) {
+            clusterBinaryVersion = Integer.parseInt(read(values[index++]));
+          } else {
+            clusterBinaryVersion = 0;
+          }
+
           currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa,
               clusterCompression, clusterEncryption, configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
-              clusterConflictStrategy, status);
+              clusterConflictStrategy, status, clusterBinaryVersion);
 
           break;
         case "p":
@@ -681,6 +689,10 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
             write(buffer, paginatedClusterConfiguration.conflictStrategy);
           if (iNetworkVersion > 25)
             write(buffer, paginatedClusterConfiguration.getStatus().name());
+
+          if (iNetworkVersion >= Integer.MAX_VALUE) {
+            write(buffer, paginatedClusterConfiguration.getBinaryVersion());
+          }
         }
       }
       if (iNetworkVersion <= 25) {

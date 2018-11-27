@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 
 import java.io.IOException;
@@ -76,7 +75,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final AtomicReference<WaitingListNode> waitingTail = new AtomicReference<>();
 
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<>();
-  private final           OPerformanceStatisticManager  performanceStatisticManager;
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -108,9 +106,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     this.writeAheadLog = storage.getWALInstance();
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
-    this.performanceStatisticManager = storage.getPerformanceStatisticManager();
-
-    performanceStatisticManager.registerComponent("atomic operation");
   }
 
   /**
@@ -184,7 +179,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final OOperationUnitId unitId = OOperationUnitId.generateId();
     final OLogSequenceNumber lsn = useWal ? writeAheadLog.logAtomicOperationStartRecord(true, unitId) : null;
 
-    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId(), performanceStatisticManager);
+    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId());
     currentOperation.set(operation);
 
     if (trackAtomicOperations) {

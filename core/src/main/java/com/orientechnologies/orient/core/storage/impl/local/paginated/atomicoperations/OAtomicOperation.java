@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -50,14 +49,14 @@ import java.util.Set;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12/3/13
  */
-public class OAtomicOperation {
+public final class OAtomicOperation {
 
   private final int                storageId;
   private final OLogSequenceNumber startLSN;
   private final OOperationUnitId   operationUnitId;
 
-  private int       startCounter;
-  private boolean   rollback;
+  private int     startCounter;
+  private boolean rollback;
 
   private final Set<String>            lockedObjects        = new HashSet<>();
   private final Map<Long, FileChanges> fileChanges          = new HashMap<>();
@@ -68,23 +67,17 @@ public class OAtomicOperation {
   private final OReadCache  readCache;
   private final OWriteCache writeCache;
 
-  private final OPerformanceStatisticManager performanceStatisticManager;
-
   private final Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<>();
 
   public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId, OReadCache readCache,
-      OWriteCache writeCache, int storageId, OPerformanceStatisticManager performanceStatisticManager) {
+      OWriteCache writeCache, int storageId) {
     this.storageId = storageId;
     this.startLSN = startLSN;
     this.operationUnitId = operationUnitId;
-    this.performanceStatisticManager = performanceStatisticManager;
+
     startCounter = 1;
     this.readCache = readCache;
     this.writeCache = writeCache;
-  }
-
-  public OLogSequenceNumber getStartLSN() {
-    return startLSN;
   }
 
   public OOperationUnitId getOperationUnitId() {
@@ -97,8 +90,9 @@ public class OAtomicOperation {
 
     fileId = checkFileIdCompatibility(fileId, storageId);
 
-    if (deletedFiles.contains(fileId))
+    if (deletedFiles.contains(fileId)) {
       throw new OStorageException("File with id " + fileId + " is deleted.");
+    }
 
     FileChanges changesContainer = fileChanges.computeIfAbsent(fileId, k -> new FileChanges());
 
@@ -106,8 +100,9 @@ public class OAtomicOperation {
       if (pageIndex <= changesContainer.maxNewPageIndex) {
         OCacheEntryChanges pageChange = changesContainer.pageChangesMap.get(pageIndex);
         return pageChange;
-      } else
+      } else {
         return null;
+      }
     } else {
       OCacheEntryChanges pageChangesContainer = changesContainer.pageChangesMap.get(pageIndex);
 
@@ -141,8 +136,9 @@ public class OAtomicOperation {
 
     fileId = checkFileIdCompatibility(fileId, storageId);
 
-    if (deletedFiles.contains(fileId))
+    if (deletedFiles.contains(fileId)) {
       throw new OStorageException("File with id " + fileId + " is deleted.");
+    }
 
     FileChanges changesContainer = fileChanges.get(fileId);
     if (changesContainer == null) {
@@ -153,8 +149,9 @@ public class OAtomicOperation {
       if (pageIndex <= changesContainer.maxNewPageIndex) {
         OCacheEntryChanges pageChange = changesContainer.pageChangesMap.get(pageIndex);
         return pageChange;
-      } else
+      } else {
         return null;
+      }
     } else {
       OCacheEntryChanges pageChangesContainer = changesContainer.pageChangesMap.get(pageIndex);
 
@@ -200,13 +197,14 @@ public class OAtomicOperation {
   /**
    * @return All keys and associated metadata contained inside of atomic operation
    */
-  public Map<String, OAtomicOperationMetadata<?>> getMetadata() {
+  private Map<String, OAtomicOperationMetadata<?>> getMetadata() {
     return Collections.unmodifiableMap(metadata);
   }
 
   public void pinPage(OCacheEntry cacheEntry) {
-    if (deletedFiles.contains(cacheEntry.getFileId()))
+    if (deletedFiles.contains(cacheEntry.getFileId())) {
       throw new OStorageException("File with id " + cacheEntry.getFileId() + " is deleted.");
+    }
 
     final FileChanges changesContainer = fileChanges.get(cacheEntry.getFileId());
     assert changesContainer != null;
@@ -220,8 +218,9 @@ public class OAtomicOperation {
   public OCacheEntry addPage(long fileId) {
     fileId = checkFileIdCompatibility(fileId, storageId);
 
-    if (deletedFiles.contains(fileId))
+    if (deletedFiles.contains(fileId)) {
       throw new OStorageException("File with id " + fileId + " is deleted.");
+    }
 
     final FileChanges changesContainer = fileChanges.get(fileId);
     assert changesContainer != null;
@@ -244,18 +243,20 @@ public class OAtomicOperation {
   public void releasePageFromRead(OCacheEntry cacheEntry) {
     if (cacheEntry instanceof OCacheEntryChanges) {
       releasePageFromWrite(cacheEntry);
-    } else
+    } else {
       readCache.releaseFromRead(cacheEntry, writeCache);
+    }
   }
 
   public void releasePageFromWrite(OCacheEntry cacheEntry) {
     OCacheEntryChanges real = (OCacheEntryChanges) cacheEntry;
-    if (deletedFiles.contains(cacheEntry.getFileId()))
+    if (deletedFiles.contains(cacheEntry.getFileId())) {
       throw new OStorageException("File with id " + cacheEntry.getFileId() + " is deleted.");
+    }
 
-    if (cacheEntry.getCachePointer().getBuffer() != null)
+    if (cacheEntry.getCachePointer().getBuffer() != null) {
       readCache.releaseFromRead(real.getDelegate(), writeCache);
-    else {
+    } else {
       assert real.isNew || !cacheEntry.isLockAcquiredByCurrentThread();
     }
   }
@@ -263,8 +264,9 @@ public class OAtomicOperation {
   public long filledUpTo(long fileId) {
     fileId = checkFileIdCompatibility(fileId, storageId);
 
-    if (deletedFiles.contains(fileId))
+    if (deletedFiles.contains(fileId)) {
       throw new OStorageException("File with id " + fileId + " is deleted.");
+    }
 
     FileChanges changesContainer = fileChanges.get(fileId);
 
@@ -277,8 +279,9 @@ public class OAtomicOperation {
       fileChanges.put(fileId, changesContainer);
     } else if (changesContainer.isNew || changesContainer.maxNewPageIndex > -2) {
       return changesContainer.maxNewPageIndex + 1;
-    } else if (changesContainer.truncate)
+    } else if (changesContainer.truncate) {
       return 0;
+    }
 
     return writeCache.getFilledUpTo(fileId);
   }
@@ -287,23 +290,25 @@ public class OAtomicOperation {
    * This check if a file was trimmed or trunked in the current atomic operation.
    *
    * @param changesContainer changes container to check
-   * @param pageIndex        limit to check aginst the changes
+   * @param pageIndex        limit to check against the changes
    *
    * @return true if there are no changes or pageIndex still fit, false if the pageIndex do not fit anymore
    */
-  private boolean checkChangesFilledUpTo(FileChanges changesContainer, long pageIndex) {
+  private static boolean checkChangesFilledUpTo(FileChanges changesContainer, long pageIndex) {
     if (changesContainer == null) {
       return true;
     } else if (changesContainer.isNew || changesContainer.maxNewPageIndex > -2) {
       return pageIndex < changesContainer.maxNewPageIndex + 1;
-    } else if (changesContainer.truncate)
+    } else if (changesContainer.truncate) {
       return false;
+    }
     return true;
   }
 
   public long addFile(String fileName) {
-    if (newFileNamesId.containsKey(fileName))
+    if (newFileNamesId.containsKey(fileName)) {
       throw new OStorageException("File with name " + fileName + " already exists.");
+    }
 
     final long fileId;
     final boolean isNew;
@@ -333,8 +338,9 @@ public class OAtomicOperation {
   public long loadFile(String fileName) throws IOException {
     Long fileId = newFileNamesId.get(fileName);
 
-    if (fileId == null)
+    if (fileId == null) {
       fileId = writeCache.loadFile(fileName);
+    }
 
     this.fileChanges.computeIfAbsent(fileId, k -> new FileChanges());
 
@@ -345,36 +351,27 @@ public class OAtomicOperation {
     fileId = checkFileIdCompatibility(fileId, storageId);
 
     final FileChanges fileChanges = this.fileChanges.remove(fileId);
-    if (fileChanges != null && fileChanges.fileName != null)
+    if (fileChanges != null && fileChanges.fileName != null) {
       newFileNamesId.remove(fileChanges.fileName);
-    else {
+    } else {
       deletedFiles.add(fileId);
       final String f = writeCache.fileNameById(fileId);
-      if (f != null)
+      if (f != null) {
         deletedFileNameIdMap.put(f, fileId);
+      }
     }
   }
 
   public boolean isFileExists(String fileName) {
-    if (newFileNamesId.containsKey(fileName))
+    if (newFileNamesId.containsKey(fileName)) {
       return true;
+    }
 
-    if (deletedFileNameIdMap.containsKey(fileName))
+    if (deletedFileNameIdMap.containsKey(fileName)) {
       return false;
+    }
 
     return writeCache.exists(fileName);
-  }
-
-  public boolean isFileExists(long fileId) {
-    fileId = checkFileIdCompatibility(fileId, storageId);
-
-    if (fileChanges.containsKey(fileId))
-      return true;
-
-    if (deletedFiles.contains(fileId))
-      return false;
-
-    return writeCache.exists(fileId);
   }
 
   public String fileNameById(long fileId) {
@@ -382,11 +379,13 @@ public class OAtomicOperation {
 
     FileChanges fileChanges = this.fileChanges.get(fileId);
 
-    if (fileChanges != null && fileChanges.fileName != null)
+    if (fileChanges != null && fileChanges.fileName != null) {
       return fileChanges.fileName;
+    }
 
-    if (deletedFiles.contains(fileId))
+    if (deletedFiles.contains(fileId)) {
       throw new OStorageException("File with id " + fileId + " was deleted.");
+    }
 
     return writeCache.fileNameById(fileId);
   }
@@ -399,13 +398,14 @@ public class OAtomicOperation {
     fileChanges.pageChangesMap.clear();
     fileChanges.maxNewPageIndex = -1;
 
-    if (fileChanges.isNew)
+    if (fileChanges.isNew) {
       return;
+    }
 
     fileChanges.truncate = true;
   }
 
-  public OLogSequenceNumber commitChanges(OWriteAheadLog writeAheadLog) throws IOException {
+  OLogSequenceNumber commitChanges(OWriteAheadLog writeAheadLog) throws IOException {
     OLogSequenceNumber txEndLsn = null;
     if (writeAheadLog != null) {
       OLogSequenceNumber startLSN = writeAheadLog.end();
@@ -443,7 +443,7 @@ public class OAtomicOperation {
         }
       }
 
-      txEndLsn = writeAheadLog.logAtomicOperationEndRecord(getOperationUnitId(), rollback, getStartLSN(), getMetadata());
+      txEndLsn = writeAheadLog.logAtomicOperationEndRecord(getOperationUnitId(), rollback, this.startLSN, getMetadata());
 
       for (long deletedFileId : deletedFiles) {
         readCache.deleteFile(deletedFileId, writeCache);
@@ -474,10 +474,11 @@ public class OAtomicOperation {
             if (cacheEntry == null) {
               assert filePageChanges.isNew;
               do {
-                if (cacheEntry != null)
+                if (cacheEntry != null) {
                   readCache.releaseFromWrite(cacheEntry, writeCache);
+                }
 
-                cacheEntry = readCache.allocateNewPage(fileId, writeCache, true, startLSN);
+                cacheEntry = readCache.allocateNewPage(fileId, writeCache, true, startLSN, false);
               } while (cacheEntry.getPageIndex() != pageIndex);
             }
 
@@ -495,8 +496,9 @@ public class OAtomicOperation {
             } finally {
               readCache.releaseFromWrite(cacheEntry, writeCache);
             }
-          } else
+          } else {
             filePageChangesIterator.remove();
+          }
         }
       }
     } else {
@@ -508,25 +510,28 @@ public class OAtomicOperation {
         final FileChanges fileChanges = fileChangesEntry.getValue();
         final long fileId = fileChangesEntry.getKey();
 
-        if (fileChanges.isNew)
+        if (fileChanges.isNew) {
           readCache.addFile(fileChanges.fileName, newFileNamesId.get(fileChanges.fileName), writeCache);
-        else if (fileChanges.truncate)
+        } else if (fileChanges.truncate) {
           readCache.truncateFile(fileId, writeCache);
+        }
 
         for (Map.Entry<Long, OCacheEntryChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
           final OCacheEntryChanges filePageChanges = filePageChangesEntry.getValue();
-          if (!filePageChanges.changes.hasChanges())
+          if (!filePageChanges.changes.hasChanges()) {
             continue;
+          }
           final long pageIndex = filePageChangesEntry.getKey();
 
           OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, true, null);
           if (cacheEntry == null) {
             assert filePageChanges.isNew;
             do {
-              if (cacheEntry != null)
+              if (cacheEntry != null) {
                 readCache.releaseFromWrite(cacheEntry, writeCache);
+              }
 
-              cacheEntry = readCache.allocateNewPage(fileId, writeCache, true, null);
+              cacheEntry = readCache.allocateNewPage(fileId, writeCache, true, null, false);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
 
@@ -534,8 +539,9 @@ public class OAtomicOperation {
             ODurablePage durablePage = new ODurablePage(cacheEntry);
             durablePage.restoreChanges(filePageChanges.changes);
 
-            if (filePageChanges.pinPage)
+            if (filePageChanges.pinPage) {
               readCache.pinPage(cacheEntry, writeCache);
+            }
 
           } finally {
             readCache.releaseFromWrite(cacheEntry, writeCache);
@@ -581,15 +587,18 @@ public class OAtomicOperation {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
+    if (this == o) {
       return true;
-    if (o == null || getClass() != o.getClass())
+    }
+    if (o == null || getClass() != o.getClass()) {
       return false;
+    }
 
     OAtomicOperation operation = (OAtomicOperation) o;
 
-    if (!operationUnitId.equals(operation.operationUnitId))
+    if (!operationUnitId.equals(operation.operationUnitId)) {
       return false;
+    }
 
     return true;
   }
@@ -599,7 +608,7 @@ public class OAtomicOperation {
     return operationUnitId.hashCode();
   }
 
-  private static class FileChanges {
+  private static final class FileChanges {
     private final Map<Long, OCacheEntryChanges> pageChangesMap  = new HashMap<>();
     private       long                          maxNewPageIndex = -2;
     private       boolean                       isNew           = false;
@@ -607,18 +616,19 @@ public class OAtomicOperation {
     private       String                        fileName        = null;
   }
 
-  private int storageId(long fileId) {
+  private static int storageId(long fileId) {
     return (int) (fileId >>> 32);
   }
 
-  private long composeFileId(long fileId, int storageId) {
+  private static long composeFileId(long fileId, int storageId) {
     return (((long) storageId) << 32) | fileId;
   }
 
-  private long checkFileIdCompatibility(long fileId, int storageId) {
+  private static long checkFileIdCompatibility(long fileId, int storageId) {
     // indicates that storage has no it's own id.
-    if (storageId == -1)
+    if (storageId == -1) {
       return fileId;
+    }
 
     if (storageId(fileId) == 0) {
       return composeFileId(fileId, storageId);

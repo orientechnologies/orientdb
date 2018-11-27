@@ -15,15 +15,14 @@
  */
 package com.orientechnologies.orient.test.internal.io;
 
-import java.io.File;
-import java.io.IOException;
-
+import com.orientechnologies.common.test.SpeedTestMonoThread;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.storage.fs.OFile;
+import java.io.File;
+import java.io.IOException;
 
 @Test(enabled = false)
 public abstract class OFileAbstractTest extends SpeedTestMonoThread {
@@ -31,10 +30,10 @@ public abstract class OFileAbstractTest extends SpeedTestMonoThread {
 
 	private static final int			NUMS				= 1000000;
 
-	private static final int			START_SIZE	= 100000000;
-	private OFile									file;
+  private static final int          START_SIZE = 100000000;
+  private              OFileClassic file;
 
-	protected abstract OFile getFileImpl() throws IOException;
+  protected abstract OFileClassic getFileImpl() throws IOException;
 
 	@Override
 	public void init() throws IOException {

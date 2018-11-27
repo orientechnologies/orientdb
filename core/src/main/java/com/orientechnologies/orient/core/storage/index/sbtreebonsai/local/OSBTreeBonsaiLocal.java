@@ -1131,7 +1131,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   private void initSysBucket(OAtomicOperation atomicOperation) throws IOException {
     OCacheEntry sysCacheEntry = loadPageForWrite(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false);
     if (sysCacheEntry == null) {
-      sysCacheEntry = addPage(atomicOperation, fileId);
+      sysCacheEntry = addPage(atomicOperation, fileId, false);
       assert sysCacheEntry.getPageIndex() == SYS_BUCKET.getPageIndex();
     }
 
@@ -1153,7 +1153,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   private AllocationResult allocateBucketForWrite(OAtomicOperation atomicOperation) throws IOException {
     OCacheEntry sysCacheEntry = loadPageForWrite(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false);
     if (sysCacheEntry == null) {
-      sysCacheEntry = addPage(atomicOperation, fileId);
+      sysCacheEntry = addPage(atomicOperation, fileId, false);
       assert sysCacheEntry.getPageIndex() == SYS_BUCKET.getPageIndex();
     }
 
@@ -1165,7 +1165,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       } else {
         final OBonsaiBucketPointer freeSpacePointer = sysBucket.getFreeSpacePointer();
         if (freeSpacePointer.getPageOffset() + OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES > PAGE_SIZE) {
-          final OCacheEntry cacheEntry = addPage(atomicOperation, fileId);
+          final OCacheEntry cacheEntry = addPage(atomicOperation, fileId, false);
           final long pageIndex = cacheEntry.getPageIndex();
           sysBucket.setFreeSpacePointer(new OBonsaiBucketPointer(pageIndex, OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
 

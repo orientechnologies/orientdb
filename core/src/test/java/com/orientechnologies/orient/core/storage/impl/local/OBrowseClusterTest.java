@@ -1,7 +1,11 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OVertex;
 import org.junit.After;
 import org.junit.Before;
@@ -28,7 +32,7 @@ public class OBrowseClusterTest {
 
   @Test
   public void testBrowse() {
-    int numberOfEntries = 10000;
+    int numberOfEntries = 4962;
     for (int i = 0; i < numberOfEntries; i++) {
       OVertex v = db.newVertex("One");
       v.setProperty("a", i);
@@ -38,6 +42,7 @@ public class OBrowseClusterTest {
     Iterator<OClusterBrowsePage> browser = ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) db).getStorage())
         .browseCluster(cluster);
     int count = 0;
+
     while (browser.hasNext()) {
       OClusterBrowsePage page = browser.next();
       for (OClusterBrowseEntry entry : page) {
