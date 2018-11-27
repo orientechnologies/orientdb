@@ -3819,4 +3819,44 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
     }
   }
+
+  @Test
+  public void testContainsEmptyCollection() {
+    String className = "testContainsEmptyCollection";
+
+    db.createClassIfNotExist(className);
+
+    db.command("INSERT INTO " + className + " content {\"name\": \"jack\", \"age\": 22}").close();
+    db.command("INSERT INTO " + className + " content {\"name\": \"rose\", \"age\": 22, \"test\": [[]]}").close();
+    db.command("INSERT INTO " + className + " content {\"name\": \"rose\", \"age\": 22, \"test\": [[1]]}").close();
+    db.command("INSERT INTO " + className + " content {\"name\": \"pete\", \"age\": 22, \"test\": [{}]}").close();
+    db.command("INSERT INTO " + className + " content {\"name\": \"david\", \"age\": 22, \"test\": [\"hello\"]}").close();
+
+    try (OResultSet result = db.query("select from " + className + " where test contains []")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+  }
+
+
+  @Test
+  public void testContainsCollection() {
+    String className = "testContainsCollection";
+
+    db.createClassIfNotExist(className);
+
+    db.command("INSERT INTO " + className + " content {\"name\": \"jack\", \"age\": 22}").close();
+    db.command("INSERT INTO " + className + " content {\"name\": \"rose\", \"age\": 22, \"test\": [[]]}").close();
+    db.command("INSERT INTO " + className + " content {\"name\": \"rose\", \"age\": 22, \"test\": [[1]]}").close();
+    db.command("INSERT INTO " + className + " content {\"name\": \"pete\", \"age\": 22, \"test\": [{}]}").close();
+    db.command("INSERT INTO " + className + " content {\"name\": \"david\", \"age\": 22, \"test\": [\"hello\"]}").close();
+
+    try (OResultSet result = db.query("select from " + className + " where test contains [1]")) {
+      Assert.assertTrue(result.hasNext());
+      result.next();
+      Assert.assertFalse(result.hasNext());
+    }
+  }
+
 }
