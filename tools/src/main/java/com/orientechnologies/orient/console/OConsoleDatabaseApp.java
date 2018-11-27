@@ -165,8 +165,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       new OSignalHandler().installDefaultSignals(signal -> restoreTerminal());
 
       final OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
+
       if (tty)
-        console.setReader(new TTYConsoleReader());
+        console.setReader(new TTYConsoleReader(console.historyEnabled()));
 
       result = console.run();
 
