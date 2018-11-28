@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -29,7 +29,7 @@ public class SubQueryCollector {
   protected static final String GENERATED_ALIAS_PREFIX = "$$$SUBQUERY$$_";
   protected              int    nextAliasId            = 0;
 
-  protected Map<OIdentifier, OStatement> subQueries = new HashMap<>();
+  protected Map<OIdentifier, OStatement> subQueries = new LinkedHashMap<>();
 
   protected OIdentifier getNextAlias() {
     OIdentifier result = new OIdentifier(GENERATED_ALIAS_PREFIX + (nextAliasId++));

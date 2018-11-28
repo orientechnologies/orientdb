@@ -58,11 +58,10 @@ public class OrientJdbcResultSet implements ResultSet {
   private int concurrency;
   private int holdability;
 
-  protected OrientJdbcResultSet(final OrientJdbcStatement statement,
-      final OResultSet oResultSet,
-      final int type,
-      final int concurrency,
-      int holdability) throws SQLException {
+  private boolean lastReadWasNull = true;
+
+  protected OrientJdbcResultSet(final OrientJdbcStatement statement, final OResultSet oResultSet, final int type,
+      final int concurrency, int holdability) throws SQLException {
 
     this.statement = statement;
     try {
@@ -128,13 +127,9 @@ public class OrientJdbcResultSet implements ResultSet {
           throw new RuntimeException(e);
         }
 
-
         final OSelectStatement select = osql.SelectStatement();
         if (select.getProjection() != null) {
-          boolean isMappable = select.getProjection()
-              .getItems()
-              .stream()
-              .peek(i -> fields.add(i.getProjectionAliasAsString()))
+          boolean isMappable = select.getProjection().getItems().stream().peek(i -> fields.add(i.getProjectionAliasAsString()))
               .allMatch(i -> i.getExpression().isBaseIdentifier());
           if (!isMappable)
             fields.clear();
@@ -265,10 +260,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public Array getArray(String columnLabel) throws SQLException {
 
-    OType columnType = result.toElement()
-        .getSchemaType()
-        .map(t -> t.getProperty(columnLabel).getType())
-        .orElse(OType.EMBEDDEDLIST);
+    OType columnType = result.toElement().getSchemaType().map(t -> t.getProperty(columnLabel).getType()).orElse(OType.EMBEDDEDLIST);
 
     assert columnType.isEmbedded() && columnType.isMultiValue();
 
@@ -276,14 +268,17 @@ public class OrientJdbcResultSet implements ResultSet {
 
     Array array = new OrientJdbcArray(result.getProperty(columnLabel));
 
+    lastReadWasNull = array == null;
     return array;
   }
 
   public InputStream getAsciiStream(int columnIndex) throws SQLException {
+    lastReadWasNull = true;
     return null;
   }
 
   public InputStream getAsciiStream(final String columnLabel) throws SQLException {
+    lastReadWasNull = true;
     return null;
   }
 
@@ -294,7 +289,9 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public BigDecimal getBigDecimal(final String columnLabel) throws SQLException {
     try {
-      return (BigDecimal) result.getProperty(columnLabel);
+      BigDecimal r = result.getProperty(columnLabel);
+      lastReadWasNull = r == null;
+      return r;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the double value at column '" + columnLabel + "'", e);
     }
@@ -308,7 +305,9 @@ public class OrientJdbcResultSet implements ResultSet {
   @Override
   public BigDecimal getBigDecimal(String columnLabel, int scale) throws SQLException {
     try {
-      return ((BigDecimal) result.getProperty(columnLabel)).setScale(scale);
+      BigDecimal r = ((BigDecimal) result.getProperty(columnLabel)).setScale(scale);
+      lastReadWasNull = r == null;
+      return r;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the double value at column '" + columnLabel + "'", e);
     }
@@ -321,6 +320,7 @@ public class OrientJdbcResultSet implements ResultSet {
   public InputStream getBinaryStream(String columnLabel) throws SQLException {
     try {
       Blob blob = getBlob(columnLabel);
+      lastReadWasNull = blob == null;
       return blob != null ? blob.getBinaryStream() : null;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the binary stream at column '" + columnLabel + "'", e);
@@ -336,10 +336,11 @@ public class OrientJdbcResultSet implements ResultSet {
     try {
       Object value = result.getProperty(columnLabel);
 
-      if(value instanceof ORID){
+      if (value instanceof ORID) {
         value = ((ORID) value).getRecord();
       }
       if (value instanceof OBlob) {
+        lastReadWasNull = false;
         return new OrientBlob((OBlob) value);
       } else if (value instanceof ORecordLazyList) {
         ORecordLazyList list = (ORecordLazyList) value;
@@ -355,9 +356,11 @@ public class OrientJdbcResultSet implements ResultSet {
           binaryRecordList.add(ob);
 
         }
+        lastReadWasNull = false;
         return new OrientBlob(binaryRecordList);
       }
 
+      lastReadWasNull = true;
       return null;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the BLOB at column '" + columnLabel + "'", e);
@@ -372,12 +375,13 @@ public class OrientJdbcResultSet implements ResultSet {
   @SuppressWarnings("boxing")
   public boolean getBoolean(String columnLabel) throws SQLException {
     try {
-      return (Boolean) result.getProperty(columnLabel);
+      Boolean r = result.getProperty(columnLabel);
+      lastReadWasNull = r == null;
+      return Boolean.TRUE.equals(r);
     } catch (Exception e) {
       throw new SQLException(
           "An error occurred during the retrieval of the boolean value at column '" + columnLabel + "' ---> " + result.toElement()
-              .toJSON(),
-          e);
+              .toJSON(), e);
     }
 
   }
@@ -389,7 +393,9 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public byte getByte(String columnLabel) throws SQLException {
     try {
-      return (Byte) result.getProperty(columnLabel);
+      Byte r = result.getProperty(columnLabel);
+      lastReadWasNull = r == null;
+      return r == null ? 0 : r;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the byte value at column '" + columnLabel + "'", e);
     }
@@ -403,12 +409,17 @@ public class OrientJdbcResultSet implements ResultSet {
     try {
 
       Object value = result.getProperty(columnLabel);
-      if (value == null)
+      if (value == null) {
+        lastReadWasNull = true;
         return null;
-      else {
-        if (value instanceof OBlob)
+      } else {
+        if (value instanceof OBlob) {
+          lastReadWasNull = false;
           return ((OBlob) value).toStream();
-        return result.getProperty(columnLabel);
+        }
+        byte[] r = result.getProperty(columnLabel);
+        lastReadWasNull = r == null;
+        return r;
       }
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the bytes value at column '" + columnLabel + "'", e);
@@ -416,18 +427,22 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Reader getCharacterStream(int columnIndex) throws SQLException {
+    lastReadWasNull = true;
     return null;
   }
 
   public Reader getCharacterStream(String columnLabel) throws SQLException {
+    lastReadWasNull = true;
     return null;
   }
 
   public Clob getClob(int columnIndex) throws SQLException {
+    lastReadWasNull = true;
     return null;
   }
 
   public Clob getClob(String columnLabel) throws SQLException {
+    lastReadWasNull = true;
     return null;
   }
 
@@ -448,6 +463,7 @@ public class OrientJdbcResultSet implements ResultSet {
       activateDatabaseOnCurrentThread();
 
       java.util.Date date = result.getProperty(columnLabel);
+      lastReadWasNull = date == null;
       return date != null ? new Date(date.getTime()) : null;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the date value at column '" + columnLabel + "'", e);
@@ -465,10 +481,13 @@ public class OrientJdbcResultSet implements ResultSet {
       activateDatabaseOnCurrentThread();
 
       java.util.Date date = result.getProperty(columnLabel);
-      if (date == null)
+      if (date == null) {
+        lastReadWasNull = true;
         return null;
+      }
 
       cal.setTimeInMillis(date.getTime());
+      lastReadWasNull = false;
       return new Date(cal.getTimeInMillis());
     } catch (Exception e) {
       throw new SQLException(
@@ -484,6 +503,7 @@ public class OrientJdbcResultSet implements ResultSet {
   public double getDouble(final String columnLabel) throws SQLException {
     try {
       final Double r = result.getProperty(columnLabel);
+      lastReadWasNull = r == null;
       return r != null ? r : 0;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the double value at column '" + columnLabel + "'", e);
@@ -514,6 +534,7 @@ public class OrientJdbcResultSet implements ResultSet {
   public float getFloat(String columnLabel) throws SQLException {
     try {
       final Float r = result.getProperty(columnLabel);
+      lastReadWasNull = r == null;
       return r != null ? r : 0;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the float value at column '" + columnLabel + "'", e);
@@ -534,6 +555,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
     try {
       final Integer r = result.getProperty(columnLabel);
+      lastReadWasNull = r == null;
       return r != null ? r : 0;
 
     } catch (Exception e) {
@@ -549,6 +571,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
     try {
       final Long r = result.getProperty(columnLabel);
+      lastReadWasNull = r == null;
       return r != null ? r : 0;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the long value at column '" + columnLabel + "'", e);
@@ -556,22 +579,22 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Reader getNCharacterStream(int columnIndex) throws SQLException {
-
+    lastReadWasNull = true;
     return null;
   }
 
   public Reader getNCharacterStream(String columnLabel) throws SQLException {
-
+    lastReadWasNull = true;
     return null;
   }
 
   public NClob getNClob(int columnIndex) throws SQLException {
-
+    lastReadWasNull = true;
     return null;
   }
 
   public NClob getNClob(String columnLabel) throws SQLException {
-
+    lastReadWasNull = true;
     return null;
   }
 
@@ -581,7 +604,9 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public String getNString(String columnLabel) throws SQLException {
     try {
-      return result.getProperty(columnLabel);
+      String r = result.getProperty(columnLabel);
+      lastReadWasNull = r == null;
+      return r;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the string value at column '" + columnLabel + "'", e);
     }
@@ -597,13 +622,17 @@ public class OrientJdbcResultSet implements ResultSet {
       return result.getIdentity().toString();
     }
 
-    if ("@class".equals(columnLabel) || "class".equals(columnLabel))
-      return result.toElement().getSchemaType().map(t -> t.getName()).orElse(null);
+    if ("@class".equals(columnLabel) || "class".equals(columnLabel)) {
+      String r = result.toElement().getSchemaType().map(t -> t.getName()).orElse(null);
+      lastReadWasNull = r == null;
+      return r;
+    }
 
     try {
       Object value = result.getProperty(columnLabel);
 
       if (value == null) {
+        lastReadWasNull = true;
         return null;
       } else {
         // resolve the links so that the returned set contains instances
@@ -611,8 +640,10 @@ public class OrientJdbcResultSet implements ResultSet {
         if (value instanceof ORecordLazyMultiValue) {
           ORecordLazyMultiValue lazyRecord = (ORecordLazyMultiValue) value;
           lazyRecord.convertLinks2Records();
+          lastReadWasNull = lazyRecord == null;
           return lazyRecord;
         } else {
+          lastReadWasNull = value == null;
           return value;
         }
       }
@@ -630,11 +661,12 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Ref getRef(int columnIndex) throws SQLException {
-
+    lastReadWasNull = true;
     return null;
   }
 
   public Ref getRef(String columnLabel) throws SQLException {
+    lastReadWasNull = true;
     return null;
   }
 
@@ -644,6 +676,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public RowId getRowId(final int columnIndex) throws SQLException {
     try {
+      lastReadWasNull = false;
       return new OrientRowId(result.toElement().getIdentity());
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the rowid for record '" + result + "'", e);
@@ -655,12 +688,12 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public SQLXML getSQLXML(int columnIndex) throws SQLException {
-
+    lastReadWasNull = true;
     return null;
   }
 
   public SQLXML getSQLXML(String columnLabel) throws SQLException {
-
+    lastReadWasNull = true;
     return null;
   }
 
@@ -673,6 +706,7 @@ public class OrientJdbcResultSet implements ResultSet {
   public short getShort(String columnLabel) throws SQLException {
     try {
       final Short r = result.getProperty(columnLabel);
+      lastReadWasNull = r == null;
       return r != null ? r : 0;
 
     } catch (Exception e) {
@@ -693,16 +727,13 @@ public class OrientJdbcResultSet implements ResultSet {
 
     if ("@class".equals(columnLabel) || "class".equals(columnLabel)) {
 
-      return result.toElement().getSchemaType()
-          .map(c -> c.getName())
-          .orElse("NOCLASS");
+      return result.toElement().getSchemaType().map(c -> c.getName()).orElse("NOCLASS");
     }
 
     try {
-      return Optional.ofNullable(result.getProperty(columnLabel))
-          .map(v -> "" + v)
-          .orElse(null);
-
+      String r = Optional.ofNullable(result.getProperty(columnLabel)).map(v -> "" + v).orElse(null);
+      lastReadWasNull = r == null;
+      return r;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the string value at column '" + columnLabel + "'", e);
     }
@@ -716,6 +747,7 @@ public class OrientJdbcResultSet implements ResultSet {
   public Time getTime(String columnLabel) throws SQLException {
     try {
       java.util.Date date = result.getProperty(columnLabel);
+      lastReadWasNull = date == null;
       return getTime(date);
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the time value at column '" + columnLabel + "'", e);
@@ -724,6 +756,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public Time getTime(int columnIndex, Calendar cal) throws SQLException {
     Date date = getDate(columnIndex, cal);
+    lastReadWasNull = date == null;
     return getTime(date);
   }
 
@@ -733,11 +766,13 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public Time getTime(String columnLabel, Calendar cal) throws SQLException {
     Date date = getDate(columnLabel, cal);
+    lastReadWasNull = date == null;
     return getTime(date);
   }
 
   public Timestamp getTimestamp(int columnIndex) throws SQLException {
     Date date = getDate(columnIndex);
+    lastReadWasNull = date == null;
     return getTimestamp(date);
   }
 
@@ -747,16 +782,19 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public Timestamp getTimestamp(String columnLabel) throws SQLException {
     Date date = getDate(columnLabel);
+    lastReadWasNull = date == null;
     return getTimestamp(date);
   }
 
   public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
     Date date = getDate(columnIndex, cal);
+    lastReadWasNull = date == null;
     return getTimestamp(date);
   }
 
   public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException {
     Date date = getDate(columnLabel, cal);
+    lastReadWasNull = date == null;
     return getTimestamp(date);
   }
 
@@ -765,22 +803,22 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public URL getURL(int columnIndex) throws SQLException {
-
+    lastReadWasNull = true;
     return null;
   }
 
   public URL getURL(String columnLabel) throws SQLException {
-
+    lastReadWasNull = true;
     return null;
   }
 
   public InputStream getUnicodeStream(int columnIndex) throws SQLException {
-
+    lastReadWasNull = true;
     return null;
   }
 
   public InputStream getUnicodeStream(String columnLabel) throws SQLException {
-
+    lastReadWasNull = true;
     return null;
   }
 
@@ -1153,8 +1191,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public boolean wasNull() throws SQLException {
-
-    return false;
+    return lastReadWasNull;
   }
 
   public boolean isWrapperFor(Class<?> iface) throws SQLException {

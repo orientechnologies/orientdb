@@ -62,4 +62,13 @@ public abstract class OrientConsole extends OConsoleApplication implements OTabl
       return iValue.substring(0, iMaxSize - 3) + "...";
     return iValue;
   }
+
+  public boolean historyEnabled() {
+    for (String arg : args) {
+      if (arg.equalsIgnoreCase(PARAM_DISABLE_HISTORY)) {
+        return false;
+      }
+    }
+    return true;
+  }
 }

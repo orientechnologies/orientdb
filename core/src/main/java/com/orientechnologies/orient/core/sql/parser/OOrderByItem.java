@@ -122,23 +122,23 @@ public class OOrderByItem {
     }
 
     if (collateStrategy != null) {
-      return collateStrategy.compareForOrderBy(aVal, bVal);
-    }
-
-    if (aVal == null) {
-      if (bVal == null) {
-        result = 0;
-      } else {
-        result = -1;
-      }
-    } else if (bVal == null) {
-      result = 1;
-    } else if (aVal instanceof Comparable && bVal instanceof Comparable) {
-      try {
-        result = ((Comparable) aVal).compareTo(bVal);
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during comparision", e);
-        result = 0;
+      result = collateStrategy.compareForOrderBy(aVal, bVal);
+    } else {
+      if (aVal == null) {
+        if (bVal == null) {
+          result = 0;
+        } else {
+          result = -1;
+        }
+      } else if (bVal == null) {
+        result = 1;
+      } else if (aVal instanceof Comparable && bVal instanceof Comparable) {
+        try {
+          result = ((Comparable) aVal).compareTo(bVal);
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during comparision", e);
+          result = 0;
+        }
       }
     }
     if (type == DESC) {

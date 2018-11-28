@@ -52,11 +52,6 @@ public class OContainsConditionTest {
     
     left.add(null);
     Assert.assertTrue(op.execute(left, null));
-
-    List<String> right = new ArrayList<>();
-    right.add("foo");
-    right.add(null);
-    Assert.assertTrue(op.execute(left, right));
   }
   
   @Test
