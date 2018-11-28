@@ -7,7 +7,7 @@ import com.orientechnologies.agent.services.metrics.OrientDBMetric;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.sun.management.OperatingSystemMXBean;
 
 import java.io.File;

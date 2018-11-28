@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OMicroTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -531,7 +532,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
               if (cacheEntry != null)
                 readCache.releaseFromWrite(cacheEntry, writeCache);
 
-              cacheEntry = readCache.allocateNewPage(fileId, writeCache, true, null);
+              cacheEntry = readCache.allocateNewPage(fileId, writeCache, true, null, true);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
 
