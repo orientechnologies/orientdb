@@ -418,7 +418,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * any data corruption. Till JVM is not restarted storage will be put in read-only state.
    */
   public final void handleJVMError(Error e) {
-    jvmError.compareAndSet(null, e);
+    if (jvmError.compareAndSet(null, e)) {
+      OLogManager.instance().errorNoDb(this, "JVM error was thrown", e);
+    }
   }
 
   /**
@@ -832,7 +834,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         if (clusterId < 0 || clusterId >= clusters.size()) {
           throw new IllegalArgumentException(
-              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1) + ") in database '" + name + "'");
+              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
+                  + ") in database '" + name + "'");
         }
 
         final OCluster cluster = clusters.get(clusterId);
@@ -881,7 +884,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         checkOpenness();
         if (clusterId < 0 || clusterId >= clusters.size()) {
           throw new IllegalArgumentException(
-              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1) + ") in database '" + name + "'");
+              "Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-" + (clusters.size() - 1)
+                  + ") in database '" + name + "'");
         }
 
         final OCluster cluster = clusters.get(clusterId);
@@ -1076,7 +1080,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           .getValueAsBoolean(OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL)) {
         throw new IllegalStateException(
             "Cannot find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
-                + "to switch it on please set property " + OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getKey() + " to the true value, please note that only records"
+                + "to switch it on please set property " + OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getKey()
+                + " to the true value, please note that only records"
                 + " which are stored after this property was set will be retrieved");
       }
 
@@ -1270,7 +1275,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean()) {
         throw new IllegalStateException(
             "Cannot find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
-                + "to switch it on please set property " + OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getKey() + " to the true value, please note that only records"
+                + "to switch it on please set property " + OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getKey()
+                + " to the true value, please note that only records"
                 + " which are stored after this property was set will be retrieved");
       }
 
@@ -3302,7 +3308,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           if (transaction.get().getMicroTransaction().getId() != microTransaction.getId()) {
             throw new OStorageException(
-                "Passed in and active micro-transaction are different micro-transactions. Passed in micro-transaction cannot be " + "rolled back.");
+                "Passed in and active micro-transaction are different micro-transactions. Passed in micro-transaction cannot be "
+                    + "rolled back.");
           }
 
           makeStorageDirty();
@@ -3816,8 +3823,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               || iCommand.getParameters().isEmpty()))
           // CACHE THE COMMAND RESULT
           {
-            db.getMetadata().getCommandCache().put(db.getUser(), iCommand.getText(), result, iCommand.getLimit(), executor.getInvolvedClusters(),
-                System.currentTimeMillis() - beginTime);
+            db.getMetadata().getCommandCache()
+                .put(db.getUser(), iCommand.getText(), result, iCommand.getLimit(), executor.getInvolvedClusters(),
+                    System.currentTimeMillis() - beginTime);
           }
         }
 
@@ -4281,7 +4289,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkOpenness();
 
     if (!rid.isPersistent()) {
-      throw new ORecordNotFoundException(rid, "Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
+      throw new ORecordNotFoundException(rid,
+          "Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
     }
 
     if (transaction.get() != null) {
@@ -4320,7 +4329,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkOpenness();
 
     if (!rid.isPersistent()) {
-      throw new ORecordNotFoundException(rid, "Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
+      throw new ORecordNotFoundException(rid,
+          "Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
     }
 
     if (transaction.get() != null) {
@@ -5210,8 +5220,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public String incrementalBackup(String backupDirectory, OCallable<Void, Void> started)
-      throws UnsupportedOperationException {
+  public String incrementalBackup(String backupDirectory, OCallable<Void, Void> started) throws UnsupportedOperationException {
     throw new UnsupportedOperationException("Incremental backup is supported only in enterprise version");
   }
 
@@ -5672,7 +5681,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
     for (Integer clusterId : clusters.keySet()) {
-      atomicOperationsManager.acquireExclusiveLockTillOperationComplete(atomicOperation, OSBTreeCollectionManagerAbstract.generateLockName(clusterId));
+      atomicOperationsManager
+          .acquireExclusiveLockTillOperationComplete(atomicOperation, OSBTreeCollectionManagerAbstract.generateLockName(clusterId));
     }
 
     for (Map.Entry<String, OTransactionIndexChanges> entry : indexes.entrySet()) {
@@ -5680,7 +5690,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OIndexInternal<?> index = entry.getValue().resolveAssociatedIndex(indexName, manager);
 
       if (!index.isUnique()) {
-        atomicOperationsManager.acquireExclusiveLockTillOperationComplete(atomicOperation, OIndexRIDContainerSBTree.generateLockName(indexName));
+        atomicOperationsManager
+            .acquireExclusiveLockTillOperationComplete(atomicOperation, OIndexRIDContainerSBTree.generateLockName(indexName));
       }
     }
   }
@@ -5729,8 +5740,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected final RuntimeException logAndPrepareForRethrow(RuntimeException runtimeException) {
     if (!(runtimeException instanceof OHighLevelException || runtimeException instanceof ONeedRetryException)) {
-      OLogManager.instance().errorStorage(this, "Exception `%08X` in storage `%s`: %s", runtimeException, System.identityHashCode(runtimeException),
-          getURL(), OConstants.getVersion());
+      OLogManager.instance()
+          .errorStorage(this, "Exception `%08X` in storage `%s`: %s", runtimeException, System.identityHashCode(runtimeException),
+              getURL(), OConstants.getVersion());
     }
     return runtimeException;
   }
@@ -5742,7 +5754,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private Error logAndPrepareForRethrow(Error error, boolean putInReadOnlyMode) {
     if (!(error instanceof OHighLevelException)) {
       OLogManager.instance()
-          .errorStorage(this, "Exception `%08X` in storage `%s`: %s", error, System.identityHashCode(error), getURL(), OConstants.getVersion());
+          .errorStorage(this, "Exception `%08X` in storage `%s`: %s", error, System.identityHashCode(error), getURL(),
+              OConstants.getVersion());
     }
 
     if (putInReadOnlyMode) {
