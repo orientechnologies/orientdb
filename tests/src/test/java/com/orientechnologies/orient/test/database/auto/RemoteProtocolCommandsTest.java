@@ -2,15 +2,12 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.junit.Ignore;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -68,7 +65,7 @@ public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
     doc.field("test", "test");
     ORecordId bad = new ORecordId(-1, -1);
     OStorageOperationResult<OPhysicalPosition> res = storage.createRecord(bad, doc.toStream(), doc.getVersion(),
-        ODocument.RECORD_TYPE, OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
+        ODocument.RECORD_TYPE, null);
 
     // assertTrue(" the cluster is not valid", bad.clusterId >= 0);
     String ids = "";

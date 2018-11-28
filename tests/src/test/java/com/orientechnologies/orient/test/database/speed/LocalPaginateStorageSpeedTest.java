@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
@@ -72,7 +71,7 @@ public class LocalPaginateStorageSpeedTest extends OrientMonoThreadTest {
 
     content = record.toStream();
 
-    storage.createRecord(new ORecordId(), content, 0, (byte) 'd', 0, null);
+    storage.createRecord(new ORecordId(), content, 0, (byte) 'd', null);
   }
 
   @Override

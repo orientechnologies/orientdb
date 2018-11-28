@@ -8,8 +8,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.OSystemDatabase;
@@ -21,8 +21,8 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistrib
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
 import com.orientechnologies.orient.server.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
-import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralDistributedContext;
 import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralCoordinator;
+import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralDistributedContext;
 import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralDistributedMember;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 

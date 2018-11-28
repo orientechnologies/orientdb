@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.concur.lock.OComparableLockManager;
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.concur.lock.ONotThreadRWLockManager;
@@ -53,7 +52,6 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.config.OStorageConfigurationUpdateListener;
-import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
@@ -213,7 +211,6 @@ import java.util.zip.ZipOutputStream;
 public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     implements OLowDiskSpaceListener, OCheckpointRequestListener, OIdentifiableStorage, OBackgroundExceptionListener,
     OFreezableStorageComponent, OPageIsBrokenListener {
-  private static final int RECORD_LOCK_TIMEOUT         = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger();
   private static final int WAL_RESTORE_REPORT_INTERVAL = 30 * 1000; // milliseconds
 
   private static final Comparator<ORecordOperation> COMMIT_RECORD_OPERATION_COMPARATOR = Comparator
@@ -1406,9 +1403,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
   public final OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId rid, final byte[] content,
-      final int recordVersion, final byte recordType, final int mode, final ORecordCallback<Long> callback) {
+      final int recordVersion, final byte recordType, final ORecordCallback<Long> callback) {
     try {
       checkOpenness();
       checkLowDiskSpaceRequestsAndReadOnlyConditions();
@@ -1771,7 +1767,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public OPerformanceStatisticManager getPerformanceStatisticManager() {
+  protected OPerformanceStatisticManager getPerformanceStatisticManager() {
     return performanceStatisticManager;
   }
 
@@ -4695,41 +4691,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private void addDefaultClusters() throws IOException {
-    final String storageCompression = getConfiguration().getContextConfiguration()
-        .getValueAsString(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD);
-
-    final String storageEncryption = getConfiguration().getContextConfiguration()
-        .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD);
-
-    final String encryptionKey = getConfiguration().getContextConfiguration()
-        .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
-
-    final String stgConflictStrategy = getConflictStrategy().getName();
-
-    createClusterFromConfig(
-        new OStoragePaginatedClusterConfiguration(getConfiguration(), clusters.size(), OMetadataDefault.CLUSTER_INTERNAL_NAME, null,
-            true, 20, 4, storageCompression, storageEncryption, encryptionKey, stgConflictStrategy,
-            OStorageClusterConfiguration.STATUS.ONLINE, OPaginatedCluster.getLatestBinaryVersion()));
-
-    createClusterFromConfig(
-        new OStoragePaginatedClusterConfiguration(getConfiguration(), clusters.size(), OMetadataDefault.CLUSTER_INDEX_NAME, null,
-            false, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-            OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression, storageEncryption, encryptionKey,
-            stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE, OPaginatedCluster.getLatestBinaryVersion()));
-
-    createClusterFromConfig(
-        new OStoragePaginatedClusterConfiguration(getConfiguration(), clusters.size(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME,
-            null, false, 1, 1, storageCompression, storageEncryption, encryptionKey, stgConflictStrategy,
-            OStorageClusterConfiguration.STATUS.ONLINE, OPaginatedCluster.getLatestBinaryVersion()));
-
-    defaultClusterId = createClusterFromConfig(
-        new OStoragePaginatedClusterConfiguration(getConfiguration(), clusters.size(), CLUSTER_DEFAULT_NAME, null, true,
-            OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-            storageCompression, storageEncryption, encryptionKey, stgConflictStrategy, OStorageClusterConfiguration.STATUS.ONLINE,
-            OPaginatedCluster.getLatestBinaryVersion()));
-  }
-
   private int createClusterFromConfig(final OStorageClusterConfiguration config) throws IOException {
     OCluster cluster = clusterMap.get(config.getName().toLowerCase(configuration.getLocaleInstance()));
 
@@ -5659,17 +5620,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       ((OStorageConfigurationImpl) configuration).setConfigurationUpdateListener(storageConfigurationUpdateListener);
     } finally {
       stateLock.releaseWriteLock();
-    }
-  }
-
-  private static final class ORIDOLockManager extends OComparableLockManager<ORID> {
-    ORIDOLockManager() {
-      super(true, -1);
-    }
-
-    @Override
-    protected final ORID getImmutableResourceId(ORID iResourceId) {
-      return new ORecordId(iResourceId);
     }
   }
 

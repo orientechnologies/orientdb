@@ -37,7 +37,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage.PAGE_SIZE;
+import static com.orientechnologies.orient.core.storage.cluster.OClusterPage.PAGE_SIZE;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)

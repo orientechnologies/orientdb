@@ -144,6 +144,22 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
   }
 
   @Override
+  public boolean exists() {
+    atomicOperationsManager.acquireReadLock(this);
+    try {
+      acquireSharedLock();
+      try {
+        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        return isFileExists(atomicOperation, getFullName());
+      } finally {
+        releaseSharedLock();
+      }
+    } finally {
+      atomicOperationsManager.releaseReadLock(this);
+    }
+  }
+
+  @Override
   public int getBinaryVersion() {
     return BINARY_VERSION;
   }

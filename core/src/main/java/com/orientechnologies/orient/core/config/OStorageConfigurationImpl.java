@@ -789,7 +789,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
   public void create() throws IOException {
     lock.acquireWriteLock();
     try {
-      storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, 0, OBlob.RECORD_TYPE, (byte) 0, null);
+      storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, 0, OBlob.RECORD_TYPE, null);
     } finally {
       lock.releaseWriteLock();
     }

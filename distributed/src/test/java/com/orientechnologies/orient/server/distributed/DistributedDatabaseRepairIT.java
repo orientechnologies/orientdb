@@ -16,7 +16,8 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.OElement;
@@ -363,7 +364,7 @@ public class DistributedDatabaseRepairIT extends AbstractServerClusterTest {
         v.save();
         ((OAbstractPaginatedStorage)((ODatabaseInternal) graph).getStorage().getUnderlying())
             .createRecord((ORecordId) v.getRecord().getIdentity(), v.getRecord().toStream(), v.getRecord().getVersion(),
-                ODocument.RECORD_TYPE, 0, null);
+                ODocument.RECORD_TYPE, null);
 
         final ODistributedResponse result = createRemoteRecord(0, v.getRecord(),
             new String[] { serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName() });
@@ -383,7 +384,7 @@ public class DistributedDatabaseRepairIT extends AbstractServerClusterTest {
         v.save(localCluster);
         ((OAbstractPaginatedStorage)((ODatabaseInternal) graph).getStorage().getUnderlying())
             .createRecord((ORecordId) v.getRecord().getIdentity(), v.getRecord().toStream(), v.getRecord().getVersion(),
-                ODocument.RECORD_TYPE, 0, null);
+                ODocument.RECORD_TYPE, null);
       }
     } finally {
       graph.rollback();
