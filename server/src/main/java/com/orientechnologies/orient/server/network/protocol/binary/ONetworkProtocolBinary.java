@@ -134,6 +134,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     channel.writeShort((short) getVersion());
 
     channel.flush();
+
+    OServerPluginHelper.invokeHandlerCallbackOnSocketAccepted(server, this);
+
     start();
     setName("OrientDB (" + iSocket.getLocalSocketAddress() + ") <- BinaryClient (" + iSocket.getRemoteSocketAddress() + ")");
   }
@@ -147,6 +150,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   public void shutdown() {
     sendShutdown();
     channel.close();
+
+    OServerPluginHelper.invokeHandlerCallbackOnSocketDestroyed(server, this);
   }
 
   private boolean isHandshaking(int requestType) {
