@@ -421,4 +421,22 @@ public class OInsertStatementExecutionTest {
     result.close();
   }
 
+  @Test
+  public void testQuotedCharactersInJson() {
+    String className = "testQuotedCharactersInJson";
+
+    db.command("CREATE CLASS " + className);
+
+    db.command("INSERT INTO " + className + " CONTENT { name: \"jack\", memo: \"this is a \\n multi line text\" }");
+
+    OResultSet result = db.query("SELECT FROM " + className);
+
+    OResult item = result.next();
+    String memo = item.getProperty("memo");
+    Assert.assertEquals("this is a \n multi line text", memo);
+
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
 }
