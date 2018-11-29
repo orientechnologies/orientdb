@@ -15,7 +15,10 @@
 package com.orientechnologies.spatial.shape;
 
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.spatial4j.shape.Point;
 import org.locationtech.spatial4j.shape.Rectangle;
@@ -127,7 +130,14 @@ public class OShapeFactory extends OComplexShapeBuilder {
   }
 
   public byte[] asBinary(Object obj, Integer srid) {
-
+    if (obj instanceof OResultInternal){
+      OResultInternal resultInternal = (OResultInternal)obj;
+      OElement el = resultInternal.toElement();
+      if (el != null && el instanceof ODocument){
+        obj = (ODocument)el;
+      }
+    }
+    
     if (obj instanceof ODocument) {
       Shape shape = fromDoc((ODocument) obj, srid);
       return asBinary(shape);
@@ -141,6 +151,7 @@ public class OShapeFactory extends OComplexShapeBuilder {
 
       return asBinary(shape);
     }
+    
     throw new IllegalArgumentException("Error serializing to binary " + obj);
   }
 
@@ -162,11 +173,14 @@ public class OShapeFactory extends OComplexShapeBuilder {
       ShapeCollection collection = (ShapeCollection) shape;
 
       if (isMultiPolygon(collection)) {
-        doc = factories.get("OMultiPolygon").toDoc(createMultiPolygon(collection), srid);
+        //second srid is null because we don't want double transformation
+        doc = factories.get("OMultiPolygon").toDoc(createMultiPolygon(collection, srid), null);
       } else if (isMultiPoint(collection)) {
-        doc = factories.get("OMultiPoint").toDoc(createMultiPoint(collection, srid), srid);
+        //second srid is null because we don't want double transformation
+        doc = factories.get("OMultiPoint").toDoc(createMultiPoint(collection, srid), null);
       } else if (isMultiLine(collection)) {
-        doc = factories.get("OMultiLineString").toDoc(createMultiLine(collection, srid), srid);
+        //second srid is null because we don't want double transformation
+        doc = factories.get("OMultiLineString").toDoc(createMultiLine(collection, srid), null);
       } else {
         doc = factories.get("OGeometryCollection").toDoc(shape, srid);
       }

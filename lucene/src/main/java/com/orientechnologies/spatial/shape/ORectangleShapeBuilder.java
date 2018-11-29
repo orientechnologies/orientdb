@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import static com.orientechnologies.spatial.shape.CoordinateSpaceTransformations.WGS84SpaceRid;
 import org.locationtech.spatial4j.shape.Point;
 import org.locationtech.spatial4j.shape.Rectangle;
 
@@ -57,11 +58,15 @@ public class ORectangleShapeBuilder extends OShapeBuilder<Rectangle> {
   public Rectangle fromDoc(ODocument document, Integer srid) {
     validate(document);
     List<Number> coordinates = document.field(COORDINATES);
-
-    Point topLeft = SPATIAL_CONTEXT.makePoint(coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue());
-    Point bottomRight = SPATIAL_CONTEXT.makePoint(coordinates.get(2).doubleValue(), coordinates.get(3).doubleValue());
+    double[] coord = {coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue()};
+    coord = CoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
+    Point topLeft = SPATIAL_CONTEXT.makePoint(coord[0], coord[1]);
+    
+    coord[0] = coordinates.get(2).doubleValue(); coord[1] = coordinates.get(3).doubleValue();
+    coord = CoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
+    Point bottomRight = SPATIAL_CONTEXT.makePoint(coord[0], coord[1]);
     Rectangle rectangle = SPATIAL_CONTEXT.makeRectangle(topLeft, bottomRight);
-    aa;
+    
     return rectangle;
   }
 
@@ -71,12 +76,16 @@ public class ORectangleShapeBuilder extends OShapeBuilder<Rectangle> {
     ODocument doc = new ODocument(getName());
 
     doc.field(COORDINATES, new ArrayList<Double>() {
-      {
-        aa;
-        add(shape.getMinX());
-        add(shape.getMinY());
-        add(shape.getMaxX());
-        add(shape.getMaxY());
+      {        
+        double[] coord = {shape.getMinX(), shape.getMinY()};
+        coord = CoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
+        add(coord[0]);
+        add(coord[1]);
+        
+        coord[0] = shape.getMaxX(); coord[1] = shape.getMaxY();
+        coord = CoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
+        add(coord[0]);
+        add(coord[1]);
       }
     });
     return doc;

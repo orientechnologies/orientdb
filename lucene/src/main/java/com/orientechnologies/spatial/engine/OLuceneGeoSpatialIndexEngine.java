@@ -113,7 +113,7 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
       Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
       for (OIdentifiable oIdentifiable : container) {
         updateLastAccess();
-        addDocument(newGeoDocument(oIdentifiable, factory.fromDoc(location)));
+        addDocument(newGeoDocument(oIdentifiable, factory.fromDoc(location, null)));
       }
     } else {
 
@@ -133,7 +133,7 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
   @Override
   public Document buildDocument(Object key, OIdentifiable value) {
     ODocument location = ((OIdentifiable) key).getRecord();
-    return newGeoDocument(value, factory.fromDoc(location));
+    return newGeoDocument(value, factory.fromDoc(location, null));
   }
 
   @Override

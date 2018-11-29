@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import static com.orientechnologies.spatial.shape.CoordinateSpaceTransformations.WGS84SpaceRid;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.spatial4j.shape.jts.JtsGeometry;
@@ -48,8 +49,9 @@ public class OMultiPointShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
     Coordinate[] coords = new Coordinate[coordinates.size()];
     int i = 0;
     for (List<Number> coordinate : coordinates) {
-      coords[i] = new Coordinate(coordinate.get(0).doubleValue(), coordinate.get(1).doubleValue());
-      aa;
+      double[] coord = {coordinate.get(0).doubleValue(), coordinate.get(1).doubleValue()};
+      coord = CoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
+      coords[i] = new Coordinate(coord[0], coord[1]);
       i++;
     }
     return toShape(GEOMETRY_FACTORY.createMultiPoint(coords));
@@ -72,8 +74,9 @@ public class OMultiPointShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
       {
         Coordinate[] coordinates = geom.getCoordinates();
         for (Coordinate coordinate : coordinates) {
-          aa;
-          add(Arrays.asList(coordinate.x, coordinate.y));
+          double[] coord = {coordinate.x, coordinate.x};
+          coord = CoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
+          add(Arrays.asList(coord[0], coord[1]));
         }
       }
     });

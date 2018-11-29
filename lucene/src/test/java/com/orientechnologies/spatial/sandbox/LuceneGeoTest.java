@@ -126,7 +126,7 @@ public class LuceneGeoTest {
 
     OMultiPolygonShapeBuilder builder = new OMultiPolygonShapeBuilder();
 
-    Shape multiPolygon = builder.fromDoc(entries);
+    Shape multiPolygon = builder.fromDoc(entries, null);
 
     Document doc = new Document();
 

@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import static com.orientechnologies.spatial.shape.CoordinateSpaceTransformations.WGS84SpaceRid;
 import org.locationtech.spatial4j.shape.Point;
 
 import java.util.ArrayList;
@@ -56,8 +57,9 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
   public Point fromDoc(ODocument document, Integer srid) {
     validate(document);
     List<Number> coordinates = document.field(COORDINATES);
-    Point point = SHAPE_FACTORY.pointXY(coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue());
-    aa;
+    double[] coord = {coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue()};
+    coord = CoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
+    Point point = SHAPE_FACTORY.pointXY(coord[0], coord[1]);    
     return point;
   }
 
@@ -67,9 +69,10 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
     ODocument doc = new ODocument(getName());
     doc.field(COORDINATES, new ArrayList<Double>() {
       {
-        aa;
-        add(shape.getX());
-        add(shape.getY());
+        double[] coord = {shape.getX(), shape.getY()};
+        coord = CoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
+        add(coord[0]);
+        add(coord[1]);
       }
     });
     return doc;

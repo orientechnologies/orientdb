@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.orientechnologies.spatial.shape.CoordinateSpaceTransformations.WGS84SpaceRid;
+
 /**
  * Created by Enrico Risa on 13/08/15.
  */
@@ -39,8 +41,9 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
     Coordinate[] coordinates = ring.getCoordinates();
     List<List<Double>> numbers = new ArrayList<List<Double>>();
     for (Coordinate coordinate : coordinates) {
-      aa;
-      numbers.add(Arrays.asList(coordinate.x, coordinate.y));
+      double[] coord = {coordinate.x, coordinate.y};
+      coord = CoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
+      numbers.add(Arrays.asList(coord[0], coord[1]));
     }
     return numbers;
   }
@@ -49,8 +52,10 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
     Coordinate[] coords = new Coordinate[coordinates.size()];
     int i = 0;
     for (List<Number> c : coordinates) {
-      aa;
-      coords[i] = new Coordinate(c.get(0).doubleValue(), c.get(1).doubleValue());
+      double[] coord = {c.get(0).doubleValue(), c.get(1).doubleValue()};
+      //this is used inf fromDoc, so reversed tranformation
+      coord = CoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
+      coords[i] = new Coordinate(coord[0], coord[1]);
       i++;
     }
     return GEOMETRY_FACTORY.createLineString(coords);
@@ -63,8 +68,9 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
     int i = 0;
 
     for (JtsPoint geometry : geometries) {
-      aa;
-      points[i] = new Coordinate(geometry.getX(), geometry.getY());
+      double[] coord = {geometry.getX(), geometry.getY()};
+      coord = CoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
+      points[i] = new Coordinate(coord[0], coord[1]);
       i++;
     }
 
@@ -81,7 +87,15 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
 
     for (JtsGeometry geometry : geometries) {
       multiLineString[i] = (LineString) geometry.getGeom();
-      aa;
+      Coordinate[] coordinates = multiLineString[i].getCoordinates();
+      Coordinate[] newCoordinates = new Coordinate[coordinates.length];
+      for (int j = 0; j < coordinates.length; j++){
+        Coordinate coordinate = coordinates[j];
+        double[] coord = {coordinate.x, coordinate.y};
+        coord = CoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
+        newCoordinates[j] = new Coordinate(coord[0], coord[1]);
+      }
+      multiLineString[i] = GEOMETRY_FACTORY.createLineString(newCoordinates);
       i++;
     }
 
@@ -90,7 +104,7 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
     return SPATIAL_CONTEXT.makeShape(multiPoints);
   }
 
-  protected JtsGeometry createMultiPolygon(ShapeCollection<Shape> geometries) {
+  protected JtsGeometry createMultiPolygon(ShapeCollection<Shape> geometries, Integer srid) {
 
     Polygon[] polygons = new Polygon[geometries.size()];
 
@@ -98,14 +112,22 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
 
     for (Shape geometry : geometries) {
       if (geometry instanceof JtsGeometry) {
-        polygons[i] = (Polygon) ((JtsGeometry) geometry).getGeom();
-        aa;
+        polygons[i] = (Polygon) ((JtsGeometry) geometry).getGeom();        
       } else {
         Rectangle rectangle = (Rectangle) geometry;
         Geometry geometryFrom = SPATIAL_CONTEXT.getGeometryFrom(rectangle);
         polygons[i] = (Polygon) geometryFrom;
       }
 
+      Coordinate[] coordinates = polygons[i].getCoordinates();
+      Coordinate[] newCoordinates = new Coordinate[coordinates.length];
+      for (int j = 0; j < coordinates.length; j++){
+        Coordinate coordinate = coordinates[j];
+        double[] coord = {coordinate.x, coordinate.y};
+        coord = CoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
+        newCoordinates[j] = new Coordinate(coord[0], coord[1]);
+      }
+      polygons[i] = GEOMETRY_FACTORY.createPolygon(newCoordinates);
       i++;
     }
 

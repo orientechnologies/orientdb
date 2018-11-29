@@ -82,7 +82,7 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
   protected Object encodeKey(Object key) {
 
     if (key instanceof ODocument) {
-      Shape shape = shapeFactory.fromDoc((ODocument) key);
+      Shape shape = shapeFactory.fromDoc((ODocument) key, null);
       return shapeFactory.toGeometry(shape);
     }
     return key;
@@ -93,7 +93,7 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
 
     if (key instanceof Geometry) {
       Geometry geom = (Geometry) key;
-      return shapeFactory.toDoc(geom);
+      return shapeFactory.toDoc(geom, null);
     }
     return key;
   }
