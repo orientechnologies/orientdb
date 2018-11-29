@@ -7,6 +7,7 @@ import com.orientechnologies.agent.services.metrics.OrientDBMetric;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.enterprise.server.listener.OEnterpriseConnectionListener;
 import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -22,6 +23,8 @@ public class OrientDBServerNetworkMetrics implements OrientDBMetric {
 
   private AtomicLong connections = new AtomicLong(0);
 
+  private AtomicLong sockets = new AtomicLong(0);
+
   public OrientDBServerNetworkMetrics(OEnterpriseServer server, OMetricsRegistry registry) {
 
     this.server = server;
@@ -32,7 +35,7 @@ public class OrientDBServerNetworkMetrics implements OrientDBMetric {
   public void start() {
 
     this.networkRequests = this.registry
-        .meter(OGlobalMetrics.SERVER_NETWORK_REQUESTS.name, OGlobalMetrics.SERVER_NETWORK_REQUESTS.description,"Events/seconds");
+        .meter(OGlobalMetrics.SERVER_NETWORK_REQUESTS.name, OGlobalMetrics.SERVER_NETWORK_REQUESTS.description, "Events/seconds");
 
     server.registerConnectionListener(new OEnterpriseConnectionListener() {
 
@@ -50,10 +53,23 @@ public class OrientDBServerNetworkMetrics implements OrientDBMetric {
       public void onAfterClientRequest(OClientConnection iConnection, byte iRequestType) {
         networkRequests.mark();
       }
+
+      @Override
+      public void onSocketAccepted(ONetworkProtocol protocol) {
+        sockets.incrementAndGet();
+      }
+
+      @Override
+      public void onSocketDestroyed(ONetworkProtocol protocol) {
+        sockets.decrementAndGet();
+      }
     });
 
     this.registry.gauge(OGlobalMetrics.SERVER_NETWORK_SESSIONS.name, OGlobalMetrics.SERVER_NETWORK_SESSIONS.description,
         () -> connections.get());
+
+    this.registry.gauge(OGlobalMetrics.SERVER_NETWORK_SOCKETS.name, OGlobalMetrics.SERVER_NETWORK_SOCKETS.description,
+        () -> sockets.get());
 
   }
 
@@ -61,5 +77,6 @@ public class OrientDBServerNetworkMetrics implements OrientDBMetric {
   public void stop() {
     this.registry.remove(OGlobalMetrics.SERVER_NETWORK_REQUESTS.name);
     this.registry.remove(OGlobalMetrics.SERVER_NETWORK_SESSIONS.name);
+    this.registry.remove(OGlobalMetrics.SERVER_NETWORK_SOCKETS.name);
   }
 }

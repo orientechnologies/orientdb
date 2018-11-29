@@ -22,6 +22,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
@@ -110,6 +111,16 @@ public class OEnterpriseServerImpl implements OEnterpriseServer, OServerPlugin, 
   public void onClientConnection(OClientConnection oClientConnection) {
 
     this.listeners.forEach((l) -> l.onClientConnection(oClientConnection));
+  }
+
+  @Override
+  public void onSocketAccepted(ONetworkProtocol protocol) {
+    this.listeners.forEach((l) -> l.onSocketAccepted(protocol));
+  }
+
+  @Override
+  public void onSocketDestroyed(ONetworkProtocol protocol) {
+    this.listeners.forEach((l) -> l.onSocketDestroyed(protocol));
   }
 
   @Override
