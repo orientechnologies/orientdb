@@ -245,7 +245,7 @@ public class ORecordLazySet extends ORecordTrackedSet
 
   @Override
   public int hashCode() {
-    return map.hashCode();
+    return 0;
   }
 
 }
