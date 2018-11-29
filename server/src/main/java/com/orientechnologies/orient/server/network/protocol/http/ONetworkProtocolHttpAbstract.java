@@ -118,6 +118,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     listeningAddress = getListeningAddress();
 
+
+
+    OServerPluginHelper.invokeHandlerCallbackOnSocketAccepted(server,this);
+
     start();
   }
 
@@ -244,7 +248,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     } finally {
       server.getClientConnectionManager().disconnect(connection.getId());
-
+      OServerPluginHelper.invokeHandlerCallbackOnSocketDestroyed(server, this);
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance().debug(this, "Connection closed");
     }
