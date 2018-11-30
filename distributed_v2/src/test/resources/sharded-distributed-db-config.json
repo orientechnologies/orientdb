@@ -1,0 +1,25 @@
+{
+    "autoDeploy": true,
+    "readQuorum": 1,
+    "writeQuorum": "majority",
+    "readYourWrites": true,
+    "clusters": {
+        "internal": {
+        },
+        "client-type": {
+            "owner" : "europe",
+            "servers" : [ "europe", "usa" ]
+        },
+        "client-type_usa": {
+            "owner" : "usa",
+            "servers" : [ "usa" ]
+        },
+        "client-type_asia": {
+            "owner" : "asia",
+            "servers" : [ "asia", "europe", "usa" ]
+        },
+        "*": {
+            "servers" : [ "<NEW_NODE>" ]
+        }
+    }
+}

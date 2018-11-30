@@ -1,0 +1,19 @@
+{
+  "autoDeploy": true,
+  "readQuorum": 1,
+  "writeQuorum": "majority",
+  "readYourWrites": true,
+  "servers": {
+    "europe0": "master",
+    "*": "replica"
+  },
+  "clusters": {
+    "internal": {
+    },
+    "*": {
+      "servers": [
+        "<NEW_NODE>"
+      ]
+    }
+  }
+}
