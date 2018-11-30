@@ -15,14 +15,17 @@
  */
 package com.orientechnologies.spatial.shape;
 
+import com.mjt.geo.ostn02.EastingNorthing;
+import com.mjt.geo.ostn02.LatitudeLongitude;
+
 /**
  *
  * @author marko
  */
-public class CoordinateSpaceTransformations {
+public class OCoordinateSpaceTransformations {
   //TODO review this numbers
   static final int WGS84SpaceRid = 4326;
-  static final int BNGSpaceRid = 2;
+  static final int BNGSpaceRid = 27700;
   
   
   static double[] transform(Integer fromSpaceRid, Integer toSpaceRid, double[] coordinate){
@@ -30,6 +33,18 @@ public class CoordinateSpaceTransformations {
       return coordinate;
     }
     //TODO implement transformation
+    if (fromSpaceRid == BNGSpaceRid && toSpaceRid == WGS84SpaceRid){
+      EastingNorthing bngSpace = new EastingNorthing(coordinate[0], coordinate[1]);
+      LatitudeLongitude wgsSpace = bngSpace.toLatitudeLongitude();
+      double[] ret = {wgsSpace.getLat(), wgsSpace.getLon()};
+      return ret;
+    }
+    if (fromSpaceRid == WGS84SpaceRid && toSpaceRid == BNGSpaceRid){
+      LatitudeLongitude wgsSpace = new LatitudeLongitude(coordinate[0], coordinate[1]);
+      EastingNorthing bngSpace = wgsSpace.toEastingNorthing();
+      double[] ret = {bngSpace.getEast(), bngSpace.getNorth()};
+      return ret;
+    }
     return coordinate;
   }
   

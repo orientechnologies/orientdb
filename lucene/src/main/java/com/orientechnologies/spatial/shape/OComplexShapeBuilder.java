@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.orientechnologies.spatial.shape.CoordinateSpaceTransformations.WGS84SpaceRid;
+import static com.orientechnologies.spatial.shape.OCoordinateSpaceTransformations.WGS84SpaceRid;
 
 /**
  * Created by Enrico Risa on 13/08/15.
@@ -42,7 +42,7 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
     List<List<Double>> numbers = new ArrayList<List<Double>>();
     for (Coordinate coordinate : coordinates) {
       double[] coord = {coordinate.x, coordinate.y};
-      coord = CoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
+      coord = OCoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
       numbers.add(Arrays.asList(coord[0], coord[1]));
     }
     return numbers;
@@ -54,7 +54,7 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
     for (List<Number> c : coordinates) {
       double[] coord = {c.get(0).doubleValue(), c.get(1).doubleValue()};
       //this is used inf fromDoc, so reversed tranformation
-      coord = CoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
+      coord = OCoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
       coords[i] = new Coordinate(coord[0], coord[1]);
       i++;
     }
@@ -69,7 +69,7 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
 
     for (JtsPoint geometry : geometries) {
       double[] coord = {geometry.getX(), geometry.getY()};
-      coord = CoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
+      coord = OCoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
       points[i] = new Coordinate(coord[0], coord[1]);
       i++;
     }
@@ -92,7 +92,7 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
       for (int j = 0; j < coordinates.length; j++){
         Coordinate coordinate = coordinates[j];
         double[] coord = {coordinate.x, coordinate.y};
-        coord = CoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
+        coord = OCoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
         newCoordinates[j] = new Coordinate(coord[0], coord[1]);
       }
       multiLineString[i] = GEOMETRY_FACTORY.createLineString(newCoordinates);
@@ -124,7 +124,7 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
       for (int j = 0; j < coordinates.length; j++){
         Coordinate coordinate = coordinates[j];
         double[] coord = {coordinate.x, coordinate.y};
-        coord = CoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
+        coord = OCoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
         newCoordinates[j] = new Coordinate(coord[0], coord[1]);
       }
       polygons[i] = GEOMETRY_FACTORY.createPolygon(newCoordinates);

@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import static com.orientechnologies.spatial.shape.CoordinateSpaceTransformations.WGS84SpaceRid;
+import static com.orientechnologies.spatial.shape.OCoordinateSpaceTransformations.WGS84SpaceRid;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.spatial4j.shape.jts.JtsGeometry;
@@ -58,7 +58,7 @@ public class OLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
     int i = 0;
     for (List<Number> coordinate : coordinates) {
       double[] coord = {coordinate.get(0).doubleValue(), coordinate.get(1).doubleValue()};
-      coord = CoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
+      coord = OCoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
       coords[i] = new Coordinate(coord[0], coord[1]);      
       i++;
     }

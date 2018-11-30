@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import static com.orientechnologies.spatial.shape.CoordinateSpaceTransformations.WGS84SpaceRid;
+import static com.orientechnologies.spatial.shape.OCoordinateSpaceTransformations.WGS84SpaceRid;
 import org.locationtech.spatial4j.shape.Point;
 import org.locationtech.spatial4j.shape.Rectangle;
 
@@ -59,11 +59,11 @@ public class ORectangleShapeBuilder extends OShapeBuilder<Rectangle> {
     validate(document);
     List<Number> coordinates = document.field(COORDINATES);
     double[] coord = {coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue()};
-    coord = CoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
+    coord = OCoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
     Point topLeft = SPATIAL_CONTEXT.makePoint(coord[0], coord[1]);
     
     coord[0] = coordinates.get(2).doubleValue(); coord[1] = coordinates.get(3).doubleValue();
-    coord = CoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
+    coord = OCoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
     Point bottomRight = SPATIAL_CONTEXT.makePoint(coord[0], coord[1]);
     Rectangle rectangle = SPATIAL_CONTEXT.makeRectangle(topLeft, bottomRight);
     
@@ -78,12 +78,12 @@ public class ORectangleShapeBuilder extends OShapeBuilder<Rectangle> {
     doc.field(COORDINATES, new ArrayList<Double>() {
       {        
         double[] coord = {shape.getMinX(), shape.getMinY()};
-        coord = CoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
+        coord = OCoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
         add(coord[0]);
         add(coord[1]);
         
         coord[0] = shape.getMaxX(); coord[1] = shape.getMaxY();
-        coord = CoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
+        coord = OCoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
         add(coord[0]);
         add(coord[1]);
       }
