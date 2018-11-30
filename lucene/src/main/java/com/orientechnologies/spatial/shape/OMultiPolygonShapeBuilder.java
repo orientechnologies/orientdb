@@ -53,21 +53,21 @@ public class OMultiPolygonShapeBuilder extends OPolygonShapeBuilder {
   }
 
   @Override
-  public JtsGeometry fromDoc(ODocument document, Integer srid) {
+  public JtsGeometry fromDoc(ODocument document) {
     validate(document);
     List<List<List<List<Number>>>> coordinates = document.field("coordinates");
 
     Polygon[] polygons = new Polygon[coordinates.size()];
     int i = 0;
     for (List<List<List<Number>>> coordinate : coordinates) {
-      polygons[i] = createPolygon(coordinate, srid);
+      polygons[i] = createPolygon(coordinate);
       i++;
     }
     return toShape(GEOMETRY_FACTORY.createMultiPolygon(polygons));
   }
 
   @Override
-  public ODocument toDoc(JtsGeometry shape, Integer srid) {
+  public ODocument toDoc(JtsGeometry shape) {
 
     ODocument doc = new ODocument(getName());
     MultiPolygon multiPolygon = (MultiPolygon) shape.getGeom();
@@ -76,7 +76,7 @@ public class OMultiPolygonShapeBuilder extends OPolygonShapeBuilder {
 
     for (int i = 0; i < n; i++) {
       Geometry geom = multiPolygon.getGeometryN(i);
-      polyCoordinates.add(coordinatesFromPolygon((Polygon) geom, srid));
+      polyCoordinates.add(coordinatesFromPolygon((Polygon) geom));
     }
 
     doc.field(COORDINATES, polyCoordinates);

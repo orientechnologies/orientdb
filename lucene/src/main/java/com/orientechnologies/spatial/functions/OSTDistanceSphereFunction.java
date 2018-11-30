@@ -46,9 +46,9 @@ public class OSTDistanceSphereFunction extends OSpatialFunctionAbstractIndexable
     if (containsNull(iParams)) {
       return null;
     }
-    Shape shape = factory.fromObject(iParams[0], null);
+    Shape shape = factory.fromObject(iParams[0]);
 
-    Shape shape1 = factory.fromObject(iParams[1], null);
+    Shape shape1 = factory.fromObject(iParams[1]);
     double distance = factory.context().getDistCalc().distance(shape.getCenter(), shape1.getCenter());
     final double docDistInKM = DistanceUtils.degrees2Dist(distance, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
     return docDistInKM * 1000;

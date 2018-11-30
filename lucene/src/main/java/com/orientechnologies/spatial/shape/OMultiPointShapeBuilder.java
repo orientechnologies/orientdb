@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import static com.orientechnologies.spatial.shape.OCoordinateSpaceTransformations.WGS84SpaceRid;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.spatial4j.shape.jts.JtsGeometry;
@@ -43,15 +42,13 @@ public class OMultiPointShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   }
 
   @Override
-  public JtsGeometry fromDoc(ODocument document, Integer srid) {
+  public JtsGeometry fromDoc(ODocument document) {
     validate(document);
     List<List<Number>> coordinates = document.field(COORDINATES);
     Coordinate[] coords = new Coordinate[coordinates.size()];
     int i = 0;
-    for (List<Number> coordinate : coordinates) {
-      double[] coord = {coordinate.get(0).doubleValue(), coordinate.get(1).doubleValue()};
-      coord = OCoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
-      coords[i] = new Coordinate(coord[0], coord[1]);
+    for (List<Number> coordinate : coordinates) {      
+      coords[i] = new Coordinate(coordinate.get(0).doubleValue(), coordinate.get(1).doubleValue());
       i++;
     }
     return toShape(GEOMETRY_FACTORY.createMultiPoint(coords));
@@ -66,17 +63,15 @@ public class OMultiPointShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   }
 
   @Override
-  public ODocument toDoc(final JtsGeometry shape, Integer srid) {
+  public ODocument toDoc(final JtsGeometry shape) {
     final MultiPoint geom = (MultiPoint) shape.getGeom();
 
     ODocument doc = new ODocument(getName());
     doc.field(COORDINATES, new ArrayList<List<Double>>() {
       {
         Coordinate[] coordinates = geom.getCoordinates();
-        for (Coordinate coordinate : coordinates) {
-          double[] coord = {coordinate.x, coordinate.x};
-          coord = OCoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
-          add(Arrays.asList(coord[0], coord[1]));
+        for (Coordinate coordinate : coordinates) {          
+          add(Arrays.asList(coordinate.x, coordinate.y));
         }
       }
     });

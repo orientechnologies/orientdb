@@ -38,14 +38,8 @@ public class OSTAsGeoJSONFunction extends OSQLFunctionAbstract {
 
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
-      OCommandContext iContext) {
-    Integer srid = null;
-    if (iParams.length > 1){
-      if (iParams[1] instanceof Integer){
-        srid = (Integer)iParams[1];
-      }
-    }
-    return factory.asGeoJson((ODocument) iParams[0], srid);
+      OCommandContext iContext) {    
+    return factory.asGeoJson((ODocument) iParams[0]);
   }
 
   @Override

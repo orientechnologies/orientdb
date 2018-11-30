@@ -493,7 +493,7 @@ public class LuceneSpatialMiscFunctionsTest extends BaseSpatialLuceneTest {
   @Test
   public void testWktPolygon() throws ParseException {
 
-    Shape shape = OShapeFactory.INSTANCE.fromObject("POLYGON((0 0, 10 0, 10 5, 0 5, 0 0))", null);
+    Shape shape = OShapeFactory.INSTANCE.fromObject("POLYGON((0 0, 10 0, 10 5, 0 5, 0 0))");
 
     Assert.assertEquals(shape instanceof JtsGeometry, true);
 

@@ -76,7 +76,7 @@ public class OLuceneOverlapOperator extends OLuceneSpatialOperator {
   @Override
   public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
       Object iRight, OCommandContext iContext, final ODocumentSerializer serializer) {
-    Shape shape = factory.fromDoc((ODocument) iLeft, null);
+    Shape shape = factory.fromDoc((ODocument) iLeft);
 
     // TODO { 'shape' : { 'type' : 'LineString' , 'coordinates' : [[1,2],[4,6]]} }
     // TODO is not translated in map but in array[ { 'type' : 'LineString' , 'coordinates' : [[1,2],[4,6]]} ]
@@ -86,7 +86,7 @@ public class OLuceneOverlapOperator extends OLuceneSpatialOperator {
     } else {
       filter = iRight;
     }
-    Shape shape1 = factory.fromObject(filter, null);
+    Shape shape1 = factory.fromObject(filter);
 
     return SpatialOperation.BBoxIntersects.evaluate(shape, shape1.getBoundingBox());
   }

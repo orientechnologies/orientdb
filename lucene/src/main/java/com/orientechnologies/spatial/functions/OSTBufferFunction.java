@@ -41,14 +41,14 @@ public class OSTBufferFunction extends OSQLFunctionAbstract {
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
-    Shape shape = factory.fromObject(iParams[0], null);
+    Shape shape = factory.fromObject(iParams[0]);
     Number distance = (Number) iParams[1];
     Map params = null;
     if (iParams.length > 2) {
       params = (Map) iParams[2];
     }
     Shape buffer = factory.buffer(shape, distance.doubleValue(), params);
-    return factory.toDoc(buffer, null);
+    return factory.toDoc(buffer);
   }
 
   @Override

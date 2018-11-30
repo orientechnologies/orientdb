@@ -62,7 +62,7 @@ public class OGeometryGenericShapeBuilder extends OComplexShapeBuilder<Shape> {
   }
 
   @Override
-  public Shape fromDoc(ODocument doc, Integer srid) {
+  public Shape fromDoc(ODocument doc) {
     List<ODocument> geometries = doc.field(GEOMETRIES);
     byte isCollection = doc.field(IS_COLLECTION);
 
@@ -70,7 +70,7 @@ public class OGeometryGenericShapeBuilder extends OComplexShapeBuilder<Shape> {
 
     Geometry[] geoms = new Geometry[geometries.size()];
     for (ODocument geometry : geometries) {
-      Shape shape = shapeFactory.fromDoc(geometry, srid);
+      Shape shape = shapeFactory.fromDoc(geometry);
       shapes.add(shape);
     }
 
@@ -81,7 +81,7 @@ public class OGeometryGenericShapeBuilder extends OComplexShapeBuilder<Shape> {
   }
 
   @Override
-  public ODocument toDoc(Shape shape, Integer srid) {
+  public ODocument toDoc(Shape shape) {
     ODocument doc = new ODocument(getName());
     List<ODocument> geometries;
     boolean isCollection = false;
@@ -89,12 +89,12 @@ public class OGeometryGenericShapeBuilder extends OComplexShapeBuilder<Shape> {
       ShapeCollection<Shape> shapes = (ShapeCollection) shape;
       geometries = new ArrayList<>(shapes.size());
       for (Shape s : shapes) {
-        geometries.add(shapeFactory.toDoc(s, srid));
+        geometries.add(shapeFactory.toDoc(s));
       }
       isCollection = true;
     } else {
       geometries = new ArrayList<>(1);
-      geometries.add(shapeFactory.toDoc(shape, srid));
+      geometries.add(shapeFactory.toDoc(shape));
     }
 
     doc.field(GEOMETRIES, geometries);

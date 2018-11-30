@@ -29,48 +29,39 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.orientechnologies.spatial.shape.OCoordinateSpaceTransformations.WGS84SpaceRid;
-
 /**
  * Created by Enrico Risa on 13/08/15.
  */
 public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilder<T> {
 
-  protected List<List<Double>> coordinatesFromLineString(LineString ring, Integer srid) {
+  protected List<List<Double>> coordinatesFromLineString(LineString ring) {
 
     Coordinate[] coordinates = ring.getCoordinates();
     List<List<Double>> numbers = new ArrayList<List<Double>>();
-    for (Coordinate coordinate : coordinates) {
-      double[] coord = {coordinate.x, coordinate.y};
-      coord = OCoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
-      numbers.add(Arrays.asList(coord[0], coord[1]));
+    for (Coordinate coordinate : coordinates) {      
+      numbers.add(Arrays.asList(coordinate.x, coordinate.y));
     }
     return numbers;
   }
 
-  protected LineString createLineString(List<List<Number>> coordinates, Integer srid) {
+  protected LineString createLineString(List<List<Number>> coordinates) {
     Coordinate[] coords = new Coordinate[coordinates.size()];
     int i = 0;
-    for (List<Number> c : coordinates) {
-      double[] coord = {c.get(0).doubleValue(), c.get(1).doubleValue()};
-      //this is used inf fromDoc, so reversed tranformation
-      coord = OCoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
-      coords[i] = new Coordinate(coord[0], coord[1]);
+    for (List<Number> c : coordinates) {      
+      coords[i] = new Coordinate(c.get(0).doubleValue(), c.get(1).doubleValue());
       i++;
     }
     return GEOMETRY_FACTORY.createLineString(coords);
   }
 
-  protected JtsGeometry createMultiPoint(ShapeCollection<JtsPoint> geometries, Integer srid) {
+  protected JtsGeometry createMultiPoint(ShapeCollection<JtsPoint> geometries) {
 
     Coordinate[] points = new Coordinate[geometries.size()];
 
     int i = 0;
 
-    for (JtsPoint geometry : geometries) {
-      double[] coord = {geometry.getX(), geometry.getY()};
-      coord = OCoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
-      points[i] = new Coordinate(coord[0], coord[1]);
+    for (JtsPoint geometry : geometries) {           
+      points[i] = new Coordinate(geometry.getX(), geometry.getY());
       i++;
     }
 
@@ -79,7 +70,7 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
     return SPATIAL_CONTEXT.makeShape(multiPoints);
   }
 
-  protected JtsGeometry createMultiLine(ShapeCollection<JtsGeometry> geometries, Integer srid) {
+  protected JtsGeometry createMultiLine(ShapeCollection<JtsGeometry> geometries) {
 
     LineString[] multiLineString = new LineString[geometries.size()];
 
@@ -90,10 +81,8 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
       Coordinate[] coordinates = multiLineString[i].getCoordinates();
       Coordinate[] newCoordinates = new Coordinate[coordinates.length];
       for (int j = 0; j < coordinates.length; j++){
-        Coordinate coordinate = coordinates[j];
-        double[] coord = {coordinate.x, coordinate.y};
-        coord = OCoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
-        newCoordinates[j] = new Coordinate(coord[0], coord[1]);
+        Coordinate coordinate = coordinates[j];        
+        newCoordinates[j] = new Coordinate(coordinate.x, coordinate.y);
       }
       multiLineString[i] = GEOMETRY_FACTORY.createLineString(newCoordinates);
       i++;
@@ -104,7 +93,7 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
     return SPATIAL_CONTEXT.makeShape(multiPoints);
   }
 
-  protected JtsGeometry createMultiPolygon(ShapeCollection<Shape> geometries, Integer srid) {
+  protected JtsGeometry createMultiPolygon(ShapeCollection<Shape> geometries) {
 
     Polygon[] polygons = new Polygon[geometries.size()];
 
@@ -122,10 +111,8 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
       Coordinate[] coordinates = polygons[i].getCoordinates();
       Coordinate[] newCoordinates = new Coordinate[coordinates.length];
       for (int j = 0; j < coordinates.length; j++){
-        Coordinate coordinate = coordinates[j];
-        double[] coord = {coordinate.x, coordinate.y};
-        coord = OCoordinateSpaceTransformations.transform(srid, WGS84SpaceRid, coord);
-        newCoordinates[j] = new Coordinate(coord[0], coord[1]);
+        Coordinate coordinate = coordinates[j];        
+        newCoordinates[j] = new Coordinate(coordinate.x, coordinate.y);
       }
       polygons[i] = GEOMETRY_FACTORY.createPolygon(newCoordinates);
       i++;

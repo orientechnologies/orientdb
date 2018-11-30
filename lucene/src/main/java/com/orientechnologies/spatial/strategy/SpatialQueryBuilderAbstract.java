@@ -55,7 +55,7 @@ public abstract class SpatialQueryBuilderAbstract {
       throw new OIndexEngineException("Invalid spatial query. Missing shape field " + query, null);
     }
     //these are queries for which we don't want to apply transformations from one geo space to another
-    return factory.fromObject(geometry, null);
+    return factory.fromObject(geometry);
   }
 
   protected boolean isOnlyBB(SpatialStrategy spatialStrategy) {

@@ -47,9 +47,9 @@ public class OSTContainsFunction extends OSpatialFunctionAbstractIndexable {
       return null;
     }
 
-    Shape shape = factory.fromObject(iParams[0], null);
+    Shape shape = factory.fromObject(iParams[0]);
 
-    Shape shape1 = factory.fromObject(iParams[1], null);
+    Shape shape1 = factory.fromObject(iParams[1]);
 
     return factory.operation().contains(shape, shape1);
 

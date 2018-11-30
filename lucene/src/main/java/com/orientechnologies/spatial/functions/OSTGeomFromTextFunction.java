@@ -40,15 +40,9 @@ public class OSTGeomFromTextFunction extends OSQLFunctionAbstract {
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
-    String geom = (String) iParams[0];
-    Integer srid = null;
-    if (iParams.length > 1){
-      if (iParams[1] instanceof Integer){
-        srid = (Integer)iParams[1];
-      }
-    }
+    String geom = (String) iParams[0];    
     try {
-      return factory.toDoc(geom, srid);
+      return factory.toDoc(geom);
     } catch (Exception e) {
       throw OException.wrapException(new OCommandExecutionException(String.format("Cannot parse geometry {%s}", geom)), e);
     }

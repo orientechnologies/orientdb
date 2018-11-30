@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import static com.orientechnologies.spatial.shape.OCoordinateSpaceTransformations.WGS84SpaceRid;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
@@ -56,18 +55,18 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   }
 
   @Override
-  public JtsGeometry fromDoc(ODocument document, Integer srid) {
+  public JtsGeometry fromDoc(ODocument document) {
     validate(document);
     List<List<List<Number>>> coordinates = document.field("coordinates");
 
-    return toShape(createPolygon(coordinates, srid));
+    return toShape(createPolygon(coordinates));
   }
 
-  protected Polygon createPolygon(List<List<List<Number>>> coordinates, Integer srid) {
+  protected Polygon createPolygon(List<List<List<Number>>> coordinates) {
     Polygon shape;
     if (coordinates.size() == 1) {
       List<List<Number>> coords = coordinates.get(0);
-      LinearRing linearRing = createLinearRing(coords, srid);
+      LinearRing linearRing = createLinearRing(coords);
       shape = GEOMETRY_FACTORY.createPolygon(linearRing);
     } else {
       int i = 0;
@@ -75,9 +74,9 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
       LinearRing[] holes = new LinearRing[coordinates.size() - 1];
       for (List<List<Number>> coordinate : coordinates) {
         if (i == 0) {
-          outerRing = createLinearRing(coordinate, srid);
+          outerRing = createLinearRing(coordinate);
         } else {
-          holes[i - 1] = createLinearRing(coordinate, srid);
+          holes[i - 1] = createLinearRing(coordinate);
         }
         i++;
       }
@@ -86,36 +85,34 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
     return shape;
   }
 
-  protected LinearRing createLinearRing(List<List<Number>> coords, Integer srid) {
+  protected LinearRing createLinearRing(List<List<Number>> coords) {
     Coordinate[] crs = new Coordinate[coords.size()];
     int i = 0;
-    for (List<Number> points : coords) {
-      double[] coord = {points.get(0).doubleValue(), points.get(1).doubleValue()};
-      coord = OCoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
-      crs[i] = new Coordinate(coord[0], coord[1]);      
+    for (List<Number> points : coords) {      
+      crs[i] = new Coordinate(points.get(0).doubleValue(), points.get(1).doubleValue());      
       i++;
     }
     return GEOMETRY_FACTORY.createLinearRing(crs);
   }
 
   @Override
-  public ODocument toDoc(JtsGeometry shape, Integer srid) {
+  public ODocument toDoc(JtsGeometry shape) {
 
     ODocument doc = new ODocument(getName());
     Polygon polygon = (Polygon) shape.getGeom();
-    List<List<List<Double>>> polyCoordinates = coordinatesFromPolygon(polygon, srid);
+    List<List<List<Double>>> polyCoordinates = coordinatesFromPolygon(polygon);
     doc.field(COORDINATES, polyCoordinates);
     return doc;
   }
 
-  protected List<List<List<Double>>> coordinatesFromPolygon(Polygon polygon, Integer srid) {
+  protected List<List<List<Double>>> coordinatesFromPolygon(Polygon polygon) {
     List<List<List<Double>>> polyCoordinates = new ArrayList<List<List<Double>>>();
     LineString exteriorRing = polygon.getExteriorRing();
-    polyCoordinates.add(coordinatesFromLineString(exteriorRing, srid));
+    polyCoordinates.add(coordinatesFromLineString(exteriorRing));
     int i = polygon.getNumInteriorRing();
     for (int j = 0; j < i; j++) {
       LineString interiorRingN = polygon.getInteriorRingN(j);
-      polyCoordinates.add(coordinatesFromLineString(interiorRingN, srid));
+      polyCoordinates.add(coordinatesFromLineString(interiorRingN));
     }
     return polyCoordinates;
   }

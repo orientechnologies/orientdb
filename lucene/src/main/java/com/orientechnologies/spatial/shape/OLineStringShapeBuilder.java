@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import static com.orientechnologies.spatial.shape.OCoordinateSpaceTransformations.WGS84SpaceRid;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.spatial4j.shape.jts.JtsGeometry;
@@ -49,27 +48,25 @@ public class OLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
   }
 
   @Override
-  public JtsGeometry fromDoc(ODocument document, Integer srid) {
+  public JtsGeometry fromDoc(ODocument document) {
 
     validate(document);
     List<List<Number>> coordinates = document.field(COORDINATES);
 
     Coordinate[] coords = new Coordinate[coordinates.size()];
     int i = 0;
-    for (List<Number> coordinate : coordinates) {
-      double[] coord = {coordinate.get(0).doubleValue(), coordinate.get(1).doubleValue()};
-      coord = OCoordinateSpaceTransformations.transform(WGS84SpaceRid, srid, coord);
-      coords[i] = new Coordinate(coord[0], coord[1]);      
+    for (List<Number> coordinate : coordinates) {            
+      coords[i] = new Coordinate(coordinate.get(0).doubleValue(), coordinate.get(1).doubleValue());      
       i++;
     }
     return toShape(GEOMETRY_FACTORY.createLineString(coords));
   }
 
   @Override
-  public ODocument toDoc(JtsGeometry shape, Integer srid) {
+  public ODocument toDoc(JtsGeometry shape) {
     ODocument doc = new ODocument(getName());
     LineString lineString = (LineString) shape.getGeom();
-    doc.field(COORDINATES, coordinatesFromLineString(lineString, srid));
+    doc.field(COORDINATES, coordinatesFromLineString(lineString));
     return doc;
   }
 }

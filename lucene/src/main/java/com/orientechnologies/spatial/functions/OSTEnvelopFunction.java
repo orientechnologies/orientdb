@@ -39,8 +39,8 @@ public class OSTEnvelopFunction extends OSQLFunctionAbstract {
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
-    Shape shape = factory.fromObject(iParams[0], null);
-    return factory.toDoc(shape.getBoundingBox(), null);
+    Shape shape = factory.fromObject(iParams[0]);
+    return factory.toDoc(shape.getBoundingBox());
   }
 
   @Override

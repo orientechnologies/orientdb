@@ -71,17 +71,17 @@ public class OShapeFactory extends OComplexShapeBuilder {
   }
 
   @Override
-  public Shape fromDoc(ODocument document, Integer srid) {
+  public Shape fromDoc(ODocument document) {
     OShapeBuilder oShapeBuilder = factories.get(document.getClassName());
     if (oShapeBuilder != null) {
-      return oShapeBuilder.fromDoc(document, srid);
+      return oShapeBuilder.fromDoc(document);
     }
     // TODO handle exception shape not found
     return null;
   }
 
   @Override
-  public Shape fromObject(Object obj, Integer srid) {
+  public Shape fromObject(Object obj) {
 
     if (obj instanceof String) {
       try {
@@ -91,45 +91,45 @@ public class OShapeFactory extends OComplexShapeBuilder {
       }
     }
     if (obj instanceof ODocument) {
-      return fromDoc((ODocument) obj, srid);
+      return fromDoc((ODocument) obj);
     }
     if (obj instanceof Map) {
       Map map = (Map) ((Map) obj).get("shape");
       if (map == null) {
         map = (Map) obj;
       }
-      return fromMapGeoJson(map, srid);
+      return fromMapGeoJson(map);
     }
     return null;
   }
 
   @Override
-  public String asText(ODocument document, Integer srid) {
+  public String asText(ODocument document) {
     OShapeBuilder oShapeBuilder = factories.get(document.getClassName());
     if (oShapeBuilder != null) {
-      return oShapeBuilder.asText(document, srid);
+      return oShapeBuilder.asText(document);
     }
     // TODO handle exception shape not found
     return null;
   }
 
   @Override
-  public String asText(Object obj, Integer srid) {
+  public String asText(Object obj) {
 
     if (obj instanceof ODocument) {
-      return asText((ODocument) obj, srid);
+      return asText((ODocument) obj);
     }
     if (obj instanceof Map) {
       Map map = (Map) ((Map) obj).get("shape");
       if (map == null) {
         map = (Map) obj;
       }
-      return asText(map, srid);
+      return asText(map);
     }
     return null;
   }
 
-  public byte[] asBinary(Object obj, Integer srid) {
+  public byte[] asBinary(Object obj) {
     if (obj instanceof OResultInternal){
       OResultInternal resultInternal = (OResultInternal)obj;
       OElement el = resultInternal.toElement();
@@ -139,7 +139,7 @@ public class OShapeFactory extends OComplexShapeBuilder {
     }
     
     if (obj instanceof ODocument) {
-      Shape shape = fromDoc((ODocument) obj, srid);
+      Shape shape = fromDoc((ODocument) obj);
       return asBinary(shape);
     }
     if (obj instanceof Map) {
@@ -147,7 +147,7 @@ public class OShapeFactory extends OComplexShapeBuilder {
       if (map == null) {
         map = (Map) obj;
       }
-      Shape shape = fromMapGeoJson(map, srid);
+      Shape shape = fromMapGeoJson(map);
 
       return asBinary(shape);
     }
@@ -156,47 +156,47 @@ public class OShapeFactory extends OComplexShapeBuilder {
   }
 
   @Override
-  public ODocument toDoc(Shape shape, Integer srid) {
+  public ODocument toDoc(Shape shape) {
 
     // TODO REFACTOR
     ODocument doc = null;
     if (Point.class.isAssignableFrom(shape.getClass())) {
-      doc = factories.get(OPointShapeBuilder.NAME).toDoc(shape, srid);
+      doc = factories.get(OPointShapeBuilder.NAME).toDoc(shape);
     } else if (Rectangle.class.isAssignableFrom(shape.getClass())) {
-      doc = factories.get(ORectangleShapeBuilder.NAME).toDoc(shape, srid);
+      doc = factories.get(ORectangleShapeBuilder.NAME).toDoc(shape);
     } else if (JtsGeometry.class.isAssignableFrom(shape.getClass())) {
       JtsGeometry geometry = (JtsGeometry) shape;
       Geometry geom = geometry.getGeom();
-      doc = factories.get("O" + geom.getClass().getSimpleName()).toDoc(shape, srid);
+      doc = factories.get("O" + geom.getClass().getSimpleName()).toDoc(shape);
 
     } else if (ShapeCollection.class.isAssignableFrom(shape.getClass())) {
       ShapeCollection collection = (ShapeCollection) shape;
 
       if (isMultiPolygon(collection)) {
         //second srid is null because we don't want double transformation
-        doc = factories.get("OMultiPolygon").toDoc(createMultiPolygon(collection, srid), null);
+        doc = factories.get("OMultiPolygon").toDoc(createMultiPolygon(collection));
       } else if (isMultiPoint(collection)) {
         //second srid is null because we don't want double transformation
-        doc = factories.get("OMultiPoint").toDoc(createMultiPoint(collection, srid), null);
+        doc = factories.get("OMultiPoint").toDoc(createMultiPoint(collection));
       } else if (isMultiLine(collection)) {
         //second srid is null because we don't want double transformation
-        doc = factories.get("OMultiLineString").toDoc(createMultiLine(collection, srid), null);
+        doc = factories.get("OMultiLineString").toDoc(createMultiLine(collection));
       } else {
-        doc = factories.get("OGeometryCollection").toDoc(shape, srid);
+        doc = factories.get("OGeometryCollection").toDoc(shape);
       }
     }
     return doc;
   }
 
   @Override
-  public Shape fromMapGeoJson(Map geoJsonMap, Integer srid) {
+  public Shape fromMapGeoJson(Map geoJsonMap) {
     OShapeBuilder oShapeBuilder = factories.get(geoJsonMap.get("type"));
 
     if (oShapeBuilder == null) {
       oShapeBuilder = factories.get(geoJsonMap.get("@class"));
     }
     if (oShapeBuilder != null) {
-      return oShapeBuilder.fromMapGeoJson(geoJsonMap, srid);
+      return oShapeBuilder.fromMapGeoJson(geoJsonMap);
     }
     throw new IllegalArgumentException("Invalid map");
     // TODO handle exception shape not found
@@ -217,11 +217,11 @@ public class OShapeFactory extends OComplexShapeBuilder {
     }
   }
 
-  public ODocument toDoc(Geometry geometry, Integer srid) {
+  public ODocument toDoc(Geometry geometry) {
     if (geometry instanceof org.locationtech.jts.geom.Point) {
       org.locationtech.jts.geom.Point point = (org.locationtech.jts.geom.Point) geometry;
       Point point1 = context().makePoint(point.getX(), point.getY());
-      return toDoc(point1, srid);
+      return toDoc(point1);
     }
     if (geometry instanceof org.locationtech.jts.geom.GeometryCollection) {
       org.locationtech.jts.geom.GeometryCollection gc = (org.locationtech.jts.geom.GeometryCollection) geometry;
@@ -237,9 +237,9 @@ public class OShapeFactory extends OComplexShapeBuilder {
         }
         shapes.add(shape);
       }
-      return toDoc(new ShapeCollection<Shape>(shapes, SPATIAL_CONTEXT), srid);
+      return toDoc(new ShapeCollection<Shape>(shapes, SPATIAL_CONTEXT));
     }
-    return toDoc(SPATIAL_CONTEXT.makeShape(geometry), srid);
+    return toDoc(SPATIAL_CONTEXT.makeShape(geometry));
   }
 
   public OShapeOperation operation() {

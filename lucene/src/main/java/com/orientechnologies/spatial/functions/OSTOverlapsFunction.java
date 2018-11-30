@@ -48,9 +48,9 @@ public class OSTOverlapsFunction extends OSpatialFunctionAbstractIndexable {
 //      }
 //    }
     
-    Shape shape = factory.fromObject(iParams[0], null);
+    Shape shape = factory.fromObject(iParams[0]);
 
-    Shape shape1 = factory.fromObject(iParams[1], null);
+    Shape shape1 = factory.fromObject(iParams[1]);
 
     return factory.operation().overlaps(shape, shape1);
 

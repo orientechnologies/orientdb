@@ -40,7 +40,7 @@ public class OSTSrid extends OSQLFunctionAbstract {
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
 
-    Shape shape = factory.fromObject(iParams[0], null);
+    Shape shape = factory.fromObject(iParams[0]);
     return factory.getSRID(shape);
   }
 

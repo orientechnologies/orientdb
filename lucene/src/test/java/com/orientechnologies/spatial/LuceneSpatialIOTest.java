@@ -53,7 +53,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     });
     OPointShapeBuilder builder = new OPointShapeBuilder();
 
-    String p1 = builder.asText(doc, null);
+    String p1 = builder.asText(doc);
     Assert.assertNotNull(p1);
 
     Point point = context.makePoint(-100d, 45d);
@@ -62,7 +62,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
 
     Assert.assertEquals(p2, p1);
 
-    ODocument parsed = builder.toDoc(p2, null);
+    ODocument parsed = builder.toDoc(p2);
 
     Assert.assertEquals(doc.<OPointShapeBuilder>field("coordinates"), parsed.field("coordinates"));
   }
@@ -81,7 +81,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     });
 
     OMultiPointShapeBuilder builder = new OMultiPointShapeBuilder();
-    String multiPoint = builder.asText(doc, null);
+    String multiPoint = builder.asText(doc);
 
     List<Coordinate> points = new ArrayList<Coordinate>() {
       {
@@ -105,7 +105,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
 
     ORectangleShapeBuilder builder = new ORectangleShapeBuilder();
 
-    String rect = builder.asText(doc, null);
+    String rect = builder.asText(doc);
 
     Assert.assertNotNull(rect);
 
@@ -130,7 +130,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     });
 
     OLineStringShapeBuilder builder = new OLineStringShapeBuilder();
-    String lineString = builder.asText(doc, null);
+    String lineString = builder.asText(doc);
 
     Shape shape = context.makeLineString(new ArrayList<Point>() {
       {
@@ -163,7 +163,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     });
 
     OMultiLineStringShapeBuilder builder = new OMultiLineStringShapeBuilder();
-    String multiLineString = builder.asText(doc, null);
+    String multiLineString = builder.asText(doc);
 
     Shape shape = context.makeLineString(new ArrayList<Point>() {
       {
@@ -210,7 +210,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
 
     OPolygonShapeBuilder builder = new OPolygonShapeBuilder();
 
-    String p1 = builder.asText(doc, null);
+    String p1 = builder.asText(doc);
     Polygon polygon1 = geometryFactory.createPolygon(coordinates.toArray(new Coordinate[coordinates.size()]));
     String p2 = polygon1.toText();
     Assert.assertEquals(p2, p1);
@@ -226,7 +226,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     Polygon polygon1 = polygonTestHole();
 
     OPolygonShapeBuilder builder = new OPolygonShapeBuilder();
-    String p1 = builder.asText(doc, null);
+    String p1 = builder.asText(doc);
 
     String p2 = polygon1.toText();
     Assert.assertEquals(p2, p1);
@@ -240,7 +240,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     ODocument multiPolygon = loadMultiPolygon();
     MultiPolygon multiPolygon1 = createMultiPolygon();
 
-    String m1 = builder.asText(multiPolygon, null);
+    String m1 = builder.asText(multiPolygon);
     String m2 = multiPolygon1.toText();
     Assert.assertEquals(m2, m1);
   }
@@ -253,7 +253,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     ODocument geometryCollection = geometryCollection();
     GeometryCollection collection = createGeometryCollection();
 
-    String m1 = builder.asText(geometryCollection, null);
+    String m1 = builder.asText(geometryCollection);
     String m2 = collection.toText();
     Assert.assertEquals(m2, m1);
   }
