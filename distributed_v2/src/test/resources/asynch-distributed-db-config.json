@@ -1,0 +1,16 @@
+{
+  "autoDeploy": true,
+  "executionMode": "asynchronous",
+  "readQuorum": 1,
+  "writeQuorum": "majority",
+  "readYourWrites": true,
+  "clusters": {
+    "internal": {
+    },
+    "*": {
+      "servers": [
+        "<NEW_NODE>"
+      ]
+    }
+  }
+}
