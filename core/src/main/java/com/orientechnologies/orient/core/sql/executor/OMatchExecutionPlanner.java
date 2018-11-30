@@ -73,8 +73,8 @@ public class OMatchExecutionPlanner {
 
     OSelectExecutionPlan result = new OSelectExecutionPlan(context);
     Map<String, Long> estimatedRootEntries = estimateRootEntries(aliasClasses, aliasClusters, aliasRids, aliasFilters, context);
-    Set<String> aliasesToPrefetch = estimatedRootEntries.entrySet().stream().filter(x -> x.getValue() < this.threshold).
-        map(x -> x.getKey()).collect(Collectors.toSet());
+    Set<String> aliasesToPrefetch = estimatedRootEntries.entrySet().stream().filter(x -> x.getValue() < this.threshold)
+        .filter(x -> !dependsOnExecutionContext(x.getKey())).map(x -> x.getKey()).collect(Collectors.toSet());
     for (Map.Entry<String, Long> entry : estimatedRootEntries.entrySet()) {
       if (entry.getValue() == 0L && !isOptional(entry.getKey())) {
         result.chain(new EmptyStep(context, enableProfiling));
@@ -156,6 +156,20 @@ public class OMatchExecutionPlanner {
 
     return result;
 
+  }
+
+  private boolean dependsOnExecutionContext(String key) {
+    OWhereClause filter = aliasFilters.get(key);
+    if (filter == null) {
+      return false;
+    }
+    if (filter.refersToParent()) {
+      return true;
+    }
+    if (filter.toString().toLowerCase().contains("$matched.")) {
+      return true;
+    }
+    return false;
   }
 
   private boolean isOptional(String key) {
