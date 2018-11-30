@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.client.remote.OBinaryRequest;
+import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -10,43 +12,57 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedCoordinator;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ODistributedMember;
+import com.orientechnologies.orient.server.distributed.impl.coordinator.network.*;
 import com.orientechnologies.orient.server.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralCoordinator;
 import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralDistributedContext;
 import com.orientechnologies.orient.server.distributed.impl.structural.OStructuralDistributedMember;
+import com.orientechnologies.orient.server.hazelcast.OCoordinatedExecutorMessageHandler;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.*;
+import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE;
+
 /**
  * Created by tglman on 08/08/17.
  */
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
 
-  private          OServer                          server;
-  private volatile OHazelcastPlugin                 plugin;
-  private final    Map<String, ODistributedChannel> members     = new HashMap<>();
-  private volatile boolean                          coordinator = false;
-  private volatile String                           coordinatorName;
-  private final    OStructuralDistributedContext    structuralDistributedContext;
+  private          OServer                            server;
+  private volatile OHazelcastPlugin                   plugin;
+  private final    Map<String, ODistributedChannel>   members     = new HashMap<>();
+  private volatile boolean                            coordinator = false;
+  private volatile String                             coordinatorName;
+  private final    OStructuralDistributedContext      structuralDistributedContext;
+  private          OCoordinatedExecutorMessageHandler requestHandler;
+  private          OCoordinateMessagesFactory         coordinateMessagesFactory;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
     structuralDistributedContext = new OStructuralDistributedContext();
+    //This now si simple but should be replaced by a factory depending to the protocol version
+    coordinateMessagesFactory = new OCoordinateMessagesFactory();
+    requestHandler = new OCoordinatedExecutorMessageHandler(this);
   }
 
   @Override
@@ -354,5 +370,46 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       }
     }
   }
+
+  public void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
+      throws IOException {
+    try {
+      getPlugin().waitUntilNodeOnline();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+    OBinaryRequest<OBinaryResponse> request = newDistributedRequest(requestType);
+    try {
+      request.read(channel, 0, null);
+    } catch (IOException e) {
+      //impossible to read request ... probably need to notify this back.
+      throw e;
+    }
+    ODistributedExecutable executable = (ODistributedExecutable) request;
+    executable.executeDistributed(requestHandler);
+  }
+
+  private OBinaryRequest<OBinaryResponse> newDistributedRequest(int requestType) {
+    switch (requestType) {
+    case DISTRIBUTED_SUBMIT_REQUEST:
+      return new ONetworkSubmitRequest(coordinateMessagesFactory);
+    case DISTRIBUTED_SUBMIT_RESPONSE:
+      return new ONetworkSubmitResponse(coordinateMessagesFactory);
+    case DISTRIBUTED_OPERATION_REQUEST:
+      return new OOperationRequest(coordinateMessagesFactory);
+    case DISTRIBUTED_OPERATION_RESPONSE:
+      return new OOperationResponse(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST:
+      return new ONetworkStructuralSubmitRequest(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE:
+      return new ONetworkStructuralSubmitResponse(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST:
+      return new OStructuralOperationRequest(coordinateMessagesFactory);
+    case DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE:
+      return new OStructuralOperationResponse(coordinateMessagesFactory);
+    }
+    return null;
+  }
+
 
 }

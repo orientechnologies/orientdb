@@ -56,6 +56,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.*;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OConnectionBinaryExecutor;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -217,10 +218,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   private void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId) throws IOException {
-    final ODistributedServerManager manager = server.getDistributedManager();
     byte[] tokenBytes = channel.readBytes();
     connection = onBeforeOperationalRequest(connection, tokenBytes);
-    manager.coordinatedRequest(connection, requestType, clientTxId, channel);
+    ((OServerAware) server.getDatabases()).coordinatedRequest(connection, requestType, clientTxId, channel);
   }
 
   private void handleHandshake() throws IOException {

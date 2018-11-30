@@ -153,12 +153,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   // THIS MAP IS BACKED BY HAZELCAST EVENTS. IN THIS WAY WE AVOID TO USE HZ MAP DIRECTLY
   protected OHazelcastDistributedMap           configurationMap;
   private   OSignalHandler.OSignalListener     signalListener;
-  private   OCoordinatedExecutorMessageHandler requestHandler;
-  private   OCoordinateMessagesFactory         coordinateMessagesFactory;
+
 
   public OHazelcastPlugin() {
-    //This now si simple but should be replaced by a factory depending to the protocol version
-    coordinateMessagesFactory = new OCoordinateMessagesFactory();
   }
 
   // Must be set before startup() is called.
@@ -174,7 +171,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
     super.config(iServer, iParams);
-    requestHandler = new OCoordinatedExecutorMessageHandler((OrientDBDistributed) iServer.getDatabases());
     if (nodeName == null)
       assignNodeName();
 
@@ -1885,44 +1881,4 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     OLogManager.instance().info(this, "Distributed Lock Manager server is '%s'", lockManagerServer);
   }
 
-  @Override
-  public void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
-      throws IOException {
-    try {
-      waitUntilNodeOnline();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-    OBinaryRequest<OBinaryResponse> request = newDistributedRequest(requestType);
-    try {
-      request.read(channel, 0, null);
-    } catch (IOException e) {
-      //impossible to read request ... probably need to notify this back.
-      throw e;
-    }
-    ODistributedExecutable executable = (ODistributedExecutable) request;
-    executable.executeDistributed(requestHandler);
-  }
-
-  private OBinaryRequest<OBinaryResponse> newDistributedRequest(int requestType) {
-    switch (requestType) {
-    case DISTRIBUTED_SUBMIT_REQUEST:
-      return new ONetworkSubmitRequest(coordinateMessagesFactory);
-    case DISTRIBUTED_SUBMIT_RESPONSE:
-      return new ONetworkSubmitResponse(coordinateMessagesFactory);
-    case DISTRIBUTED_OPERATION_REQUEST:
-      return new OOperationRequest(coordinateMessagesFactory);
-    case DISTRIBUTED_OPERATION_RESPONSE:
-      return new OOperationResponse(coordinateMessagesFactory);
-    case DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST:
-      return new ONetworkStructuralSubmitRequest(coordinateMessagesFactory);
-    case DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE:
-      return new ONetworkStructuralSubmitResponse(coordinateMessagesFactory);
-    case DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST:
-      return new OStructuralOperationRequest(coordinateMessagesFactory);
-    case DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE:
-      return new OStructuralOperationResponse(coordinateMessagesFactory);
-    }
-    return null;
-  }
 }

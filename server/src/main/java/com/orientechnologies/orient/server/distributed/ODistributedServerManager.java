@@ -300,5 +300,4 @@ public interface ODistributedServerManager {
 
   void notifyClients(String databaseName);
 
-  void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel) throws IOException;
 }
