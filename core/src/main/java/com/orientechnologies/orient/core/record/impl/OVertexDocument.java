@@ -299,7 +299,11 @@ public class OVertexDocument extends ODocument implements OVertex {
 
   public static void deleteLinks(OVertex delegate) {
     Iterable<OEdge> allEdges = delegate.getEdges(ODirection.BOTH);
+    List<OEdge> items = new ArrayList<>();
     for (OEdge edge : allEdges) {
+      items.add(edge);
+    }
+    for (OEdge edge : items) {
       edge.delete();
     }
   }
