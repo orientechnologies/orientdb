@@ -117,8 +117,7 @@ public abstract class OShapeBuilder<T extends Shape> {
     return asText(fromDoc(document));
   }
 
-  public String asText(Map<String, Object> geoJson) {
-    //srid should be processed in fromMapGeoJson(), so other parameter should be null to avoid double transformation
+  public String asText(Map<String, Object> geoJson) {    
     return asText(fromMapGeoJson(geoJson));
   }
 

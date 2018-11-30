@@ -172,14 +172,11 @@ public class OShapeFactory extends OComplexShapeBuilder {
     } else if (ShapeCollection.class.isAssignableFrom(shape.getClass())) {
       ShapeCollection collection = (ShapeCollection) shape;
 
-      if (isMultiPolygon(collection)) {
-        //second srid is null because we don't want double transformation
+      if (isMultiPolygon(collection)) {        
         doc = factories.get("OMultiPolygon").toDoc(createMultiPolygon(collection));
-      } else if (isMultiPoint(collection)) {
-        //second srid is null because we don't want double transformation
+      } else if (isMultiPoint(collection)) {        
         doc = factories.get("OMultiPoint").toDoc(createMultiPoint(collection));
-      } else if (isMultiLine(collection)) {
-        //second srid is null because we don't want double transformation
+      } else if (isMultiLine(collection)) {        
         doc = factories.get("OMultiLineString").toDoc(createMultiLine(collection));
       } else {
         doc = factories.get("OGeometryCollection").toDoc(shape);

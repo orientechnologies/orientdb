@@ -78,13 +78,8 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
 
     for (JtsGeometry geometry : geometries) {
       multiLineString[i] = (LineString) geometry.getGeom();
-      Coordinate[] coordinates = multiLineString[i].getCoordinates();
-      Coordinate[] newCoordinates = new Coordinate[coordinates.length];
-      for (int j = 0; j < coordinates.length; j++){
-        Coordinate coordinate = coordinates[j];        
-        newCoordinates[j] = new Coordinate(coordinate.x, coordinate.y);
-      }
-      multiLineString[i] = GEOMETRY_FACTORY.createLineString(newCoordinates);
+      Coordinate[] coordinates = multiLineString[i].getCoordinates();      
+      multiLineString[i] = GEOMETRY_FACTORY.createLineString(coordinates);
       i++;
     }
 
@@ -108,13 +103,8 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
         polygons[i] = (Polygon) geometryFrom;
       }
 
-      Coordinate[] coordinates = polygons[i].getCoordinates();
-      Coordinate[] newCoordinates = new Coordinate[coordinates.length];
-      for (int j = 0; j < coordinates.length; j++){
-        Coordinate coordinate = coordinates[j];        
-        newCoordinates[j] = new Coordinate(coordinate.x, coordinate.y);
-      }
-      polygons[i] = GEOMETRY_FACTORY.createPolygon(newCoordinates);
+      Coordinate[] coordinates = polygons[i].getCoordinates();      
+      polygons[i] = GEOMETRY_FACTORY.createPolygon(coordinates);
       i++;
     }
 
