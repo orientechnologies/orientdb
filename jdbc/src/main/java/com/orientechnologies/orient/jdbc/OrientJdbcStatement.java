@@ -15,6 +15,7 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -138,9 +139,16 @@ public class OrientJdbcStatement implements Statement {
           return 1;
       } else {
         return 0;
+      }      
+    }
+    catch (SQLException e){
+      OLogManager.instance().error(this, e.getMessage(), e, (Object[])null);
+      throw e;
+    }
+    finally {
+      if (oResultSet != null){
+        oResultSet.close();
       }
-    } finally {
-      oResultSet.close();
     }
 
   }

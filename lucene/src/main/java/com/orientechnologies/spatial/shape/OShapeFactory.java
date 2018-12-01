@@ -82,7 +82,14 @@ public class OShapeFactory extends OComplexShapeBuilder {
 
   @Override
   public Shape fromObject(Object obj) {
-
+    if (obj instanceof OResultInternal){
+      OResultInternal resultInternal = (OResultInternal)obj;
+      OElement el = resultInternal.toElement();
+      if (el != null && el instanceof ODocument){
+        obj = (ODocument)el;
+      }
+    }
+    
     if (obj instanceof String) {
       try {
         return fromText((String) obj);

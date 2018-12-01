@@ -131,6 +131,7 @@ public class OrientJdbcConnection implements Connection {
   }
 
   public void commit() throws SQLException {
+    database.activateOnCurrentThread();
     database.commit();
   }
 
