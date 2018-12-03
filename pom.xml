@@ -110,6 +110,7 @@
         <module>tools</module>
         <module>tests</module>
         <module>distributed</module>
+        <module>distributed-v2</module>
         <module>graphdb</module>
         <module>lucene</module>
         <module>jdbc</module>

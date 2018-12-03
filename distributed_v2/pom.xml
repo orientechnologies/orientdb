@@ -32,7 +32,7 @@
         <relativePath>../</relativePath>
     </parent>
 
-    <artifactId>orientdb-distributed</artifactId>
+    <artifactId>orientdb-distributed-v2</artifactId>
 
     <name>OrientDB Distributed Server</name>
 

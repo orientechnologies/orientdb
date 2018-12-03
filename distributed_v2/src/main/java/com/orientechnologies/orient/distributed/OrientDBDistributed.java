@@ -70,6 +70,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     this.server.registerLifecycleListener(this);
   }
 
+  @Override
+  public void onAfterActivate() {
+
+  }
+
   public synchronized OHazelcastPlugin getPlugin() {
     if (plugin == null) {
       if (server != null && server.isActive())
