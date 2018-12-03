@@ -1,4 +1,7 @@
-package com.orientechnologies.orient.server.distributed;
+package com.orientechnologies.orient.distributed.impl;
+
+import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
+import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
