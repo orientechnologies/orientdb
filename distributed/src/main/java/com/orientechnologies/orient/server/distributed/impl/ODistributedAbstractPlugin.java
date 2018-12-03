@@ -121,19 +121,19 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected static final String PAR_DEF_DISTRIB_DB_CONFIG = "configuration.db.default";
   protected static final String NODE_NAME_ENV             = "ORIENTDB_NODE_NAME";
 
-  protected          OServer                                        serverInstance;
-  protected          String                                         nodeUuid;
-  protected          String                                         nodeName                          = null;
-  protected          int                                            nodeId                            = -1;
-  protected          File                                           defaultDatabaseConfigFile;
-  protected final    ConcurrentMap<String, ODistributedStorage>     storages                          = new ConcurrentHashMap<String, ODistributedStorage>();
-  protected volatile NODE_STATUS                                    status                            = NODE_STATUS.OFFLINE;
-  protected          long                                           lastClusterChangeOn;
-  protected          List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
-  protected final    ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
-  protected          TimerTask                                      publishLocalNodeConfigurationTask = null;
-  protected          TimerTask                                      haStatsTask                       = null;
-  protected          OClusterHealthChecker                          healthCheckerTask                 = null;
+  protected          OServer                                    serverInstance;
+  protected          String                                     nodeUuid;
+  protected          String                                     nodeName                          = null;
+  protected          int                                        nodeId                            = -1;
+  protected          File                                       defaultDatabaseConfigFile;
+  protected final    ConcurrentMap<String, ODistributedStorage> storages                          = new ConcurrentHashMap<String, ODistributedStorage>();
+  protected volatile NODE_STATUS                                status                            = NODE_STATUS.OFFLINE;
+  protected          long                                       lastClusterChangeOn;
+  protected          List<ODistributedLifecycleListener>        listeners                         = new ArrayList<ODistributedLifecycleListener>();
+  protected          ORemoteServerManager                       remoteServerManager;
+  protected          TimerTask                                  publishLocalNodeConfigurationTask = null;
+  protected          TimerTask                                  haStatsTask                       = null;
+  protected          OClusterHealthChecker                      healthCheckerTask                 = null;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -209,6 +209,18 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     } catch (IOException e) {
       throw OException.wrapException(new OConfigurationException("Error on deleting 'replicator' user"), e);
     }
+
+    this.remoteServerManager = new ORemoteServerManager(nodeName, new ORemoteServerAvailabilityCheck() {
+      @Override
+      public boolean isNodeAvailable(String node) {
+        return ODistributedAbstractPlugin.this.isNodeAvailable(node);
+      }
+
+      @Override
+      public void nodeDisconnected(String node) {
+        ODistributedAbstractPlugin.this.removeServer(node,true);
+      }
+    });
   }
 
   @Override
@@ -258,9 +270,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return;
 
     // CLOSE ALL CONNECTIONS TO THE SERVERS
-    for (ORemoteServerController server : remoteServers.values())
-      server.close();
-    remoteServers.clear();
+    remoteServerManager.closeAll();
 
     if (publishLocalNodeConfigurationTask != null)
       publishLocalNodeConfigurationTask.cancel();
@@ -2066,9 +2076,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   public void closeRemoteServer(final String node) {
-    final ORemoteServerController c = remoteServers.remove(node);
-    if (c != null)
-      c.close();
+    remoteServerManager.closeRemoteServer(node);
   }
 
   protected boolean isRelatedToLocalServer(final ODatabaseInternal iDatabase) {

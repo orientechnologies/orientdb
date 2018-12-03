@@ -151,9 +151,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected volatile HazelcastInstance hazelcastInstance;
 
   // THIS MAP IS BACKED BY HAZELCAST EVENTS. IN THIS WAY WE AVOID TO USE HZ MAP DIRECTLY
-  protected OHazelcastDistributedMap           configurationMap;
-  private   OSignalHandler.OSignalListener     signalListener;
-
+  protected OHazelcastDistributedMap       configurationMap;
+  private   OSignalHandler.OSignalListener signalListener;
 
   public OHazelcastPlugin() {
   }
@@ -212,9 +211,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     activeNodesUuidByName.clear();
 
     // CLOSE ALL CONNECTIONS TO THE SERVERS
-    for (ORemoteServerController server : remoteServers.values())
-      server.close();
-    remoteServers.clear();
+    remoteServerManager.closeAll();
 
     registeredNodeById.clear();
     registeredNodeByName.clear();
@@ -691,7 +688,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 //    if (rNodeName.equalsIgnoreCase(getLocalNodeName()))
 //      throw new IllegalArgumentException("Cannot send remote message to the local server");
 
-    ORemoteServerController remoteServer = remoteServers.get(rNodeName);
+    ORemoteServerController remoteServer = remoteServerManager.getRemoteServer(rNodeName);
     if (remoteServer == null) {
       Member member = getClusterMemberByName(rNodeName);
 
@@ -719,13 +716,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         final String userPassword = cfg.field("user_replicator");
 
         if (userPassword != null) {
-          // OK
-          remoteServer = new ORemoteServerController(this, rNodeName, url, REPLICATOR_USER, userPassword);
-          final ORemoteServerController old = remoteServers.putIfAbsent(rNodeName, remoteServer);
-          if (old != null) {
-            remoteServer.close();
-            remoteServer = old;
-          }
+          remoteServer = remoteServerManager.connectRemoteServer(rNodeName, url, REPLICATOR_USER, userPassword);
           break;
         }
 
@@ -1721,8 +1712,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       final String originalLockManager = lockManagerServer;
 
-      ODistributedServerLog.debug(this, nodeName, originalLockManager, DIRECTION.OUT,
-          "lock '%s' is unreachable, electing a new lock...", originalLockManager);
+      ODistributedServerLog
+          .debug(this, nodeName, originalLockManager, DIRECTION.OUT, "lock '%s' is unreachable, electing a new lock...",
+              originalLockManager);
 
       int lockManagerServerId = -1;
       if (lockManagerServer != null && registeredNodeByName.containsKey(lockManagerServer))
@@ -1745,8 +1737,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           // TODO: IMPROVE ELECTION BY CHECKING AL THE NODES AGREE ON IT
 
           ODistributedServerLog
-              .debug(this, nodeName, newServer, DIRECTION.OUT, "Trying to elected server '%s' as new lock (old=%s)...",
-                  newServer, originalLockManager);
+              .debug(this, nodeName, newServer, DIRECTION.OUT, "Trying to elected server '%s' as new lock (old=%s)...", newServer,
+                  originalLockManager);
 
           try {
             getLockManagerRequester().setServer(newServer);
@@ -1763,8 +1755,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           } catch (Exception e) {
             // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED, GO AHEAD WITH THE NEXT IN THE LIST
             ODistributedServerLog
-                .info(this, nodeName, newServer, DIRECTION.OUT, "Error on electing server '%s' as new lock (error: %s)",
-                    newServer, e);
+                .info(this, nodeName, newServer, DIRECTION.OUT, "Error on electing server '%s' as new lock (error: %s)", newServer,
+                    e);
           }
         }
       }

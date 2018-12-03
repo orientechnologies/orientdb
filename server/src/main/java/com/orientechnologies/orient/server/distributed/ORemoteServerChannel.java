@@ -48,17 +48,18 @@ import java.util.concurrent.*;
  * @author Luca Garulli
  */
 public class ORemoteServerChannel {
-  private final ODistributedServerManager manager;
-  private final String                    url;
-  private final String                    remoteHost;
-  private final int                       remotePort;
-  private final String                    userName;
-  private final String                    userPassword;
-  private final String                    server;
-  private       OChannelBinarySynchClient channel;
-  private       int                       protocolVersion;
-  private       ODistributedRequest       prevRequest;
-  private       ODistributedResponse      prevResponse;
+  private final ORemoteServerAvailabilityCheck check;
+  private final String                         url;
+  private final String                         remoteHost;
+  private final int                            remotePort;
+  private final String                         userName;
+  private final String                         userPassword;
+  private final String                         server;
+  private       OChannelBinarySynchClient      channel;
+  private       int                            protocolVersion;
+  private       ODistributedRequest            prevRequest;
+  private       ODistributedResponse           prevResponse;
+  private       String                         localNodeName;
 
   private static final int                   MAX_RETRY     = 3;
   private static final String                CLIENT_TYPE   = "OrientDB Server";
@@ -72,9 +73,10 @@ public class ORemoteServerChannel {
   private final static int             MAX_CONSECUTIVE_ERRORS = 10;
   private              ExecutorService executor;
 
-  public ORemoteServerChannel(final ODistributedServerManager manager, final String iServer, final String iURL, final String user,
-      final String passwd, final int currentProtocolVersion) throws IOException {
-    this.manager = manager;
+  public ORemoteServerChannel(final ORemoteServerAvailabilityCheck check, String localNodeName, final String iServer,
+      final String iURL, final String user, final String passwd, final int currentProtocolVersion) throws IOException {
+    this.check = check;
+    this.localNodeName = localNodeName;
     this.server = iServer;
     this.url = iURL;
     this.userName = user;
@@ -206,10 +208,10 @@ public class ORemoteServerChannel {
         if (!autoReconnect)
           break;
 
-        if (!manager.isNodeAvailable(server))
+        if (!check.isNodeAvailable(server))
           break;
 
-        ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
+        ODistributedServerLog.warn(this, localNodeName, server, ODistributedServerLog.DIRECTION.OUT,
             "Error on sending message to distributed node (%s) retrying (%d/%d)", lastException.toString(), retry, maxRetry);
 
         if (retry > 1)
@@ -229,7 +231,7 @@ public class ORemoteServerChannel {
           lastException = e1;
           handleNewError();
 
-          ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
+          ODistributedServerLog.warn(this, localNodeName, server, ODistributedServerLog.DIRECTION.OUT,
               "Error on reconnecting to distributed node (%s)", lastException.toString());
         }
       }
@@ -239,13 +241,9 @@ public class ORemoteServerChannel {
       handleNewError();
 
     ODistributedServerLog
-        .error(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT, "Error sending message to other node",
+        .error(this, localNodeName, server, ODistributedServerLog.DIRECTION.OUT, "Error sending message to other node",
             lastException);
     return null;
-  }
-
-  public ODistributedServerManager getManager() {
-    return manager;
   }
 
   public String getServer() {
@@ -260,13 +258,13 @@ public class ORemoteServerChannel {
     totalConsecutiveErrors++;
 
     if (totalConsecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-      ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
+      ODistributedServerLog.warn(this, localNodeName, server, ODistributedServerLog.DIRECTION.OUT,
           "Reached %d consecutive errors on connection, remove the server '%s' from the cluster", totalConsecutiveErrors, server);
 
       try {
-        manager.removeServer(server, true);
+        check.nodeDisconnected(server);
       } catch (Exception e) {
-        ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
+        ODistributedServerLog.warn(this, localNodeName, server, ODistributedServerLog.DIRECTION.OUT,
             "Error on removing server '%s' from the cluster", server);
       }
     }
