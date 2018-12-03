@@ -57,6 +57,9 @@ import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.distributed.impl.*;
+import com.orientechnologies.orient.distributed.impl.task.*;
+import com.orientechnologies.orient.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
@@ -66,9 +69,8 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ORemoteServerManager;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
-import com.orientechnologies.orient.distributed.impl.task.*;
-import com.orientechnologies.orient.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
@@ -76,33 +78,13 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -121,19 +103,19 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected static final String PAR_DEF_DISTRIB_DB_CONFIG = "configuration.db.default";
   protected static final String NODE_NAME_ENV             = "ORIENTDB_NODE_NAME";
 
-  protected          OServer                                        serverInstance;
-  protected          String                                         nodeUuid;
-  protected          String                                         nodeName                          = null;
-  protected          int                                            nodeId                            = -1;
-  protected          File                                           defaultDatabaseConfigFile;
-  protected final    ConcurrentMap<String, ODistributedStorage>     storages                          = new ConcurrentHashMap<String, ODistributedStorage>();
-  protected volatile NODE_STATUS                                    status                            = NODE_STATUS.OFFLINE;
-  protected          long                                           lastClusterChangeOn;
-  protected          List<ODistributedLifecycleListener>            listeners                         = new ArrayList<ODistributedLifecycleListener>();
-  protected final    ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
-  protected          TimerTask                                      publishLocalNodeConfigurationTask = null;
-  protected          TimerTask                                      haStatsTask                       = null;
-  protected          OClusterHealthChecker                          healthCheckerTask                 = null;
+  protected          OServer                                    serverInstance;
+  protected          String                                     nodeUuid;
+  protected          String                                     nodeName  = null;
+  protected          int                                        nodeId    = -1;
+  protected          File                                       defaultDatabaseConfigFile;
+  protected final    ConcurrentMap<String, ODistributedStorage> storages  = new ConcurrentHashMap<String, ODistributedStorage>();
+  protected volatile NODE_STATUS                                status    = NODE_STATUS.OFFLINE;
+  protected long                                lastClusterChangeOn;
+  protected List<ODistributedLifecycleListener> listeners                         = new ArrayList<ODistributedLifecycleListener>();
+  protected ORemoteServerManager                remoteServerManager;
+  protected TimerTask                           publishLocalNodeConfigurationTask = null;
+  protected TimerTask                           haStatsTask                       = null;
+  protected OClusterHealthChecker               healthCheckerTask                 = null;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -209,6 +191,18 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     } catch (IOException e) {
       throw OException.wrapException(new OConfigurationException("Error on deleting 'replicator' user"), e);
     }
+
+    this.remoteServerManager = new ORemoteServerManager(nodeName, new ORemoteServerAvailabilityCheck() {
+      @Override
+      public boolean isNodeAvailable(String node) {
+        return ODistributedAbstractPlugin.this.isNodeAvailable(node);
+      }
+
+      @Override
+      public void nodeDisconnected(String node) {
+        ODistributedAbstractPlugin.this.removeServer(node,true);
+      }
+    });
   }
 
   @Override
@@ -258,9 +252,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return;
 
     // CLOSE ALL CONNECTIONS TO THE SERVERS
-    for (ORemoteServerController server : remoteServers.values())
-      server.close();
-    remoteServers.clear();
+    remoteServerManager.closeAll();
 
     if (publishLocalNodeConfigurationTask != null)
       publishLocalNodeConfigurationTask.cancel();
@@ -2066,9 +2058,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   public void closeRemoteServer(final String node) {
-    final ORemoteServerController c = remoteServers.remove(node);
-    if (c != null)
-      c.close();
+    remoteServerManager.closeRemoteServer(node);
   }
 
   protected boolean isRelatedToLocalServer(final ODatabaseInternal iDatabase) {

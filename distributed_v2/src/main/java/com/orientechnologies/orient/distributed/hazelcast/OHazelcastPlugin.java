@@ -21,21 +21,7 @@ package com.orientechnologies.orient.distributed.hazelcast;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.FileSystemXmlConfig;
-import com.hazelcast.core.EntryEvent;
-import com.hazelcast.core.EntryListener;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastException;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.hazelcast.core.ILock;
-import com.hazelcast.core.LifecycleEvent;
-import com.hazelcast.core.LifecycleListener;
-import com.hazelcast.core.LifecycleService;
-import com.hazelcast.core.MapEvent;
-import com.hazelcast.core.Member;
-import com.hazelcast.core.MemberAttributeEvent;
-import com.hazelcast.core.MembershipEvent;
-import com.hazelcast.core.MembershipListener;
+import com.hazelcast.core.*;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
@@ -55,7 +41,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -64,47 +49,26 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OSystemDatabase;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ORemoteServerController;
-import com.orientechnologies.orient.distributed.impl.OClusterHealthChecker;
-import com.orientechnologies.orient.distributed.impl.ODistributedAbstractPlugin;
-import com.orientechnologies.orient.distributed.impl.ODistributedDatabaseImpl;
-import com.orientechnologies.orient.distributed.impl.ODistributedMessageServiceImpl;
-import com.orientechnologies.orient.distributed.impl.ODistributedOutput;
-import com.orientechnologies.orient.distributed.impl.ODistributedStorage;
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
+import com.orientechnologies.orient.distributed.impl.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.ODistributedChannelBinaryProtocol;
 import com.orientechnologies.orient.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.distributed.impl.task.OUpdateDatabaseConfigurationTask;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OSystemDatabase;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import sun.misc.Signal;
+import com.orientechnologies.orient.distributed.impl.ODistributedAbstractPlugin;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * Hazelcast implementation for clustering.
@@ -128,9 +92,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected volatile HazelcastInstance hazelcastInstance;
 
   // THIS MAP IS BACKED BY HAZELCAST EVENTS. IN THIS WAY WE AVOID TO USE HZ MAP DIRECTLY
-  protected OHazelcastDistributedMap           configurationMap;
-  private   OSignalHandler.OSignalListener     signalListener;
-
+  protected OHazelcastDistributedMap       configurationMap;
+  private   OSignalHandler.OSignalListener signalListener;
 
   public OHazelcastPlugin() {
   }
@@ -171,7 +134,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     //FORCE TO NEVER CONVERT RIDBAG EMBEDDED TO TREE
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
-    //FORCE TO EVERYTIME CONVERT RIDBAG TREE TO EMBEDDED 
+    //FORCE TO EVERYTIME CONVERT RIDBAG TREE TO EMBEDDED
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(Integer.MAX_VALUE);
     OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
 
@@ -189,9 +152,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     activeNodesUuidByName.clear();
 
     // CLOSE ALL CONNECTIONS TO THE SERVERS
-    for (ORemoteServerController server : remoteServers.values())
-      server.close();
-    remoteServers.clear();
+    remoteServerManager.closeAll();
 
     registeredNodeById.clear();
     registeredNodeByName.clear();
@@ -668,7 +629,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 //    if (rNodeName.equalsIgnoreCase(getLocalNodeName()))
 //      throw new IllegalArgumentException("Cannot send remote message to the local server");
 
-    ORemoteServerController remoteServer = remoteServers.get(rNodeName);
+    ORemoteServerController remoteServer = remoteServerManager.getRemoteServer(rNodeName);
     if (remoteServer == null) {
       Member member = getClusterMemberByName(rNodeName);
 
@@ -696,13 +657,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         final String userPassword = cfg.field("user_replicator");
 
         if (userPassword != null) {
-          // OK
-          remoteServer = new ORemoteServerController(this, rNodeName, url, REPLICATOR_USER, userPassword);
-          final ORemoteServerController old = remoteServers.putIfAbsent(rNodeName, remoteServer);
-          if (old != null) {
-            remoteServer.close();
-            remoteServer = old;
-          }
+          remoteServer = remoteServerManager.connectRemoteServer(rNodeName, url, REPLICATOR_USER, userPassword);
           break;
         }
 
@@ -1698,8 +1653,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       final String originalLockManager = lockManagerServer;
 
-      ODistributedServerLog.debug(this, nodeName, originalLockManager, DIRECTION.OUT,
-          "lock '%s' is unreachable, electing a new lock...", originalLockManager);
+      ODistributedServerLog
+          .debug(this, nodeName, originalLockManager, DIRECTION.OUT, "lock '%s' is unreachable, electing a new lock...",
+              originalLockManager);
 
       int lockManagerServerId = -1;
       if (lockManagerServer != null && registeredNodeByName.containsKey(lockManagerServer))
@@ -1722,8 +1678,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           // TODO: IMPROVE ELECTION BY CHECKING AL THE NODES AGREE ON IT
 
           ODistributedServerLog
-              .debug(this, nodeName, newServer, DIRECTION.OUT, "Trying to elected server '%s' as new lock (old=%s)...",
-                  newServer, originalLockManager);
+              .debug(this, nodeName, newServer, DIRECTION.OUT, "Trying to elected server '%s' as new lock (old=%s)...", newServer,
+                  originalLockManager);
 
           try {
             getLockManagerRequester().setServer(newServer);
@@ -1740,8 +1696,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           } catch (Exception e) {
             // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED, GO AHEAD WITH THE NEXT IN THE LIST
             ODistributedServerLog
-                .info(this, nodeName, newServer, DIRECTION.OUT, "Error on electing server '%s' as new lock (error: %s)",
-                    newServer, e);
+                .info(this, nodeName, newServer, DIRECTION.OUT, "Error on electing server '%s' as new lock (error: %s)", newServer,
+                    e);
           }
         }
       }
