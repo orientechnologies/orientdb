@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.distributed.impl.*;
 import com.orientechnologies.orient.distributed.impl.task.*;
 import com.orientechnologies.orient.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -68,6 +69,7 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ORemoteServerManager;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
@@ -108,12 +110,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected          File                                       defaultDatabaseConfigFile;
   protected final    ConcurrentMap<String, ODistributedStorage> storages  = new ConcurrentHashMap<String, ODistributedStorage>();
   protected volatile NODE_STATUS                                status    = NODE_STATUS.OFFLINE;
-  protected          long                                       lastClusterChangeOn;
-  protected          List<ODistributedLifecycleListener>        listeners                         = new ArrayList<ODistributedLifecycleListener>();
-  protected          ODistributedNetworkManager                 remoteServerManager;
-  protected          TimerTask                                  publishLocalNodeConfigurationTask = null;
-  protected          TimerTask                                  haStatsTask                       = null;
-  protected          OClusterHealthChecker                      healthCheckerTask                 = null;
+  protected long                                lastClusterChangeOn;
+  protected List<ODistributedLifecycleListener> listeners                         = new ArrayList<ODistributedLifecycleListener>();
+  protected ORemoteServerManager                remoteServerManager;
+  protected TimerTask                           publishLocalNodeConfigurationTask = null;
+  protected TimerTask                           haStatsTask                       = null;
+  protected OClusterHealthChecker               healthCheckerTask                 = null;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -190,7 +192,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       throw OException.wrapException(new OConfigurationException("Error on deleting 'replicator' user"), e);
     }
 
-    this.remoteServerManager = new ODistributedNetworkManager(nodeName, new ORemoteServerAvailabilityCheck() {
+    this.remoteServerManager = new ORemoteServerManager(nodeName, new ORemoteServerAvailabilityCheck() {
       @Override
       public boolean isNodeAvailable(String node) {
         return ODistributedAbstractPlugin.this.isNodeAvailable(node);
