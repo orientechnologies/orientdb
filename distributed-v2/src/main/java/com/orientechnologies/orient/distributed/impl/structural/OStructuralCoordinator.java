@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 
@@ -18,16 +19,18 @@ public class OStructuralCoordinator implements AutoCloseable {
   private final ConcurrentMap<OLogId, OStructuralRequestContext> contexts = new ConcurrentHashMap<>();
   private final Map<String, OStructuralDistributedMember>        members  = new ConcurrentHashMap<>();
   private final Timer                                            timer;
+  private final OrientDBDistributed                              context;
 
-  public OStructuralCoordinator(ExecutorService requestExecutor, OOperationLog operationLog) {
+  public OStructuralCoordinator(ExecutorService requestExecutor, OOperationLog operationLog, OrientDBDistributed context) {
     this.requestExecutor = requestExecutor;
     this.operationLog = operationLog;
     this.timer = new Timer(true);
+    this.context = context;
   }
 
   public void submit(OStructuralDistributedMember member, OSessionOperationId operationId, OStructuralSubmitRequest request) {
     requestExecutor.execute(() -> {
-      request.begin(member, operationId, this);
+      request.begin(member, operationId, this, context);
     });
   }
 

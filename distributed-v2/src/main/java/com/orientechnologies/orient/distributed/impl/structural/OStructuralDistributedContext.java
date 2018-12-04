@@ -1,46 +1,29 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.OIncrementOperationalLog;
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
-import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.metadata.OTransactionContext;
+import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 
 public class OStructuralDistributedContext {
-  private Map<OSessionOperationId, OTransactionContext> transactions;
-  private OStructuralDistributedExecutor                executor;
-  private OStructuralSubmitContext                      submitContext;
-  private OStructuralCoordinator                        coordinator;
-  private OOperationLog                                 opLog;
+  private OStructuralDistributedExecutor executor;
+  private OStructuralSubmitContext       submitContext;
+  private OStructuralCoordinator         coordinator;
+  private OOperationLog                  opLog;
+  private OrientDBDistributed            context;
 
-  public OStructuralDistributedContext() {
-    transactions = new ConcurrentHashMap<>();
-    executor = new OStructuralDistributedExecutor(Executors.newSingleThreadExecutor(), opLog, null);
+  public OStructuralDistributedContext(OrientDBDistributed context) {
+    initOpLog();
+    executor = new OStructuralDistributedExecutor(Executors.newSingleThreadExecutor(), opLog, context);
     submitContext = new OStructuralSubmitContextImpl();
     coordinator = null;
-    initOpLog();
+    this.context = context;
   }
 
   private void initOpLog() {
 //    this.opLog = OPersistentOperationalLogV1.newInstance(databaseName, context);
     this.opLog = new OIncrementOperationalLog();
-  }
-
-  public void registerTransaction(OSessionOperationId requestId, OTransactionInternal tx) {
-    transactions.put(requestId, new OTransactionContext(tx));
-
-  }
-
-  public OTransactionContext getTransaction(OSessionOperationId operationId) {
-    return transactions.get(operationId);
-  }
-
-  public void closeTransaction(OSessionOperationId operationId) {
-    transactions.remove(operationId);
   }
 
   public OStructuralDistributedExecutor getExecutor() {
@@ -57,14 +40,13 @@ public class OStructuralDistributedContext {
 
   public synchronized void makeCoordinator(String nodeName) {
     if (coordinator == null) {
-      coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), opLog);
-      OStructuralLoopBackDistributeDistributedMember loopBack = new OStructuralLoopBackDistributeDistributedMember(nodeName, submitContext, coordinator,
-          executor);
+      coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), opLog, context);
+      OStructuralLoopBackDistributeDistributedMember loopBack = new OStructuralLoopBackDistributeDistributedMember(nodeName,
+          submitContext, coordinator, executor);
       coordinator.join(loopBack);
       submitContext.setCoordinator(loopBack);
       executor.join(loopBack);
     }
-
   }
 
   public synchronized void setExternalCoordinator(OStructuralDistributedMember coordinator) {

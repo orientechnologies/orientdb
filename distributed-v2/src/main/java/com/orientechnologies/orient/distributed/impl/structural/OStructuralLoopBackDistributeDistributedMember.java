@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 
 public class OStructuralLoopBackDistributeDistributedMember extends OStructuralDistributedMember {
@@ -8,8 +8,8 @@ public class OStructuralLoopBackDistributeDistributedMember extends OStructuralD
   private       OStructuralCoordinator         coordinator;
   private final OStructuralDistributedExecutor executor;
 
-  public OStructuralLoopBackDistributeDistributedMember(String name, OStructuralSubmitContext submitContext, OStructuralCoordinator coordinator,
-      OStructuralDistributedExecutor executor) {
+  public OStructuralLoopBackDistributeDistributedMember(String name, OStructuralSubmitContext submitContext,
+      OStructuralCoordinator coordinator, OStructuralDistributedExecutor executor) {
     super(name, null);
     this.submitContext = submitContext;
     this.coordinator = coordinator;

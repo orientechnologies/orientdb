@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import org.junit.Test;
@@ -22,7 +23,7 @@ public class OStructuralCoordinatorTest {
     CountDownLatch responseReceived = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    OStructuralCoordinator coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), operationLog);
+    OStructuralCoordinator coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), operationLog, null);
     MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
     OStructuralDistributedMember one = new OStructuralDistributedMember("one", channel);
@@ -31,7 +32,8 @@ public class OStructuralCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override
-      public void begin(OStructuralDistributedMember member, OSessionOperationId operationId, OStructuralCoordinator coordinator) {
+      public void begin(OStructuralDistributedMember sender, OSessionOperationId operationId, OStructuralCoordinator coordinator,
+          OrientDBDistributed context) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OStructuralResponseHandler() {
           @Override
@@ -75,7 +77,7 @@ public class OStructuralCoordinatorTest {
     CountDownLatch responseReceived = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    OStructuralCoordinator coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), operationLog);
+    OStructuralCoordinator coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), operationLog, null);
     MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
     channel.reply = responseReceived;
@@ -85,7 +87,8 @@ public class OStructuralCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override
-      public void begin(OStructuralDistributedMember member, OSessionOperationId operationId, OStructuralCoordinator coordinator) {
+      public void begin(OStructuralDistributedMember sender, OSessionOperationId operationId, OStructuralCoordinator coordinator,
+          OrientDBDistributed context) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OStructuralResponseHandler() {
           @Override
@@ -95,7 +98,7 @@ public class OStructuralCoordinatorTest {
               coordinator.sendOperation(null, new OStructuralNodeRequest() {
                 @Override
                 public OStructuralNodeResponse execute(OStructuralDistributedMember nodeFrom, OLogId opId,
-                    OStructuralDistributedExecutor executor, OrientDBInternal context) {
+                    OStructuralDistributedExecutor executor, OrientDBDistributed context) {
                   return null;
                 }
 
@@ -180,7 +183,7 @@ public class OStructuralCoordinatorTest {
     CountDownLatch timedOut = new CountDownLatch(1);
     OOperationLog operationLog = new MockOperationLog();
 
-    OStructuralCoordinator coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), operationLog);
+    OStructuralCoordinator coordinator = new OStructuralCoordinator(Executors.newSingleThreadExecutor(), operationLog, null);
     MockDistributedChannel channel = new MockDistributedChannel();
     channel.coordinator = coordinator;
     OStructuralDistributedMember one = new OStructuralDistributedMember("one", channel);
@@ -189,7 +192,8 @@ public class OStructuralCoordinatorTest {
 
     coordinator.submit(one, new OSessionOperationId(), new OStructuralSubmitRequest() {
       @Override
-      public void begin(OStructuralDistributedMember member, OSessionOperationId operationId, OStructuralCoordinator coordinator) {
+      public void begin(OStructuralDistributedMember sender, OSessionOperationId operationId, OStructuralCoordinator coordinator,
+          OrientDBDistributed context) {
         MockNodeRequest nodeRequest = new MockNodeRequest();
         coordinator.sendOperation(this, nodeRequest, new OStructuralResponseHandler() {
           @Override
@@ -293,7 +297,7 @@ public class OStructuralCoordinatorTest {
 
     @Override
     public OStructuralNodeResponse execute(OStructuralDistributedMember nodeFrom, OLogId opId,
-        OStructuralDistributedExecutor executor, OrientDBInternal context) {
+        OStructuralDistributedExecutor executor, OrientDBDistributed context) {
       return null;
     }
 

@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 
 import java.util.Collection;
 import java.util.Map;

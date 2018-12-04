@@ -5,10 +5,7 @@ import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQueryOp
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQuerySubmitRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.ddl.ODDLQuerySubmitResponse;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.*;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralNodeResponse;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitRequest;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralSubmitResponse;
+import com.orientechnologies.orient.distributed.impl.structural.*;
 
 public class OCoordinateMessagesFactory {
   public static final int TRANSACTION_SUBMIT_REQUEST        = 1;
@@ -27,6 +24,16 @@ public class OCoordinateMessagesFactory {
   public static final int DDL_QUERY_SUBMIT_RESPONSE = 3;
   public static final int DDL_QUERY_NODE_REQUEST    = 4;
   public static final int DDL_QUERY_NODE_RESPONSE   = 4;
+
+  //STRUCTURAL MESSAGES
+  public static final int CREATE_DATABASE_SUBMIT_REQUEST  = 1;
+  public static final int CREATE_DATABASE_SUBMIT_RESPONSE = 1;
+  public static final int CREATE_DATABASE_REQUEST         = 1;
+  public static final int CREATE_DATABASE_RESPONSE        = 1;
+  public static final int DROP_DATABASE_SUBMIT_REQUEST    = 2;
+  public static final int DROP_DATABASE_SUBMIT_RESPONSE   = 2;
+  public static final int DROP_DATABASE_REQUEST           = 2;
+  public static final int DROP_DATABASE_RESPONSE          = 2;
 
   public ONodeResponse createOperationResponse(int responseType) {
     switch (responseType) {
@@ -85,18 +92,42 @@ public class OCoordinateMessagesFactory {
   }
 
   public OStructuralNodeResponse createStructuralOperationResponse(int responseType) {
+    switch (responseType) {
+    case CREATE_DATABASE_RESPONSE:
+      return new OCreateDatabaseOperationResponse();
+    case DROP_DATABASE_RESPONSE:
+      return new ODropDatabaseOperationResponse();
+    }
     return null;
   }
 
   public OStructuralNodeRequest createStructuralOperationRequest(int requestType) {
+    switch (requestType) {
+    case CREATE_DATABASE_REQUEST:
+      return new OCreateDatabaseOperationRequest();
+    case DROP_DATABASE_REQUEST:
+      return new ODropDatabaseOperationRequest();
+    }
     return null;
   }
 
   public OStructuralSubmitRequest createStructuralSubmitRequest(int requestType) {
+    switch (requestType) {
+    case CREATE_DATABASE_SUBMIT_REQUEST:
+      return new OCreateDatabaseSubmitRequest();
+    case DROP_DATABASE_SUBMIT_REQUEST:
+      return new ODropDatabaseSubmitRequest();
+    }
     return null;
   }
 
   public OStructuralSubmitResponse createStructuralSubmitResponse(int responseType) {
+    switch (responseType) {
+    case CREATE_DATABASE_SUBMIT_RESPONSE:
+      return new OCreateDatabaseSubmitResponse();
+    case DROP_DATABASE_SUBMIT_RESPONSE:
+      return new ODropDatabaseSubmitResponse();
+    }
     return null;
   }
 }

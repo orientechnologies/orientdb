@@ -13,6 +13,8 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
+import com.orientechnologies.orient.distributed.impl.structural.*;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.*;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
@@ -25,9 +27,6 @@ import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedMem
 import com.orientechnologies.orient.distributed.impl.coordinator.network.*;
 import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.distributed.impl.metadata.OSharedContextDistributed;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralCoordinator;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedContext;
-import com.orientechnologies.orient.distributed.impl.structural.OStructuralDistributedMember;
 import com.orientechnologies.orient.distributed.hazelcast.OCoordinatedExecutorMessageHandler;
 import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
 
@@ -37,6 +36,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.*;
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE;
@@ -57,7 +58,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
-    structuralDistributedContext = new OStructuralDistributedContext();
+    structuralDistributedContext = new OStructuralDistributedContext(this);
     //This now si simple but should be replaced by a factory depending to the protocol version
     coordinateMessagesFactory = new OCoordinateMessagesFactory();
     requestHandler = new OCoordinatedExecutorMessageHandler(this);
@@ -171,8 +172,22 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void create(String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
-    //if (isDistributedVersionTwo()) {
     if (false) {
+      if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) {
+        super.create(name, user, password, type, config);
+        return;
+      }
+      //TODO:RESOLVE CONFIGURATION PARAMETERS
+      Future<OStructuralSubmitResponse> created = structuralDistributedContext.getSubmitContext()
+          .send(new OSessionOperationId(), new OCreateDatabaseSubmitRequest(name, type.name(), new HashMap<>()));
+      try {
+        created.get();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+        return;
+      } catch (ExecutionException e) {
+        e.printStackTrace();
+      }
       //This initialize the distributed configuration.
       plugin.getDatabaseConfiguration(name);
       checkCoordinator(name);
@@ -348,29 +363,43 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void drop(String name, String user, String password) {
-    synchronized (this) {
-      checkOpen();
-      //This is a temporary fix for distributed drop that avoid scheduled view update to re-open the distributed database while is dropped
-      OSharedContext sharedContext = sharedContexts.get(name);
-      if (sharedContext != null) {
-        sharedContext.getViewManager().close();
+    if (false) {
+      //TODO:RESOLVE CONFIGURATION PARAMETERS
+      Future<OStructuralSubmitResponse> created = structuralDistributedContext.getSubmitContext()
+          .send(new OSessionOperationId(), new ODropDatabaseSubmitRequest(name));
+      try {
+        created.get();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+        return;
+      } catch (ExecutionException e) {
+        e.printStackTrace();
       }
-    }
-
-    ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
-    for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners(); it.hasNext(); ) {
-      it.next().onDrop(db);
-    }
-    db.close();
-    synchronized (this) {
-      if (exists(name, user, password)) {
-        OAbstractPaginatedStorage storage = getOrInitStorage(name);
+    } else {
+      synchronized (this) {
+        checkOpen();
+        //This is a temporary fix for distributed drop that avoid scheduled view update to re-open the distributed database while is dropped
         OSharedContext sharedContext = sharedContexts.get(name);
-        if (sharedContext != null)
-          sharedContext.close();
-        storage.delete();
-        storages.remove(name);
-        sharedContexts.remove(name);
+        if (sharedContext != null) {
+          sharedContext.getViewManager().close();
+        }
+      }
+
+      ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
+      for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners(); it.hasNext(); ) {
+        it.next().onDrop(db);
+      }
+      db.close();
+      synchronized (this) {
+        if (exists(name, user, password)) {
+          OAbstractPaginatedStorage storage = getOrInitStorage(name);
+          OSharedContext sharedContext = sharedContexts.get(name);
+          if (sharedContext != null)
+            sharedContext.close();
+          storage.delete();
+          storages.remove(name);
+          sharedContexts.remove(name);
+        }
       }
     }
   }
@@ -415,5 +444,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return null;
   }
 
+  public void internalCreateDatabase(String database, String type, Map<String, String> configurations) {
+    //TODO:INIT CONFIG
+    super.create(database, null, null, ODatabaseType.valueOf(type), null);
+  }
 
+  public void internalDropDatabase(String database) {
+    super.drop(database, null, null);
+  }
 }

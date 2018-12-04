@@ -1,7 +1,8 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
-import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.distributed.impl.coordinator.*;
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
+import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
+import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,10 +13,10 @@ public class OStructuralDistributedExecutor implements AutoCloseable {
 
   private       OOperationLog                             operationLog;
   private       ExecutorService                           executor;
-  private       OrientDBInternal                          orientDB;
+  private       OrientDBDistributed                       orientDB;
   private final Map<String, OStructuralDistributedMember> members = new ConcurrentHashMap<>();
 
-  public OStructuralDistributedExecutor(ExecutorService executor, OOperationLog operationLog, OrientDBInternal orientDB) {
+  public OStructuralDistributedExecutor(ExecutorService executor, OOperationLog operationLog, OrientDBDistributed orientDB) {
     this.operationLog = operationLog;
     this.executor = executor;
     this.orientDB = orientDB;

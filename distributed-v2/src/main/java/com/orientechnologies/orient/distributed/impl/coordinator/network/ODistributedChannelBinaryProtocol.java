@@ -35,17 +35,17 @@ public class ODistributedChannelBinaryProtocol implements ODistributedChannel {
 
   @Override
   public void sendRequest(OLogId id, OStructuralNodeRequest request) {
-
+    controller.sendBinaryRequest(new OStructuralOperationRequest(nodeName, id, request));
   }
 
   @Override
   public void reply(OSessionOperationId operationId, OStructuralSubmitResponse response) {
-
+    controller.sendBinaryRequest(new ONetworkStructuralSubmitResponse(nodeName, operationId, response));
   }
 
   @Override
   public void submit(OSessionOperationId operationId, OStructuralSubmitRequest request) {
-
+    controller.sendBinaryRequest(new ONetworkStructuralSubmitRequest(nodeName, operationId, request));
   }
 
   @Override
@@ -57,5 +57,4 @@ public class ODistributedChannelBinaryProtocol implements ODistributedChannel {
   public void reply(String database, OSessionOperationId operationId, OSubmitResponse response) {
     controller.sendBinaryRequest(new ONetworkSubmitResponse(nodeName, database, operationId, response));
   }
-
 }
