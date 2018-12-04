@@ -111,14 +111,20 @@ public interface OrientDBInternal extends AutoCloseable {
     OrientDBInternal factory;
 
     try {
-      String className = "com.orientechnologies.orient.core.db.OrientDBDistributed";
       ClassLoader loader;
       if (configuration != null) {
         loader = configuration.getClassLoader();
       } else {
         loader = OrientDBInternal.class.getClassLoader();
       }
-      Class<?> kass = loader.loadClass(className);
+      Class<?> kass;
+      try {
+        String className = "com.orientechnologies.orient.core.db.OrientDBDistributed";
+        kass = loader.loadClass(className);
+      } catch (ClassNotFoundException e) {
+        String className = "com.orientechnologies.orient.distributed.OrientDBDistributed";
+        kass = loader.loadClass(className);
+      }
       Constructor<?> constructor = kass.getConstructor(String.class, OrientDBConfig.class, Orient.class);
       factory = (OrientDBInternal) constructor.newInstance(directoryPath, configuration, Orient.instance());
     } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
