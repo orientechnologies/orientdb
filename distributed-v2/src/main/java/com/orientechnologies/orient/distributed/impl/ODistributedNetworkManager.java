@@ -7,13 +7,13 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class ORemoteServerManager {
+public class ODistributedNetworkManager {
 
   private final ConcurrentMap<String, ORemoteServerController> remoteServers = new ConcurrentHashMap<String, ORemoteServerController>();
   private final String                                         localNodeName;
   private final ORemoteServerAvailabilityCheck                 check;
 
-  public ORemoteServerManager(String localNodeName, ORemoteServerAvailabilityCheck check) {
+  public ODistributedNetworkManager(String localNodeName, ORemoteServerAvailabilityCheck check) {
     this.localNodeName = localNodeName;
     this.check = check;
   }
