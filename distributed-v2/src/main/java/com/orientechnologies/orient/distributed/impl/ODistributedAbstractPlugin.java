@@ -108,12 +108,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected          File                                       defaultDatabaseConfigFile;
   protected final    ConcurrentMap<String, ODistributedStorage> storages  = new ConcurrentHashMap<String, ODistributedStorage>();
   protected volatile NODE_STATUS                                status    = NODE_STATUS.OFFLINE;
-  protected long                                lastClusterChangeOn;
-  protected List<ODistributedLifecycleListener> listeners                         = new ArrayList<ODistributedLifecycleListener>();
-  protected ORemoteServerManager                remoteServerManager;
-  protected TimerTask                           publishLocalNodeConfigurationTask = null;
-  protected TimerTask                           haStatsTask                       = null;
-  protected OClusterHealthChecker               healthCheckerTask                 = null;
+  protected          long                                       lastClusterChangeOn;
+  protected          List<ODistributedLifecycleListener>        listeners                         = new ArrayList<ODistributedLifecycleListener>();
+  protected          ODistributedNetworkManager                 remoteServerManager;
+  protected          TimerTask                                  publishLocalNodeConfigurationTask = null;
+  protected          TimerTask                                  haStatsTask                       = null;
+  protected          OClusterHealthChecker                      healthCheckerTask                 = null;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -190,7 +190,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       throw OException.wrapException(new OConfigurationException("Error on deleting 'replicator' user"), e);
     }
 
-    this.remoteServerManager = new ORemoteServerManager(nodeName, new ORemoteServerAvailabilityCheck() {
+    this.remoteServerManager = new ODistributedNetworkManager(nodeName, new ORemoteServerAvailabilityCheck() {
       @Override
       public boolean isNodeAvailable(String node) {
         return ODistributedAbstractPlugin.this.isNodeAvailable(node);
