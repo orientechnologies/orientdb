@@ -1,23 +1,16 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.hazelcast.core.Member;
-import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
-
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class ORemoteServerManager {
+public class ODistributedNetworkManager {
 
   private final ConcurrentMap<String, ORemoteServerController> remoteServers = new ConcurrentHashMap<String, ORemoteServerController>();
   private final String                                         localNodeName;
   private final ORemoteServerAvailabilityCheck                 check;
 
-  public ORemoteServerManager(String localNodeName, ORemoteServerAvailabilityCheck check) {
+  public ODistributedNetworkManager(String localNodeName, ORemoteServerAvailabilityCheck check) {
     this.localNodeName = localNodeName;
     this.check = check;
   }
