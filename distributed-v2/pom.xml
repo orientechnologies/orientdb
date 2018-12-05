@@ -81,23 +81,6 @@
                 </plugins>
             </build>
         </profile>
-        <profile>
-            <id>new-coordinator</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                        <version>${surefire.version}</version>
-                        <configuration>
-                            <systemPropertyVariables>
-                                <distributed.replicationProtocol.version>2</distributed.replicationProtocol.version>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
     </profiles>
 
     <dependencies>
@@ -174,6 +157,9 @@
                 <configuration>
                     <reuseForks>false</reuseForks>
                     <forkCount>1</forkCount>
+                    <systemPropertyVariables>
+                        <distributed.replicationProtocol.version>2</distributed.replicationProtocol.version>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
         </plugins>
