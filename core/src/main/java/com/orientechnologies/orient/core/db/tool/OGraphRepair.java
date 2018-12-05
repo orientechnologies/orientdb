@@ -268,6 +268,7 @@ public class OGraphRepair {
       final long beginTime = System.currentTimeMillis();
 
       for (ODocument vertex : db.browseClass(vertexClass.getName())) {
+        boolean vertexCorrupted = false;
         parsedVertices++;
         if (skipVertices > 0 && parsedVertices <= skipVertices)
           continue;
@@ -302,6 +303,7 @@ public class OGraphRepair {
             if (fieldValue instanceof OIdentifiable) {
 
               if (isEdgeBroken(vertex, fieldName, connection.getKey(), (OIdentifiable) fieldValue, stats, true)) {
+                vertexCorrupted = true;
                 if (!checkOnly) {
                   vertex.field(fieldName, (Object) null);
                 } else
@@ -316,6 +318,7 @@ public class OGraphRepair {
                 final Object o = it.next();
 
                 if (isEdgeBroken(vertex, fieldName, connection.getKey(), (OIdentifiable) o, stats, true)) {
+                  vertexCorrupted = true;
                   if (!checkOnly) {
                     it.remove();
                   } else
@@ -337,6 +340,7 @@ public class OGraphRepair {
               for (Iterator<?> it = ridbag.rawIterator(); it.hasNext(); ) {
                 final Object o = it.next();
                 if (isEdgeBroken(vertex, fieldName, connection.getKey(), (OIdentifiable) o, stats, true)) {
+                  vertexCorrupted = true;
                   if (!checkOnly) {
                     it.remove();
                   } else
@@ -350,7 +354,7 @@ public class OGraphRepair {
           }
         }
 
-        if (vertex.isDirty()) {
+        if (vertexCorrupted) {
           stats.repairedVertices++;
           if (eventListener != null)
             eventListener.onRepairedVertex(vertex);
@@ -359,6 +363,9 @@ public class OGraphRepair {
           if (!checkOnly) {
             vertex.save();
           }
+        } else if (vertex.isDirty() && !checkOnly) {
+          message(outputListener, "+ optimized vertex " + vertex + "\n");
+          vertex.save();
         }
       }
 
