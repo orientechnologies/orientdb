@@ -525,14 +525,15 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
           final long pageIndex = OLongSerializer.INSTANCE.deserializeNative(data, 0);
 
-          OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, true, null);
+          OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1,
+              false, null);
 
           if (cacheEntry == null) {
             do {
               if (cacheEntry != null)
                 readCache.releaseFromWrite(cacheEntry, writeCache);
 
-              cacheEntry = readCache.allocateNewPage(fileId, writeCache, true, null, true);
+              cacheEntry = readCache.allocateNewPage(fileId, writeCache, false, null, true);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
 
