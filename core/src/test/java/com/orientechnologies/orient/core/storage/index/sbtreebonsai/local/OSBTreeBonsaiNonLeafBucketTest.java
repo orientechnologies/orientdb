@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.storage.index.sbtreebonsai.local;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
@@ -10,7 +11,6 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -26,9 +26,9 @@ public class OSBTreeBonsaiNonLeafBucketTest {
   @Test
   public void testInitialization() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
-    OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
+    OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();
@@ -62,9 +62,9 @@ public class OSBTreeBonsaiNonLeafBucketTest {
     }
 
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
-    OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
+    OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
@@ -129,9 +129,9 @@ public class OSBTreeBonsaiNonLeafBucketTest {
     }
 
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    ByteBuffer buffer = bufferPool.acquireDirect(true);
+    OPointer pointer = bufferPool.acquireDirect(true);
 
-    OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, 0, 0);
+    OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, 0, 0);
     cachePointer.incrementReferrer();
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer);
     cacheEntry.acquireExclusiveLock();

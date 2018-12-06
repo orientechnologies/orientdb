@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.cache.local.twoq;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
@@ -191,8 +192,7 @@ public class ReadWriteDiskCacheTest {
 
   private void initBuffer() throws IOException, InterruptedException {
     writeAheadLog = new OCASDiskWriteAheadLog(storageName, storagePath, storagePath, 12_000, 128, Integer.MAX_VALUE,
-        Integer.MAX_VALUE,
-        25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
+        Integer.MAX_VALUE, 25, true, Locale.US, -1, 1024L * 1024 * 1024, 1000, true, false, true, 10);
 
     writeBuffer = new OWOWCache(PAGE_SIZE, BUFFER_POOL, writeAheadLog, -1, 10, WRITE_CACHE_MAX_SIZE, storagePath, storageName,
         OStringSerializer.INSTANCE, files, 1, OChecksumMode.StoreAndThrow, false, true, 10);
@@ -232,7 +232,7 @@ public class ReadWriteDiskCacheTest {
 
     final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, entries[i].getCachePointer().getBufferDuplicate(), bufferPool);
+      OCacheEntry entry = generateEntry(fileId, i, entries[i].getCachePointer().getPointer(), bufferPool);
       Assert.assertEquals(a1in.get(entry.getFileId(), entry.getPageIndex()), entry);
     }
 
@@ -285,6 +285,7 @@ public class ReadWriteDiskCacheTest {
 
         final ByteBuffer buffer = entries[i].getCachePointer().getBufferDuplicate();
 
+        assert buffer != null;
         buffer.position(systemOffset);
         buffer.put(new byte[] { (byte) i, 1, 2, (byte) (seed + n), 4, 5, 6, (byte) (i + n) });
 
@@ -370,6 +371,7 @@ public class ReadWriteDiskCacheTest {
 
         final ByteBuffer buffer = entries[i].getCachePointer().getBufferDuplicate();
 
+        assert buffer != null;
         buffer.position(systemOffset);
         buffer.put(new byte[] { (byte) i, 1, 2, (byte) (seed + n), 4, 5, 6, (byte) (i + n) });
 
@@ -441,6 +443,7 @@ public class ReadWriteDiskCacheTest {
       }
 
       final ByteBuffer buffer = entries[i].getCachePointer().getBufferDuplicate();
+      assert buffer != null;
       buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i });
 
@@ -475,7 +478,7 @@ public class ReadWriteDiskCacheTest {
 
     final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     for (int i = 2; i < 4; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, entries[i].getCachePointer().getBufferDuplicate(), bufferPool);
+      OCacheEntry lruEntry = generateEntry(fileId, i, entries[i].getCachePointer().getPointer(), bufferPool);
       Assert.assertEquals(am.get(fileId, i), lruEntry);
     }
 
@@ -485,7 +488,7 @@ public class ReadWriteDiskCacheTest {
     }
 
     for (int i = 6; i < 8; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, entries[i].getCachePointer().getBufferDuplicate(), bufferPool);
+      OCacheEntry lruEntry = generateEntry(fileId, i, entries[i].getCachePointer().getPointer(), bufferPool);
       Assert.assertEquals(a1in.get(fileId, i), lruEntry);
     }
   }
@@ -515,6 +518,7 @@ public class ReadWriteDiskCacheTest {
       }
 
       final ByteBuffer buffer = entries[i].getCachePointer().getBufferDuplicate();
+      assert buffer != null;
       buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i });
       setLsn(buffer, new OLogSequenceNumber(1, i));
@@ -532,7 +536,7 @@ public class ReadWriteDiskCacheTest {
 
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     for (int i = 6; i < 10; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, entries[i].getCachePointer().getBufferDuplicate(), bufferPool);
+      OCacheEntry lruEntry = generateEntry(fileId, i, entries[i].getCachePointer().getPointer(), bufferPool);
       Assert.assertEquals(a1in.get(fileId, i), lruEntry);
     }
 
@@ -551,7 +555,7 @@ public class ReadWriteDiskCacheTest {
     Assert.assertEquals(a1out.size(), 2);
 
     for (int i = 4; i < 6; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, entries[i].getCachePointer().getBufferDuplicate(), bufferPool);
+      OCacheEntry lruEntry = generateEntry(fileId, i, entries[i].getCachePointer().getPointer(), bufferPool);
       Assert.assertEquals(am.get(fileId, i), lruEntry);
     }
 
@@ -561,7 +565,7 @@ public class ReadWriteDiskCacheTest {
     }
 
     for (int i = 8; i < 10; i++) {
-      OCacheEntry lruEntry = generateEntry(fileId, i, entries[i].getCachePointer().getBufferDuplicate(), bufferPool);
+      OCacheEntry lruEntry = generateEntry(fileId, i, entries[i].getCachePointer().getPointer(), bufferPool);
       Assert.assertEquals(a1in.get(fileId, i), lruEntry);
     }
 
@@ -587,6 +591,7 @@ public class ReadWriteDiskCacheTest {
       }
 
       final ByteBuffer buffer = entries[i].getCachePointer().getBufferDuplicate();
+      assert buffer != null;
       buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i });
       setLsn(buffer, new OLogSequenceNumber(1, i));
@@ -615,7 +620,7 @@ public class ReadWriteDiskCacheTest {
 
     OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, entries[i].getCachePointer().getBufferDuplicate(), bufferPool);
+      OCacheEntry entry = generateEntry(fileId, i, entries[i].getCachePointer().getPointer(), bufferPool);
       Assert.assertEquals(a1in.get(entry.getFileId(), entry.getPageIndex()), entry);
     }
 
@@ -636,6 +641,7 @@ public class ReadWriteDiskCacheTest {
         }
 
         final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
+        assert buffer != null;
         buffer.position(systemOffset);
         buffer.put(userData);
 
@@ -702,6 +708,7 @@ public class ReadWriteDiskCacheTest {
         }
 
         final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
+        assert buffer != null;
         buffer.position(systemOffset);
         buffer.put(userData);
 
@@ -786,6 +793,7 @@ public class ReadWriteDiskCacheTest {
         }
 
         final ByteBuffer buffer = cacheEntry.getCachePointer().getBufferDuplicate();
+        assert buffer != null;
         buffer.position(systemOffset);
         buffer.put(userData);
 
@@ -889,7 +897,7 @@ public class ReadWriteDiskCacheTest {
     Assert.assertEquals(a1out.size(), 0);
 
     final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
-    final OCacheEntry entry = generateEntry(fileId, 0, cacheEntry.getCachePointer().getBufferDuplicate(), bufferPool);
+    final OCacheEntry entry = generateEntry(fileId, 0, cacheEntry.getCachePointer().getPointer(), bufferPool);
 
     Assert.assertEquals(a1in.size(), 1);
     Assert.assertEquals(a1in.get(entry.getFileId(), entry.getPageIndex()), entry);
@@ -909,6 +917,7 @@ public class ReadWriteDiskCacheTest {
         Assert.assertEquals(entries[i].getPageIndex(), i);
       }
       ByteBuffer buffer = entries[i].getCachePointer().getBufferDuplicate();
+      assert buffer != null;
       buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i });
 
@@ -924,7 +933,7 @@ public class ReadWriteDiskCacheTest {
 
     final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     for (int i = 0; i < 4; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, entries[i].getCachePointer().getBufferDuplicate(), bufferPool);
+      OCacheEntry entry = generateEntry(fileId, i, entries[i].getCachePointer().getPointer(), bufferPool);
       Assert.assertEquals(a1in.get(entry.getFileId(), entry.getPageIndex()), entry);
     }
 
@@ -953,6 +962,7 @@ public class ReadWriteDiskCacheTest {
       }
 
       final ByteBuffer buffer = entries[i].getCachePointer().getBufferDuplicate();
+      assert buffer != null;
       buffer.position(systemOffset);
       content[i] = new byte[8];
       buffer.get(content[i]);
@@ -984,6 +994,7 @@ public class ReadWriteDiskCacheTest {
     cachePointer.acquireExclusiveLock();
     final Random random = new Random(seed);
     final ByteBuffer buffer = cachePointer.getBufferDuplicate();
+    assert buffer != null;
     Assert.assertTrue(buffer.limit() > systemOffset);
     for (int i = systemOffset; i < buffer.limit(); ++i)
       buffer.put(i, (byte) random.nextInt());
@@ -1015,6 +1026,7 @@ public class ReadWriteDiskCacheTest {
     verificationCachePointer.acquireSharedLock();
     final Random verificationRandom = new Random(seed);
     final ByteBuffer verificationBuffer = verificationCachePointer.getBufferDuplicate();
+    assert verificationBuffer != null;
     Assert.assertTrue(verificationBuffer.limit() > systemOffset);
     for (int i = systemOffset; i < verificationBuffer.limit(); ++i)
       Assert.assertEquals("at " + i, (byte) verificationRandom.nextInt(), verificationBuffer.get(i));
@@ -1038,6 +1050,7 @@ public class ReadWriteDiskCacheTest {
         }
 
         final ByteBuffer buffer = entries[i].getCachePointer().getBufferDuplicate();
+        assert buffer != null;
         buffer.position(systemOffset);
         buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, (byte) j, (byte) i });
 
@@ -1054,8 +1067,8 @@ public class ReadWriteDiskCacheTest {
 
     final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     for (int i = 0; i < 4; i++) {
-      final ByteBuffer buffer = entries[i].getCachePointer().getBufferDuplicate();
-      OCacheEntry entry = generateEntry(fileId, i, buffer, bufferPool);
+      final OPointer pointer = entries[i].getCachePointer().getPointer();
+      OCacheEntry entry = generateEntry(fileId, i, pointer, bufferPool);
       Assert.assertEquals(a1in.get(entry.getFileId(), entry.getPageIndex()), entry);
     }
 
@@ -1084,6 +1097,7 @@ public class ReadWriteDiskCacheTest {
       }
 
       final ByteBuffer buffer = entries[i].getCachePointer().getBufferDuplicate();
+      assert buffer != null;
       buffer.position(systemOffset);
       buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 });
 
@@ -1103,7 +1117,7 @@ public class ReadWriteDiskCacheTest {
 
     final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
     for (int i = 2; i < 6; i++) {
-      OCacheEntry entry = generateEntry(fileId, i, entries[i].getCachePointer().getBufferDuplicate(), bufferPool);
+      OCacheEntry entry = generateEntry(fileId, i, entries[i].getCachePointer().getPointer(), bufferPool);
       Assert.assertEquals(a1in.get(entry.getFileId(), entry.getPageIndex()), entry);
     }
 
@@ -1129,6 +1143,7 @@ public class ReadWriteDiskCacheTest {
         }
 
         ByteBuffer buffer = entries[i].getCachePointer().getBufferDuplicate();
+        assert buffer != null;
         buffer.position(systemOffset);
         buffer.put(new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, 7 });
 
@@ -1136,6 +1151,7 @@ public class ReadWriteDiskCacheTest {
           readBuffer.loadForWrite(fileId, i - 4, false, writeBuffer, 0, true, null);
 
           buffer = entries[i - 4].getCachePointer().getBufferDuplicate();
+          assert buffer != null;
           buffer.position(systemOffset);
           buffer.put(new byte[] { (byte) (i - 4), 1, 2, seed, 4, 5, 6, 7 });
         }
@@ -1171,8 +1187,8 @@ public class ReadWriteDiskCacheTest {
     fileClassic.close();
   }
 
-  private OCacheEntry generateEntry(long fileId, long pageIndex, ByteBuffer buffer, OByteBufferPool bufferPool) {
-    return new OCacheEntryImpl(fileId, pageIndex, new OCachePointer(buffer, bufferPool, fileId, pageIndex));
+  private OCacheEntry generateEntry(long fileId, long pageIndex, OPointer pointer, OByteBufferPool bufferPool) {
+    return new OCacheEntryImpl(fileId, pageIndex, new OCachePointer(pointer, bufferPool, fileId, pageIndex));
   }
 
   private OCacheEntry generateRemovedEntry(long fileId, long pageIndex) {

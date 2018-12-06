@@ -33,23 +33,23 @@ public class OByteBufferPoolTest {
     final ODirectMemoryAllocator allocator = new ODirectMemoryAllocator();
     final OByteBufferPool byteBufferPool = new OByteBufferPool(42, allocator, 0);
 
-    final ByteBuffer bufferOne = byteBufferPool.acquireDirect(false);
-    Assert.assertEquals(42, bufferOne.capacity());
+    final OPointer pointerOne = byteBufferPool.acquireDirect(false);
+    Assert.assertEquals(42, pointerOne.getNativeByteBuffer().capacity());
     Assert.assertEquals(42, allocator.getMemoryConsumption());
 
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
 
-    final ByteBuffer bufferTwo = byteBufferPool.acquireDirect(true);
-    Assert.assertEquals(42, bufferTwo.capacity());
+    final OPointer pointerTwo = byteBufferPool.acquireDirect(true);
+    Assert.assertEquals(42, pointerTwo.getNativeByteBuffer().capacity());
     Assert.assertEquals(84, allocator.getMemoryConsumption());
 
-    assertBufferIsClear(bufferTwo);
+    assertBufferIsClear(pointerTwo.getNativeByteBuffer());
 
-    byteBufferPool.release(bufferOne);
+    byteBufferPool.release(pointerOne);
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
     Assert.assertEquals(42, allocator.getMemoryConsumption());
 
-    byteBufferPool.release(bufferTwo);
+    byteBufferPool.release(pointerTwo);
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
     Assert.assertEquals(0, allocator.getMemoryConsumption());
 
@@ -62,120 +62,89 @@ public class OByteBufferPoolTest {
     final ODirectMemoryAllocator allocator = new ODirectMemoryAllocator();
     final OByteBufferPool byteBufferPool = new OByteBufferPool(42, allocator, 2);
 
-    ByteBuffer bufferOne = byteBufferPool.acquireDirect(false);
+    OPointer pointerOne = byteBufferPool.acquireDirect(false);
 
-    Assert.assertEquals(42, bufferOne.capacity());
+    Assert.assertEquals(42, pointerOne.getNativeByteBuffer().capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
     Assert.assertEquals(42, allocator.getMemoryConsumption());
 
-    ByteBuffer bufferTwo = byteBufferPool.acquireDirect(true);
-    Assert.assertEquals(42, bufferTwo.capacity());
+    OPointer pointerTwo = byteBufferPool.acquireDirect(true);
+    Assert.assertEquals(42, pointerTwo.getNativeByteBuffer().capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
     Assert.assertEquals(84, allocator.getMemoryConsumption());
 
-    assertBufferIsClear(bufferTwo);
+    assertBufferIsClear(pointerTwo.getNativeByteBuffer());
 
-    ByteBuffer bufferThree = byteBufferPool.acquireDirect(false);
+    OPointer pointerThree = byteBufferPool.acquireDirect(false);
 
-    Assert.assertEquals(42, bufferThree.capacity());
+    Assert.assertEquals(42, pointerThree.getNativeByteBuffer().capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
     Assert.assertEquals(126, allocator.getMemoryConsumption());
 
-    byteBufferPool.release(bufferOne);
+    byteBufferPool.release(pointerOne);
 
     Assert.assertEquals(1, byteBufferPool.getPoolSize());
     Assert.assertEquals(126, allocator.getMemoryConsumption());
 
-    byteBufferPool.release(bufferTwo);
+    byteBufferPool.release(pointerTwo);
 
     Assert.assertEquals(2, byteBufferPool.getPoolSize());
     Assert.assertEquals(126, allocator.getMemoryConsumption());
 
-    byteBufferPool.release(bufferThree);
+    byteBufferPool.release(pointerThree);
 
     Assert.assertEquals(2, byteBufferPool.getPoolSize());
     Assert.assertEquals(84, allocator.getMemoryConsumption());
 
-    bufferOne = byteBufferPool.acquireDirect(true);
+    pointerOne = byteBufferPool.acquireDirect(true);
 
-    Assert.assertEquals(42, bufferOne.capacity());
-    Assert.assertEquals(0, bufferOne.position());
+    Assert.assertEquals(42, pointerOne.getNativeByteBuffer().capacity());
     Assert.assertEquals(1, byteBufferPool.getPoolSize());
     Assert.assertEquals(84, allocator.getMemoryConsumption());
 
-    assertBufferIsClear(bufferOne);
+    assertBufferIsClear(pointerOne.getNativeByteBuffer());
 
-    bufferTwo = byteBufferPool.acquireDirect(true);
+    pointerTwo = byteBufferPool.acquireDirect(true);
 
-    Assert.assertEquals(42, bufferTwo.capacity());
-    Assert.assertEquals(0, bufferTwo.position());
+    Assert.assertEquals(42, pointerTwo.getNativeByteBuffer().capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
     Assert.assertEquals(84, allocator.getMemoryConsumption());
 
-    assertBufferIsClear(bufferTwo);
+    assertBufferIsClear(pointerTwo.getNativeByteBuffer());
 
-    bufferThree = byteBufferPool.acquireDirect(false);
+    pointerThree = byteBufferPool.acquireDirect(false);
 
-    Assert.assertEquals(42, bufferThree.capacity());
-    Assert.assertEquals(0, bufferThree.position());
+    Assert.assertEquals(42, pointerThree.getNativeByteBuffer().capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
     Assert.assertEquals(126, allocator.getMemoryConsumption());
 
-    byteBufferPool.release(bufferThree);
+    byteBufferPool.release(pointerThree);
 
     Assert.assertEquals(1, byteBufferPool.getPoolSize());
     Assert.assertEquals(126, allocator.getMemoryConsumption());
 
-    bufferThree = byteBufferPool.acquireDirect(true);
+    pointerThree = byteBufferPool.acquireDirect(true);
 
-    Assert.assertEquals(42, bufferThree.capacity());
-    Assert.assertEquals(0, bufferThree.position());
+    Assert.assertEquals(42, pointerThree.getNativeByteBuffer().capacity());
     Assert.assertEquals(0, byteBufferPool.getPoolSize());
     Assert.assertEquals(126, allocator.getMemoryConsumption());
 
-    assertBufferIsClear(bufferThree);
+    assertBufferIsClear(pointerThree.getNativeByteBuffer());
 
-    byteBufferPool.release(bufferThree);
+    byteBufferPool.release(pointerThree);
 
     Assert.assertEquals(1, byteBufferPool.getPoolSize());
     Assert.assertEquals(126, allocator.getMemoryConsumption());
 
-    byteBufferPool.release(bufferOne);
+    byteBufferPool.release(pointerOne);
 
     Assert.assertEquals(2, byteBufferPool.getPoolSize());
     Assert.assertEquals(126, allocator.getMemoryConsumption());
 
-    try {
-      byteBufferPool.release(bufferThree);
-      Assert.fail();
-    } catch (IllegalArgumentException e) {
-      Assert.assertTrue(true);
-    }
-
     Assert.assertEquals(2, byteBufferPool.getPoolSize());
     Assert.assertEquals(126, allocator.getMemoryConsumption());
 
-    byteBufferPool.release(bufferTwo);
-
-    Assert.assertEquals(2, byteBufferPool.getPoolSize());
-    Assert.assertEquals(84, allocator.getMemoryConsumption());
-
-    try {
-      byteBufferPool.release(bufferTwo);
-      Assert.fail();
-    } catch (IllegalArgumentException e) {
-      Assert.assertTrue(true);
-    }
-
-    Assert.assertEquals(2, byteBufferPool.getPoolSize());
-    Assert.assertEquals(84, allocator.getMemoryConsumption());
-
-    try {
-      byteBufferPool.release(bufferOne);
-      Assert.fail();
-    } catch (IllegalArgumentException e) {
-      Assert.assertTrue(true);
-    }
+    byteBufferPool.release(pointerTwo);
 
     Assert.assertEquals(2, byteBufferPool.getPoolSize());
     Assert.assertEquals(84, allocator.getMemoryConsumption());
@@ -222,11 +191,10 @@ public class OByteBufferPoolTest {
   }
 
   private static final class Allocator implements Callable<Void> {
-    private final OByteBufferPool pool;
-    private final ThreadLocalRandom random = ThreadLocalRandom.current();
-    private final AtomicBoolean stop;
-    private       long          allocatedSize;
-    private List<ByteBuffer> allocatedBuffers = new ArrayList<>();
+    private final OByteBufferPool   pool;
+    private final ThreadLocalRandom random            = ThreadLocalRandom.current();
+    private final AtomicBoolean     stop;
+    private final List<OPointer>    allocatedPointers = new ArrayList<>();
 
     private Allocator(OByteBufferPool pool, AtomicBoolean stop) {
       this.pool = pool;
@@ -234,36 +202,36 @@ public class OByteBufferPoolTest {
     }
 
     @Override
-    public Void call() throws Exception {
+    public Void call() {
       try {
         while (!stop.get()) {
-          if (allocatedBuffers.size() < 500) {
-            ByteBuffer buffer = pool.acquireDirect(false);
-            allocatedBuffers.add(buffer);
-          } else if (allocatedBuffers.size() < 1000) {
+          if (allocatedPointers.size() < 500) {
+            OPointer pointer = pool.acquireDirect(false);
+            allocatedPointers.add(pointer);
+          } else if (allocatedPointers.size() < 1000) {
             if (random.nextDouble() <= 0.5) {
-              ByteBuffer buffer = pool.acquireDirect(false);
-              allocatedBuffers.add(buffer);
+              OPointer pointer = pool.acquireDirect(false);
+              allocatedPointers.add(pointer);
             } else {
-              final int bufferToRemove = random.nextInt(allocatedBuffers.size());
-              final ByteBuffer buffer = allocatedBuffers.remove(bufferToRemove);
-              pool.release(buffer);
+              final int bufferToRemove = random.nextInt(allocatedPointers.size());
+              final OPointer pointer = allocatedPointers.remove(bufferToRemove);
+              pool.release(pointer);
             }
           } else {
             if (random.nextDouble() <= 0.4) {
-              ByteBuffer buffer = pool.acquireDirect(false);
-              allocatedBuffers.add(buffer);
+              OPointer pointer = pool.acquireDirect(false);
+              allocatedPointers.add(pointer);
             } else {
-              final int bufferToRemove = random.nextInt(allocatedBuffers.size());
-              final ByteBuffer buffer = allocatedBuffers.remove(bufferToRemove);
-              pool.release(buffer);
+              final int bufferToRemove = random.nextInt(allocatedPointers.size());
+              final OPointer pointer = allocatedPointers.remove(bufferToRemove);
+              pool.release(pointer);
             }
           }
         }
 
-        System.out.println("Allocated buffers " + allocatedBuffers.size());
-        for (ByteBuffer buffer : allocatedBuffers) {
-          pool.release(buffer);
+        System.out.println("Allocated buffers " + allocatedPointers.size());
+        for (OPointer pointer : allocatedPointers) {
+          pool.release(pointer);
         }
       } catch (Exception | Error e) {
         e.printStackTrace();
