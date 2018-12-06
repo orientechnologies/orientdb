@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @see ODirectMemoryAllocator
  */
-public class OByteBufferPool implements OByteBufferPoolMXBean {
+public final class OByteBufferPool implements OByteBufferPoolMXBean {
   /**
    * Whether we should track memory leaks during application execution
    */
@@ -56,7 +56,6 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
   /**
    * @return Singleton instance
-   * @param contextConfiguration
    */
   public static OByteBufferPool instance(OContextConfiguration contextConfiguration) {
     final OByteBufferPool instance = INSTANCE_HOLDER.get();
@@ -71,7 +70,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
       bufferSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger();
     }
 
-    final OByteBufferPool newInstance = new OByteBufferPool(bufferSize  * 1024);
+    final OByteBufferPool newInstance = new OByteBufferPool(bufferSize * 1024);
     if (INSTANCE_HOLDER.compareAndSet(null, newInstance)) {
       return newInstance;
     }
@@ -87,7 +86,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   /**
    * {@link ByteBuffer}s can not be extended, so to keep mapping between pointers and buffers we use concurrent hash map.
    */
-  private final ConcurrentHashMap<ByteBufferHolder, PointerHolder> bufferPointerMapping = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<OPointer, PointerTracker> pointerMapping = new ConcurrentHashMap<>();
 
   /**
    * Pool of already allocated pages.
@@ -133,7 +132,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    *
    * @return Direct memory buffer instance.
    */
-  public ByteBuffer acquireDirect(boolean clear) {
+  public final OPointer acquireDirect(boolean clear) {
     OPointer pointer;
 
     pointer = pointersPool.poll();
@@ -151,39 +150,39 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     final ByteBuffer buffer = pointer.getNativeByteBuffer();
     buffer.position(0);
 
-    bufferPointerMapping.put(wrapBuffer(buffer), wrapPointer(pointer));
-    return buffer;
+    if (TRACK) {
+      pointerMapping.put(pointer, generatePointer());
+    }
+
+    return pointer;
   }
 
   /**
    * Put buffer which is not used any more back to the pool or frees direct memory if pool is full.
    *
-   * @param buffer Not used instance of buffer.
+   * @param pointer Not used instance of buffer.
    *
    * @see OGlobalConfiguration#DIRECT_MEMORY_POOL_LIMIT
    */
-  public void release(ByteBuffer buffer) {
-    final PointerHolder holder = bufferPointerMapping.remove(wrapBuffer(buffer));
-
-    if (holder == null) {
-      throw new IllegalArgumentException(String.format("Buffer %X is not acquired", System.identityHashCode(buffer)));
+  public final void release(OPointer pointer) {
+    if (TRACK) {
+      pointerMapping.remove(pointer);
     }
 
     long poolSize = pointersPoolSize.incrementAndGet();
     if (poolSize > this.poolSize) {
       pointersPoolSize.decrementAndGet();
-      allocator.deallocate(holder.pointer);
+      allocator.deallocate(pointer);
     } else {
-      pointersPool.add(holder.pointer);
+      pointersPool.add(pointer);
     }
-
   }
 
   /**
    * @inheritDoc
    */
   @Override
-  public int getPoolSize() {
+  public final int getPoolSize() {
     return pointersPoolSize.get();
   }
 
@@ -193,10 +192,10 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   public void checkMemoryLeaks() {
     boolean detected = false;
     if (TRACK) {
-      for (Map.Entry<ByteBufferHolder, PointerHolder> entry : bufferPointerMapping.entrySet()) {
+      for (Map.Entry<OPointer, PointerTracker> entry : pointerMapping.entrySet()) {
         OLogManager.instance()
-            .errorNoDb(this, "DIRECT-TRACK: unreleased direct memory buffer `%X` detected.", entry.getValue().allocation,
-                System.identityHashCode(entry.getKey().byteBuffer));
+            .errorNoDb(this, "DIRECT-TRACK: unreleased direct memory pointer `%X` detected.", entry.getValue().allocation,
+                System.identityHashCode(entry.getKey()));
         detected = true;
       }
     }
@@ -215,68 +214,25 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     pointersPool.clear();
     pointersPoolSize.set(0);
 
-    if (!TRACK && !bufferPointerMapping.isEmpty()) {
-      final String message =
-          "There are not released allocations in " + "ByteBufferPool which may indicate presence of memory leaks in database!!"
-              + "Start JVM with system property" + OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getKey()
-              + " = true for more details";
-
-      OLogManager.instance().warnNoDb(this, message);
+    for (OPointer pointer : pointerMapping.keySet()) {
+      allocator.deallocate(pointer);
     }
 
-    for (PointerHolder holder : bufferPointerMapping.values()) {
-      allocator.deallocate(holder.pointer);
-    }
-
-    bufferPointerMapping.clear();
+    pointerMapping.clear();
   }
 
   /**
-   * Holder which is used to compare byte buffers by object's identity not by content
+   * Holder which contains if memory tracking is enabled stack trace for the first allocation.
    */
-  private static final class ByteBufferHolder {
-    private final ByteBuffer byteBuffer;
-
-    ByteBufferHolder(ByteBuffer byteBuffer) {
-      this.byteBuffer = byteBuffer;
-    }
-
-    @Override
-    public int hashCode() {
-      return System.identityHashCode(byteBuffer);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (!(obj instanceof ByteBufferHolder))
-        return false;
-
-      return ((ByteBufferHolder) obj).byteBuffer == this.byteBuffer;
-    }
-  }
-
-  /**
-   * Holder which contains direct memory pointer and if memory tracking is enabled stack trace for the first allocation.
-   */
-  private static final class PointerHolder {
-    private final OPointer  pointer;
+  private static final class PointerTracker {
     private final Exception allocation;
 
-    PointerHolder(OPointer pointer, Exception allocation) {
-      this.pointer = pointer;
+    PointerTracker(Exception allocation) {
       this.allocation = allocation;
     }
   }
 
-  private ByteBufferHolder wrapBuffer(ByteBuffer byteBuffer) {
-    return new ByteBufferHolder(byteBuffer);
-  }
-
-  private PointerHolder wrapPointer(OPointer pointer) {
-    if (TRACK) {
-      return new PointerHolder(pointer, new Exception());
-    } else {
-      return new PointerHolder(pointer, null);
-    }
+  private PointerTracker generatePointer() {
+    return new PointerTracker(new Exception());
   }
 }

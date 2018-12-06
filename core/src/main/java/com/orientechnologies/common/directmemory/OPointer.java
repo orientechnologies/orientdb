@@ -5,11 +5,12 @@ import com.sun.jna.Pointer;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-public class OPointer {
-  private final Pointer pointer;
-  private final int     size;
+public final class OPointer {
+  private final Pointer    pointer;
+  private final int        size;
+  private       ByteBuffer byteBuffer;
 
-  public OPointer(Pointer pointer, int size) {
+  OPointer(Pointer pointer, int size) {
     this.pointer = pointer;
     this.size = size;
   }
@@ -19,7 +20,12 @@ public class OPointer {
   }
 
   public ByteBuffer getNativeByteBuffer() {
-    return pointer.getByteBuffer(0, size);
+    if (byteBuffer != null) {
+      return byteBuffer;
+    }
+
+    byteBuffer = pointer.getByteBuffer(0, size);
+    return byteBuffer;
   }
 
   Pointer getNativePointer() {
