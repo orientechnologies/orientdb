@@ -576,9 +576,10 @@ public class OClassDistributed extends OClassEmbedded {
 
   @Override
   public int getClusterForNewInstance(ODocument doc) {
+    return getClusterForNewInstance((ODatabaseDocumentDistributed) getDatabase(), doc);
+  }
 
-    ODatabaseDocumentDistributed db = (ODatabaseDocumentDistributed) getDatabase();
-
+  public int getClusterForNewInstance(ODatabaseDocumentDistributed db, ODocument doc) {
     ODistributedServerManager manager = db.getDistributedManager();
     if (bestClusterIds == null)
       readConfiguration(db, manager);
