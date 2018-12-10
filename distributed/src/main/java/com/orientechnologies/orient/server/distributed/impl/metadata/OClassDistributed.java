@@ -58,8 +58,10 @@ public class OClassDistributed extends OClassEmbedded {
 
   @Override
   public int getClusterForNewInstance(ODocument doc) {
+    return getClusterForNewInstance((ODatabaseDocumentDistributed) getDatabase(), doc);
+  }
 
-    ODatabaseDocumentDistributed db = (ODatabaseDocumentDistributed) getDatabase();
+  public int getClusterForNewInstance(ODatabaseDocumentDistributed db, ODocument doc) {
     final OStorage storage = db.getStorage();
     if (!(storage instanceof ODistributedStorage))
       throw new IllegalStateException("Storage is not distributed");
