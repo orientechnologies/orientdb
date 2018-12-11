@@ -1622,7 +1622,11 @@ ee.controller("ClusterSingleDBController", [
         $scope.calculatedRoles = {};
 
         if ($scope.config.servers) {
-          Object.keys($scope.config.servers).forEach(function(k) {
+          Object.keys($scope.config.servers).sort((function(a,b) {
+            if (a === "*" ) return -1;
+            if (b === "*" ) return 1;
+            return 0;
+          })).forEach(function(k) {
             if (k === "*") {
               servers.forEach(function(s) {
                 $scope.calculatedRoles[s.name] = $scope.config.servers[
@@ -1635,6 +1639,8 @@ ee.controller("ClusterSingleDBController", [
               ].toUpperCase();
             }
           });
+
+          console.log($scope.calculatedRoles);
         }
         $scope.servers = servers;
       });
