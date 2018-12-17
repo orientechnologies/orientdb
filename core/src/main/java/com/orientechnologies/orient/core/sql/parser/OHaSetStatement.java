@@ -36,7 +36,7 @@ public class OHaSetStatement extends OSimpleExecStatement {
 
     Object value = this.value.execute(new OResultInternal(), ctx);
     if (value == null) {
-      value = this.key.getDefaultAlias();
+      value = this.value.getDefaultAlias();
       if (value.equals("null")) {
         value = null;
       }
