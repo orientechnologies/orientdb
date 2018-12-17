@@ -611,6 +611,16 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
 
   private ORawBuffer internalReadRecord(long clusterPosition, long pageIndex, int recordPosition, int pageCount,
       final OAtomicOperation atomicOperation) throws IOException {
+    if (pageCount > 1) {
+      final OCacheEntry stateCacheEntry = loadPageForRead(atomicOperation, fileId, STATE_ENTRY_INDEX, false);
+      try {
+        final OPaginatedClusterStateV1 state = new OPaginatedClusterStateV1(stateCacheEntry);
+        pageCount = (int) Math.min(state.getFileSize() + 1 - pageIndex, pageCount);
+      } finally {
+        releasePageFromRead(atomicOperation, stateCacheEntry);
+      }
+    }
+
     int recordVersion;
     final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount);
     try {
@@ -1611,9 +1621,19 @@ public final class OPaginatedClusterV1 extends OPaginatedCluster {
 
   @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
   private byte[] readFullEntry(final long clusterPosition, long pageIndex, int recordPosition,
-      final OAtomicOperation atomicOperation, final int pageCount) throws IOException {
+      final OAtomicOperation atomicOperation, int pageCount) throws IOException {
     final List<byte[]> recordChunks = new ArrayList<>();
     int contentSize = 0;
+
+    if (pageCount > 1) {
+      final OCacheEntry stateCacheEntry = loadPageForRead(atomicOperation, fileId, STATE_ENTRY_INDEX, false);
+      try {
+        final OPaginatedClusterStateV1 state = new OPaginatedClusterStateV1(stateCacheEntry);
+        pageCount = (int) Math.min(state.getFileSize() + 1 - pageIndex, pageCount);
+      } finally {
+        releasePageFromRead(atomicOperation, stateCacheEntry);
+      }
+    }
 
     long nextPagePointer;
     boolean firstEntry = true;
