@@ -261,7 +261,7 @@ public final class OClusterPositionMapV1 extends OClusterPositionMap {
     }
   }
 
-  public OClusterPositionMapBucket.PositionEntry get(final long clusterPosition, final int pageCount,
+  public OClusterPositionMapBucket.PositionEntry get(final long clusterPosition, int pageCount,
       final OAtomicOperation atomicOperation) throws IOException {
     final long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES + 1;
     final int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
@@ -271,6 +271,8 @@ public final class OClusterPositionMapV1 extends OClusterPositionMap {
     if (pageIndex > lastPage) {
       return null;
     }
+
+    pageCount = (int)Math.min(lastPage - pageIndex + 1, pageCount);
 
     final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount);
     try {
