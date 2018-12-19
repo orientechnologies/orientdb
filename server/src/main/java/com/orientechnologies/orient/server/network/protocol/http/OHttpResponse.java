@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -269,13 +270,23 @@ public class OHttpResponse {
             @Override
             public Void call(final OChunkedResponse iArgument) {
               final LinkedHashSet<String> colNames = new LinkedHashSet<String>();
-              final List<ODocument> records = new ArrayList<ODocument>();
+              final List<OElement> records = new ArrayList<OElement>();
 
               // BROWSE ALL THE RECORD TO HAVE THE COMPLETE COLUMN
               // NAMES LIST
               while (it.hasNext()) {
                 final Object r = it.next();
-                if (r != null && r instanceof OIdentifiable) {
+
+                if(r instanceof OResult) {
+
+                  OResult result = (OResult) r;
+                  records.add(result.toElement());
+
+                  for (String fieldName : result.getPropertyNames()) {
+                    colNames.add(fieldName);
+                  }
+
+                }else if (r != null && r instanceof OIdentifiable) {
                   final ORecord rec = ((OIdentifiable) r).getRecord();
                   if (rec != null) {
                     if (rec instanceof ODocument) {
@@ -303,13 +314,13 @@ public class OHttpResponse {
                 iArgument.write(OHttpUtils.EOL);
 
                 // WRITE EACH RECORD
-                for (ODocument doc : records) {
+                for (OElement doc : records) {
                   for (int col = 0; col < orderedColumns.size(); ++col) {
                     if (col > 0) {
                       iArgument.write(',');
                     }
 
-                    Object value = doc.field(orderedColumns.get(col));
+                    Object value = doc.getProperty(orderedColumns.get(col));
                     if (value != null) {
                       if (!(value instanceof Number))
                         value = "\"" + value + "\"";
