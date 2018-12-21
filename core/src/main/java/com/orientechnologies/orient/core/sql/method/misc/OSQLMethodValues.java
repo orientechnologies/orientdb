@@ -19,8 +19,10 @@ package com.orientechnologies.orient.core.sql.method.misc;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Johann Sorel (Geomatys)
@@ -41,6 +43,10 @@ public class OSQLMethodValues extends OAbstractSQLMethod {
     }
     if (ioResult instanceof ODocument) {
       return Arrays.asList(((ODocument) ioResult).fieldValues());
+    }
+    if(ioResult instanceof OResult) {
+      OResult res = (OResult) ioResult;
+      return res.getPropertyNames().stream().map(field -> res.getProperty(field)).collect(Collectors.toList());
     }
     if (ioResult instanceof Collection) {
       List result = new ArrayList();
