@@ -559,8 +559,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         break;
       default:
         throw new IllegalStateException(
-            "Invalid distributed replicaiton protocol version: " + DISTRIBUTED_REPLICATION_PROTOCOL_VERSION
-                .getValueAsInteger());
+            "Invalid distributed replicaiton protocol version: " + DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger());
       }
     }
   }
@@ -674,15 +673,22 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             ((ODocument) record).validate();
         }
       }
-      final ODistributedConfiguration dbCfg = getDistributedConfiguration();
-      final String localNodeName = distributedManager.getLocalNodeName();
+      final ODistributedConfiguration dbCfg = getStorageDistributed().getDistributedConfiguration();
+      ODistributedServerManager dManager = getStorageDistributed().getDistributedManager();
+      final String localNodeName = dManager.getLocalNodeName();
       getStorageDistributed().checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
-      ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(),
-          distributedManager, getStorageDistributed().getLocalDistributedDatabase());
-      Set<String> otherNodesInQuorum = txManager
-          .getAvailableNodesButLocal(dbCfg, txManager.getInvolvedClusters(iTx.getRecordOperations()), getLocalNodeName());
-      List<String> online = distributedManager.getOnlineNodes(getName());
-      if (online.size() < ((otherNodesInQuorum.size() + 1) / 2) + 1) {
+      ONewDistributedTransactionManager txManager = new ONewDistributedTransactionManager(getStorageDistributed(), dManager,
+          getStorageDistributed().getLocalDistributedDatabase());
+      int quorum = 0;
+      for (String clusterName : txManager.getInvolvedClusters(iTx.getRecordOperations())) {
+        final List<String> clusterServers = dbCfg.getServers(clusterName, null);
+        final int writeQuorum = dbCfg.getWriteQuorum(clusterName, clusterServers.size(), localNodeName);
+        quorum = Math.max(quorum, writeQuorum);
+      }
+      final int availableNodes = dManager.getAvailableNodes(getName());
+
+      if (quorum > availableNodes) {
+        List<String> online = dManager.getOnlineNodes(getName());
         throw new ODistributedException("No enough nodes online to execute the operation, online nodes: " + online);
       }
 
