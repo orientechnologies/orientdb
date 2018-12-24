@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.task.*;
 import com.orientechnologies.orient.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -103,11 +104,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   protected          OServer                                    serverInstance;
   protected          String                                     nodeUuid;
-  protected          String                                     nodeName  = null;
-  protected          int                                        nodeId    = -1;
+  protected          String                                     nodeName                          = null;
+  protected          int                                        nodeId                            = -1;
   protected          File                                       defaultDatabaseConfigFile;
-  protected final    ConcurrentMap<String, ODistributedStorage> storages  = new ConcurrentHashMap<String, ODistributedStorage>();
-  protected volatile NODE_STATUS                                status    = NODE_STATUS.OFFLINE;
+  protected final    ConcurrentMap<String, ODistributedStorage> storages                          = new ConcurrentHashMap<String, ODistributedStorage>();
+  protected volatile NODE_STATUS                                status                            = NODE_STATUS.OFFLINE;
   protected          long                                       lastClusterChangeOn;
   protected          List<ODistributedLifecycleListener>        listeners                         = new ArrayList<ODistributedLifecycleListener>();
   protected          ODistributedNetworkManager                 remoteServerManager;
@@ -198,9 +199,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       @Override
       public void nodeDisconnected(String node) {
-        ODistributedAbstractPlugin.this.removeServer(node,true);
+        ODistributedAbstractPlugin.this.removeServer(node, true);
       }
-    });
+    }, (OrientDBDistributed) serverInstance.getContext().getInternal());
   }
 
   @Override

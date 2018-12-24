@@ -13,34 +13,35 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
-import com.orientechnologies.orient.distributed.impl.structural.*;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-import com.orientechnologies.orient.server.*;
+import com.orientechnologies.orient.distributed.hazelcast.OCoordinatedExecutorMessageHandler;
+import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributedPooled;
+import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
 import com.orientechnologies.orient.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedMember;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.*;
+import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 import com.orientechnologies.orient.distributed.impl.metadata.ODistributedContext;
 import com.orientechnologies.orient.distributed.impl.metadata.OSharedContextDistributed;
-import com.orientechnologies.orient.distributed.hazelcast.OCoordinatedExecutorMessageHandler;
-import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.distributed.impl.structural.*;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.server.*;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.*;
-import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE;
 
 /**
  * Created by tglman on 08/08/17.
@@ -55,6 +56,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private final    OStructuralDistributedContext      structuralDistributedContext;
   private          OCoordinatedExecutorMessageHandler requestHandler;
   private          OCoordinateMessagesFactory         coordinateMessagesFactory;
+  private          ODistributedNetworkManager         networkManager;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -62,6 +64,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     //This now si simple but should be replaced by a factory depending to the protocol version
     coordinateMessagesFactory = new OCoordinateMessagesFactory();
     requestHandler = new OCoordinatedExecutorMessageHandler(this);
+    String nodeName = getNodeNameFromConfig();
+    networkManager = new ODistributedNetworkManager(nodeName, null, this);
+  }
+
+  private String getNodeNameFromConfig() {
+    return "_" + new Random().nextInt(100000000);//TODO load the name from config
   }
 
   @Override
@@ -74,6 +82,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   @Override
   public void onAfterActivate() {
 
+  }
+
+  @Override
+  public void onBeforeDeactivate() {
+    networkManager.shutdown();
   }
 
   public synchronized OHazelcastPlugin getPlugin() {
@@ -452,4 +465,5 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public void internalDropDatabase(String database) {
     super.drop(database, null, null);
   }
+
 }

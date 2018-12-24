@@ -32,14 +32,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
  * Created by tglman on 27/03/16.
  */
-public interface OrientDBInternal extends AutoCloseable {
+public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
 
   /**
    * Create a new factory from a given url.
@@ -287,10 +286,6 @@ public interface OrientDBInternal extends AutoCloseable {
   Collection<OStorage> getStorages();
 
   void forceDatabaseClose(String databaseName);
-
-  void schedule(TimerTask task, long delay, long period);
-
-  void scheduleOnce(TimerTask task, long delay);
 
   <X> Future<X> execute(String database, String user, ODatabaseTask<X> task);
 

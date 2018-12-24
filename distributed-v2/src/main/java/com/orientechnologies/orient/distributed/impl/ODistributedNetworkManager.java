@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.distributed.impl;
 
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 
@@ -7,15 +9,18 @@ import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class ODistributedNetworkManager {
+public class ODistributedNetworkManager implements ODiscoveryListener {
 
   private final ConcurrentMap<String, ORemoteServerController> remoteServers = new ConcurrentHashMap<String, ORemoteServerController>();
   private final String                                         localNodeName;
   private final ORemoteServerAvailabilityCheck                 check;
+  private final OrientDBDistributed                            orientDB;
+  private       OMulticastNodeDiscoveryManager                 discoveryManager;
 
-  public ODistributedNetworkManager(String localNodeName, ORemoteServerAvailabilityCheck check) {
+  public ODistributedNetworkManager(String localNodeName, ORemoteServerAvailabilityCheck check, OrientDBDistributed orientDB) {
     this.localNodeName = localNodeName;
     this.check = check;
+    this.orientDB = orientDB;
   }
 
   public ORemoteServerController getRemoteServer(final String rNodeName) {
@@ -46,4 +51,32 @@ public class ODistributedNetworkManager {
     remoteServers.clear();
   }
 
+  public void startup() {
+    //TODO different strategies for different infrastructures, eg. AWS
+
+    //TODO get info from config
+    String multicastIp = "230.0.0.0";
+    int multicastPort = 4321;
+    int[] pingPorts = { 4321 };
+    discoveryManager = new OMulticastNodeDiscoveryManager(localNodeName, this, multicastPort, multicastIp, pingPorts, orientDB);
+    discoveryManager.start();
+  }
+
+  public void shutdown() {
+    closeAll();
+    //TODO
+  }
+
+  public ODistributedConfiguration getDistributedConfiguration() {
+    return null;//TODO
+  }
+
+  @Override
+  public void nodeJoined(NodeData data) {
+
+  }
+
+  public void nodeLeft(NodeData data) {
+
+  }
 }
