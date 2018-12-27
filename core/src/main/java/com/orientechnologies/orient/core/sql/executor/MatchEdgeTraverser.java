@@ -126,16 +126,16 @@ public class MatchEdgeTraverser {
       // evaluated
       Iterable<OResultInternal> queryResult = traversePatternEdge(startingPoint, iCommandContext);
 
+      Object previousMatch = iCommandContext.getVariable("$currentMatch");
       for (OResultInternal origin : queryResult) {
-        Object previousMatch = iCommandContext.getVariable("$currentMatch");
         OElement elem = origin.toElement();
         iCommandContext.setVariable("$currentMatch", elem);
         if (matchesFilters(iCommandContext, filter, elem) && matchesClass(iCommandContext, className, elem) && matchesCluster(
             iCommandContext, clusterId, elem) && matchesRid(iCommandContext, targetRid, elem)) {
           result.add(origin);
         }
-        iCommandContext.setVariable("$currentMatch", previousMatch);
       }
+      iCommandContext.setVariable("$currentMatch", previousMatch);
     } else {// in this case also zero level (starting point) is considered and traversal depth is given by the while condition
       iCommandContext.setVariable("$depth", depth);
       Object previousMatch = iCommandContext.getVariable("$currentMatch");
