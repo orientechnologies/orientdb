@@ -19,8 +19,8 @@
  */
 package com.orientechnologies.orient.graph.server.command;
 
+import com.orientechnologies.orient.graph.server.http.OHttpGraphResponse;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpGraphResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommand;
