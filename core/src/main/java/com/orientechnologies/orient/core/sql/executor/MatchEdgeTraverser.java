@@ -120,23 +120,63 @@ public class MatchEdgeTraverser {
       targetRid = targetRid(item, iCommandContext);
     }
 
-    List<OResultInternal> result = new ArrayList<>();
+    Iterable<OResultInternal> result;
 
     if (whileCondition == null && maxDepth == null) {// in this case starting point is not returned and only one level depth is
       // evaluated
-      Iterable<OResultInternal> queryResult = traversePatternEdge(startingPoint, iCommandContext);
 
-      Object previousMatch = iCommandContext.getVariable("$currentMatch");
-      for (OResultInternal origin : queryResult) {
-        OElement elem = origin.toElement();
-        iCommandContext.setVariable("$currentMatch", elem);
-        if (matchesFilters(iCommandContext, filter, elem) && matchesClass(iCommandContext, className, elem) && matchesCluster(
-            iCommandContext, clusterId, elem) && matchesRid(iCommandContext, targetRid, elem)) {
-          result.add(origin);
-        }
-      }
-      iCommandContext.setVariable("$currentMatch", previousMatch);
+      Iterable<OResultInternal> queryResult = traversePatternEdge(startingPoint, iCommandContext);
+      final OWhereClause theFilter = filter;
+      final String theClassName = className;
+      final Integer theClusterId = clusterId;
+      final ORid theTargetRid = targetRid;
+      result = () -> {
+        Iterator<OResultInternal> iter = queryResult.iterator();
+
+        return new Iterator() {
+
+          OResultInternal nextElement = null;
+
+          @Override
+          public boolean hasNext() {
+            if (nextElement == null) {
+              fetchNext();
+            }
+            return nextElement != null;
+          }
+
+          @Override
+          public Object next() {
+            if (nextElement == null) {
+              fetchNext();
+            }
+            if (nextElement == null) {
+              throw new IllegalStateException();
+            }
+            OResultInternal res = nextElement;
+            nextElement = null;
+            return res;
+          }
+
+          public void fetchNext() {
+            Object previousMatch = iCommandContext.getVariable("$currentMatch");
+            while (iter.hasNext()) {
+              OResultInternal next = iter.next();
+              OElement elem = next.toElement();
+              iCommandContext.setVariable("$currentMatch", elem);
+              if (matchesFilters(iCommandContext, theFilter, elem) && matchesClass(iCommandContext, theClassName, elem)
+                  && matchesCluster(iCommandContext, theClusterId, elem) && matchesRid(iCommandContext, theTargetRid, elem)) {
+                nextElement = next;
+                break;
+              }
+            }
+            iCommandContext.setVariable("$currentMatch", previousMatch);
+          }
+        };
+      };
+
     } else {// in this case also zero level (starting point) is considered and traversal depth is given by the while condition
+      result = new ArrayList<>();
       iCommandContext.setVariable("$depth", depth);
       Object previousMatch = iCommandContext.getVariable("$currentMatch");
       iCommandContext.setVariable("$currentMatch", startingPoint);
@@ -149,7 +189,7 @@ public class MatchEdgeTraverser {
         // set traversal path in the metadata
         rs.setMetadata("$matchPath", pathToHere == null ? Collections.EMPTY_LIST : pathToHere);
         // add the result to the list
-        result.add(rs);
+        ((List) result).add(rs);
       }
 
       if ((maxDepth == null || depth < maxDepth) && (whileCondition == null || whileCondition
@@ -173,10 +213,10 @@ public class MatchEdgeTraverser {
 
           Iterable<OResultInternal> subResult = executeTraversal(iCommandContext, item, elem, depth + 1, newPath);
           if (subResult instanceof Collection) {
-            result.addAll((Collection<? extends OResultInternal>) subResult);
+            ((List) result).addAll((Collection<? extends OResultInternal>) subResult);
           } else {
             for (OResultInternal i : subResult) {
-              result.add(i);
+              ((List) result).add(i);
             }
           }
         }
