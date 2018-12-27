@@ -1109,7 +1109,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
         listener.onMessage(String.format("\n- Imported %,d records into clusters: %s. "
                 + "Total JSON records imported so for %,d .Total records imported so far: %,d (%,.2f/sec)", lastLapRecords, total,
-            sortedClusters, totalRecords, (float) lastLapRecords * 1000 / (float) IMPORT_RECORD_DUMP_LAP_EVERY_MS));
+            sortedClusters.size(), totalRecords, (float) lastLapRecords * 1000 / (float) IMPORT_RECORD_DUMP_LAP_EVERY_MS));
 
         // RESET LAP COUNTERS
         last = now;
