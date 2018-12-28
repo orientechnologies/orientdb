@@ -12,12 +12,7 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.parser.OBatch;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 28/11/16.
@@ -39,8 +34,8 @@ public class CreateEdgesStep extends AbstractExecutionStep {
   OVertex  currentFrom;
   OVertex  currentTo;
   OEdge    edgeToUpdate;//for upsert
-  boolean finished = false;
-  List    toList   = new ArrayList<>();
+  boolean  finished = false;
+  List     toList   = new ArrayList<>();
   private OIndex<?> uniqueIndex;
 
   private boolean inited = false;
@@ -191,7 +186,10 @@ public class CreateEdgesStep extends AbstractExecutionStep {
       }
       if (toIterator.hasNext() || (toList.size() > 0 && fromIter.hasNext())) {
         if (currentFrom == null) {
-          throw new OCommandExecutionException("Invalid FROM vertex for edge");
+          if (!fromIter.hasNext()) {
+            finished = true;
+            return;
+          }
         }
 
         Object obj = toIterator.next();
@@ -241,15 +239,19 @@ public class CreateEdgesStep extends AbstractExecutionStep {
       currentFrom = ((ORID) currentFrom).getRecord();
     }
     if (currentFrom instanceof OResult) {
-      return ((OResult) currentFrom).getVertex().orElse(null);
+      Object from = currentFrom;
+      currentFrom = ((OResult) currentFrom).getVertex()
+          .orElseThrow(() -> new OCommandExecutionException("Invalid vertex for edge creation: " + from.toString()));
     }
     if (currentFrom instanceof OVertex) {
       return (OVertex) currentFrom;
     }
     if (currentFrom instanceof OElement) {
-      return ((OElement) currentFrom).asVertex().orElse(null);
+      Object from = currentFrom;
+      return ((OElement) currentFrom).asVertex()
+          .orElseThrow(() -> new OCommandExecutionException("Invalid vertex for edge creation: " + from.toString()));
     }
-    return null;
+    throw new OCommandExecutionException("Invalid vertex for edge creation: " + currentFrom.toString());
   }
 
   @Override
