@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -108,7 +109,11 @@ public class OSuffixIdentifier extends SimpleNode {
         return ctx.getParent();
       }
       if (ctx != null && varName.startsWith("$") && ctx.getVariable(varName) != null) {
-        return ctx.getVariable(varName);
+        Object result = ctx.getVariable(varName);
+        if (result instanceof OResettable) {
+          ((OResettable) result).reset();
+        }
+        return result;
       }
       if (iCurrentRecord != null) {
         if (iCurrentRecord.hasProperty(varName)) {

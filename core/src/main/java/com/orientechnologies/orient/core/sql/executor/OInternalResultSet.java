@@ -1,11 +1,13 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.common.util.OResettable;
+
 import java.util.*;
 
 /**
  * Created by luigidellaquila on 07/07/16.
  */
-public class OInternalResultSet implements OResultSet {
+public class OInternalResultSet implements OResultSet, OResettable {
   private List<OResult> content = new ArrayList<>();
   private int           next    = 0;
   protected OExecutionPlan plan;
