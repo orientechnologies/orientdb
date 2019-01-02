@@ -34,7 +34,7 @@ public class OConsoleCommandStream implements OCommandStream {
   private int nestingLevel = 0;
 
   private enum State {
-    TEXT, SINGLE_QUOTE_STRING, DOUBLE_QUOTE_STRING, SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT, HYPHEN, SLASH, CLOSING_ASTERISK, ESCAPING_STRING
+    TEXT, SINGLE_QUOTE_STRING, DOUBLE_QUOTE_STRING, SINGLE_LINE_COMMENT, MULTI_LINE_COMMENT, HYPHEN, SLASH, CLOSING_ASTERISK, ESCAPING_IN_SINGLE_QUOTE_STRING, ESCAPING_IN_DOUBLE_QUOTE_STRING
   }
 
   private enum Symbol {
@@ -179,7 +179,7 @@ public class OConsoleCommandStream implements OCommandStream {
             return result.toString().trim();
           }
           if (symbol == Symbol.STRING_ESCAPE) {
-            state = State.ESCAPING_STRING;
+            state = State.ESCAPING_IN_SINGLE_QUOTE_STRING;
             break;
           }
           if (symbol == Symbol.SINGLE_QUOTE) {
@@ -192,7 +192,7 @@ public class OConsoleCommandStream implements OCommandStream {
             return result.toString().trim();
           }
           if (symbol == Symbol.STRING_ESCAPE) {
-            state = State.ESCAPING_STRING;
+            state = State.ESCAPING_IN_DOUBLE_QUOTE_STRING;
             break;
           }
           if (symbol == Symbol.DOUBLE_QUOTE) {
@@ -249,14 +249,23 @@ public class OConsoleCommandStream implements OCommandStream {
             state = State.TEXT;
           }
           break;
-        case ESCAPING_STRING:
+        case ESCAPING_IN_SINGLE_QUOTE_STRING:
           if (symbol == Symbol.EOF) {
             result.append('\\');
             return result.toString().trim();
           }
           result.append('\\');
           result.append(c);
-          state = State.TEXT;
+          state = State.SINGLE_QUOTE_STRING;
+          break;
+        case ESCAPING_IN_DOUBLE_QUOTE_STRING:
+          if (symbol == Symbol.EOF) {
+            result.append('\\');
+            return result.toString().trim();
+          }
+          result.append('\\');
+          result.append(c);
+          state = State.DOUBLE_QUOTE_STRING;
           break;
         }
 
@@ -315,6 +324,9 @@ public class OConsoleCommandStream implements OCommandStream {
       return Symbol.RIGHT_BRAKET;
     if (c.equals('\n') || c.equals('\r'))
       return Symbol.NEW_LINE;
+    if(c.equals('\\')){
+      return Symbol.STRING_ESCAPE;
+    }
 
     return Symbol.LETTER;
   }
