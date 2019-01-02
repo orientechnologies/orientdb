@@ -141,6 +141,20 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
         if (backup.getIncremental().get()) {
           iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
           backupFile = backupFile.listFiles(pathname -> pathname.getName().endsWith(".ibu"))[0];
+
+          final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
+
+          // WHILE UNTIL THE BACKUP IS FINISHED FOR ISSUE ON READING WHILE WRITING
+          while (true) {
+            try {
+              Thread.sleep(300);
+            } catch (InterruptedException e) {
+            }
+            if (completedFile.exists())
+              // BACKUP FINISHED
+              break;
+          }
+
         }
 
         final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, momentum.get(), false,
