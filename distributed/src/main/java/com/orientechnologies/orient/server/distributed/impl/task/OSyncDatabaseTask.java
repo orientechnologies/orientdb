@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -122,7 +123,6 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
 
           // RECORD LAST BACKUP TO BE REUSED IN CASE ANOTHER NODE ASK FOR THE SAME IN SHORT TIME WHILE THE DB IS NOT UPDATED
           ((ODistributedStorage) database.getStorage()).setLastValidBackup(backup);
-
         } else {
           momentum.set(dDatabase.getSyncConfiguration().getMomentum().copy());
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
@@ -133,7 +133,9 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
         for (int retry = 0; momentum.get() == null && retry < 10; ++retry)
           Thread.sleep(300);
 
-        backup.getStarted().await(1, TimeUnit.MINUTES);
+        while (!backup.getStarted().await(1, TimeUnit.MINUTES)) {
+          OLogManager.instance().info(this, "Another backup running on database '%s' waiting it to finish", databaseName);
+        }
 
         File backupFile = new File(backup.getFinalBackupPath());
         if (backup.getIncremental().get()) {
@@ -151,12 +153,6 @@ public class OSyncDatabaseTask extends OAbstractSyncDatabaseTask {
         if (chunk.last) {
           // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
           iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
-          if (backup.getIncremental().get()) {
-            File dir = backupFile.getParentFile();
-            Arrays.stream(dir.listFiles()).forEach(x -> x.delete());
-            dir.delete();
-          }
-
         }
 
         return chunk;
