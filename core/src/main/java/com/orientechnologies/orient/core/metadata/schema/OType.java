@@ -177,7 +177,7 @@ public enum OType implements OTypeInterface {
   public static OType getById(final byte iId) {
     if (iId >= 0 && iId < TYPES_BY_ID.length)
       return TYPES_BY_ID[iId];
-    OLogManager.instance().warn(OType.class, "Invalid type index: " + iId, (Object[])null);
+    OLogManager.instance().warn(OType.class, "Invalid type index: " + iId, (Object[]) null);
     return null;
   }
 
@@ -622,9 +622,12 @@ public enum OType implements OTypeInterface {
         context = context.floatValue();
       else if (max instanceof Double)
         context = context.doubleValue();
-      else if (max instanceof BigDecimal)
+      else if (max instanceof BigDecimal) {
         context = new BigDecimal(context.intValue());
-      else if (max instanceof Byte)
+        int maxScale = Math.max(((BigDecimal) context).scale(), (((BigDecimal) max).scale()));
+        context = ((BigDecimal) context).setScale(maxScale, BigDecimal.ROUND_DOWN);
+        max = ((BigDecimal) max).setScale(maxScale, BigDecimal.ROUND_DOWN);
+      } else if (max instanceof Byte)
         context = context.byteValue();
 
     } else if (context instanceof Integer) {
@@ -635,9 +638,12 @@ public enum OType implements OTypeInterface {
         context = context.floatValue();
       else if (max instanceof Double)
         context = context.doubleValue();
-      else if (max instanceof BigDecimal)
+      else if (max instanceof BigDecimal) {
         context = new BigDecimal(context.intValue());
-      else if (max instanceof Short)
+        int maxScale = Math.max(((BigDecimal) context).scale(), (((BigDecimal) max).scale()));
+        context = ((BigDecimal) context).setScale(maxScale, BigDecimal.ROUND_DOWN);
+        max = ((BigDecimal) max).setScale(maxScale, BigDecimal.ROUND_DOWN);
+      } else if (max instanceof Short)
         max = max.intValue();
       else if (max instanceof Byte)
         max = max.intValue();
@@ -648,25 +654,35 @@ public enum OType implements OTypeInterface {
         context = context.floatValue();
       else if (max instanceof Double)
         context = context.doubleValue();
-      else if (max instanceof BigDecimal)
+      else if (max instanceof BigDecimal) {
         context = new BigDecimal(context.longValue());
-      else if (max instanceof Integer || max instanceof Byte || max instanceof Short)
+        int maxScale = Math.max(((BigDecimal) context).scale(), (((BigDecimal) max).scale()));
+        context = ((BigDecimal) context).setScale(maxScale, BigDecimal.ROUND_DOWN);
+        max = ((BigDecimal) max).setScale(maxScale, BigDecimal.ROUND_DOWN);
+      } else if (max instanceof Integer || max instanceof Byte || max instanceof Short)
         max = max.longValue();
 
     } else if (context instanceof Float) {
       // FLOAT
       if (max instanceof Double)
         context = context.doubleValue();
-      else if (max instanceof BigDecimal)
+      else if (max instanceof BigDecimal) {
         context = new BigDecimal(context.floatValue());
-      else if (max instanceof Byte || max instanceof Short || max instanceof Integer || max instanceof Long)
+        int maxScale = Math.max(((BigDecimal) context).scale(), (((BigDecimal) max).scale()));
+        context = ((BigDecimal) context).setScale(maxScale, BigDecimal.ROUND_DOWN);
+        max = ((BigDecimal) max).setScale(maxScale, BigDecimal.ROUND_DOWN);
+      } else if (max instanceof Byte || max instanceof Short || max instanceof Integer || max instanceof Long)
         max = max.floatValue();
 
     } else if (context instanceof Double) {
       // DOUBLE
-      if (max instanceof BigDecimal)
+      if (max instanceof BigDecimal) {
         context = new BigDecimal(context.doubleValue());
-      else if (max instanceof Byte || max instanceof Short || max instanceof Integer || max instanceof Long || max instanceof Float)
+        int maxScale = Math.max(((BigDecimal) context).scale(), (((BigDecimal) max).scale()));
+        context = ((BigDecimal) context).setScale(maxScale, BigDecimal.ROUND_DOWN);
+        max = ((BigDecimal) max).setScale(maxScale, BigDecimal.ROUND_DOWN);
+      } else if (max instanceof Byte || max instanceof Short || max instanceof Integer || max instanceof Long
+          || max instanceof Float)
         max = max.doubleValue();
 
     } else if (context instanceof BigDecimal) {
@@ -679,8 +695,13 @@ public enum OType implements OTypeInterface {
         max = new BigDecimal((Double) max);
       else if (max instanceof Short)
         max = new BigDecimal((Short) max);
-      else if (max instanceof Byte)
+      else if (max instanceof Byte) {
         max = new BigDecimal((Byte) max);
+      }
+
+      int maxScale = Math.max(((BigDecimal) context).scale(), (((BigDecimal) max).scale()));
+      context = ((BigDecimal) context).setScale(maxScale, BigDecimal.ROUND_DOWN);
+      max = ((BigDecimal) max).setScale(maxScale, BigDecimal.ROUND_DOWN);
     } else if (context instanceof Byte) {
       if (max instanceof Short)
         context = context.shortValue();
@@ -692,8 +713,12 @@ public enum OType implements OTypeInterface {
         context = context.floatValue();
       else if (max instanceof Double)
         context = context.doubleValue();
-      else if (max instanceof BigDecimal)
+      else if (max instanceof BigDecimal) {
         context = new BigDecimal(context.intValue());
+        int maxScale = Math.max(((BigDecimal) context).scale(), (((BigDecimal) max).scale()));
+        context = ((BigDecimal) context).setScale(maxScale, BigDecimal.ROUND_DOWN);
+        max = ((BigDecimal) max).setScale(maxScale, BigDecimal.ROUND_DOWN);
+      }
     }
 
     return new Number[] { context, max };
