@@ -89,6 +89,11 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
   }
 
   @Override
+  public boolean aggregateResults() {
+    return configuredParameters.length <= 2;
+  }
+
+  @Override
   public Map<Object, Object> getResult() {
     final Map<Object, Object> res = context;
     context = null;
