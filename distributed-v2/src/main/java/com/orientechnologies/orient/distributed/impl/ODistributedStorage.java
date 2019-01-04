@@ -794,7 +794,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   @Override
   public String incrementalBackup(final String backupDirectory, OCallable<Void, Void> started) {
-    return wrapped.incrementalBackup(backupDirectory, null);
+    return wrapped.incrementalBackup(backupDirectory, started);
   }
 
   @Override
