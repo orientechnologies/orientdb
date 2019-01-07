@@ -26,6 +26,7 @@ public class OMulticastNodeDiscoveryManager {
     int    type;
     int    tcpPort;
     int    role;
+    String group;
     String nodeName;
   }
 
@@ -58,14 +59,22 @@ public class OMulticastNodeDiscoveryManager {
    * @param listeningPort
    * @param taskScheduler
    */
-  public OMulticastNodeDiscoveryManager(String groupName, String nodeName, ODiscoveryListener oDistributedNetworkManager, int listeningPort,
-      String multicastIp, int[] multicastDiscoveryPorts, OSchedulerInternal taskScheduler) {
+  public OMulticastNodeDiscoveryManager(String groupName, String nodeName, ODiscoveryListener oDistributedNetworkManager,
+      int listeningPort, String multicastIp, int[] multicastDiscoveryPorts, OSchedulerInternal taskScheduler) {
+    if (groupName == null || groupName.length() == 0) {
+      throw new IllegalArgumentException("Invalid group name");
+    }
+    this.group = groupName;
+    if (nodeName == null || nodeName.length() == 0) {
+      throw new IllegalArgumentException("Invalid node name");
+    }
     this.nodeName = nodeName;
     this.networkManager = oDistributedNetworkManager;
     this.listeningPort = listeningPort;
     this.multicastIp = multicastIp;
     this.discoveryPorts = multicastDiscoveryPorts;
     this.taskScheduler = taskScheduler;
+
     knownServers = new HashMap<>();
   }
 
@@ -188,6 +197,7 @@ public class OMulticastNodeDiscoveryManager {
     Message message = new Message();
     message.type = Message.TYPE_PING;
     message.nodeName = this.nodeName;
+    message.group = group;
     //TODO
     return message;
   }
@@ -202,6 +212,9 @@ public class OMulticastNodeDiscoveryManager {
       socket.receive(packet);
       packet.getAddress();
       Message message = deserializeMessage(packet.getData());
+      if (!message.group.equals(group)) {
+        return;
+      }
       if (message.type == Message.TYPE_PING) {
         synchronized (knownServers) {
           ODiscoveryListener.NodeData data = knownServers.get(message.nodeName);
@@ -230,10 +243,8 @@ public class OMulticastNodeDiscoveryManager {
     case Message.TYPE_PING:
       buffer.write(message.tcpPort);
       buffer.write(message.role);
-      buffer.write(message.nodeName.length());
-      for (char aByte : message.nodeName.toCharArray()) {
-        buffer.write(aByte);
-      }
+      writeString(message.group, buffer);
+      writeString(message.nodeName, buffer);
       break;
     }
 
@@ -246,18 +257,41 @@ public class OMulticastNodeDiscoveryManager {
       return null;
     }
     Message message = new Message();
-    ByteArrayInputStream buffer = new ByteArrayInputStream(data);
-    message.type = buffer.read();
+    ByteArrayInputStream stream = new ByteArrayInputStream(data);
+    message.type = stream.read();
     switch (message.type) {
     case Message.TYPE_PING:
-      message.tcpPort = buffer.read();
-      message.role = buffer.read();
-      int nodeNameLength = buffer.read();
-      byte[] nameBuffer = new byte[nodeNameLength];
-      buffer.read(nameBuffer);
-      message.nodeName = new String(nameBuffer);
+      message.tcpPort = stream.read();
+      message.role = stream.read();
+      message.group = readString(stream);
+      message.nodeName = readString(stream);
     }
     return message;
+  }
+
+  private void writeString(String string, ByteArrayOutputStream buffer) throws IOException {
+    if (string == null) {
+      buffer.write(-1);
+      return;
+    }
+    buffer.write(string.length());
+    if (string.length() == 0) {
+      return;
+    }
+    buffer.write(string.getBytes());
+  }
+
+  private String readString(ByteArrayInputStream stream) throws IOException {
+    int length = stream.read();
+    if (length < 0) {
+      return null;
+    }
+    if (length == 0) {
+      return "";
+    }
+    byte[] nameBuffer = new byte[length];
+    stream.read(nameBuffer);
+    return new String(nameBuffer);
   }
 
   private byte[] encrypt(byte[] data) throws Exception {
