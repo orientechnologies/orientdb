@@ -3,6 +3,9 @@ package com.orientechnologies.orient.distributed.impl;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OSchedulerInternal;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -55,7 +58,7 @@ public class OMulticastNodeDiscoveryManager {
    * @param listeningPort
    * @param taskScheduler
    */
-  public OMulticastNodeDiscoveryManager(String nodeName, ODiscoveryListener oDistributedNetworkManager, int listeningPort,
+  public OMulticastNodeDiscoveryManager(String groupName, String nodeName, ODiscoveryListener oDistributedNetworkManager, int listeningPort,
       String multicastIp, int[] multicastDiscoveryPorts, OSchedulerInternal taskScheduler) {
     this.nodeName = nodeName;
     this.networkManager = oDistributedNetworkManager;
@@ -151,7 +154,7 @@ public class OMulticastNodeDiscoveryManager {
     discoveryThread.start();
   }
 
-  private void sendPing() throws IOException {
+  private void sendPing() throws Exception {
     if (!running) {
       return;
     }
@@ -219,7 +222,7 @@ public class OMulticastNodeDiscoveryManager {
     }
   }
 
-  private byte[] serializeMessage(Message message) {
+  private byte[] serializeMessage(Message message) throws Exception {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     buffer.write(message.type);
 
@@ -233,6 +236,7 @@ public class OMulticastNodeDiscoveryManager {
       }
       break;
     }
+
     return encrypt(buffer.toByteArray());
   }
 
@@ -256,22 +260,57 @@ public class OMulticastNodeDiscoveryManager {
     return message;
   }
 
-  private byte[] encrypt(byte[] data) {
-    return data;//TODO
+  private byte[] encrypt(byte[] data) throws Exception {
+    if (groupPassword == null) {
+      return data;
+    }
+    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+    byte[] iv = cipher.getParameters().getParameterSpec(IvParameterSpec.class).getIV();
+    IvParameterSpec ivSpec = new IvParameterSpec(iv);
+    SecretKeySpec keySpec = new SecretKeySpec(paddedPassword(groupPassword), "AES");
+    cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
+
+    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    stream.write(iv.length);
+    stream.write(iv);
+    byte[] cypher = cipher.doFinal(data);
+    stream.write(cypher.length);
+    stream.write(cypher);
+
+    return stream.toByteArray();
   }
 
   private byte[] decrypt(byte[] data) throws Exception {
-    return data;//TODO
+    if (groupPassword == null) {
+      return data;
+    }
+    ByteArrayInputStream stream = new ByteArrayInputStream(data);
+    int ivLength = stream.read();
+    byte[] ivData = new byte[ivLength];
+    stream.read(ivData);
+    IvParameterSpec ivSpec = new IvParameterSpec(ivData);
+    SecretKeySpec skeySpec = new SecretKeySpec(paddedPassword(groupPassword), "AES");
+
+    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+    cipher.init(Cipher.DECRYPT_MODE, skeySpec, ivSpec);
+
+    int length = stream.read();
+    byte[] encrypted = new byte[length];
+    stream.read(encrypted);
+    return cipher.doFinal(encrypted);
   }
 
-  private char[] paddedPassword(String pwd) {
+  private byte[] paddedPassword(String pwd) {
+    if (pwd == null) {
+      return null;
+    }
     while (pwd.length() < 16) {
       pwd += "=";
     }
     if (pwd.length() > 16) {
       pwd = pwd.substring(16);
     }
-    return pwd.toCharArray();
+    return pwd.getBytes();
   }
 
   public void stop() {

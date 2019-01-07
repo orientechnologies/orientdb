@@ -58,7 +58,9 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
     String multicastIp = "230.0.0.0";
     int multicastPort = 4321;
     int[] pingPorts = { 4321 };
-    discoveryManager = new OMulticastNodeDiscoveryManager(localNodeName, this, multicastPort, multicastIp, pingPorts, orientDB);
+    String group = "default";
+
+    discoveryManager = new OMulticastNodeDiscoveryManager(group, localNodeName, this, multicastPort, multicastIp, pingPorts, orientDB);
     discoveryManager.start();
   }
 
