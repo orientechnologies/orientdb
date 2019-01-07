@@ -114,7 +114,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected          ODistributedNetworkManager                 remoteServerManager;
   protected          TimerTask                                  publishLocalNodeConfigurationTask = null;
   protected          TimerTask                                  haStatsTask                       = null;
-  protected          OClusterHealthChecker                      healthCheckerTask                 = null;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -148,8 +147,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   public void waitUntilNodeOnline(final String nodeName, final String databaseName) throws InterruptedException {
-    while (messageService == null || messageService.getDatabase(databaseName) == null || !isNodeOnline(nodeName, databaseName))
-      Thread.sleep(100);
+
   }
 
   @Override
@@ -256,9 +254,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (publishLocalNodeConfigurationTask != null)
       publishLocalNodeConfigurationTask.cancel();
 
-    if (healthCheckerTask != null)
-      healthCheckerTask.cancel();
-
     if (haStatsTask != null)
       haStatsTask.cancel();
 
@@ -303,30 +298,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
    */
   @Override
   public void onOpen(final ODatabaseInternal iDatabase) {
-    if (!isRelatedToLocalServer(iDatabase))
-      return;
-
-    if (isOffline() && status != NODE_STATUS.STARTING)
-      return;
-
-    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    try {
-      final String dbName = iDatabase.getName();
-
-      final ODistributedConfiguration cfg = getDatabaseConfiguration(dbName);
-      if (cfg == null)
-        return;
-
-    } catch (HazelcastException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } catch (HazelcastInstanceNotActiveException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } finally {
-      // RESTORE ORIGINAL DATABASE INSTANCE IN TL
-      ODatabaseRecordThreadLocal.instance().set(currDb);
-    }
   }
 
   public void registerNewDatabaseIfNeeded(String dbName, ODistributedConfiguration cfg) {
@@ -349,11 +320,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
-    final ODistributedMessageService msgService = getMessageService();
-    if (msgService != null) {
-      msgService.unregisterDatabase(iDatabase.getName());
-    }
-    removeStorage(iDatabase.getName());
   }
 
   public void removeStorage(final String name) {

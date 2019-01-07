@@ -51,7 +51,7 @@ public class FirstPhaseOperationTest {
   }
 
   @Test
-  public void testExecuteSuccess() {
+  public void   testExecuteSuccess() {
     List<ORecordOperationRequest> networkOps;
     try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
       session.begin();

@@ -30,11 +30,11 @@ public class CoordinatorTxTest {
 
   @Before
   public void before() {
-    this.one = OrientDBInternal.distributed("target/one/", OrientDBConfig.defaultConfig()).newOrientDB();
+    this.one = OrientDBInternal.embedded("target/one/", OrientDBConfig.defaultConfig()).newOrientDB();
     this.one.create("none", ODatabaseType.MEMORY);
-    this.two = OrientDBInternal.distributed("target/two/", OrientDBConfig.defaultConfig()).newOrientDB();
+    this.two = OrientDBInternal.embedded("target/two/", OrientDBConfig.defaultConfig()).newOrientDB();
     this.two.create("none", ODatabaseType.MEMORY);
-    this.three = OrientDBInternal.distributed("target/three/", OrientDBConfig.defaultConfig()).newOrientDB();
+    this.three = OrientDBInternal.embedded("target/three/", OrientDBConfig.defaultConfig()).newOrientDB();
     this.three.create("none", ODatabaseType.MEMORY);
   }
 

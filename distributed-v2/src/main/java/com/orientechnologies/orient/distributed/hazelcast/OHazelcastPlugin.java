@@ -243,8 +243,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       assignLockManagerFromCluster();
 
-      initSystemDatabase();
-
       ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "Servers in cluster: %s", activeNodes.keySet());
 
       publishLocalNodeConfiguration();
@@ -263,8 +261,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       publishLocalNodeConfiguration();
 
       installNewDatabasesFromCluster();
-
-      loadLocalDatabases();
 
       membershipListenerMapRegistration = configurationMap.getHazelcastMap().addEntryListener(this, true);
       membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
@@ -294,12 +290,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           }
         };
         Orient.instance().scheduleTask(haStatsTask, statsDelay, statsDelay);
-      }
-
-      final long healthChecker = OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY.getValueAsLong();
-      if (healthChecker > 0) {
-        healthCheckerTask = new OClusterHealthChecker(this, healthChecker);
-        Orient.instance().scheduleTask(healthCheckerTask, healthChecker, healthChecker);
       }
 
       for (OServerNetworkListener nl : serverInstance.getNetworkListeners())
@@ -821,12 +811,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         final Set<String> servers = new HashSet<String>(getActiveServers());
         servers.remove(nodeName);
 
-        if (!servers.isEmpty() && messageService.getDatabase(databaseName) != null) {
-          final ODistributedResponse dResponse = sendRequest(databaseName, null, servers,
-              new OUpdateDatabaseConfigurationTask(databaseName, document), getNextMessageIdCounter(),
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null, null);
-        }
-
       } else
         configurationMap.putInLocalCache(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName, document);
 
@@ -911,8 +895,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           final DB_STATUS s = getDatabaseStatus(getLocalNodeName(), databaseName);
           if (s == DB_STATUS.NOT_AVAILABLE) {
             // INSTALL THE DATABASE
-            installDatabase(false, databaseName, false,
-                OGlobalConfiguration.DISTRIBUTED_BACKUP_TRY_INCREMENTAL_FIRST.getValueAsBoolean());
+
           }
         }
       }
@@ -1196,131 +1179,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public void onCreate(final ODatabaseInternal iDatabase) {
-    if (!isRelatedToLocalServer(iDatabase))
-      return;
-
-    if (status != NODE_STATUS.ONLINE)
-      return;
-
-    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    try {
-
-      final String dbName = iDatabase.getName();
-
-//      final ODocument dCfg = (ODocument) configurationMap.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName);
-//      if (dCfg != null && getAvailableNodes(dbName) > 0) {
-//        throw new ODistributedException(
-//            "Cannot create the new database '" + dbName + "' because it is already present in distributed configuration");
-//      }
-
-      // INIT THE STORAGE
-      getStorage(dbName);
-
-      final ODistributedConfiguration cfg = getDatabaseConfiguration(dbName);
-
-      // TODO: TEMPORARY PATCH TO WAIT FOR DB PROPAGATION IN CFG TO ALL THE OTHER SERVERS
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw OException
-            .wrapException(new ODistributedException("Error on creating database '" + dbName + "' on distributed nodes"), e);
-      }
-
-      // WAIT UNTIL THE DATABASE HAS BEEN PROPAGATED TO ALL THE SERVERS
-      final Set<String> servers = cfg.getAllConfiguredServers();
-      if (servers.size() > 1) {
-        int retry = 0;
-        for (; retry < 100; ++retry) {
-          boolean allServersAreOnline = true;
-          for (String server : servers) {
-            if (!isNodeOnline(server, dbName)) {
-              allServersAreOnline = false;
-              break;
-            }
-          }
-
-          if (allServersAreOnline)
-            break;
-
-          // WAIT FOR ANOTHER RETRY
-          try {
-            Thread.sleep(200);
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw OException
-                .wrapException(new ODistributedException("Error on creating database '" + dbName + "' on distributed nodes"), e);
-          }
-        }
-
-        if (retry >= 100)
-          ODistributedServerLog
-              .warn(this, getLocalNodeName(), null, DIRECTION.NONE, "Timeout waiting for all nodes to be up for database %s",
-                  dbName);
-      }
-
-      onOpen(iDatabase);
-
-    } finally {
-      // RESTORE ORIGINAL DATABASE INSTANCE IN TL
-      ODatabaseRecordThreadLocal.instance().set(currDb);
-    }
   }
 
   @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
-    if (!isRelatedToLocalServer(iDatabase))
-      return;
-
-    final String dbName = iDatabase.getName();
-
-    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Dropping database %s...", dbName);
-
-    if (iDatabase.getStorage() instanceof OAutoshardedStorage && !((OAutoshardedStorage) iDatabase.getStorage()).isLocalEnv()) {
-      // DROP THE DATABASE ON ALL THE SERVERS
-      final ODistributedConfiguration dCfg = getDatabaseConfiguration(dbName);
-
-      final Set<String> servers = dCfg.getAllConfiguredServers();
-      servers.remove(nodeName);
-
-      final long start = System.currentTimeMillis();
-
-      // WAIT ALL THE SERVERS BECOME ONLINE
-      boolean allServersAreOnline = false;
-      while (!allServersAreOnline && System.currentTimeMillis() - start < 5000) {
-        allServersAreOnline = true;
-        for (String s : servers) {
-          final DB_STATUS st = getDatabaseStatus(s, dbName);
-          if (st == DB_STATUS.NOT_AVAILABLE || st == DB_STATUS.SYNCHRONIZING || st == DB_STATUS.BACKUP) {
-            allServersAreOnline = false;
-            try {
-              Thread.sleep(300);
-            } catch (InterruptedException e) {
-              Thread.currentThread().interrupt();
-              break;
-            }
-          }
-        }
-      }
-
-      if (!servers.isEmpty() && messageService.getDatabase(dbName) != null)
-        sendRequest(dbName, null, servers, new ODropDatabaseTask(), getNextMessageIdCounter(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null, null);
-    }
-
-    super.onDrop(iDatabase);
-
-    if (configurationMap != null) {
-      configurationMap.remove(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + nodeName + "." + dbName);
-
-      if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
-        // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
-        configurationMap.remove(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName);
-        configurationMap.remove(OAbstractSyncDatabaseTask.DEPLOYDB + dbName);
-        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "Dropped last copy of database '%s', removing it from the cluster", dbName);
-      }
-    }
   }
 
   public ODocument getNodeConfigurationByUuid(final String iNodeId, final boolean useCache) {
@@ -1552,11 +1414,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
               .debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on calling onNodeLeft event on '%s'", e, l);
         }
 
-      // UNLOCK ANY PENDING LOCKS
-      if (messageService != null) {
-        for (String dbName : messageService.getDatabases())
-          messageService.getDatabase(dbName).handleUnreachableNode(nodeLeftName);
-      }
 
       if (member.getUuid() != null)
         activeNodesNamesByUuid.remove(member.getUuid());

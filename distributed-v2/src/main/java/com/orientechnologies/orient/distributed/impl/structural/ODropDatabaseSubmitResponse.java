@@ -4,6 +4,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import static com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory.DROP_DATABASE_SUBMIT_RESPONSE;
+
 public class ODropDatabaseSubmitResponse implements OStructuralSubmitResponse {
   @Override
   public void serialize(DataOutput output) throws IOException {
@@ -17,6 +19,6 @@ public class ODropDatabaseSubmitResponse implements OStructuralSubmitResponse {
 
   @Override
   public int getResponseType() {
-    return 0;
+    return DROP_DATABASE_SUBMIT_RESPONSE;
   }
 }

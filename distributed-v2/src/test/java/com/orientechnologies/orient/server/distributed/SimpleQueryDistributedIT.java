@@ -27,6 +27,7 @@ public class SimpleQueryDistributedIT {
 
   @Before
   public void before() throws Exception {
+    OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.setValue(2);
     server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
     server1 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-1.xml");
     server2 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-2.xml");

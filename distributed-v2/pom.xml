@@ -136,6 +136,7 @@
                 <configuration>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
+                        <distributed.replicationProtocol.version>2</distributed.replicationProtocol.version>
                     </systemPropertyVariables>
                     <excludes>
                         <exclude>${exclude.test.distributed}</exclude>

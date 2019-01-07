@@ -115,9 +115,6 @@ public class ODefaultRemoteTaskFactoryV0 implements ORemoteTaskFactory {
     case ORequestDatabaseConfigurationTask.FACTORYID: // 27
       return new ORequestDatabaseConfigurationTask();
 
-    case OUnreachableServerLocalTask.FACTORYID: // 28
-      throw new IllegalArgumentException("Task with code " + code + " is not supported in remote configuration");
-
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

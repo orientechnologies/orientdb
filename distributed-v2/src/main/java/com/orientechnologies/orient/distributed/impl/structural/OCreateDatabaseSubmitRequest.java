@@ -32,8 +32,11 @@ public class OCreateDatabaseSubmitRequest implements OStructuralSubmitRequest {
     if (context.exists(database, null, null)) {
       //TODO:Send error;
     }
-    coordinator.sendOperation(this, new OCreateDatabaseOperationRequest(this.database, this.type, this.configurations),
-        new OCreateDatabaseResponseHandler(sender, operationId, database, context));
+    OStructuralRequestContext ct = coordinator
+        .sendOperation(this, new OCreateDatabaseOperationRequest(this.database, this.type, this.configurations),
+            new OCreateDatabaseResponseHandler(sender, operationId, database, context));
+    System.out.println("members: " + ct.getInvolvedMembers());
+
   }
 
   @Override

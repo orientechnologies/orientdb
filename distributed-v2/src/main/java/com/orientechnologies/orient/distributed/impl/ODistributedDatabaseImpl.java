@@ -43,7 +43,6 @@ import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.distributed.impl.task.ODistributedLockTask;
-import com.orientechnologies.orient.distributed.impl.task.OUnreachableServerLocalTask;
 import com.orientechnologies.orient.distributed.impl.task.OWaitForTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
@@ -925,13 +924,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void handleUnreachableNode(final String nodeName) {
-    ODistributedServerLog.debug(this, manager.getLocalNodeName(), nodeName, DIRECTION.IN,
-        "Distributed transaction: rolling back all the pending transactions coordinated by the unreachable server '%s'", nodeName);
-
-    final OUnreachableServerLocalTask task = new OUnreachableServerLocalTask(nodeName);
-    final ODistributedRequest rollbackRequest = new ODistributedRequest(null, manager.getLocalNodeId(),
-        manager.getNextMessageIdCounter(), null, task);
-    processRequest(rollbackRequest, false);
   }
 
   @Override

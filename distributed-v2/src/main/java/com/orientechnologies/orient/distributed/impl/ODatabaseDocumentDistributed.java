@@ -144,30 +144,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return distributedManager.getLocalNodeName();
   }
 
-  /**
-   * returns the cluster map for current deploy. The keys of the map are node names, the values contain names of clusters (data
-   * files) available on the single node.
-   *
-   * @return the cluster map for current deploy
-   */
-  public Map<String, Set<String>> getActiveClusterMap() {
-    if (distributedManager.isOffline() || !distributedManager.isNodeOnline(distributedManager.getLocalNodeName(), getName())
-        || OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
-      return super.getActiveClusterMap();
-    }
-    Map<String, Set<String>> result = new HashMap<>();
-    ODistributedConfiguration cfg = getDistributedConfiguration();
-
-    for (String server : distributedManager.getActiveServers()) {
-      if (getClustersOnServer(cfg, server).contains("*")) {
-        //TODO check this!!!
-        result.put(server, getStorage().getClusterNames());
-      } else {
-        result.put(server, getClustersOnServer(cfg, server));
-      }
-    }
-    return result;
-  }
 
   public Set<String> getClustersOnServer(ODistributedConfiguration cfg, String server) {
     Set<String> result = cfg.getClustersOnServer(server);
@@ -501,47 +477,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ((OSharedContextDistributed) shared).create(this);
   }
 
-  public int assignAndCheckCluster(ORecord record, String iClusterName) {
-    ORecordId rid = (ORecordId) record.getIdentity();
-    // if provided a cluster name use it.
-    if (rid.getClusterId() <= ORID.CLUSTER_POS_INVALID && iClusterName != null) {
-      rid.setClusterId(getClusterIdByName(iClusterName));
-      if (rid.getClusterId() == -1)
-        throw new IllegalArgumentException("Cluster name '" + iClusterName + "' is not configured");
-
-    }
-    OClass schemaClass = null;
-    // if cluster id is not set yet try to find it out
-    if (rid.getClusterId() <= ORID.CLUSTER_ID_INVALID && getStorage().isAssigningClusterIds()) {
-      if (record instanceof ODocument) {
-        //Immutable Schema Class not support distributed yet.
-        schemaClass = ((ODocument) record).getSchemaClass();
-        if (schemaClass != null) {
-          if (schemaClass.isAbstract())
-            throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
-          rid.setClusterId(schemaClass.getClusterForNewInstance((ODocument) record));
-        } else
-          throw new ODatabaseException("Cannot save (4) document " + record + ": no class or cluster defined");
-      } else {
-        throw new ODatabaseException("Cannot save (5) document " + record + ": no class or cluster defined");
-      }
-    } else if (record instanceof ODocument)
-      schemaClass = ((ODocument) record).getSchemaClass();
-    // If the cluster id was set check is validity
-    if (rid.getClusterId() > ORID.CLUSTER_ID_INVALID) {
-      if (schemaClass != null) {
-        String messageClusterName = getClusterNameById(rid.getClusterId());
-        checkRecordClass(schemaClass, messageClusterName, rid);
-        if (!schemaClass.hasClusterId(rid.getClusterId())) {
-          throw new IllegalArgumentException(
-              "Cluster name '" + messageClusterName + "' (id=" + rid.getClusterId() + ") is not configured to store the class '"
-                  + schemaClass.getName() + "', valid are " + Arrays.toString(schemaClass.getClusterIds()));
-        }
-      }
-    }
-    return rid.getClusterId();
-  }
-
   @Override
   public void internalCommit(OTransactionInternal iTx) {
     int protocolVersion = DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger();
@@ -617,10 +552,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    ODistributedDatabaseImpl sharedDistributeDb = (ODistributedDatabaseImpl) distributedManager.getMessageService()
-        .getDatabase(getName());
     OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
-    sharedDistributeDb.waitForOnline();
     OSessionOperationId id = new OSessionOperationId();
     id.init();
 
