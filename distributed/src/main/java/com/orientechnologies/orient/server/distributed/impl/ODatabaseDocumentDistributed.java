@@ -955,13 +955,23 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       OIndex<?> index = getSharedContext().getIndexManager().getRawIndex(change.getKey());
       if (OClass.INDEX_TYPE.UNIQUE.name().equals(index.getType()) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
           .equals(index.getType())) {
-        if (!change.getValue().nullKeyChanges.entries.isEmpty()) {
+        OTransactionIndexChangesPerKey nullKeyChanges = change.getValue().nullKeyChanges;
+        if (!nullKeyChanges.entries.isEmpty()) {
           OIdentifiable old = (OIdentifiable) index.get(null);
-          Object newValue = change.getValue().nullKeyChanges.entries.get(change.getValue().nullKeyChanges.entries.size() - 1).value;
+          Object newValue = nullKeyChanges.entries.get(nullKeyChanges.entries.size() - 1).value;
           if (old != null && !old.equals(newValue)) {
-            throw new ORecordDuplicatedException(String
-                .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                    newValue, null, getName(), old.getIdentity()), getName(), old.getIdentity(), null);
+            boolean oldValueRemoved = false;
+            for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry : nullKeyChanges.entries) {
+              if (entry.value != null && entry.value.equals(old) && entry.operation == OTransactionIndexChanges.OPERATION.REMOVE) {
+                oldValueRemoved = true;
+                break;
+              }
+            }
+            if (!oldValueRemoved) {
+              throw new ORecordDuplicatedException(String
+                  .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                      newValue, null, getName(), old.getIdentity()), getName(), old.getIdentity(), null);
+            }
           }
         }
 
@@ -970,9 +980,20 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           if (!changesPerKey.entries.isEmpty()) {
             Object newValue = changesPerKey.entries.get(changesPerKey.entries.size() - 1).value;
             if (old != null && !old.equals(newValue)) {
-              throw new ORecordDuplicatedException(String
-                  .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                      newValue, changesPerKey.key, getName(), old.getIdentity()), getName(), old.getIdentity(), changesPerKey.key);
+              boolean oldValueRemoved = false;
+              for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry : changesPerKey.entries) {
+                if (entry.value != null && entry.value.equals(old)
+                    && entry.operation == OTransactionIndexChanges.OPERATION.REMOVE) {
+                  oldValueRemoved = true;
+                  break;
+                }
+              }
+              if (!oldValueRemoved) {
+                throw new ORecordDuplicatedException(String
+                    .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                        newValue, changesPerKey.key, getName(), old.getIdentity()), getName(), old.getIdentity(),
+                    changesPerKey.key);
+              }
             }
           }
         }
