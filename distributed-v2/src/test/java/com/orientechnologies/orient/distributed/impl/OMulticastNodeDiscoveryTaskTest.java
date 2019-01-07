@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.OSchedulerInternal;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -25,7 +26,7 @@ public class OMulticastNodeDiscoveryTaskTest {
   }
 
   @Test
-  public void test() throws InterruptedException {
+  public void test() throws InterruptedException, NoSuchAlgorithmException {
     ODiscoveryListener discoveryListener1 = new MockDiscoveryListener();
     ODiscoveryListener discoveryListener2 = new MockDiscoveryListener();
     OSchedulerInternal scheduler = new OSchedulerInternal() {

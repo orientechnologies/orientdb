@@ -3,9 +3,10 @@ package com.orientechnologies.orient.distributed.impl;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OSchedulerInternal;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.*;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 public class OMulticastNodeDiscoveryManager {
@@ -25,6 +26,8 @@ public class OMulticastNodeDiscoveryManager {
     String nodeName;
   }
 
+  private static final int BUFFER_SIZE = 1024;
+
   private final String                                   nodeName;
   private       Map<String, ODiscoveryListener.NodeData> knownServers;
   private final String                                   multicastIp;
@@ -39,6 +42,10 @@ public class OMulticastNodeDiscoveryManager {
    * max time a server can be silent (did not get ping from it) until it is considered inactive, ie. left the network
    */
   private       long               maxInactiveServerTimeMillis = 10000;
+
+  private String group;
+  private String groupPassword;
+  private String encryptionAlgorithm = "AES";
 
   private boolean running = true;
 
@@ -73,32 +80,37 @@ public class OMulticastNodeDiscoveryManager {
    * inits the procedure that checks if a server is no longer available, ie. if he did not ping for a long time
    */
   private void initCheckDisconnect() {
-    taskScheduler.schedule(new TimerTask() {
-      @Override
+    taskScheduler.scheduleOnce(new TimerTask() {
       public void run() {
         try {
           checkIfKnownServersAreAlive();
+          if (running) {
+            initCheckDisconnect();
+          }
         } catch (Exception e) {
           e.printStackTrace();
         }
       }
-    }, discoveryPingIntervalMillis, discoveryPingIntervalMillis);
+    }, discoveryPingIntervalMillis);
   }
 
   /**
    * init the procedure that sends pings to other servers, ie. that notifies that you are alive
    */
   private void initDiscoveryPing() {
-    taskScheduler.schedule(new TimerTask() {
+    taskScheduler.scheduleOnce(new TimerTask() {
       @Override
       public void run() {
         try {
           sendPing();
+          if (running) {
+            initDiscoveryPing();
+          }
         } catch (Exception e) {
           e.printStackTrace();
         }
       }
-    }, discoveryPingIntervalMillis, discoveryPingIntervalMillis);
+    }, discoveryPingIntervalMillis);
   }
 
   /**
@@ -179,8 +191,11 @@ public class OMulticastNodeDiscoveryManager {
 
   private void receiveMessages() {
     try {
-      byte[] buffer = new byte[1024];
+      byte[] buffer = new byte[BUFFER_SIZE];
       DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+      if (socket.isClosed()) {
+        return;
+      }
       socket.receive(packet);
       packet.getAddress();
       Message message = deserializeMessage(packet.getData());
@@ -198,43 +213,65 @@ public class OMulticastNodeDiscoveryManager {
           data.lastPingTimestamp = System.currentTimeMillis();
         }
       }
+    } catch (SocketException ex) {
     } catch (Exception e) {
-
+      e.printStackTrace();
     }
   }
 
   private byte[] serializeMessage(Message message) {
-    ByteBuffer buffer = ByteBuffer.allocate(1024);
-    buffer.putInt(message.type);
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    buffer.write(message.type);
 
     switch (message.type) {
     case Message.TYPE_PING:
-      buffer.putInt(message.tcpPort);
-      buffer.putInt(message.role);
-      buffer.putInt(message.nodeName.length());
+      buffer.write(message.tcpPort);
+      buffer.write(message.role);
+      buffer.write(message.nodeName.length());
       for (char aByte : message.nodeName.toCharArray()) {
-        buffer.putChar(aByte);
+        buffer.write(aByte);
       }
       break;
     }
-    return buffer.array();
+    return encrypt(buffer.toByteArray());
   }
 
-  private Message deserializeMessage(byte[] data) {
+  private Message deserializeMessage(byte[] data) throws Exception {
+    data = decrypt(data);
+    if (data == null) {
+      return null;
+    }
     Message message = new Message();
-    ByteBuffer buffer = ByteBuffer.wrap(data);
-    message.type = buffer.getInt();
+    ByteArrayInputStream buffer = new ByteArrayInputStream(data);
+    message.type = buffer.read();
     switch (message.type) {
     case Message.TYPE_PING:
-      message.tcpPort = buffer.getInt();
-      message.role = buffer.getInt();
-      int nodeNameLength = buffer.getInt();
-      message.nodeName = "";
-      for (int i = 0; i < nodeNameLength; i++) {
-        message.nodeName += buffer.getChar();
-      }
+      message.tcpPort = buffer.read();
+      message.role = buffer.read();
+      int nodeNameLength = buffer.read();
+      byte[] nameBuffer = new byte[nodeNameLength];
+      buffer.read(nameBuffer);
+      message.nodeName = new String(nameBuffer);
     }
     return message;
+  }
+
+  private byte[] encrypt(byte[] data) {
+    return data;//TODO
+  }
+
+  private byte[] decrypt(byte[] data) throws Exception {
+    return data;//TODO
+  }
+
+  private char[] paddedPassword(String pwd) {
+    while (pwd.length() < 16) {
+      pwd += "=";
+    }
+    if (pwd.length() > 16) {
+      pwd = pwd.substring(16);
+    }
+    return pwd.toCharArray();
   }
 
   public void stop() {
@@ -242,4 +279,27 @@ public class OMulticastNodeDiscoveryManager {
     socket.close();
   }
 
+  public String getGroup() {
+    return group;
+  }
+
+  public void setGroup(String group) {
+    this.group = group;
+  }
+
+  public String getGroupPassword() {
+    return groupPassword;
+  }
+
+  public void setGroupPassword(String groupPassword) {
+    this.groupPassword = groupPassword;
+  }
+
+  public String getEncryptionAlgorithm() {
+    return encryptionAlgorithm;
+  }
+
+  public void setEncryptionAlgorithm(String encryptionAlgorithm) {
+    this.encryptionAlgorithm = encryptionAlgorithm;
+  }
 }
