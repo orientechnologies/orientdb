@@ -32,14 +32,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
  * Created by tglman on 27/03/16.
  */
-public interface OrientDBInternal extends AutoCloseable {
+public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
 
   /**
    * Create a new factory from a given url.
@@ -111,14 +110,20 @@ public interface OrientDBInternal extends AutoCloseable {
     OrientDBInternal factory;
 
     try {
-      String className = "com.orientechnologies.orient.core.db.OrientDBDistributed";
       ClassLoader loader;
       if (configuration != null) {
         loader = configuration.getClassLoader();
       } else {
         loader = OrientDBInternal.class.getClassLoader();
       }
-      Class<?> kass = loader.loadClass(className);
+      Class<?> kass;
+      try {
+        String className = "com.orientechnologies.orient.core.db.OrientDBDistributed";
+        kass = loader.loadClass(className);
+      } catch (ClassNotFoundException e) {
+        String className = "com.orientechnologies.orient.distributed.OrientDBDistributed";
+        kass = loader.loadClass(className);
+      }
       Constructor<?> constructor = kass.getConstructor(String.class, OrientDBConfig.class, Orient.class);
       factory = (OrientDBInternal) constructor.newInstance(directoryPath, configuration, Orient.instance());
     } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
@@ -281,10 +286,6 @@ public interface OrientDBInternal extends AutoCloseable {
   Collection<OStorage> getStorages();
 
   void forceDatabaseClose(String databaseName);
-
-  void schedule(TimerTask task, long delay, long period);
-
-  void scheduleOnce(TimerTask task, long delay);
 
   <X> Future<X> execute(String database, String user, ODatabaseTask<X> task);
 

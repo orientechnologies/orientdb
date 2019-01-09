@@ -306,7 +306,7 @@ public class OrientDB implements AutoCloseable {
     return this.internal.openPool(database, user, password, config);
   }
 
-  OrientDBInternal getInternal() {
+  public OrientDBInternal getInternal() {
     return internal;
   }
 }
