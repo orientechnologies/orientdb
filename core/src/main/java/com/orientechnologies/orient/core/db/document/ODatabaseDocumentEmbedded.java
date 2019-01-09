@@ -1101,7 +1101,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     OImmutableSchema schema = getMetadata().getImmutableSchemaSnapshot();
     OView view = schema.getViewByClusterId(cluster);
     if (view == null) {
-      String viewName = ((OSharedContextEmbedded) getSharedContext()).getViewManager().getViewFromOldCluster(cluster);
+      String viewName = getSharedContext().getViewManager().getViewFromOldCluster(cluster);
       if (viewName != null) {
         view = schema.getView(viewName);
       }
