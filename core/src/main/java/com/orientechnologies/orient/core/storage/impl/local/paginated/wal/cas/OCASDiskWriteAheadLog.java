@@ -912,7 +912,9 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
       } else {
         result = readFromDisk(lsn, limit + 1);
       }
-
+      if (result.isEmpty()) {
+        return result;
+      }
       return result.subList(1, result.size());
     } finally {
       removeCutTillLimit(lsn);
