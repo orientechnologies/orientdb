@@ -2,8 +2,8 @@ package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.exception.OException;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
 
   private final Lock              lock = new ReentrantLock();
-  private final Map<T, Condition> map  = new HashMap<>();
+  private final Map<T, Condition> map  = new ConcurrentHashMap<>();
   private final long timeout;
 
   public OSimpleLockManagerImpl(long timeout) {
