@@ -12,7 +12,7 @@ import org.apache.tinkerpop.gremlin.structure.FeatureSupportTest.GraphFunctional
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.GraphTest;
 import org.apache.tinkerpop.gremlin.structure.SerializationTest;
-import org.apache.tinkerpop.gremlin.structure.SerializationTest.GryoTest;
+import org.apache.tinkerpop.gremlin.structure.io.IoCustomTest;
 import org.junit.AssumptionViolatedException;
 
 import java.io.File;
@@ -43,10 +43,14 @@ public class OrientGraphProvider extends AbstractGraphProvider {
     IGNORED_TESTS.put(GraphFunctionalityTest.class, asList("shouldSupportTransactionsIfAGraphConstructsATx"));
 
     //This tests become broken after gremlin 3.2.4
-    IGNORED_TESTS.put(SerializationTest.GraphSONTest.class, asList("shouldSerializeTraversalMetrics"));
+    IGNORED_TESTS.put(SerializationTest.GraphSONV3d0Test.class, asList("shouldSerializeTraversalMetrics"));
 
     //This tests become broken after gremlin 3.2.0
-    IGNORED_TESTS.put(GryoTest.class, asList("shouldSerializeTree"));
+    IGNORED_TESTS.put(SerializationTest.GryoV1d0Test.class, asList("shouldSerializeTree"));
+    IGNORED_TESTS.put(SerializationTest.GryoV3d0Test.class, asList("shouldSerializeTree"));
+
+
+    IGNORED_TESTS.put(IoCustomTest.class, asList("shouldSerializeTree"));
 
   }
 
@@ -56,8 +60,9 @@ public class OrientGraphProvider extends AbstractGraphProvider {
     if (IGNORED_TESTS.containsKey(test) && IGNORED_TESTS.get(test).contains(testMethodName))
       throw new AssumptionViolatedException("We allow mixed ids");
 
-    if (testMethodName.contains("graphson-v2-embedded"))
-      throw new AssumptionViolatedException("graphson-v2-embedded support not implemented");
+
+    if (testMethodName.contains("graphson-v1-embedded"))
+      throw new AssumptionViolatedException("graphson-v1-embedded support not implemented");
 
     HashMap<String, Object> configs = new HashMap<String, Object>();
     configs.put(Graph.GRAPH, OrientGraph.class.getName());

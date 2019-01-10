@@ -7,7 +7,6 @@ import org.apache.tinkerpop.gremlin.server.util.DefaultGraphManager;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 
 import javax.script.Bindings;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -23,11 +22,6 @@ public class OrientGremlinGraphManager implements GraphManager {
   }
 
   @Override
-  public Map<String, Graph> getGraphs() {
-    return delegate.getGraphs();
-  }
-
-  @Override
   public Set<String> getGraphNames() {
     return delegate.getGraphNames();
   }
@@ -40,11 +34,6 @@ public class OrientGremlinGraphManager implements GraphManager {
   @Override
   public void putGraph(String s, Graph graph) {
     delegate.putGraph(s, graph);
-  }
-
-  @Override
-  public Map<String, TraversalSource> getTraversalSources() {
-    return delegate.getTraversalSources();
   }
 
   @Override
