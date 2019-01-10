@@ -34,6 +34,7 @@ public class ODistributedDatabaseChunk implements OStreamable {
   public  boolean              last;
   private ODistributedMomentum momentum;
   public  boolean              incremental;
+  //This are not used anymore remove in the next version
   public  long                 walSegment;
   public  long                 walPosition;
 

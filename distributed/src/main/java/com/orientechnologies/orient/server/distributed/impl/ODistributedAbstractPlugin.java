@@ -1569,7 +1569,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
 
     final ODatabaseDocumentInternal db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta,
-        uniqueClustersBackupDirectory, cfg, firstChunk.incremental, firstChunk.walSegment, firstChunk.walPosition, receiver);
+        uniqueClustersBackupDirectory, cfg, firstChunk.incremental, receiver);
 
     if (db == null)
       return;
@@ -1901,8 +1901,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   protected ODatabaseDocumentInternal installDatabaseOnLocalNode(final String databaseName, final String dbPath, final String iNode,
       final String iDatabaseCompressedFile, final boolean delta, final File uniqueClustersBackupDirectory,
-      final OModifiableDistributedConfiguration cfg, boolean incremental, long walSegment, long walPosition,
-      OSyncReceiver receiver) {
+      final OModifiableDistributedConfiguration cfg, boolean incremental, OSyncReceiver receiver) {
     ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN, "Installing database '%s' to: %s...", databaseName, dbPath);
 
     final File f = new File(iDatabaseCompressedFile);
@@ -1953,7 +1952,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
                 uniqueClustersBackupDirectory.delete();
               }
-              OLogSequenceNumber lsn = new OLogSequenceNumber(walSegment, walPosition);
+              OLogSequenceNumber lsn = ((OAbstractPaginatedStorage) storage).getLSN();
               final OSyncDatabaseDeltaTask deployTask = new OSyncDatabaseDeltaTask(lsn,
                   getMessageService().getDatabase(databaseName).getSyncConfiguration().getLastOperationTimestamp());
 
