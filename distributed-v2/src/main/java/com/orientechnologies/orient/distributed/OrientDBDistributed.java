@@ -277,7 +277,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public synchronized void nodeJoin(String nodeName, ODistributedChannel channel) {
-    if(this.getPlugin().getLocalNodeName().equals(nodeName))
+    if (this.getPlugin().getLocalNodeName().equals(nodeName))
       return;
     members.put(nodeName, channel);
     for (OSharedContext context : sharedContexts.values()) {
@@ -481,7 +481,19 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
-  public void setOnline(){
+  public void setOnline() {
     distributedReady.countDown();
+  }
+
+  public void checkDatabaseReady(String database) {
+    checkReadyForHandleRequests();
+    if (super.exists(database, null, null)) {
+      if (getStorage(database) == null) {
+        openNoAuthorization(database);
+        checkCoordinator(database);
+      }
+    } else {
+      //TODO: Wait for something
+    }
   }
 }

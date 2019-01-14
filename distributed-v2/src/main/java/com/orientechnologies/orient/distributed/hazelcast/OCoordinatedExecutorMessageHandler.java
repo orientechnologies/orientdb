@@ -21,18 +21,13 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
     this.distributed = distributed;
   }
 
-  private void waitOnline(String database) {
-    try {
-      OHazelcastPlugin plugin = distributed.getPlugin();
-      plugin.waitUntilNodeOnline(plugin.getLocalNodeName(), database);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
+  private void checkDatabaseReady(String database) {
+    distributed.checkDatabaseReady(database);
   }
 
   @Override
   public void executeOperationRequest(OOperationRequest request) {
-    waitOnline(request.getDatabase());
+    checkDatabaseReady(request.getDatabase());
     ODistributedContext distributedContext = distributed.getDistributedContext(request.getDatabase());
     ODistributedExecutor executor = distributedContext.getExecutor();
     ODistributedMember member = executor.getMember(request.getSenderNode());
@@ -41,7 +36,7 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
 
   @Override
   public void executeOperationResponse(OOperationResponse response) {
-    waitOnline(response.getDatabase());
+    checkDatabaseReady(response.getDatabase());
     ODistributedContext distributedContext = distributed.getDistributedContext(response.getDatabase());
     ODistributedCoordinator coordinator = distributedContext.getCoordinator();
     if (coordinator == null) {
@@ -54,7 +49,7 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
 
   @Override
   public void executeSubmitResponse(ONetworkSubmitResponse response) {
-    waitOnline(response.getDatabase());
+    checkDatabaseReady(response.getDatabase());
     ODistributedContext distributedContext = distributed.getDistributedContext(response.getDatabase());
     OSubmitContext context = distributedContext.getSubmitContext();
     context.receive(response.getOperationId(), response.getResponse());
@@ -62,7 +57,7 @@ public class OCoordinatedExecutorMessageHandler implements OCoordinatedExecutor 
 
   @Override
   public void executeSubmitRequest(ONetworkSubmitRequest request) {
-    waitOnline(request.getDatabase());
+    checkDatabaseReady(request.getDatabase());
     ODistributedContext distributedContext = distributed.getDistributedContext(request.getDatabase());
     ODistributedCoordinator coordinator = distributedContext.getCoordinator();
     if (coordinator == null) {
