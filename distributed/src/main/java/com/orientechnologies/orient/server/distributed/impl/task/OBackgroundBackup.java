@@ -32,6 +32,7 @@ public class OBackgroundBackup implements Runnable {
   private final ODistributedRequestId                 requestId;
   private final File                                  completedFile;
   private       CountDownLatch                        started     = new CountDownLatch(1);
+  private       CountDownLatch                        finished    = new CountDownLatch(1);
 
   public OBackgroundBackup(OSyncDatabaseTask oSyncDatabaseTask, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database, File resultedBackupFile, String finalBackupPath, OModifiableBoolean incremental,
@@ -77,13 +78,18 @@ public class OBackgroundBackup implements Runnable {
               started.countDown();
               return null;
             });
+          } catch (UnsupportedOperationException u) {
+            throw u;
+          } catch (RuntimeException r) {
+            finished.countDown();
+            throw r;
           } finally {
             wal.removeCutTillLimit(lsn);
           }
           File dir = new File(finalBackupPath);
           File file = new File(finalBackupPath, dir.listFiles()[0].getName() + ".completed");
           file.createNewFile();
-
+          finished.countDown();
           OLogManager.instance().info(this, "Sending Enterprise backup (" + database.getName() + ") for node sync");
 
         } catch (UnsupportedOperationException e) {
@@ -136,6 +142,7 @@ public class OBackgroundBackup implements Runnable {
         } catch (IOException e) {
           OLogManager.instance().error(this, "Cannot create file of backup completed: %s", e, completedFile);
         }
+        finished.countDown();
       }
     } catch (Exception e) {
       OLogManager.instance().errorNoDb(this, "Error during backup processing, file %s will be deleted\n", e, resultedBackupFile);
@@ -162,5 +169,9 @@ public class OBackgroundBackup implements Runnable {
 
   public CountDownLatch getStarted() {
     return started;
+  }
+
+  public CountDownLatch getFinished() {
+    return finished;
   }
 }
