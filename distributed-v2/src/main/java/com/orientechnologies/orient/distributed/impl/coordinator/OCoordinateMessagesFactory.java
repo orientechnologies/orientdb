@@ -26,14 +26,17 @@ public class OCoordinateMessagesFactory {
   public static final int DDL_QUERY_NODE_RESPONSE   = 4;
 
   //STRUCTURAL MESSAGES
-  public static final int CREATE_DATABASE_SUBMIT_REQUEST  = 1;
-  public static final int CREATE_DATABASE_SUBMIT_RESPONSE = 1;
-  public static final int CREATE_DATABASE_REQUEST         = 1;
-  public static final int CREATE_DATABASE_RESPONSE        = 1;
-  public static final int DROP_DATABASE_SUBMIT_REQUEST    = 2;
-  public static final int DROP_DATABASE_SUBMIT_RESPONSE   = 2;
-  public static final int DROP_DATABASE_REQUEST           = 2;
-  public static final int DROP_DATABASE_RESPONSE          = 2;
+  public static final int CREATE_DATABASE_SUBMIT_REQUEST    = 1;
+  public static final int CREATE_DATABASE_SUBMIT_RESPONSE   = 1;
+  public static final int CREATE_DATABASE_REQUEST           = 1;
+  public static final int CREATE_DATABASE_RESPONSE          = 1;
+  public static final int CREATE_DATABASE_FINALIZE_REQUEST  = 3;
+  public static final int CREATE_DATABASE_FINALIZE_RESPONSE = 3;
+
+  public static final int DROP_DATABASE_SUBMIT_REQUEST  = 2;
+  public static final int DROP_DATABASE_SUBMIT_RESPONSE = 2;
+  public static final int DROP_DATABASE_REQUEST         = 2;
+  public static final int DROP_DATABASE_RESPONSE        = 2;
 
   public ONodeResponse createOperationResponse(int responseType) {
     switch (responseType) {
@@ -95,6 +98,8 @@ public class OCoordinateMessagesFactory {
     switch (responseType) {
     case CREATE_DATABASE_RESPONSE:
       return new OCreateDatabaseOperationResponse();
+    case CREATE_DATABASE_FINALIZE_RESPONSE:
+      return new OCreateDatabaseFinalizeResponse();
     case DROP_DATABASE_RESPONSE:
       return new ODropDatabaseOperationResponse();
     }
@@ -105,6 +110,8 @@ public class OCoordinateMessagesFactory {
     switch (requestType) {
     case CREATE_DATABASE_REQUEST:
       return new OCreateDatabaseOperationRequest();
+    case CREATE_DATABASE_FINALIZE_REQUEST:
+      return new OCreateDatabaseFinalizeRequest();
     case DROP_DATABASE_REQUEST:
       return new ODropDatabaseOperationRequest();
     }

@@ -29,14 +29,9 @@ public class OCreateDatabaseSubmitRequest implements OStructuralSubmitRequest {
   @Override
   public void begin(OStructuralDistributedMember sender, OSessionOperationId operationId, OStructuralCoordinator coordinator,
       OrientDBDistributed context) {
-    if (context.exists(database, null, null)) {
-      //TODO:Send error;
-    }
     OStructuralRequestContext ct = coordinator
         .sendOperation(this, new OCreateDatabaseOperationRequest(this.database, this.type, this.configurations),
-            new OCreateDatabaseResponseHandler(sender, operationId, database, context));
-    System.out.println("members: " + ct.getInvolvedMembers());
-
+            new OCreateDatabaseResponseHandler(this, sender, operationId, database));
   }
 
   @Override

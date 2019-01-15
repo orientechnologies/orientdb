@@ -38,10 +38,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.*;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -51,16 +48,17 @@ import static java.util.concurrent.TimeUnit.MINUTES;
  */
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware, OServerLifecycleListener {
 
-  private          OServer                            server;
-  private volatile OHazelcastPlugin                   plugin;
-  private final    Map<String, ODistributedChannel>   members          = new HashMap<>();
-  private volatile boolean                            coordinator      = false;
-  private volatile String                             coordinatorName;
-  private final    OStructuralDistributedContext      structuralDistributedContext;
-  private          OCoordinatedExecutorMessageHandler requestHandler;
-  private          OCoordinateMessagesFactory         coordinateMessagesFactory;
-  private          ODistributedNetworkManager         networkManager;
-  private          CountDownLatch                     distributedReady = new CountDownLatch(1);
+  private          OServer                                   server;
+  private volatile OHazelcastPlugin                          plugin;
+  private final    Map<String, ODistributedChannel>          members          = new HashMap<>();
+  private volatile boolean                                   coordinator      = false;
+  private volatile String                                    coordinatorName;
+  private final    OStructuralDistributedContext             structuralDistributedContext;
+  private          OCoordinatedExecutorMessageHandler        requestHandler;
+  private          OCoordinateMessagesFactory                coordinateMessagesFactory;
+  private          ODistributedNetworkManager                networkManager;
+  private volatile boolean                                   distributedReady = false;
+  private          ConcurrentMap<String, ODistributedStatus> databasesStatus  = new ConcurrentHashMap<>();
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -229,7 +227,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
-    checkReadyForHandleRequests();
+    checkDatabaseReady(name);
     ODatabaseDocumentInternal session = super.open(name, user, password, config);
     checkCoordinator(name);
     return session;
@@ -237,7 +235,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public ODatabaseDocumentInternal poolOpen(String name, String user, String password, ODatabasePoolInternal pool) {
-    checkReadyForHandleRequests();
+    checkDatabaseReady(name);
     ODatabaseDocumentInternal session = super.poolOpen(name, user, password, pool);
     checkCoordinator(name);
     return session;
@@ -358,7 +356,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       structuralDistributedContext.setExternalCoordinator(new OStructuralDistributedMember(lockManager, members.get(lockManager)));
       coordinator = false;
     }
-    distributedReady.countDown();
+    setOnline();
   }
 
   public synchronized ODistributedContext getDistributedContext(String database) {
@@ -471,29 +469,42 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     super.drop(database, null, null);
   }
 
-  public void checkReadyForHandleRequests() {
+  public synchronized void checkReadyForHandleRequests() {
     try {
-      if (!distributedReady.await(1, MINUTES)) {
-        throw new ODatabaseException("Server Not Yet Online");
+      if (!distributedReady) {
+        this.wait(MINUTES.toMillis(1));
+        if (!distributedReady) {
+          throw new ODatabaseException("Server Not Yet Online");
+        }
       }
     } catch (InterruptedException e) {
       throw OException.wrapException(new OInterruptedException("Interrupted while waiting to start"), e);
     }
   }
 
-  public void setOnline() {
-    distributedReady.countDown();
+  public synchronized void setOnline() {
+    this.distributedReady = true;
+    this.notifyAll();
   }
 
   public void checkDatabaseReady(String database) {
     checkReadyForHandleRequests();
-    if (super.exists(database, null, null)) {
-      if (getStorage(database) == null) {
-        openNoAuthorization(database);
-        checkCoordinator(database);
+    try {
+      if (!ODistributedStatus.ONLINE.equals(databasesStatus.get(database))) {
+        this.wait(MINUTES.toMillis(1));
+        if (!distributedReady) {
+          throw new ODatabaseException("Server Not Yet Online");
+        }
       }
-    } else {
-      //TODO: Wait for something
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OInterruptedException("Interrupted while waiting to start"), e);
     }
+  }
+
+  public synchronized void finalizeCreateDatabase(String database) {
+    this.databasesStatus.put(database, ODistributedStatus.ONLINE);
+    checkCoordinator(database);
+    //TODO: double check this notify, it may unblock as well checkReadyForHandleRequests that is not what is expected
+    this.notifyAll();
   }
 }

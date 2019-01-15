@@ -1,35 +1,36 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
-import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
 
 public class OCreateDatabaseResponseHandler implements OStructuralResponseHandler {
 
+  private OCreateDatabaseSubmitRequest request;
   private OStructuralDistributedMember sender;
   private OSessionOperationId          sessionOperationId;
-  private String                       database;
-  private OrientDBDistributed          orientDB;
+  private String                        database;
 
-  public OCreateDatabaseResponseHandler(OStructuralDistributedMember sender, OSessionOperationId sessionOperationId,
-      String database, OrientDBDistributed orientDB) {
+  public OCreateDatabaseResponseHandler(OCreateDatabaseSubmitRequest request, OStructuralDistributedMember sender,
+      OSessionOperationId sessionOperationId, String database) {
+    this.request = request;
     this.sender = sender;
     this.sessionOperationId = sessionOperationId;
     this.database = database;
-    this.orientDB = orientDB;
   }
 
   @Override
   public boolean receive(OStructuralCoordinator coordinator, OStructuralRequestContext context, OStructuralDistributedMember member,
       OStructuralNodeResponse response) {
-    OCreateDatabaseOperationResponse res = (OCreateDatabaseOperationResponse) response;
-    //TODO:Check the response for eventual errors.
-
     if (context.getInvolvedMembers().size() == context.getResponses().size()) {
-      for (OStructuralDistributedMember node : context.getInvolvedMembers()) {
-        orientDB.getPlugin().setDatabaseStatus(node.getName(), database, ODistributedServerManager.DB_STATUS.ONLINE);
+      if (context.getResponses().values().stream().filter((f) -> !((OCreateDatabaseOperationResponse) f).isCreated()).count()
+          == 0) {
+        coordinator.sendOperation(null, new OCreateDatabaseFinalizeRequest(true, database),
+            new OCreateDatabaseFinalizeResponseHandler());
+        coordinator.reply(sender, sessionOperationId, new OCreateDatabaseSubmitResponse(true, null));
+      } else {
+        coordinator.sendOperation(null, new OCreateDatabaseFinalizeRequest(false, database),
+            new OCreateDatabaseFinalizeResponseHandler());
+        coordinator.reply(sender, sessionOperationId, new OCreateDatabaseSubmitResponse(true, "Database Not Created"));
       }
-      coordinator.reply(sender, sessionOperationId, new OCreateDatabaseSubmitResponse());
     }
 
     return false;
