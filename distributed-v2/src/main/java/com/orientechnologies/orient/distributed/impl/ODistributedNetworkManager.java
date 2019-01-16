@@ -15,12 +15,15 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
   private final String                                         localNodeName;
   private final ORemoteServerAvailabilityCheck                 check;
   private final OrientDBDistributed                            orientDB;
+  private final int                                            quorum;
   private       OMulticastNodeDiscoveryManager                 discoveryManager;
 
-  public ODistributedNetworkManager(String localNodeName, ORemoteServerAvailabilityCheck check, OrientDBDistributed orientDB) {
-    this.localNodeName = localNodeName;
+  public ODistributedNetworkManager(ORemoteServerAvailabilityCheck check, OrientDBDistributed orientDB,
+      ONodeConfiguration config) {
+    this.localNodeName = config.getNodeName();
     this.check = check;
     this.orientDB = orientDB;
+    this.quorum = config.getQuorum();
   }
 
   public ORemoteServerController getRemoteServer(final String rNodeName) {
@@ -60,7 +63,8 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
     int[] pingPorts = { 4321 };
     String group = "default";
 
-    discoveryManager = new OMulticastNodeDiscoveryManager(group, localNodeName, this, multicastPort, multicastIp, pingPorts, orientDB);
+    discoveryManager = new OMulticastNodeDiscoveryManager(group, localNodeName, quorum, this, multicastPort, multicastIp, pingPorts,
+        orientDB);
     discoveryManager.start();
   }
 

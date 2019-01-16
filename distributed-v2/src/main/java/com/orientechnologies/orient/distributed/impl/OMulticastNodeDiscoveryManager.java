@@ -3,55 +3,22 @@ package com.orientechnologies.orient.distributed.impl;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OSchedulerInternal;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
 
-public class OMulticastNodeDiscoveryManager {
-
-  private class Message {
-    static final int TYPE_PING          = 0;
-    static final int TYPE_LEAVE         = 1;
-    static final int TYPE_KNOWN_SERVERS = 2;
-
-    static final int ROLE_COORDINATOR = 0;
-    static final int ROLE_REPLICA     = 1;
-    static final int ROLE_UNDEFINED   = 2;
-
-    int    type;
-    int    tcpPort;
-    int    role;
-    String group;
-    String nodeName;
-  }
+public class OMulticastNodeDiscoveryManager extends ONodeManager {
 
   private static final int BUFFER_SIZE = 1024;
 
-  private final String                                   nodeName;
-  private       Map<String, ODiscoveryListener.NodeData> knownServers;
-  private final String                                   multicastIp;
-  private       int                                      listeningPort;
-  private final ODiscoveryListener                       networkManager;
+  private final String multicastIp;
+  private       int    listeningPort;
+
   MulticastSocket socket;
-  private       Thread             discoveryThread;
-  private final int[]              discoveryPorts;
-  private final OSchedulerInternal taskScheduler;
-  private       long               discoveryPingIntervalMillis = 1000;//TODO configure
-  /**
-   * max time a server can be silent (did not get ping from it) until it is considered inactive, ie. left the network
-   */
-  private       long               maxInactiveServerTimeMillis = 10000;
+  private       Thread discoveryThread;
+  private final int[]  discoveryPorts;
 
-  private String group;
-  private String groupPassword;
-  private String encryptionAlgorithm = "AES";
-
-  private boolean running = true;
+  protected long discoveryPingIntervalMillis = 1000;//TODO configure
 
   /**
    * @param oDistributedNetworkManager
@@ -59,26 +26,19 @@ public class OMulticastNodeDiscoveryManager {
    * @param listeningPort
    * @param taskScheduler
    */
-  public OMulticastNodeDiscoveryManager(String groupName, String nodeName, ODiscoveryListener oDistributedNetworkManager,
-      int listeningPort, String multicastIp, int[] multicastDiscoveryPorts, OSchedulerInternal taskScheduler) {
-    if (groupName == null || groupName.length() == 0) {
-      throw new IllegalArgumentException("Invalid group name");
-    }
-    this.group = groupName;
-    if (nodeName == null || nodeName.length() == 0) {
-      throw new IllegalArgumentException("Invalid node name");
-    }
-    this.nodeName = nodeName;
-    this.networkManager = oDistributedNetworkManager;
+  public OMulticastNodeDiscoveryManager(String groupName, String nodeName, int quorum,
+      ODiscoveryListener oDistributedNetworkManager, int listeningPort, String multicastIp, int[] multicastDiscoveryPorts,
+      OSchedulerInternal taskScheduler) {
+    super(taskScheduler, groupName, nodeName, quorum, 0, oDistributedNetworkManager); //TODO term (from OpLog...?)!!
+
     this.listeningPort = listeningPort;
     this.multicastIp = multicastIp;
     this.discoveryPorts = multicastDiscoveryPorts;
-    this.taskScheduler = taskScheduler;
 
-    knownServers = new HashMap<>();
   }
 
   public void start() {
+    super.start();
     try {
       initDiscoveryListening();
       initDiscoveryPing();
@@ -167,10 +127,14 @@ public class OMulticastNodeDiscoveryManager {
     if (!running) {
       return;
     }
-    DatagramSocket socket = new DatagramSocket();
-    InetAddress group = InetAddress.getByName(this.multicastIp);
     Message ping = generatePingMessage();
     byte[] msg = serializeMessage(ping);
+    sendMessageToGroup(msg);
+  }
+
+  protected void sendMessageToGroup(byte[] msg) throws IOException {
+    DatagramSocket socket = new DatagramSocket();
+    InetAddress group = InetAddress.getByName(this.multicastIp);
     for (int discoveryPort : discoveryPorts) {
       DatagramPacket packet = new DatagramPacket(msg, msg.length, group, discoveryPort);
       socket.send(packet);
@@ -178,27 +142,39 @@ public class OMulticastNodeDiscoveryManager {
     socket.close();
   }
 
-  private void checkIfKnownServersAreAlive() {
-    synchronized (knownServers) {
-      Set<String> toRemove = new HashSet<>();
-      for (Map.Entry<String, ODiscoveryListener.NodeData> entry : knownServers.entrySet()) {
-        if (entry.getValue().lastPingTimestamp < System.currentTimeMillis() - maxInactiveServerTimeMillis) {
-          toRemove.add(entry.getKey());
-        }
+  private synchronized void checkIfKnownServersAreAlive() {
+    Set<String> toRemove = new HashSet<>();
+    for (Map.Entry<String, ODiscoveryListener.NodeData> entry : knownServers.entrySet()) {
+      if (entry.getValue().lastPingTimestamp < System.currentTimeMillis() - maxInactiveServerTimeMillis) {
+        toRemove.add(entry.getKey());
       }
-      toRemove.forEach(x -> {
-        ODiscoveryListener.NodeData val = knownServers.remove(x);
-        networkManager.nodeLeft(val);
-      });
     }
+    toRemove.forEach(x -> {
+      ODiscoveryListener.NodeData val = knownServers.remove(x);
+      discoveryListener.nodeLeft(val);
+    });
   }
 
-  private Message generatePingMessage() {
+  private synchronized Message generatePingMessage() {
+    //nodeData
     Message message = new Message();
     message.type = Message.TYPE_PING;
     message.nodeName = this.nodeName;
     message.group = group;
-    //TODO
+    message.term = leaderStatus.currentTerm;
+    message.role =
+        leaderStatus.status == OLeaderElectionStateMachine.Status.LEADER ? Message.ROLE_COORDINATOR : Message.ROLE_REPLICA;
+
+    //masterData
+    ODiscoveryListener.NodeData master = this.knownServers.values().stream().filter(x -> x.master).findFirst().orElse(null);
+    if (master != null) {
+      message.masterName = master.name;
+      message.masterTerm = master.term;
+      message.masterAddress = master.address;
+      message.masterTcpPort = master.port;
+      message.masterPing = master.lastPingTimestamp;
+    }
+
     return message;
   }
 
@@ -215,136 +191,12 @@ public class OMulticastNodeDiscoveryManager {
       if (!message.group.equals(group)) {
         return;
       }
-      if (message.type == Message.TYPE_PING) {
-        synchronized (knownServers) {
-          ODiscoveryListener.NodeData data = knownServers.get(message.nodeName);
-          if (data == null) {
-            data = new ODiscoveryListener.NodeData();
-            data.name = message.nodeName;
-            data.address = packet.getAddress().getHostAddress();
-            data.port = message.tcpPort;
-            knownServers.put(message.nodeName, data);
-            networkManager.nodeJoined(data);
-          }
-          data.lastPingTimestamp = System.currentTimeMillis();
-        }
-      }
+      String fromAddr = packet.getAddress().getHostAddress();
+      processMessage(message, fromAddr);
     } catch (SocketException ex) {
     } catch (Exception e) {
       e.printStackTrace();
     }
-  }
-
-  private byte[] serializeMessage(Message message) throws Exception {
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    buffer.write(message.type);
-
-    switch (message.type) {
-    case Message.TYPE_PING:
-      buffer.write(message.tcpPort);
-      buffer.write(message.role);
-      writeString(message.group, buffer);
-      writeString(message.nodeName, buffer);
-      break;
-    }
-
-    return encrypt(buffer.toByteArray());
-  }
-
-  private Message deserializeMessage(byte[] data) throws Exception {
-    data = decrypt(data);
-    if (data == null) {
-      return null;
-    }
-    Message message = new Message();
-    ByteArrayInputStream stream = new ByteArrayInputStream(data);
-    message.type = stream.read();
-    switch (message.type) {
-    case Message.TYPE_PING:
-      message.tcpPort = stream.read();
-      message.role = stream.read();
-      message.group = readString(stream);
-      message.nodeName = readString(stream);
-    }
-    return message;
-  }
-
-  private void writeString(String string, ByteArrayOutputStream buffer) throws IOException {
-    if (string == null) {
-      buffer.write(-1);
-      return;
-    }
-    buffer.write(string.length());
-    if (string.length() == 0) {
-      return;
-    }
-    buffer.write(string.getBytes());
-  }
-
-  private String readString(ByteArrayInputStream stream) throws IOException {
-    int length = stream.read();
-    if (length < 0) {
-      return null;
-    }
-    if (length == 0) {
-      return "";
-    }
-    byte[] nameBuffer = new byte[length];
-    stream.read(nameBuffer);
-    return new String(nameBuffer);
-  }
-
-  private byte[] encrypt(byte[] data) throws Exception {
-    if (groupPassword == null) {
-      return data;
-    }
-    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-    byte[] iv = cipher.getParameters().getParameterSpec(IvParameterSpec.class).getIV();
-    IvParameterSpec ivSpec = new IvParameterSpec(iv);
-    SecretKeySpec keySpec = new SecretKeySpec(paddedPassword(groupPassword), "AES");
-    cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec);
-
-    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-    stream.write(iv.length);
-    stream.write(iv);
-    byte[] cypher = cipher.doFinal(data);
-    stream.write(cypher.length);
-    stream.write(cypher);
-
-    return stream.toByteArray();
-  }
-
-  private byte[] decrypt(byte[] data) throws Exception {
-    if (groupPassword == null) {
-      return data;
-    }
-    ByteArrayInputStream stream = new ByteArrayInputStream(data);
-    int ivLength = stream.read();
-    byte[] ivData = new byte[ivLength];
-    stream.read(ivData);
-    IvParameterSpec ivSpec = new IvParameterSpec(ivData);
-    SecretKeySpec skeySpec = new SecretKeySpec(paddedPassword(groupPassword), "AES");
-
-    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-    cipher.init(Cipher.DECRYPT_MODE, skeySpec, ivSpec);
-
-    int length = stream.read();
-    byte[] encrypted = new byte[length];
-    stream.read(encrypted);
-    return cipher.doFinal(encrypted);
-  }
-
-  private byte[] paddedPassword(String pwd) {
-    if (pwd == null) {
-      return null;
-    }
-    while (pwd.length() < 16) {
-      pwd += "=";
-    }
-    if (pwd.length() > 16) {
-      pwd = pwd.substring(16);
-    }
-    return pwd.getBytes();
   }
 
   public void stop() {
@@ -352,27 +204,4 @@ public class OMulticastNodeDiscoveryManager {
     socket.close();
   }
 
-  public String getGroup() {
-    return group;
-  }
-
-  public void setGroup(String group) {
-    this.group = group;
-  }
-
-  public String getGroupPassword() {
-    return groupPassword;
-  }
-
-  public void setGroupPassword(String groupPassword) {
-    this.groupPassword = groupPassword;
-  }
-
-  public String getEncryptionAlgorithm() {
-    return encryptionAlgorithm;
-  }
-
-  public void setEncryptionAlgorithm(String encryptionAlgorithm) {
-    this.encryptionAlgorithm = encryptionAlgorithm;
-  }
 }

@@ -37,24 +37,17 @@ import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.ODistributedChannelBinaryProtocol;
-import com.orientechnologies.orient.distributed.impl.task.OAbstractSyncDatabaseTask;
-import com.orientechnologies.orient.distributed.impl.task.ODropDatabaseTask;
-import com.orientechnologies.orient.distributed.impl.task.OUpdateDatabaseConfigurationTask;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -63,7 +56,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.OBeforeDatabaseOpenNetworkEventListener;
 import sun.misc.Signal;
-import com.orientechnologies.orient.distributed.impl.ODistributedAbstractPlugin;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -120,6 +112,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         hazelcastConfigFile = OFileUtils.getPath(hazelcastConfigFile);
       }
     }
+  }
+
+  @Override
+  protected ONodeConfiguration getNodeConfiguration() {
+    //TODO load from file or command line
+    ONodeConfiguration config = new ONodeConfiguration();
+    config.setNodeName(nodeName);
+    config.setQuorum(2);
+    return config;
   }
 
   @Override

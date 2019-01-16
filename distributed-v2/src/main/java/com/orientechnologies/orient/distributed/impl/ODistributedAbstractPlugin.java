@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.distributed.impl;
 
-import com.hazelcast.core.HazelcastException;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
@@ -189,7 +187,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       throw OException.wrapException(new OConfigurationException("Error on deleting 'replicator' user"), e);
     }
 
-    this.remoteServerManager = new ODistributedNetworkManager(nodeName, new ORemoteServerAvailabilityCheck() {
+    this.remoteServerManager = new ODistributedNetworkManager( new ORemoteServerAvailabilityCheck() {
       @Override
       public boolean isNodeAvailable(String node) {
         return ODistributedAbstractPlugin.this.isNodeAvailable(node);
@@ -199,8 +197,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       public void nodeDisconnected(String node) {
         ODistributedAbstractPlugin.this.removeServer(node, true);
       }
-    }, (OrientDBDistributed) serverInstance.getContext().getInternal());
+    }, (OrientDBDistributed) serverInstance.getContext().getInternal(), getNodeConfiguration());
+    //TODO check that the quorum is there!
   }
+
+  protected abstract ONodeConfiguration getNodeConfiguration();
 
   @Override
   @Deprecated

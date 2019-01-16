@@ -16,10 +16,7 @@ import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.distributed.hazelcast.OCoordinatedExecutorMessageHandler;
 import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
-import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
-import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributedPooled;
-import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
-import com.orientechnologies.orient.distributed.impl.ODistributedStorage;
+import com.orientechnologies.orient.distributed.impl.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
@@ -66,8 +63,16 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     //This now si simple but should be replaced by a factory depending to the protocol version
     coordinateMessagesFactory = new OCoordinateMessagesFactory();
     requestHandler = new OCoordinatedExecutorMessageHandler(this);
-    String nodeName = getNodeNameFromConfig();
-    networkManager = new ODistributedNetworkManager(nodeName, null, this);
+
+    networkManager = new ODistributedNetworkManager(null, this, getNodeConfig());
+  }
+
+  private ONodeConfiguration getNodeConfig() {
+    //TODO load from config file or cli
+    ONodeConfiguration config = new ONodeConfiguration();
+    config.setNodeName(getNodeNameFromConfig());
+    config.setQuorum(2);
+    return config;
   }
 
   private String getNodeNameFromConfig() {
