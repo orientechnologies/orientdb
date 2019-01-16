@@ -328,38 +328,38 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return context.getStorage().getName().equals(OSystemDatabase.SYSTEM_DB_NAME) || context.getStorage().isClosed();
   }
 
-  public synchronized void setCoordinator(String lockManager, boolean isSelf) {
-    this.coordinatorName = lockManager;
-    if (isSelf) {
-      if (!coordinator) {
+  public synchronized void setCoordinator(String coordinatorName) {
+    this.coordinatorName = coordinatorName;
+    if (getPlugin().getLocalNodeName().equals(coordinatorName)) {
+      if (!this.coordinator) {
         for (OSharedContext context : sharedContexts.values()) {
           if (isContextToIgnore(context))
             continue;
           ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
-          distributed.makeCoordinator(lockManager, context);
+          distributed.makeCoordinator(coordinatorName, context);
           for (Map.Entry<String, ODistributedChannel> node : members.entrySet()) {
             ODistributedMember member = new ODistributedMember(node.getKey(), context.getStorage().getName(), node.getValue());
             distributed.getCoordinator().join(member);
           }
         }
-        structuralDistributedContext.makeCoordinator(lockManager);
+        structuralDistributedContext.makeCoordinator(coordinatorName);
         OStructuralCoordinator structuralCoordinator = structuralDistributedContext.getCoordinator();
         for (Map.Entry<String, ODistributedChannel> node : members.entrySet()) {
           OStructuralDistributedMember member = new OStructuralDistributedMember(node.getKey(), node.getValue());
           structuralCoordinator.join(member);
         }
-        coordinator = true;
+        this.coordinator = true;
       }
     } else {
       for (OSharedContext context : sharedContexts.values()) {
         if (isContextToIgnore(context))
           continue;
         ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
-        ODistributedMember member = new ODistributedMember(lockManager, context.getStorage().getName(), members.get(lockManager));
+        ODistributedMember member = new ODistributedMember(coordinatorName, context.getStorage().getName(), members.get(coordinatorName));
         distributed.setExternalCoordinator(member);
       }
-      structuralDistributedContext.setExternalCoordinator(new OStructuralDistributedMember(lockManager, members.get(lockManager)));
-      coordinator = false;
+      structuralDistributedContext.setExternalCoordinator(new OStructuralDistributedMember(coordinatorName, members.get(coordinatorName)));
+      this.coordinator = false;
     }
     setOnline();
   }

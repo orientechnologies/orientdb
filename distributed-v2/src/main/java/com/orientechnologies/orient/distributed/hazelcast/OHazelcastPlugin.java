@@ -1175,7 +1175,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   private void checkAndMakeCoordinator(String lockManager) {
     OrientDBDistributed distributed = (OrientDBDistributed) serverInstance.getDatabases();
-    distributed.setCoordinator(lockManager, nodeName.equals(lockManager));
+    distributed.setCoordinator(lockManager);
   }
 
   @Override
