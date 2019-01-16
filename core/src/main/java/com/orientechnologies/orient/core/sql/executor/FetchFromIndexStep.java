@@ -35,12 +35,12 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   private long cost  = 0;
   private long count = 0;
 
-  private boolean inited = false;
-  private OIndexCursor cursor;
+  private boolean            inited      = false;
+  private OIndexCursor       cursor;
   private List<OIndexCursor> nextCursors = new ArrayList<>();
 
   OMultiCollectionIterator<Map.Entry<Object, OIdentifiable>> customIterator;
-  private Iterator nullKeyIterator;
+  private Iterator                         nullKeyIterator;
   private Map.Entry<Object, OIdentifiable> nextEntry = null;
 
   public FetchFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
@@ -110,7 +110,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
           localCount++;
           OResultInternal result = new OResultInternal();
-          result.setProperty("key", key);
+          result.setProperty("key", convertKey(key));
           result.setProperty("rid", value);
           ctx.setVariable("$current", result);
           return result;
@@ -136,6 +136,15 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         return null;
       }
     };
+  }
+
+  private Object convertKey(Object key) {
+    if (key instanceof OCompositeKey) {
+      List<Object> result = new ArrayList<>();
+      result.addAll(((OCompositeKey) key).getKeys());
+      return result;
+    }
+    return key;
   }
 
   private void fetchNextEntry() {
