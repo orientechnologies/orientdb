@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class OMulticastNodeDiscoveryTaskTestIT {
+public class OUDPMulticastNodeManagerIT {
 
   class MockDiscoveryListener implements ODiscoveryListener {
 
@@ -59,12 +59,12 @@ public class OMulticastNodeDiscoveryTaskTestIT {
       multicastPorts[j] = 4321 + j;
     }
 
-    Map<String, OMulticastNodeDiscoveryManager> nodes = new LinkedHashMap<>();
+    Map<String, OUDPMulticastNodeManager> nodes = new LinkedHashMap<>();
     for (int i = 0; i < nNodes; i++) {
       String nodeName = "node" + i;
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      OMulticastNodeDiscoveryManager node = new OMulticastNodeDiscoveryManager("default", nodeName, quorum, discoveryListener,
+      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager("default", nodeName, quorum, discoveryListener,
           4321 + i, "235.1.1.1", multicastPorts, scheduler);
       node.start();
       nodes.put(nodeName, node);
@@ -74,7 +74,7 @@ public class OMulticastNodeDiscoveryTaskTestIT {
     Thread.sleep(10000);
 
     String lastMaster = null;
-    for (OMulticastNodeDiscoveryManager node : nodes.values()) {
+    for (OUDPMulticastNodeManager node : nodes.values()) {
       int numOfMasters = 0;
       for (ODiscoveryListener.NodeData value : node.knownServers.values()) {
         if (value.master) {
@@ -99,7 +99,7 @@ public class OMulticastNodeDiscoveryTaskTestIT {
       Thread.sleep(15000);
 
       lastMaster = null;
-      for (OMulticastNodeDiscoveryManager node : nodes.values()) {
+      for (OUDPMulticastNodeManager node : nodes.values()) {
         int numOfMasters = 0;
         for (ODiscoveryListener.NodeData value : node.knownServers.values()) {
           if (value.master) {
@@ -148,12 +148,12 @@ public class OMulticastNodeDiscoveryTaskTestIT {
       multicastPorts[j] = 4321 + j;
     }
 
-    Map<String, OMulticastNodeDiscoveryManager> nodes = new LinkedHashMap<>();
+    Map<String, OUDPMulticastNodeManager> nodes = new LinkedHashMap<>();
     for (int i = 0; i < quorum; i++) {
       String nodeName = "node" + i;
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      OMulticastNodeDiscoveryManager node = new OMulticastNodeDiscoveryManager("default", nodeName, quorum, discoveryListener,
+      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager("default", nodeName, quorum, discoveryListener,
           4321 + i, "235.1.1.1", multicastPorts, scheduler);
       node.start();
       nodes.put(nodeName, node);
@@ -163,7 +163,7 @@ public class OMulticastNodeDiscoveryTaskTestIT {
     Thread.sleep(10000);
 
     String lastMaster = null;
-    for (OMulticastNodeDiscoveryManager node : nodes.values()) {
+    for (OUDPMulticastNodeManager node : nodes.values()) {
       int numOfMasters = 0;
       for (ODiscoveryListener.NodeData value : node.knownServers.values()) {
         if (value.master) {
@@ -182,7 +182,7 @@ public class OMulticastNodeDiscoveryTaskTestIT {
       String nodeName = "node" + (i + quorum);
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      OMulticastNodeDiscoveryManager node = new OMulticastNodeDiscoveryManager("default", nodeName, quorum, discoveryListener,
+      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager("default", nodeName, quorum, discoveryListener,
           4321 + i + quorum, "235.1.1.1", multicastPorts, scheduler);
       node.start();
       nodes.put(nodeName, node);
@@ -190,7 +190,7 @@ public class OMulticastNodeDiscoveryTaskTestIT {
       Thread.sleep(6000);
 
       lastMaster = null;
-      for (OMulticastNodeDiscoveryManager node_ : nodes.values()) {
+      for (OUDPMulticastNodeManager node_ : nodes.values()) {
         int numOfMasters = 0;
         for (ODiscoveryListener.NodeData value : node_.knownServers.values()) {
           if (value.master) {

@@ -7,7 +7,7 @@ import org.junit.Test;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class OMulticastNodeDiscoveryTaskTest {
+public class OUDPMulticastNodeManagerTest {
 
   class MockDiscoveryListener implements ODiscoveryListener {
 
@@ -43,14 +43,14 @@ public class OMulticastNodeDiscoveryTaskTest {
       }
     };
 
-    OMulticastNodeDiscoveryManager manager1 = new OMulticastNodeDiscoveryManager("default", "node1", 2, discoveryListener1, 4321,
+    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager("default", "node1", 2, discoveryListener1, 4321,
         "235.1.1.1", new int[] { 4321, 4322 }, scheduler);
     manager1.start();
     Thread.sleep(2000);
 
     Assert.assertEquals(1, ((MockDiscoveryListener) discoveryListener1).totalNodes);
 
-    OMulticastNodeDiscoveryManager manager2 = new OMulticastNodeDiscoveryManager("default", "node2", 2, discoveryListener2, 4322,
+    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager("default", "node2", 2, discoveryListener2, 4322,
         "235.1.1.1", new int[] { 4321, 4322 }, scheduler);
     manager2.start();
     Thread.sleep(2000);
@@ -87,7 +87,7 @@ public class OMulticastNodeDiscoveryTaskTest {
       }
     };
 
-    OMulticastNodeDiscoveryManager manager1 = new OMulticastNodeDiscoveryManager("default", "node1", 2, discoveryListener1, 4321,
+    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager("default", "node1", 2, discoveryListener1, 4321,
         "235.1.1.1", new int[] { 4321, 4322 }, scheduler);
     manager1.setGroupPassword("test");
     manager1.start();
@@ -95,7 +95,7 @@ public class OMulticastNodeDiscoveryTaskTest {
 
     Assert.assertEquals(1, ((MockDiscoveryListener) discoveryListener1).totalNodes);
 
-    OMulticastNodeDiscoveryManager manager2 = new OMulticastNodeDiscoveryManager("default", "node2", 2, discoveryListener2, 4322,
+    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager("default", "node2", 2, discoveryListener2, 4322,
         "235.1.1.1", new int[] { 4321, 4322 }, scheduler);
     manager2.setGroupPassword("test");
     manager2.start();
@@ -134,10 +134,10 @@ public class OMulticastNodeDiscoveryTaskTest {
       }
     };
 
-    OMulticastNodeDiscoveryManager manager1 = new OMulticastNodeDiscoveryManager("default", "node1", 2, discoveryListener1, 4321,
+    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager("default", "node1", 2, discoveryListener1, 4321,
         "235.1.1.1", new int[] { 4321, 4322, 4323 }, scheduler);
     manager1.start();
-    OMulticastNodeDiscoveryManager managerOtherGroup = new OMulticastNodeDiscoveryManager("group2", "node1", 2,
+    OUDPMulticastNodeManager managerOtherGroup = new OUDPMulticastNodeManager("group2", "node1", 2,
         discoveryListenerOther, 4323, "235.1.1.1", new int[] { 4321, 4322, 4323 }, scheduler);
     managerOtherGroup.start();
 
@@ -145,7 +145,7 @@ public class OMulticastNodeDiscoveryTaskTest {
 
     Assert.assertEquals(1, ((MockDiscoveryListener) discoveryListener1).totalNodes);
 
-    OMulticastNodeDiscoveryManager manager2 = new OMulticastNodeDiscoveryManager("default", "node2", 2, discoveryListener2, 4322,
+    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager("default", "node2", 2, discoveryListener2, 4322,
         "235.1.1.1", new int[] { 4321, 4322, 4323 }, scheduler);
     manager2.start();
     Thread.sleep(2000);
@@ -183,7 +183,7 @@ public class OMulticastNodeDiscoveryTaskTest {
       }
     };
 
-    OMulticastNodeDiscoveryManager manager1 = new OMulticastNodeDiscoveryManager("default", "node1", 2, discoveryListener1, 4321,
+    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager("default", "node1", 2, discoveryListener1, 4321,
         "235.1.1.1", new int[] { 4321, 4322 }, scheduler);
     manager1.start();
     Thread.sleep(2000);
@@ -193,7 +193,7 @@ public class OMulticastNodeDiscoveryTaskTest {
       Assert.assertFalse(value.master);
     }
 
-    OMulticastNodeDiscoveryManager manager2 = new OMulticastNodeDiscoveryManager("default", "node2", 2, discoveryListener2, 4322,
+    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager("default", "node2", 2, discoveryListener2, 4322,
         "235.1.1.1", new int[] { 4321, 4322 }, scheduler);
     manager2.start();
     Thread.sleep(10000);
