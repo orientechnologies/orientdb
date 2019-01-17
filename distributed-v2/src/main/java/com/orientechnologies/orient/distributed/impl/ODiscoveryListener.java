@@ -8,13 +8,15 @@ public interface ODiscoveryListener {
     boolean master;
     int     term;
     long    lastPingTimestamp;
+    String  connectionUsername;
+    String  connectionPassword;
   }
 
   void nodeJoined(NodeData data);
 
   void nodeLeft(NodeData data);
 
-  default void leaderElected(NodeData data){
+  default void leaderElected(NodeData data) {
     //TODO
   }
 

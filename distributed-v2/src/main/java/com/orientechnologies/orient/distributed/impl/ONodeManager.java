@@ -32,6 +32,8 @@ public abstract class ONodeManager {
     String group;
     int    term;
     int    role;
+    String connectionUsername;
+    String connectionPassword;
 
     //for ping
     int tcpPort;
@@ -47,6 +49,8 @@ public abstract class ONodeManager {
     int    masterTerm;
     String masterAddress;
     int    masterTcpPort;
+    String masterConnectionUsername;
+    String masterConnectionPassword;
     long   masterPing;
   }
 
@@ -223,6 +227,9 @@ public abstract class ONodeManager {
     message.role =
         leaderStatus.status == OLeaderElectionStateMachine.Status.LEADER ? Message.ROLE_COORDINATOR : Message.ROLE_REPLICA;
 
+    message.connectionUsername = config.getConnectionUsername();
+    message.connectionPassword = config.getConnectionPassword();
+    message.tcpPort = config.getTcpPort();
     //masterData
     ODiscoveryListener.NodeData master = this.knownServers.values().stream().filter(x -> x.master).findFirst().orElse(null);
     if (master != null) {
@@ -230,6 +237,8 @@ public abstract class ONodeManager {
       message.masterTerm = master.term;
       message.masterAddress = master.address;
       message.masterTcpPort = master.port;
+      message.masterConnectionUsername = master.connectionUsername;
+      message.masterConnectionPassword = master.connectionPassword;
       message.masterPing = master.lastPingTimestamp;
     }
 
@@ -248,6 +257,8 @@ public abstract class ONodeManager {
         data.term = message.term;
         data.name = message.nodeName;
         data.address = fromAddr;
+        data.connectionUsername = message.connectionUsername;
+        data.connectionPassword = message.connectionPassword;
         data.port = message.tcpPort;
         knownServers.put(message.nodeName, data);
         discoveryListener.nodeJoined(data);
@@ -288,6 +299,8 @@ public abstract class ONodeManager {
           data.name = message.masterName;
           data.term = message.masterTerm;
           data.address = message.masterAddress;
+          data.connectionUsername = message.masterConnectionUsername;
+          data.connectionPassword = message.masterConnectionPassword;
           data.port = message.masterTcpPort;
           data.lastPingTimestamp = message.masterPing;
           data.master = true;
@@ -431,6 +444,8 @@ public abstract class ONodeManager {
       data.master = true;
       data.term = message.term;
       data.address = fromAddr;
+      data.connectionUsername = message.connectionUsername;
+      data.connectionPassword = message.connectionPassword;
       data.port = message.tcpPort;
       data.lastPingTimestamp = System.currentTimeMillis();
 
@@ -524,15 +539,19 @@ public abstract class ONodeManager {
     writeString(message.nodeName, buffer);
     writeInt(message.term, buffer);
     writeInt(message.role, buffer);
+    writeInt(message.tcpPort, buffer);
+    writeString(message.connectionUsername, buffer);
+    writeString(message.connectionPassword, buffer);
 
     switch (message.type) {
     case Message.TYPE_PING:
-      writeInt(message.tcpPort, buffer);
       writeString(message.masterName, buffer);
       writeInt(message.masterTerm, buffer);
       writeString(message.masterAddress, buffer);
       writeInt(message.masterTcpPort, buffer);
       writeLong(message.masterPing, buffer);
+      writeString(message.masterConnectionUsername, buffer);
+      writeString(message.masterConnectionPassword, buffer);
       break;
     case Message.TYPE_VOTE_LEADER_ELECTION:
       writeString(message.voteForNode, buffer);
@@ -553,15 +572,19 @@ public abstract class ONodeManager {
     message.nodeName = readString(stream);
     message.term = readInt(stream);
     message.role = readInt(stream);
+    message.tcpPort = readInt(stream);
+    message.connectionUsername = readString(stream);
+    message.connectionPassword = readString(stream);
 
     switch (message.type) {
     case Message.TYPE_PING:
-      message.tcpPort = readInt(stream);
       message.masterName = readString(stream);
       message.masterTerm = readInt(stream);
       message.masterAddress = readString(stream);
       message.masterTcpPort = readInt(stream);
       message.masterPing = readLong(stream);
+      message.masterConnectionUsername = readString(stream);
+      message.masterConnectionPassword = readString(stream);
 
     case Message.TYPE_VOTE_LEADER_ELECTION:
       message.voteForNode = readString(stream);
