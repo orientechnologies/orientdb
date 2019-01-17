@@ -7,10 +7,12 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterTest;
 import com.orientechnologies.orient.server.distributed.ServerRun;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class AlterPropertyTest extends AbstractServerClusterTest {
 
   private OProperty property;

@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.distributed.impl;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
+import com.orientechnologies.orient.distributed.impl.coordinator.network.ODistributedChannelBinaryProtocol;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
@@ -12,18 +14,13 @@ import java.util.concurrent.ConcurrentMap;
 public class ODistributedNetworkManager implements ODiscoveryListener {
 
   private final ConcurrentMap<String, ORemoteServerController> remoteServers = new ConcurrentHashMap<String, ORemoteServerController>();
-  private final String                                         localNodeName;
-  private final ORemoteServerAvailabilityCheck                 check;
   private final OrientDBDistributed                            orientDB;
-  private final int                                            quorum;
+  private final ONodeConfiguration                             config;
   private       OUDPMulticastNodeManager                       discoveryManager;
 
-  public ODistributedNetworkManager(ORemoteServerAvailabilityCheck check, OrientDBDistributed orientDB,
-      ONodeConfiguration config) {
-    this.localNodeName = config.getNodeName();
-    this.check = check;
+  public ODistributedNetworkManager(OrientDBDistributed orientDB, ONodeConfiguration config) {
     this.orientDB = orientDB;
-    this.quorum = config.getQuorum();
+    this.config = config;
   }
 
   public ORemoteServerController getRemoteServer(final String rNodeName) {
@@ -33,7 +30,18 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
   public ORemoteServerController connectRemoteServer(final String rNodeName, String host, String user, String password)
       throws IOException {
     // OK
-    ORemoteServerController remoteServer = new ORemoteServerController(check, localNodeName, rNodeName, host, user, password);
+    ORemoteServerController remoteServer = new ORemoteServerController(new ORemoteServerAvailabilityCheck() {
+      @Override
+      public boolean isNodeAvailable(String node) {
+        return true;
+      }
+
+      @Override
+      public void nodeDisconnected(String node) {
+        //TODO: Integrate with the discovery manager.
+        ODistributedNetworkManager.this.orientDB.nodeLeave(node);
+      }
+    }, config.getNodeName(), rNodeName, host, user, password);
     final ORemoteServerController old = remoteServers.putIfAbsent(rNodeName, remoteServer);
     if (old != null) {
       remoteServer.close();
@@ -61,16 +69,8 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
     String multicastIp = "230.0.0.0";
     int multicastPort = 4321;
     int[] pingPorts = { 4321 };
-    String group = "default";
 
-    ONodeConfiguration config = new ONodeConfiguration();
-    config.setNodeName(localNodeName);
-    config.setGroupName(group);
-    config.setQuorum(quorum);
-
-
-    discoveryManager = new OUDPMulticastNodeManager(config, this, multicastPort, multicastIp, pingPorts,
-        orientDB);
+    discoveryManager = new OUDPMulticastNodeManager(config, this, multicastPort, multicastIp, pingPorts, orientDB);
     discoveryManager.start();
   }
 
@@ -85,10 +85,29 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
 
   @Override
   public void nodeJoined(NodeData data) {
-
+    if (data.name.equals(config.getNodeName()))
+      return;
+    ORemoteServerController remote = getRemoteServer(data.name);
+    if (remote == null) {
+      //TODO: use some authentication data to do a binary connection.
+      try {
+        remote = connectRemoteServer(data.name, data.address + ":" + data.port, data.connectionUsername, data.connectionPassword);
+        orientDB.nodeJoin(data.name, new ODistributedChannelBinaryProtocol(config.getNodeName(), remote));
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error on establish connection to a new joined node", e);
+      }
+    } else {
+      orientDB.nodeJoin(data.name, new ODistributedChannelBinaryProtocol(config.getNodeName(), remote));
+    }
   }
 
   public void nodeLeft(NodeData data) {
+    orientDB.nodeLeave(data.name);
+    //TODO: Disconnect binary sockets
+  }
 
+  @Override
+  public void leaderElected(NodeData data) {
+    orientDB.setCoordinator(data.name);
   }
 }

@@ -28,9 +28,13 @@ import com.orientechnologies.orient.distributed.impl.metadata.OSharedContextDist
 import com.orientechnologies.orient.distributed.impl.structural.*;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.*;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -56,6 +60,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private          ODistributedNetworkManager                networkManager;
   private volatile boolean                                   distributedReady = false;
   private          ConcurrentMap<String, ODistributedStatus> databasesStatus  = new ConcurrentHashMap<>();
+  private          ONodeConfiguration                        nodeConfiguration;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -64,19 +69,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     coordinateMessagesFactory = new OCoordinateMessagesFactory();
     requestHandler = new OCoordinatedExecutorMessageHandler(this);
 
-    networkManager = new ODistributedNetworkManager(null, this, getNodeConfig());
   }
 
-  private ONodeConfiguration getNodeConfig() {
-    //TODO load from config file or cli
-    ONodeConfiguration config = new ONodeConfiguration();
-    config.setNodeName(getNodeNameFromConfig());
-    config.setQuorum(2);
-    return config;
+  public ONodeConfiguration getNodeConfig() {
+    return nodeConfiguration;
   }
 
   private String getNodeNameFromConfig() {
-    return "_" + new Random().nextInt(100000000);//TODO load the name from config
+    return nodeConfiguration.getNodeName();
   }
 
   @Override
@@ -88,7 +88,30 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void onAfterActivate() {
+    generateNodeConfig();
+    networkManager = new ODistributedNetworkManager(this, getNodeConfig());
+    networkManager.startup();
 
+  }
+
+  private void generateNodeConfig() {
+    String nodeName = "_" + new Random().nextInt(100000000);//TODO load the name from config
+    OServerNetworkListener protocol = server.getListenerByProtocol(ONetworkProtocolBinary.class);
+    OServerUserConfiguration user = server.getUser("distributed_replication");
+    if (user == null) {
+      server.addTemporaryUser("distributed_replication", "" + new SecureRandom().nextLong(), "*");
+      user = server.getUser("distributed_replication");
+    }
+    //TODO load from config file or cli
+    ONodeConfiguration config = new ONodeConfiguration();
+    config.setNodeName(nodeName);
+    config.setQuorum(2);
+    config.setConnectionUsername("distributed_replication");
+    config.setConnectionPassword(user.password);
+    config.setTcpPort(protocol.getInboundAddr().getPort());
+    config.setGroupName("default");
+    config.setGroupPassword("123456");
+    this.nodeConfiguration = config;
   }
 
   @Override
@@ -280,7 +303,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public synchronized void nodeJoin(String nodeName, ODistributedChannel channel) {
-    if (this.getPlugin().getLocalNodeName().equals(nodeName))
+    if (this.getNodeConfig().getNodeName().equals(nodeName))
       return;
     members.put(nodeName, channel);
     for (OSharedContext context : sharedContexts.values()) {
@@ -305,6 +328,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public synchronized void nodeLeave(String nodeName) {
+    if (this.getNodeConfig().getNodeName().equals(nodeName))
+      return;
     members.remove(nodeName);
     for (OSharedContext context : sharedContexts.values()) {
       if (isContextToIgnore(context))
@@ -330,7 +355,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public synchronized void setCoordinator(String coordinatorName) {
     this.coordinatorName = coordinatorName;
-    if (getPlugin().getLocalNodeName().equals(coordinatorName)) {
+    if (getNodeConfig().getNodeName().equals(coordinatorName)) {
       if (!this.coordinator) {
         for (OSharedContext context : sharedContexts.values()) {
           if (isContextToIgnore(context))
@@ -355,10 +380,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         if (isContextToIgnore(context))
           continue;
         ODistributedContext distributed = ((OSharedContextDistributed) context).getDistributedContext();
-        ODistributedMember member = new ODistributedMember(coordinatorName, context.getStorage().getName(), members.get(coordinatorName));
+        ODistributedMember member = new ODistributedMember(coordinatorName, context.getStorage().getName(),
+            members.get(coordinatorName));
         distributed.setExternalCoordinator(member);
       }
-      structuralDistributedContext.setExternalCoordinator(new OStructuralDistributedMember(coordinatorName, members.get(coordinatorName)));
+      structuralDistributedContext
+          .setExternalCoordinator(new OStructuralDistributedMember(coordinatorName, members.get(coordinatorName)));
       this.coordinator = false;
     }
     setOnline();
@@ -427,11 +454,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
       throws IOException {
-    try {
-      getPlugin().waitUntilNodeOnline();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
     OBinaryRequest<OBinaryResponse> request = newDistributedRequest(requestType);
     try {
       request.read(channel, 0, null);

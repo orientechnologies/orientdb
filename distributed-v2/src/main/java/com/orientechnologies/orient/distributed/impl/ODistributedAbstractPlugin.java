@@ -109,7 +109,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected volatile NODE_STATUS                                status                            = NODE_STATUS.OFFLINE;
   protected          long                                       lastClusterChangeOn;
   protected          List<ODistributedLifecycleListener>        listeners                         = new ArrayList<ODistributedLifecycleListener>();
-  protected          ODistributedNetworkManager                 remoteServerManager;
   protected          TimerTask                                  publishLocalNodeConfigurationTask = null;
   protected          TimerTask                                  haStatsTask                       = null;
 
@@ -187,17 +186,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       throw OException.wrapException(new OConfigurationException("Error on deleting 'replicator' user"), e);
     }
 
-    this.remoteServerManager = new ODistributedNetworkManager( new ORemoteServerAvailabilityCheck() {
-      @Override
-      public boolean isNodeAvailable(String node) {
-        return ODistributedAbstractPlugin.this.isNodeAvailable(node);
-      }
-
-      @Override
-      public void nodeDisconnected(String node) {
-        ODistributedAbstractPlugin.this.removeServer(node, true);
-      }
-    }, (OrientDBDistributed) serverInstance.getContext().getInternal(), getNodeConfiguration());
     //TODO check that the quorum is there!
   }
 
@@ -248,9 +236,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   public void shutdown() {
     if (!enabled)
       return;
-
-    // CLOSE ALL CONNECTIONS TO THE SERVERS
-    remoteServerManager.closeAll();
 
     if (publishLocalNodeConfigurationTask != null)
       publishLocalNodeConfigurationTask.cancel();
@@ -2021,10 +2006,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   public long getNextMessageIdCounter() {
     return localMessageIdCounter.getAndIncrement();
-  }
-
-  public void closeRemoteServer(final String node) {
-    remoteServerManager.closeRemoteServer(node);
   }
 
   protected boolean isRelatedToLocalServer(final ODatabaseInternal iDatabase) {

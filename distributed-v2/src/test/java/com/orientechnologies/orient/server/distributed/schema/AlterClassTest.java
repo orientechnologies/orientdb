@@ -5,10 +5,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterTest;
 import com.orientechnologies.orient.server.distributed.ServerRun;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class AlterClassTest extends AbstractServerClusterTest {
 
   private OClass oClass;

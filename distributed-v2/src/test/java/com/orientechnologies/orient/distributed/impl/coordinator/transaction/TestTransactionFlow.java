@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.distributed.impl.OIncrementOperationalLog;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
@@ -48,6 +49,8 @@ public class TestTransactionFlow {
       IllegalAccessException, InstanceAlreadyExistsException, NotCompliantMBeanException, ClassNotFoundException,
       MalformedObjectNameException {
     server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
+    ((OrientDBDistributed) server0.getDatabases())
+        .setCoordinator(((OrientDBDistributed) server0.getDatabases()).getNodeConfig().getNodeName());
     orientDB = server0.getContext();
     orientDB.create(TestTransactionFlow.class.getSimpleName(), ODatabaseType.MEMORY);
     try (ODatabaseSession session = orientDB.open(TestTransactionFlow.class.getSimpleName(), "admin", "admin")) {

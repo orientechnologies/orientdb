@@ -512,7 +512,7 @@ public abstract class ONodeManager {
     message.group = this.config.getGroupName();
     message.nodeName = this.config.getNodeName();
     message.term = leaderStatus.currentTerm;
-    //message.tcpPort = //TODO
+    message.tcpPort = getConfig().getTcpPort();
     message.type = Message.TYPE_LEADER_ELECTED;
 
     try {

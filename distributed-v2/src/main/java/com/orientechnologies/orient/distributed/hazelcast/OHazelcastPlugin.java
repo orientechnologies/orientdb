@@ -125,7 +125,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public void startup() {
-    if (!enabled)
+    if (true)
       return;
 
     if (serverInstance.getDatabases() instanceof OrientDBDistributed)
@@ -151,9 +151,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     activeNodes.clear();
     activeNodesNamesByUuid.clear();
     activeNodesUuidByName.clear();
-
-    // CLOSE ALL CONNECTIONS TO THE SERVERS
-    remoteServerManager.closeAll();
 
     registeredNodeById.clear();
     registeredNodeByName.clear();
@@ -537,7 +534,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public void shutdown() {
-    if (!enabled)
+    if (true)
       return;
     OSignalHandler signalHandler = Orient.instance().getSignalHandler();
     if (signalHandler != null)
@@ -619,54 +616,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 // TODO: check if it's possible to bypass remote call
 //    if (rNodeName.equalsIgnoreCase(getLocalNodeName()))
 //      throw new IllegalArgumentException("Cannot send remote message to the local server");
+    return null;
 
-    ORemoteServerController remoteServer = remoteServerManager.getRemoteServer(rNodeName);
-    if (remoteServer == null) {
-      Member member = getClusterMemberByName(rNodeName);
-
-      for (int retry = 0; retry < 20; ++retry) {
-        ODocument cfg = getNodeConfigurationByUuid(member.getUuid(), false);
-        if (cfg == null || cfg.field("listeners") == null) {
-          try {
-            Thread.sleep(100);
-            member = getClusterMemberByName(rNodeName);
-            continue;
-
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw OException.wrapException(new ODistributedException("Cannot find node '" + rNodeName + "'"), e);
-          }
-        }
-
-        final String url = ODistributedAbstractPlugin.getListeningBinaryAddress(cfg);
-
-        if (url == null) {
-          closeRemoteServer(rNodeName);
-          throw new ODatabaseException("Cannot connect to a remote node because the url was not found");
-        }
-
-        final String userPassword = cfg.field("user_replicator");
-
-        if (userPassword != null) {
-          remoteServer = remoteServerManager.connectRemoteServer(rNodeName, url, REPLICATOR_USER, userPassword);
-          break;
-        }
-
-        // RETRY TO GET USR+PASSWORD IN A WHILE
-        try {
-          Thread.sleep(100);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw OException.wrapException(new OInterruptedException("Cannot connect to remote server " + rNodeName), e);
-        }
-
-      }
-    }
-
-    if (remoteServer == null)
-      throw new ODistributedException("Cannot find node '" + rNodeName + "'");
-
-    return remoteServer;
   }
 
   private Member getClusterMemberByName(final String rNodeName) {
@@ -1003,7 +954,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           activeNodes.remove(eventNodeName);
           activeNodesNamesByUuid.remove(iEvent.getMember().getUuid());
           activeNodesUuidByName.remove(eventNodeName);
-          closeRemoteServer(eventNodeName);
         }
 
         updateLastClusterChange();
@@ -1402,8 +1352,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
 
     try {
-      // REMOVE INTRA SERVER CONNECTION
-      closeRemoteServer(nodeLeftName);
 
       // NOTIFY ABOUT THE NODE HAS LEFT
       for (ODistributedLifecycleListener l : listeners)
@@ -1414,7 +1362,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           ODistributedServerLog
               .debug(this, nodeName, nodeLeftName, DIRECTION.NONE, "Error on calling onNodeLeft event on '%s'", e, l);
         }
-
 
       if (member.getUuid() != null)
         activeNodesNamesByUuid.remove(member.getUuid());

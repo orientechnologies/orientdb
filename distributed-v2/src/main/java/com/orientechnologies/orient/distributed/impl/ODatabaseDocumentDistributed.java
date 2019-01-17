@@ -501,11 +501,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public <T> T sendSequenceAction(OSequenceAction action) throws ExecutionException, InterruptedException {
-    try {
-      distributedManager.waitUntilNodeOnline();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
     ODistributedDatabaseImpl sharedDistributeDb = (ODistributedDatabaseImpl) distributedManager.getMessageService()
         .getDatabase(getName());
     OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
@@ -547,11 +542,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       return;
     }
 
-    try {
-      distributedManager.waitUntilNodeOnline();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
     OSubmitContext submitContext = ((OSharedContextDistributed) getSharedContext()).getDistributedContext().getSubmitContext();
     OSessionOperationId id = new OSessionOperationId();
     id.init();

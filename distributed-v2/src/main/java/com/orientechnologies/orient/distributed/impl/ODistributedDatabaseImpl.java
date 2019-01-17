@@ -528,11 +528,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           if (e instanceof ODistributedException && e.getCause() instanceof IOException) {
             // CONNECTION ERROR: REMOVE THE CONNECTION
             reason = e.getCause().getMessage();
-            manager.closeRemoteServer(node);
 
           } else if (e instanceof OSecurityAccessException) {
             // THE CONNECTION COULD BE STALE, CREATE A NEW ONE AND RETRY
-            manager.closeRemoteServer(node);
             try {
               final ORemoteServerController remoteServer = manager.getRemoteServer(node);
               remoteServer.sendRequest(iRequest);

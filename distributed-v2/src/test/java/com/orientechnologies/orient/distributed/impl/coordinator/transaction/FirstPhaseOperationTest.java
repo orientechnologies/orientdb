@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
 import org.junit.After;
@@ -43,6 +44,8 @@ public class FirstPhaseOperationTest {
       IllegalAccessException, InstanceAlreadyExistsException, NotCompliantMBeanException, ClassNotFoundException,
       MalformedObjectNameException {
     server = OServer.startFromClasspathConfig("orientdb-server-config.xml");
+    ((OrientDBDistributed) server.getDatabases())
+        .setCoordinator(((OrientDBDistributed) server.getDatabases()).getNodeConfig().getNodeName());
     orientDB = server.getContext();
     orientDB.create(FirstPhaseOperationTest.class.getSimpleName(), ODatabaseType.MEMORY);
     try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
@@ -51,7 +54,7 @@ public class FirstPhaseOperationTest {
   }
 
   @Test
-  public void   testExecuteSuccess() {
+  public void testExecuteSuccess() {
     List<ORecordOperationRequest> networkOps;
     try (ODatabaseSession session = orientDB.open(FirstPhaseOperationTest.class.getSimpleName(), "admin", "admin")) {
       session.begin();
