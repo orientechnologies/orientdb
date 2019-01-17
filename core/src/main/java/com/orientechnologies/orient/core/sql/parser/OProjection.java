@@ -99,16 +99,17 @@ public class OProjection extends SimpleNode {
     for (OProjectionItem item : items) {
       if (item.isAll()) {
         for (String alias : iRecord.getPropertyNames()) {
-          result.setProperty(alias, item.convert(iRecord.getProperty(alias)));
+          Object val = item.convert(iRecord.getProperty(alias));
+          if (item.nestedProjection != null) {
+            val = item.nestedProjection.apply(item.expression, val, iContext);
+          }
+          result.setProperty(alias, val);
         }
         if (iRecord.getElement().isPresent()) {
           OElement x = iRecord.getElement().get();
           result.setProperty("@rid", x.getIdentity());
           result.setProperty("@version", x.getVersion());
           result.setProperty("@class", x.getSchemaType().map(clazz -> clazz.getName()).orElse(null));
-        }
-        if (item.nestedProjection != null) {
-          result = (OResultInternal) item.nestedProjection.apply(item.expression, result, iContext);
         }
       } else {
         result.setProperty(item.getProjectionAliasAsString(), item.execute(iRecord, iContext));
