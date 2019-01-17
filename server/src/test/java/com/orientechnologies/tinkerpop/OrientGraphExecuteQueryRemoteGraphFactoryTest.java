@@ -1,5 +1,6 @@
 package com.orientechnologies.tinkerpop;
 
+import com.orientechnologies.orient.core.id.ORecordId;
 import org.apache.tinkerpop.gremlin.orientdb.OrientEdge;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
@@ -20,7 +21,6 @@ import java.util.stream.Collectors;
  */
 public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemoteGraphFactoryTest {
 
-
   @Test
   public void testExecuteGremlinSimpleQueryTest() {
 
@@ -33,7 +33,6 @@ public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemot
 
     Assert.assertEquals(2, gremlin.stream().count());
   }
-
 
   @Test
   public void testExecuteGremlinCountQueryTest() {
@@ -52,7 +51,6 @@ public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemot
     Assert.assertEquals(new Long(2), count);
 
   }
-
 
   @Test
   public void testExecuteGremlinVertexQueryTest() {
@@ -81,8 +79,7 @@ public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemot
     Vertex v1 = noTx.addVertex(T.label, "Person", "name", "John");
     Vertex v2 = noTx.addVertex(T.label, "Person", "name", "Luke");
 
-    v1.addEdge("HasFriend",v2, "since", new Date());
-
+    v1.addEdge("HasFriend", v2, "since", new Date());
 
     OGremlinResultSet gremlin = noTx.execute("gremlin", "g.E().hasLabel('HasFriend')", null);
 
@@ -92,6 +89,39 @@ public class OrientGraphExecuteQueryRemoteGraphFactoryTest extends AbstractRemot
     OGremlinResult result = collected.iterator().next();
     OrientEdge vertex = result.getEdge().get();
     Assert.assertNotNull(vertex.value("since"));
+
+  }
+
+  @Test
+  public void testExecuteGremlinAggregateTest() {
+
+    OrientGraph noTx = factory.getNoTx();
+
+    Vertex v1 = noTx.addVertex(T.label, "Person", "name", "John");
+    Vertex v2 = noTx.addVertex(T.label, "Person", "name", "Luke");
+
+    v1.addEdge("HasFriend", v2, "since", new Date());
+
+    OGremlinResultSet gremlin = noTx.execute("gremlin",
+        "g.V().hasLabel('Person').has('name','Luke').as('luke').branch{it.get().label()}.option('Person',__.in('HasFriend').aggregate('friends')).select('luke','friends')",
+        null);
+
+    List<OGremlinResult> collected = gremlin.stream().collect(Collectors.toList());
+    Assert.assertEquals(1, collected.size());
+
+    OGremlinResult result = collected.iterator().next();
+
+    Object luke = result.getProperty("luke");
+
+    Assert.assertTrue(luke instanceof ORecordId);
+
+    List friends = result.getProperty("friends");
+
+    Assert.assertEquals(1, friends.size());
+
+    Object john = friends.iterator().next();
+
+    Assert.assertTrue(john instanceof ORecordId);
 
   }
 }

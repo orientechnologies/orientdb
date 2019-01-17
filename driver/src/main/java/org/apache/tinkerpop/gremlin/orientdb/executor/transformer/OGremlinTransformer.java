@@ -7,6 +7,8 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import org.apache.tinkerpop.gremlin.orientdb.OrientElement;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Spliterator;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -20,7 +22,11 @@ public class OGremlinTransformer implements OScriptTransformer {
 
   public OGremlinTransformer(OScriptTransformer transformer) {
     this.transformer = transformer;
+
+    this.transformer.registerResultTransformer(HashMap.class, new OGremlinMapTransformer(this));
+    this.transformer.registerResultTransformer(LinkedHashMap.class, new OGremlinMapTransformer(this));
   }
+
 
   @Override
   public OResultSet toResultSet(Object value) {
