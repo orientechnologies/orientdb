@@ -15,7 +15,7 @@ public class OUDPMulticastNodeManager extends ONodeManager {
   private       int    listeningPort;
 
   MulticastSocket socket;
-  private final int[]  discoveryPorts;
+  private final int[] discoveryPorts;
 
   /**
    * @param oDistributedNetworkManager
@@ -23,10 +23,9 @@ public class OUDPMulticastNodeManager extends ONodeManager {
    * @param listeningPort
    * @param taskScheduler
    */
-  public OUDPMulticastNodeManager(String groupName, String nodeName, int quorum,
-      ODiscoveryListener oDistributedNetworkManager, int listeningPort, String multicastIp, int[] multicastDiscoveryPorts,
-      OSchedulerInternal taskScheduler) {
-    super(taskScheduler, groupName, nodeName, quorum, 0, oDistributedNetworkManager); //TODO term (from OpLog...?)!!
+  public OUDPMulticastNodeManager(ONodeConfiguration config, ODiscoveryListener oDistributedNetworkManager, int listeningPort,
+      String multicastIp, int[] multicastDiscoveryPorts, OSchedulerInternal taskScheduler) {
+    super(config, 0, taskScheduler, oDistributedNetworkManager); //TODO term (from OpLog...?)!!
 
     this.listeningPort = listeningPort;
     this.multicastIp = multicastIp;
@@ -42,8 +41,6 @@ public class OUDPMulticastNodeManager extends ONodeManager {
     super.stop();
     socket.close();
   }
-
-
 
   protected void initNetwork() throws IOException {
     socket = new MulticastSocket(listeningPort);
@@ -90,7 +87,7 @@ public class OUDPMulticastNodeManager extends ONodeManager {
       socket.receive(packet);
       packet.getAddress();
       Message message = deserializeMessage(packet.getData());
-      if (!message.group.equals(group)) {
+      if (!message.group.equals(this.config.getGroupName())) {
         return;
       }
       String fromAddr = packet.getAddress().getHostAddress();

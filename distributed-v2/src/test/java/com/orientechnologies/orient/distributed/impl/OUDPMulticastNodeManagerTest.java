@@ -43,15 +43,24 @@ public class OUDPMulticastNodeManagerTest {
       }
     };
 
-    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager("default", "node1", 2, discoveryListener1, 4321,
-        "235.1.1.1", new int[] { 4321, 4322 }, scheduler);
+    ONodeConfiguration config1 = new ONodeConfiguration();
+    config1.setNodeName("node1");
+    config1.setGroupName("default");
+    config1.setQuorum(2);
+
+    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, discoveryListener1, 4321, "235.1.1.1",
+        new int[] { 4321, 4322 }, scheduler);
     manager1.start();
     Thread.sleep(2000);
 
     Assert.assertEquals(1, ((MockDiscoveryListener) discoveryListener1).totalNodes);
+    ONodeConfiguration config2 = new ONodeConfiguration();
+    config2.setNodeName("node2");
+    config2.setGroupName("default");
+    config2.setQuorum(2);
 
-    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager("default", "node2", 2, discoveryListener2, 4322,
-        "235.1.1.1", new int[] { 4321, 4322 }, scheduler);
+    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, discoveryListener2, 4322, "235.1.1.1",
+        new int[] { 4321, 4322 }, scheduler);
     manager2.start();
     Thread.sleep(2000);
 
@@ -87,17 +96,29 @@ public class OUDPMulticastNodeManagerTest {
       }
     };
 
-    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager("default", "node1", 2, discoveryListener1, 4321,
-        "235.1.1.1", new int[] { 4321, 4322 }, scheduler);
-    manager1.setGroupPassword("test");
+    ONodeConfiguration config1 = new ONodeConfiguration();
+    config1.setNodeName("node1");
+    config1.setGroupName("default");
+    config1.setQuorum(2);
+    config1.setGroupPassword("test");
+
+    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, discoveryListener1, 4321, "235.1.1.1",
+        new int[] { 4321, 4322 }, scheduler);
+
     manager1.start();
     Thread.sleep(2000);
 
     Assert.assertEquals(1, ((MockDiscoveryListener) discoveryListener1).totalNodes);
 
-    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager("default", "node2", 2, discoveryListener2, 4322,
-        "235.1.1.1", new int[] { 4321, 4322 }, scheduler);
-    manager2.setGroupPassword("test");
+    ONodeConfiguration config2 = new ONodeConfiguration();
+    config2.setNodeName("node2");
+    config2.setGroupName("default");
+    config2.setQuorum(2);
+    config2.setGroupPassword("test");
+
+    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, discoveryListener2, 4322, "235.1.1.1",
+        new int[] { 4321, 4322 }, scheduler);
+
     manager2.start();
     Thread.sleep(2000);
 
@@ -134,19 +155,35 @@ public class OUDPMulticastNodeManagerTest {
       }
     };
 
-    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager("default", "node1", 2, discoveryListener1, 4321,
-        "235.1.1.1", new int[] { 4321, 4322, 4323 }, scheduler);
+    ONodeConfiguration config1 = new ONodeConfiguration();
+    config1.setNodeName("node1");
+    config1.setGroupName("default");
+    config1.setQuorum(2);
+
+    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, discoveryListener1, 4321, "235.1.1.1",
+        new int[] { 4321, 4322, 4323 }, scheduler);
     manager1.start();
-    OUDPMulticastNodeManager managerOtherGroup = new OUDPMulticastNodeManager("group2", "node1", 2,
-        discoveryListenerOther, 4323, "235.1.1.1", new int[] { 4321, 4322, 4323 }, scheduler);
+
+    ONodeConfiguration configOther = new ONodeConfiguration();
+    configOther.setNodeName("node1");
+    configOther.setGroupName("group2");
+    configOther.setQuorum(2);
+
+    OUDPMulticastNodeManager managerOtherGroup = new OUDPMulticastNodeManager(configOther, discoveryListenerOther, 4323,
+        "235.1.1.1", new int[] { 4321, 4322, 4323 }, scheduler);
     managerOtherGroup.start();
 
     Thread.sleep(2000);
 
     Assert.assertEquals(1, ((MockDiscoveryListener) discoveryListener1).totalNodes);
 
-    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager("default", "node2", 2, discoveryListener2, 4322,
-        "235.1.1.1", new int[] { 4321, 4322, 4323 }, scheduler);
+    ONodeConfiguration config2 = new ONodeConfiguration();
+    config2.setNodeName("node2");
+    config2.setGroupName("default");
+    config2.setQuorum(2);
+
+    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, discoveryListener2, 4322, "235.1.1.1",
+        new int[] { 4321, 4322, 4323 }, scheduler);
     manager2.start();
     Thread.sleep(2000);
 
@@ -183,8 +220,13 @@ public class OUDPMulticastNodeManagerTest {
       }
     };
 
-    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager("default", "node1", 2, discoveryListener1, 4321,
-        "235.1.1.1", new int[] { 4321, 4322 }, scheduler);
+    ONodeConfiguration config1 = new ONodeConfiguration();
+    config1.setNodeName("node1");
+    config1.setGroupName("default");
+    config1.setQuorum(2);
+
+    OUDPMulticastNodeManager manager1 = new OUDPMulticastNodeManager(config1, discoveryListener1, 4321, "235.1.1.1",
+        new int[] { 4321, 4322 }, scheduler);
     manager1.start();
     Thread.sleep(2000);
 
@@ -193,8 +235,13 @@ public class OUDPMulticastNodeManagerTest {
       Assert.assertFalse(value.master);
     }
 
-    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager("default", "node2", 2, discoveryListener2, 4322,
-        "235.1.1.1", new int[] { 4321, 4322 }, scheduler);
+    ONodeConfiguration config2 = new ONodeConfiguration();
+    config2.setNodeName("node2");
+    config2.setGroupName("default");
+    config2.setQuorum(2);
+
+    OUDPMulticastNodeManager manager2 = new OUDPMulticastNodeManager(config2, discoveryListener2, 4322, "235.1.1.1",
+        new int[] { 4321, 4322 }, scheduler);
     manager2.start();
     Thread.sleep(10000);
 

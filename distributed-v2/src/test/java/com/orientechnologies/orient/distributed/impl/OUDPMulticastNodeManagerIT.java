@@ -64,7 +64,11 @@ public class OUDPMulticastNodeManagerIT {
       String nodeName = "node" + i;
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager("default", nodeName, quorum, discoveryListener,
+      ONodeConfiguration config = new ONodeConfiguration();
+      config.setNodeName(nodeName);
+      config.setGroupName("default");
+      config.setQuorum(quorum);
+      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager(config, discoveryListener,
           4321 + i, "235.1.1.1", multicastPorts, scheduler);
       node.start();
       nodes.put(nodeName, node);
@@ -92,7 +96,7 @@ public class OUDPMulticastNodeManagerIT {
     for (int i = 0; i < nNodes - quorum; i++) {
 
       String leader = nodes.values().stream().filter(x -> x.leaderStatus.status == OLeaderElectionStateMachine.Status.LEADER)
-          .map(x -> x.nodeName).findFirst().orElse(null);
+          .map(x -> x.getConfig().getNodeName()).findFirst().orElse(null);
       Assert.assertNotNull(leader);
       nodes.remove(leader).stop();
 
@@ -153,7 +157,11 @@ public class OUDPMulticastNodeManagerIT {
       String nodeName = "node" + i;
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager("default", nodeName, quorum, discoveryListener,
+      ONodeConfiguration config = new ONodeConfiguration();
+      config.setNodeName(nodeName);
+      config.setGroupName("default");
+      config.setQuorum(quorum);
+      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager(config, discoveryListener,
           4321 + i, "235.1.1.1", multicastPorts, scheduler);
       node.start();
       nodes.put(nodeName, node);
@@ -182,7 +190,11 @@ public class OUDPMulticastNodeManagerIT {
       String nodeName = "node" + (i + quorum);
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager("default", nodeName, quorum, discoveryListener,
+      ONodeConfiguration config = new ONodeConfiguration();
+      config.setNodeName(nodeName);
+      config.setGroupName("default");
+      config.setQuorum(quorum);
+      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager(config, discoveryListener,
           4321 + i + quorum, "235.1.1.1", multicastPorts, scheduler);
       node.start();
       nodes.put(nodeName, node);

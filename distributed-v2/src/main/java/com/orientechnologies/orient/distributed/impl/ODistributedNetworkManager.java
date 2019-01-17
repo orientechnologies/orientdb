@@ -63,7 +63,13 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
     int[] pingPorts = { 4321 };
     String group = "default";
 
-    discoveryManager = new OUDPMulticastNodeManager(group, localNodeName, quorum, this, multicastPort, multicastIp, pingPorts,
+    ONodeConfiguration config = new ONodeConfiguration();
+    config.setNodeName(localNodeName);
+    config.setGroupName(group);
+    config.setQuorum(quorum);
+
+
+    discoveryManager = new OUDPMulticastNodeManager(config, this, multicastPort, multicastIp, pingPorts,
         orientDB);
     discoveryManager.start();
   }
