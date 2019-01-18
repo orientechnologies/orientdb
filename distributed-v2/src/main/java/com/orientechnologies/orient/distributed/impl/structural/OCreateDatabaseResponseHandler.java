@@ -25,7 +25,7 @@ public class OCreateDatabaseResponseHandler implements OStructuralResponseHandle
           == 0) {
         coordinator.sendOperation(null, new OCreateDatabaseFinalizeRequest(true, database),
             new OCreateDatabaseFinalizeResponseHandler());
-        coordinator.reply(sender, sessionOperationId, new OCreateDatabaseSubmitResponse(true, null));
+        coordinator.reply(sender, sessionOperationId, new OCreateDatabaseSubmitResponse(true, ""));
       } else {
         coordinator.sendOperation(null, new OCreateDatabaseFinalizeRequest(false, database),
             new OCreateDatabaseFinalizeResponseHandler());

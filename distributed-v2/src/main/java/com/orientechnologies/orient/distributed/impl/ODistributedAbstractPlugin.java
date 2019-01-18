@@ -803,15 +803,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public ODistributedMessageServiceImpl getMessageService() {
-    while (messageService == null)
-      // THIS COULD HAPPEN ONLY AT STARTUP
-      try {
-        Thread.sleep(100);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw OException.wrapException(new OOfflineNodeException("Message Service is not available"), e);
-      }
-    return messageService;
+    return null;
   }
 
   public long getLastClusterChangeOn() {

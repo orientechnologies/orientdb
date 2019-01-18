@@ -509,12 +509,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       final ODistributedServerManager manager = server.getDistributedManager();
       if (manager != null && connection.getDatabase() != null)
         try {
-          final ODistributedDatabase dDatabase = manager.getMessageService().getDatabase(connection.getDatabase().getName());
-          if (dDatabase != null) {
-            dDatabase.waitForOnline();
-          } else
-            manager.waitUntilNodeOnline(manager.getLocalNodeName(), connection.getToken().getDatabase());
-
+          if (manager.getMessageService() != null) {
+            final ODistributedDatabase dDatabase = manager.getMessageService().getDatabase(connection.getDatabase().getName());
+            if (dDatabase != null) {
+              dDatabase.waitForOnline();
+            } else
+              manager.waitUntilNodeOnline(manager.getLocalNodeName(), connection.getToken().getDatabase());
+          }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           throw OException.wrapException(new OInterruptedException("Request interrupted"), e);
