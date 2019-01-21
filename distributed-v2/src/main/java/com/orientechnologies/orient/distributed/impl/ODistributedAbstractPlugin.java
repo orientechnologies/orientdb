@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.distributed.impl;
 
-import com.hazelcast.core.Member;
-import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
@@ -41,24 +39,20 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cluster.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.task.*;
 import com.orientechnologies.orient.distributed.sql.OCommandExecutorSQLHASyncCluster;
-import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -117,12 +111,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected OClusterOwnershipAssignmentStrategy clusterAssignmentStrategy = new ODefaultClusterOwnershipAssignmentStrategy(this);
 
   protected static final int                            DEPLOY_DB_MAX_RETRIES  = 10;
-  protected              ConcurrentMap<String, Member>  activeNodes            = new ConcurrentHashMap<String, Member>();
   protected              ConcurrentMap<String, String>  activeNodesNamesByUuid = new ConcurrentHashMap<String, String>();
   protected              ConcurrentMap<String, String>  activeNodesUuidByName  = new ConcurrentHashMap<String, String>();
   protected final        List<String>                   registeredNodeById     = new CopyOnWriteArrayList<String>();
   protected final        ConcurrentMap<String, Integer> registeredNodeByName   = new ConcurrentHashMap<String, Integer>();
-  protected              ConcurrentMap<String, Long>    autoRemovalOfServers   = new ConcurrentHashMap<String, Long>();
   protected              Set<String>                    installingDatabases    = Collections
       .newSetFromMap(new ConcurrentHashMap<String, Boolean>());
   protected volatile     ODistributedMessageServiceImpl messageService;
@@ -214,10 +206,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public void startup() {
-    if (!enabled)
-      return;
-
-    Orient.instance().addDbLifecycleListener(this);
   }
 
   @Override
@@ -234,39 +222,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public void shutdown() {
-    if (!enabled)
-      return;
-
-    if (publishLocalNodeConfigurationTask != null)
-      publishLocalNodeConfigurationTask.cancel();
-
-    if (haStatsTask != null)
-      haStatsTask.cancel();
-
-    if (messageService != null)
-      messageService.shutdown();
-
-    activeNodes.clear();
-    activeNodesNamesByUuid.clear();
-    activeNodesUuidByName.clear();
-
-    if (lockManagerExecutor != null)
-      lockManagerExecutor.shutdown();
-
-    if (lockManagerRequester != null)
-      lockManagerRequester.shutdown();
-
-    setNodeStatus(NODE_STATUS.OFFLINE);
-
-    Orient.instance().removeDbLifecycleListener(this);
-
-    // CLOSE AND FREE ALL THE STORAGES
-    for (ODistributedStorage s : storages.values())
-      try {
-        s.close();
-      } catch (Exception e) {
-      }
-    storages.clear();
   }
 
   @Override
@@ -308,15 +263,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   public void onDrop(final ODatabaseInternal iDatabase) {
   }
 
-  public void removeStorage(final String name) {
-    synchronized (storages) {
-      final ODistributedStorage storage = storages.remove(name);
-      if (storage != null) {
-        storage.closeOnDrop();
-      }
-    }
-  }
-
   @Override
   public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
   }
@@ -331,73 +277,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     shutdown();
   }
 
-  public String getNodeName(final Member iMember) {
-    return getNodeName(iMember, true);
-  }
-
-  public String getNodeName(final Member iMember, final boolean useCache) {
-    if (iMember == null || iMember.getUuid() == null)
-      return "?";
-
-    if (nodeUuid.equals(iMember.getUuid()))
-      // LOCAL NODE (NOT YET NAMED)
-      return nodeName;
-
-    final String name = activeNodesNamesByUuid.get(iMember.getUuid());
-    if (name != null)
-      return name;
-
-    final ODocument cfg = getNodeConfigurationByUuid(iMember.getUuid(), useCache);
-    if (cfg != null)
-      return cfg.field("name");
-
-    return "ext:" + iMember.getUuid();
-  }
-
-  public boolean updateCachedDatabaseConfiguration(final String iDatabaseName, final OModifiableDistributedConfiguration cfg) {
-    final ODistributedStorage stg = storages.get(iDatabaseName);
-    if (stg == null)
-      return false;
-
-    final ODistributedConfiguration dCfg = stg.getDistributedConfiguration();
-
-    ODocument oldCfg = dCfg != null ? dCfg.getDocument() : null;
-    Integer oldVersion = oldCfg != null ? (Integer) oldCfg.field("version") : null;
-    if (oldVersion == null)
-      oldVersion = 0;
-
-    int currVersion = cfg.getVersion();
-
-    final boolean modified = currVersion > oldVersion;
-
-    if (oldCfg != null && !modified) {
-      // NO CHANGE, SKIP IT
-      OLogManager.instance()
-          .debug(this, "Skip saving of distributed configuration file for database '%s' because is unchanged (version %d)",
-              iDatabaseName, currVersion);
-      return false;
-    }
-
-    // SAVE IN NODE'S LOCAL RAM
-    stg.setDistributedConfiguration(cfg);
-
-    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-        "Broadcasting new distributed configuration for database: %s (version=%d)\n", iDatabaseName, currVersion);
-
-    return modified;
-  }
 
   public ODistributedConfiguration getDatabaseConfiguration(final String iDatabaseName) {
     return getDatabaseConfiguration(iDatabaseName, true);
   }
 
   public ODistributedConfiguration getDatabaseConfiguration(final String iDatabaseName, final boolean createIfNotPresent) {
-    final ODistributedStorage stg = createIfNotPresent ? getStorage(iDatabaseName) : getStorageIfExists(iDatabaseName);
-
-    if (stg == null)
-      return null;
-
-    return stg.getDistributedConfiguration();
+    return null;
   }
 
   public OServer getServerInstance() {
@@ -406,22 +292,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public ODocument getClusterConfiguration() {
-    if (!enabled)
-      return null;
-
-    final ODocument cluster = new ODocument();
-
-    cluster.field("localName", getName());
-    cluster.field("localId", nodeUuid);
-
-    // INSERT MEMBERS
-    final List<ODocument> members = new ArrayList<ODocument>();
-    cluster.field("members", members, OType.EMBEDDEDLIST);
-    for (Member member : activeNodes.values()) {
-      members.add(getNodeConfigurationByUuid(member.getUuid(), true));
-    }
-
-    return cluster;
+    return null;
   }
 
   public abstract String getPublicAddress();
@@ -636,28 +507,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {
-    if (iDatabase.getStorage() instanceof OAutoshardedStorage && ((OAutoshardedStorage) iDatabase.getStorage()).isLocalEnv())
-      return;
-
-    if (isOffline() && status != NODE_STATUS.STARTING)
-      return;
-
-    // RUN ONLY IN NON-DISTRIBUTED MODE
-    if (!isRelatedToLocalServer(iDatabase))
-      return;
-
-    if (messageService == null || messageService.getDatabase(iDatabase.getName()) == null)
-      // NOT INITIALIZED YET
-      return;
-
-    final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
-
-    installClustersOfClass(iDatabase, iClass, cfg.modify());
   }
 
   public void onCreateView(final ODatabaseInternal iDatabase, final OView view) {
-    //TODO implement this!
-    OLogManager.instance().error(this, "Implement ODistributedAbstractPlugin.onCreateView()!!!", null);
   }
 
   @SuppressWarnings("unchecked")
@@ -754,9 +606,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public boolean isNodeAvailable(final String iNodeName) {
-    if (iNodeName == null)
-      return false;
-    return activeNodes.containsKey(iNodeName);
+    return false;
   }
 
   @Override
@@ -821,20 +671,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   @Override
   public int getAvailableNodes(final String iDatabaseName) {
     int availableNodes = 0;
-    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
-      if (isNodeAvailable(entry.getKey(), iDatabaseName))
-        availableNodes++;
-    }
     return availableNodes;
   }
 
   @Override
   public List<String> getOnlineNodes(final String iDatabaseName) {
-    final List<String> onlineNodes = new ArrayList<String>(activeNodes.size());
-    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
-      if (isNodeOnline(entry.getKey(), iDatabaseName))
-        onlineNodes.add(entry.getKey());
-    }
+    final List<String> onlineNodes = new ArrayList<String>();
     return onlineNodes;
   }
 
@@ -881,8 +723,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 return false;
 
               // INIT STORAGE + UPDATE LOCAL FILE ONLY
-              final ODistributedStorage stg = getStorage(databaseName);
-              stg.setDistributedConfiguration(cfg);
 
               // DISCARD MESSAGES DURING THE REQUEST OF DATABASE INSTALLATION
               distrDatabase.suspend();
@@ -1299,10 +1139,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(), (ODistributedDatabaseChunk) value, false,
               uniqueClustersBackupDirectory, cfg);
 
-          OStorage storage = storages.get(databaseName);
-          replaceStorageInSessions(storage);
-          distrDatabase.resume();
-
           return true;
 
         } else
@@ -1311,21 +1147,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
 
     throw new ODistributedException("No response received from remote nodes for auto-deploy of database '" + databaseName + "'");
-  }
-
-  private void replaceStorageInSessions(final OStorage storage) {
-    for (OClientConnection conn : serverInstance.getClientConnectionManager().getConnections()) {
-      final ODatabaseDocumentInternal connDb = conn.getDatabase();
-      if (connDb != null && connDb.getName().equals(storage.getName())) {
-        conn.acquire();
-        try {
-          conn.getDatabase().replaceStorage(storage);
-          conn.getDatabase().getMetadata().reload();
-        } finally {
-          conn.release();
-        }
-      }
-    }
   }
 
   protected File getClusterOwnedExclusivelyByCurrentNode(final String dbPath, final String iDatabaseName) {
@@ -1551,37 +1372,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   @Override
   public ORemoteTaskFactoryManager getTaskFactoryManager() {
     return taskFactoryManager;
-  }
-
-  /**
-   * Guarantees that each class has own master cluster.
-   */
-  public boolean installClustersOfClass(final ODatabaseInternal iDatabase, final OClass iClass,
-      OModifiableDistributedConfiguration cfg) {
-
-    final String databaseName = iDatabase.getName();
-    if (iClass.isAbstract())
-      return false;
-
-    // INIT THE DATABASE IF NEEDED
-    getMessageService().registerDatabase(databaseName, cfg);
-
-    return executeInDistributedDatabaseLock(databaseName, 20000, cfg,
-        new OCallable<Boolean, OModifiableDistributedConfiguration>() {
-          @Override
-          public Boolean call(final OModifiableDistributedConfiguration lastCfg) {
-            final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
-
-            final List<String> cluster2Create = clusterAssignmentStrategy
-                .assignClusterOwnershipOfClass(iDatabase, lastCfg, iClass, availableNodes, true);
-
-            final Map<OClass, List<String>> cluster2CreateMap = new HashMap<OClass, List<String>>(1);
-            cluster2CreateMap.put(iClass, cluster2Create);
-
-            createClusters(iDatabase, cluster2CreateMap, lastCfg);
-            return true;
-          }
-        });
   }
 
   private void createClusters(final ODatabaseInternal iDatabase, final Map<OClass, List<String>> cluster2Create,
@@ -1856,10 +1646,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
               file.renameTo(new File(dir, databaseName + "_full.ibu"));
               OStorage storage = serverInstance.getDatabases()
                   .fullSync(databaseName, dir.getAbsolutePath(), OrientDBConfig.defaultConfig());
-              ODistributedStorage distributedStorage = getStorage(databaseName);
-              distributedStorage.replaceIfNeeded((OAbstractPaginatedStorage) storage);
-              distributedStorage.saveDatabaseConfiguration();
-              distributedStorage.getLocalDistributedDatabase().getSyncConfiguration().save();
               file.delete();
               dir.delete();
               if (uniqueClustersBackupDirectory != null && uniqueClustersBackupDirectory.exists()) {
@@ -1988,11 +1774,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   public Set<String> getAvailableNodeNames(final String iDatabaseName) {
     final Set<String> nodes = new HashSet<String>();
-
-    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
-      if (isNodeAvailable(entry.getKey(), iDatabaseName))
-        nodes.add(entry.getKey());
-    }
     return nodes;
   }
 
@@ -2027,88 +1808,17 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
    * Avoids to dump the same configuration twice if it's unchanged since the last time.
    */
   protected void dumpServersStatus() {
-    final ODocument cfg = getClusterConfiguration();
 
-    final String compactStatus = ODistributedOutput.getCompactServerStatus(this, cfg);
-
-    if (!lastServerDump.equals(compactStatus)) {
-      lastServerDump = compactStatus;
-
-      ODistributedServerLog
-          .info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status (*=current @=lockmgr[%s]):\n%s",
-              getLockManagerServer(), ODistributedOutput.formatServerStatus(this, cfg));
-    }
   }
 
-  public ODistributedStorage getStorageIfExists(final String dbName) {
-    return storages.get(dbName);
-  }
-
-  public ODistributedStorage getStorage(final String dbName) {
-    ODistributedStorage storage = storages.get(dbName);
-    if (storage == null) {
-      storage = new ODistributedStorage(serverInstance, dbName);
-
-      final ODistributedStorage oldStorage = storages.putIfAbsent(dbName, storage);
-      if (oldStorage != null)
-        storage = oldStorage;
-    }
-    return storage;
-  }
-
-  public ODistributedStorage getStorage(final String dbName, OAbstractPaginatedStorage wrapped) {
-    ODistributedStorage storage = storages.get(dbName);
-    if (storage == null) {
-      storage = new ODistributedStorage(serverInstance, dbName);
-
-      final ODistributedStorage oldStorage = storages.putIfAbsent(dbName, storage);
-      if (oldStorage != null)
-        storage = oldStorage;
-    }
-    if (storage.getUnderlying() == null) {
-      storage.wrap(wrapped);
-    }
-    if (storage.getUnderlying() != wrapped) {
-      storage.replaceIfNeeded(wrapped);
-    }
-    return storage;
+  @Override
+  public OStorage getStorage(String databaseName) {
+    return null;
   }
 
   @Override
   public ODistributedConflictResolverFactory getConflictResolverFactory() {
     return conflictResolverFactory;
-  }
-
-  public static String getListeningBinaryAddress(final ODocument cfg) {
-    if (cfg == null)
-      return null;
-
-    String url = cfg.field("publicAddress");
-
-    final Collection<Map<String, Object>> listeners = (Collection<Map<String, Object>>) cfg.field("listeners");
-    if (listeners == null)
-      throw new ODatabaseException(
-          "Cannot connect to a remote node because bad distributed configuration: missing 'listeners' array field");
-    String listenUrl = null;
-    for (Map<String, Object> listener : listeners) {
-      if ((listener.get("protocol")).equals("ONetworkProtocolBinary")) {
-        listenUrl = (String) listener.get("listen");
-        break;
-      }
-    }
-    if (url == null)
-      url = listenUrl;
-    else {
-      int pos;
-      String port;
-      if ((pos = listenUrl.lastIndexOf(":")) != -1) {
-        port = listenUrl.substring(pos + 1);
-      } else {
-        port = "2424";
-      }
-      url += ":" + port;
-    }
-    return url;
   }
 
   private static class OWaitDataInputStream extends FileInputStream {

@@ -103,9 +103,6 @@ public class ODefaultRemoteTaskFactoryV0 implements ORemoteTaskFactory {
     case ODropDatabaseTask.FACTORYID: // 23
       return new ODropDatabaseTask();
 
-    case OUpdateDatabaseConfigurationTask.FACTORYID: // 24
-      return new OUpdateDatabaseConfigurationTask();
-
     case OUpdateDatabaseStatusTask.FACTORYID: // 25
       return new OUpdateDatabaseStatusTask();
 

@@ -105,9 +105,6 @@ public class ODefaultRemoteTaskFactoryV1 extends ODefaultRemoteTaskFactoryV0 {
     case ODropDatabaseTask.FACTORYID: // 23
       return new ODropDatabaseTask();
 
-    case OUpdateDatabaseConfigurationTask.FACTORYID: // 24
-      return new OUpdateDatabaseConfigurationTask();
-
     case OUpdateDatabaseStatusTask.FACTORYID: // 25
       return new OUpdateDatabaseStatusTask();
 
@@ -116,12 +113,6 @@ public class ODefaultRemoteTaskFactoryV1 extends ODefaultRemoteTaskFactoryV0 {
 
     case ORequestDatabaseConfigurationTask.FACTORYID: // 27
       return new ORequestDatabaseConfigurationTask();
-
-    case OTransactionPhase1Task.FACTORYID:
-      return new OTransactionPhase1Task();
-
-    case OTransactionPhase2Task.FACTORYID:
-      return new OTransactionPhase2Task();
 
     case OEnterpriseStatsTask.FACTORYID: // 29
       return new OEnterpriseStatsTask();

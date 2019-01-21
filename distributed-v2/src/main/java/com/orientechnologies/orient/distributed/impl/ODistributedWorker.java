@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.distributed.impl;
 
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
@@ -124,12 +122,6 @@ public class ODistributedWorker extends Thread {
 
       } catch (InterruptedException e) {
         // EXIT CURRENT THREAD
-        Thread.currentThread().interrupt();
-        break;
-      } catch (DistributedObjectDestroyedException e) {
-        Thread.currentThread().interrupt();
-        break;
-      } catch (HazelcastInstanceNotActiveException e) {
         Thread.currentThread().interrupt();
         break;
       } catch (Exception e) {

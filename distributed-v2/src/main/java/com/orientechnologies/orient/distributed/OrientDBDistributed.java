@@ -12,11 +12,13 @@ import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.distributed.hazelcast.OCoordinatedExecutorMessageHandler;
 import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
-import com.orientechnologies.orient.distributed.impl.*;
+import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
+import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributedPooled;
+import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
+import com.orientechnologies.orient.distributed.impl.ONodeConfiguration;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
@@ -163,7 +165,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
         if (storage != null) {
           OCommandCacheSoftRefs.clearFiles(storage);
-          ODistributedStorage.dropStorageFiles((OLocalPaginatedStorage) storage);
           OSharedContext context = sharedContexts.remove(dbName);
           context.close();
           storage.delete();

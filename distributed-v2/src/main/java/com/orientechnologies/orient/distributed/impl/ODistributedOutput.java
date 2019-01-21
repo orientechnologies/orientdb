@@ -421,64 +421,6 @@ public class ODistributedOutput {
     rowTotals.field(column, total + totValue);
   }
 
-  /**
-   * Create a compact string with all the relevant information.
-   *
-   * @param manager
-   * @param distribCfg
-   *
-   * @return
-   */
-  public static String getCompactServerStatus(final ODistributedServerManager manager, final ODocument distribCfg) {
-    final StringBuilder buffer = new StringBuilder();
-
-    final Collection<ODocument> members = distribCfg.field("members");
-
-    if (members != null) {
-      buffer.append(members.size());
-      buffer.append(":[");
-
-      int memberCount = 0;
-      for (ODocument m : members) {
-        if (m == null)
-          continue;
-
-        if (memberCount++ > 0)
-          buffer.append(",");
-
-        final String serverName = m.field("name");
-        buffer.append(serverName);
-        buffer.append((Object)m.field("status"));
-
-        final Collection<String> databases = m.field("databases");
-        if (databases != null) {
-          buffer.append("{");
-          int dbCount = 0;
-          for (String dbName : databases) {
-            final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName, false);
-
-            if (dbCfg == null)
-              continue;
-
-            if (dbCount++ > 0)
-              buffer.append(",");
-
-            buffer.append(dbName);
-            buffer.append("=");
-            buffer.append(manager.getDatabaseStatus(serverName, dbName));
-            buffer.append(" (");
-            buffer.append(dbCfg.getServerRole(serverName));
-            buffer.append(")");
-          }
-          buffer.append("}");
-        }
-      }
-      buffer.append("]");
-    }
-
-    return buffer.toString();
-  }
-
   public static String formatClusterTable(final ODistributedServerManager manager, final String databaseName,
       final ODistributedConfiguration cfg, final int totalConfiguredServers) {
     final StringBuilder buffer = new StringBuilder();

@@ -84,25 +84,17 @@ public class ServerRun {
   public void crashServer() {
     if (server != null) {
       server.getClientConnectionManager().killAllChannels();
-      ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
+      //((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
       server.shutdown();
     }
   }
 
   public void disconnectFrom(final ServerRun... serverIds) {
-    final Node currentNode = getHazelcastNode(((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
-    for (ServerRun s : serverIds) {
-      //((OHazelcastPlugin) server.getDistributedManager()).closeRemoteServer(s.server.getDistributedManager().getLocalNodeName());
-      //((OHazelcastPlugin) s.server.getDistributedManager()).closeRemoteServer(server.getDistributedManager().getLocalNodeName());
 
-      final Node otherNode = getHazelcastNode(((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
-
-      currentNode.clusterService.suspectMember(currentNode.clusterService.getMember(otherNode.address), "test", true);
-//      otherNode.clusterService.suspectMember(currentNode.clusterService.getMember(currentNode.address), "test", true);
-    }
   }
 
   public void rejoin(final ServerRun... serverIds) {
+    /*
     final Node currentNode = getHazelcastNode(((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance());
     for (ServerRun s : serverIds) {
       final Node otherNode = getHazelcastNode(((OHazelcastPlugin) s.server.getDistributedManager()).getHazelcastInstance());
@@ -110,6 +102,7 @@ public class ServerRun {
       final ClusterServiceImpl clusterService = currentNode.getClusterService();
       clusterService.merge(otherNode.address);
     }
+    */
   }
 
   public static Node getHazelcastNode(final HazelcastInstance hz) {
@@ -173,7 +166,7 @@ System.out.println("----- db exists = " + orientDB.exists(dbName));
   public void shutdownServer() {
     if (server != null) {
       try {
-        ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().shutdown();
+       // ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().shutdown();
       } catch (Exception e) {
         // IGNORE IT
       }
@@ -191,19 +184,6 @@ System.out.println("----- db exists = " + orientDB.exists(dbName));
 
   public void terminateServer() {
     if (server != null) {
-      try {
-        final OHazelcastPlugin dm = (OHazelcastPlugin) server.getDistributedManager();
-        if (dm != null) {
-          HazelcastInstance hz = dm.getHazelcastInstance();
-          final Node node = getHazelcastNode(hz);
-          node.getConnectionManager().shutdown();
-          node.shutdown(true);
-          hz.getLifecycleService().terminate();
-        }
-      } catch (Exception e) {
-        // IGNORE IT
-      }
-
       try {
         server.shutdown();
       } catch (Exception e) {

@@ -19,23 +19,14 @@
  */
 package com.orientechnologies.orient.distributed.impl;
 
-import com.hazelcast.core.HazelcastException;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.command.ODistributedCommand;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -43,7 +34,6 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -53,54 +43,22 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.distributed.impl.task.*;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.OWriteOperationNotPermittedException;
-import com.orientechnologies.orient.distributed.impl.task.OBackgroundBackup;
-import com.orientechnologies.orient.distributed.impl.task.OReadRecordIfNotLatestTask;
-import com.orientechnologies.orient.distributed.impl.task.OReadRecordTask;
-import com.orientechnologies.orient.distributed.impl.task.OSQLCommandTask;
-import com.orientechnologies.orient.distributed.impl.task.OScriptTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
-import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -127,29 +85,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     this.serverInstance = iServer;
     this.dManager = iServer.getDistributedManager();
     this.name = dbName;
-  }
-
-  public synchronized void replaceIfNeeded(final OAbstractPaginatedStorage wrapped) {
-    if (this.wrapped != wrapped)
-      this.wrapped = wrapped;
-  }
-
-  public synchronized void wrap(final OAbstractPaginatedStorage wrapped) {
-    if (this.wrapped != null)
-      // ALREADY WRAPPED
-      return;
-
-    this.wrapped = wrapped;
-    this.wrapped.underDistributedStorage();
-    this.localDistributedDatabase = dManager.getMessageService().getDatabase(getName());
-
-    ODistributedServerLog
-        .debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.NONE,
-            "Installing distributed storage on database '%s'", wrapped.getName());
-
-    final int queueSize = getServer().getContextConfiguration()
-        .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ASYNCH_QUEUE_SIZE);
-
   }
 
   /**
@@ -330,13 +265,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     } catch (ONeedRetryException e) {
       // PASS THROUGH
       throw e;
-    } catch (HazelcastInstanceNotActiveException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } catch (HazelcastException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } catch (Exception e) {
+    }catch (Exception e) {
       handleDistributedException("Cannot route COMMAND operation to the distributed node", e);
       // UNREACHABLE
       return null;
@@ -622,12 +551,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     } catch (ONeedRetryException e) {
       // PASS THROUGH
       throw e;
-    } catch (HazelcastInstanceNotActiveException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } catch (HazelcastException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
     } catch (Exception e) {
       handleDistributedException("Cannot route read record operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
@@ -685,12 +608,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     } catch (ONeedRetryException e) {
       // PASS THROUGH
       throw e;
-    } catch (HazelcastInstanceNotActiveException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
-    } catch (HazelcastException e) {
-      throw OException.wrapException(new OOfflineNodeException("Hazelcast instance is not available"), e);
-
     } catch (Exception e) {
       handleDistributedException("Cannot route read record operation for %s to the distributed node", e, rid);
       // UNREACHABLE
@@ -876,74 +793,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   @Override
   public int addCluster(final String iClusterName, final Object... iParameters) {
-    for (int retry = 0; retry < 10; ++retry) {
-      final AtomicInteger clId = new AtomicInteger();
-
-      if (!isLocalEnv()) {
-
-        final StringBuilder cmd = new StringBuilder("create cluster `");
-        cmd.append(iClusterName);
-        cmd.append("`");
-
-        // EXECUTE THIS OUTSIDE LOCK TO AVOID DEADLOCKS
-        Object result = null;
-        try {
-          result = dManager
-              .executeInDistributedDatabaseLock(getName(), 20000, dManager.getDatabaseConfiguration(getName()).modify(),
-                  new OCallable<Object, OModifiableDistributedConfiguration>() {
-                    @Override
-                    public Object call(OModifiableDistributedConfiguration iArgument) {
-                      clId.set(wrapped.addCluster(iClusterName, iParameters));
-
-                      final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
-                      commandSQL.addExcludedNode(getNodeId());
-                      return command(commandSQL);
-                    }
-                  });
-        } catch (Exception e) {
-          // RETRY
-          wrapped.dropCluster(iClusterName, false);
-
-          try {
-            Thread.sleep(300);
-          } catch (InterruptedException e2) {
-          }
-
-          continue;
-        }
-
-        if (result != null && ((Integer) result).intValue() != clId.get()) {
-          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-              "Error on creating cluster '%s' on distributed nodes: ids are different (local=%d and remote=%d). Local clusters %s. Retrying %d/%d...",
-              iClusterName, clId.get(), ((Integer) result).intValue(), getClusterNames(), retry, 10);
-
-          wrapped.dropCluster(clId.get(), false);
-
-          // REMOVE ON REMOTE NODES TOO
-          cmd.setLength(0);
-          cmd.append("drop cluster ");
-          cmd.append(iClusterName);
-
-          final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
-          commandSQL.addExcludedNode(getNodeId());
-          command(commandSQL);
-
-          try {
-            Thread.sleep(300);
-          } catch (InterruptedException e) {
-          }
-
-          wrapped.reload(); // TODO: RELOAD DOESN'T DO ANYTHING WHILE HERE IT'S NEEDED A WAY TO CLOSE/OPEN THE DB
-          continue;
-        }
-      } else
-        clId.set(wrapped.addCluster(iClusterName, iParameters));
-
-      return clId.get();
-    }
-
-    throw new ODistributedException(
-        "Error on creating cluster '" + iClusterName + "' on distributed nodes: local and remote ids assigned are different");
+    return wrapped.addCluster(iClusterName, iParameters);
   }
 
   @Override
@@ -1019,7 +869,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     throw new ODistributedException(
         "Error on creating cluster '" + iClusterName + "' on distributed nodes: local and remote ids assigned are different");
   }
-  
+
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     resetLastValidBackup();
     final AtomicBoolean clId = new AtomicBoolean();
@@ -1169,38 +1019,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   public ODistributedConfiguration getDistributedConfiguration() {
-    if (distributedConfiguration == null) {
-      final Map<String, Object> map = dManager.getConfigurationMap();
-      if (map == null)
-        return null;
-
-      ODocument doc = (ODocument) map.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + getName());
-      if (doc != null) {
-        // DISTRIBUTED CFG AVAILABLE: COPY IT TO THE LOCAL DIRECTORY
-        ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Downloaded configuration for database '%s' from the cluster", getName());
-        setDistributedConfiguration(new OModifiableDistributedConfiguration(doc));
-      } else {
-        doc = loadDatabaseConfiguration(getDistributedConfigFile());
-        if (doc == null) {
-          // LOOK FOR THE STD FILE
-          doc = loadDatabaseConfiguration(dManager.getDefaultDatabaseConfigFile());
-          if (doc == null)
-            throw new OConfigurationException(
-                "Cannot load default distributed for database '" + getName() + "' config file: " + dManager
-                    .getDefaultDatabaseConfigFile());
-
-          // SAVE THE GENERIC FILE AS DATABASE FILE
-          setDistributedConfiguration(new OModifiableDistributedConfiguration(doc));
-        } else
-          // JUST LOAD THE FILE IN MEMORY
-          distributedConfiguration = new ODistributedConfiguration(doc);
-
-        // LOADED FILE, PUBLISH IT IN THE CLUSTER
-        dManager.updateCachedDatabaseConfiguration(getName(), new OModifiableDistributedConfiguration(doc), true);
-      }
-    }
-    return distributedConfiguration;
+    return null;
   }
 
   public void setDistributedConfiguration(final OModifiableDistributedConfiguration distributedConfiguration) {
