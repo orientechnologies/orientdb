@@ -593,7 +593,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
           int apiVersion;
           boolean mulitvalue;
 
-          if (this.version > 20) {
+          if (this.version >= 22) {
             apiVersion = Integer.parseInt(read(values[index++]));
             mulitvalue = Boolean.parseBoolean(read(values[index++]));
           } else {
