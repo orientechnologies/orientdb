@@ -20,7 +20,7 @@ package com.orientechnologies.spatial.index;
 import com.orientechnologies.lucene.index.OLuceneIndexNotUnique;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
@@ -63,7 +63,7 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
       return storage.callIndexEngine(false, false, indexId,
           new OIndexEngineCallback<Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry>>() {
             @Override
-            public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> callEngine(OIndexEngine engine) {
+            public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> callEngine(OBaseIndexEngine engine) {
               if (((OLuceneSpatialIndexContainer) engine).isLegacy()) {
                 return OLuceneSpatialIndex.super.interpretTxKeyChanges(changes);
               } else {

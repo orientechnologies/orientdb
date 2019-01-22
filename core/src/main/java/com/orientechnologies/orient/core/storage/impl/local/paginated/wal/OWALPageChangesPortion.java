@@ -51,8 +51,7 @@ public class OWALPageChangesPortion implements OWALChanges {
     updateData(pointer, offset, data);
   }
 
-  @SuppressWarnings("SameParameterValue")
-  void setShortValue(ByteBuffer pointer, short value, int offset) {
+  public void setShortValue(ByteBuffer pointer, short value, int offset) {
     byte[] data = new byte[OShortSerializer.SHORT_SIZE];
     OShortSerializer.INSTANCE.serializeNative(value, data, 0);
 

@@ -26,6 +26,8 @@ public interface OWALChanges {
 
   void setIntValue(ByteBuffer buffer, int value, int offset);
 
+  void setShortValue(ByteBuffer buffer, short value, int offset);
+
   void setByteValue(ByteBuffer buffer, byte value, int offset);
 
   void setBinaryValue(ByteBuffer buffer, byte[] value, int offset);

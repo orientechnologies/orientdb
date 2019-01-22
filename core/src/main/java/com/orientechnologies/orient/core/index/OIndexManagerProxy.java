@@ -36,8 +36,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     super(iDelegate, iDatabase);
   }
 
-  public OIndexManager load() {
-    return this;
+  public void load() {
   }
 
   /**
@@ -171,6 +170,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
   }
 
   public void removeClassPropertyIndex(final OIndex<?> idx) {
+    //noinspection deprecation
     delegate.removeClassPropertyIndex(idx);
   }
 
@@ -178,7 +178,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     delegate.getClassRawIndexes(name, indexes);
   }
 
-  public OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, OIndex<?> index) {
+  OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, OIndex<?> index) {
     return delegate.preProcessBeforeReturn(database, index);
   }
 }

@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -51,6 +42,17 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   private ODatabaseDocumentInternal databaseOne;
@@ -134,8 +136,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       OLogManager.instance()
           .error(this, "Error on comparing database '%s' against '%s'", e, databaseOne.getName(), databaseTwo.getName());
       throw new ODatabaseExportException(
-          "Error on comparing database '" + databaseOne.getName() + "' against '" + databaseTwo.getName() + "'",
-          e);
+          "Error on comparing database '" + databaseOne.getName() + "' against '" + databaseTwo.getName() + "'", e);
     } finally {
       makeDbCall(databaseOne, new ODbRelatedCall<Void>() {
         @Override
@@ -342,12 +343,11 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       ++differences;
     }
 
-    final Iterator<? extends OIndex<?>> iteratorOne = makeDbCall(databaseOne,
-        new ODbRelatedCall<Iterator<? extends OIndex<?>>>() {
-          public Iterator<? extends OIndex<?>> call(ODatabaseDocumentInternal database) {
-            return indexesOne.iterator();
-          }
-        });
+    final Iterator<? extends OIndex<?>> iteratorOne = makeDbCall(databaseOne, new ODbRelatedCall<Iterator<? extends OIndex<?>>>() {
+      public Iterator<? extends OIndex<?>> call(ODatabaseDocumentInternal database) {
+        return indexesOne.iterator();
+      }
+    });
 
     while (makeDbCall(databaseOne, new ODbRelatedCall<Boolean>() {
       public Boolean call(ODatabaseDocumentInternal database) {
@@ -507,8 +507,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             final Set<Object> indexOneValueSet = (Set<Object>) indexOneValue;
             final Set<Object> indexTwoValueSet = (Set<Object>) indexTwoValue;
 
-            if (!ODocumentHelper
-                .compareSets(databaseOne, indexOneValueSet, databaseTwo, indexTwoValueSet, ridMapper)) {
+            if (!ODocumentHelper.compareSets(databaseOne, indexOneValueSet, databaseTwo, indexTwoValueSet, ridMapper)) {
               ok = false;
               reportIndexDiff(indexOne, key, indexOneValue, indexTwoValue);
             }
@@ -523,7 +522,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               ok = false;
               reportIndexDiff(indexOne, key, indexOneValue, indexTwoValue);
             }
-          } else if (!indexOneValue.equals(indexTwoValue)) {
+          } else if (!compareIndexValues((Collection<ORID>) indexOneValue, (Collection<ORID>) indexTwoValue, ridMapper)) {
             ok = false;
             reportIndexDiff(indexOne, key, indexOneValue, indexTwoValue);
           }
@@ -540,6 +539,49 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
     if (ok)
       listener.onMessage("OK");
+  }
+
+  private boolean compareIndexValues(Collection<ORID> oneValue, Collection<ORID> secondValue, ODocumentHelper.RIDMapper ridMapper) {
+    Map<ORID, Integer> firstMap = new HashMap<>();
+    Map<ORID, Integer> secondMap = new HashMap<>();
+
+    for (ORID rid : oneValue) {
+      ORID ridToInsert;
+
+      if (ridMapper != null) {
+        if (rid.isPersistent()) {
+          ridToInsert = ridMapper.map(rid);
+
+          if (ridToInsert == null) {
+            ridToInsert = rid;
+          }
+        } else {
+          ridToInsert = rid;
+        }
+      } else {
+        ridToInsert = rid;
+      }
+
+      firstMap.compute(ridToInsert, (k, v) -> {
+        if (v == null) {
+          return 1;
+        }
+
+        return v + 1;
+      });
+    }
+
+    for (ORID rid : secondValue) {
+      secondMap.compute(rid, (k, v) -> {
+        if (v == null) {
+          return 1;
+        }
+
+        return v + 1;
+      });
+    }
+
+    return firstMap.equals(secondMap);
   }
 
   private boolean compareClusters() {

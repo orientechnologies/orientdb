@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -50,11 +49,6 @@ public class OCompositeIndexSQLInsertTest {
     db.command(new OCommandSQL(
         "insert into index:books (key, rid) values ([\"Donald Knuth\", \"The Art of Computer Programming\", 1968], #12:0)"))
         .execute();
-  }
-
-  @Test(expected = OException.class)
-  public void testIndexInsertNull() {
-    db.command(new OCommandSQL("insert into index:indexignoresnulls (key, rid) values (null, #12:0)")).execute();
   }
 
   @Test()

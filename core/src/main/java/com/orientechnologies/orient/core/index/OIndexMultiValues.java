@@ -26,6 +26,7 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OMixedIndexRIDContainerSerializer;
@@ -49,33 +50,34 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable>> {
-  public OIndexMultiValues(String name, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
+public abstract class OIndexMultiValues extends OIndexAbstract<Collection<ORID>> {
+  OIndexMultiValues(String name, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
       String valueContainerAlgorithm, final ODocument metadata, final int binaryFormatVersion) {
     super(name, type, algorithm, valueContainerAlgorithm, metadata, version, storage, binaryFormatVersion);
   }
 
-  public Set<OIdentifiable> get(Object key) {
+  public Collection<ORID> get(Object key) {
     key = getCollatingValue(key);
 
     acquireSharedLock();
     try {
 
-      Set<OIdentifiable> values;
-
+      Collection<ORID> values;
       while (true) {
         try {
-          values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+          //noinspection unchecked
+          values = (Collection<ORID>) storage.getIndexValue(indexId, key);
           break;
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
       }
 
-      if (values == null)
-        return Collections.emptySet();
+      if (values == null) {
+        return Collections.emptyList();
+      }
 
-      return Collections.unmodifiableSet(values);
+      return values;
 
     } finally {
       releaseSharedLock();
@@ -88,22 +90,23 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     acquireSharedLock();
     try {
 
-      Set<OIdentifiable> values;
+      Collection<ORID> values;
 
       while (true) {
         try {
-          values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+          //noinspection unchecked
+          values = (Collection<ORID>) storage.getIndexValue(indexId, key);
           break;
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
       }
 
-      if (values == null)
+      if (values == null) {
         return 0;
+      }
 
       return values.size();
-
     } finally {
       releaseSharedLock();
     }
@@ -115,70 +118,90 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     acquireSharedLock();
 
     try {
-      if (!singleValue.getIdentity().isValid())
+      if (!singleValue.getIdentity().isValid()) {
         (singleValue.getRecord()).save();
+      }
 
       final ORID identity = singleValue.getIdentity();
 
-      final boolean durable;
+      if (apiVersion == 0) {
+        doPutV0(key, identity);
+      } else if (apiVersion == 1) {
+        doPutV1(key, identity);
+      } else {
+        throw new IllegalStateException("Invalid API version, " + apiVersion);
+      }
 
-      if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-        durable = true;
-      else
-        durable = false;
+      return this;
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-      final OIndexKeyUpdater<Object> creator = (oldValue, bonsayFileId) -> {
-        Set<OIdentifiable> toUpdate = (Set<OIdentifiable>) oldValue;
-        if (toUpdate == null) {
-          if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-            if (binaryFormatVersion >= 13) {
-              toUpdate = new OMixedIndexRIDContainer(getName(), bonsayFileId);
-            } else {
-              toUpdate = new OIndexRIDContainer(getName(), durable, bonsayFileId);
-            }
+  private void doPutV0(Object key, ORID identity) {
+    final OIndexKeyUpdater<Object> creator = (oldValue, bonsayFileId) -> {
+      @SuppressWarnings("unchecked")
+      Set<OIdentifiable> toUpdate = (Set<OIdentifiable>) oldValue;
+      if (toUpdate == null) {
+        if (ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+          if (binaryFormatVersion >= 13) {
+            toUpdate = new OMixedIndexRIDContainer(getName(), bonsayFileId);
           } else {
-            throw new IllegalStateException("MVRBTree is not supported any more");
-          }
-        }
-        if (toUpdate instanceof OIndexRIDContainer) {
-          boolean isTree = !((OIndexRIDContainer) toUpdate).isEmbedded();
-          toUpdate.add(identity);
-
-          if (isTree) {
-            return OIndexUpdateAction.nothing();
-          } else {
-            return OIndexUpdateAction.changed(toUpdate);
-          }
-        } else if (toUpdate instanceof OMixedIndexRIDContainer) {
-          final OMixedIndexRIDContainer ridContainer = (OMixedIndexRIDContainer) toUpdate;
-          final boolean embeddedWasUpdated = ridContainer.addEntry(identity);
-
-          if (!embeddedWasUpdated) {
-            return OIndexUpdateAction.nothing();
-          } else {
-            return OIndexUpdateAction.changed(toUpdate);
+            toUpdate = new OIndexRIDContainer(getName(), true, bonsayFileId);
           }
         } else {
-          if (toUpdate.add(identity)) {
-            return OIndexUpdateAction.changed(toUpdate);
-          } else {
-            return OIndexUpdateAction.nothing();
-          }
+          throw new IllegalStateException("MVRBTree is not supported any more");
         }
+      }
+      if (toUpdate instanceof OIndexRIDContainer) {
+        boolean isTree = !((OIndexRIDContainer) toUpdate).isEmbedded();
+        toUpdate.add(identity);
 
-      };
+        if (isTree) {
+          //noinspection unchecked
+          return OIndexUpdateAction.nothing();
+        } else {
+          return OIndexUpdateAction.changed(toUpdate);
+        }
+      } else if (toUpdate instanceof OMixedIndexRIDContainer) {
+        final OMixedIndexRIDContainer ridContainer = (OMixedIndexRIDContainer) toUpdate;
+        final boolean embeddedWasUpdated = ridContainer.addEntry(identity);
 
-      while (true) {
-        try {
-          storage.updateIndexEntry(indexId, key, creator);
-          return this;
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
+        if (!embeddedWasUpdated) {
+          //noinspection unchecked
+          return OIndexUpdateAction.nothing();
+        } else {
+          return OIndexUpdateAction.changed(toUpdate);
+        }
+      } else {
+        if (toUpdate.add(identity)) {
+          return OIndexUpdateAction.changed(toUpdate);
+        } else {
+          //noinspection unchecked
+          return OIndexUpdateAction.nothing();
         }
       }
 
-    } finally {
-      releaseSharedLock();
+    };
+
+    while (true) {
+      try {
+        storage.updateIndexEntry(indexId, key, creator);
+        break;
+      } catch (OInvalidIndexEngineIdException ignore) {
+        doReloadIndexEngine();
+      }
+    }
+  }
+
+  private void doPutV1(Object key, ORID identity) {
+    while (true) {
+      try {
+        storage.putRidIndexEntry(indexId, key, identity);
+        break;
+      } catch (OInvalidIndexEngineIdException ignore) {
+        doReloadIndexEngine();
+      }
     }
   }
 
@@ -188,37 +211,61 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     acquireSharedLock();
     try {
-      Set<OIdentifiable> values = null;
-      while (true) {
-        try {
-          values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
-          break;
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
+      if (apiVersion == 0) {
+        return doRemoveV0(key, value);
       }
 
-      if (values == null) {
-        return false;
+      if (apiVersion == 1) {
+        return doRemoveV1(key, value);
       }
 
-      final OModifiableBoolean removed = new OModifiableBoolean(false);
-
-      final OIndexKeyUpdater<Object> creator = new EntityRemover(value, removed);
-
-      while (true)
-        try {
-          storage.updateIndexEntry(indexId, key, creator);
-          break;
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
-
-      return removed.getValue();
-
+      throw new IllegalStateException("Invalid API version, " + apiVersion);
     } finally {
       releaseSharedLock();
     }
+  }
+
+  private boolean doRemoveV0(Object key, OIdentifiable value) {
+    Set<OIdentifiable> values;
+    while (true) {
+      try {
+        //noinspection unchecked
+        values = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
+        break;
+      } catch (OInvalidIndexEngineIdException ignore) {
+        doReloadIndexEngine();
+      }
+    }
+
+    if (values == null) {
+      return false;
+    }
+
+    final OModifiableBoolean removed = new OModifiableBoolean(false);
+
+    final OIndexKeyUpdater<Object> creator = new EntityRemover(value, removed);
+
+    while (true) {
+      try {
+        storage.updateIndexEntry(indexId, key, creator);
+        break;
+      } catch (OInvalidIndexEngineIdException ignore) {
+        doReloadIndexEngine();
+      }
+    }
+
+    return removed.getValue();
+  }
+
+  private boolean doRemoveV1(Object key, OIdentifiable value) {
+    while (true) {
+      try {
+        return storage.removeRidIndexEntry(indexId, key, value.getIdentity());
+      } catch (OInvalidIndexEngineIdException ignore) {
+        doReloadIndexEngine();
+      }
+    }
+
   }
 
   public OIndexMultiValues create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
@@ -244,13 +291,14 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     acquireSharedLock();
     try {
-      while (true)
+      while (true) {
         try {
           return storage.iterateIndexEntriesBetween(indexId, fromKey, fromInclusive, toKey, toInclusive, ascOrder,
               MultiValuesTransformer.INSTANCE);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
+      }
     } finally {
       releaseSharedLock();
     }
@@ -294,49 +342,53 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   @Override
   public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
-    final List<Object> sortedKeys = new ArrayList<Object>(keys);
+    final List<Object> sortedKeys = new ArrayList<>(keys);
     final Comparator<Object> comparator;
-    if (ascSortOrder)
+    if (ascSortOrder) {
       comparator = ODefaultComparator.INSTANCE;
-    else
+    } else {
       comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+    }
 
-    Collections.sort(sortedKeys, comparator);
+    sortedKeys.sort(comparator);
 
     return new OIndexAbstractCursor() {
-      private Iterator<?> keysIterator = sortedKeys.iterator();
+      private final Iterator<?> keysIterator = sortedKeys.iterator();
 
-      private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
+      private Iterator<ORID> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
       private Object currentKey;
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (currentIterator == null)
+        if (currentIterator == null) {
           return null;
+        }
 
         Object key = null;
         if (!currentIterator.hasNext()) {
-          Collection<OIdentifiable> result = null;
+          Collection<ORID> result = null;
           while (keysIterator.hasNext() && (result == null || result.isEmpty())) {
             key = keysIterator.next();
             key = getCollatingValue(key);
 
             acquireSharedLock();
             try {
-              while (true)
+              while (true) {
                 try {
-                  result = (Collection<OIdentifiable>) storage.getIndexValue(indexId, key);
+                  //noinspection unchecked
+                  result = (Collection<ORID>) storage.getIndexValue(indexId, key);
                   break;
                 } catch (OInvalidIndexEngineIdException ignore) {
                   doReloadIndexEngine();
                 }
+              }
 
             } finally {
               releaseSharedLock();
             }
           }
 
-          if (result == null) {
+          if (result == null || result.isEmpty()) {
             currentIterator = null;
             return null;
           }
@@ -370,12 +422,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   public long getSize() {
     acquireSharedLock();
     try {
-      while (true)
+      while (true) {
         try {
           return storage.getIndexSize(indexId, MultiValuesTransformer.INSTANCE);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
+      }
     } finally {
       releaseSharedLock();
     }
@@ -418,23 +471,25 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   public OIndexCursor descCursor() {
     acquireSharedLock();
     try {
-      while (true)
+      while (true) {
         try {
           return storage.getIndexDescCursor(indexId, MultiValuesTransformer.INSTANCE);
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
+      }
     } finally {
       releaseSharedLock();
     }
   }
 
-  private static final class MultiValuesTransformer implements OIndexEngine.ValuesTransformer {
+  private static final class MultiValuesTransformer implements OBaseIndexEngine.ValuesTransformer {
     private static final MultiValuesTransformer INSTANCE = new MultiValuesTransformer();
 
     @Override
-    public Collection<OIdentifiable> transformFromValue(Object value) {
-      return (Collection<OIdentifiable>) value;
+    public Collection<ORID> transformFromValue(Object value) {
+      //noinspection unchecked
+      return (Collection<ORID>) value;
     }
   }
 
@@ -442,25 +497,29 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     private final OIdentifiable      value;
     private final OModifiableBoolean removed;
 
-    public EntityRemover(OIdentifiable value, OModifiableBoolean removed) {
+    EntityRemover(OIdentifiable value, OModifiableBoolean removed) {
       this.value = value;
       this.removed = removed;
     }
 
     @Override
     public OIndexUpdateAction<Object> update(Object persistentValue, AtomicLong bonsayFileId) {
+      @SuppressWarnings("unchecked")
       Set<OIdentifiable> values = (Set<OIdentifiable>) persistentValue;
       if (value == null) {
         removed.setValue(true);
 
+        //noinspection unchecked
         return OIndexUpdateAction.remove();
       } else if (values.remove(value)) {
         removed.setValue(true);
 
-        if (values.isEmpty())
+        if (values.isEmpty()) {
+          //noinspection unchecked
           return OIndexUpdateAction.remove();
-        else
+        } else {
           return OIndexUpdateAction.changed(values);
+        }
       }
 
       return OIndexUpdateAction.changed(values);

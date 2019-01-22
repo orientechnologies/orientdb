@@ -23,7 +23,12 @@ import com.orientechnologies.orient.core.serialization.OStreamable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.distributed.ODistributedMomentum;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
 
 public class ODistributedDatabaseChunk implements OStreamable {
@@ -153,6 +158,5 @@ public class ODistributedDatabaseChunk implements OStreamable {
   public OLogSequenceNumber getLastWal() {
     return new OLogSequenceNumber(walSegment, walPosition);
   }
-
 
 }

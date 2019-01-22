@@ -13,7 +13,7 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
 
   private final Lock              lock = new ReentrantLock();
   private final Map<T, Condition> map  = new ConcurrentHashMap<>();
-  private final long timeout;
+  private final long              timeout;
 
   public OSimpleLockManagerImpl(long timeout) {
     this.timeout = timeout;

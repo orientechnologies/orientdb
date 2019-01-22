@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.storage.index.sbtree.local;
+package com.orientechnologies.orient.core.storage.index.sbtree.singlevalue;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.serialization.types.OUTF8Serializer;
@@ -7,15 +7,12 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -27,95 +24,49 @@ import java.util.Random;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-public class PrefixBTreeTestIT {
-  private   OPrefixBTree<OIdentifiable> prefixTree;
-  protected ODatabaseSession            databaseDocumentTx;
-  protected String                      buildDirectory;
-  protected OrientDB                    orientDB;
+public class OCellBTreeSingleValueTestIT {
+  private OCellBTreeSingleValue<String> singleValueTree;
+  private OrientDB                      orientDB;
 
   private String dbName;
 
   @Before
   public void before() throws Exception {
-    buildDirectory = System.getProperty("buildDirectory", ".") + File.separator + PrefixBTreeTestIT.class.getSimpleName();
+    final String buildDirectory =
+        System.getProperty("buildDirectory", ".") + File.separator + OCellBTreeSingleValueTestIT.class.getSimpleName();
 
-    dbName = "localPrefixBTreeTest";
+    dbName = "localSingleBTreeTest";
     final File dbDirectory = new File(buildDirectory, dbName);
     OFileUtils.deleteRecursively(dbDirectory);
 
     orientDB = new OrientDB("plocal:" + buildDirectory, OrientDBConfig.defaultConfig());
     orientDB.create(dbName, ODatabaseType.PLOCAL);
 
-    databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
+    final ODatabaseSession databaseDocumentTx = orientDB.open(dbName, "admin", "admin");
 
-    prefixTree = new OPrefixBTree<>("prefixBTree", ".pbt", ".npt",
+    singleValueTree = new OCellBTreeSingleValue<>("singleBTree", ".sbt", ".nbt",
         (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
-    prefixTree.create(OUTF8Serializer.INSTANCE, OLinkSerializer.INSTANCE, false, null);
+    singleValueTree.create(OUTF8Serializer.INSTANCE, null, 1, null);
   }
 
   @After
-  public void afterMethod() throws Exception {
+  public void afterMethod() {
     orientDB.drop(dbName);
     orientDB.close();
   }
 
   @Test
-  @Ignore
-  public void testRandom() throws Exception {
-    final int keysCount = 100_000_000;
-    TreeMap<Integer, String> keys = new TreeMap<>();
-
-    for (int i = 0; i < 100; i++) {
-      long seed = System.nanoTime();
-      System.out.println("Insertion " + i + " is started, seed : " + seed);
-      Random random = new Random(seed);
-
-      System.out.println("Generation of keys is started");
-
-      for (int k = 0; k < keysCount; k++) {
-        keys.put(k, String.valueOf(k));
-      }
-
-      System.out.println("Generation of keys is completed");
-
-      for (int n = 0; n < keysCount; n++) {
-        Map.Entry<Integer, String> entry = keys.ceilingEntry(random.nextInt(keysCount));
-        if (entry == null) {
-          entry = keys.firstEntry();
-        }
-
-        prefixTree.put(entry.getValue(), new ORecordId(entry.getKey() % 32_000, entry.getKey()));
-        keys.remove(entry.getKey());
-      }
-
-      System.out.println("Insertion " + i + " is completed");
-      System.out.println("Check " + i + " is started");
-
-      for (int k = 0; k < keysCount; k++) {
-        Assert.assertEquals(prefixTree.get(String.valueOf(k)), new ORecordId(k % 32_000, k));
-      }
-
-      System.out.println("Check " + i + " is completed");
-      prefixTree.delete();
-
-      prefixTree = new OPrefixBTree<>("prefixBTree", ".pbt", ".npt",
-          (OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage());
-      prefixTree.create(OUTF8Serializer.INSTANCE, OLinkSerializer.INSTANCE, false, null);
-    }
-  }
-
-  @Test
   public void testKeyPut() throws Exception {
-    final int keysCount = 500_000;
+    final int keysCount = 1_000_000;
 
     String lastKey = null;
 
     for (int i = 0; i < keysCount; i++) {
       final String key = Integer.toString(i);
 
-      prefixTree.put(key, new ORecordId(i % 32000, i));
+      singleValueTree.put(key, new ORecordId(i % 32000, i));
       if (i % 100_000 == 0) {
-        System.out.printf("%d items loaded out of %d\n", i, keysCount);
+        System.out.printf("%d items loaded out of %d%n", i, keysCount);
       }
 
       if (lastKey == null) {
@@ -124,19 +75,19 @@ public class PrefixBTreeTestIT {
         lastKey = key;
       }
 
-      Assert.assertEquals("0", prefixTree.firstKey());
-      Assert.assertEquals(lastKey, prefixTree.lastKey());
+      Assert.assertEquals("0", singleValueTree.firstKey());
+      Assert.assertEquals(lastKey, singleValueTree.lastKey());
     }
 
     for (int i = 0; i < keysCount; i++) {
-      Assert.assertEquals(i + " key is absent", prefixTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
+      Assert.assertEquals(i + " key is absent", singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
       if (i % 100_000 == 0) {
-        System.out.printf("%d items tested out of %d\n", i, keysCount);
+        System.out.printf("%d items tested out of %d%n", i, keysCount);
       }
     }
 
     for (int i = keysCount; i < 2 * keysCount; i++) {
-      Assert.assertNull(prefixTree.get(Integer.toString(i)));
+      Assert.assertNull(singleValueTree.get(Integer.toString(i)));
     }
   }
 
@@ -144,24 +95,24 @@ public class PrefixBTreeTestIT {
   public void testKeyPutRandomUniform() throws Exception {
     final NavigableSet<String> keys = new TreeSet<>();
     final Random random = new Random();
-    final int keysCount = 500_000;
+    final int keysCount = 1_000_000;
 
     while (keys.size() < keysCount) {
       int val = random.nextInt(Integer.MAX_VALUE);
       String key = Integer.toString(val);
 
-      prefixTree.put(key, new ORecordId(val % 32000, val));
+      singleValueTree.put(key, new ORecordId(val % 32000, val));
       keys.add(key);
 
-      Assert.assertEquals(prefixTree.get(key), new ORecordId(val % 32000, val));
+      Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
     }
 
-    Assert.assertEquals(prefixTree.firstKey(), keys.first());
-    Assert.assertEquals(prefixTree.lastKey(), keys.last());
+    Assert.assertEquals(singleValueTree.firstKey(), keys.first());
+    Assert.assertEquals(singleValueTree.lastKey(), keys.last());
 
     for (String key : keys) {
       final int val = Integer.parseInt(key);
-      Assert.assertEquals(prefixTree.get(key), new ORecordId(val % 32000, val));
+      Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
     }
   }
 
@@ -173,37 +124,38 @@ public class PrefixBTreeTestIT {
     System.out.println("testKeyPutRandomGaussian seed : " + seed);
 
     Random random = new Random(seed);
-    final int keysCount = 500_000;
+    final int keysCount = 1_000_000;
 
     while (keys.size() < keysCount) {
       int val = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
-      if (val < 0)
+      if (val < 0) {
         continue;
+      }
 
       String key = Integer.toString(val);
-      prefixTree.put(key, new ORecordId(val % 32000, val));
+      singleValueTree.put(key, new ORecordId(val % 32000, val));
       keys.add(key);
 
-      Assert.assertEquals(prefixTree.get(key), new ORecordId(val % 32000, val));
+      Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
     }
 
-    Assert.assertEquals(prefixTree.firstKey(), keys.first());
-    Assert.assertEquals(prefixTree.lastKey(), keys.last());
+    Assert.assertEquals(singleValueTree.firstKey(), keys.first());
+    Assert.assertEquals(singleValueTree.lastKey(), keys.last());
 
     for (String key : keys) {
       int val = Integer.parseInt(key);
-      Assert.assertEquals(prefixTree.get(key), new ORecordId(val % 32000, val));
+      Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
     }
   }
 
   @Test
   public void testKeyDeleteRandomUniform() throws Exception {
-    final int keysCount = 500_000;
+    final int keysCount = 1_000_000;
 
     NavigableSet<String> keys = new TreeSet<>();
     for (int i = 0; i < keysCount; i++) {
       String key = Integer.toString(i);
-      prefixTree.put(key, new ORecordId(i % 32000, i));
+      singleValueTree.put(key, new ORecordId(i % 32000, i));
       keys.add(key);
     }
 
@@ -211,20 +163,20 @@ public class PrefixBTreeTestIT {
     while (keysIterator.hasNext()) {
       String key = keysIterator.next();
       if (Integer.parseInt(key) % 3 == 0) {
-        prefixTree.remove(key);
+        singleValueTree.remove(key);
         keysIterator.remove();
       }
     }
 
-    Assert.assertEquals(prefixTree.firstKey(), keys.first());
-    Assert.assertEquals(prefixTree.lastKey(), keys.last());
+    Assert.assertEquals(singleValueTree.firstKey(), keys.first());
+    Assert.assertEquals(singleValueTree.lastKey(), keys.last());
 
     for (String key : keys) {
       int val = Integer.parseInt(key);
       if (val % 3 == 0) {
-        Assert.assertNull(prefixTree.get(key));
+        Assert.assertNull(singleValueTree.get(key));
       } else {
-        Assert.assertEquals(prefixTree.get(key), new ORecordId(val % 32000, val));
+        Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
       }
     }
   }
@@ -232,7 +184,7 @@ public class PrefixBTreeTestIT {
   @Test
   public void testKeyDeleteRandomGaussian() throws Exception {
     NavigableSet<String> keys = new TreeSet<>();
-    final int keysCount = 500_000;
+    final int keysCount = 1_000_000;
 
     long seed = System.currentTimeMillis();
 
@@ -241,14 +193,15 @@ public class PrefixBTreeTestIT {
 
     while (keys.size() < keysCount) {
       int val = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
-      if (val < 0)
+      if (val < 0) {
         continue;
+      }
 
       String key = Integer.toString(val);
-      prefixTree.put(key, new ORecordId(val % 32000, val));
+      singleValueTree.put(key, new ORecordId(val % 32000, val));
       keys.add(key);
 
-      Assert.assertEquals(prefixTree.get(key), new ORecordId(val % 32000, val));
+      Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
     }
 
     Iterator<String> keysIterator = keys.iterator();
@@ -257,84 +210,85 @@ public class PrefixBTreeTestIT {
       String key = keysIterator.next();
 
       if (Integer.parseInt(key) % 3 == 0) {
-        prefixTree.remove(key);
+        singleValueTree.remove(key);
         keysIterator.remove();
       }
     }
 
-    Assert.assertEquals(prefixTree.firstKey(), keys.first());
-    Assert.assertEquals(prefixTree.lastKey(), keys.last());
+    Assert.assertEquals(singleValueTree.firstKey(), keys.first());
+    Assert.assertEquals(singleValueTree.lastKey(), keys.last());
 
     for (String key : keys) {
       int val = Integer.parseInt(key);
       if (val % 3 == 0) {
-        Assert.assertNull(prefixTree.get(key));
+        Assert.assertNull(singleValueTree.get(key));
       } else {
-        Assert.assertEquals(prefixTree.get(key), new ORecordId(val % 32000, val));
+        Assert.assertEquals(singleValueTree.get(key), new ORecordId(val % 32000, val));
       }
     }
   }
 
   @Test
   public void testKeyDelete() throws Exception {
-    final int keysCount = 500_000;
+    final int keysCount = 1_000_000;
 
     for (int i = 0; i < keysCount; i++) {
-      prefixTree.put(Integer.toString(i), new ORecordId(i % 32000, i));
+      singleValueTree.put(Integer.toString(i), new ORecordId(i % 32000, i));
     }
 
     for (int i = 0; i < keysCount; i++) {
       if (i % 3 == 0) {
-        Assert.assertEquals(prefixTree.remove(Integer.toString(i)), new ORecordId(i % 32000, i));
+        Assert.assertEquals(singleValueTree.remove(Integer.toString(i)), new ORecordId(i % 32000, i));
       }
     }
 
     for (int i = 0; i < keysCount; i++) {
       if (i % 3 == 0) {
-        Assert.assertNull(prefixTree.get(Integer.toString(i)));
+        Assert.assertNull(singleValueTree.get(Integer.toString(i)));
       } else {
-        Assert.assertEquals(prefixTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
+        Assert.assertEquals(singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
       }
     }
   }
 
   @Test
   public void testKeyAddDelete() throws Exception {
-    final int keysCount = 500_000;
+    final int keysCount = 1_000_000;
 
     for (int i = 0; i < keysCount; i++) {
-      prefixTree.put(Integer.toString(i), new ORecordId(i % 32000, i));
+      singleValueTree.put(Integer.toString(i), new ORecordId(i % 32000, i));
 
-      Assert.assertEquals(prefixTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
+      Assert.assertEquals(singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
     }
 
     for (int i = 0; i < keysCount; i++) {
       if (i % 3 == 0) {
-        Assert.assertEquals(prefixTree.remove(Integer.toString(i)), new ORecordId(i % 32000, i));
+        Assert.assertEquals(singleValueTree.remove(Integer.toString(i)), new ORecordId(i % 32000, i));
       }
 
       if (i % 2 == 0) {
-        prefixTree.put(Integer.toString(keysCount + i), new ORecordId((keysCount + i) % 32000, keysCount + i));
+        singleValueTree.put(Integer.toString(keysCount + i), new ORecordId((keysCount + i) % 32000, keysCount + i));
       }
 
     }
 
     for (int i = 0; i < keysCount; i++) {
       if (i % 3 == 0) {
-        Assert.assertNull(prefixTree.get(Integer.toString(i)));
+        Assert.assertNull(singleValueTree.get(Integer.toString(i)));
       } else {
-        Assert.assertEquals(prefixTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
+        Assert.assertEquals(singleValueTree.get(Integer.toString(i)), new ORecordId(i % 32000, i));
       }
 
       if (i % 2 == 0) {
-        Assert.assertEquals(prefixTree.get(Integer.toString(keysCount + i)), new ORecordId((keysCount + i) % 32000, keysCount + i));
+        Assert.assertEquals(singleValueTree.get(Integer.toString(keysCount + i)),
+            new ORecordId((keysCount + i) % 32000, keysCount + i));
       }
     }
   }
 
   @Test
   public void testKeyCursor() throws Exception {
-    final int keysCount = 500_000;
+    final int keysCount = 1_000_000;
 
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     final long seed = System.nanoTime();
@@ -346,14 +300,14 @@ public class PrefixBTreeTestIT {
       int val = random.nextInt(Integer.MAX_VALUE);
       String key = Integer.toString(val);
 
-      prefixTree.put(key, new ORecordId(val % 32000, val));
+      singleValueTree.put(key, new ORecordId(val % 32000, val));
       keyValues.put(key, new ORecordId(val % 32000, val));
     }
 
-    Assert.assertEquals(prefixTree.firstKey(), keyValues.firstKey());
-    Assert.assertEquals(prefixTree.lastKey(), keyValues.lastKey());
+    Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
+    Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
 
-    final OPrefixBTree.OSBTreeKeyCursor<String> cursor = prefixTree.keyCursor();
+    final OCellBTreeSingleValue.OSBTreeKeyCursor<String> cursor = singleValueTree.keyCursor();
 
     for (String entryKey : keyValues.keySet()) {
       final String indexKey = cursor.next(-1);
@@ -363,7 +317,7 @@ public class PrefixBTreeTestIT {
 
   @Test
   public void testIterateEntriesMajor() throws Exception {
-    final int keysCount = 500_000;
+    final int keysCount = 1_000_000;
 
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     final long seed = System.nanoTime();
@@ -375,7 +329,7 @@ public class PrefixBTreeTestIT {
       int val = random.nextInt(Integer.MAX_VALUE);
       String key = Integer.toString(val);
 
-      prefixTree.put(key, new ORecordId(val % 32000, val));
+      singleValueTree.put(key, new ORecordId(val % 32000, val));
       keyValues.put(key, new ORecordId(val % 32000, val));
     }
 
@@ -385,13 +339,13 @@ public class PrefixBTreeTestIT {
     assertIterateMajorEntries(keyValues, random, true, false);
     assertIterateMajorEntries(keyValues, random, false, false);
 
-    Assert.assertEquals(prefixTree.firstKey(), keyValues.firstKey());
-    Assert.assertEquals(prefixTree.lastKey(), keyValues.lastKey());
+    Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
+    Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
   }
 
   @Test
   public void testIterateEntriesMinor() throws Exception {
-    final int keysCount = 500_000;
+    final int keysCount = 1_000_000;
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
 
     final long seed = System.nanoTime();
@@ -403,7 +357,7 @@ public class PrefixBTreeTestIT {
       int val = random.nextInt(Integer.MAX_VALUE);
       String key = Integer.toString(val);
 
-      prefixTree.put(key, new ORecordId(val % 32000, val));
+      singleValueTree.put(key, new ORecordId(val % 32000, val));
       keyValues.put(key, new ORecordId(val % 32000, val));
     }
 
@@ -413,13 +367,13 @@ public class PrefixBTreeTestIT {
     assertIterateMinorEntries(keyValues, random, true, false);
     assertIterateMinorEntries(keyValues, random, false, false);
 
-    Assert.assertEquals(prefixTree.firstKey(), keyValues.firstKey());
-    Assert.assertEquals(prefixTree.lastKey(), keyValues.lastKey());
+    Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
+    Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
   }
 
   @Test
   public void testIterateEntriesBetween() throws Exception {
-    final int keysCount = 500_000;
+    final int keysCount = 1_000_000;
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 
@@ -427,7 +381,7 @@ public class PrefixBTreeTestIT {
       int val = random.nextInt(Integer.MAX_VALUE);
       String key = Integer.toString(val);
 
-      prefixTree.put(key, new ORecordId(val % 32000, val));
+      singleValueTree.put(key, new ORecordId(val % 32000, val));
       keyValues.put(key, new ORecordId(val % 32000, val));
     }
 
@@ -441,8 +395,8 @@ public class PrefixBTreeTestIT {
     assertIterateBetweenEntries(keyValues, random, false, true, false);
     assertIterateBetweenEntries(keyValues, random, false, false, false);
 
-    Assert.assertEquals(prefixTree.firstKey(), keyValues.firstKey());
-    Assert.assertEquals(prefixTree.lastKey(), keyValues.lastKey());
+    Assert.assertEquals(singleValueTree.firstKey(), keyValues.firstKey());
+    Assert.assertEquals(singleValueTree.lastKey(), keyValues.lastKey());
   }
 
   private void assertIterateMajorEntries(NavigableMap<String, ORID> keyValues, Random random, boolean keyInclusive,
@@ -463,23 +417,25 @@ public class PrefixBTreeTestIT {
         fromKey = fromKey.substring(0, fromKey.length() - 2) + (fromKey.charAt(fromKey.length() - 1) - 1);
       }
 
-      final OPrefixBTree.OSBTreeCursor<String, OIdentifiable> cursor = prefixTree
+      final OCellBTreeSingleValue.OSBTreeCursor<String, ORID> cursor = singleValueTree
           .iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, ORID>> iterator;
-      if (ascSortOrder)
+      if (ascSortOrder) {
         iterator = keyValues.tailMap(fromKey, keyInclusive).entrySet().iterator();
-      else
+      } else {
         iterator = keyValues.descendingMap().subMap(keyValues.lastKey(), true, fromKey, keyInclusive).entrySet().iterator();
+      }
 
       while (iterator.hasNext()) {
-        final Map.Entry<String, OIdentifiable> indexEntry = cursor.next(-1);
+        final Map.Entry<String, ORID> indexEntry = cursor.next(-1);
         final Map.Entry<String, ORID> entry = iterator.next();
 
         Assert.assertEquals(indexEntry.getKey(), entry.getKey());
         Assert.assertEquals(indexEntry.getValue(), entry.getValue());
       }
 
+      //noinspection ConstantConditions
       Assert.assertFalse(iterator.hasNext());
       Assert.assertNull(cursor.next(-1));
     }
@@ -502,7 +458,7 @@ public class PrefixBTreeTestIT {
         toKey = toKey.substring(0, toKey.length() - 2) + (toKey.charAt(toKey.length() - 1) + 1);
       }
 
-      final OPrefixBTree.OSBTreeCursor<String, OIdentifiable> cursor = prefixTree
+      final OCellBTreeSingleValue.OSBTreeCursor<String, ORID> cursor = singleValueTree
           .iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, ORID>> iterator;
@@ -513,13 +469,14 @@ public class PrefixBTreeTestIT {
       }
 
       while (iterator.hasNext()) {
-        Map.Entry<String, OIdentifiable> indexEntry = cursor.next(-1);
+        Map.Entry<String, ORID> indexEntry = cursor.next(-1);
         Map.Entry<String, ORID> entry = iterator.next();
 
         Assert.assertEquals(indexEntry.getKey(), entry.getKey());
         Assert.assertEquals(indexEntry.getValue(), entry.getValue());
       }
 
+      //noinspection ConstantConditions
       Assert.assertFalse(iterator.hasNext());
       Assert.assertNull(cursor.next(-1));
     }
@@ -558,7 +515,7 @@ public class PrefixBTreeTestIT {
         fromKey = toKey;
       }
 
-      OPrefixBTree.OSBTreeCursor<String, OIdentifiable> cursor = prefixTree
+      OCellBTreeSingleValue.OSBTreeCursor<String, ORID> cursor = singleValueTree
           .iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascSortOrder);
 
       Iterator<Map.Entry<String, ORID>> iterator;
@@ -569,13 +526,14 @@ public class PrefixBTreeTestIT {
       }
 
       while (iterator.hasNext()) {
-        Map.Entry<String, OIdentifiable> indexEntry = cursor.next(-1);
+        Map.Entry<String, ORID> indexEntry = cursor.next(-1);
         Assert.assertNotNull(indexEntry);
 
         Map.Entry<String, ORID> mapEntry = iterator.next();
         Assert.assertEquals(indexEntry.getKey(), mapEntry.getKey());
         Assert.assertEquals(indexEntry.getValue(), mapEntry.getValue());
       }
+      //noinspection ConstantConditions
       Assert.assertFalse(iterator.hasNext());
       Assert.assertNull(cursor.next(-1));
     }

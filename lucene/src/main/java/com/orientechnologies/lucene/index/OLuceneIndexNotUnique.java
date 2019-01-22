@@ -31,8 +31,8 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.OBasicTransaction;
@@ -327,7 +327,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
         return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Long>() {
           // TODO apply current TX
           @Override
-          public Long callEngine(OIndexEngine engine) {
+          public Long callEngine(OBaseIndexEngine engine) {
             OBasicTransaction transaction = getDatabase().getMicroOrRegularTransaction();
             OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
             return indexEngine.sizeInTx(getTransactionChanges(transaction));

@@ -25,7 +25,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
@@ -34,6 +33,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
@@ -63,11 +63,9 @@ import java.util.Set;
  */
 @SuppressFBWarnings("EQ_DOESNT_OVERRIDE_EQUALS")
 public class OIndexManagerShared extends OIndexManagerAbstract {
-  private static final long serialVersionUID = 1L;
-
-  protected volatile transient Thread   recreateIndexesThread = null;
-  private volatile             boolean  rebuildCompleted      = false;
-  private                      OStorage storage;
+  private volatile transient Thread   recreateIndexesThread = null;
+  private volatile           boolean  rebuildCompleted      = false;
+  private final              OStorage storage;
 
   public OIndexManagerShared(OStorage storage) {
     super();
@@ -125,23 +123,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
     final Locale locale = getServerLocale();
     type = type.toUpperCase(locale);
-
     if (algorithm == null) {
-      final OType[] types = indexDefinition.getTypes();
-
-      if ((type.equals(OClass.INDEX_TYPE.NOTUNIQUE.name()) || type.equals(OClass.INDEX_TYPE.UNIQUE.name())) && types.length == 1
-          && types[0] == OType.STRING) {
-
-        OStorage storage = getStorage();
-        OStorageConfiguration configuration = storage.getConfiguration();
-        if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.INDEX_USE_PREFIX_B_TREE)) {
-          algorithm = ODefaultIndexFactory.PREFIX_BTREE_ALGORITHM;
-        } else {
-          algorithm = OIndexes.chooseDefaultIndexAlgorithm(type);
-        }
-      } else {
-        algorithm = OIndexes.chooseDefaultIndexAlgorithm(type);
-      }
+      algorithm = OIndexes.chooseDefaultIndexAlgorithm(type);
     }
 
     final String valueContainerAlgorithm = chooseContainerAlgorithm(type);
@@ -204,7 +187,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     return preProcessBeforeReturn(database, index);
   }
 
-  protected void notifyInvolvedClasses(ODatabaseDocumentInternal database, int[] clusterIdsToIndex) {
+  private static void notifyInvolvedClasses(int[] clusterIdsToIndex) {
     if (clusterIdsToIndex == null || clusterIdsToIndex.length == 0)
       return;
 
@@ -212,14 +195,14 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     final Set<String> classes = new HashSet<>();
     for (int clusterId : clusterIdsToIndex) {
       final OClass cls = database.getMetadata().getSchema().getClassByClusterId(clusterId);
-      if (cls != null && cls instanceof OClassImpl && !classes.contains(cls.getName())) {
+      if (cls instanceof OClassImpl && !classes.contains(cls.getName())) {
         ((OClassImpl) cls).onPostIndexManagement();
         classes.add(cls.getName());
       }
     }
   }
 
-  private Set<String> findClustersByIds(int[] clusterIdsToIndex, ODatabase database) {
+  private static Set<String> findClustersByIds(int[] clusterIdsToIndex, ODatabase database) {
     Set<String> clustersToIndex = new HashSet<>();
     if (clusterIdsToIndex != null) {
       for (int clusterId : clusterIdsToIndex) {
@@ -233,11 +216,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     return clustersToIndex;
   }
 
-  private String chooseContainerAlgorithm(String type) {
+  private static String chooseContainerAlgorithm(String type) {
     final String valueContainerAlgorithm;
     if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(type) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(type)
         || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(type) || OClass.INDEX_TYPE.FULLTEXT.toString().equals(type)) {
-      valueContainerAlgorithm = ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER;
+      valueContainerAlgorithm = ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER;
     } else {
       valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
     }
@@ -472,7 +455,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       final int paramCount = indexDefinition.getParamCount();
 
       for (int i = 1; i <= paramCount; i++) {
-        final List<String> fields = normalizeFieldNames(indexDefinition.getFields().subList(0, i));
+        final List<String> fields = indexDefinition.getFields().subList(0, i);
         final OMultiKey multiKey = new OMultiKey(fields);
 
         Set<OIndex<?>> indexSet = map.get(multiKey);
@@ -642,7 +625,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext(); ) {
           try {
             final OIndexFactory indexFactory = it.next();
-            final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), false, storage, 0, null);
+            final OBaseIndexEngine engine = indexFactory
+                .createIndexEngine(index.getAlgorithm(), index.getName(), false, storage, 0, 1,
+                    indexDefinition.getTypes().length > 1, null);
 
             engine.deleteWithoutLoad(index.getName());
           } catch (Exception e2) {
@@ -716,7 +701,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   public OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex<?> index) {
     if (index instanceof OIndexMultiValues)
       //noinspection unchecked
-      return new OIndexTxAwareMultiValue(database, (OIndex<Set<OIdentifiable>>) index);
+      return new OIndexTxAwareMultiValue(database, (OIndex<Collection<OIdentifiable>>) index);
     else if (index instanceof OIndexDictionary)
       //noinspection unchecked
       return new OIndexTxAwareDictionary(database, (OIndex<OIdentifiable>) index);
@@ -727,7 +712,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     return index;
   }
 
-  public OStorage getStorage() {
+  protected OStorage getStorage() {
     return storage;
   }
 }

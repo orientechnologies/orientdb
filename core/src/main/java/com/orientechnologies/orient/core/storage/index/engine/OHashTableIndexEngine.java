@@ -23,13 +23,14 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.OIndexUpdateAction;
+import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -186,7 +187,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @SuppressWarnings("unchecked")
   @Override
-  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) throws IOException {
+  public boolean validatedPut(Object key, ORID value, Validator<Object, ORID> validator) throws IOException {
     return hashTable.validatedPut(key, value, (Validator) validator);
   }
 
@@ -266,7 +267,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       private int nextEntriesIndex;
       private OHashIndexBucket.Entry<Object, Object>[] entries;
 
-      private Iterator<OIdentifiable> currentIterator = new OEmptyIterator<>();
+      private Iterator<ORID> currentIterator = new OEmptyIterator<>();
       private Object currentKey;
 
       {
@@ -307,7 +308,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
           if (valuesTransformer != null) {
             currentIterator = valuesTransformer.transformFromValue(value).iterator();
           } else {
-            currentIterator = Collections.singletonList((OIdentifiable) value).iterator();
+            currentIterator = Collections.singletonList((ORID) value).iterator();
           }
 
           nextEntriesIndex++;
@@ -356,7 +357,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
       private int nextEntriesIndex;
       private OHashIndexBucket.Entry<Object, Object>[] entries;
 
-      private Iterator<OIdentifiable> currentIterator = new OEmptyIterator<>();
+      private Iterator<ORID> currentIterator = new OEmptyIterator<>();
       private Object currentKey;
 
       {
@@ -397,7 +398,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
           if (valuesTransformer != null) {
             currentIterator = valuesTransformer.transformFromValue(value).iterator();
           } else {
-            currentIterator = Collections.singletonList((OIdentifiable) value).iterator();
+            currentIterator = Collections.singletonList((ORID) value).iterator();
           }
 
           nextEntriesIndex--;

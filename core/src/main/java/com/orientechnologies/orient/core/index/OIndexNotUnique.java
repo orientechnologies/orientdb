@@ -42,12 +42,13 @@ public class OIndexNotUnique extends OIndexMultiValues {
 
   @Override
   public boolean supportsOrderedIterations() {
-    while (true)
+    while (true) {
       try {
         return storage.hasIndexRangeQuerySupport(indexId);
       } catch (OInvalidIndexEngineIdException ignore) {
         doReloadIndexEngine();
       }
+    }
   }
 
   @Override

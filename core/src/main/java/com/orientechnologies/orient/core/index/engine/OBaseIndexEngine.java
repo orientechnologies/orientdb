@@ -1,28 +1,11 @@
-/*
- *
- *  *  Copyright 2010-2016 OrientDB LTD (http://orientdb.com)
- *  *
- *  *  Licensed under the Apache License, Version 2.0 (the "License");
- *  *  you may not use this file except in compliance with the License.
- *  *  You may obtain a copy of the License at
- *  *
- *  *       http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  *  Unless required by applicable law or agreed to in writing, software
- *  *  distributed under the License is distributed on an "AS IS" BASIS,
- *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  *  See the License for the specific language governing permissions and
- *  *  limitations under the License.
- *  *
- *  * For more information: http://orientdb.com
- *
- */
-
-package com.orientechnologies.orient.core.index;
+package com.orientechnologies.orient.core.index.engine;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -31,11 +14,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
- * @since 6/29/13
- */
-public interface OIndexEngine {
+public interface OBaseIndexEngine {
+
   void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata);
 
   void flush();
@@ -48,12 +28,7 @@ public interface OIndexEngine {
 
   void deleteWithoutLoad(String indexName) throws IOException;
 
-  void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties, OEncryption encryption);
-
   boolean contains(Object key);
-
-  boolean remove(Object key) throws IOException;
 
   void clear() throws IOException;
 
@@ -61,22 +36,7 @@ public interface OIndexEngine {
 
   Object get(Object key);
 
-  void put(Object key, Object value) throws IOException;
-
-  void update(Object key, OIndexKeyUpdater<Object> updater) throws IOException;
-
-  /**
-   * Puts the given value under the given key into this index engine. Validates the operation using the provided validator.
-   *
-   * @param key       the key to put the value under.
-   * @param value     the value to put.
-   * @param validator the operation validator.
-   *
-   * @return {@code true} if the validator allowed the put, {@code false} otherwise.
-   *
-   * @see Validator#validate(Object, Object, Object)
-   */
-  boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) throws IOException;
+  boolean remove(Object key) throws IOException;
 
   Object getFirstKey();
 
@@ -102,6 +62,8 @@ public interface OIndexEngine {
 
   int getVersion();
 
+  int getEngineAPIVersion();
+
   String getName();
 
   /**
@@ -120,7 +82,7 @@ public interface OIndexEngine {
   String getIndexNameByKey(Object key);
 
   interface ValuesTransformer {
-    Collection<OIdentifiable> transformFromValue(Object value);
+    Collection<ORID> transformFromValue(Object value);
   }
 
   /**
@@ -144,7 +106,7 @@ public interface OIndexEngine {
      *
      * @param key      the put operation key.
      * @param oldValue the old value or {@code null} if no value is currently stored.
-     * @param newValue the new value passed to {@link #validatedPut(Object, OIdentifiable, Validator)}.
+     * @param newValue the new value passed to validatedPut(Object, OIdentifiable, Validator).
      *
      * @return the new value to store, may differ from the passed one, or the special {@link #IGNORE} value to silently ignore the
      * put operation request being processed.

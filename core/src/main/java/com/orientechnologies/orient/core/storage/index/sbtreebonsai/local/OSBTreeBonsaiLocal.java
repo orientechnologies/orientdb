@@ -286,7 +286,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
           addChildrenToQueue(subTreesToDelete, rootBucket);
 
           rootBucket.shrink(0);
-          rootBucket = new OSBTreeBonsaiBucket<>(cacheEntry, rootBucketPointer.getPageOffset(), true, keySerializer, valueSerializer, this);
+          rootBucket = new OSBTreeBonsaiBucket<>(cacheEntry, rootBucketPointer.getPageOffset(), true, keySerializer,
+              valueSerializer, this);
 
           rootBucket.setTreeSize(0);
         } finally {

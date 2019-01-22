@@ -40,11 +40,9 @@ public interface OIndexManager {
    * Load index manager data from database.
    * <p>
    * IMPORTANT! Only for internal usage.
-   *
-   * @return this
    */
   @Deprecated
-  OIndexManager load();
+  void load();
 
   /**
    * Creates a document where index manager configuration is saved and creates a "dictionary" index.
@@ -279,6 +277,7 @@ public interface OIndexManager {
    * @param clusterName cluster to add.
    * @param indexName   name of index.
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   void addClusterToIndex(String clusterName, String indexName);
 
@@ -290,6 +289,7 @@ public interface OIndexManager {
    * @param clusterName cluster to remove.
    * @param indexName   name of index.
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   void removeClusterFromIndex(String clusterName, String indexName);
 
@@ -308,6 +308,7 @@ public interface OIndexManager {
    *
    * @param idx index to remove.
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   void removeClassPropertyIndex(OIndex<?> idx);
 }

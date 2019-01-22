@@ -167,6 +167,10 @@ public class OWALChangesTree implements OWALChanges {
   }
 
   @Override
+  public void setShortValue(ByteBuffer buffer, short value, int offset) {
+  }
+
+  @Override
   public void setLongValue(ByteBuffer buffer, long value, int offset) {
     byte[] sValue = new byte[OLongSerializer.LONG_SIZE];
     OLongSerializer.INSTANCE.serializeNative(value, sValue, 0);

@@ -456,7 +456,6 @@ public class ODatabaseDocumentTxTest {
     db.newEdge(doc1, doc3, "testEdge");
   }
 
-
   @Test
   public void selectDescTest() {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:foo");

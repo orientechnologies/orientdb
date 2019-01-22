@@ -177,7 +177,7 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
           found = true;
           break;
         }
-        if(rid.equals(record.getProperty("@rid"))){
+        if (rid.equals(record.getProperty("@rid"))) {
           found = true;
           break;
         }

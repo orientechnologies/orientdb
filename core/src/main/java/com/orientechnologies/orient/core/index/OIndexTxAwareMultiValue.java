@@ -29,7 +29,14 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
@@ -37,7 +44,7 @@ import java.util.*;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
+public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifiable>> {
   private static class MapEntry implements Map.Entry<Object, OIdentifiable> {
     private final Object        key;
     private final OIdentifiable backendValue;
@@ -283,16 +290,16 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     }
   }
 
-  public OIndexTxAwareMultiValue(final ODatabaseDocumentInternal database, final OIndex<Set<OIdentifiable>> delegate) {
+  public OIndexTxAwareMultiValue(final ODatabaseDocumentInternal database, final OIndex<Collection<OIdentifiable>> delegate) {
     super(database, delegate);
   }
 
   @Override
-  public Set<OIdentifiable> get(Object key) {
+  public Collection<OIdentifiable> get(Object key) {
     final OTransactionIndexChanges indexChanges = database.getMicroOrRegularTransaction()
         .getIndexChangesInternal(delegate.getName());
     if (indexChanges == null) {
-      Set<OIdentifiable> res = super.get(key);
+      Collection<OIdentifiable> res = super.get(key);
       //In case of active transaction we use to return null instead of empty list, make check to be backward compatible
       if (database.getTransaction().isActive() && ((OTransactionOptimistic) database.getTransaction()).getIndexOperations().size() != 0
           && res.isEmpty())
@@ -330,7 +337,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
 
   @Override
   public boolean contains(final Object key) {
-    final Set<OIdentifiable> result = get(key);
+    final Collection<OIdentifiable> result = get(key);
     return result != null && !result.isEmpty();
   }
 
