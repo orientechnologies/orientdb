@@ -87,7 +87,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
   private final        AtomicLong                bonsayFileId     = new AtomicLong(0);
   private              OEncryption               encryption;
 
-  public OPrefixBTree(String name, String dataFileExtension, String nullFileExtension, OAbstractPaginatedStorage storage) {
+  public OPrefixBTree(final String name, final String dataFileExtension, final String nullFileExtension,
+      final OAbstractPaginatedStorage storage) {
     super(storage, name, dataFileExtension, name + dataFileExtension);
     acquireExclusiveLock();
     try {
@@ -97,8 +98,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
     }
   }
 
-  public void create(OBinarySerializer<String> keySerializer, OBinarySerializer<V> valueSerializer, boolean nullPointerSupport,
-      OEncryption encryption) throws IOException {
+  public void create(final OBinarySerializer<String> keySerializer, final OBinarySerializer<V> valueSerializer,
+      final boolean nullPointerSupport, final OEncryption encryption) throws IOException {
     assert keySerializer != null;
 
     boolean rollback = false;
@@ -118,9 +119,9 @@ public class OPrefixBTree<V> extends ODurableComponent {
           nullBucketFileId = addFile(atomicOperation, getName() + nullFileExtension);
         }
 
-        OCacheEntry rootCacheEntry = addPage(atomicOperation, fileId, false);
+        final OCacheEntry rootCacheEntry = addPage(atomicOperation, fileId);
         try {
-          OPrefixBTreeBucket<V> rootBucket = new OPrefixBTreeBucket<>(rootCacheEntry, true, keySerializer, valueSerializer,
+          final OPrefixBTreeBucket<V> rootBucket = new OPrefixBTreeBucket<>(rootCacheEntry, true, keySerializer, valueSerializer,
               encryption, "");
           rootBucket.setTreeSize(0);
         } finally {
@@ -130,7 +131,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       rollback = true;
       throw e;
     } finally {
@@ -159,15 +160,15 @@ public class OPrefixBTree<V> extends ODurableComponent {
         if (key != null) {
           key = keySerializer.preprocess(key, OType.STRING);
 
-          BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
+          final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
           if (bucketSearchResult.itemIndex < 0) {
             return null;
           }
 
-          long pageIndex = bucketSearchResult.getLastPathItem();
-          OCacheEntry keyBucketCacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
+          final long pageIndex = bucketSearchResult.getLastPathItem();
+          final OCacheEntry keyBucketCacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false);
           try {
-            OPrefixBTreeBucket<V> keyBucket = new OPrefixBTreeBucket<>(keyBucketCacheEntry, keySerializer, valueSerializer,
+            final OPrefixBTreeBucket<V> keyBucket = new OPrefixBTreeBucket<>(keyBucketCacheEntry, keySerializer, valueSerializer,
                 encryption);
 
             return readValue(keyBucket.getValue(bucketSearchResult.itemIndex), atomicOperation);
@@ -195,7 +196,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       } finally {
         releaseSharedLock();
       }
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw OException
           .wrapException(new OPrefixBTreeException("Error during retrieving  of sbtree with name " + getName(), this), e);
     } finally {
@@ -203,15 +204,16 @@ public class OPrefixBTree<V> extends ODurableComponent {
     }
   }
 
-  public void put(String key, V value) throws IOException {
+  public void put(final String key, final V value) throws IOException {
     put(key, value, null);
   }
 
-  public boolean validatedPut(String key, V value, OIndexEngine.Validator<String, V> validator) throws IOException {
+  public boolean validatedPut(final String key, final V value, final OIndexEngine.Validator<String, V> validator)
+      throws IOException {
     return put(key, value, validator);
   }
 
-  private boolean put(String key, V value, OIndexEngine.Validator<String, V> validator) throws IOException {
+  private boolean put(final String key, final V value, final OIndexEngine.Validator<String, V> validator) throws IOException {
     return update(key, (x, bonsayFileId) -> {
       final OIndexUpdateAction<V> changed = OIndexUpdateAction.changed(value);
       return changed;
@@ -219,7 +221,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
   }
 
   @SuppressWarnings("unchecked")
-  public boolean update(String key, OIndexKeyUpdater<V> updater, OIndexEngine.Validator<String, V> validator) throws IOException {
+  public boolean update(String key, final OIndexKeyUpdater<V> updater, final OIndexEngine.Validator<String, V> validator)
+      throws IOException {
     boolean rollback = false;
     final OAtomicOperation atomicOperation = startAtomicOperation(true);
 
@@ -246,7 +249,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
             oldValue = valueSerializer.deserializeNativeObject(oldRawValue, 0);
           }
 
-          OIndexUpdateAction<V> updatedValue = updater.update(oldValue, bonsayFileId);
+          final OIndexUpdateAction<V> updatedValue = updater.update(oldValue, bonsayFileId);
           if (updatedValue.isChange()) {
             V value = updatedValue.getValue();
 
@@ -277,7 +280,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
             assert !createLinkToTheValue;
 
             int insertionIndex;
-            int sizeDiff;
+            final int sizeDiff;
             if (bucketSearchResult.itemIndex >= 0) {
               assert oldRawValue != null;
 
@@ -325,11 +328,11 @@ public class OPrefixBTree<V> extends ODurableComponent {
             releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
           }
         } else {
-          OCacheEntry cacheEntry;
+          final OCacheEntry cacheEntry;
           boolean isNew = false;
 
           if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
-            cacheEntry = addPage(atomicOperation, nullBucketFileId, false);
+            cacheEntry = addPage(atomicOperation, nullBucketFileId);
             isNew = true;
           } else {
             cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
@@ -341,9 +344,9 @@ public class OPrefixBTree<V> extends ODurableComponent {
             final ONullBucket<V> nullBucket = new ONullBucket<>(cacheEntry, valueSerializer, isNew);
             final OSBTreeValue<V> oldValue = nullBucket.getValue();
             final V oldValueValue = oldValue == null ? null : readValue(oldValue, atomicOperation);
-            OIndexUpdateAction<V> updatedValue = updater.update(oldValueValue, bonsayFileId);
+            final OIndexUpdateAction<V> updatedValue = updater.update(oldValueValue, bonsayFileId);
             if (updatedValue.isChange()) {
-              V value = updatedValue.getValue();
+              final V value = updatedValue.getValue();
               final OSBTreeValue<V> treeValue = new OSBTreeValue<>(false, -1, value);
 
               if (validator != null) {
@@ -375,7 +378,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       rollback = true;
       throw e;
     } finally {
@@ -383,7 +386,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
     }
   }
 
-  public void close(boolean flush) {
+  public void close(final boolean flush) {
     acquireExclusiveLock();
     try {
       readCache.closeFile(fileId, flush, writeCache);
@@ -415,11 +418,12 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
         OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, ROOT_INDEX, false);
         if (cacheEntry == null) {
-          cacheEntry = addPage(atomicOperation, fileId, false);
+          cacheEntry = addPage(atomicOperation, fileId);
         }
 
         try {
-          OPrefixBTreeBucket<V> rootBucket = new OPrefixBTreeBucket<>(cacheEntry, true, keySerializer, valueSerializer, encryption,
+          final OPrefixBTreeBucket<V> rootBucket = new OPrefixBTreeBucket<>(cacheEntry, true, keySerializer, valueSerializer,
+              encryption,
               "");
 
           rootBucket.setTreeSize(0);
@@ -430,7 +434,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       rollback = true;
       throw e;
     } finally {
@@ -453,7 +457,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       rollback = true;
       throw e;
     } finally {
@@ -480,7 +484,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       rollback = true;
       throw e;
     } finally {
@@ -489,8 +493,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
   }
 
-  public void load(String name, OBinarySerializer<String> keySerializer, OBinarySerializer<V> valueSerializer,
-      boolean nullPointerSupport, OEncryption encryption) {
+  public void load(final String name, final OBinarySerializer<String> keySerializer, final OBinarySerializer<V> valueSerializer,
+      final boolean nullPointerSupport, final OEncryption encryption) {
     acquireExclusiveLock();
     try {
       this.encryption = encryption;
@@ -505,7 +509,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
       this.keySerializer = keySerializer;
       this.valueSerializer = valueSerializer;
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw OException.wrapException(new OPrefixBTreeException("Exception during loading of sbtree " + name, this), e);
     } finally {
       releaseExclusiveLock();
@@ -519,9 +523,10 @@ public class OPrefixBTree<V> extends ODurableComponent {
       try {
         final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
-        OCacheEntry rootCacheEntry = loadPageForRead(atomicOperation, fileId, ROOT_INDEX, false);
+        final OCacheEntry rootCacheEntry = loadPageForRead(atomicOperation, fileId, ROOT_INDEX, false);
         try {
-          OPrefixBTreeBucket<V> rootBucket = new OPrefixBTreeBucket<>(rootCacheEntry, keySerializer, valueSerializer, encryption);
+          final OPrefixBTreeBucket<V> rootBucket = new OPrefixBTreeBucket<>(rootCacheEntry, keySerializer, valueSerializer,
+              encryption);
           return rootBucket.getTreeSize();
         } finally {
           releasePageFromRead(atomicOperation, rootCacheEntry);
@@ -529,7 +534,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       } finally {
         releaseSharedLock();
       }
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw OException.wrapException(new OPrefixBTreeException("Error during retrieving of size of index " + getName(), this), e);
     } finally {
       atomicOperationsManager.releaseReadLock(this);
@@ -542,12 +547,12 @@ public class OPrefixBTree<V> extends ODurableComponent {
     try {
       acquireExclusiveLock();
       try {
-        V removedValue;
+        final V removedValue;
 
         if (key != null) {
           key = keySerializer.preprocess(key, OType.STRING);
 
-          BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
+          final BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
           if (bucketSearchResult.itemIndex < 0) {
             return null;
           }
@@ -565,7 +570,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       } finally {
         releaseExclusiveLock();
       }
-    } catch (Exception e) {
+    } catch (final Exception e) {
       rollback = true;
       throw e;
     } finally {
@@ -573,12 +578,12 @@ public class OPrefixBTree<V> extends ODurableComponent {
     }
   }
 
-  private V removeNullBucket(OAtomicOperation atomicOperation) throws IOException {
+  private V removeNullBucket(final OAtomicOperation atomicOperation) throws IOException {
     V removedValue;
-    OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
+    final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
     try {
-      ONullBucket<V> nullBucket = new ONullBucket<>(nullCacheEntry, valueSerializer, false);
-      OSBTreeValue<V> treeValue = nullBucket.getValue();
+      final ONullBucket<V> nullBucket = new ONullBucket<>(nullCacheEntry, valueSerializer, false);
+      final OSBTreeValue<V> treeValue = nullBucket.getValue();
 
       if (treeValue != null) {
         removedValue = readValue(treeValue, atomicOperation);
@@ -596,11 +601,12 @@ public class OPrefixBTree<V> extends ODurableComponent {
     return removedValue;
   }
 
-  private byte[] removeKey(OAtomicOperation atomicOperation, long pageIndex, int itemIndex) throws IOException {
+  private byte[] removeKey(final OAtomicOperation atomicOperation, final long pageIndex, final int itemIndex) throws IOException {
     byte[] removedValue;
-    OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false);
+    final OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false);
     try {
-      OPrefixBTreeBucket<V> keyBucket = new OPrefixBTreeBucket<>(keyBucketCacheEntry, keySerializer, valueSerializer, encryption);
+      final OPrefixBTreeBucket<V> keyBucket = new OPrefixBTreeBucket<>(keyBucketCacheEntry, keySerializer, valueSerializer,
+          encryption);
 
       removedValue = keyBucket.getRawValue(itemIndex);
       keyBucket.remove(itemIndex);
@@ -611,7 +617,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
     return removedValue;
   }
 
-  public OSBTreeCursor<String, V> iterateEntriesMinor(String key, boolean inclusive, boolean ascSortOrder) {
+  public OSBTreeCursor<String, V> iterateEntriesMinor(final String key, final boolean inclusive, final boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -629,7 +635,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
     }
   }
 
-  public OSBTreeCursor<String, V> iterateEntriesMajor(String key, boolean inclusive, boolean ascSortOrder) {
+  public OSBTreeCursor<String, V> iterateEntriesMajor(final String key, final boolean inclusive, final boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -652,7 +658,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
     try {
       acquireSharedLock();
       try {
-        OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
         final BucketSearchResult searchResult = firstItem(atomicOperation);
         if (searchResult == null) {
@@ -661,7 +667,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
         final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, searchResult.getLastPathItem(), false);
         try {
-          OPrefixBTreeBucket<V> bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
+          final OPrefixBTreeBucket<V> bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
           return bucket.getBucketPrefix() + bucket.getKeyWithoutPrefix(searchResult.itemIndex);
         } finally {
           releasePageFromRead(atomicOperation, cacheEntry);
@@ -669,7 +675,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       } finally {
         releaseSharedLock();
       }
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw OException
           .wrapException(new OPrefixBTreeException("Error during finding first key in sbtree [" + getName() + "]", this), e);
     } finally {
@@ -682,7 +688,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
     try {
       acquireSharedLock();
       try {
-        OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+        final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
         final BucketSearchResult searchResult = lastItem(atomicOperation);
         if (searchResult == null) {
@@ -691,7 +697,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
         final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, searchResult.getLastPathItem(), false);
         try {
-          OPrefixBTreeBucket<V> bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
+          final OPrefixBTreeBucket<V> bucket = new OPrefixBTreeBucket<>(cacheEntry, keySerializer, valueSerializer, encryption);
           return bucket.getBucketPrefix() + bucket.getKeyWithoutPrefix(searchResult.itemIndex);
         } finally {
           releasePageFromRead(atomicOperation, cacheEntry);
@@ -699,7 +705,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       } finally {
         releaseSharedLock();
       }
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw OException
           .wrapException(new OPrefixBTreeException("Error during finding last key in sbtree [" + getName() + "]", this), e);
     } finally {
@@ -711,8 +717,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
     return new OSBTreeFullKeyCursor();
   }
 
-  public OSBTreeCursor<String, V> iterateEntriesBetween(String keyFrom, boolean fromInclusive, String keyTo, boolean toInclusive,
-      boolean ascSortOrder) {
+  public OSBTreeCursor<String, V> iterateEntriesBetween(final String keyFrom, final boolean fromInclusive, final String keyTo,
+      final boolean toInclusive, final boolean ascSortOrder) {
     atomicOperationsManager.acquireReadLock(this);
     try {
       acquireSharedLock();
@@ -751,28 +757,28 @@ public class OPrefixBTree<V> extends ODurableComponent {
     atomicOperationsManager.acquireExclusiveLockTillOperationComplete(this);
   }
 
-  private void checkNullSupport(String key) {
+  private void checkNullSupport(final String key) {
     if (key == null && !nullPointerSupport) {
       throw new OPrefixBTreeException("Null keys are not supported.", this);
     }
   }
 
-  private void updateSize(long diffSize, OAtomicOperation atomicOperation) throws IOException {
-    OCacheEntry rootCacheEntry = loadPageForWrite(atomicOperation, fileId, ROOT_INDEX, false);
+  private void updateSize(final long diffSize, final OAtomicOperation atomicOperation) throws IOException {
+    final OCacheEntry rootCacheEntry = loadPageForWrite(atomicOperation, fileId, ROOT_INDEX, false);
     try {
-      OPrefixBTreeBucket<V> rootBucket = new OPrefixBTreeBucket<>(rootCacheEntry, keySerializer, valueSerializer, encryption);
+      final OPrefixBTreeBucket<V> rootBucket = new OPrefixBTreeBucket<>(rootCacheEntry, keySerializer, valueSerializer, encryption);
       rootBucket.setTreeSize(rootBucket.getTreeSize() + diffSize);
     } finally {
       releasePageFromWrite(atomicOperation, rootCacheEntry);
     }
   }
 
-  private OSBTreeCursor<String, V> iterateEntriesMinorDesc(String key, boolean inclusive) {
+  private OSBTreeCursor<String, V> iterateEntriesMinorDesc(String key, final boolean inclusive) {
     key = keySerializer.preprocess(key, OType.STRING);
     return new OSBTreeCursorBackward(null, key, false, inclusive);
   }
 
-  private OSBTreeCursor<String, V> iterateEntriesMinorAsc(String key, boolean inclusive) {
+  private OSBTreeCursor<String, V> iterateEntriesMinorAsc(String key, final boolean inclusive) {
     acquireSharedLock();
     try {
       key = keySerializer.preprocess(key, OType.STRING);
@@ -783,18 +789,18 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
   }
 
-  private OSBTreeCursor<String, V> iterateEntriesMajorAsc(String key, boolean inclusive) {
+  private OSBTreeCursor<String, V> iterateEntriesMajorAsc(String key, final boolean inclusive) {
     key = keySerializer.preprocess(key, OType.STRING);
     return new OSBTreeCursorForward(key, null, inclusive, false);
   }
 
-  private OSBTreeCursor<String, V> iterateEntriesMajorDesc(String key, boolean inclusive) {
+  private OSBTreeCursor<String, V> iterateEntriesMajorDesc(String key, final boolean inclusive) {
     key = keySerializer.preprocess(key, OType.STRING);
     return new OSBTreeCursorBackward(key, null, inclusive, false);
   }
 
-  private BucketSearchResult firstItem(OAtomicOperation atomicOperation) throws IOException {
-    LinkedList<PagePathItemUnit> path = new LinkedList<>();
+  private BucketSearchResult firstItem(final OAtomicOperation atomicOperation) throws IOException {
+    final LinkedList<PagePathItemUnit> path = new LinkedList<>();
 
     long bucketIndex = ROOT_INDEX;
 
@@ -808,7 +814,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
         if (!bucket.isLeaf()) {
           if (bucket.isEmpty() || itemIndex > bucket.size()) {
             if (!path.isEmpty()) {
-              PagePathItemUnit pagePathItemUnit = path.removeLast();
+              final PagePathItemUnit pagePathItemUnit = path.removeLast();
 
               bucketIndex = pagePathItemUnit.pageIndex;
               itemIndex = Math.abs(pagePathItemUnit.itemIndex);
@@ -832,7 +838,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
         } else {
           if (bucket.isEmpty()) {
             if (!path.isEmpty()) {
-              PagePathItemUnit pagePathItemUnit = path.removeLast();
+              final PagePathItemUnit pagePathItemUnit = path.removeLast();
 
               bucketIndex = pagePathItemUnit.pageIndex;
               itemIndex = Math.abs(pagePathItemUnit.itemIndex);
@@ -843,7 +849,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
             final ArrayList<Long> resultPath = new ArrayList<>(path.size() + 1);
             final ArrayList<Integer> items = new ArrayList<>(path.size() + 1);
 
-            for (PagePathItemUnit pathItemUnit : path) {
+            for (final PagePathItemUnit pathItemUnit : path) {
               resultPath.add(pathItemUnit.pageIndex);
               items.add(pathItemUnit.itemIndex);
             }
@@ -866,8 +872,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
     }
   }
 
-  private BucketSearchResult lastItem(OAtomicOperation atomicOperation) throws IOException {
-    LinkedList<PagePathItemUnit> path = new LinkedList<>();
+  private BucketSearchResult lastItem(final OAtomicOperation atomicOperation) throws IOException {
+    final LinkedList<PagePathItemUnit> path = new LinkedList<>();
 
     long bucketIndex = ROOT_INDEX;
 
@@ -881,7 +887,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
         if (!bucket.isLeaf()) {
           if (itemIndex < -1) {
             if (!path.isEmpty()) {
-              PagePathItemUnit pagePathItemUnit = path.removeLast();
+              final PagePathItemUnit pagePathItemUnit = path.removeLast();
 
               bucketIndex = pagePathItemUnit.pageIndex;
               itemIndex = Math.abs(pagePathItemUnit.itemIndex) - 2;
@@ -905,7 +911,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
         } else {
           if (bucket.isEmpty()) {
             if (!path.isEmpty()) {
-              PagePathItemUnit pagePathItemUnit = path.removeLast();
+              final PagePathItemUnit pagePathItemUnit = path.removeLast();
 
               bucketIndex = pagePathItemUnit.pageIndex;
               itemIndex = Math.abs(pagePathItemUnit.itemIndex) - 2;
@@ -916,7 +922,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
             final ArrayList<Long> resultPath = new ArrayList<>(path.size() + 1);
             final ArrayList<Integer> items = new ArrayList<>(path.size() + 1);
 
-            for (PagePathItemUnit pathItemUnit : path) {
+            for (final PagePathItemUnit pathItemUnit : path) {
               resultPath.add(pathItemUnit.pageIndex);
               items.add(pathItemUnit.itemIndex);
             }
@@ -944,26 +950,27 @@ public class OPrefixBTree<V> extends ODurableComponent {
     }
   }
 
-  private OSBTreeCursor<String, V> iterateEntriesBetweenAscOrder(String keyFrom, boolean fromInclusive, String keyTo,
-      boolean toInclusive) {
+  private OSBTreeCursor<String, V> iterateEntriesBetweenAscOrder(String keyFrom, final boolean fromInclusive, String keyTo,
+      final boolean toInclusive) {
     keyFrom = keySerializer.preprocess(keyFrom, OType.STRING);
     keyTo = keySerializer.preprocess(keyTo, OType.STRING);
 
     return new OSBTreeCursorForward(keyFrom, keyTo, fromInclusive, toInclusive);
   }
 
-  private OSBTreeCursor<String, V> iterateEntriesBetweenDescOrder(String keyFrom, boolean fromInclusive, String keyTo,
-      boolean toInclusive) {
+  private OSBTreeCursor<String, V> iterateEntriesBetweenDescOrder(String keyFrom, final boolean fromInclusive, String keyTo,
+      final boolean toInclusive) {
     keyFrom = keySerializer.preprocess(keyFrom, OType.STRING);
     keyTo = keySerializer.preprocess(keyTo, OType.STRING);
 
     return new OSBTreeCursorBackward(keyFrom, keyTo, fromInclusive, toInclusive);
   }
 
-  private BucketUpdateSearchResult splitBucket(OPrefixBTreeBucket<V> bucketToSplit, OCacheEntry bucketToSplitEntry, List<Long> path,
-      List<String> leftBoundaries, List<String> rightBoundaries, int keyIndex, String keyToInsert, OAtomicOperation atomicOperation)
+  private BucketUpdateSearchResult splitBucket(final OPrefixBTreeBucket<V> bucketToSplit, final OCacheEntry bucketToSplitEntry,
+      final List<Long> path, final List<String> leftBoundaries, final List<String> rightBoundaries, final int keyIndex,
+      final String keyToInsert, final OAtomicOperation atomicOperation)
       throws IOException {
-    long pageIndex = path.get(path.size() - 1);
+    final long pageIndex = path.get(path.size() - 1);
     final boolean splitLeaf = bucketToSplit.isLeaf();
     final int bucketSize = bucketToSplit.size();
 
@@ -1019,7 +1026,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
         int absMinIndex = -1;
 
         for (int i = startSeparationIndex; i < endSeparationIndex; i++) {
-          String separationKey = bucketToSplit.getKeyWithoutPrefix(i);
+          final String separationKey = bucketToSplit.getKeyWithoutPrefix(i);
           if (absMinKey == null || absMinKey.length() > separationKey.length()) {
             absMinKey = separationKey;
             absMinIndex = i;
@@ -1055,7 +1062,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
     }
   }
 
-  private static String findMinSeparationKey(String keyLeft, String keyRight) {
+  private static String findMinSeparationKey(final String keyLeft, final String keyRight) {
     final int minLen = Math.min(keyLeft.length(), keyRight.length());
     for (int i = 0; i < minLen; i++) {
       if (keyLeft.charAt(i) != keyRight.charAt(i)) {
@@ -1071,11 +1078,12 @@ public class OPrefixBTree<V> extends ODurableComponent {
   }
 
   private BucketUpdateSearchResult splitNonRootBucket(List<Long> path, List<String> leftBoundaries, List<String> rightBoundaries,
-      int keyIndex, String keyToInsert, long pageIndex, OPrefixBTreeBucket<V> bucketToSplit, boolean splitLeaf, int indexToSplit,
-      String separationKey, List<OPrefixBTreeBucket.SBTreeEntry<V>> rightEntries, OAtomicOperation atomicOperation)
+      final int keyIndex, final String keyToInsert, final long pageIndex, final OPrefixBTreeBucket<V> bucketToSplit,
+      final boolean splitLeaf, final int indexToSplit, final String separationKey,
+      final List<OPrefixBTreeBucket.SBTreeEntry<V>> rightEntries, final OAtomicOperation atomicOperation)
       throws IOException {
 
-    OCacheEntry rightBucketEntry = addPage(atomicOperation, fileId, false);
+    final OCacheEntry rightBucketEntry = addPage(atomicOperation, fileId);
 
     final String leftBoundary = leftBoundaries.get(leftBoundaries.size() - 2);
     final String rightBoundary = rightBoundaries.get(rightBoundaries.size() - 2);
@@ -1096,7 +1104,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
     }
 
     try {
-      OPrefixBTreeBucket<V> newRightBucket = new OPrefixBTreeBucket<>(rightBucketEntry, splitLeaf, keySerializer, valueSerializer,
+      final OPrefixBTreeBucket<V> newRightBucket = new OPrefixBTreeBucket<>(rightBucketEntry, splitLeaf, keySerializer,
+          valueSerializer,
           encryption, rightBucketPrefix);
 
       newRightBucket.addAllWithPrefix(rightEntries, rightBucketPrefix);
@@ -1106,7 +1115,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       OCacheEntry parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false);
       try {
         OPrefixBTreeBucket<V> parentBucket = new OPrefixBTreeBucket<>(parentCacheEntry, keySerializer, valueSerializer, encryption);
-        OPrefixBTreeBucket.SBTreeEntry<V> parentEntry = new OPrefixBTreeBucket.SBTreeEntry<>((int) pageIndex,
+        final OPrefixBTreeBucket.SBTreeEntry<V> parentEntry = new OPrefixBTreeBucket.SBTreeEntry<>((int) pageIndex,
             (int) rightBucketEntry.getPageIndex(), separationKey, null);
 
         int insertionIndex = parentBucket.find(separationKey);
@@ -1115,7 +1124,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
         insertionIndex = -insertionIndex - 1;
 
         while (!parentBucket.addEntry(insertionIndex, parentEntry, true)) {
-          BucketUpdateSearchResult bucketSearchResult = splitBucket(parentBucket, parentCacheEntry,
+          final BucketUpdateSearchResult bucketSearchResult = splitBucket(parentBucket, parentCacheEntry,
               path.subList(0, path.size() - 1), leftBoundaries.subList(0, leftBoundaries.size() - 1),
               rightBoundaries.subList(0, rightBoundaries.size() - 1), insertionIndex, separationKey, atomicOperation);
 
@@ -1180,7 +1189,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
     }
   }
 
-  private static String findCommonPrefix(String keyOne, String keyTwo) {
+  private static String findCommonPrefix(final String keyOne, final String keyTwo) {
     final int commonLen = Math.min(keyOne.length(), keyTwo.length());
 
     int commonIndex = -1;
@@ -1208,9 +1217,9 @@ public class OPrefixBTree<V> extends ODurableComponent {
     return keyOne.substring(0, commonIndex + 1) + suffix;
   }
 
-  private BucketUpdateSearchResult splitRootBucket(List<Long> path, int keyIndex, String keyToInsert, OCacheEntry bucketEntry,
-      OPrefixBTreeBucket<V> bucketToSplit, boolean splitLeaf, int indexToSplit, String separationKey, List<byte[]> rightEntries,
-      OAtomicOperation atomicOperation) throws IOException {
+  private BucketUpdateSearchResult splitRootBucket(final List<Long> path, final int keyIndex, final String keyToInsert,
+      final OCacheEntry bucketEntry, OPrefixBTreeBucket<V> bucketToSplit, final boolean splitLeaf, final int indexToSplit,
+      final String separationKey, final List<byte[]> rightEntries, final OAtomicOperation atomicOperation) throws IOException {
     final long treeSize = bucketToSplit.getTreeSize();
 
     final List<byte[]> leftEntries = new ArrayList<>(indexToSplit);
@@ -1219,10 +1228,11 @@ public class OPrefixBTree<V> extends ODurableComponent {
       leftEntries.add(bucketToSplit.getRawEntry(i));
     }
 
-    OCacheEntry leftBucketEntry = addPage(atomicOperation, fileId, false);
-    OCacheEntry rightBucketEntry = addPage(atomicOperation, fileId, false);
+    final OCacheEntry leftBucketEntry = addPage(atomicOperation, fileId);
+    final OCacheEntry rightBucketEntry = addPage(atomicOperation, fileId);
     try {
-      OPrefixBTreeBucket<V> newLeftBucket = new OPrefixBTreeBucket<>(leftBucketEntry, splitLeaf, keySerializer, valueSerializer,
+      final OPrefixBTreeBucket<V> newLeftBucket = new OPrefixBTreeBucket<>(leftBucketEntry, splitLeaf, keySerializer,
+          valueSerializer,
           encryption, "");
       newLeftBucket.addAllNoPrefix(leftEntries);
     } finally {
@@ -1230,7 +1240,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
     }
 
     try {
-      OPrefixBTreeBucket<V> newRightBucket = new OPrefixBTreeBucket<>(rightBucketEntry, splitLeaf, keySerializer, valueSerializer,
+      final OPrefixBTreeBucket<V> newRightBucket = new OPrefixBTreeBucket<>(rightBucketEntry, splitLeaf, keySerializer,
+          valueSerializer,
           encryption, "");
       newRightBucket.addAllNoPrefix(rightEntries);
     } finally {
@@ -1245,10 +1256,10 @@ public class OPrefixBTree<V> extends ODurableComponent {
         new OPrefixBTreeBucket.SBTreeEntry<>((int) leftBucketEntry.getPageIndex(), (int) rightBucketEntry.getPageIndex(),
             separationKey, null), true);
 
-    ArrayList<Long> resultPath = new ArrayList<>(path.subList(0, path.size() - 1));
+    final ArrayList<Long> resultPath = new ArrayList<>(path.subList(0, path.size() - 1));
 
-    ArrayList<String> resultLeftBoundaries = new ArrayList<>();
-    ArrayList<String> resultRightBoundaries = new ArrayList<>();
+    final ArrayList<String> resultLeftBoundaries = new ArrayList<>();
+    final ArrayList<String> resultRightBoundaries = new ArrayList<>();
 
     resultLeftBoundaries.add(null);
     resultLeftBoundaries.add(null);
@@ -1268,7 +1279,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
         resultLeftBoundaries, resultRightBoundaries);
   }
 
-  private BucketUpdateSearchResult findBucketForUpdate(String key, OAtomicOperation atomicOperation) throws IOException {
+  private BucketUpdateSearchResult findBucketForUpdate(final String key, final OAtomicOperation atomicOperation)
+      throws IOException {
     long pageIndex = ROOT_INDEX;
     final ArrayList<Long> path = new ArrayList<>();
     final ArrayList<String> leftBoundaries = new ArrayList<>();
@@ -1338,7 +1350,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
     }
   }
 
-  private BucketSearchResult findBucket(String key, OAtomicOperation atomicOperation) throws IOException {
+  private BucketSearchResult findBucket(final String key, final OAtomicOperation atomicOperation) throws IOException {
     long pageIndex = ROOT_INDEX;
     final ArrayList<Long> path = new ArrayList<>();
     final ArrayList<Integer> items = new ArrayList<>();
@@ -1392,7 +1404,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
     }
   }
 
-  private V readValue(OSBTreeValue<V> sbTreeValue, OAtomicOperation atomicOperation) throws IOException {
+  private V readValue(final OSBTreeValue<V> sbTreeValue, final OAtomicOperation atomicOperation) throws IOException {
     if (!sbTreeValue.isLink()) {
       return sbTreeValue.getValue();
     }
@@ -1401,14 +1413,14 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
     OSBTreeValuePage valuePage = new OSBTreeValuePage(cacheEntry, false);
 
-    int totalSize = valuePage.getSize();
+    final int totalSize = valuePage.getSize();
     int currentSize = 0;
-    byte[] value = new byte[totalSize];
+    final byte[] value = new byte[totalSize];
 
     while (currentSize < totalSize) {
       currentSize = valuePage.readBinaryContent(value, currentSize);
 
-      long nextPage = valuePage.getNextPage();
+      final long nextPage = valuePage.getNextPage();
       if (nextPage >= 0) {
         releasePageFromRead(atomicOperation, cacheEntry);
 
@@ -1423,7 +1435,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
     return valueSerializer.deserializeNativeObject(value, 0);
   }
 
-  private Map.Entry<String, V> convertToMapEntry(OPrefixBTreeBucket.SBTreeEntry<V> treeEntry, OAtomicOperation atomicOperation)
+  private Map.Entry<String, V> convertToMapEntry(final OPrefixBTreeBucket.SBTreeEntry<V> treeEntry,
+      final OAtomicOperation atomicOperation)
       throws IOException {
     final String key = treeEntry.key;
     final V value = readValue(treeEntry.value, atomicOperation);
@@ -1440,7 +1453,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       }
 
       @Override
-      public V setValue(V value) {
+      public V setValue(final V value) {
         throw new UnsupportedOperationException("setValue");
       }
     };
@@ -1461,7 +1474,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
     private final List<String> leftBoundaries;
     private final List<String> rightBoundaries;
 
-    private BucketUpdateSearchResult(int itemIndex, List<Long> path, List<String> leftBoundaries, List<String> rightBoundaries) {
+    private BucketUpdateSearchResult(final int itemIndex, final List<Long> path, final List<String> leftBoundaries,
+        final List<String> rightBoundaries) {
       this.itemIndex = itemIndex;
       this.path = path;
       this.leftBoundaries = leftBoundaries;
@@ -1478,7 +1492,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
     private final List<Long>    path;
     private final List<Integer> items;
 
-    private BucketSearchResult(int itemIndex, List<Long> path, List<Integer> items) {
+    private BucketSearchResult(final int itemIndex, final List<Long> path, final List<Integer> items) {
       this.itemIndex = itemIndex;
       this.path = path;
       this.items = items;
@@ -1493,7 +1507,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
     private final long pageIndex;
     private final int  itemIndex;
 
-    private PagePathItemUnit(long pageIndex, int itemIndex) {
+    private PagePathItemUnit(final long pageIndex, final int itemIndex) {
       this.pageIndex = pageIndex;
       this.itemIndex = itemIndex;
     }
@@ -1533,9 +1547,9 @@ public class OPrefixBTree<V> extends ODurableComponent {
       try {
         acquireSharedLock();
         try {
-          OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+          final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
-          BucketSearchResult bucketSearchResult;
+          final BucketSearchResult bucketSearchResult;
 
           if (lastKey == null) {
             bucketSearchResult = firstItem(atomicOperation);
@@ -1554,7 +1568,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
             itemIndex = -bucketSearchResult.itemIndex - 1;
           }
 
-          long pageIndex = bucketSearchResult.getLastPathItem();
+          final long pageIndex = bucketSearchResult.getLastPathItem();
 
           final LinkedList<ORawPair<Long, Integer>> currentPath = new LinkedList<>();
           for (int i = 0; i < bucketSearchResult.path.size(); i++) {
@@ -1574,8 +1588,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
                 //go up into the path till will find first not visited branch
                 while (pathItem != null) {
-                  long pathIndex = pathItem.getFirst();
-                  int pathItemIndex = pathItem.getSecond();
+                  final long pathIndex = pathItem.getFirst();
+                  final int pathItemIndex = pathItem.getSecond();
 
                   final OCacheEntry parentBucketCacheEntry = loadPageForRead(atomicOperation, fileId, pathIndex, false);
                   try {
@@ -1650,7 +1664,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
         } finally {
           releaseSharedLock();
         }
-      } catch (IOException e) {
+      } catch (final IOException e) {
         throw OException.wrapException(new OPrefixBTreeException("Error during element iteration", OPrefixBTree.this), e);
       } finally {
         atomicOperationsManager.releaseReadLock(OPrefixBTree.this);
@@ -1678,7 +1692,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
     @SuppressWarnings("unchecked")
     private       Iterator<Map.Entry<String, V>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
 
-    private OSBTreeCursorForward(String fromKey, String toKey, boolean fromKeyInclusive, boolean toKeyInclusive) {
+    private OSBTreeCursorForward(final String fromKey, final String toKey, final boolean fromKeyInclusive,
+        final boolean toKeyInclusive) {
       this.fromKey = fromKey;
       this.toKey = toKey;
       this.fromKeyInclusive = fromKeyInclusive;
@@ -1717,7 +1732,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
       try {
         acquireSharedLock();
         try {
-          OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
+          final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
           final BucketSearchResult bucketSearchResult;
 
@@ -1732,7 +1747,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
             return null;
           }
 
-          long pageIndex = bucketSearchResult.getLastPathItem();
+          final long pageIndex = bucketSearchResult.getLastPathItem();
           int itemIndex;
 
           if (bucketSearchResult.itemIndex >= 0) {
@@ -1759,8 +1774,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
                 //go up into the path till will find first not visited branch
                 while (pathItem != null) {
-                  long pathIndex = pathItem.getFirst();
-                  int pathItemIndex = pathItem.getSecond();
+                  final long pathIndex = pathItem.getFirst();
+                  final int pathItemIndex = pathItem.getSecond();
 
                   final OCacheEntry parentBucketCacheEntry = loadPageForRead(atomicOperation, fileId, pathIndex, false);
                   try {
@@ -1847,7 +1862,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
         } finally {
           releaseSharedLock();
         }
-      } catch (IOException e) {
+      } catch (final IOException e) {
         throw OException.wrapException(new OPrefixBTreeException("Error during element iteration", OPrefixBTree.this), e);
       } finally {
         atomicOperationsManager.releaseReadLock(OPrefixBTree.this);
@@ -1879,7 +1894,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
     @SuppressWarnings("unchecked")
     private       Iterator<Map.Entry<String, V>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
 
-    private OSBTreeCursorBackward(String fromKey, String toKey, boolean fromKeyInclusive, boolean toKeyInclusive) {
+    private OSBTreeCursorBackward(final String fromKey, final String toKey, final boolean fromKeyInclusive,
+        final boolean toKeyInclusive) {
       this.fromKey = fromKey;
       this.toKey = toKey;
       this.fromKeyInclusive = fromKeyInclusive;
@@ -1929,7 +1945,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
             return null;
           }
 
-          long pageIndex = bucketSearchResult.getLastPathItem();
+          final long pageIndex = bucketSearchResult.getLastPathItem();
 
           int itemIndex;
           if (bucketSearchResult.itemIndex >= 0) {
@@ -1956,8 +1972,8 @@ public class OPrefixBTree<V> extends ODurableComponent {
 
                 //go up into the path till will find first not visited branch
                 while (pathItem != null) {
-                  long pathIndex = pathItem.getFirst();
-                  int pathItemIndex = pathItem.getSecond();
+                  final long pathIndex = pathItem.getFirst();
+                  final int pathItemIndex = pathItem.getSecond();
 
                   final OCacheEntry parentBucketCacheEntry = loadPageForRead(atomicOperation, fileId, pathIndex, false);
                   try {
@@ -2044,7 +2060,7 @@ public class OPrefixBTree<V> extends ODurableComponent {
         } finally {
           releaseSharedLock();
         }
-      } catch (IOException e) {
+      } catch (final IOException e) {
         throw OException.wrapException(new OPrefixBTreeException("Error during element iteration", OPrefixBTree.this), e);
       } finally {
         atomicOperationsManager.releaseReadLock(OPrefixBTree.this);

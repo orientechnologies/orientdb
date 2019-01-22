@@ -78,8 +78,7 @@ public interface OReadCache {
 
   void pinPage(OCacheEntry cacheEntry, OWriteCache writeCache);
 
-  OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums, OLogSequenceNumber startLSN,
-      boolean initPage)
+  OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums, OLogSequenceNumber startLSN)
       throws IOException;
 
   long getUsedMemory();
