@@ -34,7 +34,7 @@
 
     <artifactId>orientdb-distributed-v2</artifactId>
 
-    <name>OrientDB Distributed Server</name>
+    <name>OrientDB Distributed Server V2</name>
 
     <properties>
         <hz.version>3.10.4</hz.version>
