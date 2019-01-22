@@ -4,7 +4,11 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
+import com.orientechnologies.orient.core.index.OIndexManagerShared;
+import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
@@ -15,7 +19,6 @@ import com.orientechnologies.orient.server.distributed.impl.coordinator.OSubmitR
 import com.orientechnologies.orient.server.distributed.impl.coordinator.ddl.ODDLQuerySubmitRequest;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.transaction.OSessionOperationId;
 
-import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -87,7 +90,6 @@ public class OIndexManagerDistributed extends OIndexManagerShared {
 
     reload();
 
-    final Locale locale = getServerLocale();
     return super.preProcessBeforeReturn(database, super.getIndex(database, iName));
   }
 

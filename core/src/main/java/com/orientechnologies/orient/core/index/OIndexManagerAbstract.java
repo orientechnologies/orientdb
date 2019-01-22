@@ -306,7 +306,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     }
   }
 
-  public Set<OIndex<?>> getClassInvolvedIndexes(final String className, Collection<String> fields) {
+  public Set<OIndex<?>> getClassInvolvedIndexes(ODatabaseDocumentInternal database, final String className,
+      Collection<String> fields) {
     final OMultiKey multiKey = new OMultiKey(fields);
 
     final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = getIndexOnProperty(className);
@@ -346,9 +347,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     return areIndexed(className, Arrays.asList(fields));
   }
 
-  public Set<OIndex<?>> getClassIndexes(final String className) {
-    final HashSet<OIndex<?>> coll = new HashSet<>(4);
-    getClassIndexes(className, coll);
+  public Set<OIndex<?>> getClassIndexes(ODatabaseDocumentInternal database, final String className) {
+    final HashSet<OIndex<?>> coll = new HashSet<OIndex<?>>(4);
+    getClassIndexes(database, className, coll);
     return coll;
   }
 

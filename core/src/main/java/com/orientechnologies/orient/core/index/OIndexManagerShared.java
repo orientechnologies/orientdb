@@ -75,7 +75,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   /**
    * Create a new index with default algorithm.
    *
-   * @param database
    * @param iName             - name of index
    * @param iType             - index type. Specified by plugged index factories.
    * @param indexDefinition   metadata that describes index structure
@@ -96,7 +95,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
    * <p>
    * May require quite a long time if big amount of data should be indexed.
    *
-   * @param database
    * @param iName             name of index
    * @param type              index type. Specified by plugged index factories.
    * @param indexDefinition   metadata that describes index structure
@@ -176,7 +174,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         config.field("metadata", metadata, OType.EMBEDDED);
       }
 
-      setDirty(database);
+      setDirty();
       save();
     } finally {
       releaseExclusiveLock();
@@ -187,7 +185,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     return preProcessBeforeReturn(database, index);
   }
 
-  private static void notifyInvolvedClasses(int[] clusterIdsToIndex) {
+  protected void notifyInvolvedClasses(ODatabaseDocumentInternal database, int[] clusterIdsToIndex) {
     if (clusterIdsToIndex == null || clusterIdsToIndex.length == 0)
       return;
 
@@ -252,7 +250,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         removeClassPropertyIndex(idx);
 
         idx.delete();
-        setDirty(database);
+        setDirty();
         save();
 
         notifyInvolvedClasses(database, clusterIdsToIndex);
@@ -352,10 +350,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     }
 
     return false;
-  }
-
-  public boolean autoRecreateIndexesAfterCrash() {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -652,7 +646,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         index.rebuild(new OIndexRebuildOutputListener(index));
         index.flush();
 
-        setDirty(database);
+        setDirty();
 
         ok++;
 
@@ -667,7 +661,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     private void addIndexAsIs(ODocument indexDocument, OIndexInternal<?> index, ODatabaseDocumentEmbedded database) {
       if (index.loadFromConfiguration(indexDocument)) {
         addIndexInternal(index);
-        setDirty(database);
+        setDirty();
 
         ok++;
         OLogManager.instance().info(this, "Index '%s' was added in DB index list", index.getName());
