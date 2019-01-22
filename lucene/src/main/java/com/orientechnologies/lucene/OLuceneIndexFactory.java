@@ -23,9 +23,9 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -102,8 +102,8 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public OIndexEngine createIndexEngine(String algorithm, String indexName, Boolean durableInNonTxMode, OStorage storage,
-      int version, Map<String, String> engineProperties) {
+  public OBaseIndexEngine createIndexEngine(String algorithm, String indexName, Boolean durableInNonTxMode, OStorage storage,
+      int version, int apiVersion, boolean multivalue, Map<String, String> engineProperties) {
 
     return new OLuceneFullTextIndexEngine(storage, indexName);
 

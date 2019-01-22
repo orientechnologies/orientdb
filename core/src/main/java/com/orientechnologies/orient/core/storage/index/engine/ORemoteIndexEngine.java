@@ -22,12 +22,13 @@ package com.orientechnologies.orient.core.storage.index.engine;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -115,7 +116,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
+  public boolean validatedPut(Object key, ORID value, Validator<Object, ORID> validator) {
     return false;
   }
 

@@ -19,8 +19,6 @@
   */
 package com.orientechnologies.orient.core.type;
 
-import java.io.Serializable;
-
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -33,7 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 @SuppressWarnings("unchecked")
-public class ODocumentWrapper implements Serializable {
+public class ODocumentWrapper {
   @ODocumentInstance
   protected ODocument document;
 
@@ -60,14 +58,12 @@ public class ODocumentWrapper implements Serializable {
     return document;
   }
 
-  public <RET extends ODocumentWrapper> RET load() {
+  void load() {
     document = (ODocument) document.load();
-    return (RET) this;
   }
 
-  public <RET extends ODocumentWrapper> RET load(final String iFetchPlan) {
+  void load(final String iFetchPlan) {
     document = document.load(iFetchPlan);
-    return (RET) this;
   }
 
   public <RET extends ODocumentWrapper> RET load(final String iFetchPlan, final boolean iIgnoreCache) {
@@ -76,6 +72,7 @@ public class ODocumentWrapper implements Serializable {
   }
 
   public <RET extends ODocumentWrapper> RET load(final String iFetchPlan, final boolean iIgnoreCache, final boolean loadTombstone) {
+    //noinspection deprecation
     document = document.load(iFetchPlan, iIgnoreCache, loadTombstone);
     return (RET) this;
   }
@@ -127,11 +124,9 @@ public class ODocumentWrapper implements Serializable {
       return false;
     final ODocumentWrapper other = (ODocumentWrapper) obj;
     if (document == null) {
-      if (other.document != null)
-        return false;
-    } else if (!document.equals(other.document))
-      return false;
-    return true;
+      return other.document == null;
+    } else
+      return document.equals(other.document);
   }
 
   @Override

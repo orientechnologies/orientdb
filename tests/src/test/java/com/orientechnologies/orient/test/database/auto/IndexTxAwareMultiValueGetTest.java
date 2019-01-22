@@ -7,7 +7,11 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -248,10 +252,10 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     Assert.assertEquals(resultOne.size(), 1);
     database.commit();
 
-    index.put(1, new ORecordId(clusterId, positions.get(1)));
+    index.put(1, new ORecordId(clusterId + 1, positions.get(1)));
 
     resultOne = ((OIndexTxAwareMultiValue) index).get(1);
-    Assert.assertEquals(resultOne.size(), 1);
+    Assert.assertEquals(resultOne.size(), 2);
   }
 
   @Test

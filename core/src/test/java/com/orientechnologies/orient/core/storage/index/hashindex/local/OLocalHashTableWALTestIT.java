@@ -159,8 +159,8 @@
 //  }
 //
 //  @Override
-//  public void testKeyDeleteRandomUniform() throws IOException {
-//    super.testKeyDeleteRandomUniform();
+//  public void testKeyDelete() throws IOException {
+//    super.testKeyDelete();
 //
 //    Assert.assertNull(
 //        ((OAbstractPaginatedStorage) ((ODatabaseInternal) databaseDocumentTx).getStorage()).getAtomicOperationsManager()

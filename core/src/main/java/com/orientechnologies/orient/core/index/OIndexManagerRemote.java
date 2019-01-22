@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -178,7 +177,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
   public OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex<?> index) {
     if (index instanceof OIndexRemoteMultiValue)
-      return new OIndexTxAwareMultiValue(database, (OIndex<Set<OIdentifiable>>) index);
+      return new OIndexTxAwareMultiValue(database, (OIndex<Collection<OIdentifiable>>) index);
     else if (index instanceof OIndexDictionary)
       return new OIndexTxAwareDictionary(database, (OIndex<OIdentifiable>) index);
     else if (index instanceof OIndexRemoteOneValue)

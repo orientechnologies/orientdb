@@ -30,7 +30,12 @@ import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
+import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -157,7 +162,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
+  public boolean validatedPut(Object key, ORID value, Validator<Object, ORID> validator) {
     throw new UnsupportedOperationException("Validated put is not supported by OLuceneFullTextIndexEngine");
   }
 

@@ -56,6 +56,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OPageIsBrokenListene
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
+import javax.annotation.Nonnull;
 import java.io.EOFException;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -500,7 +501,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    */
   @Override
   public void removeBackgroundExceptionListener(final OBackgroundExceptionListener listener) {
-    final List<WeakReference<OBackgroundExceptionListener>> itemsToRemove = new ArrayList<>();
+    final List<WeakReference<OBackgroundExceptionListener>> itemsToRemove = new ArrayList<>(1);
 
     for (final WeakReference<OBackgroundExceptionListener> ref : backgroundExceptionListeners) {
       final OBackgroundExceptionListener l = ref.get();
@@ -561,7 +562,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    */
   @Override
   public void removePageIsBrokenListener(final OPageIsBrokenListener listener) {
-    final List<WeakReference<OPageIsBrokenListener>> itemsToRemove = new ArrayList<>();
+    final List<WeakReference<OPageIsBrokenListener>> itemsToRemove = new ArrayList<>(1);
 
     for (final WeakReference<OPageIsBrokenListener> ref : pageIsBrokenListeners) {
       final OPageIsBrokenListener pageIsBrokenListener = ref.get();
@@ -576,7 +577,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   @Override
   public void removeLowDiskSpaceListener(final OLowDiskSpaceListener listener) {
-    final List<WeakReference<OLowDiskSpaceListener>> itemsToRemove = new ArrayList<>();
+    final List<WeakReference<OLowDiskSpaceListener>> itemsToRemove = new ArrayList<>(1);
 
     for (final WeakReference<OLowDiskSpaceListener> ref : lowDiskSpaceListeners) {
       final OLowDiskSpaceListener lowDiskSpaceListener = ref.get();
@@ -1066,7 +1067,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   public Map<String, Long> files() {
     filesLock.acquireReadLock();
     try {
-      final Map<String, Long> result = new HashMap<>();
+      final Map<String, Long> result = new HashMap<>(1_000);
 
       for (final Map.Entry<String, Integer> entry : nameIdMap.entrySet()) {
         if (entry.getValue() > 0) {
@@ -1166,6 +1167,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           final OFileClassic fileClassic = entry.get();
 
           long startAllocationIndex = fileClassic.getFileSize() / pageSize;
+          @SuppressWarnings("UnnecessaryLocalVariable")
           final long stopAllocationIndex = startPageIndex;
 
           final PageKey[] allocationPageKeys = new PageKey[(int) (stopAllocationIndex - startAllocationIndex + 1)];
@@ -1459,8 +1461,8 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     try {
       final Collection<Integer> fileIds = nameIdMap.values();
 
-      final List<Long> closedIds = new ArrayList<>();
-      final Map<Integer, String> idFileNameMap = new HashMap<>();
+      final List<Long> closedIds = new ArrayList<>(1_000);
+      final Map<Integer, String> idFileNameMap = new HashMap<>(1_000);
 
       for (final Integer intId : fileIds) {
         if (intId >= 0) {
@@ -1552,7 +1554,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   public OPageDataVerificationError[] checkStoredPages(final OCommandOutputListener commandOutputListener) {
     final int notificationTimeOut = 5000;
 
-    final List<OPageDataVerificationError> errors = new ArrayList<>();
+    final List<OPageDataVerificationError> errors = new ArrayList<>(0);
 
     filesLock.acquireWriteLock();
     try {
@@ -1673,7 +1675,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
   @Override
   public long[] delete() throws IOException {
-    final List<Long> result = new ArrayList<>();
+    final List<Long> result = new ArrayList<>(1_000);
     filesLock.acquireWriteLock();
     try {
       for (final int intId : nameIdMap.values()) {
@@ -1765,6 +1767,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         fileClassic.synch();
       }
     } else {
+      if (!fileClassic.isOpen()) {
+        fileClassic.open();
+      }
       fileClassic.shrink(0);
       if (callFsync) {
         fileClassic.synch();
@@ -1844,7 +1849,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
   }
 
   private static String createInternalFileName(final String fileName, final int fileId) {
-    final int extSeparator = fileName.lastIndexOf(".");
+    final int extSeparator = fileName.lastIndexOf('.');
 
     String prefix;
     if (extSeparator < 0) {
@@ -1887,7 +1892,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
     NameFileIdEntry nameFileIdEntry;
 
-    final Map<Integer, String> idFileNameMap = new HashMap<>();
+    final Map<Integer, String> idFileNameMap = new HashMap<>(1_000);
 
     while ((nameFileIdEntry = readNextNameIdEntryV2()) != null) {
       final long absFileId = Math.abs(nameFileIdEntry.fileId);
@@ -1936,7 +1941,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     //some deleted files have the same id
     //because we reuse ids of removed files when we re-create them
     //we need to fix this situation
-    final Map<Integer, Set<String>> filesWithNegativeIds = new HashMap<>();
+    final Map<Integer, Set<String>> filesWithNegativeIds = new HashMap<>(1_000);
 
     nameIdMap.clear();
 
@@ -1970,7 +1975,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
         Set<String> files = filesWithNegativeIds.get(nameFileIdEntry.fileId);
 
         if (files == null) {
-          files = new HashSet<>();
+          files = new HashSet<>(8);
           files.add(nameFileIdEntry.name);
           filesWithNegativeIds.put(nameFileIdEntry.fileId, files);
         } else {
@@ -2010,7 +2015,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
       }
     }
 
-    final Set<String> fixedFiles = new HashSet<>();
+    final Set<String> fixedFiles = new HashSet<>(8);
 
     for (final Map.Entry<Integer, Set<String>> entry : filesWithNegativeIds.entrySet()) {
       final Set<String> files = entry.getValue();
@@ -2751,6 +2756,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
                   final long flushInterval = endTs - lsnTs;
 
                   if (lsnPagesFlushIntervalCount == 10) {
+                    @SuppressWarnings("UnnecessaryLocalVariable")
                     final long avgFlushInterval = lsnPagesFlushIntervalSum / lsnPagesFlushIntervalCount;
 
                     lsnPagesFlushIntervalSum = avgFlushInterval;
@@ -3411,7 +3417,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
 
     @Override
-    public final Thread newThread(final Runnable r) {
+    public final Thread newThread(@Nonnull final Runnable r) {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
       thread.setDaemon(true);
       thread.setName("OrientDB Write Cache Flush Task");
@@ -3426,7 +3432,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
     }
 
     @Override
-    public final Thread newThread(final Runnable r) {
+    public final Thread newThread(@Nonnull final Runnable r) {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
 
       thread.setDaemon(true);

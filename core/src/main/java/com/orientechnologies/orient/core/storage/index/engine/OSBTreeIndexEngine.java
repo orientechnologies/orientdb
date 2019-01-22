@@ -24,13 +24,14 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
+import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -203,7 +204,7 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
   @SuppressWarnings("unchecked")
   @Override
-  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
+  public boolean validatedPut(Object key, ORID value, Validator<Object, ORID> validator) {
     try {
       return sbTree.validatedPut(key, value, (Validator) validator);
     } catch (IOException e) {
@@ -291,8 +292,8 @@ public class OSBTreeIndexEngine implements OIndexEngine {
     private final OSBTree.OSBTreeCursor<Object, Object> treeCursor;
     private final ValuesTransformer                     valuesTransformer;
 
-    private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-    private Object                  currentKey      = null;
+    private Iterator<ORID> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
+    private Object         currentKey      = null;
 
     private OSBTreeIndexCursor(OSBTree.OSBTreeCursor<Object, Object> treeCursor, ValuesTransformer valuesTransformer) {
       this.treeCursor = treeCursor;

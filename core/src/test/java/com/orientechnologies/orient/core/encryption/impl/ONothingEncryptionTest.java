@@ -98,6 +98,9 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
       result = db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
       Assert.assertEquals(result.size(), 1);
 
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
     } finally {
       db.activateOnCurrentThread();
       db.drop();

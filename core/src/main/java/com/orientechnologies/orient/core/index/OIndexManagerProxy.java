@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -34,7 +33,6 @@ import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Set;
 
 import static com.orientechnologies.orient.core.index.OIndexManagerAbstract.getDatabase;
@@ -45,8 +43,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     super(iDelegate, iDatabase);
   }
 
-  public OIndexManager load() {
-    return this;
+  public void load() {
   }
 
   /**
@@ -77,7 +74,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
       final int[] clusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata) {
 
     if (isDistributedCommand()) {
-      return distributedCreateIndex(iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata, null);
+      return distributedCreateIndex(iName, iType, indexDefinition, progressListener, metadata, null);
     }
 
     return delegate.createIndex(iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata);
@@ -87,14 +84,14 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
       final int[] iClusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata, final String algorithm) {
     if (isDistributedCommand()) {
-      return distributedCreateIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
+      return distributedCreateIndex(iName, iType, iIndexDefinition, progressListener, metadata, algorithm);
     }
 
     return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
   }
 
-  public OIndex<?> distributedCreateIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
-      final int[] iClusterIdsToIndex, final OProgressListener progressListener, ODocument metadata, String engine) {
+  private OIndex<?> distributedCreateIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
+      final OProgressListener progressListener, ODocument metadata, String engine) {
 
     String createIndexDDL;
     if (iIndexDefinition != null)
@@ -108,6 +105,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     if (progressListener != null)
       progressListener.onBegin(this, 0, false);
 
+    //noinspection deprecation
     getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 
     ORecordInternal
@@ -118,7 +116,6 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
 
     reload();
 
-    final Locale locale = delegate.getServerLocale();
     return delegate.preProcessBeforeReturn(getDatabase(), delegate.getIndex(iName));
   }
 
@@ -135,10 +132,11 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     return delegate.dropIndex(iIndexName);
   }
 
-  public void distributedDropIndex(final String iName) {
+  private void distributedDropIndex(final String iName) {
 
     String dropIndexDDL = "DROP INDEX `" + iName + "`";
 
+    //noinspection deprecation
     getDatabase().command(new OCommandSQL(dropIndexDDL)).execute();
     ORecordInternal
         .setIdentity(delegate.getDocument(), new ORecordId(getDatabase().getStorage().getConfiguration().getIndexMgrRecordId()));
@@ -233,6 +231,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
   }
 
   public void removeClassPropertyIndex(final OIndex<?> idx) {
+    //noinspection deprecation
     delegate.removeClassPropertyIndex(idx);
   }
 
@@ -244,7 +243,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
     delegate.getClassRawIndexes(name, indexes);
   }
 
-  public OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, OIndex<?> index) {
+  OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, OIndex<?> index) {
     return delegate.preProcessBeforeReturn(database, index);
   }
 }

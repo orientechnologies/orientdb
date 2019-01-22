@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -43,7 +42,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public OStorage fullSync(String dbName, String backupPath, OrientDBConfig config) {
     final ODatabaseDocumentEmbedded embedded;
-    OAbstractPaginatedStorage storage=null;
+    OAbstractPaginatedStorage storage = null;
     synchronized (this) {
 
       try {

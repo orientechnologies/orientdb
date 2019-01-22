@@ -25,7 +25,11 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -36,11 +40,23 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.record.ODirection;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author Luigi Dell'Aquila

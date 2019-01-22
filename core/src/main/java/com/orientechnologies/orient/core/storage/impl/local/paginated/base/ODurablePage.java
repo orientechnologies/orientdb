@@ -24,6 +24,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
@@ -125,6 +126,15 @@ public class ODurablePage {
     return changes.getIntValue(pointer.getBufferDuplicate(), pageOffset);
   }
 
+  protected short getShortValue(int pageOffset) {
+    if (changes == null) {
+      final ByteBuffer buffer = pointer.getBuffer();
+      return buffer.getShort(pageOffset);
+    }
+
+    return changes.getShortValue(pointer.getBufferDuplicate(), pageOffset);
+  }
+
   protected long getLongValue(int pageOffset) {
     if (changes == null) {
       final ByteBuffer buffer = pointer.getBuffer();
@@ -187,6 +197,17 @@ public class ODurablePage {
     }
 
     return OIntegerSerializer.INT_SIZE;
+  }
+
+  protected int setShortValue(int pageOffset, short value) {
+    final ByteBuffer buffer = pointer.getBuffer();
+    if (changes != null) {
+      changes.setIntValue(buffer, value, pageOffset);
+    } else {
+      buffer.putShort(pageOffset, value);
+    }
+
+    return OShortSerializer.SHORT_SIZE;
   }
 
   @SuppressWarnings("SameReturnValue")

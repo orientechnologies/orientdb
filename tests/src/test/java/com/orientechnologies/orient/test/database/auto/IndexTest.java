@@ -22,7 +22,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexes;
+import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -42,14 +47,26 @@ import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.orientechnologies.DatabaseAbstractTest.getEnvironment;
 
@@ -1633,6 +1650,7 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertTrue(explain.<Collection<String>>field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
   }
 
+  @Test(enabled = false)
   public void testValuesContainerIsRemovedIfIndexIsRemoved() {
     if (database.getURL().startsWith("remote:"))
       return;
@@ -1689,7 +1707,7 @@ public class IndexTest extends ObjectDBBaseTest {
       OIndex<?> index = fieldClass.getClassIndex("nameParentIndex");
       OCompositeKey key = new OCompositeKey(parent.getId(), "pokus");
 
-      Set<ORecordId> h = (Set<ORecordId>) index.get(key);
+      Collection<ORecordId> h = (Collection<ORecordId>) index.get(key);
       for (ORecordId o : h) {
         Assert.assertNotNull(graph.getVertex(o));
       }
@@ -1700,7 +1718,7 @@ public class IndexTest extends ObjectDBBaseTest {
       OIndex<?> index = fieldClass.getClassIndex("nameParentIndex");
       OCompositeKey key = new OCompositeKey(parent2.getId(), "pokus2");
 
-      Set<ORecordId> h = (Set<ORecordId>) index.get(key);
+      Collection<ORecordId> h = (Collection<ORecordId>) index.get(key);
       for (ORecordId o : h) {
         Assert.assertNotNull(graph.getVertex(o));
       }

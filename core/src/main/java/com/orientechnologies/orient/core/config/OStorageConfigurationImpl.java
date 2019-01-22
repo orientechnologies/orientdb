@@ -590,9 +590,20 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
             }
           }
 
+          int apiVersion;
+          boolean mulitvalue;
+
+          if (this.version > 20) {
+            apiVersion = Integer.parseInt(read(values[index++]));
+            mulitvalue = Boolean.parseBoolean(read(values[index++]));
+          } else {
+            apiVersion = 0;
+            mulitvalue = false;
+          }
+
           final IndexEngineData indexEngineData = new IndexEngineData(name, algorithm, indexType, durableInNonTxMode, version,
-              valueSerializerId, keySerializerId, isAutomatic, types, nullValuesSupport, keySize, encryption, encryptionOptions,
-              engineProperties);
+              apiVersion, mulitvalue, valueSerializerId, keySerializerId, isAutomatic, types, nullValuesSupport, keySize,
+              encryption, encryptionOptions, engineProperties);
 
           indexEngines.put(name, indexEngineData);
         }
@@ -770,6 +781,9 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
             write(buffer, property.getValue());
           }
         }
+
+        write(buffer, engineData.apiVersion);
+        write(buffer, engineData.multivalue);
       }
 
       write(buffer, createdAtVersion);
@@ -1235,6 +1249,8 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     private final String              indexType;
     private final Boolean             durableInNonTxMode;
     private final int                 version;
+    private final int                 apiVersion;
+    private final boolean             multivalue;
     private final byte                valueSerializerId;
     private final byte                keySerializedId;
     private final boolean             isAutomatic;
@@ -1246,14 +1262,16 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     private final String              encryptionOptions;
 
     public IndexEngineData(final String name, final String algorithm, String indexType, final Boolean durableInNonTxMode,
-        final int version, final byte valueSerializerId, final byte keySerializedId, final boolean isAutomatic,
-        final OType[] keyTypes, final boolean nullValuesSupport, final int keySize, final String encryption,
-        final String encryptionOptions, final Map<String, String> engineProperties) {
+        final int version, final int apiVersion, final boolean multivalue, final byte valueSerializerId, final byte keySerializedId,
+        final boolean isAutomatic, final OType[] keyTypes, final boolean nullValuesSupport, final int keySize,
+        final String encryption, final String encryptionOptions, final Map<String, String> engineProperties) {
       this.name = name;
       this.algorithm = algorithm;
       this.indexType = indexType;
       this.durableInNonTxMode = durableInNonTxMode;
       this.version = version;
+      this.apiVersion = apiVersion;
+      this.multivalue = multivalue;
       this.valueSerializerId = valueSerializerId;
       this.keySerializedId = keySerializedId;
       this.isAutomatic = isAutomatic;
@@ -1286,6 +1304,14 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
     public int getVersion() {
       return version;
+    }
+
+    public int getApiVersion() {
+      return apiVersion;
+    }
+
+    public boolean isMultivalue() {
+      return multivalue;
     }
 
     public byte getValueSerializerId() {

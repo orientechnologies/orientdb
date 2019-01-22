@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContaine
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OMixedIndexRIDContainer;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -54,7 +53,6 @@ public class OIndexFullText extends OIndexMultiValues {
   private static final String  DEF_IGNORE_CHARS       = "'\"";
   private static final String  DEF_STOP_WORDS         =
       "the in a at as and or for his her " + "him this that what which while " + "up with be was were is";
-  private static       int     DEF_MIN_WORD_LENGTH    = 3;
   private              boolean indexRadix;
   private              String  separatorChars;
   private              String  ignoreChars;
@@ -80,8 +78,9 @@ public class OIndexFullText extends OIndexMultiValues {
    */
   @Override
   public OIndexFullText put(Object key, final OIdentifiable singleValue) {
-    if (key == null)
+    if (key == null) {
       return this;
+    }
 
     key = getCollatingValue(key);
 
@@ -91,62 +90,79 @@ public class OIndexFullText extends OIndexMultiValues {
     for (final String word : words) {
       acquireSharedLock();
       try {
-        Set<OIdentifiable> refs;
-        while (true) {
-          try {
-            refs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
-            break;
-          } catch (OInvalidIndexEngineIdException ignore) {
-            doReloadIndexEngine();
-          }
-        }
-
-        final boolean durable;
-        if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-          durable = true;
-        else
-          durable = false;
-
-        final Set<OIdentifiable> refsc = refs;
-
-        // SAVE THE INDEX ENTRY
-        while (true) {
-          try {
-            storage.updateIndexEntry(indexId, word, (oldValue, bonsayFileId) -> {
-              Set<OIdentifiable> result = null;
-
-              if (refsc == null) {
-                // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-                if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-                  if (binaryFormatVersion >= 13) {
-                    result = new OMixedIndexRIDContainer(getName(), bonsayFileId);
-                  } else {
-                    result = new OIndexRIDContainer(getName(), durable, bonsayFileId);
-                  }
-                } else {
-                  throw new IllegalStateException("MBRBTreeContainer is not supported any more");
-                }
-              } else {
-                result = refsc;
-              }
-
-              // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-              result.add(singleValue);
-
-              return OIndexUpdateAction.changed(result);
-            });
-
-            break;
-          } catch (OInvalidIndexEngineIdException ignore) {
-            doReloadIndexEngine();
-          }
+        if (apiVersion == 0) {
+          doPutV0(singleValue, word);
+        } else if (apiVersion == 1) {
+          doPutV1(singleValue, word);
+        } else {
+          throw new IllegalStateException("Invalid API version, " + apiVersion);
         }
 
       } finally {
         releaseSharedLock();
       }
     }
+
     return this;
+  }
+
+  private void doPutV0(OIdentifiable singleValue, String word) {
+    Set<OIdentifiable> refs;
+    while (true) {
+      try {
+        //noinspection unchecked
+        refs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
+        break;
+      } catch (OInvalidIndexEngineIdException ignore) {
+        doReloadIndexEngine();
+      }
+    }
+
+    final Set<OIdentifiable> refsc = refs;
+
+    // SAVE THE INDEX ENTRY
+    while (true) {
+      try {
+        storage.updateIndexEntry(indexId, word, (oldValue, bonsayFileId) -> {
+          Set<OIdentifiable> result;
+
+          if (refsc == null) {
+            // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
+            if (ODefaultIndexFactory.SBTREE_BONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+              if (binaryFormatVersion >= 13) {
+                result = new OMixedIndexRIDContainer(getName(), bonsayFileId);
+              } else {
+                result = new OIndexRIDContainer(getName(), true, bonsayFileId);
+              }
+            } else {
+              throw new IllegalStateException("MBRBTreeContainer is not supported any more");
+            }
+          } else {
+            result = refsc;
+          }
+
+          // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
+          result.add(singleValue);
+
+          return OIndexUpdateAction.changed(result);
+        });
+
+        break;
+      } catch (OInvalidIndexEngineIdException ignore) {
+        doReloadIndexEngine();
+      }
+    }
+  }
+
+  private void doPutV1(OIdentifiable singleValue, String word) {
+    while (true) {
+      try {
+        storage.putRidIndexEntry(indexId, word, singleValue.getIdentity());
+        break;
+      } catch (OInvalidIndexEngineIdException ignore) {
+        doReloadIndexEngine();
+      }
+    }
   }
 
   /**
@@ -160,8 +176,9 @@ public class OIndexFullText extends OIndexMultiValues {
    */
   @Override
   public boolean remove(Object key, final OIdentifiable value) {
-    if (key == null)
+    if (key == null) {
       return false;
+    }
 
     key = getCollatingValue(key);
 
@@ -171,27 +188,12 @@ public class OIndexFullText extends OIndexMultiValues {
     for (final String word : words) {
       acquireSharedLock();
       try {
-        Set<OIdentifiable> recs;
-        while (true) {
-          try {
-            recs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
-            break;
-          } catch (OInvalidIndexEngineIdException ignore) {
-            doReloadIndexEngine();
-          }
-        }
-
-        if (recs != null && !recs.isEmpty()) {
-          while (true) {
-            try {
-              storage.updateIndexEntry(indexId, word, new EntityRemover(value, removed));
-              break;
-            } catch (OInvalidIndexEngineIdException ignore) {
-              doReloadIndexEngine();
-            }
-
-          }
-
+        if (apiVersion == 0) {
+          removeV0(value, removed, word);
+        } else if (apiVersion == 1) {
+          removeV1(value, removed, word);
+        } else {
+          throw new IllegalStateException("Invalid API version, " + apiVersion);
         }
       } finally {
         releaseSharedLock();
@@ -199,6 +201,43 @@ public class OIndexFullText extends OIndexMultiValues {
     }
 
     return removed.getValue();
+  }
+
+  private void removeV0(OIdentifiable value, OModifiableBoolean removed, String word) {
+    Set<OIdentifiable> recs;
+    while (true) {
+      try {
+        //noinspection unchecked
+        recs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
+        break;
+      } catch (OInvalidIndexEngineIdException ignore) {
+        doReloadIndexEngine();
+      }
+    }
+
+    if (recs != null && !recs.isEmpty()) {
+      while (true) {
+        try {
+          storage.updateIndexEntry(indexId, word, new EntityRemover(value, removed));
+          break;
+        } catch (OInvalidIndexEngineIdException ignore) {
+          doReloadIndexEngine();
+        }
+
+      }
+    }
+  }
+
+  private void removeV1(OIdentifiable value, OModifiableBoolean removed, String word) {
+    while (true) {
+      try {
+        final boolean rm = storage.removeRidIndexEntry(indexId, word, value.getIdentity());
+        removed.setValue(rm);
+        break;
+      } catch (OInvalidIndexEngineIdException ignore) {
+        doReloadIndexEngine();
+      }
+    }
   }
 
   @Override
@@ -241,38 +280,43 @@ public class OIndexFullText extends OIndexMultiValues {
     return false;
   }
 
-  protected void configWithMetadata(ODocument metadata) {
+  private void configWithMetadata(ODocument metadata) {
     if (metadata != null) {
-      if (metadata.containsField(CONFIG_IGNORE_CHARS))
-        ignoreChars = (String) metadata.field(CONFIG_IGNORE_CHARS);
+      if (metadata.containsField(CONFIG_IGNORE_CHARS)) {
+        ignoreChars = metadata.field(CONFIG_IGNORE_CHARS);
+      }
 
-      if (metadata.containsField(CONFIG_INDEX_RADIX))
-        indexRadix = (Boolean) metadata.field(CONFIG_INDEX_RADIX);
+      if (metadata.containsField(CONFIG_INDEX_RADIX)) {
+        indexRadix = metadata.field(CONFIG_INDEX_RADIX);
+      }
 
-      if (metadata.containsField(CONFIG_SEPARATOR_CHARS))
-        separatorChars = (String) metadata.field(CONFIG_SEPARATOR_CHARS);
+      if (metadata.containsField(CONFIG_SEPARATOR_CHARS)) {
+        separatorChars = metadata.field(CONFIG_SEPARATOR_CHARS);
+      }
 
-      if (metadata.containsField(CONFIG_MIN_WORD_LEN))
-        minWordLength = (Integer) metadata.field(CONFIG_MIN_WORD_LEN);
+      if (metadata.containsField(CONFIG_MIN_WORD_LEN)) {
+        minWordLength = metadata.field(CONFIG_MIN_WORD_LEN);
+      }
 
-      if (metadata.containsField(CONFIG_STOP_WORDS))
-        stopWords = new HashSet<String>((Collection<? extends String>) metadata.field(CONFIG_STOP_WORDS));
+      if (metadata.containsField(CONFIG_STOP_WORDS)) {
+        stopWords = new HashSet<>(metadata.field(CONFIG_STOP_WORDS));
+      }
     }
 
   }
 
-  protected void config() {
+  private void config() {
     ignoreChars = DEF_IGNORE_CHARS;
     indexRadix = DEF_INDEX_RADIX;
     separatorChars = DEF_SEPARATOR_CHARS;
-    minWordLength = DEF_MIN_WORD_LENGTH;
-    stopWords = new HashSet<String>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
+    minWordLength = 3;
+    stopWords = new HashSet<>(OStringSerializerHelper.split(DEF_STOP_WORDS, ' '));
   }
 
   private Set<String> splitIntoWords(final String iKey) {
-    final Set<String> result = new HashSet<String>();
+    final Set<String> result = new HashSet<>();
 
-    final List<String> words = new ArrayList<String>();
+    final List<String> words = new ArrayList<>();
     OStringSerializerHelper.split(words, iKey, 0, -1, separatorChars);
 
     final StringBuilder buffer = new StringBuilder(64);
@@ -286,14 +330,16 @@ public class OIndexFullText extends OIndexMultiValues {
       for (int i = 0; i < word.length(); ++i) {
         c = word.charAt(i);
         ignore = false;
-        for (int k = 0; k < ignoreChars.length(); ++k)
+        for (int k = 0; k < ignoreChars.length(); ++k) {
           if (c == ignoreChars.charAt(k)) {
             ignore = true;
             break;
           }
+        }
 
-        if (!ignore)
+        if (!ignore) {
           buffer.append(c);
+        }
       }
 
       int length = buffer.length();
@@ -305,12 +351,15 @@ public class OIndexFullText extends OIndexMultiValues {
         // CHECK IF IT'S A STOP WORD
         if (!stopWords.contains(word))
           // ADD THE WORD TO THE RESULT SET
+        {
           result.add(word);
+        }
 
-        if (indexRadix)
+        if (indexRadix) {
           length--;
-        else
+        } else {
           break;
+        }
       }
     }
 
@@ -321,21 +370,24 @@ public class OIndexFullText extends OIndexMultiValues {
     private final OIdentifiable      value;
     private final OModifiableBoolean removed;
 
-    public EntityRemover(OIdentifiable value, OModifiableBoolean removed) {
+    EntityRemover(OIdentifiable value, OModifiableBoolean removed) {
       this.value = value;
       this.removed = removed;
     }
 
     @Override
     public OIndexUpdateAction<Object> update(Object old, AtomicLong bonsayFileId) {
+      @SuppressWarnings("unchecked")
       Set<OIdentifiable> recs = (Set<OIdentifiable>) old;
       if (recs.remove(value)) {
         removed.setValue(true);
 
-        if (recs.isEmpty())
+        if (recs.isEmpty()) {
+          //noinspection unchecked
           return OIndexUpdateAction.remove();
-        else
+        } else {
           return OIndexUpdateAction.changed(recs);
+        }
 
       }
 
@@ -344,11 +396,11 @@ public class OIndexFullText extends OIndexMultiValues {
   }
 
   private final class FullTextIndexConfiguration extends IndexConfiguration {
-    public FullTextIndexConfiguration(ODocument document) {
+    FullTextIndexConfiguration(ODocument document) {
       super(document);
     }
 
-    public synchronized ODocument updateFullTextIndexConfiguration(String separatorChars, String ignoreChars, Set<String> stopWords,
+    synchronized ODocument updateFullTextIndexConfiguration(String separatorChars, String ignoreChars, Set<String> stopWords,
         int minWordLength, boolean indexRadix) {
       document.field(CONFIG_SEPARATOR_CHARS, separatorChars);
       document.field(CONFIG_IGNORE_CHARS, ignoreChars);

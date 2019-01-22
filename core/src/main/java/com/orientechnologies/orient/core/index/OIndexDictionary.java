@@ -44,17 +44,39 @@ public class OIndexDictionary extends OIndexOneValue {
 
     acquireSharedLock();
     try {
-      while (true) {
-        try {
-          storage.putIndexValue(indexId, key, value);
-          return this;
-        } catch (OInvalidIndexEngineIdException ignore) {
-          doReloadIndexEngine();
-        }
+      if (apiVersion == 0) {
+        putV0(key, value);
+      } else if (apiVersion == 1) {
+        putV1(key, value.getIdentity());
+      } else {
+        throw new IllegalStateException("Invalid API version, " + apiVersion);
       }
 
+      return this;
     } finally {
       releaseSharedLock();
+    }
+  }
+
+  private void putV0(Object key, OIdentifiable value) {
+    while (true) {
+      try {
+        storage.putIndexValue(indexId, key, value);
+        break;
+      } catch (OInvalidIndexEngineIdException ignore) {
+        doReloadIndexEngine();
+      }
+    }
+  }
+
+  private void putV1(Object key, OIdentifiable value) {
+    while (true) {
+      try {
+        storage.putRidIndexEntry(indexId, key, value.getIdentity());
+        break;
+      } catch (OInvalidIndexEngineIdException ignore) {
+        doReloadIndexEngine();
+      }
     }
   }
 

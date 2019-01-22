@@ -22,15 +22,15 @@ package com.orientechnologies.orient.core.sharding.auto;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.encryption.OEncryption;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.OIndexKeyUpdater;
 import com.orientechnologies.orient.core.index.OIndexUpdateAction;
+import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -258,7 +258,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
   @SuppressWarnings("unchecked")
   @Override
-  public boolean validatedPut(Object key, OIdentifiable value, Validator<Object, OIdentifiable> validator) {
+  public boolean validatedPut(Object key, ORID value, Validator<Object, ORID> validator) {
     try {
       return getPartition(key).validatedPut(key, value, (Validator) validator);
     } catch (IOException e) {

@@ -166,8 +166,8 @@
 //  }
 //
 //  @Override
-//  public void testKeyDeleteRandomUniform() throws Exception {
-//    super.testKeyDeleteRandomUniform();
+//  public void testKeyDelete() throws Exception {
+//    super.testKeyDelete();
 //
 //    assertFileRestoreFromWAL();
 //  }

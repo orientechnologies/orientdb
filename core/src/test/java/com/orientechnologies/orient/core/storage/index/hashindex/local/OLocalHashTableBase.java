@@ -70,7 +70,7 @@ public abstract class OLocalHashTableBase {
   public void testKeyDeleteRandomUniform() throws IOException {
     final Set<Integer> keys = new HashSet<Integer>();
     long ms = System.currentTimeMillis();
-    System.out.println("testKeyDeleteRandomUniform : " + ms);
+    System.out.println("testKeyDelete : " + ms);
     final Random random = new Random(ms);
 
     while (keys.size() < KEYS_COUNT) {

@@ -18,7 +18,7 @@ package com.orientechnologies.lucene.index;
 
 import com.orientechnologies.lucene.engine.OLuceneIndexEngine;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
-import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -80,7 +80,7 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
       try {
         return storage.callIndexEngine(false, false, indexId, new OIndexEngineCallback<Boolean>() {
           @Override
-          public Boolean callEngine(OIndexEngine engine) {
+          public Boolean callEngine(OBaseIndexEngine engine) {
             OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
             return indexEngine.isCollectionIndex();
           }

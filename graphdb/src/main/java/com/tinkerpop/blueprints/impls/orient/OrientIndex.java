@@ -20,11 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -44,6 +39,10 @@ import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.WrappingCloseableIterable;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
@@ -72,7 +71,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
   protected OrientIndex(final OrientBaseGraph orientGraph, final OIndex<?> rawIndex) {
     this.graph = orientGraph;
     this.underlying = rawIndex instanceof OIndexTxAwareMultiValue ? rawIndex : new OIndexTxAwareMultiValue(
-        orientGraph.getRawGraph(), (OIndex<Set<OIdentifiable>>) rawIndex);
+        orientGraph.getRawGraph(), (OIndex<Collection<OIdentifiable>>) rawIndex);
 
     final ODocument metadata = rawIndex.getMetadata();
     if (metadata == null) {
@@ -199,7 +198,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
 
     final OIndexFactory nuFactory = OIndexes.getFactory(OClass.INDEX_TYPE.NOTUNIQUE.toString(), null);
     // CREATE THE MAP
-    this.underlying = new OIndexTxAwareMultiValue(graph.getRawGraph(), (OIndex<Set<OIdentifiable>>) graph
+    this.underlying = new OIndexTxAwareMultiValue(graph.getRawGraph(), (OIndex<Collection<OIdentifiable>>) graph
         .getRawGraph()
         .getMetadata()
         .getIndexManager()

@@ -30,8 +30,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @SuppressWarnings("unchecked")
 public abstract class ODocumentWrapperNoClass extends ODocumentWrapper {
-  private static final long serialVersionUID = 1L;
-
+  @SuppressWarnings("WeakerAccess")
   public ODocumentWrapperNoClass() {
   }
 
@@ -47,19 +46,13 @@ public abstract class ODocumentWrapperNoClass extends ODocumentWrapper {
 
   protected abstract void fromStream();
 
-  @Override
-  public <RET extends ODocumentWrapper> RET load() {
-    super.load();
-    fromStream();
-    return (RET) this;
-  }
 
   @Override
-  public <RET extends ODocumentWrapper> RET load(final String iFetchPlan) {
-    super.load(iFetchPlan);
+  public void load() {
+    super.load();
     fromStream();
-    return (RET) this;
   }
+
 
   @Override
   public <RET extends ODocumentWrapper> RET reload() {

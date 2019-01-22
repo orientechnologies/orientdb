@@ -20,7 +20,16 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 
@@ -3838,7 +3847,6 @@ public class OSelectStatementExecutionTest {
       Assert.assertFalse(result.hasNext());
     }
   }
-
 
   @Test
   public void testContainsCollection() {
