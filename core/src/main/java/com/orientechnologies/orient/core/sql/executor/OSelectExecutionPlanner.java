@@ -535,8 +535,16 @@ public class OSelectExecutionPlanner {
   }
 
   private boolean handleHardwiredOptimizations(OSelectExecutionPlan result, OCommandContext ctx, boolean profilingEnabled) {
-    return handleHardwiredCountOnIndex(result, info, ctx, profilingEnabled) || handleHardwiredCountOnClass(result, info, ctx,
-        profilingEnabled);
+    if (handleHardwiredCountOnIndex(result, info, ctx, profilingEnabled)) {
+      return true;
+    }
+    if (handleHardwiredCountOnClass(result, info, ctx, profilingEnabled)) {
+      return true;
+    }
+    if (handleHardwiredCountOnClassUsingIndex(result, info, ctx, profilingEnabled)) {
+      return true;
+    }
+    return false;
   }
 
   private boolean handleHardwiredCountOnClass(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
@@ -559,6 +567,64 @@ public class OSelectExecutionPlanner {
     }
     result.chain(new CountFromClassStep(targetClass, info.projection.getAllAliases().iterator().next(), ctx, profilingEnabled));
     return true;
+  }
+
+  private boolean handleHardwiredCountOnClassUsingIndex(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
+      boolean profilingEnabled) {
+    OIdentifier targetClass = info.target == null ? null : info.target.getItem().getIdentifier();
+    if (targetClass == null) {
+      return false;
+    }
+    if (info.distinct || info.expand) {
+      return false;
+    }
+    if (info.preAggregateProjection != null) {
+      return false;
+    }
+    if (!isCountStar(info)) {
+      return false;
+    }
+    if (info.projectionAfterOrderBy != null || info.globalLetClause != null || info.perRecordLetClause != null
+        || info.groupBy != null || info.orderBy != null || info.unwind != null || info.skip != null) {
+      return false;
+    }
+    OClass clazz = ctx.getDatabase().getClass(targetClass.getStringValue());
+    if (clazz == null) {
+      return false;
+    }
+    if (info.flattenedWhereClause.size() > 1 || info.flattenedWhereClause.get(0).getSubBlocks().size() > 1) {
+      //for now it only handles a single equality condition, it can be extended
+      return false;
+    }
+    OBooleanExpression condition = info.flattenedWhereClause.get(0).getSubBlocks().get(0);
+    if (!(condition instanceof OBinaryCondition)) {
+      return false;
+    }
+    OBinaryCondition binaryCondition = (OBinaryCondition) condition;
+    if (!binaryCondition.getLeft().isBaseIdentifier()) {
+      return false;
+    }
+    if (!(binaryCondition.getOperator() instanceof OEqualsCompareOperator)) {
+      //this can be extended to use range operators too
+      return false;
+    }
+
+    for (OIndex<?> classIndex : clazz.getClassIndexes()) {
+      List<String> fields = classIndex.getDefinition().getFields();
+      if (fields.size() == 1 && fields.get(0).equals(binaryCondition.getLeft().getDefaultAlias().getStringValue())) {
+        OBinaryCondition indexCond = new OBinaryCondition(-1);
+        indexCond.setLeft(new OExpression(new OIdentifier("key")));
+        indexCond.setOperator(new OEqualsCompareOperator(-1));
+        indexCond.setRight(((OBinaryCondition) condition).getRight().copy());
+        result.chain(new FetchFromIndexStep(classIndex, indexCond, null, ctx, profilingEnabled));
+        result.chain(new AggregateProjectionCalculationStep(info.aggregateProjection, info.groupBy, ctx, profilingEnabled));
+        result.chain(new GuaranteeEmptyCountStep(info.aggregateProjection.getItems().get(0), ctx, profilingEnabled));
+        result.chain(new ProjectionCalculationStep(info.projection, ctx, profilingEnabled));
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private boolean handleHardwiredCountOnIndex(OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx,
