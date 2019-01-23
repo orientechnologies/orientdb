@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -59,7 +60,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
   private final AtomicLong recordProcessed     = new AtomicLong(0);
   private final AtomicLong recordCanceled      = new AtomicLong(0);
   private final AtomicLong totalTimeProcessing = new AtomicLong(0);
-  private final boolean active;
+  private final boolean    active;
 
   private ConcurrentMap<ORecordId, Boolean> records  = new ConcurrentHashMap<ORecordId, Boolean>();
   private ConcurrentMap<Integer, Boolean>   clusters = new ConcurrentHashMap<Integer, Boolean>();
@@ -202,6 +203,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
   private void check() throws Exception {
     // OPEN THE DATABASE ONLY IF NEEDED
+    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
     ODatabaseDocumentInternal db = null;
     try {
       final int batchMax = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH.getValueAsInteger();
@@ -234,6 +236,8 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
     } finally {
       if (db != null)
         db.close();
+      if (current != null)
+        current.activateOnCurrentThread();
     }
   }
 
@@ -398,14 +402,30 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
 
   @Override
   public void repairRecords(final Collection<ORecordId> rids) {
-    repairRecords(getDatabase(), rids);
+    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    ODatabaseDocumentInternal db = getDatabase();
+    try {
+      repairRecords(db, rids);
+    } finally {
+      db.close();
+      if (current != null)
+        current.activateOnCurrentThread();
+    }
   }
 
   @Override
   public void repairRecord(final ORecordId rid) {
     final List<ORecordId> rids = new ArrayList<ORecordId>();
     rids.add(rid);
-    repairRecords(getDatabase(), rids);
+    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    ODatabaseDocumentInternal db = getDatabase();
+    try {
+      repairRecords(db, rids);
+    } finally {
+      db.close();
+      if (current != null)
+        current.activateOnCurrentThread();
+    }
   }
 
   private boolean repairRecords(final ODatabaseDocumentInternal db, final Collection<ORecordId> ridSet) {
@@ -571,7 +591,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
                       buffer.append("bytes=");
                       buffer.append(Arrays.toString(r.buffer));
 
-                      final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(r.recordType, -1, getDatabase());
+                      final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(r.recordType, -1, db);
                       record.fromStream(r.buffer);
                       buffer.append(record);
                       buffer.append(" (size=");
