@@ -94,6 +94,7 @@ public class ConcurrentTxTest {
     mainTx.begin();
     OrientVertex firstVertexHandle = mainTx.addVertex(null, PROPERTY_NAME, firstValue);
     mainTx.commit();
+    mainTx.shutdown();
 
     final Object recordId = firstVertexHandle.getId();
     final CyclicBarrier barrier = new CyclicBarrier(2);
@@ -153,6 +154,7 @@ public class ConcurrentTxTest {
     tx.begin();
     final OrientVertex firstVertexHandle = tx.addVertex(null, PROPERTY_NAME, firstValue);
     tx.commit();
+    //tx.shutdown();
 
     final Object recordId = firstVertexHandle.getId();
 
@@ -161,10 +163,14 @@ public class ConcurrentTxTest {
       public void run() {
         // 1. Update
         OrientGraph tx2 = graphFactory.getTx();
-        tx2.begin();
-        Vertex secondVertexHandle = tx2.getVertex(recordId);
-        secondVertexHandle.setProperty(PROPERTY_NAME, secondValue);
-        tx2.commit();
+        try {
+          tx2.begin();
+          Vertex secondVertexHandle = tx2.getVertex(recordId);
+          secondVertexHandle.setProperty(PROPERTY_NAME, secondValue);
+          tx2.commit();
+        } finally {
+          tx2.shutdown();
+        }
       }
     });
     updateThread.start();
@@ -172,12 +178,17 @@ public class ConcurrentTxTest {
 
     // 2. Update
     OrientGraph tx3 = graphFactory.getTx();
-    tx3.begin();
-    Vertex thirdVertexHandle = tx3.getVertex(recordId);
-    thirdVertexHandle.setProperty(PROPERTY_NAME, thirdValue);
+    try {
+      tx3.begin();
+      Vertex thirdVertexHandle = tx3.getVertex(recordId);
+      thirdVertexHandle.setProperty(PROPERTY_NAME, thirdValue);
 
-    //commit
-    tx3.commit();
+      //commit
+      tx3.commit();
+    } finally {
+      tx3.shutdown();
+      tx.shutdown();
+    }
   }
 
   public static Thread run(Runnable runnable) {
