@@ -797,6 +797,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   public void reassignClustersOwnership(final String iNode, final String databaseName,
       final OModifiableDistributedConfiguration cfg, final boolean canCreateNewClusters) {
 
+    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
     // REASSIGN CLUSTERS WITHOUT AN OWNER, AVOIDING TO REBALANCE EXISTENT
     final ODatabaseDocumentInternal database = serverInstance.openDatabase(databaseName, "internal", "internal", null, true);
     try {
@@ -810,6 +811,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     } finally {
       database.activateOnCurrentThread();
       database.close();
+      if (current != null)
+        current.activateOnCurrentThread();
     }
   }
 
@@ -1022,6 +1025,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
                 if (databaseInstalled) {
                   // OVERWRITE THE LSN
+                  ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
                   final ODatabaseDocumentInternal db = distrDatabase.getDatabaseInstance();
                   try {
                     try {
@@ -1034,6 +1038,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                     notifyLsnAfterInstall(db, nodes);
                   } finally {
                     db.close();
+                    if (current != null) {
+                      current.activateOnCurrentThread();
+                    }
                   }
                 }
 
@@ -1264,33 +1271,38 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   protected void checkIntegrityOfLastTransactions(final ODistributedDatabaseImpl distrDatabase) {
+    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
     final ODatabaseDocumentInternal db = distrDatabase.getDatabaseInstance();
     if (db == null)
       return;
+    try {
+      final int checkIntegrityLastTxs = DISTRIBUTED_CHECKINTEGRITY_LAST_TX.getValueAsInteger();
+      if (checkIntegrityLastTxs < 1)
+        // SKIP IT
+        return;
 
-    final int checkIntegrityLastTxs = DISTRIBUTED_CHECKINTEGRITY_LAST_TX.getValueAsInteger();
-    if (checkIntegrityLastTxs < 1)
-      // SKIP IT
-      return;
+      final Set<String> clusters2Include = getDatabaseConfiguration(distrDatabase.getDatabaseName())
+          .getClustersOnServer(getLocalNodeName());
 
-    final Set<String> clusters2Include = getDatabaseConfiguration(distrDatabase.getDatabaseName())
-        .getClustersOnServer(getLocalNodeName());
+      final OAbstractPaginatedStorage stg = ((OAbstractPaginatedStorage) db.getStorage().getUnderlying());
 
-    final OAbstractPaginatedStorage stg = ((OAbstractPaginatedStorage) db.getStorage().getUnderlying());
+      final Set<ORecordId> changedRecords = stg.recordsChangedRecently(checkIntegrityLastTxs);
+      int av = getAvailableNodes(distrDatabase.getDatabaseName());
+      if (changedRecords != null && !changedRecords.isEmpty()) {
+        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+            "Executing the realignment of the last records modified before last close %s...", changedRecords);
+        ODistributedConfiguration config = getDatabaseConfiguration(distrDatabase.getDatabaseName());
+        config.forceWriteQuorum(av + 1);
 
-    final Set<ORecordId> changedRecords = stg.recordsChangedRecently(checkIntegrityLastTxs);
-    int av = getAvailableNodes(distrDatabase.getDatabaseName());
-    if (changedRecords != null && !changedRecords.isEmpty()) {
-      ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
-          "Executing the realignment of the last records modified before last close %s...", changedRecords);
-      ODistributedConfiguration config = getDatabaseConfiguration(distrDatabase.getDatabaseName());
-      config.forceWriteQuorum(av + 1);
-
-      distrDatabase.getDatabaseRepairer().repairRecords(changedRecords);
-      config.clearForceWriteQuorum();
-      ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Realignment completed.");
+        distrDatabase.getDatabaseRepairer().repairRecords(changedRecords);
+        config.clearForceWriteQuorum();
+        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Realignment completed.");
+      }
+    } finally {
+      db.close();
+      if (current != null)
+        current.activateOnCurrentThread();
     }
-
   }
 
   protected boolean requestDatabaseFullSync(final ODistributedDatabaseImpl distrDatabase, final boolean backupDatabase,
