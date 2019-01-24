@@ -247,6 +247,12 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>${surefire.version}</version>
+
+                    <configuration>
+                        <systemPropertyVariables>
+                            <security.userPasswordSaltIterations>1</security.userPasswordSaltIterations>
+                        </systemPropertyVariables>
+		    </configuration>
                 </plugin>
 
                 <plugin>
