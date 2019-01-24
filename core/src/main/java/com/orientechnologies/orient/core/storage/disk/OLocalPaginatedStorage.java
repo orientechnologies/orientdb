@@ -83,8 +83,8 @@ import java.util.zip.ZipOutputStream;
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
-  private static final String[] ALL_FILE_EXTENSIONS = { ".cm",".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef", ".oem",
-      ".oet", ".fl", OCASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION, OCASDiskWriteAheadLog.MASTER_RECORD_EXTENSION,
+  private static final String[] ALL_FILE_EXTENSIONS = { ".cm", ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
+      ".oem", ".oet", ".fl", OCASDiskWriteAheadLog.WAL_SEGMENT_EXTENSION, OCASDiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OIndexRIDContainer.INDEX_FILE_EXTENSION,
@@ -333,6 +333,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     long freezeId = getAtomicOperationsManager().freezeAtomicOperations(null, null);
     try {
       lastLSN = writeAheadLog.end();
+      writeAheadLog.flush();
       writeAheadLog.appendNewSegment();
       nonActiveSegments = writeAheadLog.nonActiveSegments(startSegment);
     } finally {

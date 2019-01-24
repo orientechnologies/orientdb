@@ -1309,14 +1309,8 @@ public final class OCASDiskWriteAheadLog implements OWriteAheadLog {
   }
 
   public File[] nonActiveSegments(final long fromSegment) {
-    final OLogSequenceNumber writtenUpTo = this.writtenUpTo.get().lsn;
-    long maxSegment = currentSegment;
-
-    if (writtenUpTo.getSegment() < maxSegment) {
-      maxSegment = writtenUpTo.getSegment();
-    }
-
-    final List<File> result = new ArrayList<>();
+    final long maxSegment = currentSegment;
+    final List<File> result = new ArrayList<>(8);
 
     for (final long segment : segments.tailSet(fromSegment)) {
       if (segment < maxSegment) {
