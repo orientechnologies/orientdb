@@ -21,8 +21,8 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_ACQUIRE_TIMEOUT;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_MAX;
@@ -31,9 +31,9 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_P
  * Created by tglman on 07/07/16.
  */
 public class ODatabasePoolImpl implements ODatabasePoolInternal {
-  private final OResourcePool<Void, ODatabaseDocumentInternal> pool;
-  private final OrientDBInternal                               factory;
-  private final OrientDBConfig                                 config;
+  private volatile OResourcePool<Void, ODatabaseDocumentInternal> pool;
+  private final    OrientDBInternal                               factory;
+  private final    OrientDBConfig                                 config;
 
   public ODatabasePoolImpl(OrientDBInternal factory, String database, String user, String password, OrientDBConfig config) {
     int max = config.getConfigurations().getValueAsInteger(DB_POOL_MAX);
@@ -58,21 +58,44 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
   }
 
   @Override
-  public synchronized ODatabaseSession acquire() throws OAcquireTimeoutException {
-    return pool.getResource(null, config.getConfigurations().getValueAsLong(DB_POOL_ACQUIRE_TIMEOUT));
+  public ODatabaseSession acquire() throws OAcquireTimeoutException {
+    OResourcePool<Void, ODatabaseDocumentInternal> p;
+    synchronized (this) {
+      p = pool;
+    }
+    if (p != null) {
+      return p.getResource(null, config.getConfigurations().getValueAsLong(DB_POOL_ACQUIRE_TIMEOUT));
+    } else {
+      throw new ODatabaseException("The pool is closed");
+    }
   }
 
   @Override
   public synchronized void close() {
-    for (ODatabaseDocumentInternal res : pool.getAllResources()) {
-      res.realClose();
+    OResourcePool<Void, ODatabaseDocumentInternal> p;
+    synchronized (this) {
+      p = pool;
+      pool = null;
     }
-    pool.close();
-    factory.removePool(this);
+    if (p != null) {
+      for (ODatabaseDocumentInternal res : p.getAllResources()) {
+        res.realClose();
+      }
+      p.close();
+      factory.removePool(this);
+    }
   }
 
-  public synchronized void release(ODatabaseDocumentInternal database) {
-    pool.returnResource(database);
+  public void release(ODatabaseDocumentInternal database) {
+    OResourcePool<Void, ODatabaseDocumentInternal> p;
+    synchronized (this) {
+      p = pool;
+    }
+    if (p != null) {
+      pool.returnResource(database);
+    } else {
+      throw new ODatabaseException("The pool is closed");
+    }
   }
 
   public OrientDBConfig getConfig() {
