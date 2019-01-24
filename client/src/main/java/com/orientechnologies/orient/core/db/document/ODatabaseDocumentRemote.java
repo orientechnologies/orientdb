@@ -215,9 +215,11 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
     } catch (OException e) {
       close();
+      ODatabaseRecordThreadLocal.instance().remove();
       throw e;
     } catch (Exception e) {
       close();
+      ODatabaseRecordThreadLocal.instance().remove();
       throw OException.wrapException(new ODatabaseException("Cannot open database url=" + getURL()), e);
     }
   }
