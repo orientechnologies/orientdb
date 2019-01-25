@@ -397,30 +397,31 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         }
 
         readCache.loadCacheState(writeCache);
-
-      } catch (final OStorageException e) {
-        throw e;
-      } catch (final Exception e) {
-        for (final OCluster c : clusters) {
-          try {
-            if (c != null) {
-              c.close(false);
-            }
-          } catch (final IOException e1) {
-            OLogManager.instance().error(this, "Cannot close cluster after exception on open", e1);
+      } catch (final RuntimeException e) {
+        try {
+          if (writeCache != null) {
+            readCache.closeStorage(writeCache);
           }
+        } catch (final Exception ee) {
+          //ignore
         }
 
         try {
-          status = STATUS.OPEN;
-          close(true, false);
-        } catch (final RuntimeException re) {
-          OLogManager.instance().error(this, "Error during storage close", re);
+          if (writeAheadLog != null) {
+            writeAheadLog.close();
+          }
+        } catch (Exception ee) {
+          //ignore
+        }
+
+        try {
+          postCloseSteps(false, false);
+        } catch (Exception ee) {
+          //ignore
         }
 
         status = STATUS.CLOSED;
-
-        throw OException.wrapException(new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode), e);
+        throw e;
       } finally {
         stateLock.releaseWriteLock();
       }
