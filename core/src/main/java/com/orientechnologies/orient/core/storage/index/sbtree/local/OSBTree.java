@@ -278,12 +278,12 @@ public class OSBTree<K, V> extends ODurableComponent {
 
               try {
 
-              final Object result = validator.validate(key, oldValue, value);
-              if (result == OBaseIndexEngine.Validator.IGNORE) {
-                ignored = true;
-                failure = false;
-                return false;
-              }
+                final Object result = validator.validate(key, oldValue, value);
+                if (result == OBaseIndexEngine.Validator.IGNORE) {
+                  ignored = true;
+                  failure = false;
+                  return false;
+                }
 
                 value = (V) result;
                 failure = false;
@@ -385,14 +385,14 @@ public class OSBTree<K, V> extends ODurableComponent {
               final OSBTreeValue<V> treeValue = new OSBTreeValue<>(createLinkToTheValue, valueLink,
                   createLinkToTheValue ? null : value);
 
-            if (validator != null) {
+              if (validator != null) {
 
-              final Object result = validator.validate(null, oldValueValue, value);
-              if (result == OBaseIndexEngine.Validator.IGNORE) {
-                return false;
+                final Object result = validator.validate(null, oldValueValue, value);
+                if (result == OBaseIndexEngine.Validator.IGNORE) {
+                  return false;
+                }
+
               }
-
-            }
 
               if (oldValue != null) {
                 sizeDiff = -1;

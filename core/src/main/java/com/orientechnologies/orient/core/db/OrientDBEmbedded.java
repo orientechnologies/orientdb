@@ -34,14 +34,17 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -372,11 +375,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected ODatabaseDocumentEmbedded internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
-    try {
-      storage.create(config.getConfigurations());
-    } catch (IOException e) {
-      throw OException.wrapException(new ODatabaseException("Error on database creation"), e);
-    }
+    storage.create(config.getConfigurations());
 
     ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
     if (serializer.toString().equals("ORecordDocument2csv"))
@@ -436,7 +435,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     final Set<String> databases = new HashSet<>();
     // SEARCH IN DEFAULT DATABASE DIRECTORY
     if (basePath != null) {
-      scanDatabaseDirectory(new File(basePath), (name) -> databases.add(name));
+      scanDatabaseDirectory(new File(basePath), databases::add);
     }
     databases.addAll(this.storages.keySet());
     // TODO remove OSystemDatabase.SYSTEM_DB_NAME from the list
@@ -508,20 +507,32 @@ public class OrientDBEmbedded implements OrientDBInternal {
     T create(OAbstractPaginatedStorage storage);
   }
 
-  protected void scanDatabaseDirectory(final File directory, DatabaseFound found) {
-    if (directory.exists() && directory.isDirectory()) {
-      final File[] files = directory.listFiles();
-      if (files != null)
-        for (File db : files) {
-          if (db.isDirectory()) {
-            final File plocalFile = new File(db.getAbsolutePath() + "/database.ocf");
-            final String dbPath = db.getPath().replace('\\', '/');
-            final int lastBS = dbPath.lastIndexOf('/', dbPath.length() - 1) + 1;// -1 of dbPath may be ended with slash
-            if (plocalFile.exists()) {
-              found.found(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)));
+  private static void scanDatabaseDirectory(final File directory, DatabaseFound found) {
+    try {
+      if (directory.exists() && directory.isDirectory()) {
+        final File[] files = directory.listFiles();
+        if (files != null)
+          for (File db : files) {
+            if (db.isDirectory()) {
+              final Path dbPath = Paths.get(db.getAbsolutePath());
+              try (DirectoryStream<Path> stream = Files.newDirectoryStream(dbPath)) {
+                stream.forEach((p) -> {
+                  if (!Files.isDirectory(p)) {
+                    final String fileName = p.getFileName().toString();
+
+                    if (fileName.equals("database.ocf") || (fileName.startsWith(OClusterBasedStorageConfiguration.COMPONENT_NAME)
+                        && fileName.endsWith(OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION))) {
+                      final int count = p.getNameCount();
+                      found.found(OIOUtils.getDatabaseNameFromPath(p.subpath(count - 2, count - 1).toString()));
+                    }
+                  }
+                });
+              }
             }
           }
-        }
+      }
+    } catch (IOException e) {
+      throw OException.wrapException(new ODatabaseException("Exception during scanning of database directory"), e);
     }
   }
 

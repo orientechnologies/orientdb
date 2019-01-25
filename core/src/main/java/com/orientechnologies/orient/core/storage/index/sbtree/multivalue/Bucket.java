@@ -295,8 +295,7 @@ final class Bucket<K> extends ODurablePage {
 
           final int updatedEntryPosition =
               entrySize + itemsToRemoveSize.subList(prevCounter + 1, itemsToRemove.size()).stream().mapToInt(Integer::intValue)
-                  .sum()
-                  + prevEntryPosition;
+                  .sum() + prevEntryPosition;
 
           setIntValue(updatedEntryPosition, first + diff);
         }

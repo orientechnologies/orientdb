@@ -146,12 +146,10 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -193,6 +191,7 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
+import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -229,7 +228,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -254,7 +252,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     Set<String> dbs = server.listDatabases();
     String listener = server.getListenerByProtocol(ONetworkProtocolBinary.class).getInboundAddr().toString();
-    Map<String, String> toSend = new HashMap<String, String>();
+    Map<String, String> toSend = new HashMap<>();
     for (String dbName : dbs) {
       toSend.put(dbName, "remote:" + listener + "/" + dbName);
     }
@@ -410,13 +408,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
 
-      final byte[] record = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
-        @Override
-        public byte[] call() throws Exception {
-          return ((OStorageConfigurationImpl) connection.getDatabase().getStorage().getConfiguration())
-              .toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
-        }
-      }, false);
+      final byte[] record = connection.getDatabase().getStorage().callInLock(
+          () -> ((OClusterBasedStorageConfiguration) connection.getDatabase().getStorage().getConfiguration())
+              .toStream(connection.getData().protocolVersion, Charset.forName("UTF-8")), false);
 
       response = new OReadRecordResponse(OBlob.RECORD_TYPE, 0, record, new HashSet<>());
 
@@ -425,7 +419,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
           .load(rid, fetchPlanString, ignoreCache, loadTombstones, OStorage.LOCKING_STRATEGY.NONE);
       if (record != null) {
         byte[] bytes = getRecordBytes(connection, record);
-        final Set<ORecord> recordsToSend = new HashSet<ORecord>();
+        final Set<ORecord> recordsToSend = new HashSet<>();
         if (record != null) {
           if (fetchPlanString.length() > 0) {
             // BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH
@@ -471,13 +465,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
 
-      final byte[] record = connection.getDatabase().getStorage().callInLock(new Callable<byte[]>() {
-        @Override
-        public byte[] call() throws Exception {
-          return ((OStorageConfigurationImpl) connection.getDatabase().getStorage().getConfiguration())
-              .toStream(connection.getData().protocolVersion, Charset.forName("UTF-8"));
-        }
-      }, false);
+      final byte[] record = connection.getDatabase().getStorage().callInLock(
+          () -> ((OClusterBasedStorageConfiguration) connection.getDatabase().getStorage().getConfiguration())
+              .toStream(connection.getData().protocolVersion, Charset.forName("UTF-8")), false);
 
       response = new OReadRecordIfVersionIsNotLatestResponse(OBlob.RECORD_TYPE, 0, record, new HashSet<>());
 
@@ -486,7 +476,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
       if (record != null) {
         byte[] bytes = getRecordBytes(connection, record);
-        final Set<ORecord> recordsToSend = new HashSet<ORecord>();
+        final Set<ORecord> recordsToSend = new HashSet<>();
         if (fetchPlanString.length() > 0) {
           // BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH
           // PLAN
@@ -724,7 +714,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       command.setCacheableResult(true);
 
       // ASSIGNED THE PARSED FETCHPLAN
-      final OCommandRequestText commandRequest = (OCommandRequestText) connection.getDatabase().command(command);
+      final OCommandRequestText commandRequest = connection.getDatabase().command(command);
       listener.setFetchPlan(commandRequest.getFetchPlan());
       OCommandResponse response;
       if (asynch) {
@@ -1005,7 +995,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
       final OBinarySerializer<Integer> valueSerializer = tree.getValueSerializer();
 
-      OTreeInternal.AccumulativeListener<OIdentifiable, Integer> listener = new OTreeInternal.AccumulativeListener<OIdentifiable, Integer>(
+      OTreeInternal.AccumulativeListener<OIdentifiable, Integer> listener = new OTreeInternal.AccumulativeListener<>(
           request.getPageSize());
       tree.loadEntriesMajor(key, request.isInclusive(), true, listener);
       List<Entry<OIdentifiable, Integer>> result = listener.getResult();
@@ -1039,13 +1029,10 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     OLogManager.instance().info(this, "Starting database import");
     ODatabaseImport imp;
     try {
-      imp = new ODatabaseImport(connection.getDatabase(), request.getImporPath(), new OCommandOutputListener() {
-        @Override
-        public void onMessage(String iText) {
-          OLogManager.instance().debug(OConnectionBinaryExecutor.this, iText);
-          if (iText != null)
-            result.add(iText);
-        }
+      imp = new ODatabaseImport(connection.getDatabase(), request.getImporPath(), iText -> {
+        OLogManager.instance().debug(OConnectionBinaryExecutor.this, iText);
+        if (iText != null)
+          result.add(iText);
       });
       imp.setOptions(request.getOptions());
       imp.importDatabase();
@@ -1509,7 +1496,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeUnsubscribeLiveQuery(OUnsubscribeLiveQueryRequest request) {
     ODatabaseDocumentInternal database = connection.getDatabase();
-    OLiveQueryHookV2.unsubscribe((int) request.getMonitorId(), database);
+    OLiveQueryHookV2.unsubscribe(request.getMonitorId(), database);
     return new OUnsubscribLiveQueryResponse();
   }
 
@@ -1525,7 +1512,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeDistributedConnect(ODistributedConnectRequest request) {
     HandshakeInfo handshakeInfo = new HandshakeInfo((short) OChannelBinaryProtocol.PROTOCOL_VERSION_37, "OrientDB Distributed", "",
-        (byte) 0, (byte) OChannelBinaryProtocol.ERROR_MESSAGE_JAVA);
+        (byte) 0, OChannelBinaryProtocol.ERROR_MESSAGE_JAVA);
     ((ONetworkProtocolBinary) connection.getProtocol()).setHandshakeInfo(handshakeInfo);
 
     //TODO:check auth type

@@ -747,43 +747,43 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
       write(buffer, indexEngines.size());
       for (IndexEngineData engineData : indexEngines.values()) {
-        write(buffer, engineData.name);
-        write(buffer, engineData.algorithm);
-        write(buffer, engineData.indexType == null ? "" : engineData.indexType);
+        write(buffer, engineData.getName());
+        write(buffer, engineData.getAlgorithm());
+        write(buffer, engineData.getIndexType() == null ? "" : engineData.getIndexType());
 
-        write(buffer, engineData.valueSerializerId);
-        write(buffer, engineData.keySerializedId);
+        write(buffer, engineData.getValueSerializerId());
+        write(buffer, engineData.getKeySerializedId());
 
-        write(buffer, engineData.isAutomatic);
-        write(buffer, engineData.durableInNonTxMode);
+        write(buffer, engineData.isAutomatic());
+        write(buffer, engineData.getDurableInNonTxMode());
 
-        write(buffer, engineData.version);
-        write(buffer, engineData.nullValuesSupport);
-        write(buffer, engineData.keySize);
-        write(buffer, engineData.encryption);
-        write(buffer, engineData.encryptionOptions);
+        write(buffer, engineData.getVersion());
+        write(buffer, engineData.isNullValuesSupport());
+        write(buffer, engineData.getKeySize());
+        write(buffer, engineData.getEncryption());
+        write(buffer, engineData.getEncryptionOptions());
 
-        if (engineData.keyTypes != null) {
-          write(buffer, engineData.keyTypes.length);
-          for (OType type : engineData.keyTypes) {
+        if (engineData.getKeyTypes() != null) {
+          write(buffer, engineData.getKeyTypes().length);
+          for (OType type : engineData.getKeyTypes()) {
             write(buffer, type.name());
           }
         } else {
           write(buffer, 0);
         }
 
-        if (engineData.engineProperties == null) {
+        if (engineData.getEngineProperties() == null) {
           write(buffer, 0);
         } else {
-          write(buffer, engineData.engineProperties.size());
-          for (Map.Entry<String, String> property : engineData.engineProperties.entrySet()) {
+          write(buffer, engineData.getEngineProperties().size());
+          for (Map.Entry<String, String> property : engineData.getEngineProperties().entrySet()) {
             write(buffer, property.getKey());
             write(buffer, property.getValue());
           }
         }
 
-        write(buffer, engineData.apiVersion);
-        write(buffer, engineData.multivalue);
+        write(buffer, engineData.getApiVersion());
+        write(buffer, engineData.isMultivalue());
       }
 
       write(buffer, createdAtVersion);
@@ -870,7 +870,7 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
 
       if (oldEngine != null)
         OLogManager.instance()
-            .warn(this, "Index engine with name '" + engineData.name + "' already contained in database configuration");
+            .warn(this, "Index engine with name '" + engineData.getName() + "' already contained in database configuration");
 
       update();
     } finally {
@@ -1241,117 +1241,6 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     if (iBuffer.length() > 0)
       iBuffer.append('|');
     iBuffer.append(iValue != null ? iValue.toString() : ' ');
-  }
-
-  public static final class IndexEngineData {
-    private final String              name;
-    private final String              algorithm;
-    private final String              indexType;
-    private final Boolean             durableInNonTxMode;
-    private final int                 version;
-    private final int                 apiVersion;
-    private final boolean             multivalue;
-    private final byte                valueSerializerId;
-    private final byte                keySerializedId;
-    private final boolean             isAutomatic;
-    private final OType[]             keyTypes;
-    private final boolean             nullValuesSupport;
-    private final int                 keySize;
-    private final Map<String, String> engineProperties;
-    private final String              encryption;
-    private final String              encryptionOptions;
-
-    public IndexEngineData(final String name, final String algorithm, String indexType, final Boolean durableInNonTxMode,
-        final int version, final int apiVersion, final boolean multivalue, final byte valueSerializerId, final byte keySerializedId,
-        final boolean isAutomatic, final OType[] keyTypes, final boolean nullValuesSupport, final int keySize,
-        final String encryption, final String encryptionOptions, final Map<String, String> engineProperties) {
-      this.name = name;
-      this.algorithm = algorithm;
-      this.indexType = indexType;
-      this.durableInNonTxMode = durableInNonTxMode;
-      this.version = version;
-      this.apiVersion = apiVersion;
-      this.multivalue = multivalue;
-      this.valueSerializerId = valueSerializerId;
-      this.keySerializedId = keySerializedId;
-      this.isAutomatic = isAutomatic;
-      this.keyTypes = keyTypes;
-      this.nullValuesSupport = nullValuesSupport;
-      this.keySize = keySize;
-      this.encryption = encryption;
-      this.encryptionOptions = encryptionOptions;
-      if (engineProperties == null)
-        this.engineProperties = null;
-      else
-        this.engineProperties = new HashMap<>(engineProperties);
-    }
-
-    public int getKeySize() {
-      return keySize;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public String getAlgorithm() {
-      return algorithm;
-    }
-
-    public Boolean getDurableInNonTxMode() {
-      return durableInNonTxMode;
-    }
-
-    public int getVersion() {
-      return version;
-    }
-
-    public int getApiVersion() {
-      return apiVersion;
-    }
-
-    public boolean isMultivalue() {
-      return multivalue;
-    }
-
-    public byte getValueSerializerId() {
-      return valueSerializerId;
-    }
-
-    public byte getKeySerializedId() {
-      return keySerializedId;
-    }
-
-    public boolean isAutomatic() {
-      return isAutomatic;
-    }
-
-    public OType[] getKeyTypes() {
-      return keyTypes;
-    }
-
-    public String getEncryption() {
-      return encryption;
-    }
-
-    public String getEncryptionOptions() {
-      return encryptionOptions;
-    }
-
-    public boolean isNullValuesSupport() {
-      return nullValuesSupport;
-    }
-
-    public Map<String, String> getEngineProperties() {
-      if (engineProperties == null)
-        return null;
-
-      return Collections.unmodifiableMap(engineProperties);
-    }
-
-    public String getIndexType() {
-      return indexType;
-    }
   }
 
   @Override

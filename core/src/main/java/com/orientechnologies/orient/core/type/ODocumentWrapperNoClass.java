@@ -53,7 +53,6 @@ public abstract class ODocumentWrapperNoClass extends ODocumentWrapper {
     fromStream();
   }
 
-
   @Override
   public <RET extends ODocumentWrapper> RET reload() {
     super.reload();

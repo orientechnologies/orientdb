@@ -251,7 +251,7 @@
                         <systemPropertyVariables>
                             <security.userPasswordSaltIterations>1</security.userPasswordSaltIterations>
                         </systemPropertyVariables>
-		    </configuration>
+                    </configuration>
                 </plugin>
 
                 <plugin>

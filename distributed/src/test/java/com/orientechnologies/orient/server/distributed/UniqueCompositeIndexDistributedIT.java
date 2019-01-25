@@ -38,7 +38,7 @@ public class UniqueCompositeIndexDistributedIT {
     OClass clazz = session.createClass("Test");
     clazz.createProperty("test", OType.STRING);
     clazz.createProperty("testa", OType.STRING);
-    OIndex<?> idx =  clazz.createIndex("cu",OClass.INDEX_TYPE.UNIQUE,"test","testa");
+    OIndex<?> idx = clazz.createIndex("cu", OClass.INDEX_TYPE.UNIQUE, "test", "testa");
     indexName = idx.getName();
   }
 
@@ -58,7 +58,7 @@ public class UniqueCompositeIndexDistributedIT {
 
     try (OResultSet res = session.query("select from test")) {
       assertTrue(res.hasNext());
-      assertEquals(res.next().getIdentity().get(),doc1.getIdentity());
+      assertEquals(res.next().getIdentity().get(), doc1.getIdentity());
     }
 
     try (OResultSet res = session.query("select from index:" + indexName + " where key =[\"1\",\"2\"]")) {
