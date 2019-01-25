@@ -770,7 +770,7 @@ public enum OGlobalConfiguration {
       "Dumps the full stack trace of the exception sent to the client", Boolean.class, Boolean.FALSE, true),
 
   SERVER_BACKWARD_COMPATIBILITY("server.backwardCompatibility",
-      "guarantee that the server use global context for search the database instance", Boolean.class, Boolean.TRUE, true, false),
+      "guarantee that the server use global context for search the database instance", Boolean.class, Boolean.FALSE, true, false),
 
   // DISTRIBUTED
   /**
