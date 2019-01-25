@@ -121,12 +121,6 @@ public class ODefaultRemoteTaskFactoryV2 extends ODefaultRemoteTaskFactoryV1 {
 
     //--- here starts V2 ----
 
-    case ORunQueryExecutionPlanTask.FACTORYID: // 40
-      return new ORunQueryExecutionPlanTask();
-
-    case OFetchQueryPageTask.FACTORYID: // 41
-      return new OFetchQueryPageTask();
-
     case OCloseQueryTask.FACTORYID: // 42
       return new OCloseQueryTask();
 

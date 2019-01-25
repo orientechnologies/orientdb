@@ -12,8 +12,8 @@ public class ODatabaseDocumentDistributedPooled extends ODatabaseDocumentDistrib
 
   private ODatabasePoolInternal pool;
 
-  public ODatabaseDocumentDistributedPooled(ODatabasePoolInternal pool, OStorage storage, OHazelcastPlugin hazelcastPlugin) {
-    super(storage, hazelcastPlugin);
+  public ODatabaseDocumentDistributedPooled(ODatabasePoolInternal pool, OStorage storage, String nodeName) {
+    super(storage, nodeName);
     this.pool = pool;
   }
 

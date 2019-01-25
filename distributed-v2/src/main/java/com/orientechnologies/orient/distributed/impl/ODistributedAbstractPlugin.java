@@ -52,7 +52,6 @@ import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.distributed.impl.task.*;
-import com.orientechnologies.orient.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -1336,27 +1335,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     } finally {
       db.activateOnCurrentThread();
       db.close();
-    }
-
-    // ASK FOR INDIVIDUAL CLUSTERS IN CASE OF SHARDING AND NO LOCAL COPY
-    final Set<String> localManagedClusters = cfg.getClustersOnServer(localNodeName);
-    final Set<String> sourceNodeClusters = cfg.getClustersOnServer(iNode);
-    localManagedClusters.removeAll(sourceNodeClusters);
-
-    final HashSet<String> toSynchClusters = new HashSet<String>();
-    for (String cl : localManagedClusters) {
-      // FILTER CLUSTER CHECKING IF ANY NODE IS ACTIVE
-      final List<String> servers = cfg.getServers(cl, localNodeName);
-      getAvailableNodes(servers, databaseName);
-
-      if (!servers.isEmpty())
-        toSynchClusters.add(cl);
-    }
-
-    // SYNC ALL THE CLUSTERS
-    for (String cl : toSynchClusters) {
-      // FILTER CLUSTER CHECKING IF ANY NODE IS ACTIVE
-      OCommandExecutorSQLHASyncCluster.replaceCluster(this, serverInstance, databaseName, cl);
     }
 
     try {

@@ -52,7 +52,6 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware, OServerLifecycleListener {
 
   private          OServer                                   server;
-  private volatile OHazelcastPlugin                          plugin;
   private final    Map<String, ODistributedChannel>          members          = new HashMap<>();
   private volatile boolean                                   coordinator      = false;
   private volatile String                                    coordinatorName;
@@ -95,7 +94,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     networkManager = new ODistributedNetworkManager(this, getNodeConfig());
     networkManager.startup();
 
-
   }
 
   private void generateNodeConfig() {
@@ -123,38 +121,26 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     networkManager.shutdown();
   }
 
-  public synchronized OHazelcastPlugin getPlugin() {
-    if (plugin == null) {
-      if (server != null && server.isActive())
-        plugin = server.getPlugin("cluster");
-    }
-    return plugin;
-  }
-
   protected OSharedContext createSharedContext(OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isEnabled()) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
       return new OSharedContextEmbedded(storage, this);
     }
     return new OSharedContextDistributed(storage, this);
   }
 
   protected ODatabaseDocumentEmbedded newSessionInstance(OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isEnabled()) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
       return new ODatabaseDocumentEmbedded(storage);
     }
-    return new ODatabaseDocumentDistributed(storage, plugin);
+    return new ODatabaseDocumentDistributed(storage, getNodeNameFromConfig());
   }
 
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(ODatabasePoolInternal pool, OAbstractPaginatedStorage storage) {
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName()) || getPlugin() == null || !getPlugin().isEnabled()) {
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage.getName())) {
       return new ODatabaseDocumentEmbeddedPooled(pool, storage);
     }
-    return new ODatabaseDocumentDistributedPooled(pool, storage, plugin);
+    return new ODatabaseDocumentDistributedPooled(pool, storage, getNodeNameFromConfig());
 
-  }
-
-  public void setPlugin(OHazelcastPlugin plugin) {
-    this.plugin = plugin;
   }
 
   public OStorage fullSync(String dbName, String backupPath, OrientDBConfig config) {
@@ -234,7 +220,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         e.printStackTrace();
       }
       //This initialize the distributed configuration.
-      plugin.getDatabaseConfiguration(name);
       checkCoordinator(name);
     } else {
       super.create(name, user, password, type, config);
@@ -318,7 +303,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       if (coordinator) {
         ODistributedCoordinator c = distributed.getCoordinator();
         if (c == null) {
-          distributed.makeCoordinator(plugin.getLocalNodeName(), context);
+          distributed.makeCoordinator(getNodeNameFromConfig(), context);
           c = distributed.getCoordinator();
         }
         c.join(member);
@@ -546,5 +531,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public void close() {
     this.networkManager.shutdown();
     super.close();
+  }
+
+  public OServer getServer() {
+    return server;
   }
 }
