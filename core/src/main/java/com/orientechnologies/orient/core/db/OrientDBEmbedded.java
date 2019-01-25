@@ -271,7 +271,19 @@ public class OrientDBEmbedded implements OrientDBInternal {
         config = solveConfig(config);
         OAbstractPaginatedStorage storage = getOrInitStorage(name);
         // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-        storage.open(config.getConfigurations());
+        try {
+          // THIS OPEN THE STORAGE ONLY THE FIRST TIME
+          storage.open(config.getConfigurations());
+        } catch (RuntimeException e) {
+          if (storage != null) {
+            storages.remove(storage.getName());
+          } else {
+            storages.remove(name);
+          }
+
+          throw e;
+        }
+
         embedded = newSessionInstance(storage);
         embedded.init(config, getOrCreateSharedContext(storage));
       }
