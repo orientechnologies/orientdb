@@ -91,12 +91,7 @@ public class StorageBackupMTTest {
     embedded.close();
 
     final ODatabaseCompare compare = new ODatabaseCompare("plocal:" + dbDirectory, "plocal:" + backedUpDbDirectory, "admin",
-        "admin", new OCommandOutputListener() {
-      @Override
-      public void onMessage(String iText) {
-        System.out.println(iText);
-      }
-    });
+        "admin", System.out::println);
     System.out.println("compare");
 
     boolean areSame = compare.compare();
