@@ -224,6 +224,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       .comparing(o -> o.getRecord().getIdentity());
 
   protected static final OScheduledThreadPoolExecutorWithLogging fuzzyCheckpointExecutor;
+
   static {
     fuzzyCheckpointExecutor = new OScheduledThreadPoolExecutorWithLogging(1, new FuzzyCheckpointThreadFactory());
     fuzzyCheckpointExecutor.setMaximumPoolSize(1);
@@ -261,7 +262,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       .getDefaultImplementation();
 
   private volatile   int                      defaultClusterId                           = -1;
-  @SuppressWarnings("WeakerAccess")
   protected volatile OAtomicOperationsManager atomicOperationsManager;
   private volatile   boolean                  wereNonTxOperationsPerformedInPreviousOpen = false;
   private volatile   OLowDiskSpaceInformation lowDiskSpace                               = null;
@@ -1597,8 +1597,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan,
-      final boolean iIgnoreCache, final boolean prefetchRecords, final ORecordCallback<ORawBuffer> iCallback) {
+  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
+      final boolean prefetchRecords, final ORecordCallback<ORawBuffer> iCallback) {
     try {
       checkOpenness();
       final OCluster cluster;
