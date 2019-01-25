@@ -23,7 +23,6 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
@@ -40,13 +39,13 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
@@ -214,13 +213,13 @@ public class PostponedEngineStartTest {
       return new OStorage() {
         @Override
         public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
-            OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+            OCommandOutputListener iListener, int compressionLevel, int bufferSize) {
           return null;
         }
 
         @Override
         public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable,
-            OCommandOutputListener iListener) throws IOException {
+            OCommandOutputListener iListener) {
 
         }
 
@@ -329,7 +328,7 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public OStorageConfigurationImpl getConfiguration() {
+        public OClusterBasedStorageConfiguration getConfiguration() {
           return null;
         }
 

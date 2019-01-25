@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.storage.cluster;
 
-import com.orientechnologies.orient.core.config.OStorageConfigurationImpl;
 import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 
@@ -15,11 +15,13 @@ public abstract class OPaginatedCluster extends ODurableComponent implements OCl
 
   public static final String DEF_EXTENSION = ".pcl";
 
+  @SuppressWarnings("SameReturnValue")
   public static int getLatestBinaryVersion() {
     return 1;
   }
 
-  public OPaginatedCluster(OAbstractPaginatedStorage storage, String name, String extension, String lockName) {
+  protected OPaginatedCluster(final OAbstractPaginatedStorage storage, final String name, final String extension,
+      final String lockName) {
     super(storage, name, extension, lockName);
   }
 
@@ -31,7 +33,7 @@ public abstract class OPaginatedCluster extends ODurableComponent implements OCl
 
   public abstract OPaginatedClusterDebug readDebug(long clusterPosition) throws IOException;
 
-  public abstract void registerInStorageConfig(OStorageConfigurationImpl root);
+  public abstract void registerInStorageConfig(OClusterBasedStorageConfiguration root);
 
   public abstract long getFileId();
 }

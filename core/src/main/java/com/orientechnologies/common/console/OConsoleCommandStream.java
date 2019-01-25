@@ -20,7 +20,13 @@
 
 package com.orientechnologies.common.console;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 
 /**
  * @author Luigi Dell'Aquila
@@ -324,7 +330,7 @@ public class OConsoleCommandStream implements OCommandStream {
       return Symbol.RIGHT_BRAKET;
     if (c.equals('\n') || c.equals('\r'))
       return Symbol.NEW_LINE;
-    if(c.equals('\\')){
+    if (c.equals('\\')) {
       return Symbol.STRING_ESCAPE;
     }
 

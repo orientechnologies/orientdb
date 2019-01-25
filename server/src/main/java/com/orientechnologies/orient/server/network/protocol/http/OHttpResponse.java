@@ -31,11 +31,25 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.server.OClientConnection;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -277,7 +291,7 @@ public class OHttpResponse {
               while (it.hasNext()) {
                 final Object r = it.next();
 
-                if(r instanceof OResult) {
+                if (r instanceof OResult) {
 
                   OResult result = (OResult) r;
                   records.add(result.toElement());
@@ -286,7 +300,7 @@ public class OHttpResponse {
                     colNames.add(fieldName);
                   }
 
-                }else if (r != null && r instanceof OIdentifiable) {
+                } else if (r != null && r instanceof OIdentifiable) {
                   final ORecord rec = ((OIdentifiable) r).getRecord();
                   if (rec != null) {
                     if (rec instanceof ODocument) {

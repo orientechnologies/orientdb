@@ -39,8 +39,8 @@ import java.util.Arrays;
 public final class OClusterPositionMapV1 extends OClusterPositionMap {
   private long fileId;
 
-  OClusterPositionMapV1(final OAbstractPaginatedStorage storage, final String name, final String lockName) {
-    super(storage, name, DEF_EXTENSION, lockName);
+  OClusterPositionMapV1(OAbstractPaginatedStorage storage, String name, String lockName, String extension) {
+    super(storage, name, extension, lockName);
   }
 
   public void open(final OAtomicOperation atomicOperation) throws IOException {
@@ -272,7 +272,7 @@ public final class OClusterPositionMapV1 extends OClusterPositionMap {
       return null;
     }
 
-    pageCount = (int)Math.min(lastPage - pageIndex + 1, pageCount);
+    pageCount = (int) Math.min(lastPage - pageIndex + 1, pageCount);
 
     final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, pageIndex, false, pageCount);
     try {

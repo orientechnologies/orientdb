@@ -624,7 +624,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkIfActive();
 
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
-    OResultSet original = executor.execute(this, script, args);
+
+    ((OAbstractPaginatedStorage) this.storage).pauseConfigurationUpdateNotifications();
+    OResultSet original;
+    try {
+      original = executor.execute(this, script, args);
+    } finally {
+      ((OAbstractPaginatedStorage) this.storage).fireConfigurationUpdateNotifications();
+    }
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
     this.queryStarted(result.getQueryId(), result);
     result.addLifecycleListener(this);
@@ -637,7 +644,15 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract impleme
     checkIfActive();
 
     OScriptExecutor executor = OCommandManager.instance().getScriptExecutor(language);
-    OResultSet original = executor.execute(this, script, args);
+    OResultSet original;
+
+    ((OAbstractPaginatedStorage) this.storage).pauseConfigurationUpdateNotifications();
+    try {
+      original = executor.execute(this, script, args);
+    } finally {
+      ((OAbstractPaginatedStorage) this.storage).fireConfigurationUpdateNotifications();
+    }
+
     OLocalResultSetLifecycleDecorator result = new OLocalResultSetLifecycleDecorator(original);
     this.queryStarted(result.getQueryId(), result);
     result.addLifecycleListener(this);

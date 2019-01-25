@@ -2,7 +2,11 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.util.OResettable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by luigidellaquila on 07/07/16.

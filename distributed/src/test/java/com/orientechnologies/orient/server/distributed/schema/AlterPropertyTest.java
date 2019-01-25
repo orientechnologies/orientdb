@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed.schema;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -43,6 +42,9 @@ public class AlterPropertyTest extends AbstractServerClusterTest {
   protected void executeTest() throws Exception {
     ODatabaseDocument db = serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName());
     try {
+      //wait till databases will be opened on both servers
+      Thread.sleep(1_000);
+
       testAlterCustomAttributeInProperty();
       testAlterCustomAttributeWithDotInProperty();
     } finally {

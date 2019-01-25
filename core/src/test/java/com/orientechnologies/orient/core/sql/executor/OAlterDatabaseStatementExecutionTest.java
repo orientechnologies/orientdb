@@ -53,6 +53,7 @@ public class OAlterDatabaseStatementExecutionTest {
     }
     OResultSet result = db.command("alter database custom foo = 'bar'");
 
+    previousCustoms = (List<OStorageEntryConfiguration>) db.get(ODatabase.ATTRIBUTES.CUSTOM);
     Object after = null;
     for (OStorageEntryConfiguration entry : previousCustoms) {
       if (entry.name.equals("foo")) {

@@ -1,10 +1,19 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
-import com.orientechnologies.orient.core.config.*;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
 
 public class OStorageConfigurationRemote implements OStorageConfiguration {
 
@@ -159,7 +168,7 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
   }
 
   @Override
-  public OStorageConfigurationImpl.IndexEngineData getIndexEngine(String name) {
+  public OStorageConfiguration.IndexEngineData getIndexEngine(String name) {
     throw new UnsupportedOperationException();
   }
 
@@ -178,7 +187,6 @@ public class OStorageConfigurationRemote implements OStorageConfiguration {
     return binaryFormatVersion;
   }
 
-  @Override
   public void dropCluster(int iClusterId) {
     // this just remove it locally before a proper update from the push arrive
     if (clusters.size() > iClusterId)

@@ -21,7 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.cluster.v0.OPaginatedClusterV0;
 import com.orientechnologies.orient.core.storage.cluster.v1.OPaginatedClusterV1;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 public final class OPaginatedClusterFactory {
   public static final OPaginatedClusterFactory INSTANCE = new OPaginatedClusterFactory();
 
-  public static OCluster createCluster(final String name, final int configurationVersion, final int binaryVersion,
+  public static OPaginatedCluster createCluster(final String name, final int configurationVersion, final int binaryVersion,
       final OAbstractPaginatedStorage storage) {
     if (configurationVersion >= 0 && configurationVersion < 6) {
       throw new OStorageException("You use deprecated version of storage cluster, "
@@ -45,6 +45,18 @@ public final class OPaginatedClusterFactory {
       return new OPaginatedClusterV0(name, storage);
     case 1:
       return new OPaginatedClusterV1(name, storage);
+    default:
+      throw new IllegalStateException("Invalid binary version of cluster " + binaryVersion);
+    }
+  }
+
+  public static OPaginatedCluster createCluster(final String name, final int binaryVersion, final OAbstractPaginatedStorage storage,
+      final String dataExtension, final String cpmExtension) {
+    switch (binaryVersion) {
+    case 0:
+      throw new IllegalStateException("Version 0 of cluster is not supported with given configuration");
+    case 1:
+      return new OPaginatedClusterV1(name, dataExtension, cpmExtension, storage);
     default:
       throw new IllegalStateException("Invalid binary version of cluster " + binaryVersion);
     }

@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageMemoryConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OMemoryWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
@@ -49,19 +48,21 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
   public ODirectMemoryStorage(String name, String filePath, String mode, int id) {
     super(name, filePath, mode, id);
-    configuration = new OStorageMemoryConfiguration(this);
   }
 
   @Override
   protected void initWalAndDiskCache(OContextConfiguration contextConfiguration) throws IOException {
-    if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
-      if (writeAheadLog == null)
+    if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
+      if (writeAheadLog == null) {
         writeAheadLog = new OMemoryWriteAheadLog();
-    } else
+      }
+    } else {
       writeAheadLog = null;
+    }
 
     final ODirectMemoryOnlyDiskCache diskCache = new ODirectMemoryOnlyDiskCache(
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB, 1, getPerformanceStatisticManager());
+        contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE) * ONE_KB, 1,
+        getPerformanceStatisticManager());
 
     if (readCache == null) {
       readCache = diskCache;
