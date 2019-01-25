@@ -60,7 +60,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private          OCoordinateMessagesFactory                coordinateMessagesFactory;
   private          ODistributedNetworkManager                networkManager;
   private volatile boolean                                   distributedReady = false;
-  private          ConcurrentMap<String, ODistributedStatus> databasesStatus  = new ConcurrentHashMap<>();
+  private final    ConcurrentMap<String, ODistributedStatus> databasesStatus  = new ConcurrentHashMap<>();
   private          ONodeConfiguration                        nodeConfiguration;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
@@ -502,7 +502,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     this.notifyAll();
   }
 
-  public void checkDatabaseReady(String database) {
+  public synchronized void checkDatabaseReady(String database) {
     checkReadyForHandleRequests();
     try {
       if (!ODistributedStatus.ONLINE.equals(databasesStatus.get(database))) {
