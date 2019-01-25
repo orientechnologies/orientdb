@@ -147,38 +147,38 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   @SuppressWarnings("unchecked")
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
-    serverInstance = oServer;
-    oServer.setVariable("ODistributedAbstractPlugin", this);
+//    serverInstance = oServer;
+//    oServer.setVariable("ODistributedAbstractPlugin", this);
+//
+//    for (OServerParameterConfiguration param : iParams) {
+//      if (param.name.equalsIgnoreCase("enabled")) {
+//        if (!Boolean.parseBoolean(OSystemVariableResolver.resolveSystemVariables(param.value))) {
+//          // DISABLE IT
+//          enabled = false;
+//          return;
+//        }
+//      } else if (param.name.equalsIgnoreCase("nodeName")) {
+//        nodeName = param.value;
+//        if (nodeName.contains("."))
+//          throw new OConfigurationException("Illegal node name '" + nodeName + "'. '.' is not allowed in node name");
+//      } else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
+//        setDefaultDatabaseConfigFile(param.value);
+//      }
+//    }
 
-    for (OServerParameterConfiguration param : iParams) {
-      if (param.name.equalsIgnoreCase("enabled")) {
-        if (!Boolean.parseBoolean(OSystemVariableResolver.resolveSystemVariables(param.value))) {
-          // DISABLE IT
-          enabled = false;
-          return;
-        }
-      } else if (param.name.equalsIgnoreCase("nodeName")) {
-        nodeName = param.value;
-        if (nodeName.contains("."))
-          throw new OConfigurationException("Illegal node name '" + nodeName + "'. '.' is not allowed in node name");
-      } else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
-        setDefaultDatabaseConfigFile(param.value);
-      }
-    }
-
-    lockManagerExecutor = new ODistributedLockManagerExecutor(this);
-
-    if (serverInstance.getUser("replicator") == null)
-      // DROP THE REPLICATOR USER. THIS USER WAS NEEDED BEFORE 2.2, BUT IT'S NOT REQUIRED ANYMORE
-      OLogManager.instance().config(this,
-          "Found 'replicator' user. Starting from OrientDB v2.2 this internal user is no needed anymore. Removing it...");
-    try {
-      serverInstance.dropUser("replicator");
-    } catch (IOException e) {
-      throw OException.wrapException(new OConfigurationException("Error on deleting 'replicator' user"), e);
-    }
-
-    //TODO check that the quorum is there!
+//    lockManagerExecutor = new ODistributedLockManagerExecutor(this);
+//
+//    if (serverInstance.getUser("replicator") == null)
+//      // DROP THE REPLICATOR USER. THIS USER WAS NEEDED BEFORE 2.2, BUT IT'S NOT REQUIRED ANYMORE
+//      OLogManager.instance().config(this,
+//          "Found 'replicator' user. Starting from OrientDB v2.2 this internal user is no needed anymore. Removing it...");
+//    try {
+//      serverInstance.dropUser("replicator");
+//    } catch (IOException e) {
+//      throw OException.wrapException(new OConfigurationException("Error on deleting 'replicator' user"), e);
+//    }
+//
+//    //TODO check that the quorum is there!
   }
 
   protected abstract ONodeConfiguration getNodeConfiguration();

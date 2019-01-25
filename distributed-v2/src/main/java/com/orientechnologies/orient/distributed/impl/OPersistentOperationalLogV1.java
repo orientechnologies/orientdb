@@ -2,28 +2,17 @@ package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogId;
 import com.orientechnologies.orient.distributed.impl.coordinator.OLogRequest;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLogEntry;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -81,13 +70,17 @@ public class OPersistentOperationalLogV1 implements OOperationLog {
 
   private AtomicLong inc;
 
-  public static OPersistentOperationalLogV1 newInstance(String databaseName, OrientDBInternal context, OLogRequestFactory factory) {
+  public static OOperationLog newInstance(String databaseName, OrientDBInternal context, OLogRequestFactory factory) {
     OAbstractPaginatedStorage s = ((OrientDBDistributed) context).getStorage(databaseName);
-    OLocalPaginatedStorage storage = (OLocalPaginatedStorage) s.getUnderlying();
-
-    OPersistentOperationalLogV1 result = new OPersistentOperationalLogV1(storage.getStoragePath().toString(), factory);
-    result.scheduleLogPrune(context, databaseName);
-    return result;
+    if (s instanceof OLocalPaginatedStorage) {
+      OLocalPaginatedStorage storage = (OLocalPaginatedStorage) s;
+      OPersistentOperationalLogV1 result = new OPersistentOperationalLogV1(storage.getStoragePath().toString(), factory);
+      result.scheduleLogPrune(context, databaseName);
+      return result;
+    } else {
+      //TODO replace with in-memory impl!
+      return new OIncrementOperationalLog();
+    }
   }
 
   public OPersistentOperationalLogV1(String storageFolder, OLogRequestFactory factory) {

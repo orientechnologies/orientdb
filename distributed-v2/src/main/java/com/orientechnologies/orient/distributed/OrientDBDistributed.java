@@ -56,7 +56,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private final    Map<String, ODistributedChannel>          members          = new HashMap<>();
   private volatile boolean                                   coordinator      = false;
   private volatile String                                    coordinatorName;
-  private final    OStructuralDistributedContext             structuralDistributedContext;
+  private          OStructuralDistributedContext             structuralDistributedContext;
   private          OCoordinatedExecutorMessageHandler        requestHandler;
   private          OCoordinateMessagesFactory                coordinateMessagesFactory;
   private          ODistributedNetworkManager                networkManager;
@@ -66,7 +66,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
-    structuralDistributedContext = new OStructuralDistributedContext(this);
+
     //This now si simple but should be replaced by a factory depending to the protocol version
     coordinateMessagesFactory = new OCoordinateMessagesFactory();
     requestHandler = new OCoordinatedExecutorMessageHandler(this);
@@ -91,8 +91,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   @Override
   public void onAfterActivate() {
     generateNodeConfig();
+    structuralDistributedContext = new OStructuralDistributedContext(this);
     networkManager = new ODistributedNetworkManager(this, getNodeConfig());
     networkManager.startup();
+
 
   }
 
@@ -534,5 +536,15 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     checkCoordinator(database);
     //TODO: double check this notify, it may unblock as well checkReadyForHandleRequests that is not what is expected
     this.notifyAll();
+  }
+
+  public OCoordinateMessagesFactory getCoordinateMessagesFactory() {
+    return coordinateMessagesFactory;
+  }
+
+  @Override
+  public void close() {
+    this.networkManager.shutdown();
+    super.close();
   }
 }

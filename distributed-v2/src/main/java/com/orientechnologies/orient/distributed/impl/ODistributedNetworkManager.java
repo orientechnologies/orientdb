@@ -75,6 +75,7 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
   }
 
   public void shutdown() {
+    discoveryManager.stop();
     closeAll();
     //TODO
   }
