@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.impl.coordinator.transaction;
 
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -14,8 +15,8 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.distributed.impl.coordinator.ONodeResponse;
+import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,12 +38,15 @@ public class FirstPhaseOperationTest {
 
   private OrientDB orientDB;
   private OServer  server;
+  private boolean  backwardCompatible;
 
   @Before
   public void before()
       throws IOException, InstantiationException, InvocationTargetException, NoSuchMethodException, MBeanRegistrationException,
       IllegalAccessException, InstanceAlreadyExistsException, NotCompliantMBeanException, ClassNotFoundException,
       MalformedObjectNameException {
+    backwardCompatible = OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.getValueAsBoolean();
+    OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(false);
     server = OServer.startFromClasspathConfig("orientdb-server-config.xml");
     ((OrientDBDistributed) server.getDatabases())
         .setCoordinator(((OrientDBDistributed) server.getDatabases()).getNodeConfig().getNodeName());
@@ -148,6 +152,7 @@ public class FirstPhaseOperationTest {
   public void after() {
     orientDB.drop(FirstPhaseOperationTest.class.getSimpleName());
     server.shutdown();
+    OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(backwardCompatible);
   }
 
 }

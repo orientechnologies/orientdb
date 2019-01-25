@@ -1,12 +1,12 @@
 package com.orientechnologies.orient.distributed.impl.metadata;
 
 import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.OClusterPositionAllocatorDatabase;
-import com.orientechnologies.orient.distributed.impl.OIncrementOperationalLog;
+import com.orientechnologies.orient.distributed.impl.OPersistentOperationalLogV1;
 import com.orientechnologies.orient.distributed.impl.coordinator.*;
 import com.orientechnologies.orient.distributed.impl.coordinator.lock.ODistributedLockManagerImpl;
 import com.orientechnologies.orient.distributed.impl.coordinator.transaction.OSessionOperationId;
@@ -28,17 +28,19 @@ public class ODistributedContext {
 
   public ODistributedContext(OStorage storage, OrientDBDistributed context) {
     transactions = new ConcurrentHashMap<>();
+    this.context = context;
+    this.databaseName = storage.getName();
     initOpLog();
     executor = new ODistributedExecutor(Executors.newSingleThreadExecutor(), opLog, context, storage.getName());
     submitContext = new OSubmitContextImpl();
     coordinator = null;
-    this.context = context;
-    this.databaseName = storage.getName();
+
   }
 
   private void initOpLog() {
-//    this.opLog = OPersistentOperationalLogV1.newInstance(databaseName, context);
-    this.opLog = new OIncrementOperationalLog();
+    this.opLog = OPersistentOperationalLogV1.newInstance(databaseName, context,
+        (x) -> ((OrientDBDistributed) context).getCoordinateMessagesFactory().createOperationRequest(x));
+//    this.opLog = new OIncrementOperationalLog();
   }
 
   public void registerTransaction(OSessionOperationId requestId, OTransactionInternal tx) {

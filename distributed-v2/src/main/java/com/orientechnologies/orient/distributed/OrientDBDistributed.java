@@ -280,7 +280,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         ODistributedContext distributed = ((OSharedContextDistributed) shared).getDistributedContext();
         if (distributed.getCoordinator() == null) {
           if (coordinator) {
-            distributed.makeCoordinator(plugin.getLocalNodeName(), shared);
+            distributed.makeCoordinator(getNodeNameFromConfig(), shared);
             for (Map.Entry<String, ODistributedChannel> node : members.entrySet()) {
               ODistributedMember member = new ODistributedMember(node.getKey(), database, node.getValue());
               distributed.getCoordinator().join(member);

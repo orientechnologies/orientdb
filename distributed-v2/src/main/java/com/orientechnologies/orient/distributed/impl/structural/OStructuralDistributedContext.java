@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed.impl.structural;
 
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
-import com.orientechnologies.orient.distributed.impl.OIncrementOperationalLog;
+import com.orientechnologies.orient.distributed.impl.OPersistentOperationalLogV1;
 import com.orientechnologies.orient.distributed.impl.coordinator.OOperationLog;
 
 import java.util.concurrent.Executors;
@@ -14,16 +14,17 @@ public class OStructuralDistributedContext {
   private OrientDBDistributed            context;
 
   public OStructuralDistributedContext(OrientDBDistributed context) {
+    this.context = context;
     initOpLog();
     executor = new OStructuralDistributedExecutor(Executors.newSingleThreadExecutor(), opLog, context);
     submitContext = new OStructuralSubmitContextImpl();
     coordinator = null;
-    this.context = context;
   }
 
   private void initOpLog() {
-//    this.opLog = OPersistentOperationalLogV1.newInstance(databaseName, context);
-    this.opLog = new OIncrementOperationalLog();
+    this.opLog = OPersistentOperationalLogV1
+        .newInstance("OSystem", context, (x) -> context.getCoordinateMessagesFactory().createStructuralOperationRequest(x));
+//    this.opLog = new OIncrementOperationalLog();
   }
 
   public OStructuralDistributedExecutor getExecutor() {
