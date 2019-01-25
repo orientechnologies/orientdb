@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.config;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -190,6 +191,16 @@ public interface OStorageConfiguration {
 
     public String getIndexType() {
       return indexType;
+    }
+
+    @Override
+    public String toString() {
+      return "IndexEngineData{" + "name='" + name + '\'' + ", algorithm='" + algorithm + '\'' + ", indexType='" + indexType + '\''
+          + ", durableInNonTxMode=" + durableInNonTxMode + ", version=" + version + ", apiVersion=" + apiVersion + ", multivalue="
+          + multivalue + ", valueSerializerId=" + valueSerializerId + ", keySerializedId=" + keySerializedId + ", isAutomatic="
+          + isAutomatic + ", keyTypes=" + Arrays.toString(keyTypes) + ", nullValuesSupport=" + nullValuesSupport + ", keySize="
+          + keySize + ", engineProperties=" + engineProperties + ", encryption='" + encryption + '\'' + ", encryptionOptions='"
+          + encryptionOptions + '\'' + '}';
     }
   }
 }
