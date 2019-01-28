@@ -57,9 +57,6 @@ public class ODefaultRemoteTaskFactoryV2 extends ODefaultRemoteTaskFactoryV1 {
     case OTxTask.FACTORYID: // 7
       return new OTxTask();
 
-    case OCompleted2pcTask.FACTORYID: // 8
-      return new OCompleted2pcTaskV1();
-
     case OStopServerTask.FACTORYID: // 9
       return new OStopServerTask();
 
@@ -117,15 +114,6 @@ public class ODefaultRemoteTaskFactoryV2 extends ODefaultRemoteTaskFactoryV1 {
     case OEnterpriseStatsTask.FACTORYID: // 29
       return new OEnterpriseStatsTask();
 
-
-
-    //--- here starts V2 ----
-
-    case OCloseQueryTask.FACTORYID: // 42
-      return new OCloseQueryTask();
-
-    case NodeOperationTask.FACTORYID: //55
-      return new NodeOperationTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

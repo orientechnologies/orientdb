@@ -57,9 +57,6 @@ public class ODefaultRemoteTaskFactoryV1 extends ODefaultRemoteTaskFactoryV0 {
     case OTxTask.FACTORYID: // 7
       return new OTxTask();
 
-    case OCompleted2pcTask.FACTORYID: // 8
-      return new OCompleted2pcTaskV1();
-
     case OStopServerTask.FACTORYID: // 9
       return new OStopServerTask();
 
