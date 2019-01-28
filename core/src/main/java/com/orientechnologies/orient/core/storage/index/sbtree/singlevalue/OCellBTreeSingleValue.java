@@ -497,6 +497,7 @@ public final class OCellBTreeSingleValue<K> extends ODurableComponent {
         releasePageFromRead(atomicOperation, entryPointCacheEntry);
       }
 
+      System.out.println("Tree name '" + getName() + "' encryption name '" + encryptionName + "'");
       if (encryptionName == null || encryptionName.trim().isEmpty()) {
         this.encryption = null;
       } else {
