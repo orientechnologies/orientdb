@@ -34,8 +34,13 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.*;
-import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ODirection;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.*;
@@ -591,6 +596,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
     copyRidBags(oldRecord, doc);
+    removeEdgeLinks(oldRecord);
     oldRecord.delete();
 
     if (iClassName != null)
@@ -651,6 +657,16 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     doc.save();
 
     return newIdentity;
+  }
+
+  private void removeEdgeLinks(ORecord oldRecord) {
+    ODocument doc = oldRecord.getRecord();
+    for (String propertyName : doc.getPropertyNames()) {
+      Object val = doc.getProperty(propertyName);
+      if (val instanceof ORidBag) {
+        doc.setProperty(propertyName, null);
+      }
+    }
   }
 
   private void copyRidBags(ORecord oldRecord, ODocument newDoc) {
@@ -1207,7 +1223,5 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     }
     return result;
   }
-
-
 
 }
