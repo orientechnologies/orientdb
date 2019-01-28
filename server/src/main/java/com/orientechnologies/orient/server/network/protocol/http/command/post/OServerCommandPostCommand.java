@@ -50,6 +50,8 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     Object params = null;
     String mode = "resultset";
 
+    boolean returnExecutionPlan = true;
+
     long begin = System.currentTimeMillis();
     if (iRequest.content != null && !iRequest.content.isEmpty()) {
       // CONTENT REPLACES TEXT
@@ -61,6 +63,10 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         if (doc.containsField("mode"))
           mode = doc.field("mode");
 
+        if ("false".equalsIgnoreCase("" + doc.field("returnExecutionPlan"))) {
+          returnExecutionPlan = false;
+        }
+
         if (params instanceof Collection) {
           final Object[] paramArray = new Object[((Collection) params).size()];
           ((Collection) params).toArray(paramArray);
@@ -69,6 +75,10 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       } else {
         text = iRequest.content;
       }
+    }
+
+    if ("false".equalsIgnoreCase("" + iRequest.getHeader("return-execution-plan"))) {
+      returnExecutionPlan = false;
     }
 
     if (text == null)
@@ -99,8 +109,9 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       }
 
       Map<String, Object> additionalContent = new HashMap<>();
-
-      result.getExecutionPlan().ifPresent(x -> additionalContent.put("executionPlan", x.toResult().toElement()));
+      if (returnExecutionPlan) {
+        result.getExecutionPlan().ifPresent(x -> additionalContent.put("executionPlan", x.toResult().toElement()));
+      }
 
       result.close();
       long elapsedMs = System.currentTimeMillis() - begin;
