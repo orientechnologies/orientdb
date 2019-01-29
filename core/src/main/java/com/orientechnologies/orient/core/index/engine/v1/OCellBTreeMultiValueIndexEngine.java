@@ -77,8 +77,10 @@ public final class OCellBTreeMultiValueIndexEngine implements OMultiValueIndexEn
   }
 
   @Override
-  public void load(String indexName, String encryptionKey) {
-    sbTree.load(indexName, encryptionKey);
+  public void load(final String name, final int keySize, final OType[] keyTypes, final OBinarySerializer keySerializer,
+      final OEncryption encryption) {
+    //noinspection unchecked
+    sbTree.load(name, keySize, keyTypes, keySerializer, encryption);
   }
 
   @Override
