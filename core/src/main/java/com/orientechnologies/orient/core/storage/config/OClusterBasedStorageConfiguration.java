@@ -196,7 +196,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       this.configuration = configuration;
 
       cluster.open();
-      btree.load(COMPONENT_NAME, null);
+      btree.load(COMPONENT_NAME, 1, null, OStringSerializer.INSTANCE, null);
 
       readConfiguration();
       readMinimumClusters();

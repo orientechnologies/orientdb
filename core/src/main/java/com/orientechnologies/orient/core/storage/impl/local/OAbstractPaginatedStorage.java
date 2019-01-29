@@ -466,7 +466,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     final OContextConfiguration ctxCfg = configuration.getContextConfiguration();
-    final String cfgEncryptionKey = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
 
     final Set<String> indexNames = configuration.indexEngines();
     for (final String indexName : indexNames) {
@@ -492,7 +491,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
                 engineData.getEngineProperties(), encryption);
 
       } else {
-        ((OV1IndexEngine) engine).load(engineData.getName(), cfgEncryptionKey);
+        ((OV1IndexEngine) engine).load(engineData.getName(), engineData.getKeySize(), engineData.getKeyTypes(),
+            cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()), encryption);
       }
 
       indexEngineNameMap.put(engineData.getName(), engine);
@@ -2311,7 +2311,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         makeStorageDirty();
 
         final OContextConfiguration ctxCfg = configuration.getContextConfiguration();
-        final String cfgEncryptionKey = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
 
         final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
         final int keySize = determineKeySize(indexDefinition);
@@ -2331,7 +2330,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               .load(engineName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullValuesSupport, keySize,
                   engineData.getEngineProperties(), null);
         } else {
-          ((OV1IndexEngine) engine).load(engineName, cfgEncryptionKey);
+          ((OV1IndexEngine) engine).load(engineName, keySize, keyTypes, keySerializer, null);
         }
 
         indexEngineNameMap.put(engineName, engine);
