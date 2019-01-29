@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.distributed.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.impl.coordinator.network.ODistributedChannelBinaryProtocol;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -16,11 +17,15 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
   private final ConcurrentMap<String, ORemoteServerController> remoteServers = new ConcurrentHashMap<String, ORemoteServerController>();
   private final OrientDBDistributed                            orientDB;
   private final ONodeConfiguration                             config;
+  private final ONodeInternalConfiguration                     internalConfiguration;
   private       OUDPMulticastNodeManager                       discoveryManager;
 
-  public ODistributedNetworkManager(OrientDBDistributed orientDB, ONodeConfiguration config) {
+  public ODistributedNetworkManager(OrientDBDistributed orientDB, ONodeConfiguration config,
+      ONodeInternalConfiguration internalConfiguration) {
     this.orientDB = orientDB;
     this.config = config;
+    this.internalConfiguration = internalConfiguration;
+
   }
 
   public ORemoteServerController getRemoteServer(final String rNodeName) {
@@ -65,12 +70,12 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
   public void startup() {
     //TODO different strategies for different infrastructures, eg. AWS
 
-    //TODO get info from config
-    String multicastIp = "230.0.0.0";
-    int multicastPort = 4321;
-    int[] pingPorts = { 4321 };
+//    //TODO get info from config
+//    String multicastIp = "230.0.0.0";
+//    int multicastPort = 4321;
+//    int[] pingPorts = { 4321 };
 
-    discoveryManager = new OUDPMulticastNodeManager(config, this, multicastPort, multicastIp, pingPorts, orientDB);
+    discoveryManager = new OUDPMulticastNodeManager(config, internalConfiguration, this, orientDB);
     discoveryManager.start();
   }
 

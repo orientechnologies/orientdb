@@ -23,20 +23,22 @@ import java.util.*;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
+import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 
 /**
  * Created by tglman on 27/06/16.
  */
 public class OrientDBConfig {
 
-  public static final String                  LOCK_TYPE_MODIFICATION = "modification";
-  public static final String                  LOCK_TYPE_READWRITE    = "readwrite";
+  public static final String LOCK_TYPE_MODIFICATION = "modification";
+  public static final String LOCK_TYPE_READWRITE    = "readwrite";
 
-  private             OrientDBConfig          parent;
-  private             OContextConfiguration   configurations;
-  private             Map<ATTRIBUTES, Object> attributes;
-  private             Set<ODatabaseListener>  listeners;
-  private             ClassLoader             classLoader;
+  private OrientDBConfig          parent;
+  private OContextConfiguration   configurations;
+  private Map<ATTRIBUTES, Object> attributes;
+  private Set<ODatabaseListener>  listeners;
+  private ClassLoader             classLoader;
+  private ONodeConfiguration      nodeConfiguration = ONodeConfiguration.builder().build();
 
   protected OrientDBConfig() {
     configurations = new OContextConfiguration();
@@ -79,6 +81,10 @@ public class OrientDBConfig {
 
   public Map<ATTRIBUTES, Object> getAttributes() {
     return attributes;
+  }
+
+  public ONodeConfiguration getNodeConfiguration() {
+    return nodeConfiguration;
   }
 
   public ClassLoader getClassLoader() {
