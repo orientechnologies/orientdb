@@ -69,11 +69,7 @@ public class ODistributedNetworkManager implements ODiscoveryListener {
 
   public void startup() {
     //TODO different strategies for different infrastructures, eg. AWS
-
-//    //TODO get info from config
-//    String multicastIp = "230.0.0.0";
-//    int multicastPort = 4321;
-//    int[] pingPorts = { 4321 };
+    
 
     discoveryManager = new OUDPMulticastNodeManager(config, internalConfiguration, this, orientDB);
     discoveryManager.start();

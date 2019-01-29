@@ -119,26 +119,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return new ONodeInternalConfiguration(UUID.randomUUID(), DISTRIBUTED_USER, user.password);
   }
 
-//  private void generateNodeConfig() {
-//    String nodeName = "_" + new Random().nextInt(100000000);//TODO load the name from config
-//    OServerNetworkListener protocol = server.getListenerByProtocol(ONetworkProtocolBinary.class);
-//    OServerUserConfiguration user = server.getUser("distributed_replication");
-//    if (user == null) {
-//      server.addTemporaryUser("distributed_replication", "" + new SecureRandom().nextLong(), "*");
-//      user = server.getUser("distributed_replication");
-//    }
-//    //TODO load from config file or cli
-//    ONodeConfiguration config = new ONodeConfiguration();
-//    config.setNodeName(nodeName);
-//    config.setQuorum(2);
-//    config.setConnectionUsername("distributed_replication");
-//    config.setConnectionPassword(user.password);
-//    config.setTcpPort(protocol.getInboundAddr().getPort());
-//    config.setGroupName("default");
-//    config.setGroupPassword("123456");
-//    this.nodeConfiguration = config;
-//  }
-
   @Override
   public void onBeforeDeactivate() {
     networkManager.shutdown();
