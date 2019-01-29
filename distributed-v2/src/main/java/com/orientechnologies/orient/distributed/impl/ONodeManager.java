@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OSchedulerInternal;
+import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -61,7 +62,8 @@ public abstract class ONodeManager {
 
   protected Map<String, ODiscoveryListener.NodeData> knownServers;
 
-  protected final ONodeConfiguration config;
+  protected final ONodeConfiguration         config;
+  protected final ONodeInternalConfiguration internalConfiguration;
 
   private String encryptionAlgorithm = "AES";
 
@@ -76,8 +78,10 @@ public abstract class ONodeManager {
 
   OLeaderElectionStateMachine leaderStatus;
 
-  public ONodeManager(ONodeConfiguration config, int term, OSchedulerInternal taskScheduler, ODiscoveryListener discoveryListener) {
+  public ONodeManager(ONodeConfiguration config, ONodeInternalConfiguration internalConfiguration, int term,
+      OSchedulerInternal taskScheduler, ODiscoveryListener discoveryListener) {
     this.config = config;
+    this.internalConfiguration = internalConfiguration;
     if (config.getGroupName() == null || config.getGroupName().length() == 0) {
       throw new IllegalArgumentException("Invalid group name");
     }
@@ -227,8 +231,8 @@ public abstract class ONodeManager {
     message.role =
         leaderStatus.status == OLeaderElectionStateMachine.Status.LEADER ? Message.ROLE_COORDINATOR : Message.ROLE_REPLICA;
 
-    message.connectionUsername = config.getConnectionUsername();
-    message.connectionPassword = config.getConnectionPassword();
+    message.connectionUsername = internalConfiguration.getConnectionUsername();
+    message.connectionPassword = internalConfiguration.getConnectionPassword();
     message.tcpPort = config.getTcpPort();
     //masterData
     ODiscoveryListener.NodeData master = this.knownServers.values().stream().filter(x -> x.master).findFirst().orElse(null);
