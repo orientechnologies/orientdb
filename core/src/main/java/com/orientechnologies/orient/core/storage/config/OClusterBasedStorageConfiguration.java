@@ -172,7 +172,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void close() throws IOException {
+  public void close() {
     lock.acquireWriteLock();
     try {
       updateListener = null;
@@ -180,11 +180,9 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       updateConfigurationProperty();
       updateMinimumClusters();
 
-      cluster.close();
-      btree.close();
-
       cache.clear();
 
+      //tree and cluster will be closed by storage automatically
     } finally {
       lock.releaseWriteLock();
     }

@@ -94,6 +94,8 @@ import com.orientechnologies.orient.core.index.engine.OIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OMultiValueIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSingleValueIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OV1IndexEngine;
+import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
+import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeSingleValueIndexEngine;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -4934,7 +4936,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         // we close all files inside cache system so we only clear index metadata and close non core indexes
         for (final OBaseIndexEngine engine : indexEngines) {
-          if (engine != null && !(engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine)) {
+          if (engine != null && !(engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine
+              || engine instanceof OCellBTreeSingleValueIndexEngine || engine instanceof OCellBTreeMultiValueIndexEngine)) {
             if (onDelete) {
               engine.delete();
             } else {
@@ -4947,9 +4950,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         indexEngineNameMap.clear();
 
         if (configuration != null) {
-          if (onDelete) {
-            ((OClusterBasedStorageConfiguration) configuration).delete();
-          } else {
+          if (!onDelete) {
             ((OClusterBasedStorageConfiguration) configuration).close();
           }
         }
