@@ -441,6 +441,11 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       Files.deleteIfExists(storagePath.resolve("database.ocf"));
     }
 
+    if (configuration == null) {
+      configuration = new OClusterBasedStorageConfiguration(this);
+      ((OClusterBasedStorageConfiguration) configuration).load(contextConfiguration);
+    }
+
     if (configuration.getBinaryFormatVersion() >= 11) {
       if (dirtyFlag.exists())
         dirtyFlag.open();
