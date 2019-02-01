@@ -428,7 +428,17 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  protected void preOpenSteps(final OContextConfiguration contextConfiguration) throws IOException {
+  protected void checkIfStorageDirty() throws IOException {
+    if (dirtyFlag.exists())
+      dirtyFlag.open();
+    else {
+      dirtyFlag.create();
+      dirtyFlag.makeDirty();
+    }
+  }
+
+  @Override
+  protected void initConfiguration(final OContextConfiguration contextConfiguration) throws IOException {
     if (!OClusterBasedStorageConfiguration.exists(writeCache) && Files.exists(storagePath.resolve("database.ocf"))) {
       final OStorageConfigurationSegment oldConfig = new OStorageConfigurationSegment(this);
       oldConfig.load(contextConfiguration);
@@ -444,22 +454,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     if (configuration == null) {
       configuration = new OClusterBasedStorageConfiguration(this);
       ((OClusterBasedStorageConfiguration) configuration).load(contextConfiguration);
-    }
-
-    if (configuration.getBinaryFormatVersion() >= 11) {
-      if (dirtyFlag.exists())
-        dirtyFlag.open();
-      else {
-        dirtyFlag.create();
-        dirtyFlag.makeDirty();
-      }
-    } else {
-      if (dirtyFlag.exists())
-        dirtyFlag.open();
-      else {
-        dirtyFlag.create();
-        dirtyFlag.clearDirty();
-      }
     }
   }
 

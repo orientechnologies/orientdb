@@ -106,7 +106,6 @@ public class OLuceneIndexCrashRestoreIT {
     OFileUtils.deleteRecursively(buildDir);
     Assert.assertFalse(buildDir.exists());
 
-    orientdb.close();
   }
 
   @Test
@@ -161,11 +160,14 @@ public class OLuceneIndexCrashRestoreIT {
 
     System.out.println("All loaders done");
 
+    databasePool.close();
+    orientdb.close();
+
     //now we start embedded
     System.out.println("START AGAIN");
 
     //start embedded
-    OServer server = OServerMain.create(false);
+    OServer server = OServerMain.create(true);
     InputStream conf = RemoteDBRunner.class.getResourceAsStream("index-crash-config.xml");
 
     server.startup(conf);
@@ -175,6 +177,9 @@ public class OLuceneIndexCrashRestoreIT {
       System.out.println("server active = " + server.isActive());
       TimeUnit.SECONDS.sleep(1);
     }
+
+    orientdb = new OrientDB("remote:localhost:3900", "root", "root", OrientDBConfig.defaultConfig());
+    databasePool = new ODatabasePool(orientdb, "testLuceneCrash", "admin", "admin");
 
     //test query
     db = databasePool.acquire();

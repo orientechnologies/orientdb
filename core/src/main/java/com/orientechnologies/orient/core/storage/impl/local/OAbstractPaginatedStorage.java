@@ -367,6 +367,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         atomicOperationsManager = new OAtomicOperationsManager(this);
         transaction = new ThreadLocal<>();
 
+        checkIfStorageDirty();
+        recoverIfNeeded();
+
         if (OClusterBasedStorageConfiguration.exists(writeCache)) {
           configuration = new OClusterBasedStorageConfiguration(this);
           ((OClusterBasedStorageConfiguration) configuration).load(contextConfiguration);
@@ -374,9 +377,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           //otherwise delayed to disk based storage to convert old format to new format.
         }
 
-        preOpenSteps(contextConfiguration);
-
-        recoverIfNeeded();
+        initConfiguration(contextConfiguration);
 
         checkPageSizeAndRelatedParameters();
 
@@ -4363,7 +4364,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return fullCheckpointCount.sum();
   }
 
-  protected void preOpenSteps(final OContextConfiguration contextConfiguration) throws IOException {
+  protected void checkIfStorageDirty() throws IOException {
+  }
+
+  protected void initConfiguration(final OContextConfiguration contextConfiguration) throws IOException {
   }
 
   @SuppressWarnings({ "WeakerAccess", "EmptyMethod" })

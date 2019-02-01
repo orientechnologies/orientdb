@@ -60,11 +60,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private static final String LOCALE_COUNTRY_PROPERTY  = "localeCountry";
   private static final String LOCALE_PROPERTY_INSTANCE = "localeInstance";
 
-  private static final String DATE_FORMAT_PROPERTY          = "dateFormat";
-  private static final String DATE_FORMAT_PROPERTY_INSTANCE = "dateFormatInstance";
-
-  private static final String DATE_TIME_FORMAT_PROPERTY          = "dateTimeFormat";
-  private static final String DATE_TIME_FORMAT_PROPERTY_INSTANCE = "dateTimeFormatInstance";
+  private static final String DATE_FORMAT_PROPERTY      = "dateFormat";
+  private static final String DATE_TIME_FORMAT_PROPERTY = "dateTimeFormat";
 
   private static final String TIME_ZONE_PROPERTY                 = "timeZone";
   private static final String CHARSET_PROPERTY                   = "charset";
@@ -140,8 +137,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       preloadStringProperties();
       preloadClusters();
       preloadConfigurationProperties();
-      recalculateDateTimeFormatInstance();
-      recalculateDateInstance();
       recalculateLocale();
     } finally {
       lock.releaseWriteLock();
@@ -203,8 +198,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       preloadStringProperties();
       preloadConfigurationProperties();
       preloadClusters();
-      recalculateDateTimeFormatInstance();
-      recalculateDateInstance();
       recalculateLocale();
     } finally {
       lock.releaseWriteLock();
@@ -584,7 +577,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     lock.acquireWriteLock();
     try {
       updateStringProperty(DATE_FORMAT_PROPERTY, dateFormat, true);
-      recalculateDateInstance();
     } finally {
       lock.releaseWriteLock();
     }
@@ -607,21 +599,16 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public SimpleDateFormat getDateFormatInstance() {
     lock.acquireReadLock();
     try {
-      final Object cachedValue = cache.get(DATE_FORMAT_PROPERTY_INSTANCE);
-      return (SimpleDateFormat) cachedValue;
+      final SimpleDateFormat dateFormatInstance = new SimpleDateFormat(getDateFormat());
+      dateFormatInstance.setLenient(false);
+      final TimeZone timeZone = getTimeZone();
+      if (timeZone != null) {
+        dateFormatInstance.setTimeZone(timeZone);
+      }
+
+      return dateFormatInstance;
     } finally {
       lock.releaseReadLock();
-    }
-  }
-
-  private void recalculateDateInstance() {
-    final SimpleDateFormat dateFormatInstance = new SimpleDateFormat(getDateFormat());
-    dateFormatInstance.setLenient(false);
-    final TimeZone timeZone = getTimeZone();
-    if (timeZone != null) {
-      dateFormatInstance.setTimeZone(timeZone);
-
-      cache.put(DATE_FORMAT_PROPERTY_INSTANCE, dateFormatInstance);
     }
   }
 
@@ -642,8 +629,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     lock.acquireWriteLock();
     try {
       updateStringProperty(DATE_TIME_FORMAT_PROPERTY, dateTimeFormat, true);
-
-      recalculateDateTimeFormatInstance();
     } finally {
       lock.releaseWriteLock();
     }
@@ -653,31 +638,23 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public SimpleDateFormat getDateTimeFormatInstance() {
     lock.acquireReadLock();
     try {
-      return (SimpleDateFormat) cache.get(DATE_TIME_FORMAT_PROPERTY_INSTANCE);
+      final SimpleDateFormat dateTimeFormatInstance = new SimpleDateFormat(getDateTimeFormat());
+      dateTimeFormatInstance.setLenient(false);
+      final TimeZone timeZone = getTimeZone();
+      if (timeZone != null) {
+        dateTimeFormatInstance.setTimeZone(timeZone);
+      }
+
+      return dateTimeFormatInstance;
     } finally {
       lock.releaseReadLock();
     }
-  }
-
-  private void recalculateDateTimeFormatInstance() {
-    final SimpleDateFormat dateTimeFormatInstance = new SimpleDateFormat(getDateTimeFormat());
-    dateTimeFormatInstance.setLenient(false);
-    final TimeZone timeZone = getTimeZone();
-    if (timeZone != null) {
-      dateTimeFormatInstance.setTimeZone(timeZone);
-
-      cache.put(DATE_TIME_FORMAT_PROPERTY_INSTANCE, dateTimeFormatInstance);
-    }
-
   }
 
   public void setTimeZone(final TimeZone timeZone) {
     lock.acquireWriteLock();
     try {
       updateStringProperty(TIME_ZONE_PROPERTY, timeZone.getID(), true);
-
-      recalculateDateTimeFormatInstance();
-      recalculateDateInstance();
     } finally {
       lock.releaseWriteLock();
     }
