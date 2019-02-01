@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
@@ -24,14 +25,24 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * @author Michael Hiess
@@ -86,14 +97,13 @@ public class MultipleDBTest extends DocumentDBBaseTest {
 
           ODatabaseHelper.deleteDatabase(tx, getStorageType());
           ODatabaseHelper.createDatabase(tx, dbUrl, getStorageType());
-
           try {
-            // System.out.println("(" + getDbId(tx) + ") " + "Created");
-
             if (tx.isClosed()) {
               tx.open("admin", "admin");
             }
-            tx.getMetadata().getSchema().createClass("DummyObject", 1, null);
+
+            tx.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 1);
+            tx.getMetadata().getSchema().getOrCreateClass("DummyObject");
             tx.getEntityManager().registerEntityClass(DummyObject.class);
 
             long start = System.currentTimeMillis();
@@ -250,6 +260,7 @@ public class MultipleDBTest extends DocumentDBBaseTest {
 
     // System.out.println("Test testDocumentMultipleDBsThreaded ended");
     // System.out.flush();
+
   }
 
   private String getDbId(ODatabaseInternal tx) {

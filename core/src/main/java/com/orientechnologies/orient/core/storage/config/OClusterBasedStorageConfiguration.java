@@ -137,6 +137,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       preloadStringProperties();
       preloadClusters();
       preloadConfigurationProperties();
+      setValidation(getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DB_VALIDATION));
       recalculateLocale();
     } finally {
       lock.releaseWriteLock();
@@ -199,6 +200,8 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       preloadConfigurationProperties();
       preloadClusters();
       recalculateLocale();
+
+      validation = "true".equalsIgnoreCase(getProperty("validation"));
     } finally {
       lock.releaseWriteLock();
     }
@@ -975,7 +978,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       final Map<String, String> properties = (Map<String, String>) cache.get(PROPERTIES);
       return properties.get(name);
     } finally {
-      lock.releaseWriteLock();
+      lock.releaseReadLock();
     }
   }
 
@@ -1710,7 +1713,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     updateMinimumClusters();//store inside of configuration
 
     setRecordSerializerVersion(0);
-    validation = getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DB_VALIDATION);
   }
 
   private void copy(final OStorageConfiguration storageConfiguration) {
