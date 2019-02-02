@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.impl.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.distributed.impl.ODistributedDatabaseImpl;
-import com.orientechnologies.orient.distributed.impl.ONodeConfiguration;
+import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.*;

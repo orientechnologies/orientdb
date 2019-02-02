@@ -14,11 +14,11 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.distributed.hazelcast.OCoordinatedExecutorMessageHandler;
-import com.orientechnologies.orient.distributed.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.distributed.impl.ODatabaseDocumentDistributedPooled;
 import com.orientechnologies.orient.distributed.impl.ODistributedNetworkManager;
-import com.orientechnologies.orient.distributed.impl.ONodeConfiguration;
+import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
+import com.orientechnologies.orient.distributed.impl.ONodeInternalConfiguration;
 import com.orientechnologies.orient.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedChannel;
 import com.orientechnologies.orient.distributed.impl.coordinator.ODistributedCoordinator;
@@ -37,10 +37,7 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.SecureRandom;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.*;
@@ -50,6 +47,8 @@ import static java.util.concurrent.TimeUnit.MINUTES;
  * Created by tglman on 08/08/17.
  */
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware, OServerLifecycleListener {
+
+  private static final String DISTRIBUTED_USER = "distributed_replication";
 
   private          OServer                                   server;
   private final    Map<String, ODistributedChannel>          members          = new HashMap<>();
@@ -70,6 +69,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     coordinateMessagesFactory = new OCoordinateMessagesFactory();
     requestHandler = new OCoordinatedExecutorMessageHandler(this);
 
+    this.nodeConfiguration = config.getNodeConfiguration();
+
   }
 
   public ONodeConfiguration getNodeConfig() {
@@ -89,31 +90,33 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void onAfterActivate() {
-    generateNodeConfig();
+
+    checkPort();
     structuralDistributedContext = new OStructuralDistributedContext(this);
-    networkManager = new ODistributedNetworkManager(this, getNodeConfig());
+    networkManager = new ODistributedNetworkManager(this, getNodeConfig(), generateInternalConfiguration());
     networkManager.startup();
 
   }
 
-  private void generateNodeConfig() {
-    String nodeName = "_" + new Random().nextInt(100000000);//TODO load the name from config
-    OServerNetworkListener protocol = server.getListenerByProtocol(ONetworkProtocolBinary.class);
-    OServerUserConfiguration user = server.getUser("distributed_replication");
-    if (user == null) {
-      server.addTemporaryUser("distributed_replication", "" + new SecureRandom().nextLong(), "*");
-      user = server.getUser("distributed_replication");
+  public void checkPort() {
+
+    // Use the inbound port in case it's not provided
+    if (this.nodeConfiguration.getTcpPort() == null) {
+      OServerNetworkListener protocol = server.getListenerByProtocol(ONetworkProtocolBinary.class);
+      this.nodeConfiguration.setTcpPort(protocol.getInboundAddr().getPort());
     }
-    //TODO load from config file or cli
-    ONodeConfiguration config = new ONodeConfiguration();
-    config.setNodeName(nodeName);
-    config.setQuorum(2);
-    config.setConnectionUsername("distributed_replication");
-    config.setConnectionPassword(user.password);
-    config.setTcpPort(protocol.getInboundAddr().getPort());
-    config.setGroupName("default");
-    config.setGroupPassword("123456");
-    this.nodeConfiguration = config;
+
+  }
+
+  private ONodeInternalConfiguration generateInternalConfiguration() {
+
+    OServerUserConfiguration user = server.getUser(DISTRIBUTED_USER);
+    if (user == null) {
+      server.addTemporaryUser(DISTRIBUTED_USER, "" + new SecureRandom().nextLong(), "*");
+      user = server.getUser(DISTRIBUTED_USER);
+    }
+
+    return new ONodeInternalConfiguration(UUID.randomUUID(), DISTRIBUTED_USER, user.password);
   }
 
   @Override

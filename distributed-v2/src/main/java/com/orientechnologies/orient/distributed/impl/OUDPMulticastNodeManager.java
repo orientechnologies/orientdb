@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OSchedulerInternal;
+import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 
 import java.io.IOException;
 import java.net.*;
@@ -18,18 +19,17 @@ public class OUDPMulticastNodeManager extends ONodeManager {
   private final int[] discoveryPorts;
 
   /**
+   * @param config
    * @param oDistributedNetworkManager
-   * @param multicastIp
-   * @param listeningPort
    * @param taskScheduler
    */
-  public OUDPMulticastNodeManager(ONodeConfiguration config, ODiscoveryListener oDistributedNetworkManager, int listeningPort,
-      String multicastIp, int[] multicastDiscoveryPorts, OSchedulerInternal taskScheduler) {
-    super(config, 0, taskScheduler, oDistributedNetworkManager); //TODO term (from OpLog...?)!!
+  public OUDPMulticastNodeManager(ONodeConfiguration config, ONodeInternalConfiguration internalConfiguration,
+      ODiscoveryListener oDistributedNetworkManager, OSchedulerInternal taskScheduler) {
+    super(config, internalConfiguration, 0, taskScheduler, oDistributedNetworkManager); //TODO term (from OpLog...?)!!
 
-    this.listeningPort = listeningPort;
-    this.multicastIp = multicastIp;
-    this.discoveryPorts = multicastDiscoveryPorts;
+    this.listeningPort = config.getMulticast().getPort();
+    this.multicastIp = config.getMulticast().getIp();
+    this.discoveryPorts = config.getMulticast().getDiscoveryPorts();
 
   }
 

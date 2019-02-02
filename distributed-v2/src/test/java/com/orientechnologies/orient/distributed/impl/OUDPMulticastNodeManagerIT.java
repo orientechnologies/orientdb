@@ -1,13 +1,13 @@
 package com.orientechnologies.orient.distributed.impl;
 
 import com.orientechnologies.orient.core.db.OSchedulerInternal;
+import com.orientechnologies.orient.core.db.config.OMulticastConfguration;
+import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
+import com.orientechnologies.orient.core.db.config.ONodeConfigurationBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class OUDPMulticastNodeManagerIT {
 
@@ -25,8 +25,6 @@ public class OUDPMulticastNodeManagerIT {
       totalNodes--;
     }
   }
-
-
 
   @Test
   public void testMasterElection() throws InterruptedException {
@@ -62,14 +60,17 @@ public class OUDPMulticastNodeManagerIT {
     Map<String, OUDPMulticastNodeManager> nodes = new LinkedHashMap<>();
     for (int i = 0; i < nNodes; i++) {
       String nodeName = "node" + i;
+      int port = 4321 + i;
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      ONodeConfiguration config = new ONodeConfiguration();
-      config.setNodeName(nodeName);
-      config.setGroupName("default");
-      config.setQuorum(quorum);
-      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager(config, discoveryListener,
-          4321 + i, "235.1.1.1", multicastPorts, scheduler);
+      ONodeConfiguration config = ONodeConfiguration.builder().setNodeName(nodeName).setGroupName("default").setQuorum(quorum)
+          .setMulticast(
+              OMulticastConfguration.builder().setEnabled(true).setPort(port).setIp("235.1.1.1").setDiscoveryPorts(multicastPorts)
+                  .build()).build();
+
+      ONodeInternalConfiguration internalConfiguration = new ONodeInternalConfiguration(UUID.randomUUID(), "", "");
+
+      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager(config, internalConfiguration, discoveryListener, scheduler);
       node.start();
       nodes.put(nodeName, node);
 
@@ -155,14 +156,17 @@ public class OUDPMulticastNodeManagerIT {
     Map<String, OUDPMulticastNodeManager> nodes = new LinkedHashMap<>();
     for (int i = 0; i < quorum; i++) {
       String nodeName = "node" + i;
+      int port = 4321 + i;
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      ONodeConfiguration config = new ONodeConfiguration();
-      config.setNodeName(nodeName);
-      config.setGroupName("default");
-      config.setQuorum(quorum);
-      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager(config, discoveryListener,
-          4321 + i, "235.1.1.1", multicastPorts, scheduler);
+      ONodeConfiguration config = ONodeConfiguration.builder().setNodeName(nodeName).setGroupName("default").setQuorum(quorum)
+          .setMulticast(
+              OMulticastConfguration.builder().setEnabled(true).setPort(port).setIp("235.1.1.1").setDiscoveryPorts(multicastPorts)
+                  .build()).build();
+
+      ONodeInternalConfiguration internalConfiguration = new ONodeInternalConfiguration(UUID.randomUUID(), "", "");
+
+      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager(config, internalConfiguration, discoveryListener, scheduler);
       node.start();
       nodes.put(nodeName, node);
 
@@ -188,14 +192,17 @@ public class OUDPMulticastNodeManagerIT {
 
     for (int i = 0; i < nNodes - quorum; i++) {
       String nodeName = "node" + (i + quorum);
+      int port = 4321 + i;
 
       ODiscoveryListener discoveryListener = new MockDiscoveryListener();
-      ONodeConfiguration config = new ONodeConfiguration();
-      config.setNodeName(nodeName);
-      config.setGroupName("default");
-      config.setQuorum(quorum);
-      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager(config, discoveryListener,
-          4321 + i + quorum, "235.1.1.1", multicastPorts, scheduler);
+      ONodeConfiguration config = ONodeConfiguration.builder().setNodeName(nodeName).setGroupName("default").setQuorum(quorum)
+          .setMulticast(
+              OMulticastConfguration.builder().setEnabled(true).setPort(port).setIp("235.1.1.1").setDiscoveryPorts(multicastPorts)
+                  .build()).build();
+
+      ONodeInternalConfiguration internalConfiguration = new ONodeInternalConfiguration(UUID.randomUUID(), "", "");
+
+      OUDPMulticastNodeManager node = new OUDPMulticastNodeManager(config, internalConfiguration, discoveryListener, scheduler);
       node.start();
       nodes.put(nodeName, node);
 
