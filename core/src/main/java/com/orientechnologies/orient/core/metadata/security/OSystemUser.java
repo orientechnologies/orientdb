@@ -80,13 +80,25 @@ public class OSystemUser extends OUser {
     	  }
       }
     }
-    // If databaseName is not set, only return roles without a OSystemRole.DB_FILTER property.
+    // If databaseName is not set, only return roles without a OSystemRole.DB_FILTER property or if set to "*".
     else {
-      if (roleDoc != null && !roleDoc.containsField(OSystemRole.DB_FILTER)) {
-    	  role = new OSystemRole(roleDoc);
+      if (roleDoc != null) {
+        if (!roleDoc.containsField(OSystemRole.DB_FILTER)) {
+    	    role = new OSystemRole(roleDoc);
+    	  } else { // It does use the dbFilter property.
+          if(roleDoc.fieldType(OSystemRole.DB_FILTER) == OType.EMBEDDEDLIST) {
+      	    List<String> dbNames = roleDoc.field(OSystemRole.DB_FILTER, OType.EMBEDDEDLIST);
+  	 	  
+  	 	      for (String dbName : dbNames) {
+  	           if (dbName != null && !dbName.isEmpty() && dbName.equals("*")) {
+    	          role = new OSystemRole(roleDoc);
+    	          break;
+    	        }
+    	      }
+    	    }
+        }
       }
     }
-
     return role;
   }
 }
