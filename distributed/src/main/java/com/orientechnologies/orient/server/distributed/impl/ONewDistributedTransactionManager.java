@@ -104,8 +104,36 @@ public class ONewDistributedTransactionManager {
     }
 
     if (nodes.isEmpty()) {
-      // NO FURTHER NODES TO INVOLVE
-      localOk(requestId, database);
+      switch (localResult.getResponseType()) {
+      case OTxSuccess.ID:
+        //Success send ok
+        localOk(requestId, database);
+        break;
+      case OTxException.ID:
+        //Exception send ko and throws the exception
+        localKo(requestId, database);
+        throw ((OTxException) localResult).getException();
+      case OTxUniqueIndex.ID: {
+        //Unique index quorum error send ko and throw unique index exception
+        localKo(requestId, database);
+        ORID id = ((OTxUniqueIndex) localResult).getRecordId();
+        String index = ((OTxUniqueIndex) localResult).getIndex();
+        Object key = ((OTxUniqueIndex) localResult).getKey();
+        throw new ORecordDuplicatedException(
+            String.format("Cannot index record %s: found duplicated key '%s' in index '%s' ", id, key, index), index, id, key);
+      }
+      case OTxConcurrentModification.ID: {
+        //Concurrent modification exception quorum send ko and throw cuncurrent modification exception
+        localKo(requestId, database);
+        ORID id = ((OTxConcurrentModification) localResult).getRecordId();
+        int version = ((OTxConcurrentModification) localResult).getVersion();
+        //TODO include all paramenter in response
+        throw new OConcurrentModificationException(id, version, 0, 0);
+      }
+      case OTxLockTimeout.ID:
+        throw new ODistributedRecordLockedException("DeadLock", new ORecordId(-1, -1), requestId,
+            database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT));
+      }
       return;
     }
     //TODO:check the lsn
