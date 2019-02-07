@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageChangesPortion;
@@ -14,12 +15,12 @@ public class OCacheEntryChanges implements OCacheEntry {
   OCacheEntry delegate;
   final OWALChanges changes = new OWALPageChangesPortion();
 
-  boolean isNew   = false;
-  boolean pinPage = false;
+  boolean isNew;
+  boolean pinPage;
 
   private OLogSequenceNumber changeLSN;
 
-  public OCacheEntryChanges(OCacheEntry entry) {
+  public OCacheEntryChanges(final OCacheEntry entry) {
     delegate = entry;
   }
 
@@ -38,7 +39,7 @@ public class OCacheEntryChanges implements OCacheEntry {
   }
 
   @Override
-  public void setCachePointer(OCachePointer cachePointer) {
+  public void setCachePointer(final OCachePointer cachePointer) {
     delegate.setCachePointer(cachePointer);
   }
 
@@ -97,7 +98,7 @@ public class OCacheEntryChanges implements OCacheEntry {
     return changes;
   }
 
-  public void setDelegate(OCacheEntry delegate) {
+  public void setDelegate(final OCacheEntry delegate) {
     this.delegate = delegate;
   }
 
@@ -111,15 +112,100 @@ public class OCacheEntryChanges implements OCacheEntry {
   }
 
   @Override
-  public void setEndLSN(OLogSequenceNumber endLSN) {
+  public void setEndLSN(final OLogSequenceNumber endLSN) {
     delegate.setEndLSN(endLSN);
+  }
+
+  @Override
+  public void markDirty() {
+    delegate.markDirty();
+  }
+
+  @Override
+  public void clearDirty() {
+    delegate.clearDirty();
+  }
+
+  @Override
+  public boolean isDirty() {
+    return delegate.isDirty();
+  }
+
+  @Override
+  public boolean acquireEntry() {
+    return delegate.acquireEntry();
+  }
+
+  @Override
+  public void releaseEntry() {
+    delegate.releaseEntry();
+  }
+
+  @Override
+  public boolean isReleased() {
+    return delegate.isReleased();
+  }
+
+  @Override
+  public boolean isAlive() {
+    return delegate.isAlive();
+  }
+
+  @Override
+  public boolean freeze() {
+    return delegate.freeze();
+  }
+
+  @Override
+  public boolean isFrozen() {
+    return delegate.isFrozen();
+  }
+
+  @Override
+  public void makeDead() {
+    delegate.makeDead();
+  }
+
+  @Override
+  public boolean isDead() {
+    return delegate.isDead();
+  }
+
+  @Override
+  public OCacheEntry getNext() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OCacheEntry getPrev() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setPrev(final OCacheEntry prev) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setNext(final OCacheEntry next) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setContainer(final LRUList lruList) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public LRUList getContainer() {
+    throw new UnsupportedOperationException();
   }
 
   OLogSequenceNumber getChangeLSN() {
     return changeLSN;
   }
 
-  void setChangeLSN(OLogSequenceNumber walLSN) {
+  void setChangeLSN(final OLogSequenceNumber walLSN) {
     this.changeLSN = walLSN;
   }
 }

@@ -104,7 +104,7 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
     return INSTANCE_HOLDER.get();
   }
 
-  ODirectMemoryAllocator() {
+  public ODirectMemoryAllocator() {
     trackedPointersQueue = new ReferenceQueue<>();
     trackedReferences = new HashSet<>();
     trackedBuffers = new HashMap<>();

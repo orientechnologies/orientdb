@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.cache;
 
+import com.orientechnologies.orient.core.storage.cache.chm.LRUList;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
@@ -64,4 +65,38 @@ public interface OCacheEntry {
   OLogSequenceNumber getEndLSN();
 
   void setEndLSN(OLogSequenceNumber endLSN);
+
+  void markDirty();
+
+  void clearDirty();
+
+  boolean isDirty();
+
+  boolean acquireEntry();
+
+  void releaseEntry();
+
+  boolean isReleased();
+
+  boolean isAlive();
+
+  boolean freeze();
+
+  boolean isFrozen();
+
+  void makeDead();
+
+  boolean isDead();
+
+  OCacheEntry getNext();
+
+  OCacheEntry getPrev();
+
+  void setPrev(OCacheEntry prev);
+
+  void setNext(OCacheEntry next);
+
+  void setContainer(LRUList lruList);
+
+  LRUList getContainer();
 }

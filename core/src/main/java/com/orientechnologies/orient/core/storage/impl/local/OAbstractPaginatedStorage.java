@@ -265,10 +265,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private volatile   int                      defaultClusterId                           = -1;
   protected volatile OAtomicOperationsManager atomicOperationsManager;
-  private volatile   boolean                  wereNonTxOperationsPerformedInPreviousOpen = false;
-  private volatile   OLowDiskSpaceInformation lowDiskSpace                               = null;
-  private volatile   boolean                  modificationLock                           = false;
-  private volatile   boolean                  readLock                                   = false;
+  private volatile   boolean                  wereNonTxOperationsPerformedInPreviousOpen;
+  private volatile   OLowDiskSpaceInformation lowDiskSpace;
+  private volatile   boolean                  modificationLock;
+  private volatile   boolean                  readLock;
   /**
    * Set of pages which were detected as broken and need to be repaired.
    */
@@ -413,13 +413,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           if (writeAheadLog != null) {
             writeAheadLog.close();
           }
-        } catch (Exception ee) {
+        } catch (final Exception ee) {
           //ignore
         }
 
         try {
           postCloseSteps(false, false);
-        } catch (Exception ee) {
+        } catch (final Exception ee) {
           //ignore
         }
 
@@ -440,8 +440,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         .infoNoDb(this, "Storage '%s' is opened under OrientDB distribution : %s", getURL(), OConstants.getVersion());
   }
 
-  private void initLockingStrategy(OContextConfiguration contextConfiguration) {
-    String lockKind = contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
+  private void initLockingStrategy(final OContextConfiguration contextConfiguration) {
+    final String lockKind = contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
     if (OrientDBConfig.LOCK_TYPE_MODIFICATION.equals(lockKind)) {
       modificationLock = true;
     } else if (OrientDBConfig.LOCK_TYPE_READWRITE.equals(lockKind)) {
@@ -707,23 +707,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       stateLock.acquireWriteLock();
       try {
-        try {
-          // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
-          close(true, true);
-
-          if (writeCache != null) {
-            if (readCache != null) {
-              readCache.deleteStorage(writeCache);
-            } else {
-              writeCache.delete();
-            }
-          }
-
-          postDeleteSteps();
-
-        } catch (final IOException e) {
-          throw OException.wrapException(new OStorageException("Cannot delete database '" + name + "'"), e);
-        }
+        // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
+        close(true, true);
+        postDeleteSteps();
       } finally {
         stateLock.releaseWriteLock();
         //noinspection ResultOfMethodCallIgnored
@@ -2088,13 +2074,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         if (modificationLock) {
-          List<ORID> recordLocks = new ArrayList<>();
-          for (ORecordOperation recordOperation : recordOperations) {
+          final List<ORID> recordLocks = new ArrayList<>();
+          for (final ORecordOperation recordOperation : recordOperations) {
             if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
               recordLocks.add(recordOperation.getRID());
             }
           }
-          Set<ORID> locked = transaction.getLockedRecords();
+          final Set<ORID> locked = transaction.getLockedRecords();
           if (locked != null) {
             recordLocks.removeAll(locked);
           }
@@ -2202,19 +2188,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       } finally {
         try {
           if (modificationLock) {
-            List<ORID> recordLocks = new ArrayList<>();
-            for (ORecordOperation recordOperation : recordOperations) {
+            final List<ORID> recordLocks = new ArrayList<>();
+            for (final ORecordOperation recordOperation : recordOperations) {
               if (recordOperation.type == ORecordOperation.UPDATED || recordOperation.type == ORecordOperation.DELETED) {
                 recordLocks.add(recordOperation.getRID());
               }
             }
 
-            Set<ORID> locked = transaction.getLockedRecords();
+            final Set<ORID> locked = transaction.getLockedRecords();
             if (locked != null) {
               recordLocks.removeAll(locked);
             }
 
-            for (ORID rid : recordLocks) {
+            for (final ORID rid : recordLocks) {
               releaseWriteLock(rid);
             }
           }
@@ -4173,7 +4159,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public void acquireWriteLock(final ORID rid, long timeout) {
+  public void acquireWriteLock(final ORID rid, final long timeout) {
     if (!modificationLock) {
       throw new ODatabaseException(
           "Record write locks are off by configuration, set the configuration \"storage.pessimisticLock\" to \""
@@ -4182,11 +4168,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       lockManager.acquireWriteLock(rid, timeout);
-    } catch (RuntimeException ee) {
+    } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
-    } catch (Error ee) {
+    } catch (final Error ee) {
       throw logAndPrepareForRethrow(ee);
-    } catch (Throwable t) {
+    } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
   }
@@ -4200,7 +4186,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       lockManager.acquireWriteLock(rid, 0);
-    } catch (RuntimeException ee) {
+    } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (final Error ee) {
       throw logAndPrepareForRethrow(ee);
@@ -4212,7 +4198,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void releaseWriteLock(final ORID rid) {
     try {
       lockManager.releaseWriteLock(rid);
-    } catch (RuntimeException ee) {
+    } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (final Error ee) {
       throw logAndPrepareForRethrow(ee);
@@ -4230,16 +4216,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       lockManager.acquireReadLock(rid, 0);
-    } catch (RuntimeException ee) {
+    } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
-    } catch (Error ee) {
+    } catch (final Error ee) {
       throw logAndPrepareForRethrow(ee);
-    } catch (Throwable t) {
+    } catch (final Throwable t) {
       throw logAndPrepareForRethrow(t);
     }
   }
 
-  public void acquireReadLock(final ORID rid, long timeout) {
+  public void acquireReadLock(final ORID rid, final long timeout) {
     if (!readLock) {
       throw new ODatabaseException(
           "Record read locks are off by configuration, set the configuration \"storage.pessimisticLock\" to \""
@@ -4248,7 +4234,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     try {
       lockManager.acquireReadLock(rid, timeout);
-    } catch (RuntimeException ee) {
+    } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (final Error ee) {
       throw logAndPrepareForRethrow(ee);
@@ -4260,7 +4246,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public final void releaseReadLock(final ORID rid) {
     try {
       lockManager.releaseReadLock(rid);
-    } catch (RuntimeException ee) {
+    } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (final Error ee) {
       throw logAndPrepareForRethrow(ee);
@@ -4490,7 +4476,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireReadLock();
     try {
       if (readLock) {
-        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
         if (db == null || !((OTransactionAbstract) db.getTransaction()).getLockedRecords().contains(rid)) {
           acquireReadLock(rid);
         }
@@ -4504,7 +4490,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } finally {
       try {
         if (readLock) {
-          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
           if (db == null || !((OTransactionAbstract) db.getTransaction()).getLockedRecords().contains(rid)) {
             releaseReadLock(rid);
           }
@@ -4532,7 +4518,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireReadLock();
     try {
       if (readLock) {
-        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
         if (db == null || !((OTransactionAbstract) db.getTransaction()).getLockedRecords().contains(rid)) {
           acquireReadLock(rid);
         }
@@ -4542,7 +4528,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } finally {
       try {
         if (readLock) {
-          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
           if (db == null || !((OTransactionAbstract) db.getTransaction()).getLockedRecords().contains(rid)) {
             releaseReadLock(rid);
           }
