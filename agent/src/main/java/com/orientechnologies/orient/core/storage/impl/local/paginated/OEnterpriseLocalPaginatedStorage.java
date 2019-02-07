@@ -559,6 +559,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
                 }
               }
             }
+
+            cacheEntry.markDirty();
           } finally {
             readCache.releaseFromWrite(cacheEntry, writeCache);
           }
