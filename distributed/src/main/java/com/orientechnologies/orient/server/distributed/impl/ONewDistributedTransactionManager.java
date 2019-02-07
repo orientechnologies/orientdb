@@ -102,7 +102,6 @@ public class ONewDistributedTransactionManager {
           .debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null, ODistributedServerLog.DIRECTION.NONE,
               "Error on updating local LSN configuration for database '%s'", storage.getName());
     }
-
     if (nodes.isEmpty()) {
       switch (localResult.getResponseType()) {
       case OTxSuccess.ID:
@@ -142,7 +141,6 @@ public class ONewDistributedTransactionManager {
     final Set sentNodes = new HashSet(nodes);
 
     iTx.setStatus(OTransaction.TXSTATUS.COMMITTING);
-
     // SYNCHRONOUS CALL: REPLICATE IT
     ((ODistributedAbstractPlugin) dManager)
         .sendRequest(storage.getName(), involvedClusters, nodes, txTask, requestId.getMessageId(), EXECUTION_MODE.RESPONSE,
@@ -180,18 +178,18 @@ public class ONewDistributedTransactionManager {
       switch (resultPayload.getResponseType()) {
       case OTxSuccess.ID:
         //Success send ok
-        localOk(requestId, database);
         sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, true, involvedClustersIds, getLsn()));
+        localOk(requestId, database);
         break;
       case OTxException.ID:
         //Exception send ko and throws the exception
-        localKo(requestId, database);
         sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+        localKo(requestId, database);
         throw ((OTxException) resultPayload).getException();
       case OTxUniqueIndex.ID: {
         //Unique index quorum error send ko and throw unique index exception
-        localKo(requestId, database);
         sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+        localKo(requestId, database);
         ORID id = ((OTxUniqueIndex) resultPayload).getRecordId();
         String index = ((OTxUniqueIndex) resultPayload).getIndex();
         Object key = ((OTxUniqueIndex) resultPayload).getKey();
@@ -200,12 +198,12 @@ public class ONewDistributedTransactionManager {
       }
       case OTxConcurrentModification.ID: {
         //Concurrent modification exception quorum send ko and throw cuncurrent modification exception
-        localKo(requestId, database);
         sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
+        localKo(requestId, database);
         ORID id = ((OTxConcurrentModification) resultPayload).getRecordId();
         int version = ((OTxConcurrentModification) resultPayload).getVersion();
-        //TODO include all paramenter in response
-        throw new OConcurrentModificationException(id, version, 0, 0);
+        throw new OConcurrentModificationException(id, version, iTx.getRecordEntry(id).getRecord().getVersion(),
+            iTx.getRecordEntry(id).getType());
       }
       case OTxLockTimeout.ID:
         sendPhase2Task(involvedClusters, nodes, new OTransactionPhase2Task(requestId, false, involvedClustersIds, getLsn()));
@@ -266,7 +264,6 @@ public class ONewDistributedTransactionManager {
 
   private void localKo(ODistributedRequestId requestId, ODatabaseDocumentDistributed database) {
     database.rollback2pc(requestId);
-
   }
 
   private void localOk(ODistributedRequestId requestId, ODatabaseDocumentDistributed database) {
@@ -274,7 +271,7 @@ public class ONewDistributedTransactionManager {
   }
 
   private void sendPhase2Task(Set<String> involvedClusters, Set<String> nodes, OTransactionPhase2Task task) {
-    dManager
+      dManager
         .sendRequest(storage.getName(), involvedClusters, nodes, task, dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE,
             "OK", null, null);
   }

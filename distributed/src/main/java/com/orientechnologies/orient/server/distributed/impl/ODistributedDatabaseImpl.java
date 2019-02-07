@@ -863,19 +863,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx) {
-    final ODistributedTxContext prevCtx = activeTxContexts.putIfAbsent(reqId, ctx);
-    if (prevCtx != null) {
-      // ALREADY EXISTENT
-      ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-          "Distributed transaction: repeating request %s in database '%s' (thread=%d)", reqId, databaseName,
-          Thread.currentThread().getId());
-      ctx = prevCtx;
-    } else
-      // REGISTERED
-      ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-          "Distributed transaction: registered request %s in database '%s' (thread=%d)", reqId, databaseName,
-          Thread.currentThread().getId());
-
+    final ODistributedTxContext prevCtx = activeTxContexts.put(reqId, ctx);
+    if(prevCtx != ctx && prevCtx != null)  {
+      prevCtx.destroy();
+    }
     return ctx;
   }
 
