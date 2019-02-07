@@ -93,8 +93,10 @@ public interface OWriteCache {
 
   void checkCacheOverflow() throws InterruptedException;
 
-  OCachePointer[] load(long fileId, long startPageIndex, int pageCount, boolean addNewPages, OModifiableBoolean cacheHit,
-      boolean verifyChecksums) throws IOException;
+  int allocateNewPage(final long fileId) throws IOException;
+
+  OCachePointer[] load(long fileId, long startPageIndex, int pageCount, OModifiableBoolean cacheHit, boolean verifyChecksums)
+      throws IOException;
 
   void flush(long fileId);
 

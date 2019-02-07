@@ -276,6 +276,11 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
     }
   }
 
+  @Override
+  public int allocateNewPage(final long fileId) {
+    throw new UnsupportedOperationException();
+  }
+
   private MemoryFile getFile(final int fileId) {
     final MemoryFile memoryFile = files.get(fileId);
 
@@ -436,6 +441,10 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
    */
   @Override
   public final void storeCacheState(final OWriteCache writeCache) {
+  }
+
+  @Override
+  public void changeMaximumAmountOfMemory(final long calculateReadCacheMaxMemory) {
   }
 
   @Override
@@ -679,7 +688,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
   }
 
   @Override
-  public final OCachePointer[] load(final long fileId, final long startPageIndex, final int pageCount, final boolean addNewPages,
+  public final OCachePointer[] load(final long fileId, final long startPageIndex, final int pageCount,
       final OModifiableBoolean cacheHit, final boolean verifyChecksums) {
     throw new UnsupportedOperationException();
   }
@@ -701,7 +710,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
 
   @Override
   public final Map<String, Long> files() {
-    final Map<String, Long> result = new HashMap<>();
+    final Map<String, Long> result = new HashMap<>(1024);
 
     metadataLock.lock();
     try {

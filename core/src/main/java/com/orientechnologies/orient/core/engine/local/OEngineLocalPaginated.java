@@ -30,6 +30,8 @@ import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.chm.AsyncReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
@@ -43,7 +45,7 @@ import java.util.Map;
 public class OEngineLocalPaginated extends OEngineAbstract {
   public static final String NAME = "plocal";
 
-  private volatile O2QCache readCache;
+  private volatile OReadCache readCache;
 
   protected final OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<>(getOpenFilesLimit());
 
@@ -71,14 +73,21 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
     super.startup();
 
-    readCache = new O2QCache(calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true,
-        OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger(),
-        OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS.getValueAsBoolean(),
-        OGlobalConfiguration.DISK_CACHE_STATISTICS_INTERVAL.getValueAsInteger());
+    if (OGlobalConfiguration.USE_CHM_CACHE.getValueAsBoolean()) {
+      readCache = new AsyncReadCache(
+          calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
+          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
+          OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS.getValueAsBoolean());
+    } else {
+      readCache = new O2QCache(calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
+          OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true,
+          OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger(),
+          OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS.getValueAsBoolean(),
+          OGlobalConfiguration.DISK_CACHE_STATISTICS_INTERVAL.getValueAsInteger());
+    }
   }
 
-  private long calculateReadCacheMaxMemory(final long cacheSize) {
+  private static long calculateReadCacheMaxMemory(final long cacheSize) {
     return (long) (cacheSize * ((100 - OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0));
   }
 
@@ -112,7 +121,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     return NAME;
   }
 
-  public O2QCache getReadCache() {
+  public OReadCache getReadCache() {
     return readCache;
   }
 

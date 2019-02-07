@@ -1033,7 +1033,14 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   private void recalculateLocale() {
     Locale locale;
     try {
-      locale = new Locale(getLocaleLanguage(), getLocaleCountry());
+      final String localeLanguage = getLocaleLanguage();
+      final String localeCountry = getLocaleCountry();
+
+      if (localeLanguage == null || localeCountry == null) {
+        locale = Locale.getDefault();
+      } else {
+        locale = new Locale(getLocaleLanguage(), getLocaleCountry());
+      }
     } catch (final RuntimeException e) {
       locale = Locale.getDefault();
     }

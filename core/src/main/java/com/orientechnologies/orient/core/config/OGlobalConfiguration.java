@@ -45,8 +45,7 @@ import java.util.logging.Level;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public enum OGlobalConfiguration {
-  // ENVIRONMENT
+public enum OGlobalConfiguration {// ENVIRONMENT
   ENVIRONMENT_DUMP_CFG_AT_STARTUP("environment.dumpCfgAtStartup", "Dumps the configuration during application startup",
       Boolean.class, Boolean.FALSE),
 
@@ -241,6 +240,9 @@ public enum OGlobalConfiguration {
   STORAGE_PESSIMISTIC_LOCKING("storage.pessimisticLock", "Enable/Disable pessimistic locking feature", Boolean.class, false),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
+
+  USE_CHM_CACHE("storage.useCHMCache",
+      "Whether to use new disk cache implementation based on CHM or old one based on cuncurrent queues", Boolean.class, true),
 
   WAL_SYNC_ON_PAGE_FLUSH("storage.wal.syncOnPageFlush", "Indicates whether a force sync should be performed during WAL page flush",
       Boolean.class, true),
@@ -969,7 +971,6 @@ public enum OGlobalConfiguration {
   @OApi(maturity = OApi.MATURITY.NEW) CLIENT_CONNECTION_FETCH_HOST_LIST("client.connection.fetchHostList",
       "If set true fetch the list of other possible hosts from the distributed environment ", Boolean.class, true),
 
-
   /**
    * @Since 2.2
    */
@@ -1268,5 +1269,4 @@ public enum OGlobalConfiguration {
 
   public String getDescription() {
     return description;
-  }
-}
+  }}

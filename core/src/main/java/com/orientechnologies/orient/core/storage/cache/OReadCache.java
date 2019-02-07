@@ -113,4 +113,6 @@ public interface OReadCache {
    * @param writeCache Write cache which manages files cache state of which is going to be stored.
    */
   void storeCacheState(OWriteCache writeCache);
+
+  void changeMaximumAmountOfMemory(long calculateReadCacheMaxMemory);
 }
