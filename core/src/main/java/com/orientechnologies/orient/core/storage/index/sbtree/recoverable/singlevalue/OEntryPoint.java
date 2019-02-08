@@ -7,10 +7,11 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 final class OEntryPoint<K> extends ODurablePage {
-  private static final int KEY_SERIALIZER_OFFSET = NEXT_FREE_POSITION;
-  private static final int KEY_SIZE_OFFSET       = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
-  private static final int TREE_SIZE_OFFSET      = KEY_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int PAGES_SIZE_OFFSET     = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int KEY_SERIALIZER_OFFSET      = NEXT_FREE_POSITION;
+  private static final int KEY_SIZE_OFFSET            = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int TREE_SIZE_OFFSET           = KEY_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int PAGES_SIZE_OFFSET          = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int NON_LEAF_PAGES_SIZE_OFFSET = PAGES_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
   OEntryPoint(final OCacheEntry cacheEntry) {
     super(cacheEntry);
@@ -19,6 +20,7 @@ final class OEntryPoint<K> extends ODurablePage {
   void init() {
     setLongValue(TREE_SIZE_OFFSET, 0);
     setIntValue(PAGES_SIZE_OFFSET, 1);
+    setIntValue(NON_LEAF_PAGES_SIZE_OFFSET, 0);
   }
 
   void setTreeSize(final long size) {
@@ -35,5 +37,13 @@ final class OEntryPoint<K> extends ODurablePage {
 
   int getPagesSize() {
     return getIntValue(PAGES_SIZE_OFFSET);
+  }
+
+  void setNonLeafPagesSize(final int pages) {
+    setIntValue(NON_LEAF_PAGES_SIZE_OFFSET, pages);
+  }
+
+  int getNonLeafPagesSize() {
+    return getIntValue(NON_LEAF_PAGES_SIZE_OFFSET);
   }
 }

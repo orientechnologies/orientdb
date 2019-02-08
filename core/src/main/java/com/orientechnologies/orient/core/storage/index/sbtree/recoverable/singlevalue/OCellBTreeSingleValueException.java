@@ -33,7 +33,7 @@ public final class OCellBTreeSingleValueException extends ODurableComponentExcep
     super(exception);
   }
 
-  OCellBTreeSingleValueException(final String message, final OCellBTreeSingleValue component) {
+  OCellBTreeSingleValueException(final String message, final ORecoverableCellBTreeSingleValue component) {
     super(message, component);
   }
 }
