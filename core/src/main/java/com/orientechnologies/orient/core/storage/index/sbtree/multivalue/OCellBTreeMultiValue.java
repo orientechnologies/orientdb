@@ -128,11 +128,11 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
         this.encryption = encryption;
         this.keySerializer = keySerializer;
 
-        fileId = addFile(atomicOperation, getFullName());
+        fileId = addFile(atomicOperation, getFullName(), true);
 
-        nullBucketFileId = addFile(atomicOperation, getName() + nullFileExtension);
+        nullBucketFileId = addFile(atomicOperation, getName() + nullFileExtension, true);
 
-        final OCacheEntry entryPointCacheEntry = addPage(atomicOperation, fileId);
+        final OCacheEntry entryPointCacheEntry = addPage(atomicOperation, fileId, true);
         try {
           final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
           entryPoint.init();
@@ -140,7 +140,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
           releasePageFromWrite(atomicOperation, entryPointCacheEntry);
         }
 
-        final OCacheEntry rootCacheEntry = addPage(atomicOperation, fileId);
+        final OCacheEntry rootCacheEntry = addPage(atomicOperation, fileId, true);
         try {
           @SuppressWarnings("unused")
           final Bucket<K> rootBucket = new Bucket<>(rootCacheEntry, true, keySerializer, encryption);
@@ -148,7 +148,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
           releasePageFromWrite(atomicOperation, rootCacheEntry);
         }
 
-        final OCacheEntry nullCacheEntry = addPage(atomicOperation, nullBucketFileId);
+        final OCacheEntry nullCacheEntry = addPage(atomicOperation, nullBucketFileId, true);
         try {
           final ONullEntryPoint entryPoint = new ONullEntryPoint(nullCacheEntry);
 
@@ -317,7 +317,8 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
 
           UpdateBucketSearchResult bucketSearchResult = findBucketForUpdate(key, atomicOperation);
 
-          OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false);
+          OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem(), false,
+              true);
           Bucket<K> keyBucket = new Bucket<>(keyBucketCacheEntry, keySerializer, encryption);
 
           final byte[] keyToInsert;
@@ -344,7 +345,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
             if (pageIndex != keyBucketCacheEntry.getPageIndex()) {
               releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
 
-              keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false);
+              keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
             }
 
             keyBucket = new Bucket<>(keyBucketCacheEntry, keySerializer, encryption);
@@ -367,12 +368,12 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
           }
 
           if (freeListHeader >= 0) {
-            final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, freeListHeader, false);
+            final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, freeListHeader, false, true);
             try {
               final ONullBucket nullBucket = new ONullBucket(nullCacheEntry, false);
 
               if (nullBucket.isEmpty()) {
-                final OCacheEntry cacheEntryPoint = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
+                final OCacheEntry cacheEntryPoint = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
                 try {
                   final ONullEntryPoint entryPointBucket = new ONullEntryPoint(cacheEntryPoint);
                   addToValueList(atomicOperation, entryPointBucket, freeListHeader);
@@ -385,7 +386,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
               assert added;
 
               if (nullBucket.isFull()) {
-                final OCacheEntry cacheEntryPoint = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
+                final OCacheEntry cacheEntryPoint = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
                 try {
                   final ONullEntryPoint entryPointBucket = new ONullEntryPoint(cacheEntryPoint);
                   entryPointBucket.setFreeListHeader(nullBucket.getNextFreeList());
@@ -399,16 +400,16 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
               releasePageFromWrite(atomicOperation, nullCacheEntry);
             }
           } else {
-            final OCacheEntry cacheEntryPoint = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
+            final OCacheEntry cacheEntryPoint = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
             try {
               final ONullEntryPoint entryPointBucket = new ONullEntryPoint(cacheEntryPoint);
               final int size = entryPointBucket.getSize();
 
               final OCacheEntry nullCacheEntry;
-              if (getFilledUpTo(atomicOperation, nullBucketFileId) <= size + 1) {
-                nullCacheEntry = addPage(atomicOperation, nullBucketFileId);
+              if (getFilledUpTo(atomicOperation, nullBucketFileId, true) <= size + 1) {
+                nullCacheEntry = addPage(atomicOperation, nullBucketFileId, true);
               } else {
-                nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, size + 1, false);
+                nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, size + 1, false, true);
               }
               try {
                 final ONullBucket nullBucket = new ONullBucket(nullCacheEntry, true);
@@ -449,7 +450,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
 
     final int lastPage = entryPointBucket.getLastPage();
     if (lastPage >= 0) {
-      final OCacheEntry lastPageEntry = loadPageForWrite(atomicOperation, nullBucketFileId, lastPage, false);
+      final OCacheEntry lastPageEntry = loadPageForWrite(atomicOperation, nullBucketFileId, lastPage, false, true);
       try {
         final ONullBucket lastPageBucket = new ONullBucket(lastPageEntry, false);
         assert lastPageBucket.getNext() == -1;
@@ -487,7 +488,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
     try {
       acquireExclusiveLock();
       try {
-        final OCacheEntry nullEntryPointCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
+        final OCacheEntry nullEntryPointCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
         try {
           final ONullEntryPoint entryPoint = new ONullEntryPoint(nullEntryPointCacheEntry);
 
@@ -499,7 +500,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
           releasePageFromWrite(atomicOperation, nullEntryPointCacheEntry);
         }
 
-        final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
+        final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
         try {
           final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
           entryPoint.init();
@@ -507,7 +508,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
           releasePageFromWrite(atomicOperation, entryPointCacheEntry);
         }
 
-        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, ROOT_INDEX, false);
+        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, ROOT_INDEX, false, true);
         try {
           @SuppressWarnings("unused")
           final Bucket<K> rootBucket = new Bucket<>(cacheEntry, true, keySerializer, encryption);
@@ -551,12 +552,12 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
       acquireExclusiveLock();
       try {
         if (isFileExists(atomicOperation, getFullName())) {
-          final long fileId = openFile(atomicOperation, getFullName());
+          final long fileId = openFile(atomicOperation, getFullName(), true);
           deleteFile(atomicOperation, fileId);
         }
 
         if (isFileExists(atomicOperation, getName() + nullFileExtension)) {
-          final long nullFileId = openFile(atomicOperation, getName() + nullFileExtension);
+          final long nullFileId = openFile(atomicOperation, getName() + nullFileExtension, true);
           deleteFile(atomicOperation, nullFileId);
         }
       } finally {
@@ -576,8 +577,8 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
     try {
       final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
-      fileId = openFile(atomicOperation, getFullName());
-      nullBucketFileId = openFile(atomicOperation, name + nullFileExtension);
+      fileId = openFile(atomicOperation, getFullName(), true);
+      nullBucketFileId = openFile(atomicOperation, name + nullFileExtension, true);
 
       this.keySize = keySize;
       this.keyTypes = keyTypes;
@@ -636,7 +637,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
           long rightSibling = -1;
 
           int removed;
-          OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false);
+          OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
           try {
             final Bucket<K> bucket = new Bucket<>(cacheEntry, keySerializer, encryption);
             removed = bucket.remove(itemIndex);
@@ -653,7 +654,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
           }
 
           while (leftSibling >= 0) {
-            cacheEntry = loadPageForWrite(atomicOperation, fileId, leftSibling, false);
+            cacheEntry = loadPageForWrite(atomicOperation, fileId, leftSibling, false, true);
             try {
               final Bucket<K> bucket = new Bucket<>(cacheEntry, keySerializer, encryption);
               final int size = bucket.size();
@@ -679,7 +680,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
           }
 
           while (rightSibling >= 0) {
-            cacheEntry = loadPageForWrite(atomicOperation, fileId, rightSibling, false);
+            cacheEntry = loadPageForWrite(atomicOperation, fileId, rightSibling, false, true);
             try {
               final Bucket<K> bucket = new Bucket<>(cacheEntry, keySerializer, encryption);
               final int size = bucket.size();
@@ -736,7 +737,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
           }
 
           {
-            final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
+            final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
             try {
               final ONullEntryPoint entryPoint = new ONullEntryPoint(entryPointCacheEntry);
               entryPoint.setSize(0);
@@ -785,7 +786,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
           long leftSibling = -1;
           long rightSibling = -1;
 
-          OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false);
+          OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
           try {
             final Bucket<K> bucket = new Bucket<>(cacheEntry, keySerializer, encryption);
 
@@ -805,7 +806,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
           }
 
           while (!removed && leftSibling >= 0) {
-            cacheEntry = loadPageForWrite(atomicOperation, fileId, leftSibling, false);
+            cacheEntry = loadPageForWrite(atomicOperation, fileId, leftSibling, false, true);
             try {
               final Bucket<K> bucket = new Bucket<>(cacheEntry, keySerializer, encryption);
               final int size = bucket.size();
@@ -831,7 +832,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
           }
 
           while (!removed && rightSibling >= 0) {
-            cacheEntry = loadPageForWrite(atomicOperation, fileId, rightSibling, false);
+            cacheEntry = loadPageForWrite(atomicOperation, fileId, rightSibling, false, true);
             try {
               final Bucket<K> bucket = new Bucket<>(cacheEntry, keySerializer, encryption);
               final int size = bucket.size();
@@ -876,14 +877,14 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
           int currentPage = firstPage;
           int prevPage = -1;
           while (currentPage >= 0) {
-            final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, currentPage, false);
+            final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, currentPage, false, true);
             try {
               final ONullBucket nullBucket = new ONullBucket(nullCacheEntry, false);
               final boolean wasFull = nullBucket.isFull();
               if (nullBucket.removeValue(value)) {
                 removed = true;
 
-                final OCacheEntry cacheEntryPoint = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
+                final OCacheEntry cacheEntryPoint = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
                 try {
                   final ONullEntryPoint nullEntryPointBucket = new ONullEntryPoint(cacheEntryPoint);
                   if (wasFull) {
@@ -893,7 +894,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
 
                   if (nullBucket.isEmpty()) {
                     if (prevPage >= 0) {
-                      final OCacheEntry prevPageEntry = loadPageForWrite(atomicOperation, nullBucketFileId, prevPage, false);
+                      final OCacheEntry prevPageEntry = loadPageForWrite(atomicOperation, nullBucketFileId, prevPage, false, true);
                       try {
                         final ONullBucket prevPageBucket = new ONullBucket(prevPageEntry, false);
                         prevPageBucket.setNext(nullBucket.getNext());
@@ -1095,7 +1096,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
   }
 
   private void updateSize(final long diffSize, final OAtomicOperation atomicOperation) throws IOException {
-    final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
+    final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
     try {
       final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
       entryPoint.setTreeSize(entryPoint.getTreeSize() + diffSize);
@@ -1447,18 +1448,18 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
       final OAtomicOperation atomicOperation) throws IOException {
 
     final OCacheEntry rightBucketEntry;
-    final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
+    final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
     try {
       final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
       final int pageSize = entryPoint.getPagesSize();
 
-      if (pageSize < getFilledUpTo(atomicOperation, fileId) - 1) {
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false);
+      if (pageSize < getFilledUpTo(atomicOperation, fileId, true) - 1) {
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, true);
         entryPoint.setPagesSize(pageSize + 1);
       } else {
-        assert pageSize == getFilledUpTo(atomicOperation, fileId) - 1;
+        assert pageSize == getFilledUpTo(atomicOperation, fileId, true) - 1;
 
-        rightBucketEntry = addPage(atomicOperation, fileId);
+        rightBucketEntry = addPage(atomicOperation, fileId, true);
         entryPoint.setPagesSize((int) rightBucketEntry.getPageIndex());
       }
     } finally {
@@ -1490,7 +1491,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
         bucketToSplit.setRightSibling(rightBucketEntry.getPageIndex());
 
         if (rightSiblingPageIndex >= 0) {
-          final OCacheEntry rightSiblingBucketEntry = loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, false);
+          final OCacheEntry rightSiblingBucketEntry = loadPageForWrite(atomicOperation, fileId, rightSiblingPageIndex, false, true);
           final Bucket<K> rightSiblingBucket = new Bucket<>(rightSiblingBucketEntry, keySerializer, encryption);
           try {
             rightSiblingBucket.setLeftSibling(rightBucketEntry.getPageIndex());
@@ -1501,7 +1502,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
       }
 
       long parentIndex = path.get(path.size() - 2);
-      OCacheEntry parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false);
+      OCacheEntry parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false, true);
       try {
         Bucket<K> parentBucket = new Bucket<>(parentCacheEntry, keySerializer, encryption);
         int insertionIndex = insertionIndexes.get(insertionIndexes.size() - 2);
@@ -1522,7 +1523,7 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
 
           if (parentIndex != parentCacheEntry.getPageIndex()) {
             releasePageFromWrite(atomicOperation, parentCacheEntry);
-            parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false);
+            parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentIndex, false, true);
           }
 
           parentBucket = new Bucket<>(parentCacheEntry, keySerializer, encryption);
@@ -1606,30 +1607,30 @@ public final class OCellBTreeMultiValue<K> extends ODurableComponent {
     final OCacheEntry leftBucketEntry;
     final OCacheEntry rightBucketEntry;
 
-    final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false);
+    final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, fileId, ENTRY_POINT_INDEX, false, true);
     try {
       final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
       int pageSize = entryPoint.getPagesSize();
 
-      final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId);
+      final int filledUpTo = (int) getFilledUpTo(atomicOperation, fileId, true);
 
       if (pageSize < filledUpTo - 1) {
-        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false);
+        leftBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, true);
         pageSize++;
       } else {
         assert pageSize == filledUpTo - 1;
 
-        leftBucketEntry = addPage(atomicOperation, fileId);
+        leftBucketEntry = addPage(atomicOperation, fileId, true);
         pageSize = (int) leftBucketEntry.getPageIndex();
       }
 
       if (pageSize < filledUpTo) {
-        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false);
+        rightBucketEntry = loadPageForWrite(atomicOperation, fileId, pageSize, false, true);
         pageSize++;
       } else {
         assert pageSize == filledUpTo;
 
-        rightBucketEntry = addPage(atomicOperation, fileId);
+        rightBucketEntry = addPage(atomicOperation, fileId, true);
         pageSize = (int) rightBucketEntry.getPageIndex();
       }
 

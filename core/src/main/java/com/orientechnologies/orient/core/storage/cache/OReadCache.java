@@ -67,7 +67,7 @@ public interface OReadCache {
   long addFile(String fileName, long fileId, OWriteCache writeCache) throws IOException;
 
   OCacheEntry loadForWrite(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
-      boolean verifyChecksums, OLogSequenceNumber startLSN) throws IOException;
+      boolean verifyChecksums, OLogSequenceNumber startLSN, final boolean durablePage) throws IOException;
 
   OCacheEntry loadForRead(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, int pageCount,
       boolean verifyChecksums) throws IOException;
@@ -78,7 +78,8 @@ public interface OReadCache {
 
   void pinPage(OCacheEntry cacheEntry, OWriteCache writeCache);
 
-  OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums, OLogSequenceNumber startLSN)
+  OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache, boolean verifyChecksums, OLogSequenceNumber startLSN,
+      final boolean durablePage)
       throws IOException;
 
   long getUsedMemory();

@@ -92,12 +92,15 @@ public final class AsyncReadCache implements OReadCache {
 
   @Override
   public final OCacheEntry loadForWrite(final long fileId, final long pageIndex, final boolean checkPinnedPages,
-      final OWriteCache writeCache, final int pageCount, final boolean verifyChecksums, final OLogSequenceNumber startLSN) {
+      final OWriteCache writeCache, final int pageCount, final boolean verifyChecksums, final OLogSequenceNumber startLSN,
+      final boolean durablePage) {
     final OCacheEntry cacheEntry = doLoad(fileId, (int) pageIndex, writeCache, verifyChecksums);
 
     if (cacheEntry != null) {
       cacheEntry.acquireExclusiveLock();
-      writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
+      if (durablePage) {
+        writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
+      }
     }
 
     return cacheEntry;
@@ -239,14 +242,16 @@ public final class AsyncReadCache implements OReadCache {
 
   @Override
   public final OCacheEntry allocateNewPage(long fileId, final OWriteCache writeCache, final boolean verifyChecksums,
-      final OLogSequenceNumber startLSN) throws IOException {
+      final OLogSequenceNumber startLSN, final boolean durablePage) throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
     final int newPageIndex = writeCache.allocateNewPage(fileId);
     final OCacheEntry cacheEntry = doLoad(fileId, newPageIndex, writeCache, true);
 
     if (cacheEntry != null) {
       cacheEntry.acquireExclusiveLock();
-      writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
+      if (durablePage) {
+        writeCache.updateDirtyPagesTable(cacheEntry.getCachePointer(), startLSN);
+      }
     }
 
     return cacheEntry;

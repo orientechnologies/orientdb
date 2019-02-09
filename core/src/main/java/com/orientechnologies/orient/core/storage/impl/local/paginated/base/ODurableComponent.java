@@ -67,7 +67,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   public ODurableComponent(final OAbstractPaginatedStorage storage, final String name, final String extension,
       final String lockName) {
     super(true);
-
     assert name != null;
     this.extension = extension;
     this.storage = storage;
@@ -112,21 +111,21 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
   }
 
-  protected long getFilledUpTo(final OAtomicOperation atomicOperation, final long fileId) {
+  protected long getFilledUpTo(final OAtomicOperation atomicOperation, final long fileId, final boolean durableFile) {
     if (atomicOperation == null) {
       return writeCache.getFilledUpTo(fileId);
     }
 
-    return atomicOperation.filledUpTo(fileId);
+    return atomicOperation.filledUpTo(fileId, durableFile);
   }
 
   protected OCacheEntry loadPageForWrite(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
-      final boolean checkPinnedPages) throws IOException {
+      final boolean checkPinnedPages, final boolean durableFile) throws IOException {
     if (atomicOperation == null) {
-      return readCache.loadForWrite(fileId, pageIndex, checkPinnedPages, writeCache, 1, true, null);
+      return readCache.loadForWrite(fileId, pageIndex, checkPinnedPages, writeCache, 1, true, null, durableFile);
     }
 
-    return atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1);
+    return atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1, durableFile);
   }
 
   protected OCacheEntry loadPageForRead(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
@@ -135,8 +134,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected OCacheEntry loadPageForRead(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
-      final boolean checkPinnedPages,
-      final int pageCount) throws IOException {
+      final boolean checkPinnedPages, final int pageCount) throws IOException {
     if (atomicOperation == null) {
       return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
     }
@@ -152,12 +150,13 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     }
   }
 
-  protected OCacheEntry addPage(final OAtomicOperation atomicOperation, final long fileId) throws IOException {
+  protected OCacheEntry addPage(final OAtomicOperation atomicOperation, final long fileId, final boolean durableFile)
+      throws IOException {
     if (atomicOperation == null) {
-      return readCache.allocateNewPage(fileId, writeCache, true, null);
+      return readCache.allocateNewPage(fileId, writeCache, true, null, true);
     }
 
-    return atomicOperation.addPage(fileId);
+    return atomicOperation.addPage(fileId, durableFile);
   }
 
   protected void releasePageFromWrite(final OAtomicOperation atomicOperation, final OCacheEntry cacheEntry) {
@@ -176,20 +175,22 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     }
   }
 
-  protected long addFile(final OAtomicOperation atomicOperation, final String fileName) throws IOException {
+  protected long addFile(final OAtomicOperation atomicOperation, final String fileName, final boolean durableFile)
+      throws IOException {
     if (atomicOperation == null) {
       return readCache.addFile(fileName, writeCache);
     }
 
-    return atomicOperation.addFile(fileName);
+    return atomicOperation.addFile(fileName, durableFile);
   }
 
-  protected long openFile(final OAtomicOperation atomicOperation, final String fileName) throws IOException {
+  protected long openFile(final OAtomicOperation atomicOperation, final String fileName, final boolean durableFile)
+      throws IOException {
     if (atomicOperation == null) {
       return writeCache.loadFile(fileName);
     }
 
-    return atomicOperation.loadFile(fileName);
+    return atomicOperation.loadFile(fileName, durableFile);
   }
 
   protected void deleteFile(final OAtomicOperation atomicOperation, final long fileId) throws IOException {
@@ -208,11 +209,12 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperation.isFileExists(fileName);
   }
 
-  protected void truncateFile(final OAtomicOperation atomicOperation, final long filedId) throws IOException {
+  protected void truncateFile(final OAtomicOperation atomicOperation, final long filedId, final boolean durableFile)
+      throws IOException {
     if (atomicOperation == null) {
       readCache.truncateFile(filedId, writeCache);
     } else {
-      atomicOperation.truncateFile(filedId);
+      atomicOperation.truncateFile(filedId, durableFile);
     }
   }
 }

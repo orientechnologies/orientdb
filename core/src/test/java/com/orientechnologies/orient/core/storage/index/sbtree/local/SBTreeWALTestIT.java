@@ -288,14 +288,15 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
               final long fileId = updatePageRecord.getFileId();
               final long pageIndex = updatePageRecord.getPageIndex();
 
-              OCacheEntry cacheEntry = expectedReadCache.loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1, false, null);
+              OCacheEntry cacheEntry = expectedReadCache
+                  .loadForWrite(fileId, pageIndex, true, expectedWriteCache, 1, false, null, true);
               if (cacheEntry == null) {
                 do {
                   if (cacheEntry != null) {
                     expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
                   }
 
-                  cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, false, null);
+                  cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, false, null, true);
                 } while (cacheEntry.getPageIndex() != pageIndex);
               }
 

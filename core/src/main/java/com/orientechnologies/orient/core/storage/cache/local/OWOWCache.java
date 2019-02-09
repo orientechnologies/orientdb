@@ -2712,7 +2712,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
               final Map.Entry<Long, TreeSet<PageKey>> lsnEntry = localDirtyPagesBySegment.firstEntry();
 
-              if (lsnEntry != null && segmentCount > 0 && lsnEntry.getKey() < endSegment) {
+              if (lsnEntry != null && segmentCount > 0 && lsnEntry.getKey() < endSegment && endSegment != startSegment) {
                 final long lsnTs = System.nanoTime();
 
                 lsnPages = flushWriteCacheFromMinLSN(startSegment, endSegment, 8 * chunkSize);

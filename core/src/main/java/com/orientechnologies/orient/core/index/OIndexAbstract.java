@@ -987,7 +987,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         try {
           final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
           if (atomicOperation.isFileExists(fileName)) {
-            final long fileId = atomicOperation.loadFile(fileName);
+            final long fileId = atomicOperation.loadFile(fileName, true);
             atomicOperation.deleteFile(fileId);
           }
         } catch (IOException e) {

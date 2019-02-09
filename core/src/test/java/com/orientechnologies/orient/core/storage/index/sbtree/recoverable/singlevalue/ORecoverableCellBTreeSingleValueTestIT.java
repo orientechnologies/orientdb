@@ -58,7 +58,7 @@ public class ORecoverableCellBTreeSingleValueTestIT {
 
   @Test
   public void testKeyPut() throws Exception {
-    final int keysCount = 1_000_000;
+    final int keysCount = 10_000_000;
 
     String lastKey = null;
 
@@ -231,7 +231,7 @@ public class ORecoverableCellBTreeSingleValueTestIT {
 
   @Test
   public void testKeyDelete() throws Exception {
-    final int keysCount = 1_000_000;
+    final int keysCount = 10_000_000;
 
     for (int i = 0; i < keysCount; i++) {
       singleValueTree.put(Integer.toString(i), new ORecordId(i % 32000, i));
@@ -254,7 +254,7 @@ public class ORecoverableCellBTreeSingleValueTestIT {
 
   @Test
   public void testKeyAddDelete() throws Exception {
-    final int keysCount = 1_000_000;
+    final int keysCount = 10_000_000;
 
     for (int i = 0; i < keysCount; i++) {
       singleValueTree.put(Integer.toString(i), new ORecordId(i % 32000, i));
@@ -289,7 +289,7 @@ public class ORecoverableCellBTreeSingleValueTestIT {
 
   @Test
   public void testKeyCursor() throws Exception {
-    final int keysCount = 1_000_000;
+    final int keysCount = 10_000_000;
 
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     final long seed = System.nanoTime();
@@ -318,7 +318,7 @@ public class ORecoverableCellBTreeSingleValueTestIT {
 
   @Test
   public void testIterateEntriesMajor() throws Exception {
-    final int keysCount = 1_000_000;
+    final int keysCount = 10_000_000;
 
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     final long seed = System.nanoTime();
@@ -346,7 +346,7 @@ public class ORecoverableCellBTreeSingleValueTestIT {
 
   @Test
   public void testIterateEntriesMinor() throws Exception {
-    final int keysCount = 1_000_000;
+    final int keysCount = 10_000_000;
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
 
     final long seed = System.nanoTime();
@@ -374,7 +374,7 @@ public class ORecoverableCellBTreeSingleValueTestIT {
 
   @Test
   public void testIterateEntriesBetween() throws Exception {
-    final int keysCount = 1_000_000;
+    final int keysCount = 10_000_000;
     NavigableMap<String, ORID> keyValues = new TreeMap<>();
     Random random = new Random();
 

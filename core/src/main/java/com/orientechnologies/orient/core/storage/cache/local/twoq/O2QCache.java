@@ -217,7 +217,8 @@ public final class O2QCache implements OReadCache {
 
   @Override
   public final OCacheEntry loadForWrite(final long fileId, final long pageIndex, final boolean checkPinnedPages,
-      final OWriteCache writeCache, final int pageCount, final boolean verifyChecksums, final OLogSequenceNumber startLSN)
+      final OWriteCache writeCache, final int pageCount, final boolean verifyChecksums, final OLogSequenceNumber startLSN,
+      final boolean durablePage)
       throws IOException {
     final OCacheEntry cacheEntry = doLoad(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, verifyChecksums);
 
@@ -470,7 +471,7 @@ public final class O2QCache implements OReadCache {
 
   @Override
   public final OCacheEntry allocateNewPage(long fileId, final OWriteCache writeCache, final boolean verifyChecksums,
-      final OLogSequenceNumber startLSN) throws IOException {
+      final OLogSequenceNumber startLSN, final boolean durablePage) throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
 
     UpdateCacheResult cacheResult;

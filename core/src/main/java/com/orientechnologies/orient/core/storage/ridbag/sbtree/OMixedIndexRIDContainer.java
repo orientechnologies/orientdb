@@ -25,14 +25,14 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
 
   private final long                     fileId;
   private final Set<ORID>                embeddedSet;
-  private       OIndexRIDContainerSBTree tree         = null;
+  private       OIndexRIDContainerSBTree tree;
   private final int                      topThreshold = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
       .getValueAsInteger();
 
   /**
    * Should be called inside of lock to ensure uniqueness of entity on disk !!!
    */
-  public OMixedIndexRIDContainer(String name, AtomicLong bonsayFileId) {
+  public OMixedIndexRIDContainer(final String name, final AtomicLong bonsayFileId) {
     long gotFileId = bonsayFileId.get();
     if (gotFileId == 0) {
       gotFileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
@@ -43,43 +43,43 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     embeddedSet = new HashSet<>();
   }
 
-  public OMixedIndexRIDContainer(long fileId, Set<ORID> embeddedSet, OIndexRIDContainerSBTree tree) {
+  public OMixedIndexRIDContainer(final long fileId, final Set<ORID> embeddedSet, final OIndexRIDContainerSBTree tree) {
     this.fileId = fileId;
     this.embeddedSet = embeddedSet;
     this.tree = tree;
   }
 
-  private static long resolveFileIdByName(String fileName) {
+  private static long resolveFileIdByName(final String fileName) {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage()
         .getUnderlying();
     boolean rollback = false;
     final OAtomicOperation atomicOperation;
     try {
       atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }
 
     try {
-      long fileId;
+      final long fileId;
 
       if (atomicOperation.isFileExists(fileName)) {
-        fileId = atomicOperation.loadFile(fileName);
+        fileId = atomicOperation.loadFile(fileName, true);
       } else {
-        fileId = atomicOperation.addFile(fileName);
+        fileId = atomicOperation.addFile(fileName, true);
       }
 
       return fileId;
-    } catch (IOException e) {
+    } catch (final IOException e) {
       rollback = true;
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
-    } catch (RuntimeException e) {
+    } catch (final RuntimeException e) {
       rollback = true;
       throw e;
     } finally {
       try {
         storage.getAtomicOperationsManager().endAtomicOperation(rollback);
-      } catch (IOException ioe) {
+      } catch (final IOException ioe) {
         OLogManager.instance().error(OMixedIndexRIDContainer.class, "Error of rollback of atomic operation", ioe);
       }
     }
@@ -108,7 +108,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   @Override
-  public boolean contains(Object o) {
+  public boolean contains(final Object o) {
     if (tree == null) {
       return embeddedSet.contains(o);
     }
@@ -176,7 +176,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
 
   @SuppressWarnings("SuspiciousToArrayCall")
   @Override
-  public <T> T[] toArray(T[] a) {
+  public <T> T[] toArray(final T[] a) {
     if (tree == null) {
       return embeddedSet.toArray(a);
     }
@@ -195,7 +195,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   @Override
-  public boolean add(OIdentifiable oIdentifiable) {
+  public boolean add(final OIdentifiable oIdentifiable) {
     if (embeddedSet.contains(oIdentifiable.getIdentity())) {
       return false;
     }
@@ -212,7 +212,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     return tree.add(oIdentifiable);
   }
 
-  public boolean addEntry(OIdentifiable identifiable) {
+  public boolean addEntry(final OIdentifiable identifiable) {
     if (embeddedSet.contains(identifiable.getIdentity())) {
       return false;
     }
@@ -234,8 +234,8 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   @Override
-  public boolean remove(Object o) {
-    boolean res = embeddedSet.remove(o);
+  public boolean remove(final Object o) {
+    final boolean res = embeddedSet.remove(o);
     if (res) {
       return true;
     }
@@ -248,7 +248,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   @Override
-  public boolean containsAll(Collection<?> c) {
+  public boolean containsAll(final Collection<?> c) {
     if (embeddedSet.containsAll(c)) {
       return true;
     }
@@ -265,7 +265,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   @Override
-  public boolean addAll(Collection<? extends OIdentifiable> c) {
+  public boolean addAll(final Collection<? extends OIdentifiable> c) {
     final int sizeDiff = topThreshold - embeddedSet.size();
     boolean changed = false;
 
@@ -295,7 +295,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   @Override
-  public boolean retainAll(Collection<?> c) {
+  public boolean retainAll(final Collection<?> c) {
     boolean changed = embeddedSet.retainAll(c);
     if (tree != null) {
       changed = changed | tree.retainAll(c);
@@ -305,7 +305,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   @Override
-  public boolean removeAll(Collection<?> c) {
+  public boolean removeAll(final Collection<?> c) {
     boolean changed = embeddedSet.removeAll(c);
     if (tree != null) {
       changed = changed | tree.removeAll(c);

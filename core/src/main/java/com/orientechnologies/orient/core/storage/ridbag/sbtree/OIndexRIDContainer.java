@@ -57,7 +57,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   /**
    * Should be called inside of lock to ensure uniqueness of entity on disk !!!
    */
-  public OIndexRIDContainer(String name, boolean durableNonTxMode, AtomicLong bonsayFileId) {
+  public OIndexRIDContainer(final String name, final boolean durableNonTxMode, final AtomicLong bonsayFileId) {
     long gotFileId = bonsayFileId.get();
     if (gotFileId == 0) {
       gotFileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
@@ -70,44 +70,44 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     this.durableNonTxMode = durableNonTxMode;
   }
 
-  public OIndexRIDContainer(long fileId, Set<OIdentifiable> underlying, boolean durableNonTxMode) {
+  public OIndexRIDContainer(final long fileId, final Set<OIdentifiable> underlying, final boolean durableNonTxMode) {
     this.fileId = fileId;
     this.underlying = underlying;
     isEmbedded = !(underlying instanceof OIndexRIDContainerSBTree);
     this.durableNonTxMode = durableNonTxMode;
   }
 
-  public void setTopThreshold(int topThreshold) {
+  public void setTopThreshold(final int topThreshold) {
     this.topThreshold = topThreshold;
   }
 
-  private static long resolveFileIdByName(String fileName) {
+  private static long resolveFileIdByName(final String fileName) {
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.instance().get().getStorage()
         .getUnderlying();
     boolean rollback = false;
     final OAtomicOperation atomicOperation;
     try {
       atomicOperation = storage.getAtomicOperationsManager().startAtomicOperation(fileName, true);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     }
 
     try {
-      long fileId;
+      final long fileId;
 
       if (atomicOperation.isFileExists(fileName)) {
-        fileId = atomicOperation.loadFile(fileName);
+        fileId = atomicOperation.loadFile(fileName, true);
       } else {
-        fileId = atomicOperation.addFile(fileName);
+        fileId = atomicOperation.addFile(fileName, true);
       }
       return fileId;
-    } catch (IOException e) {
+    } catch (final IOException e) {
       rollback = true;
       throw OException.wrapException(new OIndexEngineException("Error creation of sbtree with name " + fileName, fileName), e);
     } finally {
       try {
         storage.getAtomicOperationsManager().endAtomicOperation(rollback);
-      } catch (IOException ioe) {
+      } catch (final IOException ioe) {
         OLogManager.instance().error(OMixedIndexRIDContainer.class, "Error of rollback of atomic operation", ioe);
       }
     }
@@ -128,7 +128,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   @Override
-  public boolean contains(Object o) {
+  public boolean contains(final Object o) {
     return underlying.contains(o);
   }
 
@@ -144,43 +144,43 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
   @SuppressWarnings("SuspiciousToArrayCall")
   @Override
-  public <T> T[] toArray(T[] a) {
+  public <T> T[] toArray(final T[] a) {
     return underlying.toArray(a);
   }
 
   @Override
-  public boolean add(OIdentifiable oIdentifiable) {
+  public boolean add(final OIdentifiable oIdentifiable) {
     final boolean res = underlying.add(oIdentifiable);
     checkTopThreshold();
     return res;
   }
 
   @Override
-  public boolean remove(Object o) {
+  public boolean remove(final Object o) {
     final boolean res = underlying.remove(o);
     checkBottomThreshold();
     return res;
   }
 
   @Override
-  public boolean containsAll(Collection<?> c) {
+  public boolean containsAll(final Collection<?> c) {
     return underlying.containsAll(c);
   }
 
   @Override
-  public boolean addAll(Collection<? extends OIdentifiable> c) {
+  public boolean addAll(final Collection<? extends OIdentifiable> c) {
     final boolean res = underlying.addAll(c);
     checkTopThreshold();
     return res;
   }
 
   @Override
-  public boolean retainAll(Collection<?> c) {
+  public boolean retainAll(final Collection<?> c) {
     return underlying.retainAll(c);
   }
 
   @Override
-  public boolean removeAll(Collection<?> c) {
+  public boolean removeAll(final Collection<?> c) {
     final boolean res = underlying.removeAll(c);
     checkBottomThreshold();
     return res;

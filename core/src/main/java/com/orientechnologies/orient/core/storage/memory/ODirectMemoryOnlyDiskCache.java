@@ -184,7 +184,8 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
 
   @Override
   public final OCacheEntry loadForWrite(final long fileId, final long pageIndex, final boolean checkPinnedPages,
-      final OWriteCache writeCache, final int pageCount, final boolean verifyChecksums, final OLogSequenceNumber startLSN) {
+      final OWriteCache writeCache, final int pageCount, final boolean verifyChecksums, final OLogSequenceNumber startLSN,
+      final boolean durablePage) {
 
     final OCacheEntry cacheEntry = doLoad(fileId, pageIndex);
 
@@ -248,7 +249,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
 
   @Override
   public final OCacheEntry allocateNewPage(final long fileId, final OWriteCache writeCache, final boolean verifyChecksums,
-      final OLogSequenceNumber startLSN) {
+      final OLogSequenceNumber startLSN, final boolean durablePage) {
     final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
         .getSessionPerformanceStatistic();
 

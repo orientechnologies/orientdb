@@ -133,12 +133,12 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
         this.encryption = encryption;
         this.keySerializer = keySerializer;
 
-        leafFileId = addFile(atomicOperation, getFullName());
-        nonLeafFileId = addFile(atomicOperation, getName() + nonLeafFielExtension);
+        leafFileId = addFile(atomicOperation, getFullName(), true);
+        nonLeafFileId = addFile(atomicOperation, getName() + nonLeafFielExtension, false);
 
-        nullBucketFileId = addFile(atomicOperation, getName() + nullFileExtension);
+        nullBucketFileId = addFile(atomicOperation, getName() + nullFileExtension, true);
 
-        final OCacheEntry entryPointCacheEntry = addPage(atomicOperation, leafFileId);
+        final OCacheEntry entryPointCacheEntry = addPage(atomicOperation, leafFileId, true);
         try {
           final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
           entryPoint.init();
@@ -146,7 +146,7 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
           releasePageFromWrite(atomicOperation, entryPointCacheEntry);
         }
 
-        final OCacheEntry rootCacheEntry = addPage(atomicOperation, leafFileId);
+        final OCacheEntry rootCacheEntry = addPage(atomicOperation, leafFileId, true);
         try {
           @SuppressWarnings("unused")
           final OSBTreeBucketSingleValue<K> rootBucket = new OSBTreeBucketSingleValue<>(rootCacheEntry, true, keySerializer,
@@ -155,7 +155,7 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
           releasePageFromWrite(atomicOperation, rootCacheEntry);
         }
 
-        final OCacheEntry nullCacheEntry = addPage(atomicOperation, nullBucketFileId);
+        final OCacheEntry nullCacheEntry = addPage(atomicOperation, nullBucketFileId, true);
         try {
           @SuppressWarnings("unused")
           final ONullBucket nullBucket = new ONullBucket(nullCacheEntry, true);
@@ -247,7 +247,7 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
           UpdateBucketSearchResult bucketSearchResult = findBucketForUpdate(key, atomicOperation);
 
           OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, leafFileId, bucketSearchResult.getLastPathItem(),
-              false);
+              false, true);
           OSBTreeBucketSingleValue<K> keyBucket = new OSBTreeBucketSingleValue<>(keyBucketCacheEntry, keySerializer, keyTypes,
               encryption);
 
@@ -328,7 +328,7 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
             if (pageIndex != keyBucketCacheEntry.getPageIndex()) {
               releasePageFromWrite(atomicOperation, keyBucketCacheEntry);
 
-              keyBucketCacheEntry = loadPageForWrite(atomicOperation, leafFileId, pageIndex, false);
+              keyBucketCacheEntry = loadPageForWrite(atomicOperation, leafFileId, pageIndex, false, true);
             }
 
             keyBucket = new OSBTreeBucketSingleValue<>(keyBucketCacheEntry, keySerializer, keyTypes, encryption);
@@ -341,7 +341,7 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
           }
 
         } else {
-          final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
+          final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
 
           int sizeDiff = 0;
 
@@ -398,7 +398,7 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
     try {
       acquireExclusiveLock();
       try {
-        final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
+        final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
         try {
           final ONullBucket nullBucket = new ONullBucket(nullCacheEntry, false);
           nullBucket.removeValue();
@@ -406,7 +406,7 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
           releasePageFromWrite(atomicOperation, nullCacheEntry);
         }
 
-        final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, leafFileId, ENTRY_POINT_INDEX, false);
+        final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, leafFileId, ENTRY_POINT_INDEX, false, true);
         try {
           final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
           entryPoint.init();
@@ -414,7 +414,7 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
           releasePageFromWrite(atomicOperation, entryPointCacheEntry);
         }
 
-        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, leafFileId, ROOT_INDEX, false);
+        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, leafFileId, ROOT_INDEX, false, true);
         try {
           @SuppressWarnings("unused")
           final OSBTreeBucketSingleValue<K> rootBucket = new OSBTreeBucketSingleValue<>(cacheEntry, true, keySerializer, keyTypes,
@@ -462,12 +462,12 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
       acquireExclusiveLock();
       try {
         if (isFileExists(atomicOperation, getFullName())) {
-          final long fileId = openFile(atomicOperation, getFullName());
+          final long fileId = openFile(atomicOperation, getFullName(), true);
           deleteFile(atomicOperation, fileId);
         }
 
         if (isFileExists(atomicOperation, getName() + nullFileExtension)) {
-          final long nullFileId = openFile(atomicOperation, getName() + nullFileExtension);
+          final long nullFileId = openFile(atomicOperation, getName() + nullFileExtension, true);
           deleteFile(atomicOperation, nullFileId);
         }
       } finally {
@@ -487,9 +487,9 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
     try {
       final OAtomicOperation atomicOperation = OAtomicOperationsManager.getCurrentOperation();
 
-      nonLeafFileId = openFile(atomicOperation, name + nonLeafFielExtension);
-      leafFileId = openFile(atomicOperation, getFullName());
-      nullBucketFileId = openFile(atomicOperation, name + nullFileExtension);
+      nonLeafFileId = openFile(atomicOperation, name + nonLeafFielExtension, false);
+      leafFileId = openFile(atomicOperation, getFullName(), true);
+      nullBucketFileId = openFile(atomicOperation, name + nullFileExtension, true);
 
       this.keySize = keySize;
       this.keyTypes = keyTypes;
@@ -545,7 +545,7 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
 
           removedValue = removeKey(atomicOperation, bucketSearchResult);
         } else {
-          if (getFilledUpTo(atomicOperation, nullBucketFileId) == 0) {
+          if (getFilledUpTo(atomicOperation, nullBucketFileId, true) == 0) {
             return null;
           }
 
@@ -565,7 +565,7 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
 
   private ORID removeNullBucket(final OAtomicOperation atomicOperation) throws IOException {
     ORID removedValue;
-    final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false);
+    final OCacheEntry nullCacheEntry = loadPageForWrite(atomicOperation, nullBucketFileId, 0, false, true);
     try {
       final ONullBucket nullBucket = new ONullBucket(nullCacheEntry, false);
       removedValue = nullBucket.getValue();
@@ -586,7 +586,8 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
 
   private ORID removeKey(final OAtomicOperation atomicOperation, final BucketSearchResult bucketSearchResult) throws IOException {
     final ORID removedValue;
-    final OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, leafFileId, bucketSearchResult.pageIndex, false);
+    final OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, leafFileId, bucketSearchResult.pageIndex, false,
+        true);
     try {
       final OSBTreeBucketSingleValue<K> keyBucket = new OSBTreeBucketSingleValue<>(keyBucketCacheEntry, keySerializer, keyTypes,
           encryption);
@@ -751,7 +752,7 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
   }
 
   private void updateSize(final long diffSize, final OAtomicOperation atomicOperation) throws IOException {
-    final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, leafFileId, ENTRY_POINT_INDEX, false);
+    final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, leafFileId, ENTRY_POINT_INDEX, false, true);
     try {
       final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
       entryPoint.setTreeSize(entryPoint.getTreeSize() + diffSize);
@@ -1106,7 +1107,8 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
         bucketToSplit.setRightSibling(rightBucketEntry.getPageIndex());
 
         if (rightSiblingPageIndex >= 0) {
-          final OCacheEntry rightSiblingBucketEntry = loadPageForWrite(atomicOperation, leafFileId, rightSiblingPageIndex, false);
+          final OCacheEntry rightSiblingBucketEntry = loadPageForWrite(atomicOperation, leafFileId, rightSiblingPageIndex, false,
+              true);
           final OSBTreeBucketSingleValue<K> rightSiblingBucket = new OSBTreeBucketSingleValue<>(rightSiblingBucketEntry,
               keySerializer, keyTypes, encryption);
           try {
@@ -1127,7 +1129,8 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
         parentFileId = nonLeafFileId;
       }
 
-      OCacheEntry parentCacheEntry = loadPageForWrite(atomicOperation, parentFileId, parentIndex, false);
+      OCacheEntry parentCacheEntry = loadPageForWrite(atomicOperation, parentFileId, parentIndex, false,
+          parentFileId == leafFileId);
       try {
         OSBTreeBucketSingleValue<K> parentBucket = new OSBTreeBucketSingleValue<>(parentCacheEntry, keySerializer, keyTypes,
             encryption);
@@ -1161,7 +1164,7 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
           if (parentIndex != parentCacheEntry.getPageIndex() || parentFileId != parentCacheEntry.getFileId()) {
             releasePageFromWrite(atomicOperation, parentCacheEntry);
 
-            parentCacheEntry = loadPageForWrite(atomicOperation, parentFileId, parentIndex, false);
+            parentCacheEntry = loadPageForWrite(atomicOperation, parentFileId, parentIndex, false, true);
           }
 
           parentBucket = new OSBTreeBucketSingleValue<>(parentCacheEntry, keySerializer, keyTypes, encryption);
@@ -1200,18 +1203,18 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
 
   private OCacheEntry allocateLeafPage(final OAtomicOperation atomicOperation) throws IOException {
     final OCacheEntry rightBucketEntry;
-    final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, leafFileId, ENTRY_POINT_INDEX, false);
+    final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, leafFileId, ENTRY_POINT_INDEX, false, true);
     try {
       final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
       final int pageSize = entryPoint.getPagesSize();
 
-      if (pageSize < getFilledUpTo(atomicOperation, leafFileId) - 1) {
-        rightBucketEntry = loadPageForWrite(atomicOperation, leafFileId, pageSize, false);
+      if (pageSize < getFilledUpTo(atomicOperation, leafFileId, true) - 1) {
+        rightBucketEntry = loadPageForWrite(atomicOperation, leafFileId, pageSize, false, true);
         entryPoint.setPagesSize(pageSize + 1);
       } else {
-        assert pageSize == getFilledUpTo(atomicOperation, leafFileId) - 1;
+        assert pageSize == getFilledUpTo(atomicOperation, leafFileId, true) - 1;
 
-        rightBucketEntry = addPage(atomicOperation, leafFileId);
+        rightBucketEntry = addPage(atomicOperation, leafFileId, true);
         entryPoint.setPagesSize((int) rightBucketEntry.getPageIndex());
       }
     } finally {
@@ -1222,18 +1225,18 @@ public final class ORecoverableCellBTreeSingleValue<K> extends ODurableComponent
 
   private OCacheEntry allocateNonLeafPage(final OAtomicOperation atomicOperation) throws IOException {
     final OCacheEntry rightBucketEntry;
-    final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, leafFileId, ENTRY_POINT_INDEX, false);
+    final OCacheEntry entryPointCacheEntry = loadPageForWrite(atomicOperation, leafFileId, ENTRY_POINT_INDEX, false, true);
     try {
       final OEntryPoint<K> entryPoint = new OEntryPoint<>(entryPointCacheEntry);
       final int pageSize = entryPoint.getNonLeafPagesSize();
 
-      if (pageSize < getFilledUpTo(atomicOperation, nonLeafFileId)) {
-        rightBucketEntry = loadPageForWrite(atomicOperation, nonLeafFileId, pageSize, false);
+      if (pageSize < getFilledUpTo(atomicOperation, nonLeafFileId, false)) {
+        rightBucketEntry = loadPageForWrite(atomicOperation, nonLeafFileId, pageSize, false, false);
         entryPoint.setNonLeafPagesSize(pageSize + 1);
       } else {
-        assert pageSize == getFilledUpTo(atomicOperation, nonLeafFileId);
+        assert pageSize == getFilledUpTo(atomicOperation, nonLeafFileId, false);
 
-        rightBucketEntry = addPage(atomicOperation, nonLeafFileId);
+        rightBucketEntry = addPage(atomicOperation, nonLeafFileId, false);
         entryPoint.setNonLeafPagesSize((int) rightBucketEntry.getPageIndex() + 1);
       }
     } finally {
