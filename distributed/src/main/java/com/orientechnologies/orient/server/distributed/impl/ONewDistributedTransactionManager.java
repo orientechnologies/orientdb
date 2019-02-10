@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -50,10 +51,7 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedOperatio
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Distributed transaction manager.
@@ -77,6 +75,31 @@ public class ONewDistributedTransactionManager {
 
   public List<ORecordOperation> commit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx,
       final ODistributedStorageEventListener eventListener) {
+    int nretry = database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
+    int delay = database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+    int count = 0;
+    do {
+
+      try {
+        return retriedCommit(database, iTx);
+      } catch (ODistributedRecordLockedException ex) {
+        if (count == nretry) {
+          throw ex;
+        }
+        int v = new Random().nextInt(1000);
+        try {
+          Thread.sleep(delay * count + v);
+        } catch (InterruptedException e) {
+          Thread.interrupted();
+          return null;
+        }
+      }
+      count++;
+    } while (true);
+
+  }
+
+  public List<ORecordOperation> retriedCommit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx) {
     final String localNodeName = dManager.getLocalNodeName();
 
     iTx.setStatus(OTransaction.TXSTATUS.BEGUN);
@@ -92,8 +115,23 @@ public class ONewDistributedTransactionManager {
     final Set<String> involvedClusters = getInvolvedClusters(iTx.getRecordOperations());
     Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
     final OTransactionPhase1Task txTask = !nodes.isEmpty() ? createTxTask(iTx, nodes) : null;
-
-    OTransactionResultPayload localResult = OTransactionPhase1Task.executeTransaction(requestId, database, iTx, true, -1);
+    OTransactionResultPayload localResult;
+    int nretry = database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
+    int delay = database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+    int count = 0;
+    do {
+      localResult = OTransactionPhase1Task.executeTransaction(requestId, database, iTx, true, -1);
+      if (count != 0) {
+        int v = new Random().nextInt(1000);
+        try {
+          Thread.sleep(delay * count + v);
+        } catch (InterruptedException e) {
+          Thread.interrupted();
+          return null;
+        }
+      }
+      count++;
+    } while (localResult.getResponseType() == OTxLockTimeout.ID && count < nretry);
 
     try {
       localDistributedDatabase.getSyncConfiguration()
@@ -267,7 +305,7 @@ public class ONewDistributedTransactionManager {
   }
 
   private void sendPhase2Task(Set<String> involvedClusters, Set<String> nodes, OTransactionPhase2Task task) {
-      dManager
+    dManager
         .sendRequest(storage.getName(), involvedClusters, nodes, task, dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE,
             "OK", null, null);
   }
