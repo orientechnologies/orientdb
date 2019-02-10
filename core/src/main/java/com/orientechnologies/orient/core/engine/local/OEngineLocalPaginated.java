@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.engine.local;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.jna.ONative;
@@ -74,7 +75,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     super.startup();
 
     if (OGlobalConfiguration.USE_CHM_CACHE.getValueAsBoolean()) {
-      readCache = new AsyncReadCache(
+      readCache = new AsyncReadCache(OByteBufferPool.instance(null),
           calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
           OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
           OGlobalConfiguration.DISK_CACHE_PRINT_CACHE_STATISTICS.getValueAsBoolean());

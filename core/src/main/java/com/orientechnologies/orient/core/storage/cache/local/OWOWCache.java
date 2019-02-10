@@ -59,6 +59,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import javax.annotation.Nonnull;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -597,11 +599,9 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
    * {@link #diskSizeCheckInterval} new disk space check is performed and if amount of space left on disk less than threshold
    * {@link
    * #freeSpaceLimit} then database is switched in "read only" mode
-   *
-   * @param pagesAdded Amount of pages added during call of <code>load</code> method.
    */
-  private void freeSpaceCheckAfterNewPageAdd(final int pagesAdded) throws IOException {
-    final long newPagesAdded = amountOfNewPagesAdded.addAndGet(pagesAdded);
+  private void freeSpaceCheckAfterNewPageAdd() throws IOException {
+    final long newPagesAdded = amountOfNewPagesAdded.addAndGet(1);
     final long lastSpaceCheck = lastDiskSpaceCheck.get();
 
     if (newPagesAdded - lastSpaceCheck > diskSizeCheckInterval || lastSpaceCheck == 0) {
@@ -1184,24 +1184,12 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
           final Lock lock = lockManager.acquireExclusiveLock(new PageKey(intId, allocationIndex));
           try {
             if (fileClassic.getFileSize() == allocationIndex * pageSize) {
-              final OPointer pointer = bufferPool.acquireDirect(true);
-              final ByteBuffer buffer = pointer.getNativeByteBuffer();
-
-              addMagicAndChecksum(buffer);
-              fileClassic.allocateSpace(buffer);
-              buffer.rewind();
-
-              final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, fileId, allocationIndex);
-              //item only in write cache till we will not return
-              //it to read cache so we increment exclusive size by one
-              //otherwise call of write listener inside pointer may set exclusive size to negative value
-              exclusiveWriteCacheSize.getAndIncrement();
-
-              doPutInCache(cachePointer, new PageKey(intId, allocationIndex));
+              final long allocatedPosition = fileClassic.allocateSpace(pageSize);
+              assert allocationIndex * pageSize == allocatedPosition;
 
               //we check is it enough space on disk to continue to write data on it
               //otherwise we switch storage in read-only mode
-              freeSpaceCheckAfterNewPageAdd(1);
+              freeSpaceCheckAfterNewPageAdd();
 
               return (int) allocationIndex;
             } else {
@@ -1211,7 +1199,6 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
             lock.unlock();
           }
         }
-
       } finally {
         files.release(entry);
       }
@@ -2265,6 +2252,7 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
           throw new OStorageException(message);
         } else if (checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode) {
+          dumpStackTrace(message);
           callPageIsBrokenListeners(fileNameById(fileId), pageIndex);
         }
       }
@@ -2294,9 +2282,23 @@ public final class OWOWCache extends OAbstractWriteCache implements OWriteCache,
 
         throw new OStorageException(message);
       } else if (checksumMode == OChecksumMode.StoreAndSwitchReadOnlyMode) {
+        dumpStackTrace(message);
+
         callPageIsBrokenListeners(fileNameById(fileId), pageIndex);
       }
     }
+  }
+
+  private void dumpStackTrace(final String message) {
+    final StringWriter stringWriter = new StringWriter();
+    final PrintWriter printWriter = new PrintWriter(stringWriter);
+
+    printWriter.println(message);
+    final Exception exception = new Exception();
+    exception.printStackTrace(printWriter);
+    printWriter.flush();
+
+    OLogManager.instance().error(this, stringWriter.toString(), null);
   }
 
   private void flushPage(final int fileId, final long pageIndex, final ByteBuffer buffer, final OLogSequenceNumber endLSN)

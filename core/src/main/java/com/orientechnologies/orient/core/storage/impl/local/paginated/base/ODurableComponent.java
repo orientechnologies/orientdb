@@ -121,12 +121,12 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected OCacheEntry loadPageForWrite(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
-      final boolean checkPinnedPages) throws IOException {
+      final boolean checkPinnedPages, final boolean verifyCheckSum) throws IOException {
     if (atomicOperation == null) {
       return readCache.loadForWrite(fileId, pageIndex, checkPinnedPages, writeCache, 1, true, null);
     }
 
-    return atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1);
+    return atomicOperation.loadPageForWrite(fileId, pageIndex, checkPinnedPages, 1, verifyCheckSum);
   }
 
   protected OCacheEntry loadPageForRead(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
@@ -135,8 +135,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected OCacheEntry loadPageForRead(final OAtomicOperation atomicOperation, final long fileId, final long pageIndex,
-      final boolean checkPinnedPages,
-      final int pageCount) throws IOException {
+      final boolean checkPinnedPages, final int pageCount) throws IOException {
     if (atomicOperation == null) {
       return readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
     }
@@ -154,7 +153,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected OCacheEntry addPage(final OAtomicOperation atomicOperation, final long fileId) throws IOException {
     if (atomicOperation == null) {
-      return readCache.allocateNewPage(fileId, writeCache, true, null);
+      return readCache.allocateNewPage(fileId, writeCache, null);
     }
 
     return atomicOperation.addPage(fileId);

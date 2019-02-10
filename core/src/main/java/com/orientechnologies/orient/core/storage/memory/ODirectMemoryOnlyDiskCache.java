@@ -247,8 +247,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implem
   }
 
   @Override
-  public final OCacheEntry allocateNewPage(final long fileId, final OWriteCache writeCache, final boolean verifyChecksums,
-      final OLogSequenceNumber startLSN) {
+  public final OCacheEntry allocateNewPage(final long fileId, final OWriteCache writeCache, final OLogSequenceNumber startLSN) {
     final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
         .getSessionPerformanceStatistic();
 
