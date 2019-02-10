@@ -82,11 +82,11 @@ public class ODistributedWorker extends Thread {
     this.acceptsWhileNotOnline = acceptsWhileNotOnline;
   }
 
-  public void processRequest(final ODistributedRequest request) {
+  public boolean processRequest(final ODistributedRequest request) {
     if (!acceptsWhileNotOnline && manager.isOffline()) {
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
           "Discard request '%s' for database '%s' because the server is not online", request, this.databaseName);
-      return;
+      return false;
     }
 
     if (!localQueue.offer(request)) {
@@ -101,8 +101,10 @@ public class ODistributedWorker extends Thread {
       } catch (InterruptedException e) {
         // JUST RETURN
         Thread.currentThread().interrupt();
+        return false;
       }
     }
+    return true;
   }
 
   @Override
