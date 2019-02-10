@@ -224,7 +224,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public void waitForOnline() {
     try {
-      if(!databaseName.equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME))      
+      if (!databaseName.equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME))
         waitForOnline.await();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -313,11 +313,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         final CountDownLatch syncLatch = new CountDownLatch(involvedWorkerQueues.size());
         final ODistributedRequest syncRequest = new ODistributedRequest(null, request.getId().getNodeId(), -1, databaseName,
             new OSynchronizedTaskWrapper(syncLatch));
+        boolean enqueued = true;
         for (int queue : involvedWorkerQueues) {
           ODistributedWorker worker = workerThreads.get(queue);
-          worker.processRequest(syncRequest);
+          enqueued &= worker.processRequest(syncRequest);
         }
-
+        if (!enqueued) {
+          ODistributedWorker.sendResponseBack(this, manager, request, new OOfflineNodeException("Node Not yet online"));
+          return;
+        }
         // Make infinite timeout everytime
         long taskTimeout = 0;
         try {
@@ -882,7 +886,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId, ODistributedTxContext ctx) {
     final ODistributedTxContext prevCtx = activeTxContexts.put(reqId, ctx);
-    if(prevCtx != ctx && prevCtx != null)  {
+    if (prevCtx != ctx && prevCtx != null) {
       prevCtx.destroy();
     }
     return ctx;
