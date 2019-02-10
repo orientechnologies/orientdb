@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.core.storage.cache.chm;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.directmemory.OPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.ORawPair;
@@ -64,10 +66,14 @@ public final class AsyncReadCache implements OReadCache {
 
   private final int pageSize;
 
-  public AsyncReadCache(final long maxCacheSizeInBytes, final int pageSize, final boolean trackHitRate) {
+  private final OByteBufferPool bufferPool;
+
+  public AsyncReadCache(final OByteBufferPool bufferPool, final long maxCacheSizeInBytes, final int pageSize,
+      final boolean trackHitRate) {
     evictionLock.lock();
     try {
       this.pageSize = pageSize;
+      this.bufferPool = bufferPool;
 
       this.trackHitRate = trackHitRate;
       this.maxCacheSize = (int) (maxCacheSizeInBytes / pageSize);
@@ -185,6 +191,26 @@ public final class AsyncReadCache implements OReadCache {
     }
   }
 
+  private OCacheEntry addNewPagePointerToTheCache(final long fileId, final int pageIndex) {
+    final PageKey pageKey = new PageKey(fileId, pageIndex);
+
+    final OPointer pointer = bufferPool.acquireDirect(true);
+    final OCachePointer cachePointer = new OCachePointer(pointer, bufferPool, fileId, pageIndex);
+    cachePointer.incrementReadersReferrer();
+
+    final OCacheEntry cacheEntry = new OCacheEntryImpl(fileId, pageIndex, cachePointer);
+    cacheEntry.acquireEntry();
+
+    final OCacheEntry oldCacheEntry = data.putIfAbsent(pageKey, cacheEntry);
+    if (oldCacheEntry != null) {
+      throw new IllegalStateException("Page  " + fileId + ":" + pageIndex + " was allocated in other thread");
+    }
+
+    afterAdd(cacheEntry);
+
+    return cacheEntry;
+  }
+
   @Override
   public final void changeMaximumAmountOfMemory(final long maxMemory) {
     evictionLock.lock();
@@ -238,11 +264,11 @@ public final class AsyncReadCache implements OReadCache {
   }
 
   @Override
-  public final OCacheEntry allocateNewPage(long fileId, final OWriteCache writeCache, final boolean verifyChecksums,
-      final OLogSequenceNumber startLSN) throws IOException {
+  public final OCacheEntry allocateNewPage(long fileId, final OWriteCache writeCache, final OLogSequenceNumber startLSN)
+      throws IOException {
     fileId = OAbstractWriteCache.checkFileIdCompatibility(writeCache.getId(), fileId);
     final int newPageIndex = writeCache.allocateNewPage(fileId);
-    final OCacheEntry cacheEntry = doLoad(fileId, newPageIndex, writeCache, true);
+    final OCacheEntry cacheEntry = addNewPagePointerToTheCache(fileId, newPageIndex);
 
     if (cacheEntry != null) {
       cacheEntry.acquireExclusiveLock();
