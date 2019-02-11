@@ -43,6 +43,7 @@ import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -503,6 +504,16 @@ public final class O2QCache implements OReadCache {
 
     cacheRequests.increment();
     cacheHits.increment();
+
+    if (cacheEntry != null) {
+      final OCachePointer cachePointer = cacheEntry.getCachePointer();
+      assert cachePointer != null;
+
+      final ByteBuffer buffer = cachePointer.getBufferDuplicate();
+      assert buffer != null;
+
+      buffer.put(new byte[buffer.limit()]);
+    }
 
     return cacheResult.cacheEntry;
   }
