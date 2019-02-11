@@ -115,8 +115,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
     try {
       final OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<>(rootCacheEntry, this.rootBucketPointer.getPageOffset(),
-          true,
-          keySerializer, valueSerializer, this);
+          true, keySerializer, valueSerializer, this);
       rootBucket.setTreeSize(0);
     } finally {
       releasePageFromWrite(atomicOperation, rootCacheEntry);
@@ -202,7 +201,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         BucketSearchResult bucketSearchResult = findBucket(key, atomicOperation);
         OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
 
-        OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketPointer.getPageIndex(), false, true);
+        OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketPointer.getPageIndex(), false, true,
+            true);
         OSBTreeBonsaiBucket<K, V> keyBucket = new OSBTreeBonsaiBucket<>(keyBucketCacheEntry, bucketPointer.getPageOffset(),
             keySerializer, valueSerializer, this);
 
@@ -226,7 +226,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
             insertionIndex = bucketSearchResult.itemIndex;
 
             keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketSearchResult.getLastPathItem().getPageIndex(),
-                false, true);
+                false, true, true);
 
             keyBucket = new OSBTreeBonsaiBucket<>(keyBucketCacheEntry, bucketPointer.getPageOffset(), keySerializer,
                 valueSerializer, this);
@@ -275,7 +275,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       try {
         final Queue<OBonsaiBucketPointer> subTreesToDelete = new LinkedList<>();
 
-        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false, true);
+        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false, true,
+            true);
         try {
           OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<>(cacheEntry, rootBucketPointer.getPageOffset(),
               keySerializer, valueSerializer, this);
@@ -325,7 +326,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     int bucketCount = 0;
     while (!subTreesToDelete.isEmpty()) {
       final OBonsaiBucketPointer bucketPointer = subTreesToDelete.poll();
-      final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, bucketPointer.getPageIndex(), false, true);
+      final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, bucketPointer.getPageIndex(), false, true, true);
       try {
         final OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<>(cacheEntry, bucketPointer.getPageOffset(), keySerializer,
             valueSerializer, this);
@@ -342,7 +343,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
 
     if (head.isValid()) {
-      final OCacheEntry sysCacheEntry = loadPageForWrite(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false, true);
+      final OCacheEntry sysCacheEntry = loadPageForWrite(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false, true, true);
       try {
         final OSysBucket sysBucket = new OSysBucket(sysCacheEntry);
 
@@ -359,7 +360,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   private void attachFreeListHead(final OBonsaiBucketPointer bucketPointer, final OBonsaiBucketPointer freeListHead,
       final OAtomicOperation atomicOperation) throws IOException {
-    final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, bucketPointer.getPageIndex(), false, true);
+    final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, bucketPointer.getPageIndex(), false, true, true);
     try {
       final OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<>(cacheEntry, bucketPointer.getPageOffset(), keySerializer,
           valueSerializer, this);
@@ -407,8 +408,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
           false);
       try {
         final OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<>(rootCacheEntry,
-            this.rootBucketPointer.getPageOffset(),
-            keySerializer, valueSerializer, this);
+            this.rootBucketPointer.getPageOffset(), keySerializer, valueSerializer, this);
         //noinspection unchecked
         keySerializer = (OBinarySerializer<K>) storage.getComponentsFactory().binarySerializerFactory
             .getObjectSerializer(rootBucket.getKeySerializerId());
@@ -430,7 +430,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   private void updateSize(final long diffSize, final OAtomicOperation atomicOperation) throws IOException {
-    final OCacheEntry rootCacheEntry = loadPageForWrite(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false, true);
+    final OCacheEntry rootCacheEntry = loadPageForWrite(atomicOperation, fileId, rootBucketPointer.getPageIndex(), false, true,
+        true);
 
     try {
       final OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<>(rootCacheEntry, rootBucketPointer.getPageOffset(),
@@ -481,7 +482,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
         final OBonsaiBucketPointer bucketPointer = bucketSearchResult.getLastPathItem();
 
-        final OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketPointer.getPageIndex(), false,
+        final OCacheEntry keyBucketCacheEntry = loadPageForWrite(atomicOperation, fileId, bucketPointer.getPageIndex(), false, true,
             true);
         final V removed;
 
@@ -510,7 +511,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   @Override
   public Collection<V> getValuesMinor(final K key, final boolean inclusive, final int maxValuesToFetch) {
-    final List<V> result = new ArrayList<>();
+    final List<V> result = new ArrayList<>(64);
 
     loadEntriesMinor(key, inclusive, entry -> {
       result.add(entry.getValue());
@@ -543,8 +544,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
           final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
           try {
             final OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<>(cacheEntry, bucketPointer.getPageOffset(),
-                keySerializer,
-                valueSerializer, this);
+                keySerializer, valueSerializer, this);
             if (!firstBucket) {
               index = bucket.size() - 1;
             }
@@ -577,7 +577,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   @Override
   public Collection<V> getValuesMajor(final K key, final boolean inclusive, final int maxValuesToFetch) {
-    final List<V> result = new ArrayList<>();
+    final List<V> result = new ArrayList<>(64);
 
     loadEntriesMajor(key, inclusive, true, entry -> {
       result.add(entry.getValue());
@@ -620,8 +620,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
           final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
           try {
             final OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<>(cacheEntry, bucketPointer.getPageOffset(),
-                keySerializer,
-                valueSerializer, this);
+                keySerializer, valueSerializer, this);
             final int bucketSize = bucket.size();
             for (int i = index; i < bucketSize; i++) {
               if (!listener.addResult(bucket.getEntry(i))) {
@@ -652,7 +651,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   @Override
   public Collection<V> getValuesBetween(final K keyFrom, final boolean fromInclusive, final K keyTo, final boolean toInclusive,
       final int maxValuesToFetch) {
-    final List<V> result = new ArrayList<>();
+    final List<V> result = new ArrayList<>(64);
     loadEntriesBetween(keyFrom, fromInclusive, keyTo, toInclusive, entry -> {
       result.add(entry.getValue());
       return maxValuesToFetch <= 0 || result.size() < maxValuesToFetch;
@@ -856,8 +855,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
           final OCacheEntry cacheEntry = loadPageForRead(atomicOperation, fileId, bucketPointer.getPageIndex(), false);
           try {
             final OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<>(cacheEntry, bucketPointer.getPageOffset(),
-                keySerializer,
-                valueSerializer, this);
+                keySerializer, valueSerializer, this);
             if (!bucketPointer.equals(bucketPointerTo)) {
               endIndex = bucket.size() - 1;
             } else {
@@ -915,7 +913,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       final OAtomicOperation atomicOperation) throws IOException {
     final OBonsaiBucketPointer bucketPointer = path.get(path.size() - 1);
 
-    final OCacheEntry bucketEntry = loadPageForWrite(atomicOperation, fileId, bucketPointer.getPageIndex(), false, true);
+    final OCacheEntry bucketEntry = loadPageForWrite(atomicOperation, fileId, bucketPointer.getPageIndex(), false, true, true);
 
     try {
       OSBTreeBonsaiBucket<K, V> bucketToSplit = new OSBTreeBonsaiBucket<>(bucketEntry, bucketPointer.getPageOffset(), keySerializer,
@@ -941,8 +939,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
         try {
           final OSBTreeBonsaiBucket<K, V> newRightBucket = new OSBTreeBonsaiBucket<>(rightBucketEntry,
-              rightBucketPointer.getPageOffset(),
-              splitLeaf, keySerializer, valueSerializer, this);
+              rightBucketPointer.getPageOffset(), splitLeaf, keySerializer, valueSerializer, this);
           newRightBucket.addAll(rightEntries);
 
           bucketToSplit.shrink(indexToSplit);
@@ -957,7 +954,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
             if (rightSiblingBucketPointer.isValid()) {
               final OCacheEntry rightSiblingBucketEntry = loadPageForWrite(atomicOperation, fileId,
-                  rightSiblingBucketPointer.getPageIndex(), false, true);
+                  rightSiblingBucketPointer.getPageIndex(), false, true, true);
 
               final OSBTreeBonsaiBucket<K, V> rightSiblingBucket = new OSBTreeBonsaiBucket<>(rightSiblingBucketEntry,
                   rightSiblingBucketPointer.getPageOffset(), keySerializer, valueSerializer, this);
@@ -970,7 +967,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
           }
 
           OBonsaiBucketPointer parentBucketPointer = path.get(path.size() - 2);
-          OCacheEntry parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentBucketPointer.getPageIndex(), false, true);
+          OCacheEntry parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentBucketPointer.getPageIndex(), false, true,
+              true);
 
           try {
             OSBTreeBonsaiBucket<K, V> parentBucket = new OSBTreeBonsaiBucket<>(parentCacheEntry,
@@ -986,11 +984,10 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
               releasePageFromWrite(atomicOperation, parentCacheEntry);
 
               final BucketSearchResult bucketSearchResult = splitBucket(path.subList(0, path.size() - 1), insertionIndex,
-                  separationKey,
-                  atomicOperation);
+                  separationKey, atomicOperation);
 
               parentBucketPointer = bucketSearchResult.getLastPathItem();
-              parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentBucketPointer.getPageIndex(), false, true);
+              parentCacheEntry = loadPageForWrite(atomicOperation, fileId, parentBucketPointer.getPageIndex(), false, true, true);
 
               insertionIndex = bucketSearchResult.itemIndex;
 
@@ -1037,8 +1034,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         final OBonsaiBucketPointer rightBucketPointer = rightAllocationResult.getPointer();
         try {
           final OSBTreeBonsaiBucket<K, V> newLeftBucket = new OSBTreeBonsaiBucket<>(leftBucketEntry,
-              leftBucketPointer.getPageOffset(),
-              splitLeaf, keySerializer, valueSerializer, this);
+              leftBucketPointer.getPageOffset(), splitLeaf, keySerializer, valueSerializer, this);
           newLeftBucket.addAll(leftEntries);
 
           if (splitLeaf) {
@@ -1050,8 +1046,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
         try {
           final OSBTreeBonsaiBucket<K, V> newRightBucket = new OSBTreeBonsaiBucket<>(rightBucketEntry,
-              rightBucketPointer.getPageOffset(),
-              splitLeaf, keySerializer, valueSerializer, this);
+              rightBucketPointer.getPageOffset(), splitLeaf, keySerializer, valueSerializer, this);
           newRightBucket.addAll(rightEntries);
 
           if (splitLeaf) {
@@ -1065,8 +1060,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
             this);
         bucketToSplit.setTreeSize(treeSize);
 
-        bucketToSplit.addEntry(0, new OSBTreeBonsaiBucket.SBTreeEntry<>(leftBucketPointer, rightBucketPointer, separationKey, null),
-                true);
+        bucketToSplit
+            .addEntry(0, new OSBTreeBonsaiBucket.SBTreeEntry<>(leftBucketPointer, rightBucketPointer, separationKey, null), true);
 
         final ArrayList<OBonsaiBucketPointer> resultPath = new ArrayList<>(path.subList(0, path.size() - 1));
 
@@ -1091,7 +1086,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   private BucketSearchResult findBucket(final K key, final OAtomicOperation atomicOperation) throws IOException {
     OBonsaiBucketPointer bucketPointer = rootBucketPointer;
-    final ArrayList<OBonsaiBucketPointer> path = new ArrayList<>();
+    final ArrayList<OBonsaiBucketPointer> path = new ArrayList<>(8);
 
     while (true) {
       path.add(bucketPointer);
@@ -1131,7 +1126,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   private void initSysBucket(final OAtomicOperation atomicOperation) throws IOException {
-    OCacheEntry sysCacheEntry = loadPageForWrite(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false, true);
+    OCacheEntry sysCacheEntry = loadPageForWrite(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false, true, true);
     if (sysCacheEntry == null) {
       sysCacheEntry = addPage(atomicOperation, fileId, true);
       assert sysCacheEntry.getPageIndex() == SYS_BUCKET.getPageIndex();
@@ -1142,7 +1137,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       if (sysBucket.isInitialized()) {
         releasePageFromWrite(atomicOperation, sysCacheEntry);
 
-        sysCacheEntry = loadPageForWrite(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false, true);
+        sysCacheEntry = loadPageForWrite(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false, true, true);
 
         sysBucket = new OSysBucket(sysCacheEntry);
         sysBucket.init();
@@ -1153,7 +1148,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   private AllocationResult allocateBucketForWrite(final OAtomicOperation atomicOperation) throws IOException {
-    OCacheEntry sysCacheEntry = loadPageForWrite(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false, true);
+    OCacheEntry sysCacheEntry = loadPageForWrite(atomicOperation, fileId, SYS_BUCKET.getPageIndex(), false, true, true);
     if (sysCacheEntry == null) {
       sysCacheEntry = addPage(atomicOperation, fileId, true);
       assert sysCacheEntry.getPageIndex() == SYS_BUCKET.getPageIndex();
@@ -1162,8 +1157,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     try {
       final OSysBucket sysBucket = new OSysBucket(sysCacheEntry);
       if (sysBucket.freeListLength() > 0) {
-        final AllocationResult allocationResult = reuseBucketFromFreeList(sysBucket, atomicOperation);
-        return allocationResult;
+        return reuseBucketFromFreeList(sysBucket, atomicOperation);
       } else {
         final OBonsaiBucketPointer freeSpacePointer = sysBucket.getFreeSpacePointer();
         if (freeSpacePointer.getPageOffset() + OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES > PAGE_SIZE) {
@@ -1175,7 +1169,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         } else {
           sysBucket.setFreeSpacePointer(new OBonsaiBucketPointer(freeSpacePointer.getPageIndex(),
               freeSpacePointer.getPageOffset() + OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
-          final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, freeSpacePointer.getPageIndex(), false, true);
+          final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, freeSpacePointer.getPageIndex(), false, true,
+              true);
 
           return new AllocationResult(freeSpacePointer, cacheEntry);
         }
@@ -1190,7 +1185,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     final OBonsaiBucketPointer oldFreeListHead = sysBucket.getFreeListHead();
     assert oldFreeListHead.isValid();
 
-    final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, oldFreeListHead.getPageIndex(), false, true);
+    final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, oldFreeListHead.getPageIndex(), false, true, true);
     final OSBTreeBonsaiBucket<K, V> bucket = new OSBTreeBonsaiBucket<>(cacheEntry, oldFreeListHead.getPageOffset(), keySerializer,
         valueSerializer, this);
 
@@ -1289,15 +1284,14 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   public void debugPrintBucket(final PrintStream writer) throws IOException {
-    final ArrayList<OBonsaiBucketPointer> path = new ArrayList<>();
+    final ArrayList<OBonsaiBucketPointer> path = new ArrayList<>(8);
     path.add(rootBucketPointer);
     debugPrintBucket(rootBucketPointer, writer, path);
   }
 
   @SuppressWarnings({ "resource", "StringConcatenationInsideStringBufferAppend" })
   private void debugPrintBucket(final OBonsaiBucketPointer bucketPointer, final PrintStream writer,
-      final ArrayList<OBonsaiBucketPointer> path)
-      throws IOException {
+      final ArrayList<OBonsaiBucketPointer> path) throws IOException {
 
     final OCacheEntry bucketEntry = loadPageForRead(null, fileId, bucketPointer.getPageIndex(), false);
     OSBTreeBonsaiBucket.SBTreeEntry<K, V> entry;

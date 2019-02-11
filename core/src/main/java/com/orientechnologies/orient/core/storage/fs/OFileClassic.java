@@ -28,7 +28,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.sun.jna.LastErrorException;
+import com.sun.jna.Native;
 import com.sun.jna.Platform;
+import com.sun.jna.Pointer;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -94,25 +96,69 @@ public final class OFileClassic implements OClosableItem {
     this.osFile = osFile;
   }
 
-  public void allocateSpace(final ByteBuffer buffer) throws IOException {
+  public long allocateSpace(final int size) throws IOException {
     acquireWriteLock();
     try {
       final long currentSize = this.size;
       assert channel.size() == currentSize + HEADER_SIZE;
 
-      buffer.rewind();
       //noinspection NonAtomicOperationOnVolatileField
-      this.size += buffer.limit();
+      this.size += size;
+
       assert this.size >= size;
 
-      OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
+      assert allocationMode != null;
+      if (allocationMode == AllocationMode.WRITE) {
+        final long ptr = Native.malloc(size);
+        try {
+          final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, size);
+          buffer.position(0);
+          OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
+        } finally {
+          Native.free(ptr);
+        }
+      } else if (allocationMode == AllocationMode.DESCRIPTOR) {
+        assert fd > 0;
+
+        try {
+          ONative.instance().fallocate(fd, currentSize + HEADER_SIZE, size);
+        } catch (final LastErrorException e) {
+          OLogManager.instance().warnNoDb(this,
+              "Can not allocate space (error %d) for file %s using native Linux API, more slower methods will be used",
+              e.getErrorCode(), osFile.toAbsolutePath().toString());
+
+          allocationMode = AllocationMode.WRITE;
+
+          try {
+            ONative.instance().close(fd);
+          } catch (final LastErrorException lee) {
+            OLogManager.instance()
+                .warnNoDb(this, "Can not close Linux descriptor of file %s, error %d", osFile.toAbsolutePath().toString(),
+                    lee.getErrorCode());
+          }
+
+          final long ptr = Native.malloc(size);
+          try {
+            final ByteBuffer buffer = new Pointer(ptr).getByteBuffer(0, size);
+            buffer.position(0);
+            OIOUtils.writeByteBuffer(buffer, channel, currentSize + HEADER_SIZE);
+          } finally {
+            Native.free(ptr);
+          }
+        }
+
+      } else if (allocationMode == AllocationMode.LENGTH) {
+        frnd.setLength(this.size + HEADER_SIZE);
+      } else {
+        throw new IllegalStateException("Unknown allocation mode");
+      }
 
       assert channel.size() == this.size + HEADER_SIZE;
+      return currentSize;
     } finally {
       releaseWriteLock();
     }
   }
-
   /**
    * Shrink the file content (filledUpTo attribute only)
    */

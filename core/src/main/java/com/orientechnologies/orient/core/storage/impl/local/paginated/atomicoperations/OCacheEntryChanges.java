@@ -20,12 +20,15 @@ public class OCacheEntryChanges implements OCacheEntry {
 
   private OLogSequenceNumber changeLSN;
 
+  boolean verifyCheckSum;
+
   public OCacheEntryChanges(final OCacheEntry entry) {
     delegate = entry;
   }
 
   @SuppressWarnings("WeakerAccess")
-  public OCacheEntryChanges() {
+  public OCacheEntryChanges(final boolean verifyCheckSum) {
+    this.verifyCheckSum = verifyCheckSum;
   }
 
   @Override

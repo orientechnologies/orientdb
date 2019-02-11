@@ -39,7 +39,7 @@ public class AsyncReadCacheTestIT {
     final OByteBufferPool byteBufferPool = new OByteBufferPool(pageSize, allocator, 256);
     final long maxMemory = 1024 * 1024 * 1024;
 
-    final AsyncReadCache readCache = new AsyncReadCache(maxMemory, pageSize, true);
+    final AsyncReadCache readCache = new AsyncReadCache(byteBufferPool, maxMemory, pageSize, true);
     final OWriteCache writeCache = new MockedWriteCache(byteBufferPool);
 
     final ExecutorService executor = Executors.newCachedThreadPool();
@@ -103,7 +103,7 @@ public class AsyncReadCacheTestIT {
     final OByteBufferPool byteBufferPool = new OByteBufferPool(pageSize, allocator, 2048);
     final long maxMemory = 1024 * 1024 * 1024;
 
-    final AsyncReadCache readCache = new AsyncReadCache(maxMemory, pageSize, true);
+    final AsyncReadCache readCache = new AsyncReadCache(byteBufferPool, maxMemory, pageSize, true);
     final OWriteCache writeCache = new MockedWriteCache(byteBufferPool);
 
     final ExecutorService executor = Executors.newCachedThreadPool();

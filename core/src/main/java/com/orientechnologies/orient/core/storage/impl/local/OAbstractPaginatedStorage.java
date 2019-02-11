@@ -5576,7 +5576,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               readCache.releaseFromWrite(cacheEntry, writeCache);
             }
 
-            cacheEntry = readCache.allocateNewPage(fileId, writeCache, false, null, true);
+            cacheEntry = readCache.allocateNewPage(fileId, writeCache, null, false);
           } while (cacheEntry.getPageIndex() != pageIndex);
         }
 

@@ -85,7 +85,7 @@ public final class OAtomicOperation {
   }
 
   public OCacheEntry loadPageForWrite(long fileId, final long pageIndex, final boolean checkPinnedPages, final int pageCount,
-      final boolean durableFile) throws IOException {
+      final boolean verifyChecksum, final boolean durableFile) throws IOException {
     assert pageCount > 0;
 
     fileId = checkFileIdCompatibility(fileId, storageId);
@@ -109,7 +109,7 @@ public final class OAtomicOperation {
         if (pageChangesContainer == null) {
           final OCacheEntry delegate = readCache.loadForRead(fileId, pageIndex, checkPinnedPages, writeCache, pageCount, true);
           if (delegate != null) {
-            pageChangesContainer = new OCacheEntryChanges();
+            pageChangesContainer = new OCacheEntryChanges(verifyChecksum);
             changesContainer.pageChangesMap.put(pageIndex, pageChangesContainer);
             pageChangesContainer.delegate = delegate;
             return pageChangesContainer;
@@ -226,7 +226,7 @@ public final class OAtomicOperation {
     OCacheEntryChanges pageChangesContainer = changesContainer.pageChangesMap.get(filledUpTo);
     assert pageChangesContainer == null;
 
-    pageChangesContainer = new OCacheEntryChanges();
+    pageChangesContainer = new OCacheEntryChanges(false);
     pageChangesContainer.isNew = true;
 
     changesContainer.pageChangesMap.put(filledUpTo, pageChangesContainer);
@@ -468,7 +468,8 @@ public final class OAtomicOperation {
             final OCacheEntryChanges filePageChanges = filePageChangesEntry.getValue();
 
             OCacheEntry cacheEntry = readCache
-                .loadForWrite(fileId, pageIndex, true, writeCache, 1, true, startLSN, fileChanges.durable);
+                .loadForWrite(fileId, pageIndex, true, writeCache, 1, filePageChanges.verifyCheckSum, startLSN,
+                    fileChanges.durable);
             if (cacheEntry == null) {
               assert filePageChanges.isNew;
               do {
@@ -476,7 +477,7 @@ public final class OAtomicOperation {
                   readCache.releaseFromWrite(cacheEntry, writeCache);
                 }
 
-                cacheEntry = readCache.allocateNewPage(fileId, writeCache, true, startLSN, true);
+                cacheEntry = readCache.allocateNewPage(fileId, writeCache, startLSN, fileChanges.durable);
               } while (cacheEntry.getPageIndex() != pageIndex);
             }
 
@@ -523,7 +524,8 @@ public final class OAtomicOperation {
           }
           final long pageIndex = filePageChangesEntry.getKey();
 
-          OCacheEntry cacheEntry = readCache.loadForWrite(fileId, pageIndex, true, writeCache, 1, true, null, fileChanges.durable);
+          OCacheEntry cacheEntry = readCache
+              .loadForWrite(fileId, pageIndex, true, writeCache, 1, filePageChanges.verifyCheckSum, null, fileChanges.durable);
           if (cacheEntry == null) {
             assert filePageChanges.isNew;
             do {
@@ -531,7 +533,7 @@ public final class OAtomicOperation {
                 readCache.releaseFromWrite(cacheEntry, writeCache);
               }
 
-              cacheEntry = readCache.allocateNewPage(fileId, writeCache, true, null, true);
+              cacheEntry = readCache.allocateNewPage(fileId, writeCache, null, fileChanges.durable);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
 

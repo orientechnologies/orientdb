@@ -511,7 +511,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
               final long prevPageIndex = getPageIndex(prevPageRecordPointer);
               final int prevPageRecordPosition = getRecordPosition(prevPageRecordPointer);
 
-              final OCacheEntry prevPageCacheEntry = loadPageForWrite(atomicOperation, fileId, prevPageIndex, false, true);
+              final OCacheEntry prevPageCacheEntry = loadPageForWrite(atomicOperation, fileId, prevPageIndex, false, true, true);
               try {
                 final OClusterPage prevPage = new OClusterPage(prevPageCacheEntry, false);
                 prevPage.setRecordLongValue(prevPageRecordPosition, -OLongSerializer.LONG_SIZE, addedPagePointer);
@@ -615,8 +615,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
   }
 
   private ORawBuffer internalReadRecord(final long clusterPosition, final long pageIndex, final int recordPosition,
-      final int pageCount,
-      final OAtomicOperation atomicOperation) throws IOException {
+      final int pageCount, final OAtomicOperation atomicOperation) throws IOException {
 
     if (getFilledUpTo(atomicOperation, fileId, true) <= pageIndex) {
       return null;
@@ -731,7 +730,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
 
         do {
           boolean cacheEntryReleased = false;
-          OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
+          OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true, true);
           int initialFreePageIndex;
           try {
             OClusterPage localPage = new OClusterPage(cacheEntry, false);
@@ -749,7 +748,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
             } else if (removedContentSize == 0) {
               releasePageFromWrite(atomicOperation, cacheEntry);
 
-              cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
+              cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true, true);
 
               localPage = new OClusterPage(cacheEntry, false);
             }
@@ -914,7 +913,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
           }
 
           boolean isNew = false;
-          OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, nextPageIndex, false, true);
+          OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, nextPageIndex, false, true, true);
           if (cacheEntry == null) {
             cacheEntry = addPage(atomicOperation, fileId, true);
             isNew = true;
@@ -999,7 +998,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
             from = to;
 
             if (prevPageIndex >= 0) {
-              final OCacheEntry prevCacheEntry = loadPageForWrite(atomicOperation, fileId, prevPageIndex, false, true);
+              final OCacheEntry prevCacheEntry = loadPageForWrite(atomicOperation, fileId, prevPageIndex, false, true, true);
               try {
                 final OClusterPage prevPage = new OClusterPage(prevCacheEntry, false);
                 prevPage.setRecordLongValue(prevRecordPosition, -OLongSerializer.LONG_SIZE,
@@ -1024,7 +1023,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
           final int freePagesIndex;
           final int freeSpace;
 
-          final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, nextPageIndex, false, true);
+          final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, nextPageIndex, false, true, true);
           try {
             final OClusterPage localPage = new OClusterPage(cacheEntry, false);
             freeSpace = localPage.getFreeSpace();
@@ -1161,7 +1160,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
               final long prevPageIndex = getPageIndex(prevPageRecordPointer);
               final int prevPageRecordPosition = getRecordPosition(prevPageRecordPointer);
 
-              final OCacheEntry prevPageCacheEntry = loadPageForWrite(atomicOperation, fileId, prevPageIndex, false, true);
+              final OCacheEntry prevPageCacheEntry = loadPageForWrite(atomicOperation, fileId, prevPageIndex, false, true, true);
               try {
                 final OClusterPage prevPage = new OClusterPage(prevPageCacheEntry, false);
                 prevPage.setRecordLongValue(prevPageRecordPosition, -OLongSerializer.LONG_SIZE, addedPagePointer);
@@ -1533,7 +1532,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
 
   private void updateClusterState(final long sizeDiff, final long recordsSizeDiff, final OAtomicOperation atomicOperation)
       throws IOException {
-    final OCacheEntry pinnedStateEntry = loadPageForWrite(atomicOperation, fileId, pinnedStateEntryIndex, true, true);
+    final OCacheEntry pinnedStateEntry = loadPageForWrite(atomicOperation, fileId, pinnedStateEntryIndex, true, true, true);
     try {
       final OPaginatedClusterStateV0 paginatedClusterState = new OPaginatedClusterStateV0(pinnedStateEntry);
       paginatedClusterState.setSize(paginatedClusterState.getSize() + sizeDiff);
@@ -1707,7 +1706,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
 
     final boolean newRecord = freePageIndex >= FREE_LIST_SIZE;
 
-    OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
+    OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true, true);
     if (cacheEntry == null) {
       cacheEntry = addPage(atomicOperation, fileId, true);
     }
@@ -1776,7 +1775,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
       }
 
       if (freePageIndex < FREE_LIST_SIZE) {
-        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
+        final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true, true);
 
         //free list is broken automatically fix it
         if (cacheEntry == null) {
@@ -1809,7 +1808,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
 
   private void updateFreePagesIndex(final int prevFreePageIndex, final long pageIndex, final OAtomicOperation atomicOperation)
       throws IOException {
-    final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true);
+    final OCacheEntry cacheEntry = loadPageForWrite(atomicOperation, fileId, pageIndex, false, true, true);
 
     try {
       final OClusterPage localPage = new OClusterPage(cacheEntry, false);
@@ -1823,7 +1822,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
       final long prevPageIndex = localPage.getPrevPage();
 
       if (prevPageIndex >= 0) {
-        final OCacheEntry prevPageCacheEntry = loadPageForWrite(atomicOperation, fileId, prevPageIndex, false, true);
+        final OCacheEntry prevPageCacheEntry = loadPageForWrite(atomicOperation, fileId, prevPageIndex, false, true, true);
         try {
           final OClusterPage prevPage = new OClusterPage(prevPageCacheEntry, false);
           assert calculateFreePageIndex(prevPage) == prevFreePageIndex;
@@ -1834,7 +1833,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
       }
 
       if (nextPageIndex >= 0) {
-        final OCacheEntry nextPageCacheEntry = loadPageForWrite(atomicOperation, fileId, nextPageIndex, false, true);
+        final OCacheEntry nextPageCacheEntry = loadPageForWrite(atomicOperation, fileId, nextPageIndex, false, true, true);
         try {
           final OClusterPage nextPage = new OClusterPage(nextPageCacheEntry, false);
           if (calculateFreePageIndex(nextPage) != prevFreePageIndex) {
@@ -1873,7 +1872,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
         }
 
         if (oldFreePage >= 0) {
-          final OCacheEntry oldFreePageCacheEntry = loadPageForWrite(atomicOperation, fileId, oldFreePage, false, true);
+          final OCacheEntry oldFreePageCacheEntry = loadPageForWrite(atomicOperation, fileId, oldFreePage, false, true, true);
           try {
             final OClusterPage oldFreeLocalPage = new OClusterPage(oldFreePageCacheEntry, false);
             assert calculateFreePageIndex(oldFreeLocalPage) == newFreePageIndex;
@@ -1896,7 +1895,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
 
   private void updateFreePagesList(final int freeListIndex, final long pageIndex, final OAtomicOperation atomicOperation)
       throws IOException {
-    final OCacheEntry pinnedStateEntry = loadPageForWrite(atomicOperation, fileId, pinnedStateEntryIndex, true, true);
+    final OCacheEntry pinnedStateEntry = loadPageForWrite(atomicOperation, fileId, pinnedStateEntryIndex, true, true, true);
     try {
       final OPaginatedClusterStateV0 paginatedClusterState = new OPaginatedClusterStateV0(pinnedStateEntry);
       paginatedClusterState.setFreeListPage(freeListIndex, pageIndex);

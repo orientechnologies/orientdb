@@ -296,7 +296,7 @@ public class SBTreeWALTestIT extends SBTreeTestIT {
                     expectedReadCache.releaseFromWrite(cacheEntry, expectedWriteCache);
                   }
 
-                  cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, false, null, true);
+                  cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache, null, true);
                 } while (cacheEntry.getPageIndex() != pageIndex);
               }
 
