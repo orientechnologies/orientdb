@@ -45,7 +45,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -53,7 +52,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class OClusterHealthChecker extends TimerTask {
+public class OClusterHealthChecker implements Runnable {
   private final ODistributedServerManager       manager;
   private final long                            healthCheckerEveryMs;
   private       long                            lastExecution = 0;

@@ -31,10 +31,13 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.Date;
+import java.util.List;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -52,19 +55,19 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class HALocalGraphIT extends AbstractServerClusterTxTest {
 
-  protected final static int           SERVERS                 = 3;
-  protected static final int           CONCURRENCY_LEVEL       = 4;
-  protected static final int           TOTAL_CYCLES_PER_THREAD = 300000;
-  protected final        AtomicBoolean serverDown              = new AtomicBoolean(false);
-  protected final        AtomicBoolean serverRestarting        = new AtomicBoolean(false);
-  protected final        AtomicBoolean serverRestarted         = new AtomicBoolean(false);
-  protected ODatabasePool   graphReadFactory;
-  protected ExecutorService executorService;
-  protected int        serverStarted = 0;
-  protected AtomicLong operations    = new AtomicLong();
+  protected final static int             SERVERS                 = 3;
+  protected static final int             CONCURRENCY_LEVEL       = 4;
+  protected static final int             TOTAL_CYCLES_PER_THREAD = 300000;
+  protected final        AtomicBoolean   serverDown              = new AtomicBoolean(false);
+  protected final        AtomicBoolean   serverRestarting        = new AtomicBoolean(false);
+  protected final        AtomicBoolean   serverRestarted         = new AtomicBoolean(false);
+  protected              ODatabasePool   graphReadFactory;
+  protected              ExecutorService executorService;
+  protected              int             serverStarted           = 0;
+  protected              AtomicLong      operations              = new AtomicLong();
   List<Future<?>> ths = new ArrayList<Future<?>>();
-  private TimerTask task;
-  private volatile long sleep = 0;
+  private          TimerTask task;
+  private volatile long      sleep = 0;
 
   @Test
   public void test() throws Exception {
@@ -80,50 +83,44 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
       createSchemaAndFirstVertices(server);
       startTest(server);
       // START THE TEST DURING 2ND NODE STARTUP
-      task = new TimerTask() {
-        @Override
-        public void run() {
+      task = Orient.instance().scheduleTask(() -> {
+        final OServer server2 = serverInstance.get(SERVERS - 1).getServerInstance();
 
-          final OServer server2 = serverInstance.get(SERVERS - 1).getServerInstance();
+        if (server2 != null) {
+          if (serverDown.get() && !serverRestarting.get() && !serverRestarted.get() && !server2.isActive()
+              && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 2 / 4) {
+            serverRestarting.set(true);
 
-          if (server2 != null) {
-            if (serverDown.get() && !serverRestarting.get() && !serverRestarted.get() && !server2.isActive()
-                && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 2 / 4) {
-              serverRestarting.set(true);
+            // RESTART LAST SERVER AT 2/3 OF PROGRESS
+            banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
+            try {
+              serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
 
-              // RESTART LAST SERVER AT 2/3 OF PROGRESS
-              banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
-              try {
-                serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+              if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
+                serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
 
-                if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
-                  serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
+              sleep = 0;
 
-                sleep = 0;
+              serverRestarted.set(true);
 
-                serverRestarted.set(true);
-
-              } catch (Exception e) {
-                e.printStackTrace();
-              }
-
-            } else if (!serverDown.get() && server2.isActive()
-                && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 1 / 4) {
-
-              // SLOW DOWN A LITTLE BIT
-              sleep = 5;
-
-              // SHUTDOWN LASt SERVER AT 1/3 OF PROGRESS
-              banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
-              serverInstance.get(SERVERS - 1).shutdownServer();
-
-              serverDown.set(true);
+            } catch (Exception e) {
+              e.printStackTrace();
             }
+
+          } else if (!serverDown.get() && server2.isActive()
+              && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 1 / 4) {
+
+            // SLOW DOWN A LITTLE BIT
+            sleep = 5;
+
+            // SHUTDOWN LASt SERVER AT 1/3 OF PROGRESS
+            banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
+            serverInstance.get(SERVERS - 1).shutdownServer();
+
+            serverDown.set(true);
           }
         }
-      };
-
-      Orient.instance().scheduleTask(task, 1000, 1000);
+      }, 1000, 1000);
     }
   }
 
@@ -181,7 +178,7 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
     Runnable th = new Runnable() {
       @Override
       public void run() {
-System.out.println("\n\n ----------- startThread()");
+        System.out.println("\n\n ----------- startThread()");
         // OrientBaseGraph graph = new OrientGraph(getDBURL());
         // OrientGraph graph = graphFactory.getTx();
         boolean useSQL = false;
@@ -211,7 +208,7 @@ System.out.println("\n\n ----------- startThread()");
               if (useSQL) {
                 boolean update = true;
                 boolean isException = false;
-                String sql = "Update Test set prop5='" + String.valueOf(System.currentTimeMillis()) + "', updateTime='" + new Date()
+                String sql = "Update Test set prop5='" + System.currentTimeMillis() + "', updateTime='" + new Date()
                     .toString() + "' where prop2='v2-1'";
                 for (int k = 0; k < 10 && update; k++) {
                   try {
@@ -253,7 +250,7 @@ System.out.println("\n\n ----------- startThread()");
                     // RETRY
                   }
 
-                while(vtxs.hasNext()) {
+                while (vtxs.hasNext()) {
                   OResult vtx = vtxs.next();
                   if (retry) {
                     retry = true;
@@ -342,7 +339,8 @@ System.out.println("\n\n ----------- startThread()");
     if (graphReadFactory == null) {
 //      String dbUrl = getDatabaseURL(serverInstance.get(0));
 //      log("Datastore pool created with size : 10, db location: " + getDatabaseURL(server));
-      graphReadFactory = new ODatabasePool(server.getServerInstance().getContext(), getDatabaseName(), "admin", "admin", OrientDBConfig.defaultConfig());
+      graphReadFactory = new ODatabasePool(server.getServerInstance().getContext(), getDatabaseName(), "admin", "admin",
+          OrientDBConfig.defaultConfig());
 
     }
     return graphReadFactory;
@@ -374,7 +372,7 @@ System.out.println("\n\n ----------- startThread()");
     } else {
       orientGraph.create();
     } */
-    
+
     createVertexType(orientGraph, "Test");
     createVertexType(orientGraph, "Test1");
     orientGraph.close();

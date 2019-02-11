@@ -65,18 +65,13 @@ public class OClientConnectionManager {
   public OClientConnectionManager(OServer server) {
     final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
 
-    timerTask = new TimerTask() {
-      @Override
-      public void run() {
-        try {
-          cleanExpiredConnections();
-        } catch (Exception e) {
-          OLogManager.instance().debug(this, "Error on client connection purge task", e);
-        }
+    timerTask = Orient.instance().scheduleTask(() -> {
+      try {
+        cleanExpiredConnections();
+      } catch (Exception e) {
+        OLogManager.instance().debug(this, "Error on client connection purge task", e);
       }
-    };
-
-    Orient.instance().scheduleTask(timerTask, delay, delay);
+    }, delay, delay);
 
     Orient.instance().getProfiler()
         .registerHookValue("server.connections.actives", "Number of active network connections", METRIC_TYPE.COUNTER,
@@ -141,8 +136,6 @@ public class OClientConnectionManager {
    * @param iProtocol protocol which will be used by connection
    *
    * @return new connection
-   *
-   * @throws IOException
    */
   public OClientConnection connect(final ONetworkProtocol iProtocol) {
 
@@ -162,8 +155,6 @@ public class OClientConnectionManager {
    * @param iProtocol protocol which will be used by connection
    *
    * @return new connection
-   *
-   * @throws IOException
    */
   public OClientConnection connect(final ONetworkProtocol iProtocol, final OClientConnection connection, final byte[] tokenBytes,
       final OTokenHandler handler) {

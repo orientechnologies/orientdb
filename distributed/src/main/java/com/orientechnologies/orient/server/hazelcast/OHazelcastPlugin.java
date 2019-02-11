@@ -103,7 +103,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimerTask;
 
 /**
  * Hazelcast implementation for clustering.
@@ -120,7 +119,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public static final String CONFIG_LOCKMANAGER     = "coordinator";
   public static final String CONFIG_REGISTEREDNODES = "registeredNodes";
 
-  protected String hazelcastConfigFile = "hazelcast.xml";
+  protected          String            hazelcastConfigFile = "hazelcast.xml";
   protected          Config            hazelcastConfig;
   protected          String            membershipListenerRegistration;
   protected          String            membershipListenerMapRegistration;
@@ -310,30 +309,18 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       final long delay = OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY.getValueAsLong();
       if (delay > 0) {
-        publishLocalNodeConfigurationTask = new TimerTask() {
-          @Override
-          public void run() {
-            publishLocalNodeConfiguration();
-          }
-        };
-        Orient.instance().scheduleTask(publishLocalNodeConfigurationTask, delay, delay);
+        publishLocalNodeConfigurationTask = Orient.instance().scheduleTask(this::publishLocalNodeConfiguration, delay, delay);
       }
 
       final long statsDelay = OGlobalConfiguration.DISTRIBUTED_DUMP_STATS_EVERY.getValueAsLong();
       if (statsDelay > 0) {
-        haStatsTask = new TimerTask() {
-          @Override
-          public void run() {
-            dumpStats();
-          }
-        };
-        Orient.instance().scheduleTask(haStatsTask, statsDelay, statsDelay);
+        haStatsTask = Orient.instance().scheduleTask(this::dumpStats, statsDelay, statsDelay);
       }
 
       final long healthChecker = OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY.getValueAsLong();
       if (healthChecker > 0) {
-        healthCheckerTask = new OClusterHealthChecker(this, healthChecker);
-        Orient.instance().scheduleTask(healthCheckerTask, healthChecker, healthChecker);
+        healthCheckerTask = Orient.instance()
+            .scheduleTask(new OClusterHealthChecker(this, healthChecker), healthChecker, healthChecker);
       }
 
       for (OServerNetworkListener nl : serverInstance.getNetworkListeners())
@@ -386,9 +373,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final String registeredNodesFromClusterAsJson = (String) configurationMap.get(CONFIG_REGISTEREDNODES);
       if (registeredNodesFromClusterAsJson != null) {
         registeredNodesFromCluster.fromJSON(registeredNodesFromClusterAsJson);
-        registeredNodeById.addAll((Collection<? extends String>) registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST));
-        registeredNodeByName
-            .putAll((Map<? extends String, ? extends Integer>) registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP));
+        registeredNodeById.addAll(registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST));
+        registeredNodeByName.putAll(registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP));
 
         if (registeredNodeByName.containsKey(nodeName)) {
           nodeId = registeredNodeByName.get(nodeName);
@@ -597,9 +583,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       if (hazelcastInstance.getLifecycleService().isRunning())
         for (Map.Entry<String, Object> entry : configurationMap.entrySet()) {
-          if (entry.getKey().toString().startsWith(CONFIG_DBSTATUS_PREFIX)) {
+          if (entry.getKey().startsWith(CONFIG_DBSTATUS_PREFIX)) {
 
-            final String nodeDb = entry.getKey().toString().substring(CONFIG_DBSTATUS_PREFIX.length());
+            final String nodeDb = entry.getKey().substring(CONFIG_DBSTATUS_PREFIX.length());
 
             if (nodeDb.startsWith(nodeName))
               databases.add(entry.getKey());
@@ -888,7 +874,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final String nodeStatus = memberConfig.field("status");
 
       if (memberConfig != null && !"OFFLINE".equals(nodeStatus)) {
-        final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) memberConfig.field("listeners"));
+        final Collection<Map<String, Object>> listeners = memberConfig.field("listeners");
         if (listeners != null)
           for (Map<String, Object> listener : listeners) {
             if (listener.get("protocol").equals("ONetworkProtocolBinary")) {
@@ -920,7 +906,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (key.startsWith(CONFIG_NODE_PREFIX)) {
         if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
           final ODocument cfg = (ODocument) iEvent.getValue();
-          final String joinedNodeName = (String) cfg.field("name");
+          final String joinedNodeName = cfg.field("name");
 
           if (this.nodeName.equals(joinedNodeName)) {
             ODistributedServerLog.error(this, joinedNodeName, eventNodeName, DIRECTION.IN,
@@ -983,13 +969,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         final ODocument cfg = (ODocument) iEvent.getValue();
 
-        if (!activeNodes.containsKey((String) cfg.field("name")))
+        if (!activeNodes.containsKey(cfg.field("name")))
           updateLastClusterChange();
 
-        activeNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
+        activeNodes.put(cfg.field("name"), iEvent.getMember());
         if (iEvent.getMember().getUuid() != null) {
-          activeNodesNamesByUuid.put(iEvent.getMember().getUuid(), (String) cfg.field("name"));
-          activeNodesUuidByName.put((String) cfg.field("name"), iEvent.getMember().getUuid());
+          activeNodesNamesByUuid.put(iEvent.getMember().getUuid(), cfg.field("name"));
+          activeNodesUuidByName.put(cfg.field("name"), iEvent.getMember().getUuid());
         }
 
         dumpServersStatus();
@@ -1460,11 +1446,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (registeredNodesFromClusterAsJson != null) {
       registeredNodesFromCluster.fromJSON(registeredNodesFromClusterAsJson);
       registeredNodeById.clear();
-      registeredNodeById.addAll((Collection<? extends String>) registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST));
+      registeredNodeById.addAll(registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST));
 
       registeredNodeByName.clear();
-      registeredNodeByName
-          .putAll((Map<? extends String, ? extends Integer>) registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP));
+      registeredNodeByName.putAll(registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP));
     } else
       throw new ODistributedException("Cannot find distributed 'registeredNodes' configuration");
   }
@@ -1597,21 +1582,18 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       else if (autoRemoveOffLineServer > 0) {
         // SCHEDULE AUTO REMOVAL IN A WHILE
         autoRemovalOfServers.put(nodeLeftName, System.currentTimeMillis());
-        Orient.instance().scheduleTask(new TimerTask() {
-          @Override
-          public void run() {
-            try {
-              final Long lastTimeNodeLeft = autoRemovalOfServers.get(nodeLeftName);
-              if (lastTimeNodeLeft == null)
-                // NODE WAS BACK ONLINE
-                return;
+        Orient.instance().scheduleTask(() -> {
+          try {
+            final Long lastTimeNodeLeft = autoRemovalOfServers.get(nodeLeftName);
+            if (lastTimeNodeLeft == null)
+              // NODE WAS BACK ONLINE
+              return;
 
-              if (System.currentTimeMillis() - lastTimeNodeLeft >= autoRemoveOffLineServer) {
-                removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
-              }
-            } catch (Exception e) {
-              // IGNORE IT
+            if (System.currentTimeMillis() - lastTimeNodeLeft >= autoRemoveOffLineServer) {
+              removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
             }
+          } catch (Exception e) {
+            // IGNORE IT
           }
         }, autoRemoveOffLineServer, 0);
       }

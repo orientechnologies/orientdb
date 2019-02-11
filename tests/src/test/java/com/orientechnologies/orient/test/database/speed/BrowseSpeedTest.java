@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.TimerTask;
 
 /**
  * Test the speed on browsing records at storage level. Run this with the following syntax:
@@ -40,12 +39,9 @@ public class BrowseSpeedTest {
   }
 
   public void testIterationSpeed() throws IOException {
-    Orient.instance().scheduleTask(new TimerTask() {
-      @Override
-      public void run() {
-        final OAbstractPaginatedStorage stg = (OAbstractPaginatedStorage) Orient.instance().getStorages().iterator().next();
-        System.out.println("DiskCache used: " + stg.getReadCache().getUsedMemory());
-      }
+    Orient.instance().scheduleTask(() -> {
+      final OAbstractPaginatedStorage stg = (OAbstractPaginatedStorage) Orient.instance().getStorages().iterator().next();
+      System.out.println("DiskCache used: " + stg.getReadCache().getUsedMemory());
     }, 1000, 1000);
 
     browseStorageClusters();

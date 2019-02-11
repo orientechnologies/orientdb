@@ -56,8 +56,8 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
   protected final ConcurrentHashMap<String, String>      dictionary    = new ConcurrentHashMap<String, String>();
   protected final ConcurrentHashMap<String, METRIC_TYPE> types         = new ConcurrentHashMap<String, METRIC_TYPE>();
   protected       long                                   recordingFrom = -1;
-  protected TimerTask autoDumpTask;
-  protected List<OProfilerListener> listeners = new ArrayList<OProfilerListener>();
+  protected       TimerTask                              autoDumpTask;
+  protected       List<OProfilerListener>                listeners     = new ArrayList<OProfilerListener>();
 
   private static long statsCreateRecords = 0;
   private static long statsReadRecords   = 0;
@@ -92,7 +92,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
     }
   }
 
-  private static final class MemoryChecker extends TimerTask {
+  private static final class MemoryChecker implements Runnable {
     @Override
     public void run() {
       try {
@@ -158,7 +158,6 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
   protected abstract void setTip(String iMessage, AtomicInteger counter);
 
   protected abstract AtomicInteger getTip(String iMessage);
-
 
   public static String dumpEnvironment(final String dumpType) {
     final StringBuilder buffer = new StringBuilder();
@@ -415,26 +414,20 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
       final int ms = iSeconds * 1000;
 
-      autoDumpTask = new TimerTask() {
+      autoDumpTask = Orient.instance().scheduleTask(() -> {
+        final StringBuilder output = new StringBuilder();
 
-        @Override
-        public void run() {
-          final StringBuilder output = new StringBuilder();
+        final String dumpType = OGlobalConfiguration.PROFILER_AUTODUMP_TYPE.getValueAsString();
 
-          final String dumpType = OGlobalConfiguration.PROFILER_AUTODUMP_TYPE.getValueAsString();
+        output.append(
+            "\n*******************************************************************************************************************************************");
+        output.append("\nPROFILER AUTO DUMP '" + dumpType + "' OUTPUT (to disabled it set 'profiler.autoDump.interval' = 0):\n");
+        output.append(dump(dumpType));
+        output.append(
+            "\n*******************************************************************************************************************************************");
 
-          output.append(
-              "\n*******************************************************************************************************************************************");
-          output.append("\nPROFILER AUTO DUMP '" + dumpType + "' OUTPUT (to disabled it set 'profiler.autoDump.interval' = 0):\n");
-          output.append(dump(dumpType));
-          output.append(
-              "\n*******************************************************************************************************************************************");
-
-          OLogManager.instance().info(null, output.toString());
-        }
-      };
-
-      Orient.instance().scheduleTask(autoDumpTask, ms, ms);
+        OLogManager.instance().info(null, output.toString());
+      }, ms, ms);
     } else
       OLogManager.instance().info(this, "Auto dump of profiler disabled", iSeconds);
 

@@ -46,8 +46,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -147,7 +154,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
           .info(this, "Automatic Backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s", delay,
               firstTime, targetDirectory);
 
-      final TimerTask timerTask = new TimerTask() {
+      final Runnable timerTask = new Runnable() {
         @Override
         public void run() {
           OLogManager.instance().info(this, "Scanning databases to backup...");
