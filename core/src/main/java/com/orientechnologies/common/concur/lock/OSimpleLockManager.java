@@ -5,4 +5,6 @@ public interface OSimpleLockManager<T> {
   void lock(T key);
 
   void unlock(T key);
+
+  void reset();
 }
