@@ -37,7 +37,11 @@ import com.orientechnologies.orient.etl.transformer.OETLTransformer;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimerTask;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -62,11 +66,11 @@ public class OETLProcessor {
   protected       long                  startTime;
   protected       long                  elapsed;
   protected       TimerTask             dumpTask;
-  protected Level   logLevel    = Level.INFO;
-  protected boolean haltOnError = true;
-  protected int     maxRetries  = 10;
-  protected int     workers     = 1;
-  private   boolean parallel    = false;
+  protected       Level                 logLevel    = Level.INFO;
+  protected       boolean               haltOnError = true;
+  protected       int                   maxRetries  = 10;
+  protected       int                   workers     = 1;
+  private         boolean               parallel    = false;
 
   /**
    * Creates an ETL processor by setting all the components on construction.
@@ -91,7 +95,7 @@ public class OETLProcessor {
     context = iContext;
     factory = new OETLComponentFactory();
     stats = new OETLProcessorStats();
-    
+
     executor = Executors.newCachedThreadPool();
 
     configRunBehaviour(context);
@@ -218,14 +222,7 @@ public class OETLProcessor {
 
     final Integer dumpEveryMs = (Integer) context.getVariable("dumpEveryMs");
     if (dumpEveryMs != null && dumpEveryMs > 0) {
-      dumpTask = new TimerTask() {
-        @Override
-        public void run() {
-          dumpProgress();
-        }
-      };
-
-      Orient.instance().scheduleTask(dumpTask, dumpEveryMs, dumpEveryMs);
+      dumpTask = Orient.instance().scheduleTask(this::dumpProgress, dumpEveryMs, dumpEveryMs);
 
       startTime = System.currentTimeMillis();
     }

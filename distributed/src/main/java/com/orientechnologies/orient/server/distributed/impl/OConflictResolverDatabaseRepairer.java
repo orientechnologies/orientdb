@@ -111,7 +111,7 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
           throw new OConfigurationException("Invalid configuration for conflict resolver: " + item);
 
         name = item.substring(0, pos);
-        config = new ODocument().fromJSON(item.substring(pos, item.length()));
+        config = new ODocument().fromJSON(item.substring(pos));
       } else {
         name = item;
         config = null;
@@ -129,31 +129,28 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
       conflictResolvers.add(cr);
     }
 
-    checkTask = new TimerTask() {
-      @Override
-      public void run() {
-
-        final long start = System.currentTimeMillis();
-        try {
-
-          check();
-
-        } catch (Exception t) {
-          OLogManager.instance().error(this, "Error on repairing distributed database", t);
-          // IGNORE THE EXCEPTION
-        } finally {
-          totalTimeProcessing.addAndGet(System.currentTimeMillis() - start);
-        }
-      }
-
-    };
-
     final long time = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY.getValueAsLong();
     if (time > 0) {
-      Orient.instance().scheduleTask(checkTask, time, time);
+      checkTask = Orient.instance().scheduleTask(new Runnable() {
+        @Override
+        public void run() {
+          final long start = System.currentTimeMillis();
+          try {
+            check();
+          } catch (Exception t) {
+            OLogManager.instance().error(this, "Error on repairing distributed database", t);
+            // IGNORE THE EXCEPTION
+          } finally {
+            totalTimeProcessing.addAndGet(System.currentTimeMillis() - start);
+          }
+        }
+      }, time, time);
       active = true;
-    } else
+    } else {
+      checkTask = null;
       active = false;
+    }
+
   }
 
   @Override

@@ -79,24 +79,24 @@ public class Orient extends OListenerManger<OOrientListener> {
   public static final String URL_SYNTAX    = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
   private static volatile Orient instance;
-  private static final Lock initLock = new ReentrantLock();
+  private static final    Lock   initLock = new ReentrantLock();
 
   private static volatile boolean registerDatabaseByPath = false;
 
   private final ConcurrentMap<String, OEngine> engines = new ConcurrentHashMap<String, OEngine>();
 
-  private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
-  private final OScriptManager                                                       scriptManager        = new OScriptManager();
-  private final ThreadGroup threadGroup;
-  private final ReadWriteLock                                        engineLock                    = new ReentrantReadWriteLock();
-  private final ORecordConflictStrategyFactory                       recordConflictStrategy        = new ORecordConflictStrategyFactory();
-  private final ReferenceQueue<OOrientStartupListener>               removedStartupListenersQueue  = new ReferenceQueue<OOrientStartupListener>();
-  private final ReferenceQueue<OOrientShutdownListener>              removedShutdownListenersQueue = new ReferenceQueue<OOrientShutdownListener>();
-  private final Set<OOrientStartupListener>                          startupListeners              = Collections
+  private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
+  private final OScriptManager                                                       scriptManager                 = new OScriptManager();
+  private final ThreadGroup                                                          threadGroup;
+  private final ReadWriteLock                                                        engineLock                    = new ReentrantReadWriteLock();
+  private final ORecordConflictStrategyFactory                                       recordConflictStrategy        = new ORecordConflictStrategyFactory();
+  private final ReferenceQueue<OOrientStartupListener>                               removedStartupListenersQueue  = new ReferenceQueue<OOrientStartupListener>();
+  private final ReferenceQueue<OOrientShutdownListener>                              removedShutdownListenersQueue = new ReferenceQueue<OOrientShutdownListener>();
+  private final Set<OOrientStartupListener>                                          startupListeners              = Collections
       .newSetFromMap(new ConcurrentHashMap<OOrientStartupListener, Boolean>());
-  private final Set<WeakHashSetValueHolder<OOrientStartupListener>>  weakStartupListeners          = Collections
+  private final Set<WeakHashSetValueHolder<OOrientStartupListener>>                  weakStartupListeners          = Collections
       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientStartupListener>, Boolean>());
-  private final Set<WeakHashSetValueHolder<OOrientShutdownListener>> weakShutdownListeners         = Collections
+  private final Set<WeakHashSetValueHolder<OOrientShutdownListener>>                 weakShutdownListeners         = Collections
       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
 
   private final PriorityQueue<OShutdownHandler> shutdownHandlers = new PriorityQueue<OShutdownHandler>(11,
@@ -121,16 +121,16 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   private final String os;
 
-  private volatile Timer timer;
-  private volatile ORecordFactoryManager recordFactoryManager = new ORecordFactoryManager();
+  private volatile Timer                       timer;
+  private volatile ORecordFactoryManager       recordFactoryManager = new ORecordFactoryManager();
   private          OrientShutdownHook          shutdownHook;
   private volatile OAbstractProfiler           profiler;
   private          ODatabaseThreadLocalFactory databaseThreadFactory;
-  private volatile boolean active = false;
-  private          ThreadPoolExecutor workers;
-  private          OSignalHandler     signalHandler;
-  private volatile OSecuritySystem    security;
-  private boolean runningDistributed = false;
+  private volatile boolean                     active               = false;
+  private          ThreadPoolExecutor          workers;
+  private          OSignalHandler              signalHandler;
+  private volatile OSecuritySystem             security;
+  private          boolean                     runningDistributed   = false;
 
   /**
    * Indicates that engine is initialized inside of web application container.
@@ -423,31 +423,67 @@ public class Orient extends OListenerManger<OOrientListener> {
     return this;
   }
 
-  public void scheduleTask(final TimerTask task, final long delay, final long period) {
+  public TimerTask scheduleTask(final Runnable task, final long delay, final long period) {
     engineLock.readLock().lock();
     try {
+      final TimerTask timerTask = new TimerTask() {
+        @Override
+        public void run() {
+          try {
+            task.run();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error during execution of task " + task.getClass().getSimpleName(), e);
+          } catch (Error e) {
+            OLogManager.instance().error(this, "Error during execution of task " + task.getClass().getSimpleName(), e);
+            throw e;
+          }
+        }
+      };
+
       if (active) {
-        if (period > 0)
-          timer.schedule(task, delay, period);
-        else
-          timer.schedule(task, delay);
-      } else
+        if (period > 0) {
+          timer.schedule(timerTask, delay, period);
+        } else {
+          timer.schedule(timerTask, delay);
+        }
+      } else {
         OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be scheduled.");
+      }
+
+      return timerTask;
     } finally {
       engineLock.readLock().unlock();
     }
   }
 
-  public void scheduleTask(final TimerTask task, final Date firstTime, final long period) {
+  public TimerTask scheduleTask(final Runnable task, final Date firstTime, final long period) {
     engineLock.readLock().lock();
     try {
-      if (active)
-        if (period > 0)
-          timer.schedule(task, firstTime, period);
-        else
-          timer.schedule(task, firstTime);
-      else
+      final TimerTask timerTask = new TimerTask() {
+        @Override
+        public void run() {
+          try {
+            task.run();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error during execution of task " + task.getClass().getSimpleName(), e);
+          } catch (Error e) {
+            OLogManager.instance().error(this, "Error during execution of task " + task.getClass().getSimpleName(), e);
+            throw e;
+          }
+        }
+      };
+
+      if (active) {
+        if (period > 0) {
+          timer.schedule(timerTask, firstTime, period);
+        } else {
+          timer.schedule(timerTask, firstTime);
+        }
+      } else {
         OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be scheduled.");
+      }
+
+      return timerTask;
     } finally {
       engineLock.readLock().unlock();
     }
@@ -582,14 +618,6 @@ public class Orient extends OListenerManger<OOrientListener> {
       storages.addAll(factory.getStorages());
     }
     return storages;
-  }
-
-  /**
-   * @deprecated This method is not thread safe please use {@link #scheduleTask(java.util.TimerTask, long, long)} instead.
-   */
-  @Deprecated
-  public Timer getTimer() {
-    return timer;
   }
 
   public void removeShutdownHook() {
@@ -830,8 +858,8 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   /**
-   * Interrupts all threads in OrientDB thread group and stops timer is used in methods {@link #scheduleTask(TimerTask, Date, long)}
-   * and {@link #scheduleTask(TimerTask, long, long)}.
+   * Interrupts all threads in OrientDB thread group and stops timer is used in methods {@link #scheduleTask(Runnable, Date, long)}
+   * and {@link #scheduleTask(Runnable, long, long)}.
    */
   private class OShutdownPendingThreadsHandler implements OShutdownHandler {
     @Override

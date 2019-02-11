@@ -12,14 +12,13 @@ import junit.framework.TestCase;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.TimerTask;
 
 /**
  * @author Luca Garulli
  */
 
 public class OHashIndexMTSpeedTest extends TestCase {
-  long                        lastCount        = 0;
+  long lastCount = 0;
 
   private ODatabaseDocumentTx databaseDocumentTx;
   private int                 concurrencyLevel = 16;
@@ -41,10 +40,11 @@ public class OHashIndexMTSpeedTest extends TestCase {
     databaseDocumentTx.create();
 
     ODocument metadata = new ODocument().field("partitions", concurrencyLevel);
-    final OIndex<?> userIndex = databaseDocumentTx.getMetadata().getIndexManager().createIndex("User.id", "UNIQUE",
-        new OSimpleKeyIndexDefinition(-1, OType.LONG), new int[0], null, metadata, "AUTOSHARDING");
+    final OIndex<?> userIndex = databaseDocumentTx.getMetadata().getIndexManager()
+        .createIndex("User.id", "UNIQUE", new OSimpleKeyIndexDefinition(-1, OType.LONG), new int[0], null, metadata,
+            "AUTOSHARDING");
 
-    Orient.instance().scheduleTask(new TimerTask() {
+    Orient.instance().scheduleTask(new Runnable() {
       private ODatabaseDocumentTx db = databaseDocumentTx.copy();
 
       @Override

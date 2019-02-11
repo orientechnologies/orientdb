@@ -40,7 +40,12 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -64,10 +69,31 @@ import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
+import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
+import com.orientechnologies.orient.server.distributed.ODistributedMomentum;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedStrategy;
+import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
+import com.orientechnologies.orient.server.distributed.ORemoteServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
-import com.orientechnologies.orient.server.distributed.impl.task.*;
+import com.orientechnologies.orient.server.distributed.impl.task.ORemoteTaskFactoryManagerImpl;
+import com.orientechnologies.orient.server.distributed.impl.task.ORestartServerTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OStopServerTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseDeltaTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseStatusTask;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
@@ -128,12 +154,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected          File                                       defaultDatabaseConfigFile;
   protected final    ConcurrentMap<String, ODistributedStorage> storages                          = new ConcurrentHashMap<String, ODistributedStorage>();
   protected volatile NODE_STATUS                                status                            = NODE_STATUS.OFFLINE;
-  protected          long                                       lastClusterChangeOn;
-  protected          List<ODistributedLifecycleListener>        listeners                         = new ArrayList<ODistributedLifecycleListener>();
-  protected          ORemoteServerManager                       remoteServerManager;
-  protected          TimerTask                                  publishLocalNodeConfigurationTask = null;
-  protected          TimerTask                                  haStatsTask                       = null;
-  protected          OClusterHealthChecker                      healthCheckerTask                 = null;
+  protected long                                lastClusterChangeOn;
+  protected List<ODistributedLifecycleListener> listeners                         = new ArrayList<ODistributedLifecycleListener>();
+  protected ORemoteServerManager                remoteServerManager;
+  protected TimerTask                           publishLocalNodeConfigurationTask = null;
+  protected TimerTask                           haStatsTask                       = null;
+  protected TimerTask                           healthCheckerTask                 = null;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                          localMessageIdCounter     = new AtomicLong();
@@ -1753,7 +1779,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       try {
 
-        result = (T) iCallback.call(lastCfg);
+        result = iCallback.call(lastCfg);
 
       } finally {
         if (ODistributedServerLog.isDebugEnabled())
@@ -2104,13 +2130,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final Path storagePath = paginatedStorage.getStoragePath();
       final Path dbDirectoryPath = Paths.get(serverInstance.getDatabaseDirectory());
 
-      if (!storagePath.startsWith(dbDirectoryPath))
-        // SKIP IT: THIS HAPPENS ONLY ON MULTIPLE SERVER INSTANCES ON THE SAME JVM
-        return false;
-    } else if (dbUrl.startsWith("remote:"))
-      return false;
+      // SKIP IT: THIS HAPPENS ONLY ON MULTIPLE SERVER INSTANCES ON THE SAME JVM
+      return storagePath.startsWith(dbDirectoryPath);
+    } else
+      return !dbUrl.startsWith("remote:");
 
-    return true;
   }
 
   /**
@@ -2175,7 +2199,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     String url = cfg.field("publicAddress");
 
-    final Collection<Map<String, Object>> listeners = (Collection<Map<String, Object>>) cfg.field("listeners");
+    final Collection<Map<String, Object>> listeners = cfg.field("listeners");
     if (listeners == null)
       throw new ODatabaseException(
           "Cannot connect to a remote node because bad distributed configuration: missing 'listeners' array field");

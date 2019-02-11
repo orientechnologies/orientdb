@@ -28,8 +28,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
-import java.util.TimerTask;
-
 /**
  * Distributed task to stop a server.
  *
@@ -50,7 +48,7 @@ public class OStopServerTask extends OAbstractRemoteTask {
     ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
         "Stopping current server...");
 
-    Orient.instance().scheduleTask(new TimerTask() {
+    Orient.instance().scheduleTask(new Runnable() {
       @Override
       public void run() {
         try {

@@ -48,8 +48,6 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
-import com.orientechnologies.orient.client.remote.OBinaryRequest;
-import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -66,8 +64,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -88,17 +84,7 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabase
 import com.orientechnologies.orient.server.distributed.impl.ODistributedMessageServiceImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.OCoordinateMessagesFactory;
 import com.orientechnologies.orient.server.distributed.impl.coordinator.network.ODistributedChannelBinaryProtocol;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.network.ODistributedExecutable;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.network.ONetworkStructuralSubmitRequest;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.network.ONetworkStructuralSubmitResponse;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.network.ONetworkSubmitRequest;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.network.ONetworkSubmitResponse;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.network.OOperationRequest;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.network.OOperationResponse;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.network.OStructuralOperationRequest;
-import com.orientechnologies.orient.server.distributed.impl.coordinator.network.OStructuralOperationResponse;
 import com.orientechnologies.orient.server.distributed.impl.task.OAbstractSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
@@ -118,16 +104,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimerTask;
-
-import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_OPERATION_REQUEST;
-import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_OPERATION_RESPONSE;
-import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_REQUEST;
-import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_OPERATION_RESPONSE;
-import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_SUBMIT_REQUEST;
-import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_STRUCTURAL_SUBMIT_RESPONSE;
-import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_SUBMIT_REQUEST;
-import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol.DISTRIBUTED_SUBMIT_RESPONSE;
 
 /**
  * Hazelcast implementation for clustering.
@@ -335,30 +311,18 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       final long delay = OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY.getValueAsLong();
       if (delay > 0) {
-        publishLocalNodeConfigurationTask = new TimerTask() {
-          @Override
-          public void run() {
-            publishLocalNodeConfiguration();
-          }
-        };
-        Orient.instance().scheduleTask(publishLocalNodeConfigurationTask, delay, delay);
+        publishLocalNodeConfigurationTask = Orient.instance().scheduleTask(this::publishLocalNodeConfiguration, delay, delay);
       }
 
       final long statsDelay = OGlobalConfiguration.DISTRIBUTED_DUMP_STATS_EVERY.getValueAsLong();
       if (statsDelay > 0) {
-        haStatsTask = new TimerTask() {
-          @Override
-          public void run() {
-            dumpStats();
-          }
-        };
-        Orient.instance().scheduleTask(haStatsTask, statsDelay, statsDelay);
+        haStatsTask = Orient.instance().scheduleTask(this::dumpStats, statsDelay, statsDelay);
       }
 
       final long healthChecker = OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY.getValueAsLong();
       if (healthChecker > 0) {
-        healthCheckerTask = new OClusterHealthChecker(this, healthChecker);
-        Orient.instance().scheduleTask(healthCheckerTask, healthChecker, healthChecker);
+        healthCheckerTask = Orient.instance()
+            .scheduleTask(new OClusterHealthChecker(this, healthChecker), healthChecker, healthChecker);
       }
 
       for (OServerNetworkListener nl : serverInstance.getNetworkListeners())
@@ -411,9 +375,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final String registeredNodesFromClusterAsJson = (String) configurationMap.get(CONFIG_REGISTEREDNODES);
       if (registeredNodesFromClusterAsJson != null) {
         registeredNodesFromCluster.fromJSON(registeredNodesFromClusterAsJson);
-        registeredNodeById.addAll((Collection<? extends String>) registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST));
-        registeredNodeByName
-            .putAll((Map<? extends String, ? extends Integer>) registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP));
+        registeredNodeById.addAll(registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST));
+        registeredNodeByName.putAll(registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP));
 
         if (registeredNodeByName.containsKey(nodeName)) {
           nodeId = registeredNodeByName.get(nodeName);
@@ -622,9 +585,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       if (hazelcastInstance.getLifecycleService().isRunning())
         for (Map.Entry<String, Object> entry : configurationMap.entrySet()) {
-          if (entry.getKey().toString().startsWith(CONFIG_DBSTATUS_PREFIX)) {
+          if (entry.getKey().startsWith(CONFIG_DBSTATUS_PREFIX)) {
 
-            final String nodeDb = entry.getKey().toString().substring(CONFIG_DBSTATUS_PREFIX.length());
+            final String nodeDb = entry.getKey().substring(CONFIG_DBSTATUS_PREFIX.length());
 
             if (nodeDb.startsWith(nodeName))
               databases.add(entry.getKey());
@@ -905,7 +868,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final String nodeStatus = memberConfig.field("status");
 
       if (memberConfig != null && !"OFFLINE".equals(nodeStatus)) {
-        final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) memberConfig.field("listeners"));
+        final Collection<Map<String, Object>> listeners = memberConfig.field("listeners");
         if (listeners != null)
           for (Map<String, Object> listener : listeners) {
             if (listener.get("protocol").equals("ONetworkProtocolBinary")) {
@@ -937,7 +900,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (key.startsWith(CONFIG_NODE_PREFIX)) {
         if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
           final ODocument cfg = (ODocument) iEvent.getValue();
-          final String joinedNodeName = (String) cfg.field("name");
+          final String joinedNodeName = cfg.field("name");
 
           if (this.nodeName.equals(joinedNodeName)) {
             ODistributedServerLog.error(this, joinedNodeName, eventNodeName, DIRECTION.IN,
@@ -1000,11 +963,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         final ODocument cfg = (ODocument) iEvent.getValue();
 
-        String name = (String) cfg.field("name");
+        String name = cfg.field("name");
         if (!activeNodes.containsKey(name))
           updateLastClusterChange();
 
-        activeNodes.put(name, (Member) iEvent.getMember());
+        activeNodes.put(name, iEvent.getMember());
         if (iEvent.getMember().getUuid() != null) {
           activeNodesNamesByUuid.put(iEvent.getMember().getUuid(), name);
           activeNodesUuidByName.put(name, iEvent.getMember().getUuid());
@@ -1494,11 +1457,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (registeredNodesFromClusterAsJson != null) {
       registeredNodesFromCluster.fromJSON(registeredNodesFromClusterAsJson);
       registeredNodeById.clear();
-      registeredNodeById.addAll((Collection<? extends String>) registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST));
+      registeredNodeById.addAll(registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST));
 
       registeredNodeByName.clear();
-      registeredNodeByName
-          .putAll((Map<? extends String, ? extends Integer>) registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP));
+      registeredNodeByName.putAll(registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP));
     } else
       throw new ODistributedException("Cannot find distributed 'registeredNodes' configuration");
   }
@@ -1631,21 +1593,18 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       else if (autoRemoveOffLineServer > 0) {
         // SCHEDULE AUTO REMOVAL IN A WHILE
         autoRemovalOfServers.put(nodeLeftName, System.currentTimeMillis());
-        Orient.instance().scheduleTask(new TimerTask() {
-          @Override
-          public void run() {
-            try {
-              final Long lastTimeNodeLeft = autoRemovalOfServers.get(nodeLeftName);
-              if (lastTimeNodeLeft == null)
-                // NODE WAS BACK ONLINE
-                return;
+        Orient.instance().scheduleTask(() -> {
+          try {
+            final Long lastTimeNodeLeft = autoRemovalOfServers.get(nodeLeftName);
+            if (lastTimeNodeLeft == null)
+              // NODE WAS BACK ONLINE
+              return;
 
-              if (System.currentTimeMillis() - lastTimeNodeLeft >= autoRemoveOffLineServer) {
-                removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
-              }
-            } catch (Exception e) {
-              // IGNORE IT
+            if (System.currentTimeMillis() - lastTimeNodeLeft >= autoRemoveOffLineServer) {
+              removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
             }
+          } catch (Exception e) {
+            // IGNORE IT
           }
         }, autoRemoveOffLineServer, 0);
       }

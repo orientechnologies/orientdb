@@ -40,8 +40,15 @@ import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -58,18 +65,13 @@ public class OClientConnectionManager {
   public OClientConnectionManager(OServer server) {
     final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
 
-    timerTask = new TimerTask() {
-      @Override
-      public void run() {
-        try {
-          cleanExpiredConnections();
-        } catch (Exception e) {
-          OLogManager.instance().debug(this, "Error on client connection purge task", e);
-        }
+    timerTask = Orient.instance().scheduleTask(() -> {
+      try {
+        cleanExpiredConnections();
+      } catch (Exception e) {
+        OLogManager.instance().debug(this, "Error on client connection purge task", e);
       }
-    };
-
-    Orient.instance().scheduleTask(timerTask, delay, delay);
+    }, delay, delay);
 
     Orient.instance().getProfiler()
         .registerHookValue("server.connections.actives", "Number of active network connections", METRIC_TYPE.COUNTER,
@@ -134,8 +136,6 @@ public class OClientConnectionManager {
    * @param iProtocol protocol which will be used by connection
    *
    * @return new connection
-   *
-   * @throws IOException
    */
   public OClientConnection connect(final ONetworkProtocol iProtocol) {
 
@@ -155,8 +155,6 @@ public class OClientConnectionManager {
    * @param iProtocol protocol which will be used by connection
    *
    * @return new connection
-   *
-   * @throws IOException
    */
   public OClientConnection connect(final ONetworkProtocol iProtocol, final OClientConnection connection, final byte[] tokenBytes,
       final OTokenHandler handler) {

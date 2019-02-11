@@ -53,7 +53,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -155,7 +154,7 @@ public final class O2QCache implements OReadCache {
       a1in = new ConcurrentLRUList();
 
       if (printCacheStatistics) {
-        Orient.instance().scheduleTask(new TimerTask() {
+        Orient.instance().scheduleTask(new Runnable() {
           @Override
           public void run() {
             final long cacheRequests = O2QCache.this.cacheRequests.sum();

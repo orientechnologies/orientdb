@@ -64,7 +64,10 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,10 +81,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
 import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
-
-import java.io.File;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
 
 public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptiveExternal implements OLuceneIndexEngine {
 
@@ -156,38 +155,27 @@ public abstract class OLuceneIndexEngineAbstract extends OSharedResourceAdaptive
   }
 
   private void scheduleCommitTask() {
-    commitTask = new TimerTask() {
-      @Override
-      public boolean cancel() {
-        return super.cancel();
-      }
+    commitTask = Orient.instance().scheduleTask(() -> {
+      if (shouldClose()) {
+        openCloseLock.lock();
 
-      @Override
-      public void run() {
+        //while on lock the index was opened
+        if (!shouldClose())
+          return;
+        try {
 
-        if (shouldClose()) {
-          openCloseLock.lock();
-
-          //while on lock the index was opened
-          if (!shouldClose())
-            return;
-          try {
-
-            close();
-          } finally {
-            openCloseLock.unlock();
-          }
-
+          close();
+        } finally {
+          openCloseLock.unlock();
         }
-        if (!closed.get()) {
 
-          OLogManager.instance().debug(this, "Flushing index: " + indexName());
-          flush();
-        }
       }
-    };
+      if (!closed.get()) {
 
-    Orient.instance().scheduleTask(commitTask, firstFlushAfter, flushIndexInterval);
+        OLogManager.instance().debug(this, "Flushing index: " + indexName());
+        flush();
+      }
+    }, firstFlushAfter, flushIndexInterval);
   }
 
   private boolean shouldClose() {

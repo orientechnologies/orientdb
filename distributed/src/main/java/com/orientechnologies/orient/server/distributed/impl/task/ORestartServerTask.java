@@ -32,7 +32,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.TimerTask;
 
 /**
  * Distributed task to restart a node.
@@ -56,7 +55,7 @@ public class ORestartServerTask extends OAbstractRemoteTask {
 
     iManager.setNodeStatus(ODistributedServerManager.NODE_STATUS.OFFLINE);
 
-    Orient.instance().scheduleTask(new TimerTask() {
+    Orient.instance().scheduleTask(new Runnable() {
       @Override
       public void run() {
         try {
