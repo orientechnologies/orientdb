@@ -61,4 +61,17 @@ public class OSimpleLockManagerImpl<T> implements OSimpleLockManager<T> {
       lock.unlock();
     }
   }
+
+  @Override
+  public void reset() {
+    lock.lock();
+    try {
+      map.entrySet().removeIf((c) -> {
+        c.getValue().signalAll();
+        return true;
+      });
+    } finally {
+      lock.unlock();
+    }
+  }
 }
