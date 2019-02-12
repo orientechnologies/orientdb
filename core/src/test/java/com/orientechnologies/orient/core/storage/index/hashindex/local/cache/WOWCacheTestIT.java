@@ -146,7 +146,7 @@ public class WOWCacheTestIT {
 
       final int pageIndex = wowCache.allocateNewPage(fileId);
       Assert.assertEquals(i, pageIndex);
-      final OCachePointer cachePointer = wowCache.load(fileId, i, 1, new OModifiableBoolean(), true)[0];
+      final OCachePointer cachePointer = wowCache.load(fileId, i, 1, new OModifiableBoolean(), false)[0];
       cachePointer.acquireExclusiveLock();
 
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
@@ -199,7 +199,7 @@ public class WOWCacheTestIT {
 
       pageIndexDataMap.put(pageIndex, data);
 
-      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, new OModifiableBoolean(), true)[0];
+      final OCachePointer cachePointer = wowCache.load(fileId, pageIndex, 1, new OModifiableBoolean(), false)[0];
       cachePointer.acquireExclusiveLock();
       ByteBuffer buffer = cachePointer.getBufferDuplicate();
       buffer.position(systemOffset);
